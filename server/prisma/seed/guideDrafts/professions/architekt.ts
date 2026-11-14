@@ -87,7 +87,7 @@ export const architektGuide: ProfessionGuide = {
 
 ## Как помогает Triad Vision
 
-Мы проверяем ваш вуз и степень в anabin, готовим заявку в ZAB, организуем переводы и подаём визовые документы через посольство в Баку. Если вы планируете запись в палату, заранее собираем подтверждения практики и портфолио. Решение принимают ведомства, гарантировать его никто не может, но полный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
+Мы проверяем ваш вуз и степень в anabin, готовим заявку в ZAB, готовим и передаём вам полный пакет документов для посольства в Баку; заявление вы подаёте сами, переводы тоже оформляете самостоятельно. Если вы планируете запись в палату, заранее собираем подтверждения практики и портфолио. Решение принимают ведомства, гарантировать его никто не может, но полный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -203,7 +203,7 @@ Nigar Bakıda memarlıq üzrə bakalavr və magistr təhsili alıb və altı il 
 
 ## Triad Vision necə kömək edir
 
-Universitetinizi və dərəcənizi anabin-də yoxlayırıq, ZAB müraciətini hazırlayırıq, tərcümələri təşkil edirik və viza sənədlərini Bakıdakı səfirliyə təqdim edirik. Palataya qeydiyyat planlaşdırırsınızsa, praktika sübutlarını və portfolionu əvvəlcədən toplayırıq. Qərarı qurumlar verir və heç kim nəticəyə zəmanət verə bilməz, amma tam paket aylarla vaxt qazandırır. [Konsultasiyaya yazılın](/booking).
+Universitetinizi və dərəcənizi anabin-də yoxlayırıq, ZAB müraciətini hazırlayırıq, Bakıdakı səfirliyin tələb etdiyi tam viza sənəd paketini hazırlayıb sizə veririk; müraciəti və tərcümələri özünüz edirsiniz. Palataya qeydiyyat planlaşdırırsınızsa, praktika sübutlarını və portfolionu əvvəlcədən toplayırıq. Qərarı qurumlar verir və heç kim nəticəyə zəmanət verə bilməz, amma tam paket aylarla vaxt qazandırır. [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -315,7 +315,7 @@ Bauingenieure finden ihren eigenen Ratgeber: [Anerkennung als Ingenieur](guide:a
 
 ## So hilft Triad Vision
 
-Wir prüfen Hochschule und Abschluss in anabin, bereiten den ZAB-Antrag vor, organisieren Übersetzungen und den Visumantrag bei der Botschaft in Baku. Für eine spätere Kammereintragung sammeln wir Praxisnachweise und Portfolio von Anfang an. Die Entscheidung treffen die Behörden – eine vollständige Akte spart aber Monate. [Beratung buchen](/booking).
+Wir prüfen Hochschule und Abschluss in anabin, bereiten den ZAB-Antrag vor, stellen Ihnen die vollständigen Visumunterlagen für die Botschaft in Baku zusammen; den Antrag stellen Sie selbst, Übersetzungen lassen Sie selbst anfertigen. Für eine spätere Kammereintragung sammeln wir Praxisnachweise und Portfolio von Anfang an. Die Entscheidung treffen die Behörden – eine vollständige Akte spart aber Monate. [Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -427,7 +427,7 @@ Civil and structural engineers should read our [engineer recognition guide](guid
 
 ## How Triad Vision helps
 
-We check your university and degree in anabin, prepare the ZAB application, arrange translations and file your visa application at the embassy in Baku. If you plan to register with a chamber later, we collect practice records and your portfolio from the start. The authorities make the decision and nobody can guarantee it, but a complete file saves months. [Book a consultation](/booking).
+We check your university and degree in anabin, prepare the ZAB application, prepare the complete set of visa documents the embassy in Baku requires; you apply there yourself and have the translations done yourself. If you plan to register with a chamber later, we collect practice records and your portfolio from the start. The authorities make the decision and nobody can guarantee it, but a complete file saves months. [Book a consultation](/booking).
 
 ## Official sources
 

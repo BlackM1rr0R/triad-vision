@@ -88,7 +88,7 @@ describe('next step rules', () => {
     expect(s.actions[0]).toMatchObject({ kind: 'transition', confirm: true, request: { body: { action: 'CONFIRM_CONTRACT' } } });
   });
 
-  it('embassy documents all accepted → book the appointment (scroll to the form, task, package)', () => {
+  it('embassy documents all accepted → hand the embassy set to the client, record the appointment (scroll to the form, task, package)', () => {
     const s = top(facts({ status: 'EMBASSY_REVIEW', requirements: [req('VIDEX', 'EMBASSY', ['ACCEPTED'])] }));
     expect(s.code).toBe('BOOK_APPOINTMENT');
     expect(s.actions.map((a) => a.kind)).toEqual(['scroll', 'task', 'package']);

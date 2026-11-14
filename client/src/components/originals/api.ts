@@ -15,7 +15,7 @@ export const ACTION_FROM: Record<Action, OriginalStatus[]> = {
   STORED: ['IN_OFFICE'],
   GIVEN_OUT: ['IN_OFFICE'],
   RETURNED_TO_OFFICE: ['GIVEN_OUT', 'IN_TRANSIT', 'DELIVERED'],
-  SENT_TO_APOSTILLE: ['IN_OFFICE', 'GIVEN_OUT'],
+  SENT_TO_APOSTILLE: [], // no longer offered: Triad Vision does not do apostilles (historical AT_APOSTILLE rows can still come back)
   APOSTILLE_BACK: ['AT_APOSTILLE'],
   SENT_BY_COURIER: ['IN_OFFICE'],
   DELIVERED: ['IN_TRANSIT'],

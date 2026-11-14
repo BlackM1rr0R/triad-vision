@@ -791,18 +791,20 @@ model Inquiry {
   partnerId     String?       @db.VarChar(40)
 
   /// Staff member who owns this lead.
-  assignedStaffId    String?   @db.VarChar(40)
+  assignedStaffId    String?                 @db.VarChar(40)
   assignedAt         DateTime?
   /// Internal notes of the team (never shown to the lead).
-  staffNotes         String?   @db.Text
+  staffNotes         String?                 @db.Text
   /// Set when the lead was converted into a client account / employer.
-  convertedUserId    String?   @db.VarChar(40)
-  convertedCompanyId String?   @db.VarChar(40)
+  convertedUserId    String?                 @db.VarChar(40)
+  convertedCompanyId String?                 @db.VarChar(40)
   convertedAt        DateTime?
   /// Agent who registered this lead in the agent portal.
-  agentId            String?   @db.VarChar(40)
+  agentId            String?                 @db.VarChar(40)
   /// Personal data removed after the retention period (GDPR); the row stays for statistics.
   anonymizedAt       DateTime?
+  /// "Apply via Triad Vision" for a listing on another job site (source "external-job:…").
+  externalJob        ExternalJobApplication?
 
   @@index([status, createdAt])
   @@index([score])
@@ -6333,4 +6335,36 @@ model StaffMailbox {
   disabledById String? // plain id of the super admin who disabled it
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+/// "Apply via Triad Vision" for a vacancy listed elsewhere (Adzuna search result on /jobs/germany or any pasted
+/// link: arbeitsagentur.de, StepStone, Indeed …). The lead itself is the Inquiry (staff inbox); this row holds the
+/// listing and the candidate's details and CV. Deleted with the inquiry; emptied when the inquiry is anonymised.
+model ExternalJobApplication {
+  id              String   @id @default(cuid())
+  inquiryId       String   @unique
+  inquiry         Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  /// arbeitnow | careerjet | jooble | adzuna | link
+  provider        String   @db.VarChar(20)
+  /// Adzuna ad id (when applied from a search result).
+  externalId      String?  @db.VarChar(64)
+  listingUrl      String   @db.VarChar(1000)
+  listingTitle    String?  @db.VarChar(300)
+  listingCompany  String?  @db.VarChar(200)
+  listingLocation String?  @db.VarChar(200)
+  /// job | ausbildung
+  jobType         String?  @db.VarChar(20)
+  germanLevel     String?  @db.VarChar(10)
+  profession      String?  @db.VarChar(160)
+  experienceYears Int?
+  /// Client account of a signed-in applicant.
+  userId          String?  @db.VarChar(40)
+  /// CV in the private uploads folder (random name); null after anonymisation.
+  cvStoredName    String?  @db.VarChar(120)
+  cvOriginalName  String?  @db.VarChar(255)
+  cvMime          String?  @db.VarChar(120)
+  cvSize          Int?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
 }

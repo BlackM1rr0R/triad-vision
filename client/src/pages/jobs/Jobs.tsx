@@ -3,11 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, Building2, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowRight, Building2, ChevronLeft, ChevronRight, Globe2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
+import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { Button, buttonClass } from '@/components/ui/Button';
@@ -21,6 +22,7 @@ import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
 
 registerCopy(pagesJobs);
+registerCopy(pagesGermanyJobs);
 
 const HERO = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2000&q=70';
 const SORTS = ['newest', 'salary', 'closing'] as const;
@@ -255,6 +257,20 @@ export default function Jobs() {
                 )}
               </>
             )}
+
+            {/* Almaniya iş bazası: listings of other German job sites (Adzuna) + the BA Jobbörse, apart from our own vacancies. */}
+            <div className="mt-10 flex flex-col gap-4 rounded-3xl border border-line bg-card p-6 shadow-[var(--tv-shadow-card)] sm:flex-row sm:items-center sm:p-8">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-link" aria-hidden>
+                <Globe2 className="size-6" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-xl font-semibold text-ink">{t('gj.fromJobs.title')}</p>
+                <p className="mt-1 text-muted">{t('gj.fromJobs.text')}</p>
+              </div>
+              <Link to="/jobs/germany" className={buttonClass({ variant: 'outline', className: 'shrink-0' })}>
+                {t('gj.fromJobs.cta')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </div>
 
             {/* "Notify me about new jobs" (double opt-in, lib/jobAlerts on the server). */}
             <JobAlertForm className="mt-10" />

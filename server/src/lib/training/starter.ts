@@ -39,7 +39,7 @@ Hər müştəri üçün sistemdə **bir müraciət** (Case) açılır. Müraciə
 3. **Müqavilə göndərildi / imzalandı** — xidmət müqaviləsi onlayn imzalanır.
 4. **Səfirlik sənədləri** — səfirlik paketi üçün əlavə sənədlər toplanır.
 5. **Səfirlik yoxlaması** — paket yoxlanılır (dörd göz qaydası!).
-6. **Görüş təyin edildi** — səfirlik görüşünün tarixi və yeri qeyd olunur.
+6. **Görüş təyin edildi** — səfirliyin müştəriyə verdiyi görüşün tarixi və yeri qeyd olunur. Görüşü biz götürmürük: səfirliyin tələb etdiyi sənəd paketini hazırlayıb müştəriyə veririk, müraciəti səfirliyə müştəri özü edir.
 7. **Qərar gözlənilir** — müraciət səfirlikdədir.
 8. **Təsdiqləndi / Rədd edildi / Ləğv edildi** — müraciət bağlanır.
 

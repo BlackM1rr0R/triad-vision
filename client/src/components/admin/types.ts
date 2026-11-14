@@ -170,6 +170,27 @@ export interface Inquiry {
   convertedCompany?: { id: string; name: string } | null;
   /** Personal data removed after the retention period (GDPR). */
   anonymizedAt?: string | null;
+  /** "Apply via Triad Vision" for an external listing (source "external-job:…"). */
+  externalJob?: ExternalJobInfo | null;
+}
+
+/** Listing + candidate facts of an external-job lead (server lib/inquiries enrichInquiries; no stored file name). */
+export interface ExternalJobInfo {
+  provider: string;
+  externalId: string | null;
+  listingUrl: string;
+  listingTitle: string | null;
+  listingCompany: string | null;
+  listingLocation: string | null;
+  jobType: string | null;
+  germanLevel: string | null;
+  profession: string | null;
+  experienceYears: number | null;
+  userId: string | null;
+  cvOriginalName: string | null;
+  cvMime: string | null;
+  cvSize: number | null;
+  createdAt: string;
 }
 
 export interface InquiriesResponse {

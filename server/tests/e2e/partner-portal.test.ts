@@ -162,7 +162,7 @@ describe('partner portal: dashboard, commissions and notifications', () => {
 
     expectStatus(await act(admin.agent, c.id, { action: 'SCHEDULE_APPOINTMENT', at: '2026-12-01T09:30:00+04:00', place: 'Embassy Baku' }), 200);
     const moved = await waitFor(() => prisma.notification.findFirst({ where: { userId: p.user.id, type: 'PARTNER_APPOINTMENT_MOVED' } }));
-    expect(moved.title).toBe('Embassy appointment set: Rəşad Həsənov');
+    expect(moved.title).toBe('Embassy appointment received: Rəşad Həsənov');
     expect(moved.link).toBe(`/partner/clients/${c.id}`);
     await waitFor(() => prisma.emailLog.findFirst({ where: { to: p.user.email, subject: `Triad Vision · ${moved.title}` } }));
 

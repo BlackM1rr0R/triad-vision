@@ -120,7 +120,7 @@ const az = {
     pages: {
       home: 'Əsas səhifə',
       about: 'Şirkət, missiya və komanda',
-      services: 'Sənədlər, tərcümə, viza dəstəyi',
+      services: 'Sənədlər və viza dəstəyi',
       visas: 'Bütün Almaniya iş vizaları',
       partners: 'Almaniyadakı tərəfdaş şirkətlər',
       stories: 'Müştərilərimizin təcrübəsi',
@@ -254,7 +254,7 @@ const de: Shape = {
     pages: {
       home: 'Startseite',
       about: 'Unternehmen, Mission und Team',
-      services: 'Unterlagen, Übersetzung, Visumservice',
+      services: 'Unterlagen und Visumservice',
       visas: 'Alle Arbeitsvisa für Deutschland',
       partners: 'Unsere Partnerunternehmen in Deutschland',
       stories: 'Erfahrungen unserer Kunden',
@@ -386,7 +386,7 @@ const en: Shape = {
     pages: {
       home: 'Home page',
       about: 'Company, mission and team',
-      services: 'Documents, translation, visa support',
+      services: 'Documents and visa support',
       visas: 'All German work visas',
       partners: 'Our partner companies in Germany',
       stories: 'Experiences of our clients',
@@ -518,7 +518,7 @@ const ru: Shape = {
     pages: {
       home: 'Главная страница',
       about: 'Компания, миссия и команда',
-      services: 'Документы, перевод, визовая поддержка',
+      services: 'Документы и визовая поддержка',
       visas: 'Все рабочие визы в Германию',
       partners: 'Наши партнёры в Германии',
       stories: 'Истории наших клиентов',

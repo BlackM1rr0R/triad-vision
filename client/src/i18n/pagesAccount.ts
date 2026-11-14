@@ -11,7 +11,6 @@ const az = {
       lettersExplain: 'Məktubu izah et',
       vault: 'Sənəd seyfi',
       arrival: 'Gəliş planı',
-      translations: 'Tərcümə və apostil',
       privacy: 'Məxfilik',
       dashboard: 'İcmal',
       myCase: 'Müraciətim',
@@ -131,6 +130,7 @@ const az = {
           'İmzalanmış PDF-i yükləyib saxlayın — səfirlik üçün lazım olacaq.',
         ],
         embassy: [
+          'Səfirliyin tələb etdiyi sənəd paketini hazırlayıb sizə veririk; müraciəti səfirliyə özünüz edirsiniz, görüş vaxtını və qərarı səfirlik özü bildirir.',
           'VIDEX viza ərizəsini onlayn doldurub çap edin.',
           'Viza müddətini əhatə edən tibbi sığorta alın.',
           'Tərcümə tələb olunan sənədlər üçün andlı tərcüməçiyə əvvəlcədən müraciət edin.',
@@ -309,7 +309,6 @@ const de: typeof az = {
       lettersExplain: 'Brief erklären',
       vault: 'Dokumententresor',
       arrival: 'Anreise',
-      translations: 'Übersetzung & Apostille',
       privacy: 'Datenschutz',
       dashboard: 'Übersicht',
       myCase: 'Mein Antrag',
@@ -429,6 +428,7 @@ const de: typeof az = {
           'Laden Sie das unterschriebene PDF herunter – Sie benötigen es für die Botschaft.',
         ],
         embassy: [
+          'Wir stellen Ihnen die vollständigen Unterlagen zusammen, die die Botschaft verlangt; den Antrag stellen Sie selbst bei der Botschaft – Termin und Entscheidung kommen von der Botschaft.',
           'Füllen Sie den VIDEX-Visumantrag online aus und drucken Sie ihn.',
           'Schließen Sie eine Krankenversicherung für die gesamte Visumdauer ab.',
           'Beauftragen Sie rechtzeitig einen vereidigten Übersetzer, falls Übersetzungen nötig sind.',
@@ -607,7 +607,6 @@ const en: typeof az = {
       lettersExplain: 'Explain a letter',
       vault: 'Document vault',
       arrival: 'Arrival plan',
-      translations: 'Translation & apostille',
       privacy: 'Privacy',
       dashboard: 'Overview',
       myCase: 'My application',
@@ -727,6 +726,7 @@ const en: typeof az = {
           'Download the signed PDF – you will need it for the embassy.',
         ],
         embassy: [
+          'We prepare and give you the complete set of documents the embassy requires; you apply to the embassy yourself, and the embassy itself gives you the appointment and the decision.',
           'Fill in the VIDEX visa application online and print it.',
           'Buy health insurance that covers the whole visa period.',
           'Book a sworn translator early if translations are required.',
@@ -905,7 +905,6 @@ const ru: typeof az = {
       lettersExplain: 'Объяснить письмо',
       vault: 'Сейф документов',
       arrival: 'План приезда',
-      translations: 'Перевод и апостиль',
       privacy: 'Конфиденциальность',
       dashboard: 'Обзор',
       myCase: 'Моя заявка',
@@ -1025,6 +1024,7 @@ const ru: typeof az = {
           'Скачайте подписанный PDF — он понадобится для посольства.',
         ],
         embassy: [
+          'Мы готовим и передаём вам полный пакет документов для посольства; заявление вы подаёте в посольство сами, дату приёма и решение сообщает само посольство.',
           'Заполните визовую анкету VIDEX онлайн и распечатайте её.',
           'Оформите медицинскую страховку на весь срок визы.',
           'Заранее обратитесь к присяжному переводчику, если нужны переводы.',

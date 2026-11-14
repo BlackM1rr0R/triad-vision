@@ -128,7 +128,7 @@ export const clientFeedEvents = async (user: { id: string; locale: Locale }, now
       end: t.dueAt!,
       allDay: true,
       summary: `${L.translation}: ${trKey(t.number)}`,
-      url: `${portal}/translations/${t.id}`,
+      url: `${portal}/notifications`, // archived translation orders have no client page any more
       stamp: t.updatedAt,
     });
   }

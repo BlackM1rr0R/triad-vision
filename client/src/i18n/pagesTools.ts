@@ -151,7 +151,7 @@ const az = {
     docs: {
       diploma: 'Diplom (surəti, notarial təsdiqli)',
       transcript: 'Fənlər və saatlar göstərilmiş əlavə (transkript)',
-      translations: 'Bütün sənədlərin and içmiş tərcüməçi tərəfindən almanca tərcüməsi',
+      translations: 'Bütün sənədlərin and içmiş tərcüməçi tərəfindən almanca tərcüməsi (özünüz etdirirsiniz)',
       cv: 'Alman dilində tərcümeyi-hal (Lebenslauf), cədvəl formasında',
       experience: 'İş təcrübəsini təsdiq edən arayışlar (vəzifə, müddət, vəzifələr)',
       id: 'Pasport (surəti)',
@@ -195,8 +195,8 @@ const az = {
       progress: '{{done}} / {{total}} hazırdır',
       saved: 'Qeydlər bu brauzerdə saxlanılır.',
       s2Text: 'Hazır olanları qeyd edin. Qurum əlavə sənəd istəyə bilər — dəqiq siyahını müraciətdən əvvəl yoxlayın.',
-      s3Text: 'Xarici dildə olan bütün sənədlər and içmiş (vereidigt) tərcüməçi tərəfindən almancaya tərcümə edilməlidir. Çox vaxt notarial təsdiqli surətlər, bəzən isə apostil tələb olunur. Orijinal sənədləri poçtla göndərməyin.',
-      s3Link: 'Tərcümə sifariş et',
+      s3Text: 'Xarici dildə olan bütün sənədlər and içmiş (vereidigt) tərcüməçi tərəfindən almancaya tərcümə edilməlidir. Çox vaxt notarial təsdiqli surətlər, bəzən isə apostil tələb olunur. Orijinal sənədləri poçtla göndərməyin. Apostil və tərcüməni özünüz etdirirsiniz (məs., ASAN xidmətdə və and içmiş tərcüməçidə).',
+      s3Link: 'Sənəd siyahınızı açın',
       s4Text: 'Səlahiyyətli qurum: {{authority}}. Dəqiq ünvanı (gələcək iş yerinizin ştatına görə) Anerkennungs-Finder-də tapın. Müraciəti çox vaxt xaricdən, getdikcə daha çox onlayn göndərmək olar. Rüsumu qurum tələb etdikdən sonra ödəyin.',
       s4Driving: 'Almaniyada yaşayış yerinizdəki sürücülük vəsiqəsi idarəsinə (Fahrerlaubnisbehörde) vəsiqənin dəyişdirilməsi üçün müraciət edin. Code 95 tanınmış təlim mərkəzində təlim və IHK imtahanı ilə alınır.',
       s4Finder: 'Anerkennungs-Finder-i aç',
@@ -229,8 +229,8 @@ const az = {
     },
     tip: {
       title: '{{brand}}-ın məsləhəti',
-      text: 'Ən çox vaxt itkisi natamam sənədlərə görə olur. Biz diplom və arayışlarınızı tərcümə edir, apostil və notarial təsdiqi təşkil edir və müraciət paketini sizinlə birlikdə hazırlayırıq.',
-      translations: 'Tərcümə sifarişləri',
+      text: 'Ən çox vaxt itkisi natamam sənədlərə görə olur. Biz sənədlərinizin tamlığını yoxlayır və müraciət paketini sizinlə birlikdə hazırlayırıq. Apostil və tərcüməni özünüz etdirirsiniz (məs., ASAN xidmətdə və and içmiş tərcüməçidə).',
+      translations: 'Sənəd siyahım',
       booking: 'Məsləhət sifariş et',
     },
     faq: {
@@ -266,9 +266,9 @@ const az = {
     disclaimer: 'Bu bələdçi ümumi məlumat xarakterlidir və hüquqi məsləhət deyil. Bağlayıcı məlumatı yalnız səlahiyyətli qurum verir.',
     cta: {
       title: 'Tanınma prosesini birlikdə keçək',
-      text: 'Sənədləri yoxlayır, tərcümələri təşkil edir və müraciəti düzgün quruma göndərməyə kömək edirik.',
+      text: 'Sənədləri yoxlayır və müraciəti düzgün quruma göndərməyə kömək edirik. Apostil və tərcüməni özünüz etdirirsiniz (məs., ASAN xidmətdə və and içmiş tərcüməçidə).',
       primary: 'Məsləhət sifariş et',
-      secondary: 'Tərcümə sifariş et',
+      secondary: 'Sənəd siyahınızı açın',
     },
   },
 };
@@ -426,7 +426,7 @@ const de: Copy = {
     docs: {
       diploma: 'Abschlusszeugnis / Diplom (beglaubigte Kopie)',
       transcript: 'Fächer- und Stundennachweis (Transcript)',
-      translations: 'Beglaubigte Übersetzungen aller Unterlagen ins Deutsche',
+      translations: 'Beglaubigte Übersetzungen aller Unterlagen ins Deutsche (lassen Sie selbst anfertigen)',
       cv: 'Tabellarischer Lebenslauf auf Deutsch',
       experience: 'Nachweise über Berufserfahrung (Position, Dauer, Aufgaben)',
       id: 'Reisepass (Kopie)',
@@ -470,8 +470,8 @@ const de: Copy = {
       progress: '{{done}} / {{total}} bereit',
       saved: 'Ihre Häkchen werden in diesem Browser gespeichert.',
       s2Text: 'Haken Sie ab, was Sie schon haben. Die Stelle kann weitere Unterlagen verlangen — prüfen Sie die genaue Liste vor dem Antrag.',
-      s3Text: 'Alle fremdsprachigen Unterlagen müssen von vereidigten Übersetzerinnen oder Übersetzern ins Deutsche übersetzt werden. Oft werden beglaubigte Kopien verlangt, teils eine Apostille. Schicken Sie keine Originale per Post.',
-      s3Link: 'Übersetzung bestellen',
+      s3Text: 'Alle fremdsprachigen Unterlagen müssen von vereidigten Übersetzerinnen oder Übersetzern ins Deutsche übersetzt werden. Oft werden beglaubigte Kopien verlangt, teils eine Apostille. Schicken Sie keine Originale per Post. Apostille und beglaubigte Übersetzungen lassen Sie selbst anfertigen.',
+      s3Link: 'Ihre Dokumentenliste öffnen',
       s4Text: 'Zuständige Stelle: {{authority}}. Die genaue Adresse (nach dem Bundesland Ihres künftigen Arbeitsorts) finden Sie im Anerkennungs-Finder. Der Antrag ist meist auch aus dem Ausland möglich, zunehmend online. Die Gebühr zahlen Sie, wenn die Stelle sie anfordert.',
       s4Driving: 'Beantragen Sie die Umschreibung bei der Fahrerlaubnisbehörde Ihres Wohnorts in Deutschland. Code 95 erhalten Sie über eine anerkannte Ausbildungsstätte und die IHK-Prüfung.',
       s4Finder: 'Anerkennungs-Finder öffnen',
@@ -504,8 +504,8 @@ const de: Copy = {
     },
     tip: {
       title: 'Tipp von {{brand}}',
-      text: 'Die meiste Zeit geht durch unvollständige Unterlagen verloren. Wir übersetzen Ihre Zeugnisse und Nachweise, organisieren Apostille und Beglaubigung und stellen den Antrag gemeinsam mit Ihnen zusammen.',
-      translations: 'Übersetzungsaufträge',
+      text: 'Die meiste Zeit geht durch unvollständige Unterlagen verloren. Wir prüfen Ihre Unterlagen auf Vollständigkeit und stellen den Antrag gemeinsam mit Ihnen zusammen. Apostille und beglaubigte Übersetzungen lassen Sie selbst anfertigen.',
+      translations: 'Meine Dokumentenliste',
       booking: 'Beratung buchen',
     },
     faq: {
@@ -541,9 +541,9 @@ const de: Copy = {
     disclaimer: 'Dieser Leitfaden dient der allgemeinen Information und ist keine Rechtsberatung. Verbindliche Auskünfte gibt nur die zuständige Stelle.',
     cta: {
       title: 'Gemeinsam durch die Anerkennung',
-      text: 'Wir prüfen Ihre Unterlagen, organisieren die Übersetzungen und helfen, den Antrag bei der richtigen Stelle einzureichen.',
+      text: 'Wir prüfen Ihre Unterlagen und helfen, den Antrag bei der richtigen Stelle einzureichen. Apostille und beglaubigte Übersetzungen lassen Sie selbst anfertigen.',
       primary: 'Beratung buchen',
-      secondary: 'Übersetzung bestellen',
+      secondary: 'Ihre Dokumentenliste öffnen',
     },
   },
 };
@@ -699,7 +699,7 @@ const en: Copy = {
     docs: {
       diploma: 'Diploma (certified copy)',
       transcript: 'Transcript with subjects and hours',
-      translations: 'Certified German translations of all documents',
+      translations: 'Certified German translations of all documents (you have them done yourself)',
       cv: 'Tabular CV in German (Lebenslauf)',
       experience: 'Proof of work experience (position, duration, duties)',
       id: 'Passport (copy)',
@@ -743,8 +743,8 @@ const en: Copy = {
       progress: '{{done}} / {{total}} ready',
       saved: 'Your ticks are saved in this browser.',
       s2Text: 'Tick what you already have. The authority may ask for more — check the exact list before you apply.',
-      s3Text: 'All foreign-language documents must be translated into German by a sworn translator. Certified copies are often required, sometimes an apostille. Do not send originals by post.',
-      s3Link: 'Order a translation',
+      s3Text: 'All foreign-language documents must be translated into German by a sworn translator. Certified copies are often required, sometimes an apostille. Do not send originals by post. You have the apostille and sworn translations done yourself.',
+      s3Link: 'Open your document list',
       s4Text: 'Competent authority: {{authority}}. Find the exact office (by the federal state where you will work) in the Anerkennungs-Finder. You can usually apply from abroad, more and more often online. Pay the fee once the authority requests it.',
       s4Driving: 'Apply for the licence conversion at the driving licence office (Fahrerlaubnisbehörde) where you live in Germany. Code 95 is obtained through an approved training centre and the IHK exam.',
       s4Finder: 'Open the Anerkennungs-Finder',
@@ -777,8 +777,8 @@ const en: Copy = {
     },
     tip: {
       title: '{{brand}} tip',
-      text: 'Most time is lost to incomplete documents. We translate your diplomas and certificates, arrange apostille and certification, and put the application together with you.',
-      translations: 'Translation orders',
+      text: 'Most time is lost to incomplete documents. We check your documents for completeness and put the application together with you. You have the apostille and sworn translations done yourself.',
+      translations: 'My document list',
       booking: 'Book a consultation',
     },
     faq: {
@@ -814,9 +814,9 @@ const en: Copy = {
     disclaimer: 'This guide is general information, not legal advice. Only the competent authority can give binding answers.',
     cta: {
       title: 'Let\'s go through recognition together',
-      text: 'We check your documents, organise the translations and help you submit the application to the right authority.',
+      text: 'We check your documents and help you submit the application to the right authority. You have the apostille and sworn translations done yourself.',
       primary: 'Book a consultation',
-      secondary: 'Order a translation',
+      secondary: 'Open your document list',
     },
   },
 };
@@ -972,7 +972,7 @@ const ru: Copy = {
     docs: {
       diploma: 'Диплом (заверенная копия)',
       transcript: 'Приложение с предметами и часами (транскрипт)',
-      translations: 'Заверенные переводы всех документов на немецкий',
+      translations: 'Заверенные переводы всех документов на немецкий (оформляете самостоятельно)',
       cv: 'Резюме на немецком в виде таблицы (Lebenslauf)',
       experience: 'Подтверждения опыта работы (должность, срок, обязанности)',
       id: 'Паспорт (копия)',
@@ -1016,8 +1016,8 @@ const ru: Copy = {
       progress: '{{done}} / {{total}} готово',
       saved: 'Отметки сохраняются в этом браузере.',
       s2Text: 'Отметьте то, что уже готово. Ведомство может запросить дополнительные документы — уточните точный список перед подачей.',
-      s3Text: 'Все документы на иностранном языке должен перевести на немецкий присяжный переводчик. Часто требуются заверенные копии, иногда апостиль. Не отправляйте оригиналы по почте.',
-      s3Link: 'Заказать перевод',
+      s3Text: 'Все документы на иностранном языке должен перевести на немецкий присяжный переводчик. Часто требуются заверенные копии, иногда апостиль. Не отправляйте оригиналы по почте. Апостиль и заверенный перевод вы оформляете самостоятельно.',
+      s3Link: 'Открыть список документов',
       s4Text: 'Компетентный орган: {{authority}}. Точный адрес (по земле, где вы будете работать) найдёте в Anerkennungs-Finder. Подать заявление обычно можно из-за границы, всё чаще онлайн. Пошлину оплачивают после запроса ведомства.',
       s4Driving: 'Подайте заявление на обмен прав в ведомство по водительским правам (Fahrerlaubnisbehörde) по месту жительства в Германии. Code 95 получают через аккредитованный учебный центр и экзамен IHK.',
       s4Finder: 'Открыть Anerkennungs-Finder',
@@ -1050,8 +1050,8 @@ const ru: Copy = {
     },
     tip: {
       title: 'Совет {{brand}}',
-      text: 'Больше всего времени теряется из-за неполного пакета документов. Мы переводим дипломы и справки, организуем апостиль и заверение и вместе с вами готовим заявление.',
-      translations: 'Заказы переводов',
+      text: 'Больше всего времени теряется из-за неполного пакета документов. Мы проверяем комплектность документов и вместе с вами готовим заявление. Апостиль и заверенный перевод вы оформляете самостоятельно.',
+      translations: 'Мой список документов',
       booking: 'Записаться на консультацию',
     },
     faq: {
@@ -1087,9 +1087,9 @@ const ru: Copy = {
     disclaimer: 'Это руководство носит общий информационный характер и не является юридической консультацией. Обязательную информацию даёт только компетентный орган.',
     cta: {
       title: 'Пройдём признание вместе',
-      text: 'Проверим документы, организуем переводы и поможем подать заявление в нужное ведомство.',
+      text: 'Проверим документы и поможем подать заявление в нужное ведомство. Апостиль и заверенный перевод вы оформляете самостоятельно.',
       primary: 'Записаться на консультацию',
-      secondary: 'Заказать перевод',
+      secondary: 'Открыть список документов',
     },
   },
 };

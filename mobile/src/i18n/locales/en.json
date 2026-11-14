@@ -21,11 +21,19 @@
   "salary": "Salary calculator",
   "anerkennung": "Diploma recognition",
   "cities": "German cities",
+  "calculator": "When can I start?",
+  "costCalculator": "Cost calculator",
+  "events": "Events",
+  "map": "Placement map",
+  "referral": "Refer a friend",
   "contact": "Contact",
   "more": "More",
   "cooperation": "Request cooperation",
   "cooperationShort": "Partner with us",
   "eligibility": "Visa check",
+  "guides": "Guides",
+  "chancenkarte": "Opportunity Card points",
+  "blueCard": "Blue Card salary check",
   "search": "Search",
   "accountShort": "Account",
   "login": "Log in",
@@ -110,7 +118,7 @@
    },
    {
     "title": "Visa process",
-    "text": "Embassy documents, appointment and security support"
+    "text": "Complete embassy document set; you apply yourself"
    },
    {
     "title": "Arrival in Germany",
@@ -276,7 +284,7 @@
    },
    {
     "title": "Documentation",
-    "text": "Collecting, translating, notarising and checking documents."
+    "text": "Document checklist, collecting and checking documents."
    },
    {
     "title": "Diploma recognition",
@@ -284,7 +292,7 @@
    },
    {
     "title": "Visa support",
-    "text": "Bundesagentur approval, embassy appointment and application tracking."
+    "text": "Bundesagentur approval, the complete embassy document set and application tracking."
    },
    {
     "title": "Language training",
@@ -444,7 +452,7 @@
    "CONTRACT_SIGNED": "Contract under review",
    "EMBASSY_DOCUMENTS": "Upload embassy documents",
    "EMBASSY_REVIEW": "Embassy documents under review",
-   "APPOINTMENT_SCHEDULED": "Embassy appointment scheduled",
+   "APPOINTMENT_SCHEDULED": "Embassy appointment received",
    "DECISION_PENDING": "Awaiting embassy decision",
    "APPROVED": "Visa approved",
    "REJECTED": "Visa refused",
@@ -456,7 +464,7 @@
    "CONTRACT_SENT": "Read the contract and sign it electronically below.",
    "CONTRACT_SIGNED": "Your signed contract is being reviewed. Once approved, the embassy stage will begin.",
    "EMBASSY_DOCUMENTS": "Upload the documents required by the embassy and submit them for review.",
-   "EMBASSY_REVIEW": "Your embassy documents are being reviewed. An embassy appointment will be scheduled next.",
+   "EMBASSY_REVIEW": "Your embassy documents are being reviewed. Next, we give you the complete document set: you apply to the embassy yourself, and the embassy gives you the appointment.",
    "APPOINTMENT_SCHEDULED": "Arrive on time for the appointment with all your original documents.",
    "DECISION_PENDING": "Your application is at the embassy. You will be notified as soon as a decision is made.",
    "APPROVED": "Congratulations! Our manager will contact you about the next steps.",
@@ -469,7 +477,7 @@
    "upload": "Upload file",
    "uploading": "Uploading...",
    "replace": "Upload new",
-   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 5 MB",
+   "formats": "PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · max. 5 MB",
    "submit": "Submit for review",
    "submitConfirm": "Do you want to submit the documents for review? No changes can be made during the review.",
    "missing": "Upload all required documents",
@@ -538,12 +546,15 @@
    "CONTRACT_SIGNED": "Contract signed",
    "SIGNATURE_REJECTED": "Signature rejected",
    "CONTRACT_CONFIRMED": "Contract confirmed",
-   "APPOINTMENT_SCHEDULED": "Embassy appointment scheduled",
+   "APPOINTMENT_SCHEDULED": "Embassy appointment received",
    "APPOINTMENT_RESCHEDULED": "Embassy appointment rescheduled",
    "LODGED_AT_EMBASSY": "Application lodged at the embassy",
    "DECISION": "Embassy decision",
    "REOPENED": "Application reopened",
-   "STAFF_DOCUMENT_UPLOADED": "A file was added for you"
+   "STAFF_DOCUMENT_UPLOADED": "A file was added for you",
+   "RENEWAL_OPENED": "Residence permit renewal application opened",
+   "RENEWAL_CASE_CREATED": "Renewal application opened",
+   "FAMILY_REUNION_STARTED": "Family reunion started"
   },
   "markAllRead": "Mark all as read",
   "noNotifications": "No notifications.",
@@ -571,6 +582,7 @@
    "INVALID_TRANSITION": "This action is not possible at the current stage. Please refresh the page.",
    "UPLOAD_NOT_ALLOWED": "Documents cannot be uploaded at this stage.",
    "WRONG_PASSWORD": "The current password is incorrect.",
+   "INVALID_PHONE": "Enter the phone number with the country code, e.g. +994 50 123 45 67.",
    "DELETE_NOT_ALLOWED": "This file cannot be deleted.",
    "UNSUPPORTED_FILE_TYPE": "This file type is not accepted.",
    "FILE_TOO_LARGE": "The file is too large (max. 5 MB)."
@@ -600,6 +612,11 @@
   "skip": "Skip to content",
   "toTop": "Back to top",
   "menu": "Menu",
+  "prev": "Previous",
+  "next": "Next",
+  "mainNav": "Main navigation",
+  "footerNav": "Legal",
+  "statementLink": "Accessibility statement",
   "on": "On",
   "off": "Off",
   "theme": {
@@ -658,32 +675,6 @@
    "contactLink": "Contact form",
    "visualAlerts": "Visual alerts",
    "visualAlertsHint": "Notifications stay for 10 seconds and the screen edge flashes."
-  },
-  "page": {
-   "title": "Accessibility statement",
-   "lead": "We build the Triad Vision website and client portal so that everyone can use them comfortably – including people with visual, hearing, motor or cognitive impairments.",
-   "goalTitle": "Our goal",
-   "goalText": "We aim for conformance with WCAG 2.1 (Web Content Accessibility Guidelines) level AA. The site is reviewed regularly and issues are fixed as they are found.",
-   "measuresTitle": "What we have done",
-   "measures": [
-    "Full keyboard navigation: every menu, form and dialog works with Tab, Enter and Esc; a \"Skip to content\" link is the first element on every page.",
-    "Colour contrast of at least 4.5:1 between text and background, plus a high-contrast and a dark mode.",
-    "Text can be enlarged up to 150%; line spacing, letter spacing and a readable font are available.",
-    "Read-aloud mode: the element under the pointer or in focus, and the whole page, are read with the browser voice.",
-    "For screen readers: semantic HTML, ARIA labels, a proper heading hierarchy and alternative text for images.",
-    "Animations can be stopped; the operating system \"reduce motion\" setting is respected automatically.",
-    "All information is textual – there is no audio or video content; support is available in writing.",
-    "The site is offered in 4 languages (Azerbaijani, German, English, Russian) and the page language attribute is set correctly."
-   ],
-   "limitsTitle": "Known limitations",
-   "limits": [
-    "Most browsers have no speech-synthesis voice for Azerbaijani; read-aloud falls back to a Turkish or English voice.",
-    "Some third-party documents (PDF) may not be fully accessible – on request we send a text version."
-   ],
-   "contactTitle": "Found a problem?",
-   "contactText": "If you have difficulty using any part of the site, write to us – we will respond as soon as possible and provide the information in a format that works for you.",
-   "contactCta": "Contact us",
-   "openWidget": "Open the accessibility panel"
   }
  },
  "svc": {
@@ -706,9 +697,9 @@
   "step": "Step",
   "process": [
    "In the first meeting we learn about your profession, experience, language level and goals. For companies we define the job profile together. At this stage we determine the right visa type.",
-   "A personal document checklist is created in your account. You upload documents online, we check each one and ask for corrections if needed. We also help with translation and certification.",
+   "A personal document checklist is created in your account. You upload documents online, we check each one and ask for corrections if needed. You have the apostille and sworn translations done yourself; we tell you which documents need them.",
    "We arrange a meeting with a matching employer. Once agreed, the contract is sent to your account and you sign it electronically on screen. Both sides get the signed PDF immediately.",
-   "The embassy document package is prepared, Federal Employment Agency approval is obtained and the embassy appointment is booked. We prepare you for the interview and notify you of every change until the decision.",
+   "Federal Employment Agency approval is obtained, and we prepare and give you the complete set of documents the embassy requires. You apply to the embassy yourself; the embassy itself gives you the appointment and the decision. We prepare you for the interview.",
    "Once the visa is approved we plan the flight, pick you up at the airport and settle you into your housing. We help with registration, a bank account and insurance.",
    "From your first working day you and your employer have a dedicated contact person. We stay in regular contact in the first months and solve questions quickly."
   ],
@@ -943,7 +934,7 @@
   "pages": {
    "home": "Home page",
    "about": "Company, mission and team",
-   "services": "Documents, translation, visa support",
+   "services": "Documents and visa support",
    "visas": "All German work visas",
    "partners": "Our partner companies in Germany",
    "stories": "Experiences of our clients",

@@ -117,7 +117,7 @@ const copy: SiteCopy<ExtraTranslations> = {
     pages: {
       home: 'Ana sayfa',
       about: 'Şirket, misyon ve ekip',
-      services: 'Belgeler, tercüme, vize desteği',
+      services: 'Belgeler ve vize desteği',
       visas: 'Tüm Almanya çalışma vizeleri',
       partners: 'Almanya’daki partner şirketlerimiz',
       stories: 'Müşterilerimizin deneyimleri',

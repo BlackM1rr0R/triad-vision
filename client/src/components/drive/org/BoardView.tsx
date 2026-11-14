@@ -24,7 +24,7 @@ interface Props {
 const fullName = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p.lastName}`.trim();
 
 /**
- * Workflow board ("Lövhə"): documents by stage — Gələn → Yoxlanılır → Tərcümədə → Apostildə → Hazır →
+ * Workflow board ("Lövhə"): documents by stage — Gələn → Yoxlanılır → Tərcümə gözlənilir → Apostil gözlənilir → Hazır →
  * Səfirliyə göndərildi. Cards move by drag & drop or with the stage menu on each card (keyboard).
  */
 export default function BoardView({ folderId, folderName, onOpen, onOpenFolder }: Props) {

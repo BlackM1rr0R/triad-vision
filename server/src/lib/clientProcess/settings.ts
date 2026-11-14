@@ -24,7 +24,7 @@ export const DEFAULT_ETA: Record<EtaStatus, Eta> = {
   DOCUMENTS_REVIEW: { minHours: 24, maxHours: TYPICAL_DAYS.DOCUMENTS_REVIEW * H },
   CONTRACT_SIGNED: { minHours: 24, maxHours: TYPICAL_DAYS.CONTRACT_SIGNED * H },
   EMBASSY_REVIEW: { minHours: 24, maxHours: TYPICAL_DAYS.EMBASSY_REVIEW * H },
-  // After the embassy appointment: the team lodges the application.
+  // After the embassy appointment (given by the embassy; the client applies there in person): the team records that the application was lodged.
   APPOINTMENT_SCHEDULED: { minHours: 24, maxHours: 2 * H },
   // "usually 4–8 weeks" (TYPICAL_DAYS.DECISION_PENDING = 56 days)
   DECISION_PENDING: { minHours: 4 * 7 * H, maxHours: TYPICAL_DAYS.DECISION_PENDING * H },

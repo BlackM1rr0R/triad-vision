@@ -35,6 +35,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'jobs',
   'job',
   'job-landing', // /jobs/in/:city/:profession (GET /vacancies/landing/…)
+  'germany-jobs-config', // /jobs/germany: whether the Adzuna search is on (the results themselves are never server-rendered)
   'guides',
   'guide',
   'public-packages',

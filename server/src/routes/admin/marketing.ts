@@ -269,7 +269,7 @@ adminMarketingRouter.get('/cost-calculator', async (_req, res) => {
     settings,
     defaults: COST_DEFAULTS,
     categories: categories.map((c) => ({ id: c.id, slug: c.slug, title: c.title, visaLabel: c.visaLabel, configured: c.configured })),
-    /** Prices from the translation price list (used while translationPrice / apostillePrice are null). */
+    /** Default third-party estimates per document (used while translationPrice / apostillePrice are null). */
     listPrices: prices,
   });
 });

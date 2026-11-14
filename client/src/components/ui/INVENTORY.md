@@ -19,7 +19,6 @@ For the APIs, see `README.md`.
 | `ui/DetailModal` | 3 site pages | adapter (eyebrow and icon tile). **Backdrop blur removed.** |
 | `tasks/NewTaskDialog` | tasks | migrated to Modal (form) |
 | `tasks/CalendarView` day popup | tasks | migrated |
-| `translations/PricingDialog` | admin translations | migrated (form) |
 | `messagingPlus/PartyThread` dialog | messaging | migrated |
 | `drive/intel/CompareDialog` | drive | migrated (2xl, mobile full) |
 | `aiWriting/AiCvWizard` | portal CV | migrated. **Backdrop blur removed.** |

@@ -1,15 +1,14 @@
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { readSetting, writeSetting } from '../growth/settings.js';
-import { loadPricing } from '../translations/pricing.js';
 
 /**
  * Client cost calculator (/cost-calculator): an itemised, indicative budget for a visa category.
  *
  * Fees live in Setting `costCalculator` (Admin → Sayt alətləri → Xərclər): one set of defaults plus
- * optional per-category overrides (by VisaCategory slug). Translation and apostille prices per document
- * come from the translation price list (Setting `translationPricing`, lib/translations/pricing.ts) unless
- * the admin enters own prices here. All amounts are EUR; AZN / TRY / UAH are shown with admin-set rates.
+ * optional per-category overrides (by VisaCategory slug). Translation and apostille are NOT services of
+ * Triad Vision: the applicant has them done themselves (sworn translator / ASAN xidmət), so their per-document
+ * amounts are only neutral third-party estimates (admin-set here, else DOCUMENT_PRICE_ESTIMATES). All amounts are EUR; AZN / TRY / UAH are shown with admin-set rates.
  *
  * One-time costs and the refundable blocked account (Sperrkonto) are kept apart: the blocked account is
  * the applicant's own money, paid out monthly in Germany, not a cost.
@@ -50,7 +49,7 @@ export type Fees = z.infer<typeof feesSchema>;
 export const costCalculatorSchema = z
   .object({
     enabled: z.boolean().default(true),
-    /** null = take the price from the translation price list (TRANSLATION / APOSTILLE per page). */
+    /** Third-party estimate per document (the applicant pays the translator / apostille office); null = DOCUMENT_PRICE_ESTIMATES. */
     translationPrice: eur.nullable().default(null),
     apostillePrice: eur.nullable().default(null),
     /** Blocked account amount used for Chancenkarte / Ausbildung / study categories without an own value. */
@@ -105,16 +104,14 @@ export const feesFor = (cat: { slug: string; visaLabel: string }, s: CostSetting
   return { ...s.defaults, ...own, blockedAccount };
 };
 
-/** Per-document translation / apostille prices: own setting, else the translation price list (EUR only). */
-export const documentPrices = async (s: CostSettings) => {
-  if (s.translationPrice != null && s.apostillePrice != null) return { translation: s.translationPrice, apostille: s.apostillePrice };
-  const pricing = await loadPricing();
-  const fromList = pricing.currency === 'EUR';
-  return {
-    translation: s.translationPrice ?? (fromList ? pricing.perPage.TRANSLATION / 100 : 35),
-    apostille: s.apostillePrice ?? (fromList ? pricing.perPage.APOSTILLE / 100 : 45),
-  };
-};
+/** Default third-party estimates (EUR per document) for a sworn translation and an apostille the applicant orders themselves. */
+export const DOCUMENT_PRICE_ESTIMATES = { translation: 35, apostille: 45 } as const;
+
+/** Per-document translation / apostille estimates (third-party costs, not our prices): own setting, else the defaults. */
+export const documentPrices = async (s: CostSettings) => ({
+  translation: s.translationPrice ?? DOCUMENT_PRICE_ESTIMATES.translation,
+  apostille: s.apostillePrice ?? DOCUMENT_PRICE_ESTIMATES.apostille,
+});
 
 export const ITEM_KEYS = ['visaFee', 'translation', 'apostille', 'recognition', 'language', 'healthInsurance', 'flight', 'serviceFee', 'blockedAccount'] as const;
 export type ItemKey = (typeof ITEM_KEYS)[number];

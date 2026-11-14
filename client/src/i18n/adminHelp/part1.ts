@@ -99,7 +99,7 @@ const az: Bundle = {
     cases: {
       title: 'Müraciətlər',
       summary:
-        'Müştərilərin viza müraciətləri burada aparılır: sənədlərin yoxlanması, müqavilə, səfirlik görüşü və qərar. Siyahıdan müraciəti açıb hər addımı müraciət səhifəsində icra edin.',
+        'Müştərilərin viza müraciətləri burada aparılır: sənədlərin yoxlanması, müqavilə, səfirlik sənəd paketi, səfirliyin verdiyi görüş və qərar. Siyahıdan müraciəti açıb hər addımı müraciət səhifəsində icra edin.',
       who: 'Bütün əməkdaşlar bütün müraciətləri görür və işləyə bilər. Məsul əməkdaş müraciət səhifəsində və ya Kanban lövhəsində təyin edilir.',
       steps: [
         'Siyahıda axtarış sahəsinə nömrə, ad, e-poçt və ya peşə yazın və status düymələri ilə süzün. «Mənim müraciətlərim» yalnız sizə təyin olunanları, «3 gündən çox gözləyir» isə gecikənləri göstərir; «Sırala» ilə yenilənməyə, statusdakı günlərə və ya yaşa görə sıralayın.',
@@ -107,7 +107,7 @@ const az: Bundle = {
         '«İş axını» müraciətin mərhələsini göstərir: Sənədlər → Müqavilə → Səfirlik sənədləri → Görüş → Qərar. «Növbəti addım» blokunda indi nə etməli olduğunuz yazılıb və uyğun düymələr var.',
         'Müştəri sənədləri göndərəndə status «Sənədlər yoxlanılır» olur. «İlkin sənədlər» bölməsində hər faylı açın və «Qəbul et» və ya səbəb yazaraq «Rədd et» basın. Hamısı qaydasındadırsa, «Hamısını qəbul et» istifadə edin; lazım olsa «Tələb əlavə et» və ya «Müştəri adından yüklə».',
         'Bütün mütləq sənədlər qəbul olunanda «Müqaviləni göndər» ilə PDF yükləyin və ya «İmza tələbləri» blokundan «İmzaya göndər» ilə onlayn imzaya göndərin. Müştəri imzalayandan sonra imzalanmış faylı yoxlayıb «İmzanı təsdiqlə» və ya «İmzanı rədd et» basın. Bir şey çatışmırsa, «Düzəliş tələb et» ilə müştəriyə nəyi düzəltməli olduğunu yazın.',
-        'Səfirlik sənədləri yoxlanandan sonra «Görüş təyin et» ilə tarix, saat və yeri daxil edin. Müştəri sənədləri təqdim edəndə «Səfirliyə təqdim edildi», qərar gələndə isə «Qərarı qeyd et» basın (təsdiqdə vizanın tarixləri, imtinada səbəb). Viza skanını «Müştəri üçün fayllar» bölməsinə yükləyin.',
+        'Səfirlik sənədləri yoxlanandan sonra hazır sənəd paketini müştəriyə verin — müraciəti səfirliyə müştəri özü edir. Səfirlik görüş vaxtı verəndə «Səfirlik görüşünü qeyd et» ilə tarix, saat və yeri daxil edin. Müştəri sənədləri təqdim edəndə «Səfirliyə təqdim edildi», qərar gələndə isə «Qərarı qeyd et» basın (təsdiqdə vizanın tarixləri, imtinada səbəb). Viza skanını «Müştəri üçün fayllar» bölməsinə yükləyin.',
         '«Sənəd köməkçisi» pasport şəklini OCR ilə oxuyur və məlumatları «Profilə tətbiq et» ilə profilə köçürməyə imkan verir. Səfirlik mərhələsində «Səfirlik paketi (PDF)» bütün qəbul edilmiş sənədləri bir faylda toplayır, «Formalar» isə avtomatik doldurulmuş PDF-lər hazırlayır.',
         'Sağ sütunda müştəri ilə yazışın («Müştəri ilə yazışma»), komanda üçün «Daxili qeydlər» yazın və «Tarixçə»yə baxın. «Ailə» blokunda «Ailə üzvü əlavə et» ilə ailə birləşməsi üçün ayrıca müraciət yaradın; müraciətə bağlı tapşırıqlar da bu sütundadır.',
       ],
@@ -206,26 +206,19 @@ const az: Bundle = {
       ],
     },
     translations: {
-      title: 'Tərcümə sifarişləri',
+      title: 'Tərcümə sifarişləri (arxiv)',
       summary:
-        'Müştərilərin tərcümə, apostil və notarial təsdiq sifarişləri burada işlənir: qiymət təklifi, icra, hazır faylların yüklənməsi və təhvil.',
-      who: 'Bütün əməkdaşlar sifarişləri işləyə bilər. «Qiymətlər» düyməsi (qiymət cədvəli) yalnız Administrator və Super admin üçündür.',
+        'Triad Vision tərcümə, apostil və notarial təsdiq xidməti göstərmir. Bu səhifə yalnız əvvəllər daxil olmuş sifarişlərin arxividir; müştərilər yeni sifariş verə bilmir.',
+      who: 'Bütün əməkdaşlar arxivə baxa və açıq qalmış köhnə sifarişləri bağlaya bilər.',
       steps: [
-        'Yuxarıdakı kartlarda «Açıq», «Qiymət gözləyir», «Gecikir» və «Hazırdır» sifarişlərin sayına baxın. Siyahını axtarış, status, xidmət, icraçı («Mənim», «Təyin edilməyib») və «Yalnız gecikənlər» filtrləri ilə süzün.',
-        'Yeni sifariş «Göndərildi» statusunda gəlir. Sifarişi açın, «Mənbə faylları»na baxın və «İdarəetmə» blokunda özünüzü və ya həmkarınızı icraçı seçin.',
-        '«Qiymət təklifi» blokunda qiyməti, hazır olma tarixini və müştəri üçün qeydi yazıb «Qiyməti göndər» basın. Status «Qiymət hazırdır» olur və müştəri bildiriş alır; qiymət cədvəli üzrə təxmini məbləğ ipucu kimi göstərilir.',
-        'Müştəri qiyməti qəbul edəndə status «Qəbul edildi» olur. Bundan sonra «İşə başla» basın — status «İcra olunur» olur.',
-        'Tərcümə hazır olanda «Hazır faylı yüklə» ilə faylları əlavə edin, sonra «Hazırdır» basın. Elektron təhvildə hazır fayl olmadan bu addım mümkün deyil.',
-        'Sənəd müştəriyə çatanda «Təhvil verildi» basın; poçtla göndərilibsə, «İzləmə nömrəsi»ni də yazın.',
-        'Sifarişi ləğv etmək üçün «Ləğv et» basın və səbəbi mütləq yazın. Komanda üçün qeydləri «Daxili qeyd» sahəsində saxlayın.',
-        'Administrator «Qiymətlər» düyməsi ilə səhifə başına qiyməti, təcililik əlavəsini, dilləri və sənəd növlərini dəyişə bilər.',
+        'Yuxarıdakı kartlarda açıq qalmış köhnə sifarişlərin sayına baxın. Siyahını axtarış, status, xidmət və icraçı filtrləri ilə süzün.',
+        'Hələ işə başlanmamış köhnə sifarişi («Göndərildi» və ya «Qiymət hazırdır») «Ləğv et» ilə bağlayın və səbəbi yazın, məsələn: «Bu xidməti artıq göstərmirik — apostil və tərcüməni özünüz etdirirsiniz».',
+        'Artıq icra olunan köhnə sifarişi sona çatdırmaq üçün hazır faylları əlavə edib «Hazırdır», sonra «Təhvil verildi» basın.',
+        'Komanda üçün qeydləri «Daxili qeyd» sahəsində saxlayın.',
       ],
       tips: [
-        'Müştəri «Qiymət hazırdır», «Hazırdır», «Təhvil verildi» və «Ləğv edildi» mərhələlərində avtomatik bildiriş alır.',
-        'Müştəri qəbul edənə qədər qiyməti «Qiyməti yenilə» ilə dəyişə bilərsiniz; qəbuldan sonra qiymət dəyişdirilmir.',
-        '«İşə başla» addımında qeydi müştəridən gizlətmək olar; digər mərhələlərin qeydləri həmişə müştəriyə görünür.',
+        'Müştərilərə apostil və tərcüməni özlərinin etdirdiyini bildirin (məs., ASAN xidmətdə və and içmiş tərcüməçidə); yeni sifariş qəbul etməyin.',
         'Təhvil verilmiş və ya ləğv edilmiş sifariş bağlanır — bundan sonra fayl əlavə etmək və silmək mümkün olmur.',
-        'Sifariş müraciətə bağlıdırsa, «Müraciəti aç» ilə müraciət səhifəsinə keçin.',
       ],
     },
     inquiries: {
@@ -430,7 +423,7 @@ const de: Bundle = {
     cases: {
       title: 'Anträge',
       summary:
-        'Hier werden die Visumanträge der Kunden bearbeitet: Dokumentprüfung, Vertrag, Botschaftstermin und Entscheidung. Öffnen Sie einen Antrag aus der Liste und erledigen Sie jeden Schritt auf der Antragsseite.',
+        'Hier werden die Visumanträge der Kunden bearbeitet: Dokumentprüfung, Vertrag, Unterlagenmappe für die Botschaft, der von der Botschaft vergebene Termin und die Entscheidung. Öffnen Sie einen Antrag aus der Liste und erledigen Sie jeden Schritt auf der Antragsseite.',
       who: 'Alle Mitarbeitenden sehen alle Anträge und können sie bearbeiten. Der zuständige Mitarbeiter wird auf der Antragsseite oder im Kanban-Board festgelegt.',
       steps: [
         'Geben Sie in der Liste Nummer, Name, E-Mail oder Beruf ins Suchfeld ein und filtern Sie mit den Status-Schaltflächen. „Meine Anträge“ zeigt nur Ihre zugewiesenen Anträge, „Wartet länger als 3 Tage“ die verzögerten; mit „Sortieren“ ordnen Sie nach Aktualisierung, Tagen im Status oder Alter.',
@@ -438,7 +431,7 @@ const de: Bundle = {
         '„Ablauf“ zeigt den Schritt des Antrags: Dokumente → Vertrag → Botschaftsunterlagen → Termin → Entscheidung. Im Block „Nächster Schritt“ steht, was jetzt zu tun ist, mit den passenden Schaltflächen.',
         'Sendet der Kunde seine Dokumente, wechselt der Status zu „Dokumente in Prüfung“. Öffnen Sie im Bereich „Erstunterlagen“ jede Datei und klicken Sie auf „Akzeptieren“ oder mit Begründung auf „Ablehnen“. Ist alles in Ordnung, nutzen Sie „Alle akzeptieren“; bei Bedarf „Anforderung hinzufügen“ oder „Im Namen des Kunden hochladen“.',
         'Sind alle Pflichtdokumente akzeptiert, laden Sie mit „Vertrag senden“ ein PDF hoch oder senden es im Block „Signaturanfragen“ mit „Zur Unterschrift senden“ zur Online-Unterschrift. Nach der Unterschrift des Kunden prüfen Sie die unterschriebene Datei und klicken auf „Unterschrift bestätigen“ oder „Unterschrift ablehnen“. Fehlt etwas, schreiben Sie dem Kunden mit „Korrektur anfordern“, was er korrigieren soll.',
-        'Nach Prüfung der Botschaftsunterlagen erfassen Sie mit „Termin vereinbaren“ Datum, Uhrzeit und Ort. Hat der Kunde die Unterlagen eingereicht, klicken Sie auf „Bei der Botschaft eingereicht“, und wenn die Entscheidung vorliegt, auf „Entscheidung erfassen“ (bei Genehmigung die Visumsdaten, bei Ablehnung den Grund). Laden Sie den Visum-Scan im Bereich „Dateien für den Kunden“ hoch.',
+        'Nach Prüfung der Botschaftsunterlagen übergeben Sie dem Kunden die fertige Unterlagenmappe – den Antrag stellt der Kunde selbst bei der Botschaft. Sobald die Botschaft einen Termin vergeben hat, erfassen Sie mit „Botschaftstermin eintragen“ Datum, Uhrzeit und Ort. Hat der Kunde die Unterlagen eingereicht, klicken Sie auf „Bei der Botschaft eingereicht“, und wenn die Entscheidung vorliegt, auf „Entscheidung erfassen“ (bei Genehmigung die Visumsdaten, bei Ablehnung den Grund). Laden Sie den Visum-Scan im Bereich „Dateien für den Kunden“ hoch.',
         'Der „Dokument-Assistent“ liest das Passfoto per OCR aus und übernimmt die Daten mit „Ins Profil übernehmen“ ins Profil. Im Botschaftsschritt fasst die „Botschaftsmappe (PDF)“ alle akzeptierten Dokumente in einer Datei zusammen, „Formulare“ erstellt automatisch ausgefüllte PDFs.',
         'In der rechten Spalte kommunizieren Sie mit dem Kunden („Kommunikation mit dem Kunden“), schreiben „Interne Notizen“ für das Team und sehen den „Verlauf“. Im Block „Familie“ legen Sie mit „Familienmitglied hinzufügen“ einen eigenen Antrag für den Familiennachzug an; mit dem Antrag verknüpfte Aufgaben stehen ebenfalls in dieser Spalte.',
       ],
@@ -537,26 +530,19 @@ const de: Bundle = {
       ],
     },
     translations: {
-      title: 'Übersetzungen',
+      title: 'Übersetzungsaufträge (Archiv)',
       summary:
-        'Hier werden Kundenaufträge für Übersetzung, Apostille und Beglaubigung bearbeitet: Angebot, Bearbeitung, Hochladen der fertigen Dateien und Zustellung.',
-      who: 'Alle Mitarbeitenden können Aufträge bearbeiten. Die Schaltfläche „Preise“ (Preisliste) steht nur Administratoren und Super-Admins zur Verfügung.',
+        'Triad Vision bietet keine Übersetzungen, Apostillen oder Beglaubigungen an. Diese Seite ist nur das Archiv früher eingegangener Aufträge; Kunden können keine neuen Aufträge mehr stellen.',
+      who: 'Alle Mitarbeitenden können das Archiv einsehen und noch offene alte Aufträge abschließen.',
       steps: [
-        'Sehen Sie in den Kacheln oben die Zahl der Aufträge „Offen“, „Angebot fehlt“, „Überfällig“ und „Fertig“. Filtern Sie die Liste nach Suche, Status, Leistung, Bearbeiter („Meine“, „Nicht zugewiesen“) und „Nur überfällige“.',
-        'Ein neuer Auftrag kommt im Status „Eingereicht“ an. Öffnen Sie ihn, prüfen Sie die „Quelldateien“ und wählen Sie im Block „Verwaltung“ sich selbst oder eine Kollegin bzw. einen Kollegen als Bearbeiter.',
-        'Tragen Sie im Block „Angebot“ Preis, Fertigstellungsdatum und Hinweis für den Kunden ein und klicken Sie auf „Angebot senden“. Der Status wird „Angebot liegt vor“ und der Kunde wird benachrichtigt; der Betrag laut Preisliste wird als Hilfe angezeigt.',
-        'Nimmt der Kunde das Angebot an, wird der Status „Angenommen“. Klicken Sie dann auf „Bearbeitung starten“ – der Status wird „In Bearbeitung“.',
-        'Ist die Übersetzung fertig, fügen Sie die Dateien mit „Fertige Datei hochladen“ hinzu und klicken auf „Als fertig markieren“. Bei digitaler Zustellung ist dieser Schritt ohne fertige Datei nicht möglich.',
-        'Hat der Kunde die Unterlagen erhalten, klicken Sie auf „Als zugestellt markieren“; bei Postversand tragen Sie auch die „Sendungsnummer“ ein.',
-        'Um einen Auftrag zu stornieren, klicken Sie auf „Stornieren“ und geben unbedingt einen Grund an. Notizen für das Team halten Sie im Feld „Interne Notiz“ fest.',
-        'Ein Administrator kann über „Preise“ den Preis pro Seite, den Expresszuschlag, die Sprachen und die Dokumentarten ändern.',
+        'Sehen Sie in den Kacheln oben, wie viele alte Aufträge noch offen sind. Filtern Sie die Liste nach Suche, Status, Leistung und Bearbeiter.',
+        'Einen alten Auftrag, an dem noch nicht gearbeitet wird („Eingereicht“ oder „Angebot liegt vor“), schließen Sie mit „Stornieren“ und einem Grund, z. B.: „Diese Leistung bieten wir nicht mehr an – Apostille und Übersetzung lassen Sie selbst anfertigen.“',
+        'Einen alten Auftrag, der bereits in Bearbeitung ist, schließen Sie ab, indem Sie die fertigen Dateien hochladen, „Als fertig markieren“ und danach „Als zugestellt markieren“ klicken.',
+        'Notizen für das Team halten Sie im Feld „Interne Notiz“ fest.',
       ],
       tips: [
-        'Der Kunde wird bei „Angebot liegt vor“, „Fertig“, „Zugestellt“ und „Storniert“ automatisch benachrichtigt.',
-        'Bis der Kunde annimmt, können Sie den Preis mit „Angebot aktualisieren“ ändern; nach der Annahme wird der Preis nicht mehr geändert.',
-        'Beim Schritt „Bearbeitung starten“ kann der Hinweis vor dem Kunden verborgen werden; Hinweise anderer Schritte sind für den Kunden immer sichtbar.',
-        'Zugestellte oder stornierte Aufträge sind abgeschlossen – danach können keine Dateien mehr hinzugefügt oder gelöscht werden.',
-        'Ist der Auftrag mit einem Antrag verknüpft, gelangen Sie mit „Antrag öffnen“ zur Antragsseite.',
+        'Sagen Sie Kunden, dass sie Apostille und beglaubigte Übersetzungen selbst anfertigen lassen; nehmen Sie keine neuen Aufträge an.',
+        'Ein zugestellter oder stornierter Auftrag ist abgeschlossen – danach können keine Dateien mehr hinzugefügt oder gelöscht werden.',
       ],
     },
     inquiries: {
@@ -761,7 +747,7 @@ const en: Bundle = {
     cases: {
       title: 'Cases',
       summary:
-        'Clients’ visa cases are handled here: document review, contract, embassy appointment and decision. Open a case from the list and complete each step on the case page.',
+        'Clients’ visa cases are handled here: document review, contract, the embassy document set, the appointment the embassy gives and the decision. Open a case from the list and complete each step on the case page.',
       who: 'All staff see and can work on all cases. The assigned staff member is set on the case page or on the Kanban board.',
       steps: [
         'In the list, type a number, name, email or profession in the search field and filter with the status buttons. “My cases” shows only cases assigned to you, “Waiting more than 3 days” the delayed ones; “Sort” orders by last update, days in status or age.',
@@ -769,7 +755,7 @@ const en: Bundle = {
         '“Workflow” shows the case’s stage: Documents → Contract → Embassy documents → Appointment → Decision. The “Next step” block says what to do now and has the matching buttons.',
         'When the client submits documents, the status becomes “Documents under review”. In the “Initial documents” section open each file and click “Accept”, or “Reject” with a reason. If everything is fine, use “Accept all”; if needed, “Add requirement” or “Upload on behalf of the client”.',
         'Once all required documents are accepted, upload a PDF with “Send contract”, or send it for online signature with “Send for signature” in the “Signature requests” block. After the client signs, check the signed file and click “Confirm signature” or “Reject signature”. If something is missing, use “Request changes” to tell the client what to fix.',
-        'After the embassy documents are reviewed, enter date, time and place with “Schedule appointment”. When the client has lodged the documents click “Lodged at the embassy”, and when the decision arrives click “Record decision” (visa dates if approved, the reason if rejected). Upload the visa scan in “Files for the client”.',
+        'After the embassy documents are reviewed, hand the client the finished document set – the client applies to the embassy themselves. Once the embassy has given an appointment, enter date, time and place with “Record embassy appointment”. When the client has lodged the documents click “Lodged at the embassy”, and when the decision arrives click “Record decision” (visa dates if approved, the reason if rejected). Upload the visa scan in “Files for the client”.',
         'The “Document assistant” reads the passport photo with OCR and copies the data to the profile with “Apply to profile”. At the embassy step the “Embassy packet (PDF)” puts all accepted documents into one file, and “Forms” produces pre-filled PDFs.',
         'In the right column you talk to the client (“Conversation with the client”), write “Internal notes” for the team and see the “History”. In the “Family” block use “Add family member” to create a separate case for family reunification; tasks linked to the case are in this column too.',
       ],
@@ -868,26 +854,19 @@ const en: Bundle = {
       ],
     },
     translations: {
-      title: 'Translations',
+      title: 'Translation orders (archive)',
       summary:
-        'Clients’ orders for translation, apostille and notarisation are handled here: quote, work, uploading the finished files and delivery.',
-      who: 'All staff can work on orders. The “Prices” button (price list) is for Administrators and the Super admin only.',
+        'Triad Vision does not offer translation, apostille or notarisation services. This page is only the archive of orders received earlier; clients can no longer place new orders.',
+      who: 'All staff can view the archive and close old orders that are still open.',
       steps: [
-        'Check the tiles at the top for the number of orders that are “Open”, “Awaiting quote”, “Overdue” and “Ready”. Filter the list by search, status, service, assignee (“Mine”, “Unassigned”) and “Overdue only”.',
-        'A new order arrives as “Submitted”. Open it, look at the “Source files” and choose yourself or a colleague as assignee in the “Management” block.',
-        'In the “Quote” block enter the price, the ready date and a note for the client, then click “Send quote”. The status becomes “Quote ready” and the client is notified; the amount from the price list is shown as a hint.',
-        'When the client accepts the quote, the status becomes “Accepted”. Then click “Start work” – the status becomes “In progress”.',
-        'When the translation is done, add the files with “Upload finished file” and click “Mark ready”. For digital delivery this step is not possible without a finished file.',
-        'When the client has received the documents, click “Mark delivered”; if sent by post, also enter the “Tracking number”.',
-        'To cancel an order click “Cancel” and always give a reason. Keep notes for the team in the “Internal note” field.',
-        'An administrator can change the price per page, express surcharge, languages and document types with the “Prices” button.',
+        'Check the tiles at the top for the number of old orders still open. Filter the list by search, status, service and assignee.',
+        'Close an old order that has not been started (“Submitted” or “Quote ready”) with “Cancel” and give a reason, e.g. “We no longer offer this service – you have the apostille and translation done yourself.”',
+        'To finish an old order that is already in progress, upload the finished files, click “Mark ready” and then “Mark delivered”.',
+        'Keep notes for the team in the “Internal note” field.',
       ],
       tips: [
-        'The client is notified automatically at “Quote ready”, “Ready”, “Delivered” and “Cancelled”.',
-        'Until the client accepts, you can change the price with “Update quote”; after acceptance the price is not changed.',
-        'At the “Start work” step the note can be hidden from the client; notes on the other steps are always visible to the client.',
-        'Delivered or cancelled orders are closed – files can no longer be added or deleted.',
-        'If the order is linked to a case, use “Open application” to go to the case page.',
+        'Tell clients that they have the apostille and sworn translations done themselves; do not take new orders.',
+        'A delivered or cancelled order is closed – files can no longer be added or deleted.',
       ],
     },
     inquiries: {
@@ -1092,7 +1071,7 @@ const ru: Bundle = {
     cases: {
       title: 'Заявки',
       summary:
-        'Здесь ведутся визовые заявки клиентов: проверка документов, договор, запись в посольство и решение. Откройте заявку из списка и выполняйте каждый шаг на странице заявки.',
+        'Здесь ведутся визовые заявки клиентов: проверка документов, договор, пакет документов для посольства, назначенный посольством приём и решение. Откройте заявку из списка и выполняйте каждый шаг на странице заявки.',
       who: 'Все сотрудники видят все заявки и могут с ними работать. Ответственный сотрудник назначается на странице заявки или на канбан-доске.',
       steps: [
         'В списке введите номер, имя, e-mail или профессию в поле поиска и фильтруйте кнопками статусов. «Мои заявки» показывает только назначенные вам, «Ждут более 3 дней» — задержанные; «Сортировка» упорядочивает по обновлению, дням в статусе или возрасту.',
@@ -1100,7 +1079,7 @@ const ru: Bundle = {
         '«Ход работы» показывает этап заявки: Документы → Договор → Документы для посольства → Запись → Решение. В блоке «Следующий шаг» написано, что делать сейчас, и есть нужные кнопки.',
         'Когда клиент отправляет документы, статус становится «Документы на проверке». В разделе «Первичные документы» откройте каждый файл и нажмите «Принять» или, указав причину, «Отклонить». Если всё в порядке, используйте «Принять все»; при необходимости — «Добавить требование» или «Загрузить от имени клиента».',
         'Когда все обязательные документы приняты, загрузите PDF кнопкой «Отправить договор» или отправьте его на онлайн-подпись кнопкой «Отправить на подпись» в блоке «Запросы на подпись». После подписи клиента проверьте подписанный файл и нажмите «Подтвердить подпись» или «Отклонить подпись». Если чего-то не хватает, кнопкой «Запросить исправления» напишите клиенту, что нужно исправить.',
-        'После проверки документов для посольства укажите дату, время и место кнопкой «Назначить запись». Когда клиент подал документы, нажмите «Подано в посольство», а когда придёт решение — «Зафиксировать решение» (при одобрении — даты визы, при отказе — причина). Загрузите скан визы в раздел «Файлы для клиента».',
+        'После проверки документов для посольства передайте клиенту готовый пакет документов — заявление в посольство клиент подаёт сам. Когда посольство назначит дату приёма, укажите дату, время и место кнопкой «Указать дату приёма». Когда клиент подал документы, нажмите «Подано в посольство», а когда придёт решение — «Зафиксировать решение» (при одобрении — даты визы, при отказе — причина). Загрузите скан визы в раздел «Файлы для клиента».',
         '«Помощник по документам» читает фото паспорта с помощью OCR и переносит данные в профиль кнопкой «Применить к профилю». На этапе посольства «Пакет для посольства (PDF)» собирает все принятые документы в один файл, а «Формы» создают автоматически заполненные PDF.',
         'В правой колонке переписывайтесь с клиентом («Переписка с клиентом»), пишите «Внутренние заметки» для команды и смотрите «Историю». В блоке «Семья» кнопкой «Добавить члена семьи» создайте отдельную заявку для воссоединения семьи; задачи, связанные с заявкой, тоже находятся в этой колонке.',
       ],
@@ -1199,26 +1178,19 @@ const ru: Bundle = {
       ],
     },
     translations: {
-      title: 'Переводы',
+      title: 'Заказы переводов (архив)',
       summary:
-        'Здесь обрабатываются заказы клиентов на перевод, апостиль и нотариальное заверение: предложение цены, выполнение, загрузка готовых файлов и выдача.',
-      who: 'Все сотрудники могут работать с заказами. Кнопка «Цены» (прайс-лист) доступна только Администраторам и Суперадмину.',
+        'Triad Vision не оказывает услуги перевода, апостиля и нотариального заверения. Эта страница — только архив ранее поступивших заказов; новые заказы клиенты оформить не могут.',
+      who: 'Все сотрудники могут просматривать архив и закрывать оставшиеся открытыми старые заказы.',
       steps: [
-        'В карточках вверху посмотрите количество заказов «Открытые», «Ждут цену», «Просрочены» и «Готовы». Фильтруйте список по поиску, статусу, услуге, исполнителю («Мои», «Не назначены») и «Только просроченные».',
-        'Новый заказ приходит в статусе «Отправлен». Откройте его, посмотрите «Исходные файлы» и в блоке «Управление» выберите исполнителем себя или коллегу.',
-        'В блоке «Предложение» укажите цену, дату готовности и примечание для клиента и нажмите «Отправить цену». Статус станет «Цена готова», клиент получит уведомление; сумма по прайс-листу показывается как подсказка.',
-        'Когда клиент принимает цену, статус становится «Принят». После этого нажмите «Начать работу» — статус станет «В работе».',
-        'Когда перевод готов, добавьте файлы кнопкой «Загрузить готовый файл» и нажмите «Отметить готовым». При электронной выдаче этот шаг невозможен без готового файла.',
-        'Когда клиент получил документы, нажмите «Отметить доставленным»; при отправке почтой укажите и «Трек-номер».',
-        'Чтобы отменить заказ, нажмите «Отменить» и обязательно укажите причину. Заметки для команды храните в поле «Внутренняя заметка».',
-        'Администратор кнопкой «Цены» может изменить цену за страницу, надбавку за срочность, языки и типы документов.',
+        'В карточках вверху посмотрите, сколько старых заказов ещё открыто. Фильтруйте список по поиску, статусу, услуге и исполнителю.',
+        'Старый заказ, работа по которому не начата («Отправлен» или «Цена готова»), закройте кнопкой «Отменить» с причиной, например: «Мы больше не оказываем эту услугу — апостиль и перевод вы оформляете самостоятельно».',
+        'Чтобы завершить старый заказ, который уже в работе, загрузите готовые файлы, нажмите «Отметить готовым», затем «Отметить доставленным».',
+        'Заметки для команды храните в поле «Внутренняя заметка».',
       ],
       tips: [
-        'Клиент автоматически получает уведомления на этапах «Цена готова», «Готов», «Доставлен» и «Отменён».',
-        'Пока клиент не принял цену, её можно изменить кнопкой «Обновить цену»; после принятия цена не меняется.',
-        'На шаге «Начать работу» примечание можно скрыть от клиента; примечания других этапов клиент видит всегда.',
-        'Доставленный или отменённый заказ закрывается — после этого добавлять и удалять файлы нельзя.',
-        'Если заказ связан с заявкой, перейдите на её страницу кнопкой «Открыть заявку».',
+        'Сообщайте клиентам, что апостиль и заверенный перевод они оформляют самостоятельно; новые заказы не принимайте.',
+        'Доставленный или отменённый заказ закрыт — после этого файлы нельзя добавлять или удалять.',
       ],
     },
     inquiries: {

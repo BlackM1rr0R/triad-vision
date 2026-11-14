@@ -18,7 +18,7 @@ const az = {
     trigger: { DATE: 'Tarixdə', ON_SIGN: 'Müqavilə imzalananda', CASE_STATUS: 'Status: {{status}}' },
     caseStatus: CASE_AZ,
     admin: {
-      subtitle: 'Fərdi müştərilərə hesab-fakturalar (xidmət haqqı, tərcümə, apostil, səfirlik rüsumu), ödənişlər və xatırlatmalar.',
+      subtitle: 'Fərdi müştərilərə hesab-fakturalar (xidmət haqqı, səfirlik rüsumu və s.), ödənişlər və xatırlatmalar.',
       tabs: { list: 'Hesab-fakturalar', settings: 'Ayarlar' },
       tiles: { open: 'Açıq', overdue: 'Gecikən', paid: 'Ödənilib', drafts: 'Qaralamalar' },
       countHint: '{{count}} hesab',
@@ -196,7 +196,7 @@ const de: typeof az = {
     trigger: { DATE: 'Zum Datum', ON_SIGN: 'Bei Vertragsunterzeichnung', CASE_STATUS: 'Status: {{status}}' },
     caseStatus: CASE_DE,
     admin: {
-      subtitle: 'Rechnungen an Privatkunden (Servicegebühr, Übersetzung, Apostille, Botschaftsgebühren), Zahlungen und Mahnungen.',
+      subtitle: 'Rechnungen an Privatkunden (Servicegebühr, Botschaftsgebühren u. a.), Zahlungen und Mahnungen.',
       tabs: { list: 'Rechnungen', settings: 'Einstellungen' },
       tiles: { open: 'Offen', overdue: 'Überfällig', paid: 'Bezahlt', drafts: 'Entwürfe' },
       countHint: '{{count}} Rechnung(en)',
@@ -374,7 +374,7 @@ const en: typeof az = {
     trigger: { DATE: 'On a date', ON_SIGN: 'On signing the contract', CASE_STATUS: 'Status: {{status}}' },
     caseStatus: CASE_EN,
     admin: {
-      subtitle: 'Invoices to private clients (service fee, translations, apostille, embassy fees), payments and reminders.',
+      subtitle: 'Invoices to private clients (service fee, embassy fees etc.), payments and reminders.',
       tabs: { list: 'Invoices', settings: 'Settings' },
       tiles: { open: 'Open', overdue: 'Overdue', paid: 'Paid', drafts: 'Drafts' },
       countHint: '{{count}} invoice(s)',
@@ -552,7 +552,7 @@ const ru: typeof az = {
     trigger: { DATE: 'В дату', ON_SIGN: 'При подписании договора', CASE_STATUS: 'Статус: {{status}}' },
     caseStatus: CASE_RU,
     admin: {
-      subtitle: 'Счета частным клиентам (сервисный сбор, переводы, апостиль, консульские сборы), платежи и напоминания.',
+      subtitle: 'Счета частным клиентам (сервисный сбор, консульские сборы и др.), платежи и напоминания.',
       tabs: { list: 'Счета', settings: 'Настройки' },
       tiles: { open: 'Открыто', overdue: 'Просрочено', paid: 'Оплачено', drafts: 'Черновики' },
       countHint: 'счетов: {{count}}',

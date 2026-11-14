@@ -108,7 +108,7 @@ describe('next step: rules on real cases and their actions', () => {
   it('a task action creates a task linked to the case through /api/tasks', async () => {
     const { client, admin } = await setupClient();
     const c = await driveCaseTo('EMBASSY_REVIEW', { client: client.agent, admin: admin.agent });
-    // review every embassy document → "book the appointment" with a task action
+    // review every embassy document → "hand over the embassy set / record the appointment" with a task action
     const detail = expectStatus(await admin.agent.get(`/api/admin/cases/${c.id}`), 200).body.case;
     for (const r of detail.requirements) for (const d of r.documents) if (d.status === 'PENDING') expectStatus(await admin.agent.post(`/api/admin/cases/${c.id}/documents/${d.id}/review`).send({ status: 'ACCEPTED' }), 200);
     const s = (await nextStep(admin.agent, c.id)).steps.find((x) => x.code === 'BOOK_APPOINTMENT')!;

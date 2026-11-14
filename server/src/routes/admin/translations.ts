@@ -17,6 +17,7 @@ import {
   orderKey,
   parseOrderKey,
   recordChange,
+  sendOrderFile,
   staffView,
   translationUpload,
   uploadedFiles,
@@ -25,7 +26,11 @@ import {
 import { SERVICES } from '../../lib/translations/pricing.js';
 import { decodeOriginalName } from '../../middleware/upload.js';
 
-/** Staff side of translation & apostille orders (/api/admin/translations; the admin router requires STAFF). */
+/**
+ * ARCHIVE of the former translation & apostille orders (/api/admin/translations; the admin router requires STAFF).
+ * Triad Vision no longer offers these services and clients cannot order any more; staff can only view, cancel or
+ * finish orders received earlier. (The client API /api/translations was removed.)
+ */
 export const adminTranslationsRouter = Router();
 
 const STATUSES = ['NEW', 'QUOTED', 'ACCEPTED', 'IN_PROGRESS', 'READY', 'DELIVERED', 'CANCELLED'] as const;
@@ -133,6 +138,13 @@ adminTranslationsRouter.get('/', async (req, res) => {
   });
 });
 
+/** GET /api/admin/translations/files/:fileId → any order file (source or result) for staff. */
+adminTranslationsRouter.get('/files/:fileId', async (req, res) => {
+  const file = await prisma.translationOrderFile.findUnique({ where: { id: String(req.params.fileId) } });
+  if (!file) throw notFound('FILE_NOT_FOUND');
+  await sendOrderFile(req, res, file);
+});
+
 /** GET /api/admin/translations/:id → full order incl. internal notes and events. */
 adminTranslationsRouter.get('/:id', async (req, res) => {
   res.json({ order: staffView(await getOrder(req)) });
@@ -180,30 +192,6 @@ adminTranslationsRouter.patch('/:id', async (req, res) => {
   if (changed.includes('assignee') && updated.assignedStaffId && updated.assignedStaffId !== req.user!.id) {
     await notifyOrderStaff(updated, 'ASSIGNED', { recipients: [updated.assignedStaffId] }).catch(() => undefined);
   }
-  res.json(await respond(order.id));
-});
-
-/** POST /api/admin/translations/:id/quote { priceCents, dueAt, quoteNote } → NEW/QUOTED → QUOTED, client notified. */
-adminTranslationsRouter.post('/:id/quote', async (req, res) => {
-  const body = parse(
-    z.object({
-      priceCents: z.coerce.number().int().min(0).max(100_000_000),
-      dueAt: z.coerce.date(),
-      quoteNote: z.string().trim().max(2000).nullable().optional(),
-      currency: z.string().trim().regex(/^[A-Za-z]{3}$/).transform((s) => s.toUpperCase()).optional(),
-    }),
-    req.body,
-  );
-  const order = await getOrder(req);
-  if (body.dueAt.getTime() < Date.now() - 24 * 3600_000) throw badRequest('DUE_IN_PAST');
-  const { count } = await prisma.translationOrder.updateMany({
-    where: { id: order.id, status: { in: ['NEW', 'QUOTED'] } },
-    data: { status: 'QUOTED', priceCents: body.priceCents, dueAt: body.dueAt, quoteNote: body.quoteNote || null, ...(body.currency ? { currency: body.currency } : {}) },
-  });
-  if (!count) throw conflict('INVALID_TRANSITION');
-  const updated = await prisma.translationOrder.findUniqueOrThrow({ where: { id: order.id } });
-  await recordChange(req, order, 'TRANSLATION_QUOTED', { status: 'QUOTED', note: body.quoteNote || null }, { priceCents: body.priceCents, dueAt: body.dueAt.toISOString() });
-  await notifyOrderClient(updated, 'QUOTED', body.quoteNote).catch((e) => console.error('[translations] notify failed', e));
   res.json(await respond(order.id));
 });
 

@@ -1,7 +1,8 @@
 import type { CaseStatus } from '@prisma/client';
 
 /**
- * Client billing (private clients: service fee, translations, apostille, embassy fees …) — the pure part:
+ * Client billing (private clients: service fee, embassy fees …; TRANSLATION / APOSTILLE lines exist only on old
+ * invoices — Triad Vision no longer offers them) — the pure part:
  * line categories, VAT, totals, invoice status rules, instalment splitting and trigger matching. Unit tested
  * (tests/unit/clientBillingMath.test.ts); everything with the database lives in service.ts / plans.ts.
  *

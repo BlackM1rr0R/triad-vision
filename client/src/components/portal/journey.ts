@@ -4,7 +4,7 @@
  *   documents → (recognition) → contract → embassy → decision → travel → arrival
  * (recognition only for cases with a recognition procedure — the step does not apply to the others)
  * each done / current / upcoming (or skipped after a refusal / cancellation) with the date to show:
- * the real date of done steps, the booked Botschaft appointment, the booked flight, otherwise the
+ * the real date of done steps, the Botschaft appointment the embassy gave, the booked flight, otherwise the
  * expected window (forecast steps; travel / arrival from the decision → arrival history).
  */
 
@@ -25,7 +25,7 @@ export interface JourneyData {
   outcome: 'APPROVED' | 'REJECTED' | 'CANCELLED' | null;
   decisionAt: string | null;
   steps: JourneyStep[];
-  /** The booked Botschaft appointment (older servers: absent). */
+  /** The Botschaft appointment the embassy gave (older servers: absent). */
   appointment?: { at: string | null; place: string | null } | null;
   travel: { at: string | null; planned: boolean; done: boolean; expectedFrom?: string | null; expectedTo?: string | null };
   arrival: { at: string | null; done: boolean };
@@ -46,13 +46,13 @@ export type MilestoneStatus = 'done' | 'current' | 'upcoming' | 'skipped';
 export interface Milestone {
   key: MilestoneKey;
   status: MilestoneStatus;
-  /** done: the day it happened; planned: the booked day (flight); appointment: the booked Botschaft date and time. */
+  /** done: the day it happened; planned: the booked day (flight); appointment: the Botschaft date and time given by the embassy. */
   date: string | null;
   /** Expected window (current / upcoming steps of the forecast). */
   from: string | null;
   to: string | null;
   dateKind: 'done' | 'expected' | 'planned' | 'appointment' | 'submitted' | null;
-  /** Place of the booked appointment (embassy milestone). */
+  /** Place of the embassy appointment (embassy milestone). */
   place?: string | null;
   /** The decision was a refusal. */
   negative?: boolean;
@@ -89,7 +89,7 @@ export const buildMilestones = (j: JourneyData): Milestone[] => {
   const documents = fromStep(step('DOCUMENTS'));
   const contract = fromStep(step('CONTRACT'));
   let embassy: Part & { place?: string | null } = embassyOf(step('EMBASSY'), step('APPOINTMENT'));
-  // A booked appointment replaces the estimate on the embassy milestone.
+  // A known embassy appointment replaces the estimate on the embassy milestone.
   if (embassy.status !== 'done' && !stopped && j.appointment?.at) {
     embassy = { ...embassy, date: j.appointment.at, from: null, to: null, dateKind: 'appointment', place: j.appointment.place };
   }

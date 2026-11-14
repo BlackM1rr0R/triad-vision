@@ -14,6 +14,7 @@ import {
   Calculator,
   Car,
   ChefHat,
+  ClipboardCheck,
   Clock,
   Cog,
   ConciergeBell,
@@ -163,8 +164,8 @@ const Stepper = ({ p }: { p: Profession }) => {
         return (
           <div className="space-y-3">
             <p>{t('anerkPage.steps.s3Text')}</p>
-            <Link to="/account/translations" className="btn-primary btn-sm">
-              <Languages className="size-4" aria-hidden /> {t('anerkPage.steps.s3Link')}
+            <Link to="/account/checklist" className="btn-primary btn-sm">
+              <ClipboardCheck className="size-4" aria-hidden /> {t('anerkPage.steps.s3Link')}
             </Link>
           </div>
         );
@@ -430,7 +431,7 @@ export default function AnerkennungGuide() {
                         {t('anerkPage.guide.readGuide')}
                       </PathLink>
                     )}
-                    <Link to="/account/translations" className="font-semibold text-link hover:underline">
+                    <Link to="/account/checklist" className="font-semibold text-link hover:underline">
                       {t('anerkPage.tip.translations')}
                     </Link>
                     <Link to="/booking" className="font-semibold text-link hover:underline">
@@ -515,7 +516,7 @@ export default function AnerkennungGuide() {
           title={t('anerkPage.cta.title')}
           text={t('anerkPage.cta.text')}
           primary={{ to: '/booking', label: t('anerkPage.cta.primary') }}
-          secondary={{ to: '/account/translations', label: t('anerkPage.cta.secondary') }}
+          secondary={{ to: '/account/checklist', label: t('anerkPage.cta.secondary') }}
         />
       </div>
     </>

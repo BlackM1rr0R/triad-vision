@@ -13,6 +13,8 @@ export const INVOICE_STATUSES: InvoiceStatus[] = ['DRAFT', 'SENT', 'PARTIALLY_PA
 export const OPEN_STATUSES: InvoiceStatus[] = ['SENT', 'PARTIALLY_PAID', 'OVERDUE'];
 export type LineCategory = 'SERVICE_FEE' | 'TRANSLATION' | 'APOSTILLE' | 'EMBASSY_FEE' | 'COURIER' | 'OTHER';
 export const LINE_CATEGORIES: LineCategory[] = ['SERVICE_FEE', 'TRANSLATION', 'APOSTILLE', 'EMBASSY_FEE', 'COURIER', 'OTHER'];
+/** Kept only to display old invoice lines: Triad Vision no longer offers translation or apostille, so new lines cannot pick them. */
+export const LEGACY_LINE_CATEGORIES: readonly LineCategory[] = ['TRANSLATION', 'APOSTILLE'];
 export type PaymentMethod = 'CASH' | 'BANK' | 'CARD' | 'OTHER';
 export const PAYMENT_METHODS: PaymentMethod[] = ['BANK', 'CASH', 'CARD', 'OTHER'];
 export type VatMode = 'STANDARD' | 'SMALL_BUSINESS' | 'EXEMPT';

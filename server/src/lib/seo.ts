@@ -1283,7 +1283,8 @@ export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
     return jl && findJobLanding(liveJobs(data), jl.citySlug, jl.professionSlug) ? 200 : 404;
   }
   const m = /^\/(visas|services|news|jobs|events|guides|ebook|l)\/([^/]+)$/.exec(path);
-  if (m) {
+  // A hand-written page under a content section (/jobs/germany) is not a slug.
+  if (m && !STATIC_PAGES[path]) {
     const [, section, slug] = m;
     const now = Date.now();
     const exists =

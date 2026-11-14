@@ -388,10 +388,10 @@ const faqs: { question: L; answer: L; audience: string }[] = [
     audience: 'company',
     question: { az: 'Vorabzustimmung və Bundesagentur prosesini kim idarə edir?', de: 'Wer kümmert sich um die Vorabzustimmung der Bundesagentur?', en: 'Who handles the Federal Employment Agency pre-approval?', ru: 'Кто занимается предварительным согласием Bundesagentur?' },
     answer: {
-      az: 'Bütün inzibati prosesi biz koordinasiya edirik: Bundesagentur für Arbeit, Ausländerbehörde və səfirliklə yazışmalar daxil olmaqla.',
-      de: 'Wir koordinieren den gesamten Verwaltungsprozess – inklusive Kommunikation mit Bundesagentur für Arbeit, Ausländerbehörde und Botschaft.',
-      en: 'We coordinate the whole administrative process, including communication with the Federal Employment Agency, the immigration office and the embassy.',
-      ru: 'Мы координируем весь административный процесс, включая переписку с Bundesagentur für Arbeit, Ausländerbehörde и посольством.',
+      az: 'Bütün inzibati prosesi biz koordinasiya edirik: Bundesagentur für Arbeit və Ausländerbehörde ilə yazışmalar daxil olmaqla. Səfirlik üçün tam sənəd paketini hazırlayıb namizədə veririk; müraciəti səfirliyə namizəd özü edir.',
+      de: 'Wir koordinieren den gesamten Verwaltungsprozess – inklusive Kommunikation mit Bundesagentur für Arbeit und Ausländerbehörde. Die vollständigen Unterlagen für die Botschaft stellen wir der Fachkraft zusammen; den Visumantrag stellt sie selbst bei der Botschaft.',
+      en: 'We coordinate the whole administrative process, including communication with the Federal Employment Agency and the immigration office. We prepare the complete embassy document set for the candidate, who then applies to the embassy themselves.',
+      ru: 'Мы координируем весь административный процесс, включая переписку с Bundesagentur für Arbeit и Ausländerbehörde. Полный пакет документов для посольства мы готовим и передаём кандидату, заявление в посольство он подаёт сам.',
     },
   },
   {

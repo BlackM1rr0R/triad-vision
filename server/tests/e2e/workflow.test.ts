@@ -104,7 +104,7 @@ describe('full journey (client in German)', () => {
     res = expectStatus(await act(admin.agent, id, schedule()), 200);
     expect(res.body.case).toMatchObject({ status: 'APPOINTMENT_SCHEDULED', appointmentPlace: 'Almaniya Səfirliyi, Nizami küç. 15, Bakı' });
     expect(new Date(res.body.case.appointmentAt).toISOString()).toBe('2026-11-20T05:30:00.000Z');
-    const appt = await expectClientNotified(user, 'APPOINTMENT_SCHEDULED', 'Botschaftstermin vereinbart', { bodyContains: 'Ort: Almaniya Səfirliyi' });
+    const appt = await expectClientNotified(user, 'APPOINTMENT_SCHEDULED', 'Ihr Botschaftstermin', { bodyContains: 'Ort: Almaniya Səfirliyi' });
     expect(appt.body).toContain('20. November 2026');
     expect(appt.body).toContain('09:30');
     res = expectStatus(await act(admin.agent, id, { ...schedule('2026-11-21T10:00:00+04:00', 'Embassy Baku'), note: 'Neuer Termin' }), 200);

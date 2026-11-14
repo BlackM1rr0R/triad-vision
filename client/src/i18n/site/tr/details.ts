@@ -22,9 +22,9 @@ const copy: SiteCopy<(typeof details)['en']> = {
     step: 'Adım',
     process: [
       'İlk görüşmede mesleğinizi, deneyiminizi, dil seviyenizi ve hedeflerinizi öğreniyoruz. Şirketler için pozisyon profilini birlikte hazırlıyoruz. Bu aşamada hangi vize türünün uygun olduğu belirlenir.',
-      'Hesabınızda size özel bir belge listesi oluşturulur. Belgeleri çevrimiçi yüklersiniz; her birini kontrol eder, gerekirse düzeltme isteriz. Tercüme ve noter onayında da yardımcı oluyoruz.',
+      'Hesabınızda size özel bir belge listesi oluşturulur. Belgeleri çevrimiçi yüklersiniz; her birini kontrol eder, gerekirse düzeltme isteriz. Apostil ve yeminli tercümeyi kendiniz yaptırırsınız; hangi belgeler için gerektiğini size söyleriz.',
       'Uygun bir işverenle görüşme ayarlıyoruz. Anlaşma sağlandığında sözleşme hesabınıza gönderilir ve siz onu ekranda elektronik olarak imzalarsınız. İmzalı PDF anında iki tarafa da ulaşır.',
-      'Konsolosluk için belge dosyası hazırlanır, Federal İş Ajansı’nın (Bundesagentur für Arbeit) onayı alınır ve konsolosluk randevusu ayarlanır. Sizi mülakata hazırlıyor, karar çıkana kadar her değişiklikten haberdar ediyoruz.',
+      'Federal İş Ajansı’nın (Bundesagentur für Arbeit) onayı alınır; büyükelçiliğin istediği eksiksiz belge setini hazırlayıp size veriyoruz. Başvuruyu büyükelçiliğe kendiniz yaparsınız; randevuyu ve kararı büyükelçiliğin kendisi bildirir. Sizi mülakata hazırlıyoruz.',
       'Vize onaylandıktan sonra uçuşu planlıyor, sizi havalimanında karşılıyor ve konaklama yerinize yerleştiriyoruz. Adres kaydı (Anmeldung), banka hesabı ve sigorta konusunda yardımcı oluyoruz.',
       'İlk iş gününüzden itibaren hem sizin hem de işvereninizin sabit bir irtibat kişisi olur. İlk aylarda düzenli olarak iletişimde kalıyor, soruları hızla çözüyoruz.',
     ],

@@ -86,7 +86,7 @@ Kenntnisprüfung — устный и практический экзамен у 
 
 ## Как помогает Triad Vision
 
-Мы помогаем выбрать землю, собрать документы, организовать переводы и апостиль, найти курсы немецкого и клинику, готовую поддержать вас на время экзаменов. Решение принимает ведомство, и гарантировать его не может никто, но аккуратный пакет и правильно выбранный путь экономят месяцы. [Запишитесь на консультацию](/booking).
+Мы помогаем выбрать землю, собрать документы (переводы и апостиль вы оформляете самостоятельно), найти курсы немецкого и клинику, готовую поддержать вас на время экзаменов. Решение принимает ведомство, и гарантировать его не может никто, но аккуратный пакет и правильно выбранный путь экономят месяцы. [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -200,7 +200,7 @@ Tibb bacıları üçün yol fərqlidir — [tibb bacısı bələdçisinə](guide
 
 ## Triad Vision necə kömək edir?
 
-Ştatı seçməyə, sənədləri toplamağa, tərcümə və apostili təşkil etməyə, alman dili kurslarını və imtahanlar dövründə sizi dəstəkləməyə hazır klinikanı tapmağa kömək edirik. Qərarı qurum verir və heç kim onu zəmanət edə bilməz, lakin səliqəli sənəd paketi və düzgün seçilmiş yol aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
+Ştatı seçməyə, sənədləri toplamağa (tərcümə və apostili özünüz etdirirsiniz), alman dili kurslarını və imtahanlar dövründə sizi dəstəkləməyə hazır klinikanı tapmağa kömək edirik. Qərarı qurum verir və heç kim onu zəmanət edə bilməz, lakin səliqəli sənəd paketi və düzgün seçilmiş yol aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -314,7 +314,7 @@ Für Pflegefachkräfte gilt ein anderes Verfahren – siehe unseren [Ratgeber Pf
 
 ## So unterstützt Triad Vision
 
-Wir helfen bei der Wahl des Bundeslands, beim Zusammenstellen der Unterlagen, bei Übersetzungen und Apostille, bei Sprachkursen und bei der Suche nach einer Klinik, die Sie während der Prüfungsphase begleitet. Die Entscheidung trifft die Behörde, und niemand kann sie garantieren – ein sauberes Dossier und der richtige Verfahrensweg sparen aber Monate. [Jetzt Beratung buchen](/booking).
+Wir helfen bei der Wahl des Bundeslands, beim Zusammenstellen der Unterlagen (Übersetzungen und Apostille lassen Sie selbst anfertigen), bei Sprachkursen und bei der Suche nach einer Klinik, die Sie während der Prüfungsphase begleitet. Die Entscheidung trifft die Behörde, und niemand kann sie garantieren – ein sauberes Dossier und der richtige Verfahrensweg sparen aber Monate. [Jetzt Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -428,7 +428,7 @@ Nurses follow a different procedure — see our [nursing guide](guide:pflege). D
 
 ## How Triad Vision helps
 
-We help you choose the state, assemble your documents, organise translations and apostilles, find German courses and a hospital that supports you through the exam phase. The authority makes the decision and nobody can guarantee it, but a clean file and the right route save months. [Book a consultation](/booking).
+We help you choose the state, assemble your documents (you have translations and apostilles done yourself), find German courses and a hospital that supports you through the exam phase. The authority makes the decision and nobody can guarantee it, but a clean file and the right route save months. [Book a consultation](/booking).
 
 ## Official sources
 

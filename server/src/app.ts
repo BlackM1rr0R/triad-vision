@@ -45,7 +45,6 @@ import { workspaceRouter } from './routes/workspace.js';
 import { agentPortalRouter } from './routes/agentPortal.js';
 import { partnerPortalRouter } from './routes/partnerPortal.js';
 import { partnerSharingRouter } from './routes/partnerSharing.js';
-import { translationsRouter } from './routes/translations.js';
 import { privacyRouter } from './routes/privacy.js';
 import { legalRouter } from './routes/legal.js';
 import { waitingRoomRouter } from './routes/waitingRoom.js';
@@ -106,6 +105,7 @@ import { introVideoRouter } from './routes/introVideo.js';
 import { skillVideosRouter } from './routes/skillVideos.js'; // candidate skill videos (record / upload, consent)
 import { companySkillVideosRouter } from './routes/companySkillVideos.js'; // employer side of the skill videos
 import { searchRouter } from './routes/search.js';
+import { germanyJobsRouter } from './routes/germanyJobs.js';
 import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
@@ -243,6 +243,7 @@ export const createApp = () => {
   app.use('/api/booking', bookingRouter);
   app.use('/api/guides', guidesRouter); // public topic guides (SEO)
   app.use('/api/search', searchRouter); // public site search (guides, visas, services, FAQ, news, jobs, events, tools)
+  app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (Adzuna API) + "apply via Triad Vision" for external listings
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
   app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
@@ -271,7 +272,6 @@ export const createApp = () => {
   app.use('/api/agent', agentPortalRouter);
   app.use('/api/partner', partnerPortalRouter);
   app.use('/api/partner-sharing', partnerSharingRouter); // client: consent to share data with the owning partner
-  app.use('/api/translations', translationsRouter);
   app.use('/api/legal', legalRouter); // versioned AGB / privacy / cookie texts, re-acceptance, cookie consent log
   app.use('/api/waiting-room', waitingRoomRouter); // client "while you wait" lessons, exercises, checklists
   app.use('/api/privacy/access-log', accessLogRouter); // before the privacy centre router

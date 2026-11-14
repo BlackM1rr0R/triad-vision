@@ -27,10 +27,10 @@ const copy: SiteCopy<(typeof pagesGrowthPlus)['en']> = {
       speedUp: 'Nasıl hızlandırılır',
       stages: {
         language: { name: 'Almanca öğrenme', tip: 'Her gün yoğun kurs ve sınava (Goethe / telc / ÖSD) erkenden kayıt.' },
-        documents: { name: 'Belgeler ve tercümeler', tip: 'Diploma, not dökümü ve iş referanslarını şimdiden toplayın; tercümeleri biz hallederiz.' },
+        documents: { name: 'Belgeler ve tercümeler', tip: 'Diploma, not dökümü ve iş referanslarını şimdiden toplayın; apostil ve tercümeyi zamanında kendiniz yaptırın.' },
         recognition: { name: 'Diploma denkliği', tip: 'Belgeler tamamlanır tamamlanmaz başvurun; işverenle birlikte hızlandırılmış prosedür (§81a) mümkündür.' },
         matching: { name: 'İşverenle eşleşme', tip: 'Eksiksiz bir özgeçmiş ve tanıtım videosu — iş teklifiniz varsa bu aşama neredeyse sıfıra iner.' },
-        embassy: { name: 'Büyükelçilik randevusu', tip: 'Randevu, tüm belgeler hazır olmadan alınabilir — bunu sizinle birlikte planlarız.' },
+        embassy: { name: 'Büyükelçilik randevusu', tip: 'Randevuyu büyükelçilik verir, siz kendiniz talep edersiniz; bunun için eksiksiz belge setini biz hazırlarız.' },
         processing: { name: 'Vize işlemleri', tip: 'Eksiksiz ve doğru bir dosya ek belge taleplerini önler.' },
         travel: { name: 'Yolculuk ve işe başlama', tip: 'Uçuş, sigorta ve konaklama ile ilgili ipuçlarımızı erkenden alın.' },
       },

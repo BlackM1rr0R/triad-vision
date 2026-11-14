@@ -373,7 +373,7 @@ const de: Copy = {
       CONTRACT_SIGNED: 'Vertrag unterschrieben',
       EMBASSY_DOCUMENTS: 'Botschaftsunterlagen',
       EMBASSY_REVIEW: 'Botschaftsunterlagen in Prüfung',
-      APPOINTMENT_SCHEDULED: 'Termin vereinbart',
+      APPOINTMENT_SCHEDULED: 'Termin steht fest',
       DECISION_PENDING: 'Entscheidung ausstehend',
       APPROVED: 'Visum erteilt',
       REJECTED: 'Abgelehnt',

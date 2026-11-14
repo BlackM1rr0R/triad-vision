@@ -230,7 +230,7 @@ describe('cost calculator', () => {
     const admin = await asAdmin();
     const staff = await asStaff();
     const s = (await staff.agent.get('/api/admin/marketing/cost-calculator').expect(200)).body;
-    expect(s.listPrices).toEqual({ translation: 35, apostille: 45 }); // from the translation price list
+    expect(s.listPrices).toEqual({ translation: 35, apostille: 45 }); // default third-party estimates (no price list of ours)
     await staff.agent.put('/api/admin/marketing/cost-calculator').send(s.settings).expect(403);
     await admin.agent.put('/api/admin/marketing/cost-calculator').send({ ...s.settings, categories: { [cat.slug]: { blockedAccount: 0, flight: 400 } } }).expect(200);
     const est2 = await anon().get(`/api/growth/cost-calculator/estimate?category=${cat.slug}`).expect(200);

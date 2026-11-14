@@ -94,7 +94,7 @@ describe('portal stage', () => {
     const subs = m.visibleSubs('LEAD', ctx({ hasCase: false, hasOpenCase: false }));
     expect(subs.home).toEqual(['overview']);
     expect(subs.messages).toEqual(['notifications']);
-    expect(subs.documents).toEqual(['vault', 'translations', 'letterExplain']);
+    expect(subs.documents).toEqual(['vault', 'letterExplain']);
     expect(subs.profile).not.toContain('family');
     expect(m.visibleSubs('LEAD', ctx({ hasCase: false, hasSignatures: true })).documents[0]).toBe('signatures');
   });
@@ -109,7 +109,7 @@ describe('portal stage', () => {
     expect(m.sectionOfLocation('/account/cases/abc/forms/f1')).toBe('home');
     expect(m.sectionOfLocation('/account/letters-explain')).toBe('documents');
     expect(m.sectionOfLocation('/account/letters/new')).toBe('learn');
-    expect(m.sectionOfLocation('/account/translations/order/1')).toBe('documents');
+    expect(m.sectionOfLocation('/account/translations/order/1')).toBeNull(); // translation ordering was removed
     expect(m.sectionOfLocation('/account/signatures/s1')).toBe('documents');
     expect(m.sectionOfLocation('/account/notifications')).toBe('messages');
     expect(m.sectionOfLocation('/account/applications')).toBe('learn');

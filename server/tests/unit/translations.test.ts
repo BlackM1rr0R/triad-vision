@@ -1,36 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PRICING, estimatePrice, needsDistinctLanguages, normalizePricing } from '../../src/lib/translations/pricing.js';
 import { canTransition, isOverdue, orderKey, parseOrderKey } from '../../src/lib/translations/core.js';
 import { formatMoney, translationNotice } from '../../src/lib/translations/texts.js';
 
-describe('translation pricing', () => {
-  it('estimates price per page and the express surcharge', () => {
-    const p = { perPage: { TRANSLATION: 3500, APOSTILLE: 4500, TRANSLATION_APOSTILLE: 7500, NOTARY: 2500 }, expressSurchargePct: 50 };
-    expect(estimatePrice(p, { service: 'TRANSLATION', pages: 3, urgency: 'STANDARD' })).toEqual({ baseCents: 10500, surchargeCents: 0, totalCents: 10500 });
-    expect(estimatePrice(p, { service: 'TRANSLATION', pages: 3, urgency: 'EXPRESS' })).toEqual({ baseCents: 10500, surchargeCents: 5250, totalCents: 15750 });
-    expect(estimatePrice({ ...p, expressSurchargePct: 33 }, { service: 'NOTARY', pages: 1, urgency: 'EXPRESS' }).surchargeCents).toBe(825);
-    expect(estimatePrice(p, { service: 'APOSTILLE', pages: 0, urgency: 'STANDARD' }).totalCents).toBe(4500); // at least one page
-  });
-
-  it('falls back to defaults field by field for a broken setting', () => {
-    expect(normalizePricing(null)).toEqual(DEFAULT_PRICING);
-    expect(normalizePricing('nonsense')).toEqual(DEFAULT_PRICING);
-    const p = normalizePricing({ currency: 'usd', perPage: { TRANSLATION: 4000, NOTARY: -5 }, expressSurchargePct: 'x', languages: ['AZ', 'de', 'de'], documentTypes: [] });
-    expect(p.currency).toBe('USD');
-    expect(p.perPage).toEqual(DEFAULT_PRICING.perPage); // one invalid value rejects the object → defaults
-    expect(p.expressSurchargePct).toBe(DEFAULT_PRICING.expressSurchargePct);
-    expect(p.languages).toEqual(['az', 'de']);
-    expect(p.documentTypes).toEqual(DEFAULT_PRICING.documentTypes);
-    expect(normalizePricing({ perPage: { APOSTILLE: 9900 } }).perPage).toEqual({ ...DEFAULT_PRICING.perPage, APOSTILLE: 9900 });
-  });
-
-  it('knows which services need two languages', () => {
-    expect(needsDistinctLanguages('TRANSLATION')).toBe(true);
-    expect(needsDistinctLanguages('TRANSLATION_APOSTILLE')).toBe(true);
-    expect(needsDistinctLanguages('APOSTILLE')).toBe(false);
-    expect(needsDistinctLanguages('NOTARY')).toBe(false);
-  });
-});
+// Archived translation orders: Triad Vision no longer offers translation / apostille (no client ordering).
 
 describe('translation order helpers', () => {
   it('formats and parses order numbers', () => {
@@ -63,12 +35,16 @@ describe('translation order helpers', () => {
     expect(isOverdue({ status: 'IN_PROGRESS', dueAt: null }, now)).toBe(false);
   });
 
-  it('has notification texts in all four languages', () => {
+  it('has notification texts in all four languages and never offers the service again', () => {
     for (const l of ['az', 'de', 'en', 'ru'] as const) {
-      const t = translationNotice('QUOTED', l, { number: 'TR-0001', price: formatMoney(12000, 'EUR', l), note: 'x' });
-      expect(t.title).toContain('TR-0001');
-      expect(t.body).toContain('120');
+      for (const kind of ['READY', 'DELIVERED', 'CANCELLED', 'ASSIGNED', 'OVERDUE'] as const) {
+        const t = translationNotice(kind, l, { number: 'TR-0001', client: 'A B', due: '1', note: 'x' });
+        expect(t.title, `${l} ${kind}`).toContain('TR-0001');
+      }
     }
     expect(translationNotice('READY', 'de', { number: 'TR-0002', delivery: 'PICKUP' }).body).toContain('abholen');
+    expect(translationNotice('READY', 'en', { number: 'TR-0002', delivery: 'DIGITAL' }).body).not.toContain('download');
+    expect(translationNotice('CANCELLED', 'az', { number: 'TR-0003' }).body).toContain('özünüz etdirirsiniz');
+    expect(formatMoney(12000, 'EUR', 'de')).toContain('120');
   });
 });

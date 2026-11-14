@@ -7,6 +7,8 @@ import { Check, Download, FileText, FolderOpen, Image as ImageIcon, Trash2 } fro
 import { errorCode, formatBytes } from '@/lib/api';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
 
+// Staff archive of the former translation orders (no client ordering any more).
+
 // ─── Types (mirror server/src/lib/translations/core.ts) ───────────────────
 
 export type TrService = 'TRANSLATION' | 'APOSTILLE' | 'TRANSLATION_APOSTILLE' | 'NOTARY';
@@ -18,14 +20,6 @@ export const SERVICES: TrService[] = ['TRANSLATION', 'TRANSLATION_APOSTILLE', 'A
 export const STATUSES: TrStatus[] = ['NEW', 'QUOTED', 'ACCEPTED', 'IN_PROGRESS', 'READY', 'DELIVERED', 'CANCELLED'];
 export const FLOW: TrStatus[] = ['NEW', 'QUOTED', 'ACCEPTED', 'IN_PROGRESS', 'READY', 'DELIVERED'];
 export const DELIVERIES: TrDelivery[] = ['DIGITAL', 'PICKUP', 'COURIER'];
-
-export interface TrPricing {
-  currency: string;
-  perPage: Record<TrService, number>;
-  expressSurchargePct: number;
-  languages: string[];
-  documentTypes: string[];
-}
 
 export interface TrFile {
   id: string;
@@ -67,10 +61,6 @@ export interface TrOrderBase {
   files: TrFile[];
 }
 
-export interface TrClientOrder extends TrOrderBase {
-  events: { id: string; status: TrStatus | null; note: string | null; createdAt: string; byStaff: boolean }[];
-}
-
 export interface TrPerson {
   id: string;
   firstName: string;
@@ -91,7 +81,7 @@ export interface TrStaffOrder extends TrOrderBase {
   }[];
 }
 
-export const fileUrl = (id: string, download = false) => `/api/translations/files/${id}${download ? '?download=1' : ''}`;
+export const fileUrl = (id: string, download = false) => `/api/admin/translations/files/${id}${download ? '?download=1' : ''}`;
 
 // ─── Formatting ───────────────────────────────────────────────────────────
 

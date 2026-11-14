@@ -327,7 +327,7 @@ Die Bewerberperspektive beschreibt unser [Leitfaden Pflege](guide:pflege) und di
 
 ## Unterstützung durch Triad Vision
 
-Triad Vision wählt in Aserbaidschan Pflegefachpersonen aus, prüft Diplome und Stundenübersichten, begleitet Übersetzungen, Anerkennungsantrag und Visum und unterstützt bei der Ankunft. Mehr unter [Anerkennung](/services/recognition), [Arbeitgeber-Service](/services/employer-services) und [Für Arbeitgeber](/for-employers). [Buchen Sie ein kostenloses Beratungsgespräch](/booking) – wir prüfen gemeinsam, welcher Weg für Ihre Einrichtung passt.`,
+Triad Vision wählt in Aserbaidschan Pflegefachpersonen aus, prüft Diplome und Stundenübersichten, begleitet Anerkennungsantrag und Visum und unterstützt bei der Ankunft. Mehr unter [Anerkennung](/services/recognition), [Arbeitgeber-Service](/services/employer-services) und [Für Arbeitgeber](/for-employers). [Buchen Sie ein kostenloses Beratungsgespräch](/booking) – wir prüfen gemeinsam, welcher Weg für Ihre Einrichtung passt.`,
     faq: [
       {
         q: 'Welches Deutschniveau brauchen ausländische Pflegekräfte?',
@@ -543,7 +543,7 @@ Im beschleunigten Verfahren sind Sie die zentrale Ansprechperson der Behörde. B
 
 ## Unterstützung durch Triad Vision
 
-Wir bereiten die Unterlagen Ihrer künftigen Mitarbeitenden aus Aserbaidschan vollständig vor, koordinieren Übersetzungen und begleiten den Visumtermin in Baku. Den Antrag nach § 81a stellen Sie als Arbeitgeber; wir unterstützen Sie dabei organisatorisch. Mehr dazu unter [Visumbegleitung](/services/visa-support), [Arbeitgeber-Service](/services/employer-services) und im Leitfaden [Fachkräfte aus Aserbaidschan](guide:employer-azerbaijan). [Buchen Sie ein kostenloses Beratungsgespräch](/booking) – wir prüfen, ob sich das beschleunigte Verfahren für Ihre Stelle lohnt.`,
+Wir stellen für Ihre künftigen Mitarbeitenden aus Aserbaidschan die vollständigen Unterlagen zusammen, die die Botschaft verlangt; den Visumantrag stellen die Fachkräfte selbst bei der Botschaft in Baku, die auch den Termin vergibt. Den Antrag nach § 81a stellen Sie als Arbeitgeber; wir unterstützen Sie dabei organisatorisch. Mehr dazu unter [Visumbegleitung](/services/visa-support), [Arbeitgeber-Service](/services/employer-services) und im Leitfaden [Fachkräfte aus Aserbaidschan](guide:employer-azerbaijan). [Buchen Sie ein kostenloses Beratungsgespräch](/booking) – wir prüfen, ob sich das beschleunigte Verfahren für Ihre Stelle lohnt.`,
     faq: [
       {
         q: 'Wer stellt den Antrag im beschleunigten Fachkräfteverfahren?',

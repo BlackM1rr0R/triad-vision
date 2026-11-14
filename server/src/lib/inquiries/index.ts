@@ -13,7 +13,7 @@ import { notifyUser } from '../notifications.js';
 export const INQUIRY_STATUSES = ['NEW', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 export const INQUIRY_SORTS = ['hot', 'newest', 'oldest', 'score', 'workers'] as const;
 /** Source groups of the filter: "web" = the site's contact form (no source), the rest a `source` prefix. */
-export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share'] as const;
+export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share', 'external-job'] as const;
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -99,14 +99,18 @@ const fullName = (u: { firstName: string; lastName: string }) => `${u.firstName}
 export const enrichInquiries = async (rows: Inquiry[]) => {
   const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))];
   const userIds = uniq([...rows.map((r) => r.assignedStaffId), ...rows.map((r) => r.convertedUserId)]);
-  const [users, agents, partners, companies] = await Promise.all([
+  const externalIds = rows.filter((r) => r.source?.startsWith('external-job')).map((r) => r.id);
+  const [users, agents, partners, companies, externalJobs] = await Promise.all([
     userIds.length ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true, email: true, role: true } }) : [],
     uniq(rows.map((r) => r.agentId)).length
       ? prisma.agent.findMany({ where: { id: { in: uniq(rows.map((r) => r.agentId)) } }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } })
       : [],
     uniq(rows.map((r) => r.partnerId)).length ? prisma.referralPartner.findMany({ where: { id: { in: uniq(rows.map((r) => r.partnerId)) } }, select: { id: true, name: true } }) : [],
     uniq(rows.map((r) => r.convertedCompanyId)).length ? prisma.company.findMany({ where: { id: { in: uniq(rows.map((r) => r.convertedCompanyId)) } }, select: { id: true, name: true } }) : [],
+    // "Apply via Triad Vision" for an external listing (routes/germanyJobs.ts): the listing + CV facts, never the stored file name.
+    externalIds.length ? prisma.externalJobApplication.findMany({ where: { inquiryId: { in: externalIds } }, omit: { cvStoredName: true } }) : [],
   ]);
+  const ext = new Map(externalJobs.map((x) => [x.inquiryId, x]));
   const u = new Map(users.map((x) => [x.id, x]));
   const a = new Map(agents.map((x) => [x.id, { id: x.id, code: x.code, name: fullName(x.user) }]));
   const p = new Map(partners.map((x) => [x.id, x]));
@@ -121,6 +125,7 @@ export const enrichInquiries = async (rows: Inquiry[]) => {
       partner: r.partnerId ? (p.get(r.partnerId) ?? null) : null,
       convertedUser: client ? { id: client.id, name: fullName(client), email: client.email, role: client.role } : null,
       convertedCompany: r.convertedCompanyId ? (c.get(r.convertedCompanyId) ?? null) : null,
+      externalJob: ext.get(r.id) ?? null,
     };
   });
 };

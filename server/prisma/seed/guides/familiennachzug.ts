@@ -102,7 +102,7 @@ Ailə mütəxəssislə **birlikdə** müraciət edirsə, proses çox vaxt daha s
 
 ## Triad Vision necə kömək edir?
 
-Bakıdakı ofisimiz ailələrə sənəd siyahısını hazırlamaqda, tərcümə və apostil prosesində, səfirlik növbəsinə hazırlıqda və Almaniyadakı işəgötürənlə əlaqədə dəstək olur. Hələ iş axtarırsınızsa, [Chancenkarte bələdçimizdən](guide:chancenkarte) başlaya bilərsiniz. Rəsmi məlumat üçün [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) və [Almaniya Xarici İşlər Nazirliyi](https://www.auswaertiges-amt.de) saytlarına baxın. Fərdi məsləhət üçün [görüş təyin edin](/booking).`,
+Bakıdakı ofisimiz ailələr üçün sənəd siyahısını və səfirliyin tələb etdiyi tam sənəd paketini hazırlayır, Almaniyadakı işəgötürənlə əlaqədə dəstək olur. Tərcümə və apostili, həmçinin səfirliyə müraciəti özünüz edirsiniz; görüş vaxtını və qərarı səfirlik bildirir. Hələ iş axtarırsınızsa, [Chancenkarte bələdçimizdən](guide:chancenkarte) başlaya bilərsiniz. Rəsmi məlumat üçün [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) və [Almaniya Xarici İşlər Nazirliyi](https://www.auswaertiges-amt.de) saytlarına baxın. Fərdi məsləhət üçün [görüş təyin edin](/booking).`,
       faq: [
         {
           q: 'Həyat yoldaşım Almaniyaya gəlmək üçün A1 alman dili bilməlidirmi?',
@@ -225,7 +225,7 @@ Ein **gemeinsamer Antrag** – die Familie reist mit der Fachkraft ein – ist o
 
 ## Unterstützung durch Triad Vision
 
-Unser Team in Baku begleitet Familien bei Unterlagen, Übersetzungen, Terminvorbereitung und Abstimmung mit dem Arbeitgeber. Arbeitgeber unterstützen wir dabei, den Nachzug in den Einstellungsprozess einzuplanen. Wer noch eine Stelle sucht, findet einen Einstieg im [Leitfaden zur Chancenkarte](guide:chancenkarte). Offizielle Informationen bieten [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) und das [Auswärtige Amt](https://www.auswaertiges-amt.de). Für eine persönliche Beratung [buchen Sie einen Termin](/booking) oder [schreiben Sie uns](/contact).`,
+Unser Team in Baku stellt Familien die vollständigen Unterlagen zusammen, die die Botschaft verlangt, und stimmt sich mit dem Arbeitgeber ab. Übersetzungen, Apostillen und den Antrag bei der Botschaft erledigen Sie selbst; Termin und Entscheidung kommen von der Botschaft. Arbeitgeber unterstützen wir dabei, den Nachzug in den Einstellungsprozess einzuplanen. Wer noch eine Stelle sucht, findet einen Einstieg im [Leitfaden zur Chancenkarte](guide:chancenkarte). Offizielle Informationen bieten [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) und das [Auswärtige Amt](https://www.auswaertiges-amt.de). Für eine persönliche Beratung [buchen Sie einen Termin](/booking) oder [schreiben Sie uns](/contact).`,
       faq: [
         {
           q: 'Muss mein Ehepartner für den Familiennachzug Deutsch A1 nachweisen?',
@@ -348,7 +348,7 @@ A **joint application** – the family travelling together with the skilled work
 
 ## How Triad Vision can help
 
-Our team in Baku supports families with document lists, translations and apostilles, appointment preparation and coordination with the employer in Germany. If you are still looking for a job, start with our [Opportunity Card guide](guide:chancenkarte). Official information is available from [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) and the [German Federal Foreign Office](https://www.auswaertiges-amt.de). For personal advice, [book a consultation](/booking) or [contact us](/contact).`,
+Our team in Baku prepares the document list and the complete set of documents the embassy requires and coordinates with the employer in Germany. You have translations and apostilles done and apply to the embassy yourself; the appointment and the decision come from the embassy. If you are still looking for a job, start with our [Opportunity Card guide](guide:chancenkarte). Official information is available from [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) and the [German Federal Foreign Office](https://www.auswaertiges-amt.de). For personal advice, [book a consultation](/booking) or [contact us](/contact).`,
       faq: [
         {
           q: 'Does my spouse need A1 German for family reunification?',
@@ -471,7 +471,7 @@ Our team in Baku supports families with document lists, translations and apostil
 
 ## Как помогает Triad Vision
 
-Наш офис в Баку помогает семьям составить список документов, организовать переводы и апостиль, подготовиться к записи в посольство и согласовать сроки с работодателем в Германии. Если вы ещё ищете работу, начните с нашего [руководства по Chancenkarte](guide:chancenkarte). Официальная информация – на сайтах [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) и [МИД Германии](https://www.auswaertiges-amt.de). Для личной консультации [запишитесь на встречу](/booking) или [напишите нам](/contact).`,
+Наш офис в Баку составляет для семей список документов, готовит полный пакет, который требует посольство, и согласует сроки с работодателем в Германии. Переводы, апостиль и подачу заявления в посольство вы оформляете сами; дату приёма и решение сообщает посольство. Если вы ещё ищете работу, начните с нашего [руководства по Chancenkarte](guide:chancenkarte). Официальная информация – на сайтах [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) и [МИД Германии](https://www.auswaertiges-amt.de). Для личной консультации [запишитесь на встречу](/booking) или [напишите нам](/contact).`,
       faq: [
         {
           q: 'Нужен ли супругу немецкий A1 для воссоединения семьи?',
@@ -594,7 +594,7 @@ Ailenin nitelikli çalışanla **birlikte** başvurması süreci çoğu zaman h�
 
 ## Triad Vision nasıl destek olur?
 
-Ekibimiz ailelere belge listesinin hazırlanması, tercüme ve apostil, randevu hazırlığı ve Almanya’daki işverenle koordinasyon konularında destek verir. Henüz iş arıyorsanız [Chancenkarte rehberimizle](guide:chancenkarte) başlayabilirsiniz. Resmî bilgiler için [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) ve [Almanya Federal Dışişleri Bakanlığı](https://www.auswaertiges-amt.de) sitelerine bakabilirsiniz. Kişisel danışmanlık için [randevu alın](/booking) veya [bize yazın](/contact).`,
+Ekibimiz aileler için belge listesini ve büyükelçiliğin istediği belge setini hazırlar, Almanya’daki işverenle koordinasyonu sağlar. Tercüme, apostil ve büyükelçiliğe başvuruyu kendiniz yaparsınız; randevuyu ve kararı büyükelçilik bildirir. Henüz iş arıyorsanız [Chancenkarte rehberimizle](guide:chancenkarte) başlayabilirsiniz. Resmî bilgiler için [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) ve [Almanya Federal Dışişleri Bakanlığı](https://www.auswaertiges-amt.de) sitelerine bakabilirsiniz. Kişisel danışmanlık için [randevu alın](/booking) veya [bize yazın](/contact).`,
       faq: [
         {
           q: 'Eşimin aile birleşimi için A1 Almanca belgesi gerekir mi?',
@@ -719,7 +719,7 @@ Ekibimiz ailelere belge listesinin hazırlanması, tercüme ve apostil, randevu 
 
 ## Як допомагає Triad Vision
 
-Наша команда допомагає родинам скласти перелік документів, організувати переклади й апостиль, підготуватися до запису в представництво та узгодити строки з роботодавцем у Німеччині. Якщо ви ще шукаєте роботу, почніть із нашого [посібника про Chancenkarte](guide:chancenkarte). Офіційна інформація – на сайтах [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) та [Міністерства закордонних справ Німеччини](https://www.auswaertiges-amt.de). Для особистої консультації [запишіться на зустріч](/booking) або [напишіть нам](/contact).`,
+Наша команда складає для родин перелік документів, готує повний пакет, якого вимагає представництво, і узгоджує строки з роботодавцем у Німеччині. Переклади, апостиль і подання заяви до представництва ви оформлюєте самі; дату прийому й рішення повідомляє представництво. Якщо ви ще шукаєте роботу, почніть із нашого [посібника про Chancenkarte](guide:chancenkarte). Офіційна інформація – на сайтах [Make it in Germany](https://www.make-it-in-germany.com/en/visa-residence/family-reunification) та [Міністерства закордонних справ Німеччини](https://www.auswaertiges-amt.de). Для особистої консультації [запишіться на зустріч](/booking) або [напишіть нам](/contact).`,
       faq: [
         {
           q: 'Чи потрібна чоловікові або дружині німецька A1 для возз’єднання сім’ї?',

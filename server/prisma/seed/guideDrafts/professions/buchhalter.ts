@@ -93,7 +93,7 @@ export const buchhalterGuide: ProfessionGuide = {
 
 ## Как помогает Triad Vision
 
-В офисе в Баку мы определяем подходящую референсную профессию, проверяем документы, организуем переводы и подачу, а затем выстраиваем визовую стратегию. Гарантировать решение ведомства не может никто, но хорошо подготовленный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
+В офисе в Баку мы определяем подходящую референсную профессию, проверяем документы, готовим заявление (переводы вы оформляете самостоятельно), а затем выстраиваем визовую стратегию. Гарантировать решение ведомства не может никто, но хорошо подготовленный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -215,7 +215,7 @@ Nərmin “mühasibat uçotu” ixtisası üzrə kolleci bitirib və altı il ti
 
 ## Triad Vision necə kömək edir?
 
-Bakıdakı ofisimizdə uyğun istinad peşəsini müəyyən edir, sənədləri yoxlayır, tərcümə və müraciəti təşkil edir, sonra viza strategiyası qururuq. Qurumun qərarına heç kim zəmanət verə bilməz, amma yaxşı hazırlanmış paket aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
+Bakıdakı ofisimizdə uyğun istinad peşəsini müəyyən edir, sənədləri yoxlayır, müraciəti hazırlayır (tərcüməni özünüz etdirirsiniz), sonra viza strategiyası qururuq. Qurumun qərarına heç kim zəmanət verə bilməz, amma yaxşı hazırlanmış paket aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -335,7 +335,7 @@ Narmin hat ein College in „Rechnungswesen“ abgeschlossen und sechs Jahre als
 
 ## So unterstützt Triad Vision
 
-In Baku bestimmen wir den passenden Referenzberuf, prüfen die Unterlagen, organisieren Übersetzungen und Antrag und planen den Aufenthaltstitel. Die Entscheidung trifft die Behörde – ein vollständiges Dossier spart aber Monate. [Beratung buchen](/booking).
+In Baku bestimmen wir den passenden Referenzberuf, prüfen die Unterlagen, bereiten den Antrag vor (Übersetzungen lassen Sie selbst anfertigen) und planen den Aufenthaltstitel. Die Entscheidung trifft die Behörde – ein vollständiges Dossier spart aber Monate. [Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -455,7 +455,7 @@ Narmin finished college in accounting and worked six years as an accountant for 
 
 ## How Triad Vision helps
 
-At our office in Baku we pick the right reference profession, check your documents, organise translations and the application, and plan the visa route. Nobody can guarantee the authority's decision, but a complete file saves months. [Book a consultation](/booking).
+At our office in Baku we pick the right reference profession, check your documents, prepare the application (you have the translations done yourself), and plan the visa route. Nobody can guarantee the authority's decision, but a complete file saves months. [Book a consultation](/booking).
 
 ## Official sources
 

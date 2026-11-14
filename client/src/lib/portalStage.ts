@@ -27,7 +27,6 @@ export type SubKey =
   | 'signatures'
   | 'payments'
   | 'vault'
-  | 'translations'
   | 'letterExplain'
   // messages
   | 'chat'
@@ -51,7 +50,7 @@ export type SubKey =
 /** Every sub-tab in display order, grouped by section. */
 export const SECTION_SUBS: Record<SectionKey, readonly SubKey[]> = {
   home: ['overview', 'application', 'arrivalPrep', 'arrival', 'onboarding', 'housing'],
-  documents: ['caseDocs', 'docChecklist', 'signatures', 'payments', 'vault', 'translations', 'letterExplain'],
+  documents: ['caseDocs', 'docChecklist', 'signatures', 'payments', 'vault', 'letterExplain'],
   messages: ['chat', 'notifications'],
   learn: ['course', 'waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
   profile: ['personal', 'family', 'privacy', 'referral'],
@@ -110,7 +109,6 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
   switch (sub) {
     case 'overview':
     case 'vault':
-    case 'translations':
     case 'letterExplain':
     case 'notifications':
     case 'german':
@@ -198,8 +196,6 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'payments';
     case 'vault':
       return 'vault';
-    case 'translations':
-      return 'translations';
     case 'letters-explain':
       return 'letterExplain';
     case 'notifications':
@@ -264,8 +260,6 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return '/account/payments';
     case 'vault':
       return '/account/vault';
-    case 'translations':
-      return '/account/translations';
     case 'letterExplain':
       return '/account/letters-explain';
     case 'chat':

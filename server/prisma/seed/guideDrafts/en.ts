@@ -185,7 +185,7 @@ The exact list depends on the route and the embassy. Typically:
 - Proof of health insurance until the job starts
 - The employer's "Erklärung zum Beschäftigungsverhältnis" (job description form for the BA)
 
-Azerbaijani civil status documents (birth or marriage certificates) need an **apostille and a certified translation**. Our [document service](/services/documents) helps you prepare a complete file.
+Azerbaijani civil status documents (birth or marriage certificates) need an **apostille and a certified translation**, which you have done yourself. Our [document service](/services/documents) helps you prepare a complete file.
 
 ## Step by step at the German Embassy in Baku
 
@@ -341,7 +341,7 @@ Most early departures have practical, not professional reasons. The factors that
 Triad Vision has offices in **Baku and Berlin**. For employers we:
 
 - **select candidates** in Azerbaijan, including CV and document checks, German level checks and structured interviews ([candidate selection](/services/candidate-selection)),
-- support **recognition and visa** applications and coordinate with the embassy,
+- support **recognition and visa** applications and prepare the complete set of documents the embassy requires (candidates apply to the embassy themselves),
 - prepare **arrival and integration** – address registration, insurance, bank account, first steps at the company.
 
 More about our offer for companies: [For employers](/for-employers) and [employer services](/services/employer-services). We do not guarantee visas or placements – decisions are made by the authorities and by you – but we make sure each file is complete and each candidate is realistically matched to the position.

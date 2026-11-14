@@ -161,7 +161,7 @@ Siyahı yola görə dəyişir, amma əsas paket təxminən belədir:
 - alman dilində CV;
 - tibbi sığorta sübutu (işə başlayana qədərki dövr üçün).
 
-Sənədlər **and içmiş tərcüməçi** tərəfindən alman dilinə tərcümə olunmalıdır. Azərbaycanın vətəndaşlıq vəziyyəti sənədləri (nikah, doğum şəhadətnaməsi) üçün **apostil** və təsdiqlənmiş tərcümə lazımdır. Sənədlərin yoxlanması və tərtibində [sənəd xidmətimiz](/services/documents) kömək edir.
+Sənədlər **and içmiş tərcüməçi** tərəfindən alman dilinə tərcümə olunmalıdır. Azərbaycanın vətəndaşlıq vəziyyəti sənədləri (nikah, doğum şəhadətnaməsi) üçün **apostil** və təsdiqlənmiş tərcümə lazımdır; apostil və tərcüməni özünüz etdirirsiniz. Sənədlərin yoxlanması və tərtibində [sənəd xidmətimiz](/services/documents) kömək edir.
 
 ## Bakı səfirliyinə müraciət
 

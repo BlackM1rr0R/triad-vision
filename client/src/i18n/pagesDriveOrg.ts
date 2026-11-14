@@ -26,8 +26,8 @@ const az = {
     stage: {
       INCOMING: 'Gələn',
       REVIEW: 'Yoxlanılır',
-      TRANSLATION: 'Tərcümədə',
-      APOSTILLE: 'Apostildə',
+      TRANSLATION: 'Tərcümə gözlənilir',
+      APOSTILLE: 'Apostil gözlənilir',
       READY: 'Hazır',
       SENT_TO_EMBASSY: 'Səfirliyə göndərildi',
       none: 'Lövhədən çıxar (mərhələsiz)',
@@ -220,8 +220,8 @@ const de: typeof az = {
     stage: {
       INCOMING: 'Eingang',
       REVIEW: 'In Prüfung',
-      TRANSLATION: 'In Übersetzung',
-      APOSTILLE: 'Bei der Apostille',
+      TRANSLATION: 'Übersetzung ausstehend',
+      APOSTILLE: 'Apostille ausstehend',
       READY: 'Fertig',
       SENT_TO_EMBASSY: 'An die Botschaft gesendet',
       none: 'Vom Board nehmen (ohne Phase)',
@@ -414,8 +414,8 @@ const en: typeof az = {
     stage: {
       INCOMING: 'Incoming',
       REVIEW: 'In review',
-      TRANSLATION: 'In translation',
-      APOSTILLE: 'At apostille',
+      TRANSLATION: 'Awaiting translation',
+      APOSTILLE: 'Awaiting apostille',
       READY: 'Ready',
       SENT_TO_EMBASSY: 'Sent to embassy',
       none: 'Remove from the board (no stage)',
@@ -608,8 +608,8 @@ const ru: typeof az = {
     stage: {
       INCOMING: 'Входящие',
       REVIEW: 'На проверке',
-      TRANSLATION: 'На переводе',
-      APOSTILLE: 'На апостиле',
+      TRANSLATION: 'Ожидается перевод',
+      APOSTILLE: 'Ожидается апостиль',
       READY: 'Готово',
       SENT_TO_EMBASSY: 'Отправлено в посольство',
       none: 'Убрать с доски (без этапа)',

@@ -118,7 +118,7 @@ Bu yol hamıya uyğun deyil, lakin bəzi namizədlər üçün vaxt qazandırır.
 
 ## Triad Vision necə kömək edir?
 
-Biz Bakı ofisimizdə sənədlərinizi yoxlayır, səlahiyyətli qurumu müəyyən edir, tərcümə və müraciəti planlaşdırır, nəticədən asılı olaraq viza strategiyasını qururuq. Nəticəni heç kim qabaqcadan zəmanət edə bilməz, amma düzgün hazırlanmış sənəd dəsti prosesi xeyli qısaldır. [Konsultasiyaya yazılın](/booking) — sizin vəziyyətinizi birlikdə qiymətləndirək.`,
+Biz Bakı ofisimizdə sənədlərinizi yoxlayır, səlahiyyətli qurumu müəyyən edir, müraciəti planlaşdırır, nəticədən asılı olaraq viza strategiyasını qururuq. Tərcümə və apostili özünüz etdirirsiniz. Nəticəni heç kim qabaqcadan zəmanət edə bilməz, amma düzgün hazırlanmış sənəd dəsti prosesi xeyli qısaldır. [Konsultasiyaya yazılın](/booking) — sizin vəziyyətinizi birlikdə qiymətləndirək.`,
       faq: [
         {
           q: 'Tanınma prosesi nə qədər çəkir?',
@@ -256,7 +256,7 @@ Ob dieser Weg passt, hängt vom Einzelfall ab. Eine erste Einschätzung liefert 
 
 ## So unterstützt Triad Vision
 
-Unser Team in Baku prüft die Unterlagen, ermittelt die zuständige Stelle, koordiniert Übersetzungen und Antrag und plant den passenden Aufenthaltstitel – für Bewerber ebenso wie für Arbeitgeber, die internationale Fachkräfte gewinnen wollen. Das Ergebnis entscheidet allein die Behörde, eine gut vorbereitete Akte verkürzt aber den Weg. [Termin vereinbaren](/booking) und den eigenen Fall besprechen.`,
+Unser Team in Baku prüft die Unterlagen, ermittelt die zuständige Stelle, bereitet den Antrag vor und plant den passenden Aufenthaltstitel – für Bewerber ebenso wie für Arbeitgeber, die internationale Fachkräfte gewinnen wollen. Übersetzungen und Apostille lassen Sie selbst anfertigen. Das Ergebnis entscheidet allein die Behörde, eine gut vorbereitete Akte verkürzt aber den Weg. [Termin vereinbaren](/booking) und den eigenen Fall besprechen.`,
       faq: [
         {
           q: 'Wie lange dauert ein Anerkennungsverfahren?',
@@ -393,7 +393,7 @@ Whether this fits depends on your case. Our [eligibility check](/eligibility) gi
 
 ## How Triad Vision helps
 
-From our office in Baku we review your documents, identify the competent authority, organise translations and the application, and plan the right visa route based on the result. Nobody can guarantee the outcome – the authority decides – but a well-prepared file saves a lot of time. [Book a consultation](/booking) to discuss your case.`,
+From our office in Baku we review your documents, identify the competent authority, prepare the application, and plan the right visa route based on the result. You have the translations and any apostille done yourself. Nobody can guarantee the outcome – the authority decides – but a well-prepared file saves a lot of time. [Book a consultation](/booking) to discuss your case.`,
       faq: [
         {
           q: 'How long does recognition take?',
@@ -530,7 +530,7 @@ From our office in Baku we review your documents, identify the competent authori
 
 ## Как помогает Triad Vision
 
-В нашем офисе в Баку мы проверяем документы, определяем компетентное ведомство, организуем переводы и подачу, а затем выстраиваем визовую стратегию в зависимости от результата. Гарантировать исход не может никто — решение принимает ведомство, — но хорошо подготовленный пакет заметно сокращает путь. [Запишитесь на консультацию](/booking), чтобы обсудить вашу ситуацию.`,
+В нашем офисе в Баку мы проверяем документы, определяем компетентное ведомство, готовим заявление, а затем выстраиваем визовую стратегию в зависимости от результата. Переводы и апостиль вы оформляете самостоятельно. Гарантировать исход не может никто — решение принимает ведомство, — но хорошо подготовленный пакет заметно сокращает путь. [Запишитесь на консультацию](/booking), чтобы обсудить вашу ситуацию.`,
       faq: [
         {
           q: 'Сколько длится признание диплома?',
@@ -669,7 +669,7 @@ Bu adımları atlamadan, sırayla ve belgelerin kopyalarını düzenli tutarak i
 
 ## Triad Vision nasıl yardımcı olur?
 
-Bakü ofisimizde belgelerinizi inceliyor, yetkili kurumu belirliyor, çeviri ve başvuruyu organize ediyor, sonuca göre doğru vize yolunu planlıyoruz. Sonucu kimse önceden garanti edemez — kararı kurum verir — ancak iyi hazırlanmış bir dosya süreci belirgin şekilde kısaltır. Durumunuzu konuşmak için [danışmanlık randevusu alın](/booking).`,
+Bakü ofisimizde belgelerinizi inceliyor, yetkili kurumu belirliyor, başvuruyu hazırlıyor, sonuca göre doğru vize yolunu planlıyoruz. Çeviri ve apostili kendiniz yaptırırsınız. Sonucu kimse önceden garanti edemez — kararı kurum verir — ancak iyi hazırlanmış bir dosya süreci belirgin şekilde kısaltır. Durumunuzu konuşmak için [danışmanlık randevusu alın](/booking).`,
       faq: [
         {
           q: 'Denklik süreci ne kadar sürer?',
@@ -806,7 +806,7 @@ Bakü ofisimizde belgelerinizi inceliyor, yetkili kurumu belirliyor, çeviri ve 
 
 ## Як допомагає Triad Vision
 
-У нашому офісі в Баку ми перевіряємо документи, визначаємо компетентну установу, організовуємо переклади й подання, а потім вибудовуємо візову стратегію залежно від результату. Гарантувати результат не може ніхто — рішення ухвалює установа, — але добре підготовлений пакет помітно скорочує шлях. [Запишіться на консультацію](/booking), щоб обговорити вашу ситуацію.`,
+У нашому офісі в Баку ми перевіряємо документи, визначаємо компетентну установу, готуємо заяву, а потім вибудовуємо візову стратегію залежно від результату. Переклади й апостиль ви оформлюєте самостійно. Гарантувати результат не може ніхто — рішення ухвалює установа, — але добре підготовлений пакет помітно скорочує шлях. [Запишіться на консультацію](/booking), щоб обговорити вашу ситуацію.`,
       faq: [
         {
           q: 'Скільки триває визнання диплома?',

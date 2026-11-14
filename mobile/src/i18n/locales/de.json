@@ -21,11 +21,19 @@
   "salary": "Gehaltsrechner",
   "anerkennung": "Anerkennung",
   "cities": "Deutsche Städte",
+  "calculator": "Wann kann ich anfangen?",
+  "costCalculator": "Kostenrechner",
+  "events": "Veranstaltungen",
+  "map": "Karte unserer Fachkräfte",
+  "referral": "Freunde werben",
   "contact": "Kontakt",
   "more": "Mehr",
   "cooperation": "Kooperationsanfrage",
   "cooperationShort": "Kooperation",
   "eligibility": "Visum-Check",
+  "guides": "Ratgeber",
+  "chancenkarte": "Chancenkarte-Punkterechner",
+  "blueCard": "Blaue-Karte-Gehaltscheck",
   "search": "Suche",
   "accountShort": "Konto",
   "login": "Anmelden",
@@ -110,7 +118,7 @@
    },
    {
     "title": "Visumverfahren",
-    "text": "Botschaftsunterlagen, Termin und Sicherheitsbegleitung"
+    "text": "Vollständige Botschaftsunterlagen; den Antrag stellen Sie selbst"
    },
    {
     "title": "Ankunft in Deutschland",
@@ -276,7 +284,7 @@
    },
    {
     "title": "Dokumentation",
-    "text": "Sammlung, Übersetzung, Beglaubigung und Prüfung der Unterlagen."
+    "text": "Dokumentenliste, Sammlung und Prüfung der Unterlagen."
    },
    {
     "title": "Diplomanerkennung",
@@ -284,7 +292,7 @@
    },
    {
     "title": "Visumservice",
-    "text": "Zustimmung der Bundesagentur, Botschaftstermin und Verfolgung des Antrags."
+    "text": "Zustimmung der Bundesagentur, vollständige Botschaftsunterlagen und Verfolgung des Antrags."
    },
    {
     "title": "Sprachvorbereitung",
@@ -444,7 +452,7 @@
    "CONTRACT_SIGNED": "Vertrag wird geprüft",
    "EMBASSY_DOCUMENTS": "Botschaftsunterlagen hochladen",
    "EMBASSY_REVIEW": "Botschaftsunterlagen werden geprüft",
-   "APPOINTMENT_SCHEDULED": "Botschaftstermin vereinbart",
+   "APPOINTMENT_SCHEDULED": "Botschaftstermin erhalten",
    "DECISION_PENDING": "Entscheidung der Botschaft ausstehend",
    "APPROVED": "Visum erteilt",
    "REJECTED": "Visum abgelehnt",
@@ -456,7 +464,7 @@
    "CONTRACT_SENT": "Lesen Sie den Vertrag und unterschreiben Sie ihn unten elektronisch.",
    "CONTRACT_SIGNED": "Ihr unterschriebener Vertrag wird geprüft. Nach der Freigabe beginnt die Botschaftsphase.",
    "EMBASSY_DOCUMENTS": "Laden Sie die für die Botschaft benötigten Dokumente hoch und senden Sie sie zur Prüfung.",
-   "EMBASSY_REVIEW": "Ihre Botschaftsunterlagen werden geprüft. Danach wird ein Botschaftstermin vereinbart.",
+   "EMBASSY_REVIEW": "Ihre Botschaftsunterlagen werden geprüft. Danach erhalten Sie von uns die vollständigen Unterlagen: Den Antrag stellen Sie selbst bei der Botschaft, den Termin vergibt die Botschaft.",
    "APPOINTMENT_SCHEDULED": "Erscheinen Sie pünktlich mit allen Originaldokumenten zum Termin.",
    "DECISION_PENDING": "Ihr Antrag liegt bei der Botschaft. Sobald entschieden ist, werden Sie benachrichtigt.",
    "APPROVED": "Herzlichen Glückwunsch! Unser Manager meldet sich bei Ihnen zu den nächsten Schritten.",
@@ -469,7 +477,7 @@
    "upload": "Datei hochladen",
    "uploading": "Wird hochgeladen...",
    "replace": "Neu hochladen",
-   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · max. 5 MB",
+   "formats": "PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · max. 5 MB",
    "submit": "Zur Prüfung senden",
    "submitConfirm": "Möchten Sie die Dokumente zur Prüfung senden? Während der Prüfung sind keine Änderungen möglich.",
    "missing": "Laden Sie alle Pflichtdokumente hoch",
@@ -538,12 +546,15 @@
    "CONTRACT_SIGNED": "Vertrag unterschrieben",
    "SIGNATURE_REJECTED": "Unterschrift abgelehnt",
    "CONTRACT_CONFIRMED": "Vertrag bestätigt",
-   "APPOINTMENT_SCHEDULED": "Botschaftstermin vereinbart",
+   "APPOINTMENT_SCHEDULED": "Botschaftstermin erhalten",
    "APPOINTMENT_RESCHEDULED": "Botschaftstermin verschoben",
    "LODGED_AT_EMBASSY": "Antrag bei der Botschaft eingereicht",
    "DECISION": "Entscheidung der Botschaft",
    "REOPENED": "Antrag wieder geöffnet",
-   "STAFF_DOCUMENT_UPLOADED": "Datei für Sie hinzugefügt"
+   "STAFF_DOCUMENT_UPLOADED": "Datei für Sie hinzugefügt",
+   "RENEWAL_OPENED": "Antrag zur Verlängerung des Aufenthaltstitels eröffnet",
+   "RENEWAL_CASE_CREATED": "Verlängerungsantrag eröffnet",
+   "FAMILY_REUNION_STARTED": "Familiennachzug gestartet"
   },
   "markAllRead": "Alle als gelesen markieren",
   "noNotifications": "Keine Benachrichtigungen.",
@@ -571,6 +582,7 @@
    "INVALID_TRANSITION": "Diese Aktion ist im aktuellen Schritt nicht möglich. Bitte laden Sie die Seite neu.",
    "UPLOAD_NOT_ALLOWED": "In dieser Phase ist kein Dokumentenupload möglich.",
    "WRONG_PASSWORD": "Das aktuelle Passwort ist falsch.",
+   "INVALID_PHONE": "Bitte die Telefonnummer mit Ländervorwahl eingeben, z. B. +49 151 12345678 oder +994 50 123 45 67.",
    "DELETE_NOT_ALLOWED": "Diese Datei kann nicht gelöscht werden.",
    "UNSUPPORTED_FILE_TYPE": "Dieser Dateityp wird nicht akzeptiert.",
    "FILE_TOO_LARGE": "Die Datei ist zu groß (max. 5 MB)."
@@ -600,6 +612,11 @@
   "skip": "Zum Inhalt springen",
   "toTop": "Nach oben",
   "menu": "Menü",
+  "prev": "Zurück",
+  "next": "Weiter",
+  "mainNav": "Hauptnavigation",
+  "footerNav": "Rechtliches",
+  "statementLink": "Barrierefreiheit",
   "on": "An",
   "off": "Aus",
   "theme": {
@@ -658,32 +675,6 @@
    "contactLink": "Kontaktformular",
    "visualAlerts": "Visuelle Hinweise",
    "visualAlertsHint": "Benachrichtigungen bleiben 10 Sekunden sichtbar und der Bildschirmrand blinkt."
-  },
-  "page": {
-   "title": "Erklärung zur Barrierefreiheit",
-   "lead": "Wir gestalten die Website und das Kundenportal von Triad Vision so, dass alle Menschen sie nutzen können – auch Nutzer mit Seh-, Hör-, Bewegungs- oder kognitiven Einschränkungen.",
-   "goalTitle": "Unser Ziel",
-   "goalText": "Unser Ziel ist die Konformität mit den WCAG 2.1 (Web Content Accessibility Guidelines) auf Stufe AA. Die Website wird regelmäßig geprüft und erkannte Mängel werden behoben.",
-   "measuresTitle": "Unsere Maßnahmen",
-   "measures": [
-    "Vollständige Tastaturbedienung: alle Menüs, Formulare und Dialoge lassen sich mit Tab, Enter und Esc bedienen; ein „Zum Inhalt springen“-Link steht am Anfang jeder Seite.",
-    "Farbkontrast: mindestens 4,5:1 zwischen Text und Hintergrund, zusätzlich ein Hochkontrast- und ein Dunkelmodus.",
-    "Die Textgröße lässt sich auf bis zu 150 % vergrößern; Zeilen- und Zeichenabstand sowie eine gut lesbare Schrift sind wählbar.",
-    "Vorlesemodus: das Element unter dem Mauszeiger bzw. im Fokus und die ganze Seite werden mit der Browserstimme vorgelesen.",
-    "Für Screenreader: semantisches HTML, ARIA-Beschriftungen, Überschriftenhierarchie und Alternativtexte für Bilder.",
-    "Animationen können abgeschaltet werden; die Systemeinstellung „Bewegung reduzieren“ wird automatisch berücksichtigt.",
-    "Alle Informationen liegen als Text vor – es gibt keine Audio- oder Videoinhalte; Unterstützung ist schriftlich verfügbar.",
-    "Die Website ist in 4 Sprachen (Aserbaidschanisch, Deutsch, Englisch, Russisch) verfügbar, das Sprachattribut der Seite ist korrekt gesetzt."
-   ],
-   "limitsTitle": "Bekannte Einschränkungen",
-   "limits": [
-    "Die meisten Browser haben keine Sprachsynthese für Aserbaidschanisch; das Vorlesen nutzt eine türkische oder englische Stimme.",
-    "Einzelne Dokumente von Dritten (PDF) sind möglicherweise nicht vollständig barrierefrei – auf Anfrage senden wir eine Textversion."
-   ],
-   "contactTitle": "Auf ein Problem gestoßen?",
-   "contactText": "Wenn Sie einen Teil der Website nicht nutzen können, schreiben Sie uns – wir antworten so schnell wie möglich und stellen die Information in einem für Sie passenden Format bereit.",
-   "contactCta": "Kontakt aufnehmen",
-   "openWidget": "Barrierefreiheit-Panel öffnen"
   }
  },
  "svc": {
@@ -706,9 +697,9 @@
   "step": "Schritt",
   "process": [
    "Im Erstgespräch lernen wir Beruf, Erfahrung, Sprachniveau und Ziele kennen. Für Unternehmen erstellen wir gemeinsam das Anforderungsprofil. In dieser Phase wird die passende Visumart bestimmt.",
-   "In Ihrem Kundenbereich entsteht eine individuelle Dokumentenliste. Sie laden die Unterlagen online hoch, wir prüfen jedes Dokument und fordern bei Bedarf Korrekturen an. Auch bei Übersetzung und Beglaubigung helfen wir.",
+   "In Ihrem Kundenbereich entsteht eine individuelle Dokumentenliste. Sie laden die Unterlagen online hoch, wir prüfen jedes Dokument und fordern bei Bedarf Korrekturen an. Apostille und beglaubigte Übersetzungen lassen Sie selbst anfertigen; wir sagen Ihnen, für welche Dokumente sie nötig sind.",
    "Wir organisieren das Gespräch mit dem passenden Arbeitgeber. Nach der Einigung wird der Vertrag in Ihren Kundenbereich gestellt und Sie unterschreiben ihn elektronisch am Bildschirm. Das unterschriebene PDF liegt sofort beiden Seiten vor.",
-   "Das Antragspaket für die Botschaft wird erstellt, die Zustimmung der Bundesagentur eingeholt und der Botschaftstermin vereinbart. Wir bereiten Sie auf das Gespräch vor. Bis zur Entscheidung werden Sie über jede Änderung informiert.",
+   "Die Zustimmung der Bundesagentur wird eingeholt, und wir stellen Ihnen die vollständigen Unterlagen zusammen, die die Botschaft verlangt. Den Antrag stellen Sie selbst bei der Botschaft – Termin und Entscheidung kommen von der Botschaft. Wir bereiten Sie auf das Gespräch vor.",
    "Nach Erteilung des Visums planen wir den Flug, holen Sie am Flughafen ab und bringen Sie in Ihre Unterkunft. Wir helfen bei Anmeldung, Bankkonto und Versicherung.",
    "Ab dem ersten Arbeitstag haben Sie und Ihr Arbeitgeber einen festen Ansprechpartner. In den ersten Monaten halten wir regelmäßig Kontakt und lösen Fragen schnell."
   ],
@@ -943,7 +934,7 @@
   "pages": {
    "home": "Startseite",
    "about": "Unternehmen, Mission und Team",
-   "services": "Unterlagen, Übersetzung, Visumservice",
+   "services": "Unterlagen und Visumservice",
    "visas": "Alle Arbeitsvisa für Deutschland",
    "partners": "Unsere Partnerunternehmen in Deutschland",
    "stories": "Erfahrungen unserer Kunden",

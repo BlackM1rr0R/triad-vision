@@ -27,7 +27,7 @@ export const MESSAGE_TEXT: Record<
     idle: 'bir müddətdir sizdən xəbər almırıq. Müraciətinizlə bağlı sualınız və ya çətinliyiniz varsa, zəhmət olmasa bizə yazın — kömək etməyə hazırıq.',
     passport: (d) => `pasportunuzun etibarlılıq müddəti ${d} tarixində bitir. Səfirlik pasportun Almaniyaya planlaşdırılan girişdən sonra ən azı 6 ay etibarlı olmasını tələb edir. Zəhmət olmasa yeni pasport üçün müraciət edin və hazır olduqda onu kabinetinizdə yükləyin.`,
     appointment: (d, p) => `xatırladırıq: səfirlik görüşünüz ${d}${p ? `, ${p}` : ''} tarixindədir. Zəhmət olmasa pasportunuzu və bütün sənədlərin orijinallarını götürün, 15 dəqiqə tez gəlin.`,
-    translation: (doc) => `səfirlik üçün "${doc}" sənədinin alman dilinə təsdiqlənmiş tərcüməsi lazımdır. Zəhmət olmasa tərcüməni kabinetinizdə yükləyin və ya tərcüməni bizdən sifariş edin.`,
+    translation: (doc) => `səfirlik üçün "${doc}" sənədinin alman dilinə təsdiqlənmiş tərcüməsi lazımdır. Tərcüməni andlı tərcüməçidə özünüz etdirin və hazır olduqda kabinetinizdə yükləyin.`,
     thanks: 'Hörmətlə,\nTriad Vision',
   },
   de: {
@@ -37,7 +37,7 @@ export const MESSAGE_TEXT: Record<
     idle: 'wir haben schon eine Weile nichts von Ihnen gehört. Wenn Sie Fragen zu Ihrem Antrag haben oder Hilfe brauchen, schreiben Sie uns bitte – wir helfen Ihnen gerne.',
     passport: (d) => `Ihr Reisepass ist nur bis ${d} gültig. Die Botschaft verlangt, dass der Pass nach der geplanten Einreise noch mindestens 6 Monate gültig ist. Bitte beantragen Sie einen neuen Reisepass und laden Sie ihn hoch, sobald Sie ihn haben.`,
     appointment: (d, p) => `wir erinnern Sie an Ihren Termin bei der Botschaft am ${d}${p ? `, ${p}` : ''}. Bitte bringen Sie Ihren Reisepass und alle Unterlagen im Original mit und seien Sie 15 Minuten früher da.`,
-    translation: (doc) => `für die Botschaft benötigen wir eine beglaubigte deutsche Übersetzung von „${doc}“. Bitte laden Sie die Übersetzung hoch oder beauftragen Sie die Übersetzung bei uns.`,
+    translation: (doc) => `für die Botschaft benötigen wir eine beglaubigte deutsche Übersetzung von „${doc}“. Bitte lassen Sie die Übersetzung selbst bei einem vereidigten Übersetzer anfertigen und laden Sie sie hoch, sobald sie vorliegt.`,
     thanks: 'Mit freundlichen Grüßen\nTriad Vision',
   },
   en: {
@@ -47,7 +47,7 @@ export const MESSAGE_TEXT: Record<
     idle: 'we have not heard from you for a while. If you have any questions about your application or need help, please write to us — we are happy to help.',
     passport: (d) => `your passport is valid only until ${d}. The embassy requires the passport to remain valid for at least 6 months after the planned entry. Please apply for a new passport and upload it as soon as you have it.`,
     appointment: (d, p) => `a reminder of your embassy appointment on ${d}${p ? `, ${p}` : ''}. Please bring your passport and the originals of all documents and arrive 15 minutes early.`,
-    translation: (doc) => `for the embassy we need a certified German translation of "${doc}". Please upload the translation or order it from us.`,
+    translation: (doc) => `for the embassy we need a certified German translation of "${doc}". Please have it done yourself by a sworn translator and upload it as soon as it is ready.`,
     thanks: 'Kind regards,\nTriad Vision',
   },
   ru: {
@@ -57,7 +57,7 @@ export const MESSAGE_TEXT: Record<
     idle: 'мы давно не получали от вас известий. Если у вас есть вопросы по заявлению или нужна помощь, пожалуйста, напишите нам — мы с радостью поможем.',
     passport: (d) => `ваш паспорт действителен только до ${d}. Посольство требует, чтобы паспорт был действителен не менее 6 месяцев после планируемого въезда. Пожалуйста, оформите новый паспорт и загрузите его, как только получите.`,
     appointment: (d, p) => `напоминаем о вашей записи в посольство ${d}${p ? `, ${p}` : ''}. Пожалуйста, возьмите паспорт и оригиналы всех документов и приходите на 15 минут раньше.`,
-    translation: (doc) => `для посольства нужен заверенный перевод на немецкий язык документа «${doc}». Пожалуйста, загрузите перевод или закажите его у нас.`,
+    translation: (doc) => `для посольства нужен заверенный перевод на немецкий язык документа «${doc}». Пожалуйста, оформите перевод самостоятельно у присяжного переводчика и загрузите его, когда он будет готов.`,
     thanks: 'С уважением,\nTriad Vision',
   },
 };

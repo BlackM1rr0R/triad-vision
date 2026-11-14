@@ -203,7 +203,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
   const lp = parseJobLandingPath(path);
   const landing = lp ? findJobLanding(jobs, lp.citySlug, lp.professionSlug) : null;
 
-  const detail = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
+  // A hand-written page under a content section (/jobs/germany) is not a detail slug.
+  const detail = STATIC_PAGES[path] ? null : /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
   if (landing) {
     const lt = jobLandingTexts(landing, lng, jobRegion(landing.city));
     const jl = JL[lng];
@@ -381,7 +382,7 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         break;
       case '/jobs': {
         const landings = jobLandings(jobs);
-        out.push(jobList(200), landings.length ? section(LANDINGS_HEADING[lng], landingLinks(landings.slice(0, 60))) : '', cta);
+        out.push(jobList(200), landings.length ? section(LANDINGS_HEADING[lng], landingLinks(landings.slice(0, 60))) : '', `<p>${link('/jobs/germany', staticLabel('/jobs/germany'))}</p>`, cta);
         break;
       }
       case '/events':

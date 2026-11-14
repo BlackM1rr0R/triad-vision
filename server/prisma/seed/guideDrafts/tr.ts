@@ -185,7 +185,7 @@ Kesin liste, yola ve büyükelçiliğe göre değişir. Genellikle şunlar isten
 - İşe başlayana kadar geçerli sağlık sigortası belgesi
 - İşverenin doldurduğu "Erklärung zum Beschäftigungsverhältnis" (BA için iş tanımı formu)
 
-Azerbaycan nüfus belgeleri (doğum veya evlilik belgeleri) için **apostil ve onaylı tercüme** gerekir. [Belge hizmetimiz](/services/documents) eksiksiz bir dosya hazırlamanıza yardımcı olur.
+Azerbaycan nüfus belgeleri (doğum veya evlilik belgeleri) için **apostil ve onaylı tercüme** gerekir; bunları kendiniz yaptırırsınız. [Belge hizmetimiz](/services/documents) eksiksiz bir dosya hazırlamanıza yardımcı olur.
 
 ## Bakü’deki Alman Büyükelçiliği’nde adım adım
 

@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import {
   BILLING_KEY,
   CURRENCIES,
+  LEGACY_LINE_CATEGORIES,
   LINE_CATEGORIES,
   addDaysIso,
   billingErrText,
@@ -243,7 +244,7 @@ export function InvoiceEditor({ invoice, fixed, onClose }: { invoice: ClientInvo
             <li key={l.key} className="grid gap-2 rounded-xl border border-line p-2.5 sm:grid-cols-[minmax(0,1fr)_11rem_auto]">
               <input className="input" placeholder={t('bill.admin.editor.description')} aria-label={t('bill.admin.editor.description')} maxLength={500} value={l.description} onChange={(e) => setLine(l.key, { description: e.target.value })} />
               <select className="input" aria-label={t('bill.admin.editor.category')} value={l.category} onChange={(e) => setLine(l.key, { category: e.target.value as LineCategory })}>
-                {LINE_CATEGORIES.map((c) => (
+                {LINE_CATEGORIES.filter((c) => !LEGACY_LINE_CATEGORIES.includes(c) || c === l.category).map((c) => (
                   <option key={c} value={c}>
                     {t(`bill.category.${c}`)}
                   </option>

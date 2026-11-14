@@ -98,7 +98,7 @@ export const kochGuide: ProfessionGuide = {
 
 ## Как помогает Triad Vision
 
-Мы проверяем ваши документы, подбираем немецкую профессию-аналог, организуем переводы и подачу в IHK FOSA, а затем ищем работодателя и выстраиваем визовую стратегию — § 18a, § 16d или путь повара национальной кухни. Решение принимает ведомство, но аккуратно подготовленный пакет экономит месяцы. Похожие разборы для других профессий: [электрик](guide:anerkennung-elektroniker). [Запишитесь на консультацию](/booking).
+Мы проверяем ваши документы, подбираем немецкую профессию-аналог, готовим заявление в IHK FOSA (переводы вы оформляете самостоятельно), а затем ищем работодателя и выстраиваем визовую стратегию — § 18a, § 16d или путь повара национальной кухни. Решение принимает ведомство, но аккуратно подготовленный пакет экономит месяцы. Похожие разборы для других профессий: [электрик](guide:anerkennung-elektroniker). [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -224,7 +224,7 @@ Elnur 29 yaşındadır, peşə liseyini "aşpaz" ixtisası üzrə bitirib və al
 
 ## Triad Vision necə kömək edir
 
-Sənədlərinizi yoxlayırıq, alman analoq peşəsini müəyyən edirik, tərcümələri və IHK FOSA-ya müraciəti təşkil edirik, sonra işəgötürən tapıb viza strategiyasını qururuq — § 18a, § 16d və ya milli mətbəx aşpazı yolu. Qərarı qurum verir, amma diqqətlə hazırlanmış paket aylarla vaxt qazandırır. Digər peşələr üzrə oxşar bələdçi: [elektrik](guide:anerkennung-elektroniker). [Konsultasiyaya yazılın](/booking).
+Sənədlərinizi yoxlayırıq, alman analoq peşəsini müəyyən edirik, IHK FOSA-ya müraciəti hazırlayırıq (tərcümələri özünüz etdirirsiniz), sonra işəgötürən tapıb viza strategiyasını qururuq — § 18a, § 16d və ya milli mətbəx aşpazı yolu. Qərarı qurum verir, amma diqqətlə hazırlanmış paket aylarla vaxt qazandırır. Digər peşələr üzrə oxşar bələdçi: [elektrik](guide:anerkennung-elektroniker). [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -350,7 +350,7 @@ Elnur, 29, hat ein Berufslyzeum mit der Fachrichtung Koch abgeschlossen und sech
 
 ## Wie Triad Vision unterstützt
 
-Wir prüfen Unterlagen, bestimmen den Referenzberuf, organisieren Übersetzungen und den Antrag bei der IHK FOSA, vermitteln passende Betriebe und planen den Aufenthaltstitel – § 18a, § 16d oder Spezialitätenkoch. Die Entscheidung trifft die Behörde, aber eine sauber vorbereitete Akte spart Monate. Weitere Berufe: [Elektroniker/in](guide:anerkennung-elektroniker). [Beratung buchen](/booking).
+Wir prüfen Unterlagen, bestimmen den Referenzberuf, bereiten den Antrag bei der IHK FOSA vor (Übersetzungen lassen Sie selbst anfertigen), vermitteln passende Betriebe und planen den Aufenthaltstitel – § 18a, § 16d oder Spezialitätenkoch. Die Entscheidung trifft die Behörde, aber eine sauber vorbereitete Akte spart Monate. Weitere Berufe: [Elektroniker/in](guide:anerkennung-elektroniker). [Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -476,7 +476,7 @@ Elnur, 29, graduated from a vocational lyceum as a cook and worked in Baku resta
 
 ## How Triad Vision helps
 
-We check your documents, identify the reference profession, organise translations and the IHK FOSA application, find an employer and plan the visa route – section 18a, 16d or specialty cook. The authority makes the decision, but a carefully prepared file saves months. Guides for other professions: [electrician](guide:anerkennung-elektroniker). [Book a consultation](/booking).
+We check your documents, identify the reference profession, prepare the IHK FOSA application (you have the translations done yourself), find an employer and plan the visa route – section 18a, 16d or specialty cook. The authority makes the decision, but a carefully prepared file saves months. Guides for other professions: [electrician](guide:anerkennung-elektroniker). [Book a consultation](/booking).
 
 ## Official sources
 

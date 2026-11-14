@@ -57,4 +57,5 @@ import './phoneReminders.js'; // WhatsApp / SMS reminders before embassy appoint
 import './employerArrival.js'; // employer arrival checklist: reminder to the company before the first work day when items are open
 import './staffDigest.js'; // staff morning digest e-mail (08:00-12:00 Baku, once per day, from the own my-work queue; per-user opt-out)
 import './indexNow.js'; // IndexNow: new / changed sitemap URLs pushed to Bing, Yandex & co. every 3 h
+import './germanyJobs.js'; // Germany job search: free Arbeitnow feed refreshed at most hourly (in memory + small file cache)
 import './backupCheck.js'; // weekly backup restore test result (deploy/backup-verify.sh -> Setting ops:backupCheck) -> admin notification + e-mail, stale warning

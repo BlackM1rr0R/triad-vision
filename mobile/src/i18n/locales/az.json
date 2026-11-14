@@ -21,11 +21,19 @@
   "salary": "Maaş kalkulyatoru",
   "anerkennung": "Diplomun tanınması",
   "cities": "Alman şəhərləri",
+  "calculator": "Nə vaxt başlaya bilərəm?",
+  "costCalculator": "Xərc kalkulyatoru",
+  "events": "Tədbirlər",
+  "map": "İşçilərimizin xəritəsi",
+  "referral": "Dostunu gətir",
   "contact": "Əlaqə",
   "more": "Daha çox",
   "cooperation": "Əməkdaşlıq təklifi al",
   "cooperationShort": "Əməkdaşlıq",
   "eligibility": "Viza testi",
+  "guides": "Bələdçilər",
+  "chancenkarte": "İmkan Kartı xal kalkulyatoru",
+  "blueCard": "Mavi Kart maaş yoxlaması",
   "search": "Axtarış",
   "accountShort": "Kabinet",
   "login": "Daxil ol",
@@ -110,7 +118,7 @@
    },
    {
     "title": "Viza prosesi",
-    "text": "Səfirlik sənədləri, görüş və təhlükəsizlik dəstəyi"
+    "text": "Səfirliyin tələb etdiyi tam sənəd paketi; müraciəti özünüz edirsiniz"
    },
    {
     "title": "Almaniyaya gəliş",
@@ -276,7 +284,7 @@
    },
    {
     "title": "Sənədləşmə",
-    "text": "Sənədlərin toplanması, tərcüməsi, notarial təsdiqi və yoxlanması."
+    "text": "Sənəd siyahısı, sənədlərin toplanması və yoxlanması."
    },
    {
     "title": "Diplomun tanınması",
@@ -284,7 +292,7 @@
    },
    {
     "title": "Viza dəstəyi",
-    "text": "Bundesagentur razılığı, səfirlik görüşü və müraciətin izlənməsi."
+    "text": "Bundesagentur razılığı, səfirlik üçün tam sənəd paketi və müraciətin izlənməsi."
    },
    {
     "title": "Dil hazırlığı",
@@ -444,7 +452,7 @@
    "CONTRACT_SIGNED": "Müqavilə yoxlanılır",
    "EMBASSY_DOCUMENTS": "Səfirlik sənədlərinin yüklənməsi",
    "EMBASSY_REVIEW": "Səfirlik sənədləri yoxlanılır",
-   "APPOINTMENT_SCHEDULED": "Səfirlik görüşü təyin edilib",
+   "APPOINTMENT_SCHEDULED": "Səfirlik görüş tarixi bəllidir",
    "DECISION_PENDING": "Səfirliyin qərarı gözlənilir",
    "APPROVED": "Viza təsdiqləndi",
    "REJECTED": "Vizadan imtina",
@@ -456,7 +464,7 @@
    "CONTRACT_SENT": "Müqaviləni oxuyun və aşağıda elektron imzalayın.",
    "CONTRACT_SIGNED": "İmzalı müqaviləniz yoxlanılır. Təsdiqdən sonra səfirlik mərhələsi başlayacaq.",
    "EMBASSY_DOCUMENTS": "Səfirlik üçün tələb olunan sənədləri yükləyin və yoxlamaya göndərin.",
-   "EMBASSY_REVIEW": "Səfirlik sənədləriniz yoxlanılır. Ardınca səfirlik görüşü təyin ediləcək.",
+   "EMBASSY_REVIEW": "Səfirlik sənədləriniz yoxlanılır. Sonra tam sənəd paketini sizə veririk: müraciəti səfirliyə özünüz edirsiniz, görüş vaxtını səfirlik özü bildirir.",
    "APPOINTMENT_SCHEDULED": "Görüşə bütün orijinal sənədlərinizlə vaxtında gəlin.",
    "DECISION_PENDING": "Müraciətiniz səfirlikdədir. Qərar çıxan kimi sizə bildiriş gələcək.",
    "APPROVED": "Təbriklər! Növbəti addımlar üçün menecerimiz sizinlə əlaqə saxlayacaq.",
@@ -469,7 +477,7 @@
    "upload": "Fayl yüklə",
    "uploading": "Yüklənir...",
    "replace": "Yenisini yüklə",
-   "formats": "PDF, JPG, PNG, WEBP, DOC, DOCX · maks. 5 MB",
+   "formats": "PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · maks. 5 MB",
    "submit": "Yoxlamaya göndər",
    "submitConfirm": "Sənədləri yoxlamaya göndərmək istəyirsiniz? Yoxlama zamanı dəyişiklik etmək olmaz.",
    "missing": "Bütün mütləq sənədləri yükləyin",
@@ -538,12 +546,15 @@
    "CONTRACT_SIGNED": "Müqavilə imzalandı",
    "SIGNATURE_REJECTED": "İmza qəbul edilmədi",
    "CONTRACT_CONFIRMED": "Müqavilə təsdiqləndi",
-   "APPOINTMENT_SCHEDULED": "Səfirlik görüşü təyin edildi",
+   "APPOINTMENT_SCHEDULED": "Səfirlik görüş tarixi bəllidir",
    "APPOINTMENT_RESCHEDULED": "Səfirlik görüşünün vaxtı dəyişdi",
    "LODGED_AT_EMBASSY": "Müraciət səfirliyə təqdim edildi",
    "DECISION": "Səfirlik qərarı",
    "REOPENED": "Müraciət yenidən açıldı",
-   "STAFF_DOCUMENT_UPLOADED": "Sizin üçün fayl əlavə edildi"
+   "STAFF_DOCUMENT_UPLOADED": "Sizin üçün fayl əlavə edildi",
+   "RENEWAL_OPENED": "Yaşayış icazəsinin uzadılması üçün müraciət açıldı",
+   "RENEWAL_CASE_CREATED": "Uzatma müraciəti açıldı",
+   "FAMILY_REUNION_STARTED": "Ailənin birləşməsi başladı"
   },
   "markAllRead": "Hamısını oxunmuş et",
   "noNotifications": "Bildiriş yoxdur.",
@@ -571,6 +582,7 @@
    "INVALID_TRANSITION": "Bu əməliyyat cari mərhələdə mümkün deyil. Səhifəni yeniləyin.",
    "UPLOAD_NOT_ALLOWED": "Bu mərhələdə sənəd yükləmək olmaz.",
    "WRONG_PASSWORD": "Cari şifrə yanlışdır.",
+   "INVALID_PHONE": "Telefon nömrəsini ölkə kodu ilə yazın, məsələn +994 50 123 45 67.",
    "DELETE_NOT_ALLOWED": "Bu faylı silmək mümkün deyil.",
    "UNSUPPORTED_FILE_TYPE": "Bu fayl növü qəbul edilmir.",
    "FILE_TOO_LARGE": "Fayl çox böyükdür (maks. 5 MB)."
@@ -600,6 +612,11 @@
   "skip": "Məzmuna keç",
   "toTop": "Yuxarı",
   "menu": "Menyu",
+  "prev": "Əvvəlki",
+  "next": "Növbəti",
+  "mainNav": "Əsas naviqasiya",
+  "footerNav": "Hüquqi məlumat",
+  "statementLink": "Əlçatanlıq bəyanatı",
   "on": "Aktiv",
   "off": "Deaktiv",
   "theme": {
@@ -658,32 +675,6 @@
    "contactLink": "Əlaqə forması",
    "visualAlerts": "Vizual bildirişlər",
    "visualAlertsHint": "Bildirişlər 10 saniyə qalır və ekranın kənarı yanıb-sönür."
-  },
-  "page": {
-   "title": "Əlçatanlıq bəyanatı",
-   "lead": "Triad Vision saytını və müştəri portalını hər kəsin — o cümlədən görmə, eşitmə, hərəkət və idrak məhdudiyyəti olan istifadəçilərin — rahat istifadə edə bilməsi üçün hazırlayırıq.",
-   "goalTitle": "Hədəfimiz",
-   "goalText": "Hədəfimiz WCAG 2.1 (Web Content Accessibility Guidelines) AA səviyyəsinə uyğunluqdur. Sayt mütəmadi yoxlanılır və çatışmazlıqlar tapıldıqca aradan qaldırılır.",
-   "measuresTitle": "Gördüyümüz tədbirlər",
-   "measures": [
-    "Klaviatura ilə tam naviqasiya: bütün menyular, formalar və dialoqlar Tab, Enter və Esc ilə idarə olunur; \"Məzmuna keç\" keçidi hər səhifənin əvvəlindədir.",
-    "Rəng kontrastı: mətn və fon arasında ən azı 4.5:1 nisbət, əlavə olaraq yüksək kontrast və qaranlıq rejim.",
-    "Mətn ölçüsü 150%-ə qədər böyüdülə bilər; sətir və hərf aralığı, oxunaqlı şrift seçimi mövcuddur.",
-    "Səsli oxuma rejimi: kursor altındakı və ya fokusdakı element, eləcə də bütün səhifə brauzerin səsi ilə oxunur.",
-    "Ekran oxuyucuları üçün semantik HTML, ARIA etiketləri, başlıq iyerarxiyası və şəkillər üçün alternativ mətnlər.",
-    "Animasiyaları dayandırmaq mümkündür; əməliyyat sistemində \"hərəkəti azalt\" seçimi avtomatik nəzərə alınır.",
-    "Bütün məlumat mətn şəklindədir — audio və ya video məzmun yoxdur; dəstək yazılı şəkildə mövcuddur.",
-    "Sayt 4 dildə (Azərbaycan, Alman, İngilis, Rus) təqdim olunur və dil atributu səhifədə düzgün göstərilir."
-   ],
-   "limitsTitle": "Məlum məhdudiyyətlər",
-   "limits": [
-    "Əksər brauzerlərdə Azərbaycan dili üçün sintez səsi yoxdur; səsli oxuma türk və ya ingilis səsi ilə işləyir.",
-    "Üçüncü tərəflərdən əldə edilən bəzi sənədlər (PDF) tam əlçatan olmaya bilər — tələb olunarsa mətn variantını göndəririk."
-   ],
-   "contactTitle": "Problemlə rastlaşdınız?",
-   "contactText": "Saytın hər hansı hissəsini istifadə etməkdə çətinlik çəkirsinizsə, bizə yazın — mümkün qədər tez cavab verəcəyik və məlumatı sizə uyğun formatda təqdim edəcəyik.",
-   "contactCta": "Bizimlə əlaqə",
-   "openWidget": "Əlçatanlıq panelini aç"
   }
  },
  "svc": {
@@ -706,9 +697,9 @@
   "step": "Addım",
   "process": [
    "İlk görüşdə peşənizi, təcrübənizi, dil səviyyənizi və məqsədlərinizi öyrənirik. Şirkətlər üçün isə vəzifə profilini birlikdə hazırlayırıq. Bu mərhələdə hansı viza növünün uyğun olduğu müəyyən edilir.",
-   "Kabinetinizdə sizin üçün fərdi sənəd siyahısı yaranır. Sənədləri onlayn yükləyirsiniz, əməkdaşımız hər birini yoxlayır və lazım olduqda düzəliş tələb edir. Tərcümə və notarial təsdiqdə də kömək edirik.",
+   "Kabinetinizdə sizin üçün fərdi sənəd siyahısı yaranır. Sənədləri onlayn yükləyirsiniz, əməkdaşımız hər birini yoxlayır və lazım olduqda düzəliş tələb edir. Apostil və tərcüməni özünüz etdirirsiniz (məs., ASAN xidmətdə və and içmiş tərcüməçidə); hansı sənədlər üçün lazım olduğunu sizə bildiririk.",
    "Uyğun işəgötürənlə görüş təşkil olunur. Razılıq əldə edildikdən sonra müqavilə kabinetinizə göndərilir və siz onu ekranda elektron imzalayırsınız. İmzalı PDF dərhal hər iki tərəfdə olur.",
-   "Səfirlik üçün sənəd paketi hazırlanır, Bundesagentur razılığı alınır və səfirlik görüşü təyin olunur. Görüşdən əvvəl sizi müsahibəyə hazırlayırıq. Qərar çıxana qədər hər dəyişiklik barədə bildiriş alırsınız.",
+   "Bundesagentur razılığı alınır, səfirliyin tələb etdiyi tam sənəd paketini hazırlayıb sizə veririk. Müraciəti səfirliyə özünüz edirsiniz; görüş vaxtını və qərarı səfirlik özü bildirir. Görüşdən əvvəl sizi müsahibəyə hazırlayırıq.",
    "Viza təsdiqləndikdən sonra uçuşu planlaşdırır, hava limanında qarşılayır və yaşayış yerinə yerləşdiririk. Ünvan qeydiyyatı (Anmeldung), bank hesabı və sığortada kömək edirik.",
    "İlk iş günündən etibarən həm siz, həm də işəgötürən üçün əlaqə şəxsimiz olur. İlk aylarda müntəzəm əlaqə saxlayır, yaranan sualları operativ həll edirik."
   ],
@@ -943,7 +934,7 @@
   "pages": {
    "home": "Əsas səhifə",
    "about": "Şirkət, missiya və komanda",
-   "services": "Sənədlər, tərcümə, viza dəstəyi",
+   "services": "Sənədlər və viza dəstəyi",
    "visas": "Bütün Almaniya iş vizaları",
    "partners": "Almaniyadakı tərəfdaş şirkətlər",
    "stories": "Müştərilərimizin təcrübəsi",

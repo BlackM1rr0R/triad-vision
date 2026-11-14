@@ -115,7 +115,7 @@ const copy: SiteCopy<(typeof pagesVisa)['en']> = {
       phases: {
         consult: {
           title: 'Danışmanlık ve belgeler',
-          text: 'Uygunluk kontrolü, belgelerin toplanması ve tercümesi',
+          text: 'Uygunluk kontrolü, belge listesi ve belgelerin toplanması',
         },
         contract: {
           title: 'İşveren ve sözleşme',
@@ -260,11 +260,11 @@ const copy: SiteCopy<(typeof pagesVisa)['en']> = {
         documents: [
           {
             q: 'Belgeleri kendim tercüme edebilir miyim?',
-            a: 'Alman makamları genellikle yeminli tercüman tarafından yapılmış tercüme ister. Kendi tercümeniz kabul edilmeyebilir; bu nedenle bunu önceden kontrol ediyoruz.',
+            a: 'Alman makamları genellikle yeminli tercüman tarafından yapılmış tercüme ister. Kendi tercümeniz kabul edilmeyebilir. Hangi belgelerin tercüme gerektirdiğini önceden söyleriz; tercümeyi kendiniz yaptırırsınız.',
           },
           {
             q: 'Her belgeye apostil gerekir mi?',
-            a: 'Hayır. Bu, belge türüne ve belgeyi alacak makama bağlıdır. Bunu her belge için ayrı ayrı netleştiriyoruz.',
+            a: 'Hayır. Bu, belge türüne ve belgeyi alacak makama bağlıdır. Bunu her belge için ayrı ayrı netleştiriyoruz; apostili kendiniz yaptırırsınız.',
           },
         ],
         recognition: [

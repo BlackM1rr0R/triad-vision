@@ -75,7 +75,7 @@ export const ingenieurGuide: ProfessionGuide = {
 
 ## Как помогает Triad Vision
 
-Мы проверяем вуз и степень в anabin, при необходимости готовим заявку в ZAB, подбираем визовый путь (Голубая карта или § 18b), организуем переводы и подачу в посольство в Баку. Если вам нужно звание «Ingenieur», готовим пакет для палаты вашей земли. Решение принимают ведомства, но аккуратный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
+Мы проверяем вуз и степень в anabin, при необходимости готовим заявку в ZAB, подбираем визовый путь (Голубая карта или § 18b), готовим и передаём вам полный пакет документов для посольства в Баку; заявление вы подаёте сами, переводы тоже оформляете самостоятельно. Если вам нужно звание «Ingenieur», готовим пакет для палаты вашей земли. Решение принимают ведомства, но аккуратный пакет экономит месяцы. [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -179,7 +179,7 @@ Memarsınızsa, ayrıca bələdçini oxuyun: [memar diplomunun tanınması](guid
 
 ## Triad Vision necə kömək edir
 
-Universiteti və dərəcəni anabin-də yoxlayırıq, lazım olduqda ZAB müraciətini hazırlayırıq, viza yolunu seçirik (Mavi Kart və ya § 18b), tərcümələri və Bakıdakı səfirliyə müraciəti təşkil edirik. "Ingenieur" adı lazımdırsa, ştatınızın palatası üçün paket hazırlayırıq. Qərarı qurumlar verir, amma səliqəli paket aylarla vaxt qazandırır. [Konsultasiyaya yazılın](/booking).
+Universiteti və dərəcəni anabin-də yoxlayırıq, lazım olduqda ZAB müraciətini hazırlayırıq, viza yolunu seçirik (Mavi Kart və ya § 18b), Bakıdakı səfirliyin tələb etdiyi tam sənəd paketini hazırlayıb sizə veririk; müraciəti və tərcümələri özünüz edirsiniz. "Ingenieur" adı lazımdırsa, ştatınızın palatası üçün paket hazırlayırıq. Qərarı qurumlar verir, amma səliqəli paket aylarla vaxt qazandırır. [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -283,7 +283,7 @@ Architektinnen und Architekten lesen den eigenen Ratgeber: [Anerkennung als Arch
 
 ## So hilft Triad Vision
 
-Wir prüfen Hochschule und Abschluss in anabin, bereiten bei Bedarf den ZAB-Antrag vor, wählen den passenden Titel (Blaue Karte oder § 18b) und organisieren Übersetzungen und den Visumantrag in Baku. Für die Berufsbezeichnung stellen wir die Unterlagen für die Kammer Ihres Landes zusammen. [Beratung buchen](/booking).
+Wir prüfen Hochschule und Abschluss in anabin, bereiten bei Bedarf den ZAB-Antrag vor, wählen den passenden Titel (Blaue Karte oder § 18b) und stellen Ihnen die vollständigen Visumunterlagen für die Botschaft in Baku zusammen; den Antrag stellen Sie selbst, Übersetzungen lassen Sie selbst anfertigen. Für die Berufsbezeichnung stellen wir die Unterlagen für die Kammer Ihres Landes zusammen. [Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -387,7 +387,7 @@ Architects should read their own guide: [architect recognition in Germany](guide
 
 ## How Triad Vision helps
 
-We check your university and degree in anabin, prepare the ZAB application if needed, choose the right permit (Blue Card or section 18b) and arrange translations and your visa application in Baku. If you need the title, we prepare the file for your state's chamber. [Book a consultation](/booking).
+We check your university and degree in anabin, prepare the ZAB application if needed, choose the right permit (Blue Card or section 18b) and prepare the complete set of visa documents the embassy in Baku requires; you apply there yourself and have the translations done yourself. If you need the title, we prepare the file for your state's chamber. [Book a consultation](/booking).
 
 ## Official sources
 

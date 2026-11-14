@@ -20,14 +20,14 @@ const EXAMPLES: Example[] = [
   {
     key: 'contract-signed-embassy-task',
     build: (l) => ({
-      name: pick(l, t4('Müqavilə imzalandı → səfirlik görüşü tapşırığı', 'Vertrag unterschrieben → Aufgabe Botschaftstermin', 'Contract signed → embassy appointment task', 'Договор подписан → задача «запись в посольство»')),
+      name: pick(l, t4('Müqavilə imzalandı → səfirlik sənəd paketi tapşırığı', 'Vertrag unterschrieben → Aufgabe Botschaftsunterlagen', 'Contract signed → embassy document set task', 'Договор подписан → задача «пакет документов для посольства»')),
       description: pick(l, t4('Müraciətin sahibinə 2 gün müddətli tapşırıq.', 'Aufgabe für den Sachbearbeiter, fällig in 2 Tagen.', 'Task for the case owner, due in 2 days.', 'Задача ответственному сотруднику со сроком 2 дня.')),
       trigger: { type: 'CONTRACT_SIGNED' },
       conditions: [],
       actions: [
         {
           type: 'CREATE_TASK',
-          title: pick(l, t4('{{case.number}}: {{client.fullName}} üçün səfirlik görüşü təyin edin', '{{case.number}}: Botschaftstermin für {{client.fullName}} buchen', '{{case.number}}: book the embassy appointment for {{client.fullName}}', '{{case.number}}: записать {{client.fullName}} в посольство')),
+          title: pick(l, t4('{{case.number}}: {{client.fullName}} üçün səfirlik sənəd paketini hazırlayın', '{{case.number}}: Botschaftsunterlagen für {{client.fullName}} zusammenstellen', '{{case.number}}: prepare the embassy document set for {{client.fullName}}', '{{case.number}}: подготовить пакет документов для посольства для {{client.fullName}}')),
           description: '{{case.link}}',
           assignee: { kind: 'CASE_OWNER' },
           dueInDays: 2,

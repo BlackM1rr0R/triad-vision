@@ -197,7 +197,7 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
       saved: 'İşaretleriniz bu tarayıcıda kaydedilir.',
       s2Text: 'Elinizde olanları işaretleyin. Makam daha fazlasını isteyebilir — başvurmadan önce tam listeyi kontrol edin.',
       s3Text: 'Yabancı dildeki tüm belgeler yeminli bir tercüman tarafından Almancaya çevrilmelidir. Çoğu zaman onaylı suretler, bazen apostil istenir. Asılları postayla göndermeyin.',
-      s3Link: 'Çeviri siparişi verin',
+      s3Link: 'Belge listenizi açın',
       s4Text: 'Yetkili makam: {{authority}}. Tam birimi (çalışacağınız eyalete göre) Anerkennungs-Finder’da bulun. Genellikle yurt dışından, giderek daha sık çevrim içi başvurabilirsiniz. Ücreti makam talep ettiğinde ödeyin.',
       s4Driving: 'Sürücü belgesi dönüştürme başvurusunu Almanya’da oturduğunuz yerdeki sürücü belgesi dairesine (Fahrerlaubnisbehörde) yapın. Code 95 onaylı bir eğitim merkezi ve IHK sınavı ile alınır.',
       s4Finder: 'Anerkennungs-Finder’ı aç',
@@ -230,8 +230,8 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
     },
     tip: {
       title: '{{brand}}’dan ipucu',
-      text: 'En çok zaman eksik belgeler yüzünden kaybedilir. Diplomalarınızı ve belgelerinizi çeviriyor, apostil ve onay işlemlerini ayarlıyor ve başvuruyu sizinle birlikte hazırlıyoruz.',
-      translations: 'Çeviri siparişleri',
+      text: 'En çok zaman eksik belgeler yüzünden kaybedilir. Belgelerinizi kontrol ediyor ve başvuruyu sizinle birlikte hazırlıyoruz; apostil ve yeminli tercümeyi kendiniz yaptırırsınız.',
+      translations: 'Belge listem',
       booking: 'Danışmanlık randevusu al',
     },
     faq: {
@@ -267,9 +267,9 @@ const copy: SiteCopy<(typeof pagesTools)['en']> = {
     disclaimer: 'Bu rehber genel bilgi niteliğindedir, hukuki danışmanlık değildir. Bağlayıcı yanıtları yalnızca yetkili makam verebilir.',
     cta: {
       title: 'Denklik sürecini birlikte yürütelim',
-      text: 'Belgelerinizi kontrol ediyor, çevirileri organize ediyor ve başvuruyu doğru makama sunmanıza yardımcı oluyoruz.',
+      text: 'Belgelerinizi kontrol ediyor ve başvuruyu doğru makama sunmanıza yardımcı oluyoruz; tercümeleri kendiniz yaptırırsınız.',
       primary: 'Danışmanlık randevusu al',
-      secondary: 'Çeviri siparişi verin',
+      secondary: 'Belge listenizi açın',
     },
   },
 };

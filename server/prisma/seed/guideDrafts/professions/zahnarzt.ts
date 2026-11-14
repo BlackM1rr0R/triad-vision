@@ -75,7 +75,7 @@ Kenntnisprüfung для стоматологов значительно объё
 
 ## Как помогает Triad Vision
 
-Мы помогаем выбрать землю, подготовить документы, переводы и апостиль, найти курсы немецкого и клинику, которая поддержит вас на время экзаменов. Решение принимает ведомство, но хорошо собранное дело экономит месяцы. [Запишитесь на консультацию](/booking).
+Мы помогаем выбрать землю, подготовить документы (переводы и апостиль вы оформляете самостоятельно), найти курсы немецкого и клинику, которая поддержит вас на время экзаменов. Решение принимает ведомство, но хорошо собранное дело экономит месяцы. [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -178,7 +178,7 @@ Sürətləndirilmiş mütəxəssis proseduru (§ 81a) 411 avro, milli viza 75 av
 
 ## Triad Vision necə kömək edir?
 
-Ştatı seçməyə, sənədləri, tərcümə və apostili hazırlamağa, alman dili kurslarını və imtahanlar dövründə sizi dəstəkləyəcək klinikanı tapmağa kömək edirik. Qərarı qurum verir, lakin yaxşı hazırlanmış sənəd paketi aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
+Ştatı seçməyə, sənədləri hazırlamağa (tərcümə və apostili özünüz etdirirsiniz), alman dili kurslarını və imtahanlar dövründə sizi dəstəkləyəcək klinikanı tapmağa kömək edirik. Qərarı qurum verir, lakin yaxşı hazırlanmış sənəd paketi aylarla vaxta qənaət edir. [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -281,7 +281,7 @@ Das beschleunigte Fachkräfteverfahren (§ 81a) kostet 411 €, das nationale Vi
 
 ## So unterstützt Triad Vision
 
-Wir helfen bei der Wahl des Bundeslands, bei Unterlagen, Übersetzungen und Apostille, bei Sprachkursen und der Suche nach einer Praxis, die Sie in der Prüfungsphase begleitet. Die Entscheidung trifft die Behörde – ein vollständiges Dossier spart aber Monate. [Jetzt Beratung buchen](/booking).
+Wir helfen bei der Wahl des Bundeslands, bei Unterlagen (Übersetzungen und Apostille lassen Sie selbst anfertigen), bei Sprachkursen und der Suche nach einer Praxis, die Sie in der Prüfungsphase begleitet. Die Entscheidung trifft die Behörde – ein vollständiges Dossier spart aber Monate. [Jetzt Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -384,7 +384,7 @@ The accelerated skilled worker procedure (section 81a) costs €411 and the nati
 
 ## How Triad Vision helps
 
-We help you choose the state, prepare documents, translations and apostilles, and find German courses and a practice that supports you through the exam phase. The authority makes the decision, but a complete file saves months. [Book a consultation](/booking).
+We help you choose the state, prepare documents (you have translations and apostilles done yourself), and find German courses and a practice that supports you through the exam phase. The authority makes the decision, but a complete file saves months. [Book a consultation](/booking).
 
 ## Official sources
 

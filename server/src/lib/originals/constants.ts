@@ -36,10 +36,12 @@ export const ACTION_RULES: Record<OriginalAction, ActionRule> = {
   RECEIVED: { from: ['RETURNED_TO_CLIENT'], to: 'IN_OFFICE' },
   // Moved inside the office (safe, shelf).
   STORED: { from: ['IN_OFFICE'], to: 'IN_OFFICE', needs: ['location'] },
-  // Handed to a translator, an authority or a colleague.
+  // Handed to an authority, a colleague or the client's own representative.
   GIVEN_OUT: { from: ['IN_OFFICE'], to: 'GIVEN_OUT', needs: ['holder'] },
   RETURNED_TO_OFFICE: { from: ['GIVEN_OUT', 'IN_TRANSIT', 'DELIVERED'], to: 'IN_OFFICE' },
-  SENT_TO_APOSTILLE: { from: ['IN_OFFICE', 'GIVEN_OUT'], to: 'AT_APOSTILLE' },
+  // Triad Vision does not do apostilles (the client has them done themselves): no status allows sending an original
+  // to the apostille any more. AT_APOSTILLE / APOSTILLE_BACK stay only so originals recorded there earlier can come back.
+  SENT_TO_APOSTILLE: { from: [], to: 'AT_APOSTILLE' },
   APOSTILLE_BACK: { from: ['AT_APOSTILLE'], to: 'IN_OFFICE' },
   SENT_BY_COURIER: { from: ['IN_OFFICE'], to: 'IN_TRANSIT', needs: ['carrier'] },
   DELIVERED: { from: ['IN_TRANSIT'], to: 'DELIVERED' },

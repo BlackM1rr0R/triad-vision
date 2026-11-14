@@ -432,7 +432,7 @@ describe('notification templates', () => {
     expect(res.types.length).toBe(15);
     const appt = res.types.find((t: { type: string }) => t.type === 'APPOINTMENT_SCHEDULED');
     expect(appt.placeholders).toEqual(['number', 'firstName', 'date', 'place', 'note']);
-    expect(appt.locales.de.default.title).toBe('Botschaftstermin vereinbart');
+    expect(appt.locales.de.default.title).toBe('Ihr Botschaftstermin');
     expect(appt.locales.de.override).toBeNull();
     expect(res.samples.az.number).toBe('TV-2026-0042');
   });

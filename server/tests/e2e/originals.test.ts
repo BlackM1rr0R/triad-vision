@@ -51,9 +51,10 @@ describe('originals register', () => {
     expect((await move(staff.agent, o.id, { action: 'DELIVERED' })).status).toBe(409);
     expect((await move(staff.agent, o.id, { action: 'APOSTILLE_BACK' })).status).toBe(409);
 
-    let r = expectStatus(await move(staff.agent, o.id, { action: 'SENT_TO_APOSTILLE', holder: 'ASAN Xidmət' }), 200).body;
-    expect(r.original.status).toBe('AT_APOSTILLE');
-    r = expectStatus(await move(staff.agent, o.id, { action: 'APOSTILLE_BACK' }), 200).body;
+    // We do not do apostilles: sending to the apostille is refused; an original recorded there earlier can come back.
+    expect((await move(staff.agent, o.id, { action: 'SENT_TO_APOSTILLE', holder: 'ASAN Xidmət' })).status).toBe(409);
+    await prisma.originalDocument.update({ where: { id: o.id }, data: { status: 'AT_APOSTILLE' } });
+    let r = expectStatus(await move(staff.agent, o.id, { action: 'APOSTILLE_BACK' }), 200).body;
     expect(r.original.status).toBe('IN_OFFICE');
     expect((await move(staff.agent, o.id, { action: 'SENT_BY_COURIER' })).status).toBe(400);
     r = expectStatus(await move(staff.agent, o.id, { action: 'SENT_BY_COURIER', carrier: 'DHL', trackingNo: '1234567890' }), 200).body;
@@ -67,7 +68,7 @@ describe('originals register', () => {
     expect(r.original.status).toBe('IN_OFFICE');
     expect(r.original.location).toBe('Seyf B · rəf 2');
     expect(r.original.events.map((e: { action: string }) => e.action)).toEqual([
-      'RETURNED_TO_OFFICE', 'DELIVERED', 'SENT_BY_COURIER', 'APOSTILLE_BACK', 'SENT_TO_APOSTILLE', 'STORED', 'RECEIVED',
+      'RETURNED_TO_OFFICE', 'DELIVERED', 'SENT_BY_COURIER', 'APOSTILLE_BACK', 'STORED', 'RECEIVED',
     ]);
 
     const list = expectStatus(await staff.agent.get(`/api/originals/cases/${c.id}`), 200).body.items;
@@ -164,7 +165,9 @@ describe('originals register', () => {
     const b = await add(staff.agent, c.id, { title: 'Diplom', kind: 'DIPLOMA' });
     const d = await add(staff.agent, c.id, { title: 'Sertifikat', kind: 'CERTIFICATE' });
     expectStatus(await move(staff.agent, a.id, { action: 'GIVEN_OUT', holder: 'Notarius', act: false }), 200);
-    expectStatus(await move(staff.agent, b.id, { action: 'SENT_TO_APOSTILLE' }), 200);
+    // b: an original recorded "at the apostille" before the service was dropped (historical status)
+    await prisma.originalDocument.update({ where: { id: b.id }, data: { status: 'AT_APOSTILLE' } });
+    await prisma.originalEvent.create({ data: { originalId: b.id, action: 'SENT_TO_APOSTILLE', status: 'AT_APOSTILLE' } });
     expectStatus(await move(staff.agent, d.id, { action: 'SENT_BY_COURIER', carrier: 'UPS', trackingNo: '1Z' }), 200);
     // a: given out 8 days ago (overdue); b: at apostille 10 days (not yet); d: in transit 11 days (overdue)
     const age = async (id: string, days: number) => {

@@ -5,7 +5,7 @@ const az = {
   originals: {
     page: {
       title: 'Orijinal sənədlər',
-      subtitle: 'Ofisdə saxlanılan, təhvil verilən, apostildə və kuryerdə olan orijinallar — hamısı bir yerdə.',
+      subtitle: 'Ofisdə saxlanılan, təhvil verilən və kuryerdə olan orijinallar — hamısı bir yerdə.',
       search: 'Axtarış: müştəri, müraciət, sənəd, izləmə nömrəsi',
       allStatuses: 'Bütün statuslar',
       overdueOnly: 'Yalnız gecikənlər',
@@ -42,7 +42,7 @@ const az = {
       location: 'Saxlanc yeri',
       locationPlaceholder: 'məs. Seyf A · rəf 3',
       holder: 'Kimə / harada',
-      holderPlaceholder: 'Tərcüməçi, qurum, əməkdaş…',
+      holderPlaceholder: 'Qurum, əməkdaş…',
       carrier: 'Kuryer',
       trackingNo: 'İzləmə nömrəsi',
       condition: 'Vəziyyət barədə qeyd (aktda)',
@@ -131,7 +131,7 @@ const de: Copy = {
   originals: {
     page: {
       title: 'Originaldokumente',
-      subtitle: 'Originale im Büro, ausgehändigt, bei der Apostille oder beim Kurier — alles an einem Ort.',
+      subtitle: 'Originale im Büro, ausgehändigt oder beim Kurier — alles an einem Ort.',
       search: 'Suche: Kunde, Antrag, Dokument, Sendungsnummer',
       allStatuses: 'Alle Status',
       overdueOnly: 'Nur überfällige',
@@ -168,7 +168,7 @@ const de: Copy = {
       location: 'Ablageort',
       locationPlaceholder: 'z. B. Tresor A · Fach 3',
       holder: 'An wen / wohin',
-      holderPlaceholder: 'Übersetzer(in), Behörde, Kollege…',
+      holderPlaceholder: 'Behörde, Kollege…',
       carrier: 'Kurier',
       trackingNo: 'Sendungsnummer',
       condition: 'Zustand (im Protokoll)',
@@ -255,7 +255,7 @@ const en: Copy = {
   originals: {
     page: {
       title: 'Original documents',
-      subtitle: 'Originals in the office, handed out, at the apostille or with a courier — all in one place.',
+      subtitle: 'Originals in the office, handed out or with a courier — all in one place.',
       search: 'Search: client, case, document, tracking number',
       allStatuses: 'All statuses',
       overdueOnly: 'Overdue only',
@@ -292,7 +292,7 @@ const en: Copy = {
       location: 'Storage location',
       locationPlaceholder: 'e.g. Safe A · shelf 3',
       holder: 'To whom / where',
-      holderPlaceholder: 'Translator, authority, colleague…',
+      holderPlaceholder: 'Authority, colleague…',
       carrier: 'Courier',
       trackingNo: 'Tracking number',
       condition: 'Condition (in the record)',
@@ -379,7 +379,7 @@ const ru: Copy = {
   originals: {
     page: {
       title: 'Оригиналы документов',
-      subtitle: 'Оригиналы в офисе, выданные, на апостиле или у курьера — всё в одном месте.',
+      subtitle: 'Оригиналы в офисе, выданные или у курьера — всё в одном месте.',
       search: 'Поиск: клиент, заявка, документ, трек-номер',
       allStatuses: 'Все статусы',
       overdueOnly: 'Только просроченные',
@@ -416,7 +416,7 @@ const ru: Copy = {
       location: 'Место хранения',
       locationPlaceholder: 'напр. Сейф A · полка 3',
       holder: 'Кому / куда',
-      holderPlaceholder: 'Переводчик, ведомство, коллега…',
+      holderPlaceholder: 'Ведомство, коллега…',
       carrier: 'Курьер',
       trackingNo: 'Трек-номер',
       condition: 'Состояние (в акте)',

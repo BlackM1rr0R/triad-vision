@@ -30,7 +30,7 @@ const copy: SiteCopy<(typeof pagesCompany)['en']> = {
       legend: { full: 'Tamamen kapsanır', partial: 'Kısmen', none: 'Dahil değil / size kalır' },
       rows: [
         { label: 'İşveren ve iş ilanı', values: ['Doğrulanmış Alman partner şirketler', 'İlanları kendiniz ararsınız', 'Çoğu zaman bir aracı zinciri'] },
-        { label: 'Belgeler ve tercüme', values: ['Kontrol listesi, inceleme ve tercüme bizden', 'Gereklilikleri kendiniz araştırırsınız', 'Genellikle sadece bir liste'] },
+        { label: 'Belgeler', values: ['Kontrol listesi ve inceleme bizden', 'Gereklilikleri kendiniz araştırırsınız', 'Genellikle sadece bir liste'] },
         { label: 'Mesleki denklik', values: ['Adım adım rehberlik', 'Yetkili kurumu kendiniz bulursunuz', 'Genellikle dahil değil'] },
         { label: 'Federal İş Ajansı ve büyükelçilik', values: ['İşverenle birlikte hazırlanan eksiksiz dosya', 'Yüksek hata ve ek belge talebi riski', 'Kısmi destek'] },
         { label: 'Sürecin şeffaflığı', values: ['Online hesapta durum ve mesajlar', 'E-postalar ve bekleyiş', 'Arayıp sormanız gerekir'] },
@@ -52,8 +52,8 @@ const copy: SiteCopy<(typeof pagesCompany)['en']> = {
       indicative: 'Tahmini sürelerdir, garanti değildir.',
       stages: [
         { title: 'Tanışma ve seçim', candidate: 'Ücretsiz danışmanlık; özgeçmiş, deneyim ve dil seviyesinin değerlendirilmesi.', company: 'İş profili, gereklilikler ve çalışma koşulları belirlenir.', we: 'Adayları ön elemeden geçirip kısa liste hazırlıyoruz.' },
-        { title: 'Mülakat ve teklif', candidate: 'Şirketle görüntülü mülakat, gerekirse uygulamalı sınav.', company: 'Adayı seçer, teklif ve sözleşmeyi hazırlar.', we: 'Görüşmeleri planlıyor, tercümanlık yapıyor ve koşulları iki tarafa da açıklıyoruz.' },
-        { title: 'Belgeler ve denklik', candidate: 'Diploma, sertifika, ehliyet ve referansları toplar.', company: 'Denklik için gereken onay ve bilgileri sağlar.', we: 'Tercüme, onay işlemleri ve denklik başvurusunu üstleniyoruz.' },
+        { title: 'Mülakat ve teklif', candidate: 'Şirketle görüntülü mülakat, gerekirse uygulamalı sınav.', company: 'Adayı seçer, teklif ve sözleşmeyi hazırlar.', we: 'Görüşmeleri planlıyor ve koşulları iki tarafa da açıkça anlatıyoruz.' },
+        { title: 'Belgeler ve denklik', candidate: 'Diploma, sertifika, ehliyet ve referansları toplar.', company: 'Denklik için gereken onay ve bilgileri sağlar.', we: 'Denklik başvurusuna eşlik ediyoruz; apostil ve tercümeyi aday kendisi yaptırır.' },
         { title: 'Federal İş Ajansı onayı', candidate: 'Ek soruları yanıtlar ve Almanca derslerine devam eder.', company: 'İş tanımını (Stellenbeschreibung) onaylar.', we: 'Dosyayı hazırlıyor ve ön onayı (Vorabzustimmung) takip ediyoruz.' },
         { title: 'Büyükelçilik ve vize', candidate: 'Büyükelçilik randevusuna gider ve biyometrik verilerini verir.', company: 'Hızlandırılmış prosedür (§81a) kullanılıyorsa vekâlet verir.', we: 'Vize dosyasını kontrol ediyor, randevuya hazırlıyor ve kararı takip ediyoruz.' },
         { title: 'Yolculuk ve varış', candidate: 'Bilet, ilk konaklama ve adres kaydı (Anmeldung).', company: 'İlk iş gününü ve oryantasyonu planlar.', we: 'Karşılama, kayıt, banka hesabı ve sigortada yardımcı oluyoruz.' },
@@ -66,7 +66,7 @@ const copy: SiteCopy<(typeof pagesCompany)['en']> = {
       subtitle: 'Her görevin sorumlu bir birimi var. Bakü’de doğrudan adaylarla, Almanya’da doğrudan işverenlerle çalışıyoruz.',
       items: [
         { title: 'Aday ilişkileri ve seçim', place: 'Bakü', text: 'Başvuruların alınması, danışmanlık, mülakatlar ve yetkinlik kontrolleri.', tasks: ['İlk danışmanlık', 'Yetkinlik ve dil kontrolü', 'Kısa liste'] },
-        { title: 'Belgeler ve vize', place: 'Bakü', text: 'Belge kontrol listeleri, tercümeler, büyükelçilik dosyası ve randevu hazırlığı.', tasks: ['Tercüme ve onay', 'Büyükelçilik dosyası', 'Randevu hazırlığı'] },
+        { title: 'Belgeler ve vize', place: 'Bakü', text: 'Belge kontrol listeleri, büyükelçilik için eksiksiz belge seti ve randevu hazırlığı; başvuruyu aday kendisi yapar.', tasks: ['Belge kontrolü', 'Büyükelçilik belge seti', 'Randevu hazırlığı'] },
         { title: 'Denklik ve uyumluluk', place: 'Bakü · Almanya', text: 'Denklik, Federal İş Ajansı gereklilikleri ve yasal çalışma koşulları.', tasks: ['Denklik', 'Ön onay', 'Sözleşme incelemesi'] },
         { title: 'İşveren ilişkileri', place: 'Almanya', text: 'Alman şirketleriyle ihtiyaç analizi, iş profilleri ve mülakatlar.', tasks: ['İhtiyaç analizi', 'İş profili', 'Mülakat planlaması'] },
         { title: 'Varış ve entegrasyon', place: 'Almanya', text: 'İlk aylarda karşılama, kayıt, banka, sigorta ve uyum.', tasks: ['Kayıt', 'Banka ve sigorta', 'İlk aylarda destek'] },
@@ -241,9 +241,9 @@ const copy: SiteCopy<(typeof pagesCompany)['en']> = {
       items: [
         { title: 'İhtiyaç analizi', text: 'Pozisyonu, kişi sayısını, başlangıç tarihini ve çalışma koşullarını birlikte belirliyoruz.', deliverable: 'İş profili ve takvim' },
         { title: 'Federal İş Ajansı için iş tanımı', text: 'Stellenbeschreibung’u ajansın formatında hazırlıyoruz — siz inceleyip onaylıyorsunuz.', deliverable: 'Sunuma hazır iş tanımı' },
-        { title: 'Seçim ve mülakatlar', text: 'Ön elemeden geçmiş adaylarla görüntülü mülakatlar; tercümanlık ve testleri biz üstleniyoruz.', deliverable: 'Kısa liste ve mülakat notları' },
+        { title: 'Seçim ve mülakatlar', text: 'Ön elemeden geçmiş adaylarla görüntülü mülakatlar; organizasyonu ve testleri biz üstleniyoruz.', deliverable: 'Kısa liste ve mülakat notları' },
         { title: 'İş sözleşmesi', text: 'İmzadan önce sözleşmenin vize gerekliliklerini karşıladığını kontrol ediyoruz.', deliverable: 'Vizeye uygun sözleşme' },
-        { title: 'Ön onay veya §81a', text: 'Ajansın onayını veya hızlandırılmış nitelikli işçi prosedürünü takip ediyoruz.', deliverable: 'Onay ve büyükelçilik randevusu' },
+        { title: 'Ön onay veya §81a', text: 'Ajansın onayını veya hızlandırılmış nitelikli işçi prosedürünü takip ediyoruz.', deliverable: 'Onay ve büyükelçilik için eksiksiz belge seti' },
         { title: 'Varış', text: 'Yolculuk, karşılama, kayıt, banka ve sigorta — ilk güne hazır.', deliverable: 'Kaydı yapılmış yeni çalışan' },
         { title: 'Oryantasyon ve takip', text: 'İlk aylarda sizinle ve çalışanla düzenli iletişimde kalıyoruz.', deliverable: 'Geri bildirim ve yeni ihtiyaçlar' },
       ],

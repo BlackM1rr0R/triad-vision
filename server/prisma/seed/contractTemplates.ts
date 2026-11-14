@@ -131,7 +131,7 @@ Triad Vision unterstützt den/die Auftraggeber/in bei der Vorbereitung seines/ih
 
 ## § 2 Leistungen von Triad Vision
 - Beratung zu den Voraussetzungen und dem Ablauf des Verfahrens
-- Prüfung und Zusammenstellung der Unterlagen
+- Prüfung und Zusammenstellung der Unterlagen, die die Auslandsvertretung verlangt; den Visumantrag stellt der/die Auftraggeber/in selbst
 - Unterstützung bei der Arbeitgeber- bzw. Ausbildungsplatzsuche, soweit vereinbart
 - Vorbereitung auf den Termin bei der Auslandsvertretung
 Triad Vision schuldet keinen bestimmten Erfolg; über die Erteilung des Visums entscheiden ausschließlich die zuständigen Behörden.

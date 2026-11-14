@@ -4,7 +4,7 @@ const az = {
   prep: {
     calendar: {
       title: 'Telefonumun təqviminə əlavə et',
-      intro: 'Səfirlik görüşü, iş müsahibələri, uçuşunuz, tərcümələrin hazır olma tarixi və imzalamaq lazım olan sənədlər telefonunuzun təqvimində avtomatik görünəcək. Tarix dəyişsə, təqvim özü yenilənir.',
+      intro: 'Səfirlik görüşünüz, iş müsahibələri, uçuşunuz və imzalamaq lazım olan sənədlər telefonunuzun təqvimində avtomatik görünəcək. Tarix dəyişsə, təqvim özü yenilənir.',
       off: 'Təqvim linki hələ yaradılmayıb.',
       enable: 'Aktivləşdir',
       linkLabel: 'Şəxsi təqvim linkiniz',
@@ -114,7 +114,7 @@ const de: typeof az = {
   prep: {
     calendar: {
       title: 'Zum Handy-Kalender hinzufügen',
-      intro: 'Botschaftstermin, Vorstellungsgespräche, Ihr Flug, Fristen für Übersetzungen und Dokumente zum Unterschreiben erscheinen automatisch im Kalender Ihres Handys. Ändert sich ein Termin, aktualisiert sich der Kalender von selbst.',
+      intro: 'Ihr Botschaftstermin, Vorstellungsgespräche, Ihr Flug und Dokumente zum Unterschreiben erscheinen automatisch im Kalender Ihres Handys. Ändert sich ein Termin, aktualisiert sich der Kalender von selbst.',
       off: 'Es gibt noch keinen Kalender-Link.',
       enable: 'Aktivieren',
       linkLabel: 'Ihr persönlicher Kalender-Link',
@@ -224,7 +224,7 @@ const en: typeof az = {
   prep: {
     calendar: {
       title: 'Add to my phone calendar',
-      intro: 'Your embassy appointment, job interviews, your flight, translation due dates and documents waiting for your signature appear automatically in your phone’s calendar. If a date changes, the calendar updates itself.',
+      intro: 'Your embassy appointment, job interviews, your flight and documents waiting for your signature appear automatically in your phone’s calendar. If a date changes, the calendar updates itself.',
       off: 'No calendar link yet.',
       enable: 'Enable',
       linkLabel: 'Your personal calendar link',
@@ -334,7 +334,7 @@ const ru: typeof az = {
   prep: {
     calendar: {
       title: 'Добавить в календарь телефона',
-      intro: 'Встреча в посольстве, собеседования, ваш перелёт, сроки переводов и документы на подпись автоматически появятся в календаре телефона. Если дата изменится, календарь обновится сам.',
+      intro: 'Дата приёма в посольстве, собеседования, ваш перелёт и документы на подпись автоматически появятся в календаре телефона. Если дата изменится, календарь обновится сам.',
       off: 'Ссылка на календарь ещё не создана.',
       enable: 'Включить',
       linkLabel: 'Ваша личная ссылка на календарь',

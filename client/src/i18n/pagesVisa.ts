@@ -118,7 +118,7 @@ const az = {
       phases: {
         consult: {
           title: 'Məsləhət və sənədlər',
-          text: 'Uyğunluğun yoxlanılması, sənədlərin toplanması və tərcüməsi',
+          text: 'Uyğunluğun yoxlanılması, sənəd siyahısı və sənədlərin toplanması',
         },
         contract: {
           title: 'İşəgötürən və müqavilə',
@@ -257,11 +257,11 @@ const az = {
         documents: [
           {
             q: 'Tərcüməni özüm edə bilərəmmi?',
-            a: 'Alman orqanları adətən and içmiş (vereidigt) tərcüməçinin tərcüməsini tələb edir. Öz tərcüməniz qəbul olunmaya bilər, ona görə bunu əvvəlcədən yoxlayırıq.',
+            a: 'Alman orqanları adətən and içmiş (vereidigt) tərcüməçinin tərcüməsini tələb edir. Öz tərcüməniz qəbul olunmaya bilər. Hansı sənədlərin tərcüməsi lazım olduğunu əvvəlcədən deyirik; tərcüməni özünüz etdirirsiniz.',
           },
           {
             q: 'Apostil hər sənəd üçün lazımdırmı?',
-            a: 'Xeyr. Bu, sənədin növündən və onu qəbul edən orqandan asılıdır. Hər sənəd üçün ayrıca dəqiqləşdiririk.',
+            a: 'Xeyr. Bu, sənədin növündən və onu qəbul edən orqandan asılıdır. Hər sənəd üçün ayrıca dəqiqləşdiririk; apostili özünüz etdirirsiniz (məs., ASAN xidmətdə).',
           },
         ],
         recognition: [
@@ -615,7 +615,7 @@ const de: typeof az = {
       phases: {
         consult: {
           title: 'Beratung & Unterlagen',
-          text: 'Eignungsprüfung, Zusammenstellung und Übersetzung der Dokumente',
+          text: 'Eignungsprüfung, Dokumentenliste und Zusammenstellung der Unterlagen',
         },
         contract: {
           title: 'Arbeitgeber & Vertrag',
@@ -762,11 +762,11 @@ const de: typeof az = {
         documents: [
           {
             q: 'Kann ich die Übersetzung selbst anfertigen?',
-            a: 'Deutsche Behörden verlangen in der Regel Übersetzungen durch beeidigte Übersetzer. Eine eigene Übersetzung wird möglicherweise nicht akzeptiert – deshalb klären wir das vorab.',
+            a: 'Deutsche Behörden verlangen in der Regel Übersetzungen durch beeidigte Übersetzer. Eine eigene Übersetzung wird möglicherweise nicht akzeptiert. Wir sagen Ihnen vorab, welche Dokumente eine Übersetzung brauchen; anfertigen lassen Sie sie selbst.',
           },
           {
             q: 'Braucht jedes Dokument eine Apostille?',
-            a: 'Nein. Das hängt von der Art des Dokuments und der Behörde ab, die es annimmt. Wir klären das für jedes Dokument einzeln.',
+            a: 'Nein. Das hängt von der Art des Dokuments und der Behörde ab, die es annimmt. Wir klären das für jedes Dokument einzeln; die Apostille lassen Sie selbst anbringen.',
           },
         ],
         recognition: [
@@ -1120,7 +1120,7 @@ const en: typeof az = {
       phases: {
         consult: {
           title: 'Advice & documents',
-          text: 'Eligibility check, collecting and translating documents',
+          text: 'Eligibility check, document checklist and collecting documents',
         },
         contract: {
           title: 'Employer & contract',
@@ -1265,11 +1265,11 @@ const en: typeof az = {
         documents: [
           {
             q: 'Can I translate documents myself?',
-            a: 'German authorities usually require translations by a sworn translator. Your own translation may not be accepted, so we check this in advance.',
+            a: 'German authorities usually require translations by a sworn translator. Your own translation may not be accepted. We tell you in advance which documents need one; you have them translated yourself.',
           },
           {
             q: 'Does every document need an apostille?',
-            a: 'No. It depends on the document type and the authority receiving it. We clarify this for each document individually.',
+            a: 'No. It depends on the document type and the authority receiving it. We clarify this for each document individually; you have the apostille done yourself.',
           },
         ],
         recognition: [
@@ -1623,7 +1623,7 @@ const ru: typeof az = {
       phases: {
         consult: {
           title: 'Консультация и документы',
-          text: 'Проверка соответствия, сбор и перевод документов',
+          text: 'Проверка соответствия, список и сбор документов',
         },
         contract: {
           title: 'Работодатель и договор',
@@ -1765,11 +1765,11 @@ const ru: typeof az = {
         documents: [
           {
             q: 'Могу ли я перевести документы сам?',
-            a: 'Немецкие ведомства обычно требуют перевод присяжного переводчика. Собственный перевод могут не принять, поэтому мы проверяем это заранее.',
+            a: 'Немецкие ведомства обычно требуют перевод присяжного переводчика. Собственный перевод могут не принять. Мы заранее скажем, каким документам нужен перевод; оформляете его вы сами.',
           },
           {
             q: 'Нужен ли апостиль на каждый документ?',
-            a: 'Нет. Это зависит от вида документа и ведомства, которое его принимает. Мы уточняем это по каждому документу отдельно.',
+            a: 'Нет. Это зависит от вида документа и ведомства, которое его принимает. Мы уточняем это по каждому документу отдельно; апостиль вы оформляете самостоятельно.',
           },
         ],
         recognition: [

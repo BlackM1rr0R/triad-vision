@@ -25,29 +25,15 @@ export const parseOrderKey = (s: string) => {
   return m ? Number(m[1]) : null;
 };
 
-/** Next free number (max + 1) inside a transaction; retried when two orders race for the same number. */
-export const createNumberedOrder = async <T>(create: (tx: Prisma.TransactionClient, number: number) => Promise<T>): Promise<T> => {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await prisma.$transaction(async (tx) => {
-        const max = await tx.translationOrder.aggregate({ _max: { number: true } });
-        return create(tx, (max._max.number ?? 0) + 1);
-      });
-    } catch (err) {
-      const code = (err as { code?: string }).code;
-      const target = String((err as { meta?: { target?: unknown } }).meta?.target ?? '');
-      if (code === 'P2002' && attempt < 6 && (target.includes('number') || target === '')) continue;
-      throw err;
-    }
-  }
-};
-
 // ─── Status flow ───────────────────────────────────────────────────────
 
 export const OPEN_STATUSES: TranslationStatus[] = ['NEW', 'QUOTED', 'ACCEPTED', 'IN_PROGRESS', 'READY'];
 export const WORKING_STATUSES: TranslationStatus[] = ['ACCEPTED', 'IN_PROGRESS'];
 
-/** Transitions staff may make through POST /status (quote and acceptance have their own endpoints). */
+/**
+ * Transitions staff may make through POST /status. Quoting and client acceptance were removed together with the
+ * client order flow (Triad Vision no longer offers translation / apostille): open NEW / QUOTED orders can only be cancelled.
+ */
 export const STATUS_TRANSITIONS: Record<TranslationStatus, TranslationStatus[]> = {
   NEW: ['CANCELLED'],
   QUOTED: ['CANCELLED'],
@@ -183,19 +169,6 @@ const baseShape = (o: TranslationOrder) => ({
   overdue: isOverdue(o),
 });
 
-/** What the client sees: no internal note, no internal events, result files only once ready. */
-export const clientView = (o: OrderFull) => {
-  const resultsVisible = o.status === 'READY' || o.status === 'DELIVERED';
-  return {
-    ...baseShape(o),
-    case: o.case,
-    files: o.files.filter((f) => f.kind === 'SOURCE' || resultsVisible).map(fileShape),
-    events: o.events
-      .filter((e) => e.visibleToClient)
-      .map((e) => ({ id: e.id, status: e.status, note: e.note, createdAt: e.createdAt, byStaff: !!e.actor && e.actor.role !== 'CLIENT' })),
-  };
-};
-
 export const staffView = (o: OrderFull) => ({
   ...baseShape(o),
   staffNote: o.staffNote,
@@ -237,7 +210,7 @@ const fullName = (u: { firstName: string; lastName: string }) => `${u.firstName}
 type NotifyOrder = Pick<TranslationOrder, 'id' | 'number' | 'clientId' | 'priceCents' | 'currency' | 'dueAt' | 'deliveryMethod' | 'trackingNumber'>;
 
 /** Client notification in the client's language (in-app + push + email per their preferences). */
-export const notifyOrderClient = async (order: NotifyOrder, kind: Extract<TranslationNoticeKind, 'QUOTED' | 'READY' | 'DELIVERED' | 'CANCELLED'>, note?: string | null) => {
+export const notifyOrderClient = async (order: NotifyOrder, kind: Extract<TranslationNoticeKind, 'READY' | 'DELIVERED' | 'CANCELLED'>, note?: string | null) => {
   const client = await prisma.user.findUnique({ where: { id: order.clientId }, select: { locale: true } });
   if (!client) return;
   const p: NoticeParams = {
@@ -249,13 +222,13 @@ export const notifyOrderClient = async (order: NotifyOrder, kind: Extract<Transl
     tracking: order.trackingNumber,
   };
   const { title, body } = translationNotice(kind, client.locale, p);
-  await notifyUser(order.clientId, { type: `TRANSLATION_${kind}`, title, body, link: `/account/translations/${order.id}` });
+  await notifyUser(order.clientId, { type: `TRANSLATION_${kind}`, title, body, link: '/account/notifications' }); // the client order page was removed (archive only)
 };
 
 /** Staff notification: the assignee (when active staff) plus, unless `assigneeOnly`, every admin. */
 export const notifyOrderStaff = async (
   order: Pick<TranslationOrder, 'id' | 'number' | 'clientId' | 'dueAt' | 'assignedStaffId'>,
-  kind: Extract<TranslationNoticeKind, 'NEW' | 'ACCEPTED' | 'ASSIGNED' | 'OVERDUE' | 'CLIENT_CANCELLED'>,
+  kind: Extract<TranslationNoticeKind, 'ASSIGNED' | 'OVERDUE'>,
   opts: { note?: string | null; assigneeOnly?: boolean; recipients?: string[] } = {},
 ) => {
   const client = await prisma.user.findUnique({ where: { id: order.clientId }, select: { firstName: true, lastName: true } });

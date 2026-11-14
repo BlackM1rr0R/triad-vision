@@ -127,6 +127,7 @@ const Jobs = lazyRoute('Jobs', () => import('./pages/jobs/Jobs'));
 const JobCompare = lazyRoute('JobCompare', () => import('./pages/jobs/JobCompare')); // /compare-jobs?v=a,b,c (noindex)
 const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'));
 const JobLanding = lazyRoute('JobLanding', () => import('./pages/jobs/JobLanding')); // /jobs/in/:city/:profession (server lib/jobLandings.ts)
+const GermanyJobs = lazyRoute('GermanyJobs', () => import('./pages/jobs/GermanyJobs')); // /jobs/germany(/search): Adzuna search, BA link, apply via Triad Vision
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazyRoute('CompanyApp', () => import('./pages/company/CompanyApp'));
 const AgentApp = lazyRoute('AgentApp', () => import('./pages/agent/AgentApp'));
@@ -228,7 +229,6 @@ const AdminCheckIns = lazyRoute('AdminCheckIns', () => import('./pages/admin/Che
 const AdminAgents = lazyRoute('AdminAgents', () => import('./pages/admin/Agents'));
 const AdminTranslations = lazyRoute('AdminTranslations', () => import('./pages/admin/Translations'));
 const AdminPrivacyRequests = lazyRoute('AdminPrivacyRequests', () => import('./pages/admin/PrivacyRequests'));
-const AccountTranslations = lazyRoute('AccountTranslations', () => import('./pages/account/Translations'));
 const AccountPrivacyCenter = lazyRoute('AccountPrivacyCenter', () => import('./pages/account/PrivacyCenter'));
 const Booking = lazyRoute('Booking', () => import('./pages/booking/Booking'));
 const BookingManage = lazyRoute('BookingManage', () => import('./pages/booking/BookingManage'));
@@ -453,6 +453,8 @@ export default function App() {
             <Route path="cookies" element={<CookiesPage />} />
             <Route path="legal/:kind/:version" element={<LegalArchivedVersion />} />
             <Route path="jobs" element={<Jobs />} />
+            <Route path="jobs/germany" element={<GermanyJobs />} />
+            <Route path="jobs/germany/search" element={<GermanyJobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
             <Route path="jobs/in/:city/:profession" element={<JobLanding />} />
             <Route path="compare-jobs" element={<JobCompare />} />
@@ -511,7 +513,6 @@ export default function App() {
               <Route path="housing" element={<AccountHousing />} />
               <Route path="german" element={<AccountGerman />} />
               <Route path="interviews" element={<AccountInterviews />} />
-              <Route path="translations/*" element={<AccountTranslations />} />
               <Route path="privacy" element={<AccountPrivacyCenter />} />
               <Route path="waiting-room" element={<AccountWaitingRoom />} />
               <Route path="course" element={<AccountCourse />} />

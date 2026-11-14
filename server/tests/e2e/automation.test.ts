@@ -31,7 +31,7 @@ describe('automation rules: admin API', () => {
     const list = expectStatus(await admin.agent.get('/api/admin/automation/rules'), 200).body.rules as { name: string; enabled: boolean; exampleKey: string | null; valid: boolean }[];
     expect(list).toHaveLength(5);
     expect(list.every((r) => !r.enabled && r.exampleKey && r.valid)).toBe(true);
-    expect(list.map((r) => r.name)).toContain('Vertrag unterschrieben → Aufgabe Botschaftstermin');
+    expect(list.map((r) => r.name)).toContain('Vertrag unterschrieben → Aufgabe Botschaftsunterlagen');
 
     // Deleted examples are not re-created.
     const first = await prisma.automationRule.findFirstOrThrow();

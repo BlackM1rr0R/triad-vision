@@ -189,7 +189,7 @@ const az = {
       staffLine: 'Məsul: {{name}}',
       noStaff: 'Məsul təyin olunmayıb',
       dragHint: 'Tarixi dəyişmək üçün sürüşdürün.',
-      help: 'Səfirlik görüşlərini və müsahibələri yeni vaxta sürüşdürün — təsdiqdən sonra müştəri xəbərdar edilir. Uçuşlar və konsultasiyalar yalnız oxunur.',
+      help: 'Səfirlik görüşü dəyişəndə (vaxtı səfirlik verir) və ya müsahibə köçəndə onu yeni vaxta sürüşdürün — təsdiqdən sonra müştəri xəbərdar edilir. Uçuşlar və konsultasiyalar yalnız oxunur.',
       past: 'Keçmiş vaxta köçürmək olmaz.',
       confirmTitle: 'Vaxt dəyişdirilsin?',
       confirm: {
@@ -401,7 +401,7 @@ const de: typeof az = {
       staffLine: 'Zuständig: {{name}}',
       noStaff: 'Niemand zuständig',
       dragHint: 'Zum Verschieben ziehen.',
-      help: 'Botschaftstermine und Interviews auf eine neue Zeit ziehen — nach der Bestätigung wird der Kunde benachrichtigt. Flüge und Beratungen sind nur zur Ansicht.',
+      help: 'Hat die Botschaft einen Termin verlegt (den Termin vergibt die Botschaft) oder verschiebt sich ein Interview, ziehen Sie ihn auf die neue Zeit — nach der Bestätigung wird der Kunde benachrichtigt. Flüge und Beratungen sind nur zur Ansicht.',
       past: 'In die Vergangenheit kann nicht verschoben werden.',
       confirmTitle: 'Termin verschieben?',
       confirm: {
@@ -411,7 +411,7 @@ const de: typeof az = {
       confirmLabel: 'Verschieben',
       moved: { embassy: 'Botschaftstermin verschoben, Kunde benachrichtigt', interview: 'Interview verschoben' },
       status: {
-        APPOINTMENT_SCHEDULED: 'Termin vereinbart',
+        APPOINTMENT_SCHEDULED: 'Termin steht fest',
         DECISION_PENDING: 'Entscheidung ausstehend',
         APPROVED: 'genehmigt',
         REJECTED: 'abgelehnt',
@@ -613,7 +613,7 @@ const en: typeof az = {
       staffLine: 'Owner: {{name}}',
       noStaff: 'No owner',
       dragHint: 'Drag to reschedule.',
-      help: 'Drag embassy appointments and interviews to a new time — after you confirm, the client is notified. Flights and consultations are read-only.',
+      help: 'When the embassy moves an appointment (the embassy sets the date) or an interview moves, drag it to the new time — after you confirm, the client is notified. Flights and consultations are read-only.',
       past: 'Cannot move into the past.',
       confirmTitle: 'Reschedule?',
       confirm: {
@@ -825,7 +825,7 @@ const ru: typeof az = {
       staffLine: 'Ответственный: {{name}}',
       noStaff: 'Ответственный не назначен',
       dragHint: 'Перетащите, чтобы перенести.',
-      help: 'Перетаскивайте записи в посольство и собеседования на новое время — после подтверждения клиент получит уведомление. Рейсы и консультации только для просмотра.',
+      help: 'Если посольство перенесло приём (дату назначает посольство) или перенесено собеседование, перетащите его на новое время — после подтверждения клиент получит уведомление. Рейсы и консультации только для просмотра.',
       past: 'Нельзя перенести в прошлое.',
       confirmTitle: 'Перенести?',
       confirm: {

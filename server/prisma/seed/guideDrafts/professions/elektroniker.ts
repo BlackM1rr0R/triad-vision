@@ -86,7 +86,7 @@ export const elektronikerGuide: ProfessionGuide = {
 
 ## Как помогает Triad Vision
 
-Мы помогаем выбрать правильную немецкую специализацию и палату, проверяем документы, организуем переводы и подачу, подбираем работодателя и выстраиваем визовую стратегию. Решение принимает палата, но точно подобранный эталон и полный пакет заметно повышают шансы. Похожий разбор для поваров: [признание диплома повара](guide:anerkennung-koch). [Запишитесь на консультацию](/booking).
+Мы помогаем выбрать правильную немецкую специализацию и палату, проверяем документы, готовим заявление (переводы вы оформляете самостоятельно), подбираем работодателя и выстраиваем визовую стратегию. Решение принимает палата, но точно подобранный эталон и полный пакет заметно повышают шансы. Похожий разбор для поваров: [признание диплома повара](guide:anerkennung-koch). [Запишитесь на консультацию](/booking).
 
 ## Официальные источники
 
@@ -200,7 +200,7 @@ Ramil 32 yaşındadır, elektrik avadanlığı üzrə kolleci bitirib və səkki
 
 ## Triad Vision necə kömək edir
 
-Düzgün alman ixtisaslaşmasını və palatanı seçməyə kömək edirik, sənədləri yoxlayırıq, tərcümələri və müraciəti təşkil edirik, işəgötürən tapıb viza strategiyasını qururuq. Qərarı palata verir, amma dəqiq seçilmiş nümunə və tam paket şansı xeyli artırır. Aşpazlar üçün oxşar bələdçi: [aşpaz diplomunun tanınması](guide:anerkennung-koch). [Konsultasiyaya yazılın](/booking).
+Düzgün alman ixtisaslaşmasını və palatanı seçməyə kömək edirik, sənədləri yoxlayırıq, müraciəti hazırlayırıq (tərcümələri özünüz etdirirsiniz), işəgötürən tapıb viza strategiyasını qururuq. Qərarı palata verir, amma dəqiq seçilmiş nümunə və tam paket şansı xeyli artırır. Aşpazlar üçün oxşar bələdçi: [aşpaz diplomunun tanınması](guide:anerkennung-koch). [Konsultasiyaya yazılın](/booking).
 
 ## Rəsmi mənbələr
 
@@ -314,7 +314,7 @@ Ramil, 32, hat ein College für elektrische Anlagen abgeschlossen und acht Jahre
 
 ## Wie Triad Vision unterstützt
 
-Wir helfen bei der Wahl von Referenzberuf und Kammer, prüfen Unterlagen, organisieren Übersetzungen und Antrag, vermitteln Betriebe und planen den Aufenthaltstitel. Die Kammer entscheidet, doch ein passender Referenzberuf und eine vollständige Akte erhöhen die Chancen deutlich. Ähnlicher Ratgeber: [Anerkennung als Koch/Köchin](guide:anerkennung-koch). [Beratung buchen](/booking).
+Wir helfen bei der Wahl von Referenzberuf und Kammer, prüfen Unterlagen, bereiten den Antrag vor (Übersetzungen lassen Sie selbst anfertigen), vermitteln Betriebe und planen den Aufenthaltstitel. Die Kammer entscheidet, doch ein passender Referenzberuf und eine vollständige Akte erhöhen die Chancen deutlich. Ähnlicher Ratgeber: [Anerkennung als Koch/Köchin](guide:anerkennung-koch). [Beratung buchen](/booking).
 
 ## Offizielle Quellen
 
@@ -428,7 +428,7 @@ Ramil, 32, graduated from a college for electrical equipment and spent eight yea
 
 ## How Triad Vision helps
 
-We help you choose the reference profession and the chamber, check documents, organise translations and the application, find employers and plan the visa route. The chamber decides, but the right reference profession and a complete file noticeably improve your chances. Related guide: [cook qualification recognition](guide:anerkennung-koch). [Book a consultation](/booking).
+We help you choose the reference profession and the chamber, check documents, prepare the application (you have the translations done yourself), find employers and plan the visa route. The chamber decides, but the right reference profession and a complete file noticeably improve your chances. Related guide: [cook qualification recognition](guide:anerkennung-koch). [Book a consultation](/booking).
 
 ## Official sources
 

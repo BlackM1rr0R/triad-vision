@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { CHANNELS, STATUS_TONE, type BaView, type ChannelStatus, type FeedsOverview } from '@/components/jobFeeds/types';
 import { useErrorLabel } from '@/components/jobFeeds/VacancyDistributionPanel';
+import { JobSourcesPanel } from '@/components/germanyJobs/JobSourcesPanel';
 import type { L10n } from '@/lib/types';
 
 registerCopy(pagesJobFeeds);
@@ -324,6 +325,9 @@ export default function JobChannels() {
           {d.feeds && (['indeed', 'stepstone', 'generic'] as const).map((c) => <CopyField key={c} label={t(`jobFeeds.channel.${c}`)} hint={t(`jobFeeds.channelHint.${c}`)} value={d.feeds![c]} />)}
         </div>
       </Panel>
+
+      {/* Almaniya iş bazası: job sources searched on /jobs/germany (incoming direction), their state. */}
+      <JobSourcesPanel />
 
       <Panel title={t('jobFeeds.errorsTitle')} icon={AlertTriangle}>
         {d.errors.length === 0 ? (

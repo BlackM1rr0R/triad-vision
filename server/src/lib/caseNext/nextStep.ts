@@ -266,10 +266,10 @@ export interface NextStep {
 }
 
 const TASK_TEXT: Record<Locale, Record<'appointment' | 'translation' | 'decision' | 'idle' | 'overdue', (n: string) => string>> = {
-  az: { appointment: (n) => `Səfirlik görüşü təyin et – ${n}`, translation: (n) => `Diplomun təsdiqli tərcüməsini sifariş et – ${n}`, decision: (n) => `Səfirlikdən qərarın vəziyyətini soruş – ${n}`, idle: (n) => `Müştəriyə zəng et (cavab yoxdur) – ${n}`, overdue: (n) => `Müraciəti irəlilət – ${n}` },
-  de: { appointment: (n) => `Botschaftstermin buchen – ${n}`, translation: (n) => `Beglaubigte Übersetzung des Diploms beauftragen – ${n}`, decision: (n) => `Bei der Botschaft nach dem Stand fragen – ${n}`, idle: (n) => `Kunden anrufen (keine Antwort) – ${n}`, overdue: (n) => `Akte voranbringen – ${n}` },
-  en: { appointment: (n) => `Book the embassy appointment – ${n}`, translation: (n) => `Order a certified translation of the diploma – ${n}`, decision: (n) => `Ask the embassy about the decision – ${n}`, idle: (n) => `Call the client (no response) – ${n}`, overdue: (n) => `Move the case forward – ${n}` },
-  ru: { appointment: (n) => `Записать на приём в посольство – ${n}`, translation: (n) => `Заказать заверенный перевод диплома – ${n}`, decision: (n) => `Узнать в посольстве о решении – ${n}`, idle: (n) => `Позвонить клиенту (нет ответа) – ${n}`, overdue: (n) => `Продвинуть дело – ${n}` },
+  az: { appointment: (n) => `Səfirlik sənəd paketini müştəriyə ver, görüş tarixini qeyd et – ${n}`, translation: (n) => `Müştəridən diplomun təsdiqli tərcüməsini istə – ${n}`, decision: (n) => `Müştəridən səfirliyin cavabını soruş – ${n}`, idle: (n) => `Müştəriyə zəng et (cavab yoxdur) – ${n}`, overdue: (n) => `Müraciəti irəlilət – ${n}` },
+  de: { appointment: (n) => `Botschaftsunterlagen an den Kunden übergeben, Termin eintragen – ${n}`, translation: (n) => `Beglaubigte Übersetzung des Diploms beim Kunden anfordern – ${n}`, decision: (n) => `Beim Kunden nach der Antwort der Botschaft fragen – ${n}`, idle: (n) => `Kunden anrufen (keine Antwort) – ${n}`, overdue: (n) => `Akte voranbringen – ${n}` },
+  en: { appointment: (n) => `Hand the embassy document set to the client, record the appointment date – ${n}`, translation: (n) => `Ask the client for a certified translation of the diploma – ${n}`, decision: (n) => `Ask the client whether the embassy has replied – ${n}`, idle: (n) => `Call the client (no response) – ${n}`, overdue: (n) => `Move the case forward – ${n}` },
+  ru: { appointment: (n) => `Передать клиенту пакет документов для посольства, внести дату приёма – ${n}`, translation: (n) => `Запросить у клиента заверенный перевод диплома – ${n}`, decision: (n) => `Узнать у клиента, ответило ли посольство – ${n}`, idle: (n) => `Позвонить клиенту (нет ответа) – ${n}`, overdue: (n) => `Продвинуть дело – ${n}` },
 };
 
 const casePath = (f: CaseFacts, sub: string) => `/admin/cases/${f.id}${sub}`;

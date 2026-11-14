@@ -229,7 +229,7 @@ Rules:
 - translationNeeded = true when the document is not in German (or English for certificates) and German authorities need it in German; a translation that is not a sworn translation (no translator stamp / declaration) is NOT_SWORN_TRANSLATION.
 - Compare names leniently: ə=e/a, ş=sh/s, ç=ch/c, ğ=g/gh, ı=i, ö=o, ü=u, x=kh/h, Cyrillic transliterations are the same name.
 - EXPIRED = expiry date before today; EXPIRES_SOON = within 6 months from today.
-- Messages: one short plain sentence each (max 140 characters), addressed to the applicant, in Azerbaijani, German, English and Russian.
+- Messages: one short plain sentence each (max 140 characters), addressed to the applicant, in Azerbaijani, German, English and Russian. The agency does NOT do apostilles or translations: when one is missing, say the applicant has it done themselves (apostille e.g. at ASAN xidmət, translation by a sworn translator); never offer or promise that the agency will do it.
 - Only include fields you can actually read; never guess.`;
 
 const l10n = (v: unknown, l: 'de' | 'az') => {

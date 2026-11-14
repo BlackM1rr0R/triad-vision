@@ -292,7 +292,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `${city} şəhərində${inRegion ? ` (${inRegion} federal əyaləti)` : ''} hazırda ${p} üçün ${count} var${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` Elanlarda göstərilən maaş ayda ${s} € brutto təşkil edir.` : ''} Bütün vakansiyalar Almaniya işəgötürənlərindəndir və Triad Vision vasitəsilə yerləşdirilir.`,
-          `Uyğun vakansiyanı seçin və onlayn müraciət edin: sənədlərin hazırlanması, iş vizası (Federal Əmək Agentliyinin razılığı daxil), səfirlikdə görüş və Almaniyada ilk addımlar üzrə sizi müşayiət edirik. Vakansiyalar bağlandıqda bu siyahı avtomatik yenilənir.`,
+          `Uyğun vakansiyanı seçin və onlayn müraciət edin: sənədlərin hazırlanması, iş vizası (Federal Əmək Agentliyinin razılığı daxil), səfirliyin tələb etdiyi tam sənəd paketi və Almaniyada ilk addımlar üzrə sizi müşayiət edirik. Vakansiyalar bağlandıqda bu siyahı avtomatik yenilənir.`,
         ],
         cityName: city,
         professionName: prof,
@@ -312,7 +312,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `In ${city}${inRegion ? ` (${inRegion})` : ''} sind derzeit ${count} als ${prof} ausgeschrieben${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` Die Arbeitgeber zahlen laut Ausschreibung ${s} € brutto im Monat.` : ''} Alle Stellen sind bei Arbeitgebern in Deutschland, vermittelt von Triad Vision.`,
-          'Wählen Sie eine passende Stelle und bewerben Sie sich online: Wir begleiten Sie bei den Unterlagen, beim Arbeitsvisum (einschließlich der Zustimmung der Bundesagentur für Arbeit), beim Termin in der Botschaft und bei den ersten Schritten in Deutschland. Die Liste aktualisiert sich, sobald eine Stelle besetzt ist.',
+          'Wählen Sie eine passende Stelle und bewerben Sie sich online: Wir begleiten Sie bei den Unterlagen, beim Arbeitsvisum (einschließlich der Zustimmung der Bundesagentur für Arbeit), mit dem vollständigen Unterlagenpaket für die Botschaft und bei den ersten Schritten in Deutschland. Die Liste aktualisiert sich, sobald eine Stelle besetzt ist.',
         ],
         cityName: city,
         professionName: prof,
@@ -332,7 +332,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `There ${n === 1 ? 'is' : 'are'} currently ${n} open ${p} ${n === 1 ? 'job' : 'jobs'} in ${city}${inRegion ? ` (${inRegion})` : ''}${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` According to the job ads, employers pay €${s} gross per month.` : ''} All positions are with employers in Germany and are placed by Triad Vision.`,
-          'Pick a job and apply online: we support you with the documents, the work visa (including the approval of the Federal Employment Agency), the embassy appointment and your first steps in Germany. This list updates itself as soon as a position is filled.',
+          'Pick a job and apply online: we support you with the documents, the work visa (including the approval of the Federal Employment Agency), the complete document set for the embassy and your first steps in Germany. This list updates itself as soon as a position is filled.',
         ],
         cityName: city,
         professionName: prof,
@@ -352,7 +352,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `Сейчас в городе ${city}${inRegion ? ` (федеральная земля ${inRegion})` : ''} ${count} по профессии «${p}»${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` По данным вакансий, работодатели платят ${s} € брутто в месяц.` : ''} Все места — у работодателей в Германии, трудоустройство через Triad Vision.`,
-          'Выберите вакансию и откликнитесь онлайн: мы помогаем с документами, рабочей визой (включая согласие Федерального агентства по труду), записью в посольство и первыми шагами в Германии. Список обновляется сам, как только место занято.',
+          'Выберите вакансию и откликнитесь онлайн: мы помогаем с документами, рабочей визой (включая согласие Федерального агентства по труду), полным пакетом документов для посольства и первыми шагами в Германии. Список обновляется сам, как только место занято.',
         ],
         cityName: city,
         professionName: prof,
@@ -372,7 +372,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `${city} şehrinde${inRegion ? ` (${inRegion} eyaleti)` : ''} şu anda ${p} için ${count} bulunuyor${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` İlanlara göre işverenler aylık ${s} € brüt maaş ödüyor.` : ''} Tüm pozisyonlar Almanya’daki işverenlere aittir ve Triad Vision aracılığıyla doldurulur.`,
-          'Size uygun ilanı seçin ve online başvurun: belgeler, çalışma vizesi (Federal İş Ajansı onayı dahil), konsolosluk randevusu ve Almanya’daki ilk adımlarınızda yanınızdayız. Bir pozisyon dolduğunda bu liste kendiliğinden güncellenir.',
+          'Size uygun ilanı seçin ve online başvurun: belgeler, çalışma vizesi (Federal İş Ajansı onayı dahil), büyükelçiliğin istediği eksiksiz belge seti ve Almanya’daki ilk adımlarınızda yanınızdayız. Bir pozisyon dolduğunda bu liste kendiliğinden güncellenir.',
         ],
         cityName: city,
         professionName: prof,
@@ -392,7 +392,7 @@ export const jobLandingTexts = (l: JobLanding, lng: SeoLocale, region: string | 
         ]),
         intro: [
           `Зараз у місті ${city}${inRegion ? ` (федеральна земля ${inRegion})` : ''} ${count} за професією «${p}»${types.length ? ` (${types.join(', ')})` : ''}.${s ? ` За даними вакансій, роботодавці платять ${s} € брутто на місяць.` : ''} Усі місця — у роботодавців у Німеччині, працевлаштування через Triad Vision.`,
-          'Оберіть вакансію та подайте заявку онлайн: ми допомагаємо з документами, робочою візою (зокрема зі згодою Федерального агентства з праці), записом до посольства та першими кроками в Німеччині. Список оновлюється сам, щойно місце зайняте.',
+          'Оберіть вакансію та подайте заявку онлайн: ми допомагаємо з документами, робочою візою (зокрема зі згодою Федерального агентства з праці), повним пакетом документів для посольства та першими кроками в Німеччині. Список оновлюється сам, щойно місце зайняте.',
         ],
         cityName: city,
         professionName: prof,

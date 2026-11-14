@@ -421,6 +421,48 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Відкриті вакансії в Німеччині: водії, будівництво, готельний бізнес, Ausbildung та інші. Подавайте заявку з візовою підтримкою.',
     },
   },
+  // Almaniya iş bazası (/jobs/germany): German jobs + Ausbildung from free job APIs (lib/germanyJobs), "apply via Triad Vision", BA Jobbörse link.
+  // The landing page (our own intro + the form) is indexable; the result list is third-party content: noindex.
+  '/jobs/germany': {
+    name: { az: 'Almaniya iş bazası', de: 'Jobbörse Deutschland', en: 'Germany job search', ru: 'Поиск работы в Германии', tr: 'Almanya iş arama', uk: 'Пошук роботи в Німеччині' },
+    title: {
+      az: 'Almaniya iş bazası: iş və Ausbildung',
+      de: 'Jobbörse Deutschland: Jobs und Ausbildung',
+      en: 'Germany job search: jobs and Ausbildung',
+      ru: 'Поиск работы в Германии и Ausbildung',
+      tr: 'Almanya iş arama: iş ve Ausbildung',
+      uk: 'Пошук роботи в Німеччині та Ausbildung',
+    },
+    description: {
+      az: 'Almaniyada minlərlə iş və Ausbildung elanında peşə və şəhər üzrə axtarış edin, bəyəndiyiniz vakansiyaya isə Triad Vision vasitəsilə müraciət edin.',
+      de: 'Tausende Jobs und Ausbildungsplätze in Deutschland nach Beruf und Ort durchsuchen und passende Stellen direkt über Triad Vision bewerben.',
+      en: 'Search thousands of jobs and Ausbildung places in Germany by profession and city, then apply for the one you like through Triad Vision.',
+      ru: 'Ищите среди тысяч вакансий и мест Ausbildung в Германии по профессии и городу и подавайте заявку на понравившуюся через Triad Vision.',
+      tr: 'Almanya\'daki binlerce iş ve Ausbildung ilanında meslek ve şehre göre arama yapın, beğendiğiniz ilana Triad Vision üzerinden başvurun.',
+      uk: 'Шукайте серед тисяч вакансій і місць Ausbildung у Німеччині за професією та містом і подавайте заявку на обрану через Triad Vision.',
+    },
+  },
+  '/jobs/germany/search': {
+    sitemap: false,
+    index: false,
+    name: { az: 'Axtarış nəticələri', de: 'Suchergebnisse', en: 'Search results', ru: 'Результаты поиска', tr: 'Arama sonuçları', uk: 'Результати пошуку' },
+    title: {
+      az: 'Almaniyada iş axtarışı: nəticələr',
+      de: 'Jobsuche Deutschland: Ergebnisse',
+      en: 'Germany job search: results',
+      ru: 'Поиск работы в Германии: результаты',
+      tr: 'Almanya iş arama: sonuçlar',
+      uk: 'Пошук роботи в Німеччині: результати',
+    },
+    description: {
+      az: 'Almaniyada iş və Ausbildung elanları üzrə axtarış nəticələri. Bəyəndiyiniz vakansiyaya Triad Vision vasitəsilə müraciət edin.',
+      de: 'Suchergebnisse für Jobs und Ausbildung in Deutschland. Bewerben Sie sich über Triad Vision auf die passende Stelle.',
+      en: 'Search results for jobs and Ausbildung in Germany. Apply for the right one through Triad Vision.',
+      ru: 'Результаты поиска вакансий и Ausbildung в Германии. Подайте заявку на подходящую через Triad Vision.',
+      tr: 'Almanya\'da iş ve Ausbildung arama sonuçları. Uygun ilana Triad Vision üzerinden başvurun.',
+      uk: 'Результати пошуку вакансій і Ausbildung у Німеччині. Подайте заявку на відповідну через Triad Vision.',
+    },
+  },
   // Service packages (Basic / Standard / Premium) with online order and e-signature.
   '/packages': {
     name: { az: 'Paketlər və qiymətlər', de: 'Pakete und Preise', en: 'Packages and prices', ru: 'Пакеты и цены', tr: 'Paketler ve fiyatlar', uk: 'Пакети та ціни' },

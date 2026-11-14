@@ -95,6 +95,7 @@ import { adminPresenceRouter } from './presence.js'; // live "who is viewing thi
 import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
+import { adminGermanyJobsRouter } from './germanyJobs.js'; // Adzuna search status, CVs of "apply via Triad Vision" leads
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
 import { audit } from '../../lib/audit.js';
@@ -269,6 +270,7 @@ adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly emp
 adminRouter.use('/vacancies', adminVacanciesRouter);
 adminRouter.use('/search-console', requireMinRole('ADMIN'), adminSearchConsoleRouter); // Search performance: GSC queries / pages, 28 days, cached 6 h
 adminRouter.use('/job-feeds', requireMinRole('ADMIN'), adminJobFeedsRouter); // İş elanı kanalları (ADMIN+)
+adminRouter.use('/germany-jobs', adminGermanyJobsRouter); // Almaniya iş bazası: search status, application CVs (STAFF+)
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);

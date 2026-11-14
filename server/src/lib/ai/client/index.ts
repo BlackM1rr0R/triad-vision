@@ -37,9 +37,9 @@ export const STATUS_TEXT: Record<CaseStatus, { plain: string; step: string; next
   CONTRACT_SENT: { plain: 'The contract was sent to you for signature', step: 'Contract', next: 'Read and sign the contract in your application or under "Documents to sign".' },
   CONTRACT_SIGNED: { plain: 'Your signed contract is being verified', step: 'Contract', next: 'Nothing to do right now.' },
   EMBASSY_DOCUMENTS: { plain: 'Waiting for your embassy documents', step: 'Embassy', next: 'Upload the embassy documents listed in your application.' },
-  EMBASSY_REVIEW: { plain: 'Your embassy documents are being checked', step: 'Embassy', next: 'Nothing to do right now; the team prepares your embassy file.' },
-  APPOINTMENT_SCHEDULED: { plain: 'Your embassy appointment is booked', step: 'Appointment', next: 'Prepare for the appointment: bring all originals and practise the interview questions.' },
-  DECISION_PENDING: { plain: 'Your application is at the embassy, waiting for the decision', step: 'Decision', next: 'Wait for the decision; the team informs you as soon as it arrives.' },
+  EMBASSY_REVIEW: { plain: 'Your embassy documents are being checked', step: 'Embassy', next: 'Nothing to do right now; the team prepares the complete set of documents the embassy requires and gives it to you. You then apply to the embassy yourself.' },
+  APPOINTMENT_SCHEDULED: { plain: 'The embassy has given you an appointment', step: 'Appointment', next: 'Prepare for the appointment: bring the document set we prepared and all originals, and practise the interview questions.' },
+  DECISION_PENDING: { plain: 'Your application is at the embassy, waiting for the decision', step: 'Decision', next: 'Wait for the decision; it comes from the embassy itself.' },
   APPROVED: { plain: 'Visa approved', step: 'Done', next: 'Plan your arrival (section "Arrival") and follow the onboarding checklist.' },
   REJECTED: { plain: 'The application was rejected', step: 'Done', next: 'Talk to your case manager about the reasons and options.' },
   CANCELLED: { plain: 'The application was cancelled', step: 'Done', next: 'Contact your case manager if you want to start again.' },
@@ -238,7 +238,7 @@ const deadlines: AiTool<Record<string, never>> = {
         targetLanguage: t.targetLang,
         dueAt: day(t.dueAt),
         price: t.priceCents !== null ? `${(t.priceCents / 100).toFixed(2)} ${t.currency}` : null,
-        link: '/account/translations',
+        link: '/account/notifications', // archived orders (no client order page any more)
       })),
       arrival: arrival
         ? {

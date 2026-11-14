@@ -47,11 +47,10 @@ export const DEFAULT_QUOTE_SETTINGS: QuoteSettings = {
   catalogue: [
     { id: 'placement-ce', name: 'Personalvermittlung LKW-Fahrer (CE) – je Fachkraft', unit: 'PERSON', unitPriceCents: 450000, vatRate: null, active: true },
     { id: 'placement-skilled', name: 'Personalvermittlung Fachkraft (allgemein) – je Fachkraft', unit: 'PERSON', unitPriceCents: 350000, vatRate: null, active: true },
-    { id: 'visa-service', name: 'Visa- und Behördenservice (Antrag, Termin, Begleitung)', unit: 'PERSON', unitPriceCents: 90000, vatRate: null, active: true },
+    { id: 'visa-service', name: 'Visa- und Behördenservice (vollständige Botschaftsunterlagen, Begleitung)', unit: 'PERSON', unitPriceCents: 90000, vatRate: null, active: true },
     { id: 'recognition', name: 'Anerkennungsverfahren (Berufsabschluss / Führerschein)', unit: 'PERSON', unitPriceCents: 60000, vatRate: null, active: true },
     { id: 'language-a2-b1', name: 'Sprachkurs Deutsch A2–B1', unit: 'PERSON', unitPriceCents: 120000, vatRate: null, active: true },
     { id: 'relocation', name: 'Relocation / Ankunft (Abholung, Anmeldung, Wohnungssuche)', unit: 'PERSON', unitPriceCents: 50000, vatRate: null, active: true },
-    { id: 'translation', name: 'Übersetzung und Beglaubigung von Dokumenten', unit: 'PIECE', unitPriceCents: 4500, vatRate: null, active: true },
     { id: 'integration', name: 'Betreuung nach Arbeitsantritt (Integration)', unit: 'MONTH', unitPriceCents: 15000, vatRate: null, active: true },
     { id: 'project-flat', name: 'Projektpauschale Recruiting-Kampagne', unit: 'FLAT', unitPriceCents: 150000, vatRate: null, active: true },
   ],

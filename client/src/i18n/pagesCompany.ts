@@ -33,7 +33,7 @@ const az = {
       legend: { full: 'Tam əhatə olunur', partial: 'Qismən', none: 'Yoxdur / sizin üzərinizdə' },
       rows: [
         { label: 'İşəgötürən və vakansiya', values: ['Yoxlanılmış Alman tərəfdaş şirkətləri', 'Elanları özünüz axtarırsınız', 'Çox vaxt vasitəçilər zənciri'] },
-        { label: 'Sənədlər və tərcümə', values: ['Siyahı, yoxlama və tərcümə bizdədir', 'Tələbləri özünüz araşdırırsınız', 'Əsasən yalnız siyahı verilir'] },
+        { label: 'Sənədlər', values: ['Siyahı və yoxlama bizdədir', 'Tələbləri özünüz araşdırırsınız', 'Əsasən yalnız siyahı verilir'] },
         { label: 'Diplomun tanınması', values: ['Anerkennung addım-addım müşayiət olunur', 'Səlahiyyətli orqanı özünüz tapırsınız', 'Adətən xidmətə daxil deyil'] },
         { label: 'Bundesagentur və səfirlik', values: ['İşəgötürənlə birlikdə tam fayl', 'Səhv və geri qaytarılma riski yüksəkdir', 'Qismən dəstək'] },
         { label: 'Prosesin izlənməsi', values: ['Onlayn kabinetdə status və mesajlar', 'E-poçt və gözləmə', 'Telefonla soruşmaq lazımdır'] },
@@ -55,8 +55,8 @@ const az = {
       indicative: 'Təxmini müddətlər, zəmanət deyil.',
       stages: [
         { title: 'Tanışlıq və seçim', candidate: 'Pulsuz məsləhət; CV, təcrübə və dil səviyyəsinin qiymətləndirilməsi.', company: 'Vakansiya profili, tələblər və iş şərtləri müəyyənləşdirilir.', we: 'Namizədləri süzgəcdən keçirib qısa siyahı hazırlayırıq.' },
-        { title: 'Müsahibə və iş təklifi', candidate: 'Şirkətlə video-müsahibə, lazım olduqda praktiki yoxlama.', company: 'Namizədi seçir, iş təklifi və müqavilə layihəsi hazırlayır.', we: 'Görüşləri təşkil edir, tərcümə edir, şərtləri hər iki tərəfə izah edirik.' },
-        { title: 'Sənədlər və tanınma', candidate: 'Diplom, sertifikat, vəsiqə və arayışları toplayır.', company: 'Tanınma üçün lazım olan təsdiq və məlumatları verir.', we: 'Tərcümə, təsdiq və Anerkennung müraciətini müşayiət edirik.' },
+        { title: 'Müsahibə və iş təklifi', candidate: 'Şirkətlə video-müsahibə, lazım olduqda praktiki yoxlama.', company: 'Namizədi seçir, iş təklifi və müqavilə layihəsi hazırlayır.', we: 'Görüşləri təşkil edir, şərtləri hər iki tərəfə aydın izah edirik.' },
+        { title: 'Sənədlər və tanınma', candidate: 'Diplom, sertifikat, vəsiqə və arayışları toplayır.', company: 'Tanınma üçün lazım olan təsdiq və məlumatları verir.', we: 'Anerkennung müraciətini müşayiət edirik; apostil və tərcüməni namizəd özü etdirir.' },
         { title: 'Bundesagentur razılığı', candidate: 'Əlavə sorğulara cavab verir, dil hazırlığını davam etdirir.', company: 'İş yerinin təsvirini (Stellenbeschreibung) təsdiqləyir.', we: 'Faylı hazırlayır və Vorabzustimmung prosesini izləyirik.' },
         { title: 'Səfirlik və viza', candidate: 'Səfirlik görüşünə gedir, biometrik məlumat verir.', company: 'Lazım olduqda sürətləndirilmiş prosedur (§81a) üçün etibarnamə verir.', we: 'Viza faylını yoxlayır, görüşə hazırlayır və qərarı izləyirik.' },
         { title: 'Səfər və gəliş', candidate: 'Bilet, ilk yaşayış yeri və Anmeldung.', company: 'İlk iş gününü və təlimatı planlaşdırır.', we: 'Qarşılama, qeydiyyat, bank və sığorta işlərində kömək edirik.' },
@@ -69,7 +69,7 @@ const az = {
       subtitle: 'Hər işin məsul şöbəsi var. Bakıda namizədlərlə, Almaniyada işəgötürənlərlə birbaşa işləyirik.',
       items: [
         { title: 'Namizədlərlə iş və seçim', place: 'Bakı', text: 'Müraciətlərin qəbulu, məsləhət, müsahibə və peşə bacarıqlarının yoxlanması.', tasks: ['İlkin məsləhət', 'Bacarıq və dil yoxlaması', 'Qısa siyahı'] },
-        { title: 'Sənədlər və viza', place: 'Bakı', text: 'Sənəd siyahıları, tərcümələr, səfirlik faylı və görüşə hazırlıq.', tasks: ['Tərcümə və təsdiq', 'Səfirlik faylı', 'Görüşə hazırlıq'] },
+        { title: 'Sənədlər və viza', place: 'Bakı', text: 'Sənəd siyahıları, səfirlik üçün tam sənəd paketi və görüşə hazırlıq; müraciəti namizəd özü edir.', tasks: ['Sənədlərin yoxlanması', 'Səfirlik sənəd paketi', 'Görüşə hazırlıq'] },
         { title: 'Tanınma və hüquqi uyğunluq', place: 'Bakı · Almaniya', text: 'Anerkennung, Bundesagentur tələbləri və iş şərtlərinin qanuna uyğunluğu.', tasks: ['Anerkennung', 'Vorabzustimmung', 'Müqavilə yoxlaması'] },
         { title: 'İşəgötürənlərlə əlaqələr', place: 'Almaniya', text: 'Alman şirkətlərinin ehtiyaclarının təhlili, vakansiya profilləri və müsahibələr.', tasks: ['Ehtiyac təhlili', 'Vakansiya profili', 'Müsahibələrin təşkili'] },
         { title: 'Gəliş və inteqrasiya', place: 'Almaniya', text: 'Qarşılama, Anmeldung, bank, sığorta və ilk aylarda uyğunlaşma.', tasks: ['Anmeldung', 'Bank və sığorta', 'İlk ayların müşayiəti'] },
@@ -127,7 +127,7 @@ const az = {
     languages: {
       eyebrow: 'Ünsiyyət',
       title: 'Hər kəslə öz dilində',
-      subtitle: 'Namizəd şərtləri ana dilində başa düşməlidir, işəgötürən isə sənədləri alman dilində almalıdır. Komandamız bu iki dünya arasında tərcüməçi rolunu da oynayır.',
+      subtitle: 'Namizəd şərtləri ana dilində başa düşməlidir, işəgötürən isə sənədləri alman dilində almalıdır. Komandamız bu iki dünya arasında körpü rolunu oynayır.',
       items: [
         { code: 'az', name: 'Azərbaycan dili', text: 'Namizədlərlə məsləhət, sənədlərin və müqavilənin izahı.' },
         { code: 'ru', name: 'Rus dili', text: 'Rusdilli namizədlər və ailələri ilə ünsiyyət.' },
@@ -244,9 +244,9 @@ const az = {
       items: [
         { title: 'Ehtiyac təhlili', text: 'Vəzifə, say, başlama tarixi və iş şərtlərini birlikdə dəqiqləşdiririk.', deliverable: 'Vakansiya profili və təqvim' },
         { title: 'Bundesagentur üçün iş yeri təsviri', text: 'BA formasına uyğun Stellenbeschreibung hazırlayırıq, siz yalnız yoxlayıb təsdiqləyirsiniz.', deliverable: 'Hazır Stellenbeschreibung' },
-        { title: 'Namizəd seçimi və müsahibələr', text: 'Yoxlanılmış namizədlərlə video-müsahibələr; tərcümə və test bizdədir.', deliverable: 'Qısa siyahı və müsahibə qeydləri' },
+        { title: 'Namizəd seçimi və müsahibələr', text: 'Yoxlanılmış namizədlərlə video-müsahibələr; təşkilat və test bizdədir.', deliverable: 'Qısa siyahı və müsahibə qeydləri' },
         { title: 'Əmək müqaviləsi', text: 'Müqavilənin viza tələblərinə uyğunluğunu imzadan əvvəl yoxlayırıq.', deliverable: 'Viza üçün uyğun müqavilə' },
-        { title: 'Vorabzustimmung və ya §81a', text: 'BA razılığı və ya sürətləndirilmiş prosedur üzrə prosesi izləyirik.', deliverable: 'Razılıq və səfirlik görüşü' },
+        { title: 'Vorabzustimmung və ya §81a', text: 'BA razılığı və ya sürətləndirilmiş prosedur üzrə prosesi izləyirik.', deliverable: 'Razılıq və səfirlik üçün tam sənəd paketi' },
         { title: 'Gəliş', text: 'Səfər, qarşılama, Anmeldung, bank və sığorta — işçi ilk günə hazır gəlir.', deliverable: 'Qeydiyyatdan keçmiş əməkdaş' },
         { title: 'Onboarding və izləmə', text: 'İlk aylarda həm işçi, həm də sizinlə müntəzəm əlaqə saxlayırıq.', deliverable: 'Rəy və növbəti ehtiyaclar' },
       ],
@@ -402,7 +402,7 @@ const de: typeof az = {
       legend: { full: 'Vollständig abgedeckt', partial: 'Teilweise', none: 'Nicht enthalten / Ihre Aufgabe' },
       rows: [
         { label: 'Arbeitgeber und Stelle', values: ['Geprüfte deutsche Partnerunternehmen', 'Sie suchen Anzeigen selbst', 'Oft eine Kette von Vermittlern'] },
-        { label: 'Unterlagen und Übersetzung', values: ['Checkliste, Prüfung und Übersetzung durch uns', 'Sie recherchieren die Anforderungen selbst', 'Meist nur eine Liste'] },
+        { label: 'Unterlagen', values: ['Checkliste und Prüfung durch uns', 'Sie recherchieren die Anforderungen selbst', 'Meist nur eine Liste'] },
         { label: 'Anerkennung des Abschlusses', values: ['Schritt für Schritt begleitet', 'Zuständige Stelle selbst finden', 'In der Regel nicht enthalten'] },
         { label: 'Bundesagentur und Botschaft', values: ['Vollständige Akte gemeinsam mit dem Arbeitgeber', 'Hohes Risiko für Fehler und Nachforderungen', 'Teilweise Unterstützung'] },
         { label: 'Transparenz im Prozess', values: ['Status und Nachrichten im Online-Konto', 'E-Mails und Warten', 'Nachfragen per Telefon'] },
@@ -424,8 +424,8 @@ const de: typeof az = {
       indicative: 'Richtwerte, keine Garantie.',
       stages: [
         { title: 'Kennenlernen und Auswahl', candidate: 'Kostenlose Beratung; Bewertung von Lebenslauf, Erfahrung und Sprachniveau.', company: 'Stellenprofil, Anforderungen und Arbeitsbedingungen werden festgelegt.', we: 'Wir prüfen Bewerbungen vor und stellen eine Shortlist zusammen.' },
-        { title: 'Interview und Angebot', candidate: 'Video-Interview mit dem Unternehmen, bei Bedarf eine Praxisprobe.', company: 'Wählt aus und erstellt Angebot und Vertragsentwurf.', we: 'Wir organisieren Termine, dolmetschen und erklären die Konditionen beiden Seiten.' },
-        { title: 'Unterlagen und Anerkennung', candidate: 'Sammelt Diplome, Zertifikate, Führerschein und Nachweise.', company: 'Stellt Bestätigungen und Angaben für die Anerkennung bereit.', we: 'Wir begleiten Übersetzung, Beglaubigung und den Anerkennungsantrag.' },
+        { title: 'Interview und Angebot', candidate: 'Video-Interview mit dem Unternehmen, bei Bedarf eine Praxisprobe.', company: 'Wählt aus und erstellt Angebot und Vertragsentwurf.', we: 'Wir organisieren die Gespräche und erklären die Konditionen beiden Seiten verständlich.' },
+        { title: 'Unterlagen und Anerkennung', candidate: 'Sammelt Diplome, Zertifikate, Führerschein und Nachweise.', company: 'Stellt Bestätigungen und Angaben für die Anerkennung bereit.', we: 'Wir begleiten den Anerkennungsantrag; Apostille und Übersetzungen lässt die Fachkraft selbst anfertigen.' },
         { title: 'Zustimmung der Bundesagentur', candidate: 'Beantwortet Rückfragen und setzt den Deutschkurs fort.', company: 'Bestätigt die Stellenbeschreibung.', we: 'Wir bereiten die Akte vor und verfolgen die Vorabzustimmung.' },
         { title: 'Botschaft und Visum', candidate: 'Nimmt den Botschaftstermin wahr und gibt Biometriedaten ab.', company: 'Erteilt bei Bedarf eine Vollmacht für das beschleunigte Verfahren (§81a).', we: 'Wir prüfen den Visumantrag, bereiten auf den Termin vor und verfolgen die Entscheidung.' },
         { title: 'Reise und Ankunft', candidate: 'Ticket, erste Unterkunft und Anmeldung.', company: 'Plant den ersten Arbeitstag und die Einweisung.', we: 'Wir helfen bei Abholung, Anmeldung, Bankkonto und Versicherung.' },
@@ -438,7 +438,7 @@ const de: typeof az = {
       subtitle: 'Jede Aufgabe hat eine verantwortliche Abteilung. In Baku arbeiten wir direkt mit Kandidaten, in Deutschland direkt mit Arbeitgebern.',
       items: [
         { title: 'Kandidatenbetreuung und Auswahl', place: 'Baku', text: 'Bewerbungseingang, Beratung, Interviews und Prüfung der fachlichen Fähigkeiten.', tasks: ['Erstberatung', 'Fach- und Sprachcheck', 'Shortlist'] },
-        { title: 'Unterlagen und Visum', place: 'Baku', text: 'Dokumentenlisten, Übersetzungen, Botschaftsakte und Terminvorbereitung.', tasks: ['Übersetzung und Beglaubigung', 'Botschaftsakte', 'Terminvorbereitung'] },
+        { title: 'Unterlagen und Visum', place: 'Baku', text: 'Dokumentenlisten, vollständige Botschaftsunterlagen und Vorbereitung auf den Termin; den Antrag stellt die Fachkraft selbst.', tasks: ['Prüfung der Unterlagen', 'Botschaftsunterlagen', 'Terminvorbereitung'] },
         { title: 'Anerkennung und Compliance', place: 'Baku · Deutschland', text: 'Anerkennung, Vorgaben der Bundesagentur und rechtskonforme Arbeitsbedingungen.', tasks: ['Anerkennung', 'Vorabzustimmung', 'Vertragsprüfung'] },
         { title: 'Arbeitgeberbetreuung', place: 'Deutschland', text: 'Bedarfsanalyse mit deutschen Unternehmen, Stellenprofile und Interviews.', tasks: ['Bedarfsanalyse', 'Stellenprofil', 'Interviewplanung'] },
         { title: 'Ankunft und Integration', place: 'Deutschland', text: 'Abholung, Anmeldung, Bank, Versicherung und Eingewöhnung in den ersten Monaten.', tasks: ['Anmeldung', 'Bank und Versicherung', 'Begleitung der ersten Monate'] },
@@ -496,7 +496,7 @@ const de: typeof az = {
     languages: {
       eyebrow: 'Kommunikation',
       title: 'Mit allen in ihrer Sprache',
-      subtitle: 'Kandidaten müssen die Konditionen in ihrer Muttersprache verstehen, Arbeitgeber brauchen Unterlagen auf Deutsch. Unser Team übersetzt zwischen beiden Welten.',
+      subtitle: 'Kandidaten müssen die Konditionen in ihrer Muttersprache verstehen, Arbeitgeber brauchen Unterlagen auf Deutsch. Unser Team schlägt die Brücke zwischen beiden Welten.',
       items: [
         { code: 'az', name: 'Aserbaidschanisch', text: 'Beratung von Kandidaten, Erläuterung von Unterlagen und Vertrag.' },
         { code: 'ru', name: 'Russisch', text: 'Kommunikation mit russischsprachigen Kandidaten und ihren Familien.' },
@@ -613,9 +613,9 @@ const de: typeof az = {
       items: [
         { title: 'Bedarfsanalyse', text: 'Wir klären gemeinsam Position, Anzahl, Starttermin und Arbeitsbedingungen.', deliverable: 'Stellenprofil und Zeitplan' },
         { title: 'Stellenbeschreibung für die Bundesagentur', text: 'Wir erstellen die Stellenbeschreibung im BA-Format – Sie prüfen und bestätigen.', deliverable: 'Fertige Stellenbeschreibung' },
-        { title: 'Auswahl und Interviews', text: 'Video-Interviews mit geprüften Kandidaten; Dolmetschen und Tests übernehmen wir.', deliverable: 'Shortlist und Interviewnotizen' },
+        { title: 'Auswahl und Interviews', text: 'Video-Interviews mit geprüften Kandidaten; Organisation und Tests übernehmen wir.', deliverable: 'Shortlist und Interviewnotizen' },
         { title: 'Arbeitsvertrag', text: 'Wir prüfen vor der Unterschrift, ob der Vertrag den Visumanforderungen entspricht.', deliverable: 'Visumtauglicher Vertrag' },
-        { title: 'Vorabzustimmung oder §81a', text: 'Wir begleiten die BA-Zustimmung oder das beschleunigte Fachkräfteverfahren.', deliverable: 'Zustimmung und Botschaftstermin' },
+        { title: 'Vorabzustimmung oder §81a', text: 'Wir begleiten die BA-Zustimmung oder das beschleunigte Fachkräfteverfahren.', deliverable: 'Zustimmung und vollständige Botschaftsunterlagen' },
         { title: 'Ankunft', text: 'Reise, Abholung, Anmeldung, Bank und Versicherung – vorbereitet zum ersten Arbeitstag.', deliverable: 'Angemeldete Fachkraft' },
         { title: 'Onboarding und Nachbetreuung', text: 'In den ersten Monaten halten wir regelmäßig Kontakt zu Ihnen und zur Fachkraft.', deliverable: 'Feedback und Folgebedarf' },
       ],
@@ -771,7 +771,7 @@ const en: typeof az = {
       legend: { full: 'Fully covered', partial: 'Partly', none: 'Not included / up to you' },
       rows: [
         { label: 'Employer and vacancy', values: ['Vetted German partner companies', 'You search job ads yourself', 'Often a chain of intermediaries'] },
-        { label: 'Documents and translation', values: ['Checklist, review and translation by us', 'You research the requirements yourself', 'Usually just a list'] },
+        { label: 'Documents', values: ['Checklist and review by us', 'You research the requirements yourself', 'Usually just a list'] },
         { label: 'Recognition of qualifications', values: ['Guided step by step', 'Find the competent authority yourself', 'Usually not included'] },
         { label: 'Federal Employment Agency and embassy', values: ['Complete file prepared with the employer', 'High risk of errors and requests for more documents', 'Partial support'] },
         { label: 'Process visibility', values: ['Status and messages in the online account', 'E-mails and waiting', 'You have to call and ask'] },
@@ -793,8 +793,8 @@ const en: typeof az = {
       indicative: 'Indicative durations, not a guarantee.',
       stages: [
         { title: 'Introduction and selection', candidate: 'Free consultation; assessment of CV, experience and language level.', company: 'Job profile, requirements and working conditions are defined.', we: 'We pre-screen applicants and compile a shortlist.' },
-        { title: 'Interview and offer', candidate: 'Video interview with the company, a practical test if needed.', company: 'Selects a candidate and drafts an offer and contract.', we: 'We schedule meetings, interpret and explain the terms to both sides.' },
-        { title: 'Documents and recognition', candidate: 'Collects diplomas, certificates, licence and references.', company: 'Provides confirmations and details needed for recognition.', we: 'We handle translation, certification and the recognition application.' },
+        { title: 'Interview and offer', candidate: 'Video interview with the company, a practical test if needed.', company: 'Selects a candidate and drafts an offer and contract.', we: 'We schedule the interviews and explain the terms clearly to both sides.' },
+        { title: 'Documents and recognition', candidate: 'Collects diplomas, certificates, licence and references.', company: 'Provides confirmations and details needed for recognition.', we: 'We guide the recognition application; the candidate has the apostille and translations done themselves.' },
         { title: 'Federal Employment Agency approval', candidate: 'Answers follow-up questions and continues German classes.', company: 'Confirms the job description (Stellenbeschreibung).', we: 'We prepare the file and track the pre-approval (Vorabzustimmung).' },
         { title: 'Embassy and visa', candidate: 'Attends the embassy appointment and gives biometrics.', company: 'Grants power of attorney for the accelerated procedure (§81a) if used.', we: 'We check the visa file, prepare for the appointment and follow the decision.' },
         { title: 'Travel and arrival', candidate: 'Ticket, first accommodation and registration (Anmeldung).', company: 'Plans the first working day and induction.', we: 'We help with pick-up, registration, bank account and insurance.' },
@@ -807,7 +807,7 @@ const en: typeof az = {
       subtitle: 'Every task has a responsible department. In Baku we work directly with candidates, in Germany directly with employers.',
       items: [
         { title: 'Candidate care and selection', place: 'Baku', text: 'Intake of applications, consultation, interviews and skills checks.', tasks: ['First consultation', 'Skills and language check', 'Shortlist'] },
-        { title: 'Documents and visa', place: 'Baku', text: 'Document checklists, translations, embassy file and appointment preparation.', tasks: ['Translation and certification', 'Embassy file', 'Appointment preparation'] },
+        { title: 'Documents and visa', place: 'Baku', text: 'Document checklists, the complete embassy document set and appointment preparation; the candidate applies to the embassy themselves.', tasks: ['Document review', 'Embassy document set', 'Appointment preparation'] },
         { title: 'Recognition and compliance', place: 'Baku · Germany', text: 'Recognition, Federal Employment Agency requirements and lawful working conditions.', tasks: ['Recognition', 'Pre-approval', 'Contract review'] },
         { title: 'Employer relations', place: 'Germany', text: 'Needs analysis with German companies, job profiles and interviews.', tasks: ['Needs analysis', 'Job profile', 'Interview scheduling'] },
         { title: 'Arrival and integration', place: 'Germany', text: 'Pick-up, registration, bank, insurance and settling in during the first months.', tasks: ['Registration', 'Bank and insurance', 'First-months support'] },
@@ -865,7 +865,7 @@ const en: typeof az = {
     languages: {
       eyebrow: 'Communication',
       title: 'Speaking everyone’s language',
-      subtitle: 'Candidates need to understand the terms in their own language, employers need documents in German. Our team translates between both worlds.',
+      subtitle: 'Candidates need to understand the terms in their own language, employers need documents in German. Our team bridges both worlds.',
       items: [
         { code: 'az', name: 'Azerbaijani', text: 'Advising candidates, explaining documents and contracts.' },
         { code: 'ru', name: 'Russian', text: 'Communication with Russian-speaking candidates and their families.' },
@@ -982,9 +982,9 @@ const en: typeof az = {
       items: [
         { title: 'Needs analysis', text: 'Together we define the role, headcount, start date and working conditions.', deliverable: 'Job profile and schedule' },
         { title: 'Job description for the Federal Employment Agency', text: 'We draft the Stellenbeschreibung in the agency’s format – you review and confirm.', deliverable: 'Ready-to-submit job description' },
-        { title: 'Selection and interviews', text: 'Video interviews with pre-screened candidates; we handle interpreting and tests.', deliverable: 'Shortlist and interview notes' },
+        { title: 'Selection and interviews', text: 'Video interviews with pre-screened candidates; we handle the organisation and tests.', deliverable: 'Shortlist and interview notes' },
         { title: 'Employment contract', text: 'Before signing, we check that the contract meets visa requirements.', deliverable: 'Visa-compliant contract' },
-        { title: 'Pre-approval or §81a', text: 'We follow the agency’s approval or the accelerated skilled-worker procedure.', deliverable: 'Approval and embassy appointment' },
+        { title: 'Pre-approval or §81a', text: 'We follow the agency’s approval or the accelerated skilled-worker procedure.', deliverable: 'Approval and the complete embassy document set' },
         { title: 'Arrival', text: 'Travel, pick-up, registration, bank and insurance – ready for day one.', deliverable: 'Registered new employee' },
         { title: 'Onboarding and follow-up', text: 'During the first months we stay in regular contact with you and the employee.', deliverable: 'Feedback and next needs' },
       ],
@@ -1140,7 +1140,7 @@ const ru: typeof az = {
       legend: { full: 'Полностью', partial: 'Частично', none: 'Нет / на вас' },
       rows: [
         { label: 'Работодатель и вакансия', values: ['Проверенные немецкие компании-партнёры', 'Вы сами ищете объявления', 'Часто цепочка посредников'] },
-        { label: 'Документы и перевод', values: ['Список, проверка и перевод — на нас', 'Вы сами изучаете требования', 'Обычно только список'] },
+        { label: 'Документы', values: ['Список и проверка — на нас', 'Вы сами изучаете требования', 'Обычно только список'] },
         { label: 'Признание диплома', values: ['Пошаговое сопровождение', 'Сами ищете компетентный орган', 'Как правило, не входит'] },
         { label: 'Агентство занятости и посольство', values: ['Полный пакет вместе с работодателем', 'Высокий риск ошибок и дозапросов', 'Частичная помощь'] },
         { label: 'Прозрачность процесса', values: ['Статус и сообщения в личном кабинете', 'Письма и ожидание', 'Нужно звонить и спрашивать'] },
@@ -1162,8 +1162,8 @@ const ru: typeof az = {
       indicative: 'Ориентировочные сроки, не гарантия.',
       stages: [
         { title: 'Знакомство и отбор', candidate: 'Бесплатная консультация; оценка резюме, опыта и уровня языка.', company: 'Определяются профиль вакансии, требования и условия труда.', we: 'Мы проводим предварительный отбор и составляем шорт-лист.' },
-        { title: 'Собеседование и оффер', candidate: 'Видеособеседование с компанией, при необходимости практическая проверка.', company: 'Выбирает кандидата, готовит оффер и проект договора.', we: 'Организуем встречи, переводим и объясняем условия обеим сторонам.' },
-        { title: 'Документы и признание', candidate: 'Собирает дипломы, сертификаты, права и справки.', company: 'Предоставляет подтверждения и данные для признания.', we: 'Сопровождаем перевод, заверение и заявление на признание (Anerkennung).' },
+        { title: 'Собеседование и оффер', candidate: 'Видеособеседование с компанией, при необходимости практическая проверка.', company: 'Выбирает кандидата, готовит оффер и проект договора.', we: 'Организуем встречи и понятно объясняем условия обеим сторонам.' },
+        { title: 'Документы и признание', candidate: 'Собирает дипломы, сертификаты, права и справки.', company: 'Предоставляет подтверждения и данные для признания.', we: 'Сопровождаем заявление на признание (Anerkennung); апостиль и перевод кандидат оформляет сам.' },
         { title: 'Согласие Агентства занятости', candidate: 'Отвечает на дополнительные запросы и продолжает учить немецкий.', company: 'Подтверждает описание рабочего места (Stellenbeschreibung).', we: 'Готовим пакет и отслеживаем предварительное согласие (Vorabzustimmung).' },
         { title: 'Посольство и виза', candidate: 'Приходит на приём в посольство и сдаёт биометрию.', company: 'При необходимости выдаёт доверенность для ускоренной процедуры (§81a).', we: 'Проверяем визовый пакет, готовим к приёму и следим за решением.' },
         { title: 'Переезд и прибытие', candidate: 'Билет, первое жильё и прописка (Anmeldung).', company: 'Планирует первый рабочий день и инструктаж.', we: 'Помогаем со встречей, пропиской, банковским счётом и страховкой.' },
@@ -1176,7 +1176,7 @@ const ru: typeof az = {
       subtitle: 'У каждой задачи есть ответственный отдел. В Баку мы работаем напрямую с кандидатами, в Германии — напрямую с работодателями.',
       items: [
         { title: 'Работа с кандидатами и отбор', place: 'Баку', text: 'Приём заявок, консультации, собеседования и проверка профессиональных навыков.', tasks: ['Первичная консультация', 'Проверка навыков и языка', 'Шорт-лист'] },
-        { title: 'Документы и виза', place: 'Баку', text: 'Списки документов, переводы, визовый пакет и подготовка к приёму.', tasks: ['Перевод и заверение', 'Пакет для посольства', 'Подготовка к приёму'] },
+        { title: 'Документы и виза', place: 'Баку', text: 'Списки документов, полный пакет для посольства и подготовка к приёму; заявление кандидат подаёт сам.', tasks: ['Проверка документов', 'Пакет для посольства', 'Подготовка к приёму'] },
         { title: 'Признание и правовое соответствие', place: 'Баку · Германия', text: 'Признание квалификации, требования Агентства занятости и законные условия труда.', tasks: ['Anerkennung', 'Vorabzustimmung', 'Проверка договора'] },
         { title: 'Работа с работодателями', place: 'Германия', text: 'Анализ потребностей немецких компаний, профили вакансий и собеседования.', tasks: ['Анализ потребностей', 'Профиль вакансии', 'Организация собеседований'] },
         { title: 'Прибытие и интеграция', place: 'Германия', text: 'Встреча, прописка, банк, страховка и адаптация в первые месяцы.', tasks: ['Anmeldung', 'Банк и страховка', 'Сопровождение первых месяцев'] },
@@ -1234,7 +1234,7 @@ const ru: typeof az = {
     languages: {
       eyebrow: 'Общение',
       title: 'С каждым — на его языке',
-      subtitle: 'Кандидат должен понимать условия на родном языке, а работодателю нужны документы на немецком. Наша команда переводит между этими двумя мирами.',
+      subtitle: 'Кандидат должен понимать условия на родном языке, а работодателю нужны документы на немецком. Наша команда служит мостом между этими двумя мирами.',
       items: [
         { code: 'az', name: 'Азербайджанский', text: 'Консультации кандидатов, разъяснение документов и договора.' },
         { code: 'ru', name: 'Русский', text: 'Общение с русскоязычными кандидатами и их семьями.' },
@@ -1351,9 +1351,9 @@ const ru: typeof az = {
       items: [
         { title: 'Анализ потребностей', text: 'Вместе уточняем должность, количество, дату начала и условия труда.', deliverable: 'Профиль вакансии и график' },
         { title: 'Описание рабочего места для Агентства занятости', text: 'Готовим Stellenbeschreibung в формате BA — вы проверяете и подтверждаете.', deliverable: 'Готовая Stellenbeschreibung' },
-        { title: 'Отбор и собеседования', text: 'Видеособеседования с проверенными кандидатами; перевод и тесты — на нас.', deliverable: 'Шорт-лист и заметки по собеседованиям' },
+        { title: 'Отбор и собеседования', text: 'Видеособеседования с проверенными кандидатами; организация и тесты — на нас.', deliverable: 'Шорт-лист и заметки по собеседованиям' },
         { title: 'Трудовой договор', text: 'До подписания проверяем, соответствует ли договор визовым требованиям.', deliverable: 'Договор, подходящий для визы' },
-        { title: 'Vorabzustimmung или §81a', text: 'Сопровождаем согласие BA или ускоренную процедуру для специалистов.', deliverable: 'Согласие и запись в посольство' },
+        { title: 'Vorabzustimmung или §81a', text: 'Сопровождаем согласие BA или ускоренную процедуру для специалистов.', deliverable: 'Согласие и полный пакет документов для посольства' },
         { title: 'Прибытие', text: 'Перелёт, встреча, прописка, банк и страховка — сотрудник готов к первому дню.', deliverable: 'Зарегистрированный сотрудник' },
         { title: 'Онбординг и сопровождение', text: 'В первые месяцы регулярно на связи и с вами, и с сотрудником.', deliverable: 'Обратная связь и новые потребности' },
       ],

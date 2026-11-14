@@ -16,6 +16,7 @@ import { optimisticListEdit } from '@/components/inline/optimistic';
 import { PresenceAvatars } from '@/components/presence/PresenceAvatars';
 import { usePresence } from '@/components/presence/usePresence';
 import { InquiryBadges, InquiryWork } from './InquiryWork'; // owner, internal notes, conversion, agent badge
+import { ExternalJobPanel } from '@/components/germanyJobs/ExternalJobPanel'; // "apply via Triad Vision" listing + CV
 
 registerCopy(pagesAdminUx);
 
@@ -66,6 +67,7 @@ export const InquiryDetailBody = ({ i, className }: { i: Inquiry; className?: st
   return (
     <div className={clsx('space-y-4', className)}>
       <InquiryBadges i={i} />
+      {i.externalJob && <ExternalJobPanel inquiryId={i.id} job={i.externalJob} />}
       {i.message && <p className="rounded-lg border border-line bg-card px-3.5 py-3 text-sm break-words whitespace-pre-wrap text-ink">{i.message}</p>}
       <InquiryWork i={i} />
       {!i.anonymizedAt && <LeadDetailsPanel inquiryId={i.id} />}

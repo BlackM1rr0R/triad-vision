@@ -4,18 +4,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock, FileText, Inbox, Languages, Lock, Mail, Phone, Search, Settings2, UserRound } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock, FileText, Inbox, Languages, Lock, Mail, Phone, Search, UserRound } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import { hasMinRole } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesTranslations } from '@/i18n/pagesTranslations';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile, Switch } from '@/components/admin/ui';
 import { MultiFileDrop } from '@/components/translations/MultiFileDrop';
-import { PricingDialog } from '@/components/translations/PricingDialog';
-import { OrderDraftButton } from '@/components/aiDocs/OrderDraftButton';
 import {
   SERVICES,
   STATUSES,
@@ -24,7 +20,6 @@ import {
   TrStepper,
   useTrError,
   useTrFormat,
-  type TrPricing,
   type TrService,
   type TrStaffOrder,
   type TrStatus,
@@ -61,7 +56,7 @@ interface Person {
   role: string;
 }
 
-/** Mirrors STATUS_TRANSITIONS on the server (quote and acceptance have their own actions). */
+/** Mirrors STATUS_TRANSITIONS on the server (archive: quoting and client acceptance no longer exist). */
 const NEXT: Record<TrStatus, TrStatus[]> = {
   NEW: ['CANCELLED'],
   QUOTED: ['CANCELLED'],
@@ -81,9 +76,6 @@ const toDateInput = (iso: string | null) => {
 /** A picked day means "by the end of the working day" (18:00 local). */
 const fromDateInput = (v: string) => (v ? new Date(`${v}T18:00:00`).toISOString() : null);
 
-const usePricing = () =>
-  useQuery({ queryKey: ['translations', 'pricing'], queryFn: async () => (await api.get<{ pricing: TrPricing }>('/translations/pricing')).data.pricing, staleTime: 5 * 60_000 });
-
 const usePeople = () =>
   useQuery({ queryKey: ['tasks', 'people'], queryFn: async () => (await api.get<{ people: Person[] }>('/tasks/people')).data.people, staleTime: 5 * 60_000 });
 
@@ -92,11 +84,7 @@ const usePeople = () =>
 const OrdersTable = () => {
   const { t } = useTranslation();
   const f = useTrFormat();
-  const { user } = useAuth();
-  const isAdmin = hasMinRole(user?.role, 'ADMIN');
   const [params, setParams] = useSearchParams();
-  const [pricingOpen, setPricingOpen] = useState(false);
-  const { data: pricing } = usePricing();
   const status = params.get('status') ?? 'open';
   const service = params.get('service') ?? '';
   const assignee = params.get('assignee') ?? '';
@@ -150,14 +138,8 @@ const OrdersTable = () => {
       <PageHead
         title={t('trOrders.admin.title')}
         subtitle={t('trOrders.admin.subtitle')}
-        actions={
-          isAdmin && (
-            <button type="button" className="btn-secondary btn-sm" onClick={() => setPricingOpen(true)}>
-              <Settings2 className="size-4" aria-hidden /> {t('trOrders.admin.prices')}
-            </button>
-          )
-        }
       />
+      <p className="mb-5 rounded-lg border border-line bg-sunken p-3 text-sm text-ink">{t('trOrders.admin.archiveNote')}</p>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label={t('trOrders.admin.tiles.open')} value={summary.data?.open ?? '—'} icon={ClipboardList} />
@@ -283,88 +265,11 @@ const OrdersTable = () => {
           </div>
         </div>
       )}
-
-      {isAdmin && <PricingDialog open={pricingOpen} pricing={pricing} onClose={() => setPricingOpen(false)} />}
     </div>
   );
 };
 
 // ─── Detail ───────────────────────────────────────────────────────────────
-
-const QuoteForm = ({ order, onSaved }: { order: TrStaffOrder; onSaved: (o: TrStaffOrder) => void }) => {
-  const { t } = useTranslation();
-  const f = useTrFormat();
-  const onError = useTrError();
-  const { data: pricing } = usePricing();
-  const estimate = pricing
-    ? (() => {
-        const base = (pricing.perPage[order.service] ?? 0) * order.pages;
-        return base + (order.urgency === 'EXPRESS' ? Math.round((base * pricing.expressSurchargePct) / 100) : 0);
-      })()
-    : null;
-  const [price, setPrice] = useState(order.priceCents != null ? (order.priceCents / 100).toFixed(2) : '');
-  const [due, setDue] = useState(toDateInput(order.dueAt));
-  const [note, setNote] = useState(order.quoteNote ?? '');
-
-  const send = useMutation({
-    mutationFn: async () =>
-      (
-        await api.post<{ order: TrStaffOrder }>(`/admin/translations/${order.id}/quote`, {
-          priceCents: Math.round(Number(price.replace(',', '.')) * 100),
-          dueAt: fromDateInput(due),
-          quoteNote: note || null,
-        })
-      ).data.order,
-    onSuccess: (o) => {
-      onSaved(o);
-      toast.success(t('trOrders.admin.quote.sent'));
-    },
-    onError,
-  });
-
-  return (
-    <Panel title={t('trOrders.admin.quote.title')} icon={ClipboardList} className="bg-card">
-      <form
-        className="grid gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send.mutate();
-        }}
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="q-price">
-              {t('trOrders.admin.quote.price', { currency: order.currency })}
-            </label>
-            <input id="q-price" type="number" min={0} step="0.01" required className="input" value={price} onChange={(e) => setPrice(e.target.value)} />
-            {estimate != null && (
-              <button type="button" className="mt-1 text-[11px] font-semibold text-link hover:underline" onClick={() => setPrice((estimate / 100).toFixed(2))}>
-                {t('trOrders.admin.quote.estimate', { price: f.money(estimate, pricing!.currency) })}
-              </button>
-            )}
-          </div>
-          <div>
-            <label className="label" htmlFor="q-due">
-              {t('trOrders.admin.quote.due')}
-            </label>
-            <input id="q-due" type="date" required className="input" value={due} onChange={(e) => setDue(e.target.value)} />
-          </div>
-        </div>
-        <div>
-          <label className="label" htmlFor="q-note">
-            {t('trOrders.admin.quote.note')}
-          </label>
-          <textarea id="q-note" rows={2} maxLength={2000} className="input" value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <div>
-          <button type="submit" className="btn-primary btn-sm" disabled={send.isPending || !price || !due}>
-            {send.isPending && <Spinner className="size-4" />} {order.status === 'QUOTED' ? t('trOrders.admin.quote.resend') : t('trOrders.admin.quote.send')}
-          </button>
-        </div>
-      </form>
-    </Panel>
-  );
-};
 
 const StatusActions = ({ order, onSaved }: { order: TrStaffOrder; onSaved: (o: TrStaffOrder) => void }) => {
   const { t } = useTranslation();
@@ -385,7 +290,7 @@ const StatusActions = ({ order, onSaved }: { order: TrStaffOrder; onSaved: (o: T
 
   return (
     <Panel title={t('trOrders.admin.actions.title')} icon={Clock} className="bg-card">
-      {order.status === 'QUOTED' && <p className="mb-3 text-sm text-muted">{t('trOrders.admin.actions.waitingClient')}</p>}
+      {(order.status === 'NEW' || order.status === 'QUOTED') && <p className="mb-3 text-sm text-muted">{t('trOrders.admin.actions.waitingClient')}</p>}
       {next.length === 0 ? (
         <p className="flex items-center gap-2 text-sm text-muted">
           <Lock className="size-4" aria-hidden /> {t('trOrders.admin.actions.final')}
@@ -591,7 +496,6 @@ const OrderAdmin = () => {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-5">
-          {(order.status === 'NEW' || order.status === 'QUOTED') && <QuoteForm key={`${order.id}-${order.updatedAt}`} order={order} onSaved={onSaved} />}
           <StatusActions order={order} onSaved={onSaved} />
 
           <Panel title={t('trOrders.admin.sources')} icon={FileText} className="bg-card">
@@ -605,8 +509,6 @@ const OrderAdmin = () => {
               <p className="text-sm text-muted">{t('trOrders.admin.noFiles')}</p>
             )}
             {order.clientNote && <p className="mt-4 rounded-lg bg-sunken p-3 text-sm whitespace-pre-line text-ink">{order.clientNote}</p>}
-            {/* AI draft translation of a source file for the translator (drive: client folder "Übersetzungen") */}
-            <OrderDraftButton orderId={order.id} files={sources} onCreated={() => void q.refetch()} />
           </Panel>
 
           <Panel title={t('trOrders.admin.results')} icon={CheckCircle2} className="bg-card">
@@ -695,7 +597,7 @@ const OrderAdmin = () => {
   );
 };
 
-/** /admin/translations/* — translation & apostille orders for staff. */
+/** /admin/translations/* — archive of the former translation orders (no new orders; staff close old ones). */
 export default function AdminTranslations() {
   const { t } = useTranslation();
   usePageTitle(t('trOrders.admin.title'));
