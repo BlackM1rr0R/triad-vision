@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { config } from '../../config.js';
 import {
   CallBudget,
   PAGE_SIZE,
@@ -98,7 +99,8 @@ export const careerjetProvider: JobProvider = {
       if (!budget.take()) throw new UpstreamError('UPSTREAM_BUSY', 'own call budget reached');
       try {
         const body = (await fetchJson(`${CAREERJET_URL}?${careerjetParams(q, { ip: ctx.ip ?? '0.0.0.0', userAgent: ctx.userAgent ?? 'Mozilla/5.0' }).toString()}`, {
-          headers: { Authorization: `Basic ${Buffer.from(`${key}:`).toString('base64')}` },
+          // Careerjet answers 403 "Undeclared referrer" without a Referer: the page the results are shown on.
+          headers: { Authorization: `Basic ${Buffer.from(`${key}:`).toString('base64')}`, Referer: `${config.clientUrl}/jobs/germany` },
         })) as { type?: unknown; jobs?: unknown; hits?: unknown; pages?: unknown } | null;
         const items = (Array.isArray(body?.jobs) ? body.jobs : []).map(normalizeCareerjet).filter((x): x is GermanyJob => !!x);
         lastFetchAt = Date.now();
@@ -107,7 +109,7 @@ export const careerjetProvider: JobProvider = {
         return { items, total, pages: Math.min(10, Math.max(1, typeof body?.pages === 'number' ? body.pages : Math.ceil(total / PAGE_SIZE))) };
       } catch (err) {
         const msg = (err as Error).message;
-        lastError = msg === 'HTTP 403' ? 'HTTP 403 (key invalid or this server IP is not whitelisted in the Careerjet panel)' : msg;
+        lastError = msg === 'HTTP 403' ? 'HTTP 403 (key invalid, this server IP is not whitelisted, or the Referer is not accepted in the Careerjet panel)' : msg;
         throw err;
       }
     });
