@@ -8,6 +8,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, PanelLeft, Plus } from 'lucide
 import { registerCopy } from '@/i18n';
 import { pagesCalendar } from '@/i18n/pagesCalendar';
 import { pagesTasks } from '@/i18n/pagesTasks';
+import { pagesStaffDesk } from '@/i18n/pagesStaffDesk';
 import { useAuth } from '@/lib/auth';
 import { useRealtime } from '@/lib/realtime';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -24,13 +25,17 @@ import type { AttendeeStatus, CalItem, EventDto, View } from '@/components/calen
 import { VIEWS } from '@/components/calendar/types';
 import { addDays, addMonths, dayKey, errorText, fmtDate, fmtMonthTitle, monthGrid, parseDayKey, startOfDay, startOfWeek, toItems, weekNumber } from '@/components/calendar/utils';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
+import { OpsSidebar, useOpsLayer } from '@/components/staffDesk/OpsCalendar'; // embassy layer (?mode=ops)
+import { OPS_TYPES, type OpsType } from '@/components/staffDesk/api';
 
 registerCopy(pagesTasks);
 registerCopy(pagesCalendar);
+registerCopy(pagesStaffDesk);
 
 const TOGGLES_KEY = 'tv-calendar-toggles';
 const USERS_KEY = 'tv-calendar-users';
 const VIEW_KEY = 'tv-calendar-view';
+const OPS_TYPES_KEY = 'tv-calendar-ops-types';
 const read = <T,>(key: string, fallback: T): T => {
   try {
     const v = localStorage.getItem(key);
@@ -64,6 +69,9 @@ export default function WorkspaceCalendar() {
   const view: View = VIEWS.find((v) => v === sp.get('view')) ?? read<View>(VIEW_KEY, isPhone() ? 'agenda' : 'week');
   const date = useMemo(() => parseDayKey(sp.get('date')) ?? startOfDay(new Date()), [sp]);
   const eventParam = sp.get('event');
+  // Embassy layer: embassy appointments, interviews, arrivals, consultations of the team (?mode=ops&staff=<id|me|none>).
+  const mode: 'mine' | 'ops' = sp.get('mode') === 'ops' ? 'ops' : 'mine';
+  const opsStaff = sp.get('staff') ?? '';
   const patch = useCallback(
     (p: Record<string, string | null>) =>
       setSp(
@@ -89,6 +97,8 @@ export default function WorkspaceCalendar() {
   useEffect(() => write(TOGGLES_KEY, toggles), [toggles]);
   useEffect(() => write(USERS_KEY, users), [users]);
   const people = usePeople();
+  const [opsTypes, setOpsTypes] = useState<OpsType[]>(() => read<OpsType[]>(OPS_TYPES_KEY, [...OPS_TYPES]).filter((x) => (OPS_TYPES as readonly string[]).includes(x)));
+  useEffect(() => write(OPS_TYPES_KEY, opsTypes), [opsTypes]);
 
   // ─── Range for the view ───
   const range = useMemo(() => {
@@ -108,7 +118,9 @@ export default function WorkspaceCalendar() {
     const all = toItems(data.data?.events ?? [], data.data?.system ?? [], meId);
     return all.filter((i) => (i.calendar === 'user' ? users.includes(i.ownerId ?? '') : toggles[i.calendar as ToggleKey]));
   }, [data.data, meId, users, toggles]);
-  const marks = useMemo(() => new Set(items.map((i) => dayKey(i.start))), [items]);
+  const ops = useOpsLayer({ enabled: mode === 'ops', from: range.from, to: range.to, staffId: opsStaff, types: opsTypes });
+  const shown = mode === 'ops' ? ops.items : items;
+  const marks = useMemo(() => new Set(shown.map((i) => dayKey(i.start))), [shown]);
 
   useRealtime('calendar.updated', () => refreshCalendar(qc));
 
@@ -183,6 +195,24 @@ export default function WorkspaceCalendar() {
     <div className="flex h-full min-h-0 bg-canvas text-ink">
       {sidebar && (
         <aside className={clsx('shrink-0 border-r border-line bg-card', 'absolute inset-y-0 left-0 z-30 w-72 shadow-[var(--tv-shadow-raised)] sm:static sm:w-64 sm:shadow-none')}>
+          {mode === 'ops' ? (
+            <OpsSidebar
+              month={date}
+              selected={date}
+              marks={marks}
+              onSelectDay={(d) => {
+                setDate(d);
+                if (isPhone()) setSidebar(false);
+              }}
+              onMonthChange={setDate}
+              types={opsTypes}
+              onToggleType={(k) => setOpsTypes((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]))}
+              counts={ops.counts}
+              staffId={opsStaff}
+              onStaff={(id) => patch({ staff: id || null })}
+              people={people.data ?? []}
+            />
+          ) : (
           <CalendarSidebar
             month={date}
             selected={date}
@@ -199,6 +229,7 @@ export default function WorkspaceCalendar() {
             users={users}
             onToggleUser={(id) => setUsers((u) => (u.includes(id) ? u.filter((x) => x !== id) : [...u, id]))}
           />
+          )}
         </aside>
       )}
       {sidebar && isPhone() && <button type="button" className="absolute inset-0 z-20 bg-scrim sm:hidden" onClick={() => setSidebar(false)} aria-label={t('calendar.actions.close')} />}
@@ -223,6 +254,13 @@ export default function WorkspaceCalendar() {
             {title}
             {view === 'week' && <span className="ml-2 text-xs font-semibold text-muted">{t('calendar.labels.week', { n: weekNumber(date) })}</span>}
           </h1>
+          <div className="flex rounded-lg border border-line p-0.5" role="group" aria-label={t('sd.ops.modeAria')}>
+            {(['mine', 'ops'] as const).map((m) => (
+              <button key={m} type="button" aria-pressed={mode === m} onClick={() => patch({ mode: m === 'ops' ? 'ops' : null })} className={clsx('rounded-md px-2.5 py-1 text-xs font-semibold whitespace-nowrap', mode === m ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}>
+                {t(`sd.ops.mode.${m}`)}
+              </button>
+            ))}
+          </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="hidden md:block md:w-72 lg:w-96">
               <QuickAdd onCreated={(e) => (refreshCalendar(qc), setDate(new Date(e.startsAt)))} />
@@ -245,7 +283,7 @@ export default function WorkspaceCalendar() {
         </div>
 
         <div className="relative min-h-0 flex-1">
-          {data.isLoading && (
+          {(mode === 'ops' ? ops.loading : data.isLoading) && (
             <div className="absolute inset-0 z-10 grid place-items-center bg-card/60">
               <Spinner />
             </div>
@@ -253,19 +291,30 @@ export default function WorkspaceCalendar() {
           {view === 'month' && (
             <MonthView
               month={date}
-              items={items}
+              items={shown}
               selected={date}
               onOpenItem={openItem}
-              onCreate={(s) => createAt(s)}
+              onCreate={(s) => (mode === 'ops' ? (setDate(s), setView('day')) : createAt(s))}
+              canDrag={mode === 'ops' ? ops.canDrag : undefined}
+              onDropDay={mode === 'ops' ? ops.dropDay : undefined}
               onSelectDay={(d) => {
                 setDate(d);
                 setView('day');
               }}
             />
           )}
-          {(view === 'week' || view === 'day') && <TimeGrid days={weekDays} items={items} onOpenItem={openItem} onCreate={(s, e, allDay) => createAt(s, e, allDay)} onMove={move} />}
-          {view === 'agenda' && <AgendaView from={date} items={items} onOpenItem={openItem} />}
-          {!data.isLoading && !items.length && view !== 'agenda' && (
+          {(view === 'week' || view === 'day') && (
+            <TimeGrid
+              days={weekDays}
+              items={shown}
+              onOpenItem={openItem}
+              onCreate={(s, e, allDay) => (mode === 'ops' ? undefined : createAt(s, e, allDay))}
+              onMove={mode === 'ops' ? (i, s, e) => void ops.move(i, s, e) : move}
+              canDrag={mode === 'ops' ? ops.canDrag : undefined}
+            />
+          )}
+          {view === 'agenda' && <AgendaView from={date} items={shown} onOpenItem={openItem} />}
+          {!(mode === 'ops' ? ops.loading : data.isLoading) && !shown.length && view !== 'agenda' && (
             <p className="pointer-events-none absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-xs text-muted">
               <CalendarDays className="size-3.5" /> {t('calendar.labels.noEvents')}
             </p>

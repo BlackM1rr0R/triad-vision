@@ -7,9 +7,9 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /**
  * Staff writes that stay possible in read-only mode: signing in and out (incl. 2FA), the user's own sidebar
- * preferences, marking notifications read and device / push registrations.
+ * preferences, guided-tour progress, marking notifications read and device / push registrations.
  */
-const ALLOWED = [/^\/api\/auth(\/|$)/, /^\/api\/admin\/me\//, /^\/api\/notifications(\/|$)/, /^\/api\/devices(\/|$)/, /^\/api\/site\/push\//];
+const ALLOWED = [/^\/api\/auth(\/|$)/, /^\/api\/admin\/me\//, /^\/api\/notifications(\/|$)/, /^\/api\/devices(\/|$)/, /^\/api\/tours(\/|$)/, /^\/api\/site\/push\//];
 
 /**
  * Licence read-only mode (expired beyond the grace period, invalid or missing licence on a customer

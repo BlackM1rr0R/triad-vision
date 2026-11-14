@@ -50,6 +50,10 @@ import { adminCaseNextRouter } from './caseNext.js';
 import { adminAiEmployerRouter } from './aiEmployer.js';
 import { adminMgmtRouter } from './aiMgmt.js';
 import { adminMyWorkRouter } from './myWork.js';
+import { adminClient360Router } from './client360.js'; // client 360° page
+import { adminWorkloadRouter } from './workload.js'; // team workload board + assignment suggestion
+import { adminOpsCalendarRouter } from './opsCalendar.js'; // embassy / operations calendar layer
+import { adminCannedRepliesRouter } from './cannedReplies.js'; // canned replies ("/" picker)
 import { adminCaseProcessingRouter } from './caseProcessing.js'; // team document workflow: Schon geschrieben → Fertig, Ablehnung
 import { adminHistoryRouter } from './history.js';
 import { adminAssignmentRouter, adminAutomationRouter } from './automation.js'; // no-code automation rules + automatic assignment
@@ -96,6 +100,7 @@ import { adminStaffUiRouter } from './staffUi.js'; // saved views, table setting
 import { audit } from '../../lib/audit.js';
 import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
 import { adminReviewRouter } from './review.js'; // fast document review queue
+import { adminInboxRouter } from './inbox.js'; // staff message inbox (phone "Mesajlar" tab)
 import { adminAuthoritiesRouter } from './authorities.js'; // authorities catalogue: embassies, Ausländerbehörden, … (STAFF read, ADMIN+ edit)
 
 export const adminRouter = Router();
@@ -172,12 +177,17 @@ adminRouter.use('/whitelabel', requireMinRole('SUPER_ADMIN'), adminWhitelabelRou
 adminRouter.use(adminDashboardLayoutRouter); // /me/dashboard (widget order, sizes, hidden widgets)
 adminRouter.use(adminStaffUiRouter); // /me/saved-views, /me/table-prefs, /me/whats-new, /whats-new/overrides
 adminRouter.use('/bulk', adminBulkRouter); // /bulk/cases/*, /bulk/inquiries/*, /bulk/candidates/*
+adminRouter.use('/inbox', adminInboxRouter); // case threads awaiting the team's answer + recent threads
 adminRouter.use('/review', adminReviewRouter); // /review/queue (pending uploads with AI findings + checklist)
 adminRouter.use('/presence', adminPresenceRouter); // /presence/:kind/:id (join / heartbeat / leave)
 adminRouter.use('/command-search', adminCommandSearchRouter); // staff command palette: cases, people, companies, vacancies, drive, tasks
 adminRouter.use(adminSensitiveRouter); // /reveal, /sensitive/* (masked fields: reveal with reason, settings, reveal log)
 adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, office visits, ball-in-court ETA settings
 adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind
+adminRouter.use('/clients', adminClient360Router); // client 360°: header, sections, timeline, tags
+adminRouter.use('/workload', adminWorkloadRouter); // team workload board (ADMIN+ team, STAFF own row) + /suggest
+adminRouter.use('/ops-calendar', adminOpsCalendarRouter); // embassy appointments, interviews, arrivals, consultations
+adminRouter.use('/canned-replies', adminCannedRepliesRouter); // personal + team canned replies, /picker with variables
 adminRouter.use('/history', adminHistoryRouter); // field-level change history + one-click revert
 adminRouter.use('/automation', adminAutomationRouter); // automation rules (ADMIN+)
 adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settings, load, rebalance, handovers

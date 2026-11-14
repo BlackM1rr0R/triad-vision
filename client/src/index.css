@@ -1312,6 +1312,77 @@ html.a11y-visual-alerts.a11y-flash::after {
   }
 }
 
+/* ── App navigation (signed-in areas: staff, workspace, client portal) ─────────────────────────────────
+   lib/viewTransition.ts sets <html data-vt-nav> for one transition between two pages of the same private area:
+   app = sibling page (short rise), app-deeper = list → detail (from the right), app-up = back up (from the
+   left). Transform + opacity of the page snapshot only; the named chrome (sidebar, top bar, portal header)
+   stays put. Public pages never get it (their navigations keep the plain cross-fade above). */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-vt-nav]::view-transition-old(root) {
+    animation: vt-app-out 140ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  html[data-vt-nav='app']::view-transition-new(root) {
+    animation: vt-app-rise 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  html[data-vt-nav='app-deeper']::view-transition-new(root) {
+    animation: vt-app-from-right 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  html[data-vt-nav='app-up']::view-transition-new(root) {
+    animation: vt-app-from-left 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes vt-app-out {
+  to { opacity: 0; }
+}
+@keyframes vt-app-rise {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@keyframes vt-app-from-right {
+  from { opacity: 0; transform: translateX(14px); }
+}
+@keyframes vt-app-from-left {
+  from { opacity: 0; transform: translateX(-14px); }
+}
+
+/* ── Micro-animations of the app (components/motion/app.tsx) ───────────────────────────────────────────
+   tv-fade-in: content replacing a skeleton / a new tour step (opacity only: no layout shift, no repaint of
+   the box). tv-check: the success tick drawn on save (Button `success`, success toasts). Reduced motion /
+   "Stop animations": shown at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-fade-in {
+    animation: tv-fade-in 200ms ease-out both;
+  }
+  .tv-check-circle {
+    animation: tv-check-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  .tv-check-mark {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: tv-check-draw 320ms 120ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+}
+@keyframes tv-fade-in {
+  from { opacity: 0; }
+}
+@keyframes tv-check-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes tv-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+html.a11y-nomotion .tv-fade-in,
+html.a11y-nomotion .tv-check-circle {
+  animation: none !important;
+}
+html.a11y-nomotion .tv-check-mark {
+  animation: none !important;
+  stroke-dashoffset: 0 !important;
+}
+
 /* ── Button feedback (components/ui/Button.tsx: Button, IconButton, buttonClass) ─────────────────────────
    A quick press (scale 0.97) and, on mouse pointers, a 1px lift on hover. Transform only (compositor), no
    change to colours or shape. Reduced motion / "Stop animations": none. */

@@ -4,6 +4,7 @@ import {
   Sun,
   AtSign,
   Banknote,
+  Bell,
   BarChart3,
   ChartNoAxesCombined,
   BookOpen,
@@ -256,7 +257,10 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('employmentContracts', '/admin/employment-contracts', FileText, 'employers'),
   a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers', { module: 'interviewPrep' }),
   // Ünsiyyət
+  a('inbox', '/admin/inbox', MessagesSquare, 'comms'), // case threads awaiting the team's answer (phone "Mesajlar" tab)
+  a('notifications', '/admin/notifications', Bell, undefined), // notification center history + settings (header bell "Bütün bildirişlər")
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
+  a('cannedReplies', '/admin/canned-replies', MessageSquareQuote, 'comms'), // canned replies for the "/" picker in composers
   a('mailboxes', '/admin/mailboxes', AtSign, 'system', { adminOnly: true }), // our own @domain mailboxes (Team hub, next to users)
   a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
   a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
@@ -317,6 +321,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true, module: 'agents' }),
   a('oversight', '/admin/oversight', Eye, 'system', { superOnly: true }),
   a('kpi', '/admin/kpi', Gauge, 'system', { adminOnly: true, module: 'kpi' }), // staff KPI leaderboard
+  a('teamLoad', '/admin/team-load', Scale, 'system'), // workload board: ADMIN+ the team, STAFF their own card
   a('training', '/admin/training', GraduationCap, 'system', { badge: 'training', module: 'training' }), // internal training (badge: unfinished required courses)
   a('help', '/admin/help', LifeBuoy, 'system'),
   // Navigation settings: module toggles, page usage (SUPER_ADMIN), staff desks (ADMIN+)
@@ -379,7 +384,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
-  { key: 'comms', icon: MessageSquareText, tabs: ['messaging', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'referralPartners', 'agents'] },
   {
@@ -387,7 +392,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
     icon: Globe,
     tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'searchPerformance', 'docGuides', 'events', 'siteTools', 'cityCosts'],
   },
-  { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
+  { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
   { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },

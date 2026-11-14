@@ -6,9 +6,11 @@ import { Mic, Square, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMessagingPlus } from '@/i18n/pagesMessagingPlus';
+import { pagesPortalPlans } from '@/i18n/pagesPortalPlans';
 import { Spinner } from '@/components/ui/Spinner';
 
 registerCopy(pagesMessagingPlus);
+registerCopy(pagesPortalPlans); // pplan.voice.* (live level meter)
 
 export const VOICE_MAX_MS = 3 * 60 * 1000;
 const MIN_MS = 600;
@@ -35,6 +37,9 @@ export const uploadVoice = async <T,>(url: string, blob: Blob, durationMs: numbe
   return (await api.post<T>(url, fd)).data;
 };
 
+/** Bars of the live level meter while recording. */
+const LEVEL_BARS = 20;
+
 const fmt = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -42,12 +47,29 @@ const fmt = (ms: number) => {
 
 /**
  * Microphone button for the message composers: tap to start (tap the stop button to send), or hold and
- * release to send. Max 3 minutes (stops and sends automatically). Records with MediaRecorder.
+ * release to send. Max 3 minutes by default (`maxMs` lowers it; stops and sends automatically). Records with
+ * MediaRecorder; while recording a live level meter (Web Audio analyser) shows that the microphone hears you.
  */
-export const VoiceRecorder = ({ uploadUrl, onSent, disabled, className }: { uploadUrl: string; onSent?: (data: unknown) => void; disabled?: boolean; className?: string }) => {
+export const VoiceRecorder = ({
+  uploadUrl,
+  onSent,
+  disabled,
+  className,
+  maxMs = VOICE_MAX_MS,
+}: {
+  uploadUrl: string;
+  onSent?: (data: unknown) => void;
+  disabled?: boolean;
+  className?: string;
+  maxMs?: number;
+}) => {
   const { t } = useTranslation();
+  const limit = Math.min(maxMs, VOICE_MAX_MS);
   const [state, setState] = useState<'idle' | 'recording' | 'sending'>('idle');
   const [elapsed, setElapsed] = useState(0);
+  const [levels, setLevels] = useState<number[]>(() => Array(LEVEL_BARS).fill(0));
+  const audioCtx = useRef<AudioContext | null>(null);
+  const analyser = useRef<AnalyserNode | null>(null);
   const rec = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -58,6 +80,9 @@ export const VoiceRecorder = ({ uploadUrl, onSent, disabled, className }: { uplo
 
   const cleanup = () => {
     window.clearInterval(timer.current);
+    analyser.current = null;
+    void audioCtx.current?.close().catch(() => undefined);
+    audioCtx.current = null;
     stream.current?.getTracks().forEach((tr) => tr.stop());
     stream.current = null;
     rec.current = null;
@@ -76,7 +101,7 @@ export const VoiceRecorder = ({ uploadUrl, onSent, disabled, className }: { uplo
     }
     setState('sending');
     try {
-      const data = await uploadVoice(uploadUrl, blob, Math.min(ms, VOICE_MAX_MS));
+      const data = await uploadVoice(uploadUrl, blob, Math.min(ms, limit));
       onSent?.(data);
     } catch (err) {
       const code = errorCode(err);
@@ -128,23 +153,64 @@ export const VoiceRecorder = ({ uploadUrl, onSent, disabled, className }: { uplo
       if (discard) setState('idle');
       else void send(blob, ms);
     };
+    // Live level meter: an analyser on the same stream (optional — recording works without Web Audio).
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (Ctx) {
+        const ctx = new Ctx();
+        const node = ctx.createAnalyser();
+        node.fftSize = 512;
+        ctx.createMediaStreamSource(s).connect(node);
+        audioCtx.current = ctx;
+        analyser.current = node;
+      }
+    } catch {
+      analyser.current = null;
+    }
+    const buf = new Uint8Array(512);
     startedAt.current = Date.now();
     r.start(1000);
     setElapsed(0);
+    setLevels(Array(LEVEL_BARS).fill(0));
     setState('recording');
     timer.current = window.setInterval(() => {
       const ms = Date.now() - startedAt.current;
       setElapsed(ms);
-      if (ms >= VOICE_MAX_MS) stop();
-    }, 250);
+      const a = analyser.current;
+      if (a) {
+        a.getByteTimeDomainData(buf);
+        let peak = 0;
+        for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
+        const level = Math.min(1, peak / 64);
+        setLevels((old) => [...old.slice(1), level]);
+      }
+      if (ms >= limit) stop();
+    }, 120);
   };
 
   if (state === 'recording') {
     return (
-      <div className={clsx('flex items-center gap-2 rounded-full border border-red-200 bg-red-50 py-1 pr-1 pl-3 text-xs font-semibold text-red-700', className)} role="status" aria-live="polite">
-        <span className="size-2 animate-pulse rounded-full bg-red-600" aria-hidden />
-        <span className="tabular-nums">{t('msgPlus.voice.recording', { time: fmt(elapsed) })}</span>
-        <button type="button" className="grid size-9 place-items-center rounded-full text-red-700 hover:bg-red-100" onClick={() => stop(true)} aria-label={t('msgPlus.voice.cancel')}>
+      <div
+        className={clsx(
+          'flex items-center gap-2 rounded-full border border-red-200 bg-red-50 py-1 pr-1 pl-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
+          className,
+        )}
+      >
+        <span className="size-2 animate-pulse rounded-full bg-red-600 motion-reduce:animate-none" aria-hidden />
+        <span className="flex h-6 items-center gap-[2px]" role="img" aria-label={t('pplan.voice.level')}>
+          {levels.map((l, i) => (
+            <span key={i} className="w-[3px] rounded-full bg-red-500 dark:bg-red-400" style={{ height: `${Math.max(12, Math.round(l * 100))}%` }} />
+          ))}
+        </span>
+        <span className="tabular-nums" role="timer" aria-live="off">
+          <span className="sr-only">{t('msgPlus.voice.label')}: </span>
+          {fmt(elapsed)} / {fmt(limit)}
+        </span>
+        <span className="sr-only" aria-live="polite">
+          {/* one announcement, 15 s before the automatic stop */}
+          {limit - elapsed <= 15_000 ? t('pplan.voice.left', { time: fmt(15_000) }) : ''}
+        </span>
+        <button type="button" className="grid size-9 place-items-center rounded-full text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40" onClick={() => stop(true)} aria-label={t('msgPlus.voice.cancel')}>
           <X className="size-4" aria-hidden />
         </button>
         <button

@@ -24,6 +24,9 @@ import { NextStepChip } from '@/components/caseNext/NextStepChip';
 import { BallChip } from '@/components/clientProcess/Ball';
 import { PresenceAvatars } from '@/components/presence/PresenceAvatars';
 import { usePresence } from '@/components/presence/usePresence';
+import { useCannedComposer } from '@/components/staffDesk/CannedReplies';
+import { AssignHint } from '@/components/staffDesk/AssignHint';
+import { clientHref } from '@/components/staffDesk/api';
 
 registerCopy(pagesCasesList);
 registerCopy(pagesAdminUx);
@@ -78,6 +81,7 @@ export const CaseQuickDrawer = ({
   const stats = data?.stats;
   const [reply, setReply] = useState('');
   const replyRef = useRef<HTMLTextAreaElement>(null);
+  const canned = useCannedComposer({ value: reply, setValue: setReply, ref: replyRef, context: { caseId: id ?? undefined } }); // "/" canned replies
   useEffect(() => setReply(''), [id]);
   const loaded = !!data;
   useEffect(() => {
@@ -199,6 +203,7 @@ export const CaseQuickDrawer = ({
                   </option>
                 ))}
               </select>
+              <AssignHint caseId={c.id} currentId={c.assignedStaff?.id ?? null} disabled={assign.isPending} onPick={(sid) => assign.mutate(sid)} />
             </Section>
 
             <Section title={t('cl.drawer.appointment')} icon={CalendarClock}>
@@ -277,8 +282,9 @@ export const CaseQuickDrawer = ({
                 if (reply.trim()) send.mutate(reply.trim());
               }}
             >
-              <label className="min-w-0 flex-1">
+              <label className="relative min-w-0 flex-1">
                 <span className="sr-only">{t('cl.drawer.replyLabel')}</span>
+                {canned.popover}
                 <textarea
                   ref={replyRef}
                   rows={2}
@@ -286,8 +292,14 @@ export const CaseQuickDrawer = ({
                   className="input min-h-10 resize-y py-2 text-sm"
                   placeholder={t('cl.drawer.reply')}
                   value={reply}
-                  onChange={(e) => setReply(e.target.value)}
+                  {...canned.aria}
+                  onChange={(e) => {
+                    setReply(e.target.value);
+                    canned.onInput(e.currentTarget);
+                  }}
+                  onClick={(e) => canned.onInput(e.currentTarget)}
                   onKeyDown={(e) => {
+                    if (canned.onKeyDown(e)) return;
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && reply.trim()) {
                       e.preventDefault();
                       send.mutate(reply.trim());
@@ -302,7 +314,14 @@ export const CaseQuickDrawer = ({
           {/* Workflow step (status change): the same form as on the case page */}
           <ActionPanel c={c} />
 
-          <Section title={t('cl.drawer.contact')}>
+          <Section
+            title={t('cl.drawer.contact')}
+            action={
+              <Link to={clientHref(c.client.id)} className={linkClass}>
+                {t('sd.c360.open')}
+              </Link>
+            }
+          >
             <p className="flex flex-col gap-1 text-sm">
               <a href={`mailto:${c.client.email}`} className="inline-flex min-w-0 items-center gap-1.5 text-link hover:underline">
                 <Mail className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{c.client.email}</span>

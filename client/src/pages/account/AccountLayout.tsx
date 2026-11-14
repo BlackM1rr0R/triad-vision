@@ -25,6 +25,7 @@ import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesWaitingRoom } from '@/i18n/pagesWaitingRoom';
 import { FamilySwitcher } from '@/components/portal/FamilySwitcher'; // family member cases: "Mən" / spouse / child chips
 import { OfflineBadge } from '@/components/offline/OfflineBadge'; // "no internet — offline documents" strip
+import { NotificationBell } from '@/components/notifications/center/NotificationCenter'; // header bell: notification center panel
 import { ApprovedCelebration } from './portal/ApprovedCelebration'; // visa approved: one-time celebration screen
 
 registerCopy(pagesAccount);
@@ -145,6 +146,12 @@ export default function AccountLayout() {
                 <ProgressRing percent={completeness.percent} size={52} stroke={5} />
               </Link>
             )}
+            {/* Notification center bell (left of the profile ring; settings live in the profile). */}
+            {isClient && (
+              <div className="float-right ml-1 py-1.5">
+                <NotificationBell allTo="/account/notifications" prefsTo="/account/profile" />
+              </div>
+            )}
             <motion.span className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <span className="size-1.5 rounded-full bg-highlight" aria-hidden />
               <span className="whitespace-nowrap">{t('portal.title')}</span>
@@ -237,7 +244,7 @@ export default function AccountLayout() {
       {isClient && <AiLauncher />}
       {isClient && <ApprovedCelebration />}
       <BottomNavPortal />
-      <TourHost />
+      <TourHost helpTour={CLIENT_TOUR} />
     </div>
   );
 }

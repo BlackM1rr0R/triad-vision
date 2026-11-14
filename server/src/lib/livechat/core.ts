@@ -4,7 +4,7 @@ import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { publish, subscriberCount } from '../messaging/realtime.js';
 import { STAFF_ROLES } from '../workspace/team.js';
-import { getOfficeHours, isOpen } from '../calls/hours.js';
+import { getOfficeHours, isOpen, nextOpening } from '../calls/hours.js';
 import { callTexts } from '../calls/texts.js';
 
 /**
@@ -15,6 +15,14 @@ import { callTexts } from '../calls/texts.js';
  */
 
 export const ACCEPT_TIMEOUT_MS = 2 * 60 * 1000;
+/**
+ * Offline handover: outside office hours / with nobody online the visitor can still open a chat. It waits in the
+ * staff queue (WAITING, reason "offline") without the 2-minute timeout, the AI advisor answers meanwhile
+ * (lib/livechat/offlineAi.ts) and the first colleague who comes online accepts it. Missed after OFFLINE_TTL_MS.
+ */
+export const OFFLINE_REASON = 'offline';
+export const OFFLINE_TTL_MS = 72 * 60 * 60 * 1000;
+export const isOfflineChat = (c: Pick<LiveChat, 'reason'>) => c.reason === OFFLINE_REASON;
 
 export const visitorChannel = (chatId: string) => `livechat:${chatId}`;
 
@@ -45,7 +53,7 @@ export const availability = async (now = new Date()) => {
   const hours = await getOfficeHours();
   const open = isOpen(hours, now);
   const online = open ? (await onlineStaffIds(now)).length : 0;
-  return { available: open && online > 0, officeOpen: open, staffOnline: online };
+  return { available: open && online > 0, officeOpen: open, staffOnline: online, nextOpen: open ? null : (nextOpening(hours, now)?.toISOString() ?? null) };
 };
 
 export type ChatWithMessages = LiveChat & { messages: LiveChatMessage[] };
@@ -72,7 +80,8 @@ export const visitorView = async (chat: ChatWithMessages) => {
     id: chat.id,
     status: chat.status,
     staffName: chat.staffId ? (first.get(chat.staffId) ?? null) : null,
-    acceptDeadline: new Date(chat.createdAt.getTime() + ACCEPT_TIMEOUT_MS).toISOString(),
+    offline: isOfflineChat(chat),
+    acceptDeadline: isOfflineChat(chat) ? null : new Date(chat.createdAt.getTime() + ACCEPT_TIMEOUT_MS).toISOString(),
     messages: chat.messages.map((m) => messageDto(m, first)),
   };
 };
@@ -105,7 +114,8 @@ export const staffView = async (chat: ChatWithMessages) => {
 
 export const loadChat = (id: string) => prisma.liveChat.findUnique({ where: { id }, include: { messages: { orderBy: { createdAt: 'asc' }, take: 500 } } });
 
-export const addMessage = async (chat: LiveChat, author: 'VISITOR' | 'STAFF' | 'SYSTEM', body: string, staffId: string | null = null) => {
+/** VISITOR, STAFF, SYSTEM, or AI (the advisor's answers in an offline chat). */
+export const addMessage = async (chat: LiveChat, author: 'VISITOR' | 'STAFF' | 'SYSTEM' | 'AI', body: string, staffId: string | null = null) => {
   const m = await prisma.liveChatMessage.create({ data: { chatId: chat.id, author, body: body.slice(0, 2000), staffId } });
   await prisma.liveChat.update({ where: { id: chat.id }, data: author === 'VISITOR' ? { lastVisitorAt: m.createdAt } : {} });
   const n = await names([staffId]);
@@ -121,9 +131,17 @@ export const publishQueue = async (chatId: string, change: 'new' | 'accepted' | 
   publish(await allStaffIds(), 'livechat.queue', { chatId, change, ...extra });
 };
 
-/** WAITING chats past the accept timeout → MISSED (visitor gets the contact form). Returns the expired ids. */
+/** WAITING chats past the accept timeout (offline chats: past OFFLINE_TTL_MS) → MISSED (visitor gets the contact form). Returns the expired ids. */
 export const expireWaiting = async (now = new Date()) => {
-  const stale = await prisma.liveChat.findMany({ where: { status: 'WAITING', createdAt: { lt: new Date(now.getTime() - ACCEPT_TIMEOUT_MS) } }, select: { id: true, locale: true }, take: 200 });
+  const stale = await prisma.liveChat.findMany({
+    where: {
+      status: 'WAITING',
+      OR: [
+        { createdAt: { lt: new Date(now.getTime() - ACCEPT_TIMEOUT_MS) }, OR: [{ reason: null }, { reason: { not: OFFLINE_REASON } }] },
+        { createdAt: { lt: new Date(now.getTime() - OFFLINE_TTL_MS) }, reason: OFFLINE_REASON },
+      ],
+    },
+    select: { id: true, locale: true }, take: 200 });
   const out: string[] = [];
   for (const c of stale) {
     const r = await prisma.liveChat.updateMany({ where: { id: c.id, status: 'WAITING' }, data: { status: 'MISSED', closedAt: now } });

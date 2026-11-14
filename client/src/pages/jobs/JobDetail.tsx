@@ -37,6 +37,8 @@ import i18n, { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
+import { CompareToggle } from '@/components/jobs/CompareToggle';
+import { CompareTray } from '@/components/jobs/CompareTray';
 import { BudgetLink } from '@/components/budget/BudgetTeaser';
 import { Spinner } from '@/components/ui/Spinner';
 import { buttonClass } from '@/components/ui/Button';
@@ -549,10 +551,12 @@ export default function JobDetail() {
               <div className="mt-5 border-t border-line pt-5">
                 <ApplyBox v={v} />
               </div>
+              <CompareToggle v={v} size="md" className="mt-3 w-full justify-center" />
             </div>
           </aside>
         </div>
       </section>
+      <CompareTray />
     </>
   );
 }

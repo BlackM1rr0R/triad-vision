@@ -2,6 +2,7 @@ import { lazy, StrictMode, Suspense, useEffect, useState, type ReactNode } from 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig, PresenceContext } from 'framer-motion';
 import { Toaster } from 'sonner';
+import { SuccessCheck } from './components/ui/SuccessCheck';
 import App from './App';
 import { AuthProvider } from './lib/auth';
 import { usePrefs, useResolvedTheme } from './lib/prefs';
@@ -41,6 +42,9 @@ export const createQueryClient = () =>
  * between null and a value — and only `initial` changes once the hydration is over, so content mounted later
  * (other pages, client-only sections) animates as before. In a client-only render it is `undefined` from the start.
  */
+// Success toasts ("Yadda saxlanıldı"…) draw their tick once (components/ui/SuccessCheck.tsx; static for reduced motion).
+const TOAST_ICONS = { success: <SuccessCheck className="size-[18px]" /> };
+
 const noRegister = () => () => undefined;
 const PRESENCE_STATIC = { id: 'tv-ssr', initial: false as const, isPresent: true, register: noRegister };
 const PRESENCE_LIVE = { id: 'tv-ssr', initial: undefined, isPresent: true, register: noRegister };
@@ -62,7 +66,7 @@ const Shell = () => {
         </MotionHydrationGate>
       </MotionConfig>
       {/* gap / visibleToasts: a burst of toasts stacks compactly instead of filling the corner (polish in index.css). */}
-      <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} />
+      <Toaster position="top-right" richColors closeButton theme={theme} duration={visualAlerts ? 10000 : 4000} gap={10} visibleToasts={4} icons={TOAST_ICONS} />
       {/* Quick tooltips for every titled button / link (the native title waits ~1 s). */}
       <TooltipHost />
       {/* Promise-based confirmations (confirmDialog / useConfirm): replaces window.confirm everywhere. */}

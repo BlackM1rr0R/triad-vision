@@ -13,6 +13,7 @@ import { casesRouter } from './routes/cases.js';
 import { scanPdfRouter, scanUploadRouter } from './routes/scanUpload.js';
 import { companyTeamRouter } from './routes/companyTeam.js';
 import { devicesRouter } from './routes/devices.js';
+import { toursRouter } from './routes/tours.js'; // guided-tour progress per user (first-login tours)
 import { filesRouter } from './routes/files.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { publicRouter } from './routes/public.js';
@@ -202,6 +203,7 @@ export const createApp = () => {
   app.use('/api/files', filesRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/devices', devicesRouter);
+  app.use('/api/tours', toursRouter);
   app.use('/api/drive/sheets', sheetsRouter);
   app.use('/api/drive/create', driveCreateRouter);
   app.use('/api/drive/pdf-tools', pdfToolsRouter);

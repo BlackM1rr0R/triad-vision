@@ -218,6 +218,39 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: '7 запитань: робоча віза, Ausbildung, Chancenkarte чи возз’єднання сім’ї — ваш шлях до Німеччини, терміни та чого бракує.',
     },
   },
+  '/path-finder': {
+    name: { az: 'Yol seçici', de: 'Wegfinder', en: 'Path finder', ru: 'Подбор пути', tr: 'Yol bulucu', uk: 'Підбір шляху' },
+    title: {
+      az: 'Almaniyaya hansı yol uyğundur? 5 sual',
+      de: 'Welcher Weg nach Deutschland? 5 Fragen',
+      en: 'Which path to Germany fits me? 5 questions',
+      ru: 'Какой путь в Германию мне подходит?',
+      tr: 'Almanya’ya hangi yol uygun? 5 soru',
+      uk: 'Який шлях до Німеччини мені підходить?',
+    },
+    description: {
+      az: 'Peşə, təhsil, alman dili, təcrübə və yaş: 5 sualdan sonra sizə uyğun viza yolları, gözlənilən maaş, adi müddət və xidmət paketinin qiyməti.',
+      de: 'Beruf, Abschluss, Deutsch, Erfahrung und Alter: nach 5 Fragen Ihre passenden Visawege mit erwartetem Gehalt, typischer Dauer und Paketpreis.',
+      en: 'Profession, education, German, experience and age: after 5 questions your best visa routes with expected salary, typical duration and price.',
+      ru: 'Профессия, образование, немецкий, опыт и возраст: после 5 вопросов подходящие визовые пути, ожидаемая зарплата, обычные сроки и цена пакета.',
+      tr: 'Meslek, eğitim, Almanca, deneyim ve yaş: 5 sorudan sonra size uygun vize yolları, beklenen maaş, tipik süre ve hizmet paketinin fiyatı.',
+      uk: 'Професія, освіта, німецька, досвід і вік: після 5 запитань відповідні візові шляхи, очікувана зарплата, звичайні терміни та ціна пакета.',
+    },
+  },
+  '/compare-jobs': {
+    sitemap: false,
+    index: false,
+    name: { az: 'Vakansiyaların müqayisəsi', de: 'Stellenvergleich', en: 'Compare jobs', ru: 'Сравнение вакансий', tr: 'İlan karşılaştırma', uk: 'Порівняння вакансій' },
+    title: { az: 'Vakansiyaları müqayisə edin', de: 'Stellenangebote vergleichen', en: 'Compare vacancies', ru: 'Сравнить вакансии', tr: 'İş ilanlarını karşılaştırın', uk: 'Порівняти вакансії' },
+    description: {
+      az: '2–3 vakansiyanı yan-yana müqayisə edin: maaş, xalis maaş, şəhər, yaşayış xərcləri, alman dili və tələblər.',
+      de: '2–3 Stellen nebeneinander vergleichen: Gehalt, Netto, Stadt, Lebenshaltungskosten, Deutschniveau und Anforderungen.',
+      en: 'Compare 2–3 vacancies side by side: salary, net pay, city, cost of living, German level and requirements.',
+      ru: 'Сравните 2–3 вакансии рядом: зарплата, нетто, город, стоимость жизни, уровень немецкого и требования.',
+      tr: '2–3 ilanı yan yana karşılaştırın: maaş, net maaş, şehir, yaşam maliyeti, Almanca seviyesi ve şartlar.',
+      uk: 'Порівняйте 2–3 вакансії поруч: зарплата, нетто, місто, вартість життя, рівень німецької та вимоги.',
+    },
+  },
   '/salary-calculator': {
     name: { az: 'Maaş kalkulyatoru', de: 'Gehaltsrechner', en: 'Salary calculator', ru: 'Калькулятор зарплаты', tr: 'Maaş hesaplayıcı', uk: 'Калькулятор зарплати' },
     title: { az: 'Almaniya maaş kalkulyatoru 2026: brutto-netto', de: 'Brutto Netto Rechner 2026 Deutschland', en: 'Salary calculator Germany 2026: gross to net', ru: 'Калькулятор налогов и зарплаты Германия 2026', tr: 'Almanya maaş hesaplama 2026: brütten nete', uk: 'Податковий калькулятор Німеччини 2026: нетто' },
@@ -708,7 +741,7 @@ export const SPA_ROUTES = [
  */
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
-  { key: 'eligibility', paths: ['/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
+  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
   { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget'] },
   { key: 'plan', paths: ['/calculator', '/cities', '/events', '/status'] },
   { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },

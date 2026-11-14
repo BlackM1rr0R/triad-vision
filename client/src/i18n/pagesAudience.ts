@@ -14,6 +14,7 @@ const az = {
       explore: { title: 'Kəşf et', text: 'İşçilərimizin xəritəsi, bələdçilər, vakansiyalar və viza növləri.' },
     },
     items: {
+      pathFinder: { title: 'Hansı yol mənə uyğundur?', text: '5 sual: viza yolu, gözlənilən maaş, adi müddət və qiymət — linklə paylaşın.' },
       quiz: { title: 'Uyğunluq testi', text: '7 sual: iş vizası, Ausbildung, İmkan Kartı və ya ailə birləşməsi — sizə uyğun yol.' },
       visaCheck: { title: 'Viza testi', text: 'Bir neçə suala cavab verin və sizə uyğun viza növünü öyrənin.' },
       compare: { title: 'Hansı viza mənə uyğundur?', text: 'İmkan Kartı, Mavi Kart, Ausbildung və digər yolları bir cədvəldə müqayisə edin.' },
@@ -99,6 +100,7 @@ const de: typeof az = {
       explore: { title: 'Entdecken', text: 'Karte unserer Fachkräfte, Ratgeber, Stellenangebote und Visumarten.' },
     },
     items: {
+      pathFinder: { title: 'Welcher Weg passt zu mir?', text: '5 Fragen: Visumweg, erwartetes Gehalt, typische Dauer und Preis — per Link teilen.' },
       quiz: { title: 'Eignungstest', text: '7 Fragen: Arbeitsvisum, Ausbildung, Chancenkarte oder Familiennachzug — Ihr passender Weg.' },
       visaCheck: { title: 'Visum-Check', text: 'Beantworten Sie ein paar Fragen und finden Sie das passende Visum.' },
       compare: { title: 'Welches Visum passt zu mir?', text: 'Chancenkarte, Blaue Karte, Ausbildung und weitere Wege in einer Tabelle vergleichen.' },
@@ -184,6 +186,7 @@ const en: typeof az = {
       explore: { title: 'Explore', text: 'Map of our workers, guides, jobs and visa types.' },
     },
     items: {
+      pathFinder: { title: 'Which path fits me?', text: '5 questions: visa route, expected salary, typical duration and price — share by link.' },
       quiz: { title: 'Eligibility quiz', text: '7 questions: work visa, Ausbildung, Opportunity Card or family reunion — your best path.' },
       visaCheck: { title: 'Visa check', text: 'Answer a few questions and find the visa type that fits you.' },
       compare: { title: 'Which visa fits me?', text: 'Compare the Opportunity Card, Blue Card, Ausbildung and other routes in one table.' },
@@ -269,6 +272,7 @@ const ru: typeof az = {
       explore: { title: 'Узнать больше', text: 'Карта наших работников, гиды, вакансии и виды виз.' },
     },
     items: {
+      pathFinder: { title: 'Какой путь мне подходит?', text: '5 вопросов: визовый путь, ожидаемая зарплата, сроки и цена — поделитесь ссылкой.' },
       quiz: { title: 'Тест на соответствие', text: '7 вопросов: рабочая виза, Ausbildung, Chancenkarte или воссоединение семьи — ваш путь.' },
       visaCheck: { title: 'Подбор визы', text: 'Ответьте на несколько вопросов и узнайте, какая виза вам подходит.' },
       compare: { title: 'Какая виза мне подходит?', text: 'Сравните Chancenkarte, Голубую карту, Ausbildung и другие пути в одной таблице.' },

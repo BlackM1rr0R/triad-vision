@@ -17,11 +17,13 @@ export type SubKey =
   // home
   | 'overview'
   | 'application'
+  | 'arrivalPrep'
   | 'arrival'
   | 'onboarding'
   | 'housing'
   // documents
   | 'caseDocs'
+  | 'docChecklist'
   | 'signatures'
   | 'payments'
   | 'vault'
@@ -48,8 +50,8 @@ export type SubKey =
 
 /** Every sub-tab in display order, grouped by section. */
 export const SECTION_SUBS: Record<SectionKey, readonly SubKey[]> = {
-  home: ['overview', 'application', 'arrival', 'onboarding', 'housing'],
-  documents: ['caseDocs', 'signatures', 'payments', 'vault', 'translations', 'letterExplain'],
+  home: ['overview', 'application', 'arrivalPrep', 'arrival', 'onboarding', 'housing'],
+  documents: ['caseDocs', 'docChecklist', 'signatures', 'payments', 'vault', 'translations', 'letterExplain'],
   messages: ['chat', 'notifications'],
   learn: ['course', 'waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
   profile: ['personal', 'family', 'privacy', 'referral'],
@@ -122,9 +124,12 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
       return ctx.hasCase;
     case 'arrival':
       return stage === 'TRAVEL';
+    case 'arrivalPrep': // flight → first weeks in Germany in one checklist (from the visa approval on)
+      return stage === 'TRAVEL' || stage === 'IN_GERMANY';
     case 'onboarding':
     case 'housing': // housing search + Anmeldung (from the visa approval on)
       return stage === 'TRAVEL' || stage === 'IN_GERMANY';
+    case 'docChecklist': // every document of the visa type with guides; same rule as the case documents
     case 'caseDocs':
       // In Germany only while something is still open there (renewal, family member, missing file).
       if (!ctx.hasCase) return false;
@@ -179,6 +184,10 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'application';
     case 'arrival':
       return 'arrival';
+    case 'arrival-prep':
+      return 'arrivalPrep';
+    case 'checklist':
+      return 'docChecklist';
     case 'onboarding':
       return 'onboarding';
     case 'housing':
@@ -239,6 +248,10 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return caseCount > 1 || !caseId ? '/account/cases' : kase();
     case 'arrival':
       return '/account/arrival';
+    case 'arrivalPrep':
+      return '/account/arrival-prep';
+    case 'docChecklist':
+      return '/account/checklist';
     case 'onboarding':
       return '/account/onboarding';
     case 'housing':

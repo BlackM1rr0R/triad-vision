@@ -18,6 +18,7 @@ import { useL10n } from '@/lib/l10n';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SECTORS } from '@/components/jobs/types';
+import { useCannedComposer } from '@/components/staffDesk/CannedReplies';
 
 registerCopy(pagesInquiries);
 
@@ -157,6 +158,8 @@ export const InquiryNotes = ({ i }: { i: Inquiry }) => {
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => void flush(), 1000);
   };
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+  const canned = useCannedComposer({ value, setValue: onChange, ref: areaRef, context: { inquiryId: i.id }, placement: 'bottom' }); // "/" canned replies
   return (
     <div>
       <label className="block text-sm" htmlFor={`inq-notes-${i.id}`}>
@@ -167,18 +170,32 @@ export const InquiryNotes = ({ i }: { i: Inquiry }) => {
           </span>
         </span>
       </label>
-      <textarea
-        id={`inq-notes-${i.id}`}
-        className="input mt-1 min-h-24"
-        rows={4}
-        maxLength={20000}
-        value={value}
-        placeholder={t('inq.notes.placeholder')}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => void flush()}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      />
+      <div className="relative">
+        <textarea
+          id={`inq-notes-${i.id}`}
+          ref={areaRef}
+          className="input mt-1 min-h-24"
+          rows={4}
+          maxLength={20000}
+          value={value}
+          placeholder={t('inq.notes.placeholder')}
+          {...canned.aria}
+          onChange={(e) => {
+            onChange(e.target.value);
+            canned.onInput(e.currentTarget);
+          }}
+          onBlur={() => void flush()}
+          onClick={(e) => {
+            e.stopPropagation();
+            canned.onInput(e.currentTarget);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            canned.onKeyDown(e);
+          }}
+        />
+        {canned.popover}
+      </div>
       <p className="mt-1 text-[11px] text-muted">{t('inq.notes.hint')}</p>
     </div>
   );

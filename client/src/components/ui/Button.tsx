@@ -2,6 +2,7 @@ import { forwardRef, isValidElement, type ButtonHTMLAttributes, type ReactNode }
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { Spinner } from './Spinner';
+import { SuccessCheck } from './SuccessCheck';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link' | 'highlight';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -46,6 +47,8 @@ export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'childre
   size?: ButtonSize;
   /** Shows a spinner, disables the button and sets aria-busy. */
   loading?: boolean;
+  /** Just saved: the leading icon becomes an animated tick for a moment (components/motion/app.tsx useFlash). */
+  success?: boolean;
   /** Leading icon (a lucide component or an element). Replaced by the spinner while loading. */
   icon?: LucideIcon | ReactNode;
   /** Trailing icon. */
@@ -59,11 +62,12 @@ export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'childre
  * The one button. `type` defaults to "button" (not "submit").
  *
  *   <Button onClick={save} loading={m.isPending}>Save</Button>
+ *   <Button onClick={save} loading={m.isPending} success={useFlash(m.submittedAt && m.isSuccess)}>Save</Button>
  *   <Button variant="secondary" size="sm" icon={Plus}>Add</Button>
  *   <Button variant="danger" type="submit">Delete</Button>
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', loading = false, icon, iconRight, block, className, disabled, type = 'button', children, ...rest },
+  { variant = 'primary', size = 'md', loading = false, success = false, icon, iconRight, block, className, disabled, type = 'button', children, ...rest },
   ref,
 ) {
   return (
@@ -72,11 +76,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
+      data-success={success || undefined}
       className={buttonClass({ variant, size, block, className })}
       {...rest}
     >
-      {loading ? <Spinner className={ICON_SIZE[size]} /> : renderIcon(icon, size)}
-      {children}
+      {loading ? <Spinner className={ICON_SIZE[size]} /> : success && icon ? <SuccessCheck key="ok" className={ICON_SIZE[size]} /> : renderIcon(icon, size)}
+      {success && !icon && !loading ? (
+        // no icon slot: the tick covers the label, which keeps its width (no layout shift)
+        <span className="grid place-items-center">
+          <span className="invisible col-start-1 row-start-1">{children}</span>
+          <SuccessCheck className={clsx('col-start-1 row-start-1', ICON_SIZE[size])} />
+        </span>
+      ) : (
+        children
+      )}
       {renderIcon(iconRight, size)}
     </button>
   );

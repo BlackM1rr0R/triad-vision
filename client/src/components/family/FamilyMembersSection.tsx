@@ -4,12 +4,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { ArrowRight, Baby, ChevronDown, Heart, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react';
+import { ArrowRight, Baby, ChevronDown, ClipboardCheck, Heart, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
+import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { Spinner } from '@/components/ui/Spinner';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { StatusBadge } from '@/components/portal/StatusBadge';
@@ -24,6 +25,7 @@ import { ReunionReadinessCard } from './ReunionReadiness';
 import { bodyFromForm, emptyMemberForm, formFromProfile, memberName, type ChecklistState, type FamilyMemberSummary, type FamilyRelation, type MemberForm } from './types';
 
 registerCopy(pagesFamilyLanguage);
+registerCopy(pagesPortalNav); // pnav.subs.docChecklist
 
 export const RELATION_ICON: Record<FamilyRelation, typeof Heart> = { spouse: Heart, child: Baby, parent: UserRound, other: UserRound };
 export const STATE_TONE: Record<ChecklistState, string> = toneClasses(STATUS_TONES.checklist);
@@ -112,9 +114,15 @@ const MemberCard = ({ m, onEdit, onRemove }: { m: FamilyMemberSummary; onEdit: (
           <ChevronDown className={clsx('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
           {open ? t('familyMembers.hideDocs') : t('familyMembers.showDocs')}
         </button>
-        <Link to={`/account/cases/${m.caseId}`} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-muted hover:text-ink">
-          {t('familyMembers.openCase')} <ArrowRight className="size-3.5" aria-hidden />
-        </Link>
+        <span className="flex flex-wrap items-center gap-x-3">
+          {/* The member's own document checklist (the portal's family switcher follows ?case=). */}
+          <Link to={`/account/checklist?case=${m.caseId}`} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-muted hover:text-ink">
+            <ClipboardCheck className="size-3.5" aria-hidden /> {t('pnav.subs.docChecklist')}
+          </Link>
+          <Link to={`/account/cases/${m.caseId}`} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-muted hover:text-ink">
+            {t('familyMembers.openCase')} <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </span>
       </div>
       {open && (
         <div id={docsId} className="border-t border-line p-3 sm:p-4">

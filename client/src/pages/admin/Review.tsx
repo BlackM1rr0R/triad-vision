@@ -20,6 +20,8 @@ import { useReviewQueue, type ChecklistState, type ReviewFilters, type ReviewIte
 import { decide, initialQueue, remaining, sessionCounts, skip, step, syncQueue, undoDecision, type Decision, type QueueState } from '@/components/staffPower/pure';
 import { DocViewer, clampZoom, type ViewState } from '@/components/staffPower/review/DocViewer';
 import { RejectDialog, suggestedReasons } from '@/components/staffPower/review/RejectDialog';
+import { MobileReview } from '@/components/staffMobile/MobileReview';
+import { useIsPhone } from '@/components/staffMobile/useIsPhone';
 
 registerCopy(pagesStaffPower);
 registerCopy(pagesUploadAi);
@@ -109,7 +111,13 @@ const HelpOverlay = ({ onClose }: { onClose: () => void }) => {
  * ? shows the keys. Decisions are optimistic: the document leaves the queue at once, the request is sent when its
  * undo window ends (or when the page is left) and a failed request puts the document back.
  */
+/** Phones get the swipe list (components/staffMobile/MobileReview); tablets and desktops the full review screen. */
 export default function Review() {
+  const phone = useIsPhone();
+  return phone ? <MobileReview /> : <DesktopReview />;
+}
+
+function DesktopReview() {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const qc = useQueryClient();

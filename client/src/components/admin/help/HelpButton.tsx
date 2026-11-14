@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CircleHelp, LifeBuoy } from 'lucide-react';
+import { CircleHelp, LifeBuoy, Route } from 'lucide-react';
 import { Drawer } from '../Drawer';
 import { HelpGuide } from './HelpGuide';
 import { helpKeyFor } from './helpKeys';
 import { loadHelpGuides, registerHelpCopy, useHelpGuides } from './registerHelp';
 import { Spinner } from '@/components/ui/Spinner';
+import { LoadSwap } from '@/components/motion/app';
+import { restartTour } from '@/components/onboarding/tour';
+import { ADMIN_TOUR } from '@/components/onboarding/tours';
 
 registerHelpCopy();
 
@@ -27,6 +30,7 @@ export const HelpButton = () => {
         className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-semibold whitespace-nowrap text-ink/80 transition hover:border-line-strong hover:bg-primary/[0.06] hover:text-link"
         aria-label={t('adminHelpUi.open')}
         title={t('adminHelpUi.open')}
+        data-tour="admin-help"
       >
         <CircleHelp className="size-4" /> <span className="hidden sm:inline">{t('adminHelpUi.button')}</span>
       </button>
@@ -39,18 +43,34 @@ export const HelpButton = () => {
           </span>
         }
         footer={
-          <Link to="/admin/help" onClick={() => setOpen(false)} className="text-sm font-semibold text-link hover:underline">
-            {t('adminHelpUi.allGuides')} →
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Link to="/admin/help" onClick={() => setOpen(false)} className="text-sm font-semibold text-link hover:underline">
+              {t('adminHelpUi.allGuides')} →
+            </Link>
+            {/* the first-login staff tour, from step 1 (components/onboarding/tours.ts ADMIN_TOUR) */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.setTimeout(() => restartTour(ADMIN_TOUR), 220); // after the drawer has closed and returned focus
+              }}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-ink/80 transition hover:bg-sunken hover:text-ink"
+            >
+              <Route className="size-4" aria-hidden /> {t('pux.tour.start')}
+            </button>
+          </div>
         }
       >
-        {ready ? (
+        <LoadSwap
+          loading={!ready}
+          skeleton={
+            <div className="grid min-h-40 place-items-center text-link" role="status" aria-label={t('ui.loading')}>
+              <Spinner className="size-6" />
+            </div>
+          }
+        >
           <HelpGuide helpKey={key} compact />
-        ) : (
-          <div className="grid min-h-40 place-items-center text-link" role="status" aria-label={t('ui.loading')}>
-            <Spinner className="size-6" />
-          </div>
-        )}
+        </LoadSwap>
       </Drawer>
     </>
   );

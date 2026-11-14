@@ -1,6 +1,6 @@
 import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -669,7 +669,14 @@ export default function Users() {
                     <tr key={u.id} className={clsx(!u.isActive && 'bg-sunken text-muted')}>
                       <td className="px-4 py-3">
                         <p className="font-semibold whitespace-nowrap text-ink">
-                          {fullName(u)} {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
+                          {u.role === 'CLIENT' ? (
+                          <Link to={`/admin/clients/${u.id}`} className="hover:text-link hover:underline">
+                            {fullName(u)}
+                          </Link>
+                        ) : (
+                          fullName(u)
+                        )}{' '}
+                        {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
                         </p>
                         <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-0.5" />
                         {dupMark(u)}
@@ -724,7 +731,14 @@ export default function Users() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-ink">
-                        {fullName(u)} {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
+                        {u.role === 'CLIENT' ? (
+                          <Link to={`/admin/clients/${u.id}`} className="hover:text-link hover:underline">
+                            {fullName(u)}
+                          </Link>
+                        ) : (
+                          fullName(u)
+                        )}{' '}
+                        {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
                       </p>
                       <p className="truncate text-xs text-muted">{u.email}</p>
                       {u.phone && <p className="text-xs text-muted">{u.phone}</p>}

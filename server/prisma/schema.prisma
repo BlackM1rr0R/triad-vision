@@ -1936,8 +1936,16 @@ model MailTemplate {
   name      String   @db.VarChar(80)
   subject   String?  @db.VarChar(300)
   html      String   @db.Text
+  /// Canned replies in the staff message composers ("/" picker, routes/admin/cannedReplies.ts): the plain-text body,
+  /// a short keyword after the slash and the client language it is written for (null = any language). Rows with the
+  /// same shortcut are the language variants of one reply. Mail-only templates leave these null (text comes from html).
+  text      String?  @db.Text
+  shortcut  String?  @db.VarChar(40)
+  lang      String?  @db.VarChar(5)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([shortcut])
 }
 
 // ─── Team workspace: chat ───────────────────────────────────────────────

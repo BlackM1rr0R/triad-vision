@@ -6,13 +6,17 @@ import type { CalItem } from './types';
 import { dayKey, fmtTime, isToday, itemsOnDay, monthGrid, weekdayShort } from './utils';
 
 const MAX_IN_CELL = 3;
+/** Drag data type of a month chip (the item key). */
+const DRAG_MIME = 'application/x-tv-calitem';
 
-export const ItemChip = ({ item, compact = false, onOpen }: { item: CalItem; compact?: boolean; onOpen: (item: CalItem, rect: DOMRect) => void }) => {
+export const ItemChip = ({ item, compact = false, onOpen, draggable = false }: { item: CalItem; compact?: boolean; onOpen: (item: CalItem, rect: DOMRect) => void; draggable?: boolean }) => {
   const timed = !item.allDay;
   const recurring = item.source === 'event' && 'rrule' in item.raw && !!item.raw.rrule;
   return (
     <button
       type="button"
+      draggable={draggable || undefined}
+      onDragStart={draggable ? (e) => (e.dataTransfer.setData(DRAG_MIME, item.key), (e.dataTransfer.effectAllowed = 'move')) : undefined}
       onClick={(e) => {
         e.stopPropagation();
         onOpen(item, e.currentTarget.getBoundingClientRect());
@@ -35,6 +39,8 @@ export const MonthView = ({
   onOpenItem,
   onCreate,
   onSelectDay,
+  canDrag,
+  onDropDay,
 }: {
   month: Date;
   items: CalItem[];
@@ -42,6 +48,9 @@ export const MonthView = ({
   onOpenItem: (item: CalItem, rect: DOMRect) => void;
   onCreate: (start: Date) => void;
   onSelectDay: (d: Date) => void;
+  /** Optional drag and drop of chips onto another day (the time of day is kept). */
+  canDrag?: (item: CalItem) => boolean;
+  onDropDay?: (item: CalItem, day: Date) => void;
 }) => {
   const { t } = useTranslation();
   const days = useMemo(() => monthGrid(month), [month]);
@@ -69,6 +78,18 @@ export const MonthView = ({
               tabIndex={0}
               onClick={() => onCreate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0))}
               onKeyDown={(e) => e.key === 'Enter' && onCreate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0))}
+              onDragOver={onDropDay ? (e) => e.dataTransfer.types.includes(DRAG_MIME) && (e.preventDefault(), (e.dataTransfer.dropEffect = 'move')) : undefined}
+              onDrop={
+                onDropDay
+                  ? (e) => {
+                      const key = e.dataTransfer.getData(DRAG_MIME);
+                      const it = items.find((x) => x.key === key);
+                      if (!it) return;
+                      e.preventDefault();
+                      if (dayKey(it.start) !== k) onDropDay(it, d);
+                    }
+                  : undefined
+              }
               className={clsx('group flex min-h-0 cursor-pointer flex-col gap-0.5 overflow-hidden border-r border-b border-line p-1 transition-colors hover:bg-surface/70', other ? 'bg-surface/40' : 'bg-card', k === sel && 'ring-1 ring-focus ring-inset')}
             >
               <button
@@ -82,7 +103,7 @@ export const MonthView = ({
                 {d.getDate()}
               </button>
               {shown.map((it) => (
-                <ItemChip key={it.key} item={it} compact onOpen={onOpenItem} />
+                <ItemChip key={it.key} item={it} compact onOpen={onOpenItem} draggable={!!onDropDay && !!canDrag?.(it)} />
               ))}
               {rest > 0 && (
                 <button

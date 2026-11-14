@@ -48,6 +48,7 @@ const EVENT_TYPES = [
   'callback.new',
   'livechat.queue',
   'livechat.message',
+  'livechat.typing', // visitor typing in a live chat (staff side)
   // live presence on a case / inquiry (components/presence)
   'viewers.updated',
 ] as const;

@@ -1,11 +1,10 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { Bell, BookOpen, CheckCheck, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LayoutGrid, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Star, X } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronsLeft, ChevronsRight, ExternalLink, LayoutGrid, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Star, X } from 'lucide-react';
 import { LogoMark } from '@/components/ui/Logo';
 import { Avatar } from '@/components/ui/Avatar';
 import { Menu as UiMenu, type MenuItem } from '@/components/ui/Menu';
@@ -13,13 +12,11 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/a11y/ThemeToggle';
 import { AccessibilityWidget } from '@/components/a11y/AccessibilityWidget';
-import { api } from '@/lib/api';
-import { useRealtimeNotifications } from '@/lib/realtime';
 import { useAuth } from '@/lib/auth';
-import type { Notification, Role } from '@/lib/types';
+import type { Role } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
-import { roleLabel, fmtRelative } from '@/components/admin/labels';
+import { roleLabel } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
 import { TrainingNavBadge } from '@/components/team/training/TrainingNotice'; // unfinished required courses
@@ -38,6 +35,9 @@ import { DensityToggle } from '@/components/ui/DensityToggle'; // per-user table
 import { WhatsNewButton } from '@/components/staffPower/WhatsNew'; // "Yeniliklər": release notes + guided tours
 import { SidebarPinnedViews } from '@/components/staffPower/SavedViews'; // saved views pinned under their page
 import { TourHost } from '@/components/onboarding/TourHost';
+import { NotificationBell as NotificationCenterBell } from '@/components/notifications/center/NotificationCenter';
+import { StaffBottomNav } from '@/components/staffMobile/StaffBottomNav'; // phones: My day · Cases · Messages · Review · More
+import { ADMIN_TOUR } from '@/components/onboarding/tours'; // first-login staff tour (my day, Ctrl+K, cases, review, Drive)
 
 registerCopy(adminCopy);
 import { adminNavCopy } from '@/i18n/adminNav'; // hub names for the breadcrumb
@@ -129,6 +129,7 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
       to={hrefFor(item, role)}
       end={item.end}
       onClick={onNavigate}
+      data-tour={`nav-${item.id}`}
       aria-label={collapsed ? label : undefined}
       className={({ isActive }) =>
         clsx(
@@ -301,120 +302,8 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
 
 // ─── Notifications ──────────────────────────────────────────────────────
 
-const NotificationBell = () => {
-  const { t } = useTranslation();
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  // Server-sent events refresh the badge the moment a notification is created (polling stays as fallback).
-  useRealtimeNotifications();
-
-  const { data } = useQuery({
-    queryKey: ['admin-notifications'],
-    queryFn: async () => (await api.get<{ items: Notification[]; unread: number }>('/notifications')).data,
-    refetchInterval: 60_000,
-  });
-
-  const markRead = useMutation({
-    mutationFn: (ids?: string[]) => api.post('/notifications/read', ids ? { ids } : {}),
-    onMutate: (ids) => {
-      qc.setQueryData<{ items: Notification[]; unread: number }>(['admin-notifications'], (old) => {
-        if (!old) return old;
-        const now = new Date().toISOString();
-        const items = old.items.map((n) => (!n.readAt && (!ids || ids.includes(n.id)) ? { ...n, readAt: now } : n));
-        return { items, unread: items.filter((n) => !n.readAt).length };
-      });
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['admin-notifications'] }),
-  });
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const unread = data?.unread ?? 0;
-  const items = data?.items ?? [];
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-label={unread ? t('admin.layout.notificationsUnread', { count: unread }) : t('admin.layout.notifications')}
-        className="relative grid size-9 place-items-center rounded-[var(--tv-radius-control)] text-muted transition hover:bg-sunken hover:text-ink pointer-coarse:size-10"
-      >
-        <Bell className="size-[18px]" />
-        {unread > 0 && (
-          <span className="absolute top-0.5 right-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-white tabular-nums ring-2 ring-canvas">
-            {unread > 99 ? '99+' : unread}
-          </span>
-        )}
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-x-3 top-14 z-50 overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--tv-shadow-raised)] sm:absolute sm:inset-x-auto sm:top-10 sm:right-0 sm:w-96"
-          >
-            <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="type-card-title">{t('admin.layout.notifications')}</p>
-              {unread > 0 && (
-                <button
-                  type="button"
-                  className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 text-xs font-medium whitespace-nowrap text-link hover:text-link-hover"
-                  onClick={() => markRead.mutate(undefined)}
-                >
-                  <CheckCheck className="size-3.5" /> {t('admin.layout.markAllRead')}
-                </button>
-              )}
-            </div>
-            <ul className="max-h-[min(60vh,32rem)] divide-y divide-line overflow-y-auto">
-              {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">{t('admin.layout.noNotifications')}</li>}
-              {items.map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    className={clsx('flex w-full gap-3 px-4 py-3 text-left transition hover:bg-sunken', !n.readAt && 'bg-sunken/60')}
-                    onClick={() => {
-                      if (!n.readAt) markRead.mutate([n.id]);
-                      if (n.link) {
-                        setOpen(false);
-                        navigate(n.link);
-                      }
-                    }}
-                  >
-                    <span className={clsx('mt-1.5 size-2 shrink-0 rounded-full', n.readAt ? 'bg-transparent' : 'bg-link')} aria-hidden />
-                    <span className="min-w-0 flex-1">
-                      <span className={clsx('block text-sm text-ink', n.readAt ? 'font-medium' : 'font-semibold')}>{n.title}</span>
-                      <span className="mt-0.5 line-clamp-2 block text-xs whitespace-pre-line text-muted">{n.body}</span>
-                      <span className="num mt-1 block text-[11px] text-muted">{fmtRelative(n.createdAt)}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+// Header bell: the shared notification center (components/notifications/center), settings on /admin/notifications.
+const NotificationBell = () => <NotificationCenterBell variant="admin" allTo="/admin/notifications" prefsTo="/admin/notifications#prefs" />;
 
 // ─── Sidebar chrome (Direction A: workspace header, search, user footer) ─────
 
@@ -671,6 +560,7 @@ export default function AdminLayout() {
             onClick={() => setMobileOpen(true)}
             className="grid size-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink lg:hidden"
             aria-label={t('admin.layout.openMenu')}
+            data-tour="admin-menu"
           >
             <Menu className="size-5" aria-hidden />
           </button>
@@ -745,8 +635,10 @@ export default function AdminLayout() {
       </div>
       <CommandPaletteHotkey />
       <ShortcutLayer />
-      <TourHost />
-      {/* guided tours of the staff features, started from "Yeniliklər" (never on their own) */}
+      <StaffBottomNav onMore={() => setMobileOpen(true)} moreOpen={mobileOpen} />
+      {/* first-login staff tour (new accounts only; Help → "Start the tour" replays it); the feature tours are
+          started from "Yeniliklər" (never on their own) */}
+      <TourHost autoStart={ADMIN_TOUR} newUsersDays={60} />
       <AccessibilityWidget standalone panelClass="sm:bottom-[5.75rem] sm:max-h-[calc(100dvh-6.75rem)]" />
     </div>
   );

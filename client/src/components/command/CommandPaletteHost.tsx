@@ -93,6 +93,7 @@ export const CommandPaletteButton = ({ variant = 'header', compact = false, dark
     onFocus: preloadCommandPalette,
     'aria-keyshortcuts': 'Control+K Meta+K /',
     'aria-haspopup': 'dialog' as const,
+    'data-tour': 'cmdk', // first-login staff tour (components/onboarding/tours.ts)
   };
   const kbd = (
     <kbd className={clsx('rounded border border-b-2 px-1.5 py-0.5 font-mono text-[11px] leading-none font-medium', dark ? 'border-white/15 text-white/50' : 'border-line bg-card text-muted')}>{shortcut}</kbd>

@@ -11,8 +11,12 @@ import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 import { normalizePhone } from '../lib/messaging/providers.js';
 import { callTexts } from '../lib/calls/texts.js';
 import { callbackInput, createCallback } from '../lib/calls/callbacks.js';
+import { notifyStaff } from '../lib/notifications.js';
+import { answerOffline } from '../lib/livechat/offlineAi.js';
 import {
+  OFFLINE_REASON,
   addMessage,
+  allStaffIds,
   availability,
   expireWaiting,
   loadChat,
@@ -28,14 +32,16 @@ import {
  * Live chat (/api/livechat): AI advisor → human handover.
  * Visitor (anonymous, signed visitor token in `x-livechat-token` / ?token= / body.token):
  *   GET  /availability            office open + staff online?
- *   POST /                        start (with the AI transcript) → 409 LIVECHAT_OFFLINE when nobody can take it
+ *   POST /                        start (with the AI transcript) → 409 LIVECHAT_OFFLINE when nobody can take it;
+ *                                 with offline: true it opens an offline chat instead (queued for staff, AI answers)
+ *   POST /:id/typing              visitor is typing (→ the accepting colleague, `livechat.typing`)
  *   GET  /:id   GET /:id/events   state + messages / SSE stream (livechat.message, livechat.status)
  *   POST /:id/messages            visitor message
  *   POST /:id/contact             offline / missed fallback: contact details → inquiry or callback request
  *   POST /:id/close
  * Staff (STAFF+):
  *   GET  /staff/queue   GET /staff/:id
- *   POST /staff/:id/accept | messages | close | lead (→ Inquiry) | link (→ existing client)
+ *   POST /staff/:id/accept | messages | typing | close | lead (→ Inquiry) | link (→ existing client)
  * Staff get `livechat.queue` (new / accepted / closed / missed) and `livechat.message` on their realtime stream.
  */
 export const livechatRouter = Router();
@@ -138,6 +144,13 @@ staff.post('/:id/messages', async (req, res) => {
   res.status(201).json({ message });
 });
 
+/** Typing indicator for the visitor ("Aynur is typing…"); fire and forget, no storage. */
+staff.post('/:id/typing', async (req, res) => {
+  const chat = await staffChat(req);
+  if (chat.status === 'ACTIVE' && chat.staffId === req.user!.id) publish(visitorChannel(chat.id), 'livechat.typing', { chatId: chat.id, who: 'STAFF', name: req.user!.firstName, on: true });
+  res.status(204).end();
+});
+
 staff.post('/:id/close', async (req, res) => {
   const chat = await staffChat(req);
   if (chat.status === 'ACTIVE') requireOwner(req, chat);
@@ -209,6 +222,8 @@ const startSchema = z
     message: z.string().trim().max(2000).optional(),
     pageUrl: z.string().trim().max(300).optional(),
     reason: z.enum(['button', 'ai_unsure', 'asked', 'ai_error']).default('button'),
+    /** nobody online: open an offline chat (queued for staff, the AI answers meanwhile) instead of a 409 */
+    offline: z.boolean().default(false),
     website: z.string().max(200).optional(),
   })
   .strict();
@@ -221,7 +236,8 @@ livechatRouter.post('/', async (req, res) => {
   }
   await expireWaiting();
   const avail = await availability();
-  if (!avail.available) {
+  const offline = !avail.available;
+  if (offline && !body.offline) {
     res.status(409).json({ error: 'LIVECHAT_OFFLINE', ...avail });
     return;
   }
@@ -237,13 +253,19 @@ livechatRouter.post('/', async (req, res) => {
       visitorEmail: isClient ? req.user!.email : null,
       transcript: body.transcript,
       pageUrl: body.pageUrl ?? null,
-      reason: body.reason,
+      reason: offline ? OFFLINE_REASON : body.reason,
       clientId: isClient ? req.user!.id : null,
     },
   });
   if (body.message) await addMessage(chat, 'VISITOR', body.message);
   const name = chat.visitorName ?? '—';
   await publishQueue(chat.id, 'new', { name, locale: chat.locale, title: callTexts('az').chatQueueTitle, body: callTexts('az').chatQueueBody(name) });
+  if (offline) {
+    // Nobody is online to see the realtime toast: a stored notification waits for the first colleague back.
+    const question = body.message ?? body.transcript.filter((m) => m.role === 'user').at(-1)?.content ?? '';
+    await notifyStaff(`Oflayn canlı söhbət: ${name}`, [`Ziyarətçi əməkdaş istəyir (iş saatından kənar). Dil: ${chat.locale}.`, question ? `Sual: ${question.slice(0, 300)}` : null].filter(Boolean).join(' · '), { link: '/workspace/live-chats' });
+    if (body.message) void answerOffline(chat.id);
+  }
   res.status(201).json({ token: visitorToken(chat.id), chat: await visitorView((await loadChat(chat.id))!) });
 });
 
@@ -288,7 +310,17 @@ livechatRouter.post('/:id/messages', async (req, res) => {
     return;
   }
   const message = await addMessage(chat, 'VISITOR', body);
+  if (chat.status === 'WAITING' && chat.reason === OFFLINE_REASON) void answerOffline(chat.id);
   res.status(201).json({ message });
+});
+
+/** Visitor typing indicator for the accepting colleague (throttled by the widget; 30 a minute at most). */
+livechatRouter.post('/:id/typing', async (req, res) => {
+  const chat = await visitorChat(req);
+  if (chat.status === 'ACTIVE' && !takeHit(`livechat-typing:${chat.id}`, { hour: 600 })) {
+    publish(chat.staffId ? [chat.staffId] : await allStaffIds(), 'livechat.typing', { chatId: chat.id, who: 'VISITOR', on: true });
+  }
+  res.status(204).end();
 });
 
 const contactSchema = z
@@ -333,11 +365,13 @@ livechatRouter.post('/:id/contact', async (req, res) => {
     await prisma.liveChat.update({ where: { id: chat.id }, data: { inquiryId: inquiry.id } });
     result = { kind: 'inquiry', id: inquiry.id, confirmation: callTexts(chat.locale).confirm(callTexts(chat.locale).asap) };
   }
+  // An offline chat stays in the queue: the colleague who comes online still answers it (and now has the contact).
+  const keepOpen = chat.status === 'WAITING' && chat.reason === OFFLINE_REASON;
   await prisma.liveChat.update({
     where: { id: chat.id },
-    data: { visitorName: body.name, visitorEmail: body.email ?? null, visitorPhone: phone, ...(chat.status === 'WAITING' || chat.status === 'ACTIVE' ? { status: 'CLOSED', closedAt: new Date() } : {}) },
+    data: { visitorName: body.name, visitorEmail: body.email ?? null, visitorPhone: phone, ...(!keepOpen && (chat.status === 'WAITING' || chat.status === 'ACTIVE') ? { status: 'CLOSED', closedAt: new Date() } : {}) },
   });
-  if (chat.status === 'WAITING') await publishQueue(chat.id, 'closed');
+  if (chat.status === 'WAITING' && !keepOpen) await publishQueue(chat.id, 'closed');
   res.status(201).json({ ok: true, ...result });
 });
 

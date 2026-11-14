@@ -219,6 +219,7 @@ export const CaseMessages = ({ data, onChanged }: { data: CaseDetail; onChanged:
         />
         <VoiceRecorder
           uploadUrl={`/messaging-plus/cases/${data.id}/voice`}
+          maxMs={2 * 60 * 1000}
           onSent={(d) => {
             const m = (d as { message?: Parameters<typeof thread.upsert>[0] }).message;
             if (m) thread.upsert(m);

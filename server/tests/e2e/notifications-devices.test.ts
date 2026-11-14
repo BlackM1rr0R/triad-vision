@@ -14,7 +14,7 @@ describe('/api/notifications', () => {
   it('lists only own notifications, newest first, with the unread count', async () => {
     const me = await asClient();
     const other = await asClient();
-    expect((await me.agent.get('/api/notifications')).body).toEqual({ items: [], unread: 0 });
+    expect((await me.agent.get('/api/notifications')).body).toEqual({ items: [], unread: 0, nextCursor: null });
 
     await notify(me.user.id, 'old', new Date('2026-01-01'));
     await notify(me.user.id, 'new', new Date('2026-03-01'));

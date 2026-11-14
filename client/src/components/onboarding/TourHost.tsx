@@ -5,9 +5,12 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useHelpAction } from '@/lib/helpMenu';
 import { smoothScrollTo } from '@/lib/smoothScroll';
+import { motionAllowed } from '@/lib/viewTransition';
 import { registerCopy } from '@/i18n';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
+import { pagesTours } from '@/i18n/pagesTours';
 import { Button, IconButton } from '@/components/ui/Button';
 import { useOverlay } from '@/components/ui/overlay';
 import {
@@ -15,6 +18,8 @@ import {
   getTour,
   goToStep,
   markSkippedThisSession,
+  restartTour,
+  saveTourProgress,
   stopTour,
   useAutoStartTour,
   useTourState,
@@ -25,6 +30,7 @@ import {
 import './tours';
 
 registerCopy(pagesPortalUx);
+registerCopy(pagesTours);
 
 const PAD = 6; // highlight padding around the target
 const GAP = 12; // distance between highlight and popover
@@ -33,9 +39,9 @@ const MOBILE = 640;
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-const reducedMotion = () =>
-  typeof window !== 'undefined' &&
-  (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('a11y-nomotion'));
+// OS "reduce motion" or "Stop animations" in the accessibility widget (lib/viewTransition.ts).
+const reducedMotion = () => !motionAllowed();
+const samePath = (a: string, b: string) => a.replace(/\/+$/, '') === b.replace(/\/+$/, '');
 
 const rectOf = (el: HTMLElement): Rect => {
   const r = el.getBoundingClientRect();
@@ -69,18 +75,24 @@ const place = (r: Rect, w: number, h: number, pref: TourPlacement): CSSPropertie
 /**
  * Renders the running tour (if any): a cut-out highlight around the step's target and a popover with
  * back / next / skip. Mount once per layout. `autoStart` starts that tour once after the first login
- * (when `ready`), e.g. `<TourHost autoStart="admin" />`.
+ * (when `ready`), e.g. `<TourHost autoStart="admin" />`. `helpTour` lists that tour as "Guided tour"
+ * in the phone help menu (components/layout/HelpFab.tsx, lib/helpMenu.ts).
  */
-export function TourHost({ autoStart, ready = true }: { autoStart?: string; ready?: boolean }) {
+export function TourHost({ autoStart, ready = true, helpTour, newUsersDays }: { autoStart?: string; ready?: boolean; helpTour?: string; newUsersDays?: number }) {
   const { user } = useAuth();
-  useAutoStartTour(autoStart, user?.id, ready);
-  const { tourId, index } = useTourState();
+  // `newUsersDays`: start on its own only for accounts younger than that (colleagues who have used the
+  // area for months are not interrupted when a tour ships; they can still open it from the help menu).
+  const createdAt = (user as { createdAt?: string } | null)?.createdAt;
+  const fresh = !newUsersDays || (!!createdAt && Date.now() - Date.parse(createdAt) < newUsersDays * 86_400_000);
+  useAutoStartTour(autoStart, user?.id, ready && fresh);
+  useHelpAction('tour', !!helpTour && !!user, () => helpTour && restartTour(helpTour));
+  const { tourId, index, restart } = useTourState();
   const def = getTour(tourId);
   if (!def || !user) return null;
-  return <TourRunner key={def.id} def={def} index={index} userId={user.id} />;
+  return <TourRunner key={def.id} def={def} index={index} userId={user.id} restart={restart} />;
 }
 
-function TourRunner({ def, index, userId }: { def: TourDef; index: number; userId: string }) {
+function TourRunner({ def, index, userId, restart }: { def: TourDef; index: number; userId: string; restart: boolean }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -93,12 +105,14 @@ function TourRunner({ def, index, userId }: { def: TourDef; index: number; userI
   const [vw, setVw] = useState(() => window.innerWidth);
   const [popH, setPopH] = useState(180);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const onRoute = !def.route || pathname.replace(/\/+$/, '') === def.route.replace(/\/+$/, '');
+  // Multi-page tours: a step may run on its own page ('*': whatever page is open).
+  const route = step.route === '*' ? undefined : (step.route ?? def.route);
+  const onRoute = !route || samePath(pathname, route);
 
   const finish = useCallback(() => {
-    writeSeen(userId, def.id, 'done');
+    writeSeen(userId, def.id, 'done', index);
     stopTour();
-  }, [userId, def.id]);
+  }, [userId, def.id, index]);
   const skip = useCallback(() => {
     if (dontShow) writeSeen(userId, def.id, 'never');
     else markSkippedThisSession(userId, def.id);
@@ -107,12 +121,36 @@ function TourRunner({ def, index, userId }: { def: TourDef; index: number; userI
   const next = useCallback(() => (last ? finish() : goToStep(index + 1)), [last, finish, index]);
   const back = useCallback(() => index > 0 && goToStep(index - 1), [index]);
 
-  // Start on the tour's page.
+  // Go to the step's page (when the tour starts and whenever the next step lives elsewhere).
+  const navigating = useRef<string | null>(null);
   useEffect(() => {
-    if (!onRoute && def.route) navigate(def.route);
-    // only when the tour starts
+    if (!route || samePath(window.location.pathname, route)) return;
+    navigating.current = route;
+    navigate(route);
+    // The page redirected elsewhere (no access, module off): skip the step instead of waiting.
+    const timer = window.setTimeout(() => {
+      if (navigating.current !== route) return;
+      navigating.current = null;
+      if (last) finish();
+      else goToStep(index + 1);
+    }, 2500);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [route, index]);
+  // Arrived; or the user went to another page mid-tour: end it quietly (the step is kept, so it resumes
+  // after the next login) instead of pulling them back.
+  useEffect(() => {
+    if (onRoute) {
+      navigating.current = null;
+      return;
+    }
+    if (!navigating.current) stopTour();
+  }, [onRoute, pathname]);
+
+  // Resumable: the server remembers the step (interrupted tours continue there after the next login).
+  useEffect(() => {
+    saveTourProgress(userId, def.id, index, restart);
+  }, [userId, def.id, index, restart]);
 
   // Find the target (it may mount late: lazy chunks, queries). Missing for 3 s → skip the step.
   useEffect(() => {
@@ -239,18 +277,18 @@ function TourRunner({ def, index, userId }: { def: TourDef; index: number; userI
             <p className="text-xs font-semibold text-muted tabular-nums">
               {t('pux.tour.label')} · {t('pux.tour.stepOf', { n: index + 1, total: def.steps.length })}
             </p>
-            <h2 id={`${ids}-title`} ref={titleRef} tabIndex={-1} className="mt-1 text-base font-bold text-ink outline-none">
+            <h2 id={`${ids}-title`} key={step.id} ref={titleRef} tabIndex={-1} className={clsx('mt-1 text-base font-bold text-ink outline-none', motion && 'tv-fade-in')}>
               {t(step.titleKey)}
             </h2>
           </div>
           <IconButton icon={X} label={t('pux.tour.skip')} size="sm" onClick={skip} tooltip={false} />
         </div>
-        <p id={`${ids}-text`} className="type-body text-muted">
+        <p id={`${ids}-text`} key={`${step.id}-text`} className={clsx('type-body text-muted', motion && 'tv-fade-in')}>
           {t(step.textKey)}
         </p>
         <div className="flex items-center gap-1.5" aria-hidden>
           {def.steps.map((s, i) => (
-            <span key={s.id} className={clsx('h-1.5 rounded-full', i === index ? 'w-5 bg-brand-600' : 'w-1.5 bg-line')} />
+            <span key={s.id} className={clsx('h-1.5 rounded-full', motion && 'transition-[width,background-color] duration-300 ease-out', i === index ? 'w-5 bg-brand-600' : i < index ? 'w-1.5 bg-brand-600/50' : 'w-1.5 bg-line')} />
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">

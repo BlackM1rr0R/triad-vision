@@ -15,6 +15,7 @@ const copy: SiteCopy<(typeof pagesAudience)['en']> = {
       explore: { title: 'Keşfet', text: 'Çalışanlarımızın haritası, rehberler, iş ilanları ve vize türleri.' },
     },
     items: {
+      pathFinder: { title: 'Hangi yol bana uygun?', text: '5 soru: vize yolu, beklenen maaş, tipik süre ve fiyat — bağlantıyla paylaşın.' },
       quiz: { title: 'Uygunluk testi', text: '7 soru: çalışma vizesi, Ausbildung, Fırsat Kartı veya aile birleşimi — size uygun yol.' },
       visaCheck: { title: 'Vize testi', text: 'Birkaç soruyu yanıtlayın ve size uygun vize türünü bulun.' },
       compare: { title: 'Hangi vize bana uygun?', text: 'Fırsat Kartı, Mavi Kart, Ausbildung ve diğer yolları tek tabloda karşılaştırın.' },

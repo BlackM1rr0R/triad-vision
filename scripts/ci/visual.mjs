@@ -134,7 +134,7 @@ function preparePage({ theme, lang, now, userId }) {
     localStorage.setItem('tv_prefs', JSON.stringify({ theme, noMotion: true }));
     localStorage.setItem('tv_lang', lang);
     // Guided tours would start (and navigate) on a user's first visit.
-    if (userId) for (const tour of ['client', 'staff']) localStorage.setItem(`tv-tour:${userId}:${tour}`, 'never');
+    if (userId) for (const tour of ['client', 'staff', 'admin']) localStorage.setItem(`tv-tour:${userId}:${tour}`, 'never');
     localStorage.setItem('tv.consent', JSON.stringify({ analytics: false, marketing: false, v: '1', at: new RealDate(now).toISOString() }));
   } catch {
     /* storage unavailable */

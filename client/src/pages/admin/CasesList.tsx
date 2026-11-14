@@ -33,6 +33,7 @@ import { CaseFilterBar, SORT_KEYS, type SortKey } from '@/components/casesList/C
 import { SavedFilterTabs } from '@/components/casesList/SavedFilterTabs';
 import { CaseQuickDrawer } from '@/components/casesList/CaseQuickDrawer';
 import { ActivityCell, AppointmentCell, CaseCard, DaysInStatus, PartnerBulkControl, RowActions, type CaseRow } from '@/components/casesList/parts';
+import { MobileCaseSwipe } from '@/components/staffMobile/MobileCaseSwipe';
 
 registerCopy(pagesAdminUx);
 registerCopy(pagesStaffPower);
@@ -389,13 +390,16 @@ export default function CasesList() {
             <ul className={clsx('grid grid-cols-1 gap-3 md:grid-cols-2', isFetching && 'opacity-60')} aria-label={t('admin.nav.cases')}>
               {items.map((c) => (
                 <li key={c.id} data-row-id={c.id}>
-                  <CaseCard
-                    c={c}
-                    selected={sel.props.isSelected(c.id)}
-                    current={c.id === selected || c.id === drawer.id}
-                    onToggle={(on, shift) => sel.props.toggle(c.id, on, shift)}
-                    onOpen={() => openDrawer(c.id)}
-                  />
+                  {/* phones: swipe right = reply (drawer composer), left = status sheet */}
+                  <MobileCaseSwipe c={c} onReply={() => openDrawer(c.id, true)}>
+                    <CaseCard
+                      c={c}
+                      selected={sel.props.isSelected(c.id)}
+                      current={c.id === selected || c.id === drawer.id}
+                      onToggle={(on, shift) => sel.props.toggle(c.id, on, shift)}
+                      onOpen={() => openDrawer(c.id)}
+                    />
+                  </MobileCaseSwipe>
                 </li>
               ))}
             </ul>

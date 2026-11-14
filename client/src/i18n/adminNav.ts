@@ -4,7 +4,7 @@
 
 const az = {
   admin: {
-    nav: { modules: 'Modullar', usage: 'İstifadə statistikası', desks: 'İşçi masaları' },
+    nav: { modules: 'Modullar', usage: 'İstifadə statistikası', desks: 'İşçi masaları', inbox: 'Mesajlar', notifications: 'Bildirişlər' },
   },
   cmd: {
     sections: { pinned: 'Sevimlilər' },
@@ -125,7 +125,7 @@ type Copy = typeof az;
 
 const de: Copy = {
   admin: {
-    nav: { modules: 'Module', usage: 'Nutzungsstatistik', desks: 'Arbeitsplätze' },
+    nav: { modules: 'Module', usage: 'Nutzungsstatistik', desks: 'Arbeitsplätze', inbox: 'Nachrichten', notifications: 'Benachrichtigungen' },
   },
   cmd: {
     sections: { pinned: 'Favoriten' },
@@ -244,7 +244,7 @@ const de: Copy = {
 
 const en: Copy = {
   admin: {
-    nav: { modules: 'Modules', usage: 'Usage statistics', desks: 'Staff desks' },
+    nav: { modules: 'Modules', usage: 'Usage statistics', desks: 'Staff desks', inbox: 'Messages', notifications: 'Notifications' },
   },
   cmd: {
     sections: { pinned: 'Favourites' },
@@ -363,7 +363,7 @@ const en: Copy = {
 
 const ru: Copy = {
   admin: {
-    nav: { modules: 'Модули', usage: 'Статистика использования', desks: 'Рабочие места' },
+    nav: { modules: 'Модули', usage: 'Статистика использования', desks: 'Рабочие места', inbox: 'Сообщения', notifications: 'Уведомления' },
   },
   cmd: {
     sections: { pinned: 'Избранное' },

@@ -14,7 +14,7 @@ import { prisma } from '../../db.js';
  * write them, and its listing leaves them out (STAFF_UI_PREFIXES).
  */
 
-export const STAFF_UI_PREFIXES = ['savedViews:', 'staffUi:'] as const;
+export const STAFF_UI_PREFIXES = ['savedViews:', 'staffUi:', 'tours:'] as const; // tours: lib/tours.ts
 export const TEAM_VIEWS_KEY = 'savedViews:team';
 export const userViewsKey = (userId: string) => `savedViews:${userId}`;
 export const staffUiKey = (userId: string) => `staffUi:${userId}`;

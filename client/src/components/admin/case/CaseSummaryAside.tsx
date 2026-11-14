@@ -18,6 +18,12 @@ import { DefRow } from '../ui';
 import { useCaseRefresh } from './shared';
 import { useCompanyOptions, useJobsCopy, useVacancyOptions, type CaseLink } from './caseLinks';
 import { FolderLine, type FolderInfo } from '@/components/vacancyFolders/FolderPicker'; // client folder in the drive (vacancy folder)
+import { AssignHint } from '@/components/staffDesk/AssignHint'; // least-loaded colleague hint
+import { clientHref } from '@/components/staffDesk/api'; // client 360° page
+import { registerCopy } from '@/i18n';
+import { pagesStaffDesk } from '@/i18n/pagesStaffDesk';
+
+registerCopy(pagesStaffDesk);
 
 const linkChip =
   'inline-flex min-h-8 max-w-full min-w-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-xs text-ink/80 transition hover:border-line-strong hover:text-link';
@@ -60,7 +66,11 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
   return (
     <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-1">
       <Card title={t('caseLayout.aside.client')} icon={UserRound} padding="sm" as="h2">
-        <p className="font-semibold break-words text-ink">{fullName(client)}</p>
+        <p className="font-semibold break-words text-ink">
+          <Link to={clientHref(client.id)} className="hover:text-link hover:underline" title={t('sd.c360.open')}>
+            {fullName(client)}
+          </Link>
+        </p>
         <p className="mt-0.5 text-xs text-muted uppercase">{t('admin.case.header.language', { value: client.locale })}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <a href={`mailto:${client.email}`} className={linkChip}>
@@ -78,6 +88,9 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
             </>
           )}
           <ViewAsClientButton user={{ ...client, role: 'CLIENT' }} compact />
+          <Link to={clientHref(client.id)} className={linkChip}>
+            <UserRound className="size-3.5 shrink-0" aria-hidden /> {t('sd.c360.short')}
+          </Link>
         </div>
       </Card>
 
@@ -97,6 +110,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
           </select>
           {assigning && <Spinner className="absolute top-1/2 right-8 size-3.5 -translate-y-1/2 text-link" />}
         </div>
+        <AssignHint caseId={c.id} currentId={c.assignedStaff?.id ?? null} disabled={assigning} onPick={(id) => void assign(id)} />
         <dl className="mt-3">
           <CasePartnerSelect c={c} />
         </dl>

@@ -226,7 +226,8 @@ const InvoiceList = ({ onEdit, legalMissing }: { onEdit: (i: Invoice) => void; l
   const [companyId, setCompanyId] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [q, setQ] = useState('');
+  // ?q= (e.g. from the overdue list of Business analytics → Revenue) pre-fills the search.
+  const [q, setQ] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
   const [debouncedQ, setDebouncedQ] = useState('');
   useEffect(() => {
     const h = window.setTimeout(() => setDebouncedQ(q.trim()), 300);

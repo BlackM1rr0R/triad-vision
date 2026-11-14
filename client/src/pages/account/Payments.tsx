@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth';
 import { setChosenCase, useChosenCase } from '@/lib/caseContext';
 import { switchLabel, useFamilyCases } from '@/components/portal/FamilySwitcher';
 import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
+import { PaymentTimeline } from '@/components/portal/PaymentTimeline'; // paid / due / overdue timeline with "Pay" per open invoice
 
 registerCopy(pagesBilling);
 registerCopy(pagesPortalExtras); // px.pay.*
@@ -163,6 +164,8 @@ export default function AccountPayments() {
             .join(' · ')}
         </p>
       )}
+
+      <PaymentTimeline invoices={d.invoices} plans={d.plans} bank={d.bank} personOf={people && !scope ? personOf : undefined} />
 
       {open.length > 0 && (
         <section className="card p-5" aria-labelledby="pay-how">

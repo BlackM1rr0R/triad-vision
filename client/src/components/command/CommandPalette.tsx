@@ -228,7 +228,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           u.id,
           u.name,
           [roleLabel(u.role), u.email, u.phone, !u.isActive ? t('cmd.inactive') : null].filter(Boolean).join(' · '),
-          u.role === 'CLIENT' ? `/admin/candidates?id=${encodeURIComponent(u.id)}` : `/admin/users?search=${encodeURIComponent(u.email)}`,
+          u.role === 'CLIENT' ? `/admin/clients/${encodeURIComponent(u.id)}` : `/admin/users?search=${encodeURIComponent(u.email)}`, // clients: the 360° page
         );
       for (const c of data.companies) add('companies', 'company', c.id, c.name, [c.city, c.vatId].filter(Boolean).join(' · ') || undefined, `/admin/companies?id=${encodeURIComponent(c.id)}`);
       for (const v of data.vacancies)

@@ -675,6 +675,7 @@ export const TOOL_PAGES = new Set([
   '/cities',
   '/eligibility',
   '/uygunluq-testi',
+  '/path-finder',
 ]);
 
 /** schema.org applicationCategory of each tool (UtilitiesApplication for checks, FinanceApplication for money). */

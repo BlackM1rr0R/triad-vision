@@ -22,6 +22,7 @@ import { VoiceRecorder } from '@/components/messagingPlus/VoiceRecorder';
 import { PartyThreadButton, PartyThreadFromQuery } from '@/components/messagingPlus/PartyThread';
 import { translatableText, useMessageTranslations, useShowOriginals } from '@/components/messagingPlus/useTranslations';
 import { CaseDraftPreview } from '@/components/messagingPlus/DraftPreview';
+import { useCannedComposer } from '@/components/staffDesk/CannedReplies';
 
 registerCopy(pagesMessaging);
 
@@ -32,6 +33,8 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const canned = useCannedComposer({ value: body, setValue: setBody, ref: bodyRef, context: { caseId: c.id } }); // "/" canned replies
   const meId = user?.id ?? '';
 
   const thread = useThread({ caseId: c.id, base: '/admin/cases', initial: c.messages, meId, onNewMessage: () => void refresh() });
@@ -146,24 +149,32 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
         <label htmlFor="msg-body" className="sr-only">
           {t('admin.case.comm.message')}
         </label>
-        <textarea
-          id="msg-body"
-          className="input min-h-[42px] resize-y"
-          rows={1}
-          value={body}
-          maxLength={4000}
-          placeholder={t('admin.case.comm.placeholder')}
-          onChange={(e) => {
-            setBody(e.target.value);
-            if (e.target.value.trim()) thread.notifyTyping();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              void send();
-            }
-          }}
-        />
+        <div className="relative min-w-0 flex-1">
+          <textarea
+            id="msg-body"
+            ref={bodyRef}
+            className="input min-h-[42px] resize-y"
+            rows={1}
+            value={body}
+            maxLength={4000}
+            placeholder={t('admin.case.comm.placeholder')}
+            {...canned.aria}
+            onChange={(e) => {
+              setBody(e.target.value);
+              canned.onInput(e.currentTarget);
+              if (e.target.value.trim()) thread.notifyTyping();
+            }}
+            onClick={(e) => canned.onInput(e.currentTarget)}
+            onKeyDown={(e) => {
+              if (canned.onKeyDown(e)) return;
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                void send();
+              }
+            }}
+          />
+          {canned.popover}
+        </div>
         <VoiceRecorder
           uploadUrl={`/messaging-plus/cases/${c.id}/voice`}
           onSent={(d) => {

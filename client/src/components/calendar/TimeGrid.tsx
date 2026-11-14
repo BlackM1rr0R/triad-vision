@@ -71,12 +71,15 @@ export const TimeGrid = ({
   onOpenItem,
   onCreate,
   onMove,
+  canDrag: canDragProp,
 }: {
   days: Date[];
   items: CalItem[];
   onOpenItem: (item: CalItem, rect: DOMRect) => void;
   onCreate: (start: Date, end: Date, allDay?: boolean) => void;
   onMove: (item: CalItem, start: Date, end: Date) => void;
+  /** Which items may be dragged (default: editable, non-recurring own events). */
+  canDrag?: (item: CalItem) => boolean;
 }) => {
   const { t } = useTranslation();
   const scroller = useRef<HTMLDivElement>(null);
@@ -104,7 +107,7 @@ export const TimeGrid = ({
   );
   const hasAllDay = perDay.some((d) => d.allDay.length > 0);
 
-  const canDrag = (i: CalItem) => i.source === 'event' && !i.busy && 'canEdit' in i.raw && i.raw.canEdit && !('rrule' in i.raw && i.raw.rrule);
+  const canDrag = canDragProp ?? ((i: CalItem) => i.source === 'event' && !i.busy && 'canEdit' in i.raw && i.raw.canEdit && !('rrule' in i.raw && i.raw.rrule));
 
   const beginDrag = (e: ReactPointerEvent, item: CalItem, dayIdx: number, kind: Drag['kind']) => {
     if (!canDrag(item) || e.button !== 0) return;

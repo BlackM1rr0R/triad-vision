@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Calculator,
   ClipboardCheck,
+  Compass,
   CreditCard,
   GraduationCap,
   Map as MapIcon,
@@ -36,6 +37,7 @@ export interface ToolItem {
 export const TOOL_GROUPS: ToolGroup[] = ['eligibility', 'costs', 'plan', 'explore'];
 
 export const TOOLS: ToolItem[] = [
+  { key: 'pathFinder', to: '/path-finder', icon: Compass, group: 'eligibility' },
   { key: 'quiz', to: '/uygunluq-testi', icon: Sparkles, group: 'eligibility' },
   { key: 'visaCheck', to: '/eligibility', icon: ClipboardCheck, group: 'eligibility' },
   { key: 'compare', to: '/compare-visas', icon: Scale, group: 'eligibility' },

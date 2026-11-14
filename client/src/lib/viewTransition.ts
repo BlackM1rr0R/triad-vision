@@ -1,6 +1,7 @@
 import { useRef, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { getPrefs } from './prefs';
+import { isPrivatePath } from './siteLocale';
 import { useHydrating } from './ssr';
 
 /*
@@ -14,6 +15,11 @@ import { useHydrating } from './ssr';
  * Off (plain instant navigation, same as before) when:
  *   - the browser has no document.startViewTransition (Firefox < 144, older Safari),
  *   - the OS asks for reduced motion, or "Stop animations" is on in the accessibility widget.
+ *
+ * Inside the signed-in areas (staff /admin, /workspace, the client portal /account…) the page also moves a
+ * few pixels (index.css "App navigation"): a short rise for a sibling page, a slide from the right when going
+ * deeper (list → detail) and from the left when going back up. The direction is set on <html data-vt-nav>
+ * for the length of the transition only.
  *
  * Shared elements ("morphs"):
  *   source (a card):  const m = useMorphSource('visa', visa.slug);
@@ -69,11 +75,32 @@ const waitForMorphTarget = async () => {
 
 let running: ViewTransition | null = null;
 
+export type NavDirection = 'app' | 'app-deeper' | 'app-up';
+const trim = (p: string) => p.replace(/\/+$/, '') || '/';
+const areaOf = (p: string) => p.split('/')[1] ?? '';
+
+/**
+ * Motion of a navigation between two private pages of the same area (null: public pages, or between
+ * areas: the plain cross-fade). Deeper = the new path continues the old one (/admin/cases → /admin/cases/7).
+ */
+export const navDirection = (fromPath: string, toPath: string, back = false): NavDirection | null => {
+  const from = trim(fromPath);
+  const to = trim(toPath);
+  if (from === to || !isPrivatePath(from) || !isPrivatePath(to) || areaOf(from) !== areaOf(to)) return null;
+  if (to.startsWith(`${from}/`)) return back ? 'app-up' : 'app-deeper';
+  if (from.startsWith(`${to}/`)) return back ? 'app-deeper' : 'app-up';
+  return 'app';
+};
+
 /**
  * Applies a navigation (a React state update) inside a view transition when possible, otherwise as a
  * normal non-blocking React transition (`fallback`).
  */
-export const navigateWithTransition = (update: () => void, fallback: (update: () => void) => void) => {
+export const navigateWithTransition = (
+  update: () => void,
+  fallback: (update: () => void) => void,
+  nav: { from: string; to: string; back?: boolean } | null = null,
+) => {
   if (!transitionsEnabled()) {
     pendingMorph = null;
     fallback(update);
@@ -82,6 +109,11 @@ export const navigateWithTransition = (update: () => void, fallback: (update: ()
   // A second navigation while one is animating (double click, redirect): finish the first at once.
   running?.skipTransition();
   const doc = document as VTDocument;
+  const root = document.documentElement;
+  const dir = nav ? navDirection(nav.from, nav.to, nav.back) : null;
+  // A morph (card → hero) brings its own motion; the page itself then only cross-fades.
+  if (dir && !pendingMorph) root.dataset.vtNav = dir;
+  else delete root.dataset.vtNav;
   try {
     const vt = doc.startViewTransition!(async () => {
       flushSync(update);
@@ -91,9 +123,13 @@ export const navigateWithTransition = (update: () => void, fallback: (update: ()
     vt.ready.catch(noop);
     vt.updateCallbackDone.catch(noop);
     vt.finished.catch(noop).finally(() => {
-      if (running === vt) running = null;
+      if (running === vt) {
+        running = null;
+        delete root.dataset.vtNav;
+      }
     });
   } catch {
+    delete root.dataset.vtNav;
     fallback(update);
   }
 };

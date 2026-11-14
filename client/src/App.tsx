@@ -37,6 +37,7 @@ const Services = lazyRoute('Services', () => import('./pages/Services'));
 const ServiceDetail = lazyRoute('ServiceDetail', () => import('./pages/ServiceDetail'));
 const Eligibility = lazyRoute('Eligibility', () => import('./pages/Eligibility'));
 const EligibilityQuiz = lazyRoute('EligibilityQuiz', () => import('./pages/EligibilityQuiz'));
+const PathFinder = lazyRoute('PathFinder', () => import('./pages/PathFinder')); // "which path fits me" wizard (shareable result URL)
 const Visas = lazyRoute('Visas', () => import('./pages/Visas'));
 const VisaDetail = lazyRoute('VisaDetail', () => import('./pages/VisaDetail'));
 const Partners = lazyRoute('Partners', () => import('./pages/Partners'));
@@ -72,9 +73,14 @@ const AdminOversight = lazyRoute('AdminOversight', () => import('./pages/admin/O
 const AdminStaffDetail = lazyRoute('AdminStaffDetail', () => import('./pages/admin/StaffDetail'));
 const AdminCases = lazyRoute('AdminCases', () => import('./pages/admin/CasesList'));
 const AdminReview = lazyRoute('AdminReview', () => import('./pages/admin/Review')); // fast document review queue (full screen)
+const AdminNotifications = lazyRoute('AdminNotifications', () => import('./pages/admin/Notifications')); // notification center history + settings
+const AdminInbox = lazyRoute('AdminInbox', () => import('./pages/admin/Inbox')); // case threads awaiting the team's answer (phone "Mesajlar" tab)
 const AdminCase = lazyRoute('AdminCase', () => import('./pages/admin/CaseAdmin'));
 const AdminInquiries = lazyRoute('AdminInquiries', () => import('./pages/admin/Inquiries'));
 const AdminUsers = lazyRoute('AdminUsers', () => import('./pages/admin/Users'));
+const AdminClient360 = lazyRoute('AdminClient360', () => import('./pages/admin/Client360')); // client 360° page
+const AdminTeamLoad = lazyRoute('AdminTeamLoad', () => import('./pages/admin/TeamLoad')); // team workload board
+const AdminCannedReplies = lazyRoute('AdminCannedReplies', () => import('./pages/admin/CannedReplies')); // canned replies
 const AdminMailboxes = lazyRoute('AdminMailboxes', () => import('./pages/admin/Mailboxes'));
 const AdminSignatures = lazyRoute('AdminSignatures', () => import('./pages/admin/Signatures'));
 const SignPage = lazyRoute('SignPage', () => import('./pages/SignPage'));
@@ -118,6 +124,7 @@ const VerifyEmail = lazyRoute('VerifyEmail', () => import('./pages/auth/VerifyEm
 const ConfirmEmailChange = lazyRoute('ConfirmEmailChange', () => import('./pages/auth/ConfirmEmailChange')); // link mailed to the new address (e-mail change)
 const TwoFactor = lazyRoute('TwoFactor', () => import('./pages/auth/TwoFactor'));
 const Jobs = lazyRoute('Jobs', () => import('./pages/jobs/Jobs'));
+const JobCompare = lazyRoute('JobCompare', () => import('./pages/jobs/JobCompare')); // /compare-jobs?v=a,b,c (noindex)
 const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'));
 const JobLanding = lazyRoute('JobLanding', () => import('./pages/jobs/JobLanding')); // /jobs/in/:city/:profession (server lib/jobLandings.ts)
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
@@ -131,6 +138,8 @@ const AccountLetters = lazyRoute('AccountLetters', () => import('./pages/account
 const AccountLetterExplain = lazyRoute('AccountLetterExplain', () => import('./pages/account/LetterExplain'));
 const AccountVault = lazyRoute('AccountVault', () => import('./pages/account/Vault'));
 const AccountArrival = lazyRoute('AccountArrival', () => import('./pages/account/Arrival'));
+const AccountArrivalPrep = lazyRoute('AccountArrivalPrep', () => import('./pages/account/ArrivalPrep')); // Home › Arrival preparation
+const AccountDocChecklist = lazyRoute('AccountDocChecklist', () => import('./pages/account/DocChecklist')); // Documents › Document checklist
 const SalaryCalculator = lazyRoute('SalaryCalculator', () => import('./pages/tools/SalaryCalculator'));
 const StartCalculator = lazyRoute('StartCalculator', () => import('./pages/growth/Calculator'));
 const PlacementMapPage = lazyRoute('PlacementMapPage', () => import('./pages/growth/MapPage'));
@@ -324,6 +333,7 @@ const INTENT: [string, () => Promise<unknown>][] = [
   ['/ausbildung', () => import('./pages/Ausbildung')],
   ['/eligibility', () => import('./pages/Eligibility')],
   ['/uygunluq-testi', () => import('./pages/EligibilityQuiz')],
+  ['/path-finder', () => import('./pages/PathFinder')],
   ['/faq', () => import('./pages/FaqPage')],
   ['/news/', () => import('./pages/NewsDetail')],
   ['/news', () => import('./pages/News')],
@@ -388,6 +398,7 @@ export default function App() {
             <Route path="services/:slug" element={<ServiceDetail />} />
             <Route path="eligibility" element={<Eligibility />} />
             <Route path="uygunluq-testi" element={<EligibilityQuiz />} />
+            <Route path="path-finder" element={<PathFinder />} />
             <Route path="visas" element={<Visas />} />
             <Route path="visas/:slug" element={<VisaDetail />} />
             <Route path="partners" element={<Partners />} />
@@ -444,6 +455,7 @@ export default function App() {
             <Route path="jobs" element={<Jobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
             <Route path="jobs/in/:city/:profession" element={<JobLanding />} />
+            <Route path="compare-jobs" element={<JobCompare />} />
             <Route path="employers/register" element={<EmployerRegister />} />
             <Route
               path="company/*"
@@ -512,6 +524,8 @@ export default function App() {
               <Route path="vault" element={<AccountVault />} />
               <Route path="referral" element={<AccountReferral />} />
               <Route path="arrival" element={<AccountArrival />} />
+              <Route path="arrival-prep" element={<AccountArrivalPrep />} />
+              <Route path="checklist" element={<AccountDocChecklist />} />
               <Route path="budget" element={<AccountBudget />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
               <Route path="signatures" element={<AccountSignatures />} />
@@ -663,10 +677,15 @@ export default function App() {
             />
             <Route path="cases" element={<AdminCases />} />
             <Route path="review" element={<AdminReview />} />
+            <Route path="inbox" element={<AdminInbox />} />
+            <Route path="notifications" element={<AdminNotifications />} />
             <Route path="cases/:id" element={<AdminCase />} />
             <Route path="inquiries" element={<AdminInquiries />} />
             <Route path="calls" element={<AdminCalls />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="clients/:id" element={<AdminClient360 />} />
+            <Route path="team-load" element={<AdminTeamLoad />} />
+            <Route path="canned-replies" element={<AdminCannedReplies />} />
             <Route
               path="mailboxes"
               element={

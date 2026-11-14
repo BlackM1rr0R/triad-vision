@@ -7,6 +7,7 @@ import { audit } from '../../lib/audit.js';
 import { OVERVIEW_PERIODS } from '../../lib/analyticsOverview/compute.js';
 import { cachedOverview, goalSchema, overviewActivity, overviewCsv, writeGoal } from '../../lib/analyticsOverview/service.js';
 import { BIZ_SECTIONS, bizAnalytics, bizCsv, bizQuery } from '../../lib/bizAnalytics/service.js';
+import { SALES_SECTIONS, salesAnalytics, salesCsv, salesQuery } from '../../lib/salesAnalytics/service.js';
 
 // Admin: analytics — mounted at /api/admin/analytics (staff and above; aggregates only, no personal data)
 export const adminAnalyticsRouter = Router();
@@ -45,6 +46,21 @@ adminAnalyticsRouter.get('/business.csv', requireMinRole('ADMIN'), async (req, r
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="biznes-analitika-${section}-${report.range.from}_${report.range.to}.csv"`);
   res.send(bizCsv(report, section));
+});
+
+// Revenue & sales (ADMIN+): paid revenue, expected / overdue payments, services, leads by source, funnel,
+// partners by revenue — lib/salesAnalytics (the "Gəlir və satış" tab of Biznes analitikası).
+adminAnalyticsRouter.get('/sales', requireMinRole('ADMIN'), async (req, res) => {
+  res.json(await salesAnalytics(parse(salesQuery, req.query)));
+});
+
+adminAnalyticsRouter.get('/sales.csv', requireMinRole('ADMIN'), async (req, res) => {
+  const { section, ...rest } = parse(z.object({ section: z.enum(SALES_SECTIONS).default('revenue') }).passthrough(), req.query);
+  const report = await salesAnalytics(parse(salesQuery, rest));
+  await audit(req, 'SALES_ANALYTICS_EXPORTED', section, { from: report.range.from, to: report.range.to });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="gelir-satis-${section}-${report.range.from}_${report.range.to}.csv"`);
+  res.send(salesCsv(report, section));
 });
 
 // ─── Overview ("İcmal", the analytics landing): lib/analyticsOverview ───────────────

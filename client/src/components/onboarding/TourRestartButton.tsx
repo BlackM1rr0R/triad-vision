@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { CircleHelp } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
-import { startTour } from './tour';
+import { restartTour } from './tour';
 
 registerCopy(pagesPortalUx);
 
@@ -14,7 +14,7 @@ export function TourRestartButton({ tourId, className, compact = false, tour }: 
   return (
     <button
       type="button"
-      onClick={() => startTour(tourId)}
+      onClick={() => restartTour(tourId)}
       className={clsx('inline-flex items-center gap-2 font-semibold', className)}
       aria-label={compact ? label : undefined}
       title={compact ? label : undefined}

@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -16,6 +16,8 @@ import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/com
 import { AreaChart, HBarList, VIZ, type ChartSeries } from '@/components/charts';
 import { useReportFormat } from '@/components/reports/types';
 import type { CaseStatus } from '@/lib/types';
+import { RevenueView } from '@/components/salesAnalytics/RevenueView'; // "Gəlir və satış" tab (lib/salesAnalytics)
+import { salesCsvHref } from '@/components/salesAnalytics/api';
 
 registerCopy(pagesBizAnalytics);
 
@@ -69,7 +71,8 @@ interface BizResponse {
   categories: { id: string; slug: string; visaLabel: string | null; title: Record<string, string> | null }[];
 }
 
-type Section = 'stages' | 'partners' | 'funnel';
+type Section = 'stages' | 'partners' | 'funnel' | 'revenue';
+const SECTIONS: Section[] = ['stages', 'partners', 'funnel', 'revenue'];
 const PRESETS = [3, 6, 12] as const;
 type Preset = (typeof PRESETS)[number] | 'custom';
 /** Stages drawn in the trend by default (the rest can be switched on in the legend). */
@@ -186,7 +189,20 @@ export default function AdminBizAnalytics() {
   const { tr } = useL10n();
   const f = useReportFormat();
   usePageTitle(t('biz.title'));
-  const [section, setSection] = useState<Section>('stages');
+  // ?tab=revenue (etc.) opens a tab directly; switching tabs keeps the URL in step.
+  const [search, setSearch] = useSearchParams();
+  const tabParam = search.get('tab') as Section | null;
+  const section: Section = tabParam && SECTIONS.includes(tabParam) ? tabParam : 'stages';
+  const setSection = (s: Section) =>
+    setSearch(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (s === 'stages') next.delete('tab');
+        else next.set('tab', s);
+        return next;
+      },
+      { replace: true },
+    );
   const [preset, setPreset] = useState<Preset>(12);
   const [custom, setCustom] = useState({ from: monthsBack(11), to: bakuToday() });
   const [draft, setDraft] = useState(custom);
@@ -201,8 +217,9 @@ export default function AdminBizAnalytics() {
     queryFn: async () => (await api.get<BizResponse>('/admin/analytics/business', { params })).data,
     placeholderData: keepPreviousData,
     staleTime: 60_000,
+    enabled: section !== 'revenue',
   });
-  const csvHref = `/api/admin/analytics/business.csv?${new URLSearchParams({ ...params, section }).toString()}`;
+  const csvHref = section === 'revenue' ? salesCsvHref(range, 'revenue') : `/api/admin/analytics/business.csv?${new URLSearchParams({ ...params, section }).toString()}`;
 
   const days = (v: number | null | undefined) => (v === null || v === undefined ? '—' : t('biz.days', { value: f.num(v) }));
   const catName = (id: string | null) => {
@@ -241,7 +258,7 @@ export default function AdminBizAnalytics() {
         subtitle={t('biz.subtitle')}
         actions={
           <a href={csvHref} className="btn-secondary btn-sm" download>
-            <Download className="size-3.5" aria-hidden /> {t('biz.csv')} · {t(`biz.tabs.${section}`)}
+            <Download className="size-3.5" aria-hidden /> {t('biz.csv')} · {section === 'revenue' ? t('sales.tab') : t(`biz.tabs.${section}`)}
           </a>
         }
       />
@@ -258,7 +275,7 @@ export default function AdminBizAnalytics() {
           </Chip>
           {isFetching && !isLoading && <Spinner className="ml-1 size-3.5 text-link" />}
         </div>
-        <label className="flex min-w-0 items-center gap-2 text-xs text-muted">
+        <label className={clsx('flex min-w-0 items-center gap-2 text-xs text-muted', section === 'revenue' && 'hidden')}>
           <span className="shrink-0">{t('biz.category')}</span>
           <select className="input min-w-0 sm:w-64" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">{t('biz.allCategories')}</option>
@@ -291,12 +308,14 @@ export default function AdminBizAnalytics() {
       <Tabs
         className="mb-6"
         label={t('biz.title')}
-        items={(['stages', 'partners', 'funnel'] as const).map((k) => ({ key: k, label: t(`biz.tabs.${k}`) }))}
+        items={SECTIONS.map((k) => ({ key: k, label: k === 'revenue' ? t('sales.tab') : t(`biz.tabs.${k}`) }))}
         value={section}
         onChange={setSection}
       />
 
-      {isLoading ? (
+      {section === 'revenue' ? (
+        <RevenueView range={range} />
+      ) : isLoading ? (
         <LoadingBlock />
       ) : error ? (
         <ErrorBlock error={error} onRetry={() => refetch()} />

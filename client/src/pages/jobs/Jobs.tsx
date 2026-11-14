@@ -14,7 +14,8 @@ import { Button, buttonClass } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Employer, Lost, SearchEmpty } from '@/components/illustrations';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
-import { JobCard } from '@/components/jobs/JobCard';
+import { ComparableJobCard } from '@/components/jobs/CompareToggle';
+import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
@@ -238,7 +239,7 @@ export default function Jobs() {
               <>
                 <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
                   {data.items.map((v) => (
-                    <JobCard key={v.id} v={v} />
+                    <ComparableJobCard key={v.id} v={v} />
                   ))}
                 </div>
                 {pages > 1 && (
@@ -274,6 +275,7 @@ export default function Jobs() {
           </div>
         </div>
       </section>
+      <CompareTray />
     </>
   );
 }

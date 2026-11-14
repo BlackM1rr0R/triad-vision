@@ -120,8 +120,9 @@ const BrowserLocaleRouter = ({ children }: { children: ReactNode }) => {
       // A new page (pathname change) cross-fades / morphs through the View Transitions API where supported
       // and motion is welcome (lib/viewTransition.ts); query / hash changes (tabs, filters) stay instant.
       const newPage = next.location.pathname !== shownPath;
+      const from = shownPath;
       shownPath = next.location.pathname;
-      if (newPage) navigateWithTransition(update, (u) => startTransition(u));
+      if (newPage) navigateWithTransition(update, (u) => startTransition(u), { from, to: next.location.pathname, back: next.action === 'POP' });
       else startTransition(update);
     });
   }, []);

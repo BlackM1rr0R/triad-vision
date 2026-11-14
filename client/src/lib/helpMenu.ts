@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
  *    (useHelpFabPresent() → 'max-sm:hidden'); desktop keeps the usual layout.
  */
 
-export type HelpAction = 'advisor' | 'ai' | 'a11y' | 'problem';
+export type HelpAction = 'advisor' | 'ai' | 'a11y' | 'problem' | 'tour'; // tour: the area's guided tour (TourHost helpTour)
 const HELP_EVENT = 'tv:help-open';
 
 const available = new Map<HelpAction, number>();

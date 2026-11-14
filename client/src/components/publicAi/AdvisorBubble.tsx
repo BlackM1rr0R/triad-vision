@@ -10,7 +10,7 @@ import { AxiosError } from 'axios';
 import { registerCopy, toContentLocale } from '@/i18n';
 import { pagesPublicAi } from '@/i18n/pagesPublicAi';
 import { LeadForm, type ChatTurn } from './LeadForm';
-import { VisitorLiveChat } from '@/components/livechat/VisitorLiveChat'; // AI → human handover ("Əməkdaşla danışın")
+import { VisitorLiveChat, loadLiveChatSession, useLiveChatUnread } from '@/components/livechat/VisitorLiveChat'; // AI → human handover ("Əməkdaşla danışın")
 import { CallbackButton } from '@/components/calls/CallbackForm'; // "Mənə zəng edin"
 import { focusBack, useHelpAction } from '@/lib/helpMenu'; // phones: opened from the "Kömək" menu
 
@@ -76,13 +76,9 @@ export const AdvisorBubble = ({ launcherClass }: { launcherClass?: string } = {}
   const [showLead, setShowLead] = useState(false);
   // Live chat handover: offered when the AI is unsure / the visitor asks for a person; null = AI mode.
   const [offerHuman, setOfferHuman] = useState(false);
-  const [human, setHuman] = useState<null | 'button' | 'ai_unsure' | 'asked' | 'ai_error'>(() => {
-    try {
-      return sessionStorage.getItem('tv.livechat') ? 'button' : null;
-    } catch {
-      return null;
-    }
-  });
+  const [human, setHuman] = useState<null | 'button' | 'ai_unsure' | 'asked' | 'ai_error'>(() => (loadLiveChatSession() ? 'button' : null));
+  // Replies of a colleague / the offline AI while the panel is closed → badge on the launcher.
+  const unread = useLiveChatUnread(!open && !!human);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -158,17 +154,28 @@ export const AdvisorBubble = ({ launcherClass }: { launcherClass?: string } = {}
       <motion.button
         ref={launcherRef}
         type="button"
-        aria-label={t('pai.bubble.open')}
+        aria-label={unread ? `${t('pai.bubble.open')} · ${t('lcx.unread', { count: unread })}` : t('pai.bubble.open')}
         aria-expanded={open}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 2.6, type: 'spring' }}
         whileHover={{ scale: 1.08 }}
         onClick={() => setOpen((o) => !o)}
-        className={clsx('grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover', launcherClass)}
+        className={clsx('relative grid size-14 place-items-center rounded-full bg-primary text-primary-contrast shadow-[var(--tv-shadow-raised)] hover:bg-primary-hover', launcherClass)}
       >
         {open ? <X className="size-6" aria-hidden /> : <MessageCircleQuestion className="size-7" aria-hidden />}
+        {unread > 0 && !open && (
+          <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-danger px-1 text-[11px] leading-5 font-bold text-white ring-2 ring-card tabular-nums" aria-hidden>
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
       </motion.button>
+      {/* Phones: the launcher is hidden (help menu), so new live-chat replies get their own small chip. */}
+      {unread > 0 && !open && (
+        <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] sm:hidden">
+          <Headset className="size-4" aria-hidden /> {t('lcx.unread', { count: unread })}
+        </button>
+      )}
 
       <AnimatePresence>
         {open && (

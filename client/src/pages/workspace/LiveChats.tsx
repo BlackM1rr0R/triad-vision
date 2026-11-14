@@ -11,8 +11,12 @@ import { registerCopy } from '@/i18n';
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { CallButton } from '@/components/calls/CallButton';
 import { setSoundEnabled, soundEnabled } from '@/components/livechat/LiveChatAlerts';
+import { useCannedComposer } from '@/components/staffDesk/CannedReplies';
+import { pagesStaffDesk } from '@/i18n/pagesStaffDesk';
+import { useRealtime } from '@/lib/realtime';
 
 registerCopy(pagesCalls);
+registerCopy(pagesStaffDesk);
 
 type Status = 'WAITING' | 'ACTIVE' | 'CLOSED' | 'MISSED';
 interface Row {
@@ -41,7 +45,7 @@ interface Detail {
   inquiryId: string | null;
   createdAt: string;
   acceptDeadline: string;
-  messages: { id: string; author: 'VISITOR' | 'STAFF' | 'SYSTEM'; staffName: string | null; body: string; createdAt: string }[];
+  messages: { id: string; author: 'VISITOR' | 'STAFF' | 'SYSTEM' | 'AI'; staffName: string | null; body: string; createdAt: string }[];
 }
 
 const TONE: Record<Status, string> = toneClasses(STATUS_TONES.liveChat);
@@ -124,12 +128,33 @@ const ChatPane = ({ id, me, onBack }: { id: string; me: string; onBack: () => vo
   const [input, setInput] = useState('');
   const [clientId, setClientId] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const canned = useCannedComposer({ value: input, setValue: setInput, ref: inputRef, context: { liveChatId: id } }); // "/" canned replies
   const q = useQuery({
     queryKey: ['livechat', 'chat', id],
     queryFn: async () => (await api.get<{ chat: Detail }>(`/livechat/staff/${id}`)).data.chat,
     refetchInterval: 15_000,
   });
   const chat = q.data;
+  // Visitor typing (`livechat.typing` SSE, ~every few seconds while they type): shown for 5 s after the last event.
+  const [visitorTyping, setVisitorTyping] = useState(false);
+  const typingTimer = useRef<number | null>(null);
+  useRealtime('livechat.typing', (p) => {
+    const d = p as { chatId?: string; who?: string; on?: boolean } | undefined;
+    if (d?.chatId !== id || d.who !== 'VISITOR') return;
+    setVisitorTyping(d.on !== false);
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    typingTimer.current = window.setTimeout(() => setVisitorTyping(false), 5000);
+  });
+  useEffect(() => () => void (typingTimer.current && window.clearTimeout(typingTimer.current)), []);
+  useEffect(() => setVisitorTyping(false), [id, chat?.messages.length]);
+  // My typing → the visitor (POST /livechat/staff/:id/typing), at most every 3 s.
+  const lastTyping = useRef(0);
+  const notifyTyping = () => {
+    if (Date.now() - lastTyping.current < 3000) return;
+    lastTyping.current = Date.now();
+    void api.post(`/livechat/staff/${id}/typing`).catch(() => undefined);
+  };
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [chat?.messages.length]);
@@ -205,14 +230,35 @@ const ChatPane = ({ id, me, onBack }: { id: string; me: string; onBack: () => vo
               {m.body}
             </p>
           ) : (
-            <div key={m.id} className={clsx('max-w-[80%] rounded-xl px-3 py-2 text-sm break-words whitespace-pre-wrap shadow-[var(--tv-shadow-card)]', m.author === 'STAFF' ? 'ml-auto rounded-tr-sm bg-primary text-primary-contrast' : 'rounded-tl-sm bg-card text-ink')}>
-              {m.body}
+            <div
+              key={m.id}
+              className={clsx(
+                'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words whitespace-pre-wrap shadow-[var(--tv-shadow-card)]',
+                m.author === 'STAFF' ? 'ml-auto rounded-tr-sm bg-primary text-primary-contrast' : m.author === 'AI' ? 'ml-auto rounded-tr-sm border border-dashed border-line-strong bg-sunken text-ink' : 'rounded-tl-sm bg-card text-ink',
+              )}
+            >
+              {m.author === 'AI' && (
+                <span className="mb-1 inline-flex items-center gap-1 rounded bg-primary/[0.08] px-1.5 py-0.5 text-[10px] font-semibold text-link">
+                  <Sparkles className="size-3" aria-hidden /> {t('sd.livechat.ai')}
+                </span>
+              )}
+              {m.author === 'AI' ? <span className="block">{m.body}</span> : m.body}
               <span className={clsx('mt-0.5 block text-right text-[10px]', m.author === 'STAFF' ? 'text-primary-contrast/70' : 'text-muted')}>
                 {m.staffName ? `${m.staffName} · ` : ''}
                 {time(m.createdAt)}
               </span>
             </div>
           ),
+        )}
+        {visitorTyping && (
+          <p className="flex items-center gap-1.5 text-xs text-muted" role="status">
+            <span className="inline-flex gap-0.5" aria-hidden>
+              <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.2s]" />
+              <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.1s]" />
+              <span className="size-1.5 animate-bounce rounded-full bg-muted" />
+            </span>
+            {t('sd.livechat.typing', { name })}
+          </p>
         )}
       </div>
 
@@ -245,21 +291,32 @@ const ChatPane = ({ id, me, onBack }: { id: string; me: string; onBack: () => vo
             if (input.trim()) act.mutate({ path: 'messages', body: { body: input.trim() } });
           }}
         >
-          <textarea
-            rows={2}
-            maxLength={2000}
-            className="input min-h-10 sm:min-h-9 flex-1 resize-none text-sm"
-            placeholder={t('livechat.placeholder')}
-            aria-label={t('livechat.placeholder')}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (input.trim()) act.mutate({ path: 'messages', body: { body: input.trim() } });
-              }
-            }}
-          />
+          <div className="relative min-w-0 flex-1">
+            {canned.popover}
+            <textarea
+              ref={inputRef}
+              rows={2}
+              maxLength={2000}
+              className="input min-h-10 w-full resize-none text-sm sm:min-h-9"
+              placeholder={t('livechat.placeholder')}
+              aria-label={t('livechat.placeholder')}
+              value={input}
+              {...canned.aria}
+              onChange={(e) => {
+                setInput(e.target.value);
+                canned.onInput(e.currentTarget);
+                if (e.target.value.trim() && chat.status === 'ACTIVE' && mine) notifyTyping();
+              }}
+              onClick={(e) => canned.onInput(e.currentTarget)}
+              onKeyDown={(e) => {
+                if (canned.onKeyDown(e)) return;
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (input.trim()) act.mutate({ path: 'messages', body: { body: input.trim() } });
+                }
+              }}
+            />
+          </div>
           <button type="submit" className="btn-primary grid size-11 shrink-0 place-items-center p-0" aria-label={t('livechat.send')} disabled={act.isPending || !input.trim()}>
             <Send className="size-4" aria-hidden />
           </button>

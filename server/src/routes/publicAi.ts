@@ -7,16 +7,19 @@ import { parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { aiComplete, CHEAP_MODEL } from '../lib/ai/complete.js';
 import { getAiSettings } from '../lib/ai/settings.js';
-import { monthSpentUsd } from '../lib/ai/limits.js';
 import { rangesFor } from '../lib/journey/forecast.js';
 import { pickL10n } from '../lib/jobsNotifications.js';
 import { LANG_NAMES, str } from '../lib/aiWriting/common.js';
 import { IP_PER_DAY, IP_PER_HOUR, LEADS_PER_HOUR, QUIZ_EXPLAIN_PER_HOUR, SESSION_TURNS, sessionTurns, takeHit, takeSessionTurn } from '../lib/publicAi/guard.js';
 import { bookPublicUsage, publicUsageMonth, publicUsageToday } from '../lib/publicAi/usage.js';
+import { publicBudget } from '../lib/publicAi/budget.js';
 import { retrieve } from '../lib/publicAi/knowledge.js';
 import { HUMAN_RE, INTENT_RE, MAX_TOKENS, OFFER_AFTER_TURNS, advisorInput, advisorSystem, chatSchema, chatSummary, detectLang, splitLead } from '../lib/publicAi/advisor.js';
 import { PATH_LABEL_RE, answersSummary, eligibilityAnswersSchema, evaluateEligibility, weeksFromRanges, type PathResult } from '../lib/publicAi/eligibility.js';
 
+import { PROFESSION_SECTOR, finderPaths, packageFor, pathFinderSchema, professionSalary, salaryForPath, vacanciesOfProfession } from '../lib/publicAi/pathFinder.js';
+import { openVacancyWhere } from '../lib/vacancies.js';
+import { publishedPackages } from '../lib/billing/packages.js';
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
 
@@ -25,6 +28,7 @@ import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/
  *   GET  /status        { enabled, maxTurns }
  *   POST /chat          site advisor (JSON answer; 15/h and 40/day per IP, 12 turns per session, 400 tokens)
  *   POST /eligibility   deterministic quiz result + durations, optional AI explanation
+ *   GET  /path-finder   "which path fits me" wizard: 5 answers → paths + salary range + duration + package
  *   POST /lead          name + phone/e-mail with consent → Inquiry (source "AI advisor") + staff notification
  *   GET  /usage         super admin: today's / this month's anonymous usage
  * Costs are booked as aggregated daily totals (Setting `ai.publicUsage`); the global daily cap is
@@ -33,18 +37,6 @@ import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/
 export const publicAiRouter = Router();
 
 const ipOf = (req: Request) => req.ip ?? req.socket.remoteAddress ?? 'unknown';
-
-type Busy = 'DISABLED' | 'DAILY_CAP' | 'MONTHLY_BUDGET';
-
-/** Null when anonymous AI may be used now. */
-const publicBudget = async (): Promise<Busy | null> => {
-  const s = await getAiSettings();
-  if (!s.publicAdvisorEnabled) return 'DISABLED';
-  const [today, month, spent] = await Promise.all([publicUsageToday(), publicUsageMonth(), monthSpentUsd()]);
-  if (today.usd >= s.publicDailyUsd) return 'DAILY_CAP';
-  if (spent + month.usd >= s.monthlyBudgetUsd) return 'MONTHLY_BUDGET';
-  return null;
-};
 
 publicAiRouter.get('/status', async (_req, res) => {
   const s = await getAiSettings();
@@ -161,6 +153,38 @@ publicAiRouter.post('/eligibility', async (req, res) => {
   }
   if (!explanation) void bookPublicUsage({ quiz: 1 });
   res.json({ paths, explanation });
+});
+
+// ─── "Which path fits me" wizard ────────────────────────────────────────
+
+const finderQuerySchema = pathFinderSchema.extend({ lang: z.enum(['az', 'de', 'en', 'ru']).catch('az') });
+
+/** Deterministic, no AI: the shareable result page (/path-finder?profession=…) calls this on every open. */
+publicAiRouter.get('/path-finder', async (req, res) => {
+  const { lang, ...answers } = parse(finderQuerySchema, req.query);
+  const over = takeHit(`finder:${ipOf(req)}`, { hour: 120 });
+  if (over) {
+    res.status(429).json({ error: 'TOO_MANY_REQUESTS', scope: over });
+    return;
+  }
+  const [paths, vacancies, packages] = await Promise.all([
+    withDurations(finderPaths(answers), lang),
+    prisma.vacancy.findMany({ where: openVacancyWhere(), select: { profession: true, title: true, salaryMin: true, salaryMax: true }, take: 2000 }),
+    publishedPackages(),
+  ]);
+  const job = professionSalary(vacancies, answers.profession);
+  res.json({
+    answers,
+    paths: paths.map((p) => {
+      const pkg = packageFor(packages, p.visaType);
+      return {
+        ...p,
+        salary: salaryForPath(p.key, job),
+        package: pkg ? { slug: pkg.slug, tier: pkg.tier, title: pickL10n(pkg.title, lang), priceCents: pkg.priceCents, currency: pkg.currency } : null,
+      };
+    }),
+    jobs: { count: vacanciesOfProfession(vacancies, answers.profession).length, sector: PROFESSION_SECTOR[answers.profession] },
+  });
 });
 
 // ─── Lead → Inquiry ─────────────────────────────────────────────────────

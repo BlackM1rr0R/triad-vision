@@ -67,19 +67,21 @@ describe('portal stage', () => {
     expect(subs.home).toEqual(['overview', 'application']);
     expect(subs.learn).toEqual(expect.arrayContaining(['waitingRoom', 'interviewPrep', 'jobs', 'cv', 'letters', 'german', 'guides']));
     expect(subs.documents).toContain('caseDocs');
+    expect(subs.documents).toContain('docChecklist');
     expect(subs.messages).toEqual(['chat', 'notifications']);
   });
 
   it('travel: arrival plan and onboarding appear, the waiting room goes', () => {
     const subs = m.visibleSubs('TRAVEL', ctx({ hasOpenCase: false }));
-    expect(subs.home).toEqual(['overview', 'application', 'arrival', 'onboarding', 'housing']);
+    expect(subs.home).toEqual(['overview', 'application', 'arrivalPrep', 'arrival', 'onboarding', 'housing']);
     expect(subs.learn).not.toContain('waitingRoom');
     expect(subs.learn).not.toContain('jobs');
   });
 
   it('in Germany: onboarding and family, document collection only while something is open', () => {
     const closed = m.visibleSubs('IN_GERMANY', ctx({ hasOpenCase: false }));
-    expect(closed.home).toEqual(['overview', 'application', 'onboarding', 'housing']);
+    expect(closed.home).toEqual(['overview', 'application', 'arrivalPrep', 'onboarding', 'housing']);
+    expect(closed.documents).not.toContain('docChecklist');
     expect(closed.documents).not.toContain('caseDocs');
     expect(closed.documents).toEqual(expect.arrayContaining(['vault', 'letterExplain']));
     expect(closed.profile).toContain('family');
@@ -114,6 +116,9 @@ describe('portal stage', () => {
     expect(m.sectionOfLocation('/account/waiting-room')).toBe('learn');
     expect(m.sectionOfLocation('/account/privacy')).toBe('profile');
     expect(m.sectionOfLocation('/account/referral')).toBe('profile');
+    expect(m.subOfLocation('/account/checklist')).toBe('docChecklist');
+    expect(m.subOfLocation('/account/arrival-prep')).toBe('arrivalPrep');
+    expect(m.subOfLocation('/account/arrival')).toBe('arrival');
     expect(m.sectionOfLocation('/admin')).toBeNull();
     // Every sub-tab's link points back to the same sub-tab.
     for (const sec of m.SECTIONS) {

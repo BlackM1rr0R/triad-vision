@@ -9,7 +9,8 @@ import { pagesJobs } from '@/i18n/pagesJobs';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { buttonClass } from '@/components/ui/Button';
-import { JobCard } from '@/components/jobs/JobCard';
+import { ComparableJobCard } from '@/components/jobs/CompareToggle';
+import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import type { PublicVacancy } from '@/components/jobs/types';
 import NotFound from '../NotFound';
@@ -112,7 +113,7 @@ export default function JobLanding() {
             </h2>
             <div className="grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2]">
               {items.map((v) => (
-                <JobCard key={v.id} v={v} />
+                <ComparableJobCard key={v.id} v={v} />
               ))}
             </div>
             <JobAlertForm profession={items[0]?.profession ?? null} />
@@ -131,6 +132,7 @@ export default function JobLanding() {
           </aside>
         </div>
       </section>
+      <CompareTray />
     </>
   );
 }

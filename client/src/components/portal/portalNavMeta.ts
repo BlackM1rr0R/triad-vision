@@ -3,6 +3,8 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Bell,
   BookOpen,
+  ClipboardCheck,
+  ListChecks,
   BookOpenCheck,
   Briefcase,
   Compass,
@@ -43,10 +45,12 @@ export const SECTION_ICON: Record<SectionKey, LucideIcon> = {
 export const SUB_ICON: Record<SubKey, LucideIcon> = {
   overview: LayoutDashboard,
   application: Briefcase,
+  arrivalPrep: ListChecks,
   arrival: PlaneLanding,
   onboarding: Compass,
   housing: KeyRound,
   caseDocs: FileText,
+  docChecklist: ClipboardCheck,
   signatures: FileSignature,
   payments: Wallet,
   vault: Vault,

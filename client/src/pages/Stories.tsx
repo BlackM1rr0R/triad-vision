@@ -22,6 +22,7 @@ import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { api } from '@/lib/api';
 import { PlacementMapSection } from '@/components/growth/PlacementMap';
+import { StoriesMap } from '@/components/stories/StoriesMap';
 
 registerCopy(pagesCompany);
 registerCopy(pagesGrowth);
@@ -330,6 +331,9 @@ export default function Stories() {
 
       {samples.length > 0 && <Gallery samples={samples} visas={data?.visaCategories ?? []} />}
       {samples.length > 0 && <Breakdown samples={samples} />}
+
+      {/* Candidate stories on a map of Germany (photos + quotes, clustered on phones, list view). */}
+      <StoriesMap testimonials={data?.testimonials ?? []} />
 
       {/* Video + text success stories with filters (profession, origin, German city, visa type). */}
       <VideoStories
