@@ -145,6 +145,8 @@ const AccountLetterExplain = lazyRoute('AccountLetterExplain', () => import('./p
 const AccountVault = lazyRoute('AccountVault', () => import('./pages/account/Vault'));
 const AccountArrival = lazyRoute('AccountArrival', () => import('./pages/account/Arrival'));
 const AccountArrivalPrep = lazyRoute('AccountArrivalPrep', () => import('./pages/account/ArrivalPrep')); // Home › Arrival preparation
+const AccountArrivalCard = lazyRoute('AccountArrivalCard', () => import('./pages/account/ArrivalCard')); // digital arrival card (offline)
+const AccountBadges = lazyRoute('AccountBadges', () => import('./pages/account/Badges')); // badges / achievements (private)
 const AccountDocChecklist = lazyRoute('AccountDocChecklist', () => import('./pages/account/DocChecklist')); // Documents › Document checklist
 const SalaryCalculator = lazyRoute('SalaryCalculator', () => import('./pages/tools/SalaryCalculator'));
 const StartCalculator = lazyRoute('StartCalculator', () => import('./pages/growth/Calculator'));
@@ -153,7 +155,10 @@ const InfoEvents = lazyRoute('InfoEvents', () => import('./pages/growth/Events')
 const InfoEventDetail = lazyRoute('InfoEventDetail', () => import('./pages/growth/EventDetail'));
 const CostCalculatorPage = lazyRoute('CostCalculatorPage', () => import('./pages/growth/CostCalculator')); // client cost calculator
 const BudgetPage = lazyRoute('BudgetPage', () => import('./pages/tools/Budget')); // first-month budget in Germany (/budget)
+const LifeInGermanyPage = lazyRoute('LifeInGermanyPage', () => import('./pages/tools/LifeInGermany')); // Life in Germany simulator (/life-in-germany)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
+const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
+const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
 const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
 const LandingPageView = lazyRoute('LandingPageView', () => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
 const AccountReferral = lazyRoute('AccountReferral', () => import('./pages/account/Referral'));
@@ -432,6 +437,7 @@ export default function App() {
             <Route path="events/:slug" element={<InfoEventDetail />} />
             <Route path="cost-calculator" element={<CostCalculatorPage />} />
             <Route path="budget" element={<BudgetPage />} />
+            <Route path="life-in-germany" element={<LifeInGermanyPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
@@ -539,6 +545,8 @@ export default function App() {
               <Route path="referral" element={<AccountReferral />} />
               <Route path="arrival" element={<AccountArrival />} />
               <Route path="arrival-prep" element={<AccountArrivalPrep />} />
+              <Route path="arrival-card" element={<AccountArrivalCard />} />
+              <Route path="badges" element={<AccountBadges />} />
               <Route path="checklist" element={<AccountDocChecklist />} />
               <Route path="budget" element={<AccountBudget />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
@@ -573,6 +581,8 @@ export default function App() {
             <Route path="settlements/*" element={<AdminSettlements />} />
           </Route>
 
+          {/* Office wall TV: outside the admin layout and login (a read-only display token, or the staff session). */}
+          <Route path="admin/tv" element={<AdminTvDisplay />} />
           <Route
             path="admin"
             element={
@@ -870,6 +880,14 @@ export default function App() {
             <Route path="events" element={<AdminGrowthEvents />} />
             <Route path="study" element={<AdminStudyProgrammes />} />
             <Route path="site-tools" element={<AdminGrowthTools />} />
+            <Route
+              path="tv-settings"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminTvSettings />
+                </RequireAuth>
+              }
+            />
             <Route
               path="city-costs"
               element={

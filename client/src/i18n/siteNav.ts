@@ -26,6 +26,7 @@ const az = {
       stories: 'Uğur hekayələri',
       faq: 'Suallar və cavablar',
       events: 'Tədbirlər və vebinarlar',
+      life: 'Almaniyada həyat simulyatoru',
       apply: 'Pulsuz qeydiyyat',
     },
     e: {
@@ -86,6 +87,7 @@ const de: typeof az = {
       stories: 'Erfolgsgeschichten',
       faq: 'Fragen und Antworten',
       events: 'Veranstaltungen und Webinare',
+      life: 'Leben in Deutschland (Simulator)',
       apply: 'Kostenlos registrieren',
     },
     e: {
@@ -146,6 +148,7 @@ const en: typeof az = {
       stories: 'Success stories',
       faq: 'Questions and answers',
       events: 'Events and webinars',
+      life: 'Life in Germany simulator',
       apply: 'Register for free',
     },
     e: {
@@ -206,6 +209,7 @@ const ru: typeof az = {
       stories: 'Истории успеха',
       faq: 'Вопросы и ответы',
       events: 'Мероприятия и вебинары',
+      life: 'Симулятор жизни в Германии',
       apply: 'Бесплатная регистрация',
     },
     e: {

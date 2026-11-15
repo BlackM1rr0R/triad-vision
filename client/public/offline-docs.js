@@ -1,6 +1,6 @@
 /*
  * Offline documents page (public/offline-docs.html): lists what the client kept on THIS device with "Oflayn saxla"
- * (src/lib/offlineDocs.ts) — the appointment card(s) and the documents — straight from Cache Storage, so it works
+ * (src/lib/offlineDocs.ts) — the arrival card, the appointment card(s) and the documents — straight from Cache Storage, so it works
  * without internet. Files open from the cache through the service worker (/__offline/doc/<id>) or, when no worker
  * controls the page, as a blob URL. Items older than 30 days are not shown (the worker deletes them).
  */
@@ -94,6 +94,38 @@
       });
     }
 
+    // The arrival card (portal › Arrival card → "Save offline"): sections of rows, phone numbers as tel: links.
+    var ac = idx.arrivalCard && fresh(idx.arrivalCard.savedAt) ? idx.arrivalCard : null;
+    var acHost = $('arrival-card');
+    acHost.textContent = '';
+    if (ac && ac.sections) {
+      var head = el('section');
+      head.appendChild(el('h2', null, ac.title || 'Arrival card'));
+      if (L.savedAt) head.appendChild(el('p', { class: 'note' }, L.savedAt.replace('{date}', new Date(ac.savedAt).toLocaleString(idx.lang || undefined))));
+      acHost.appendChild(head);
+      ac.sections.forEach(function (sec) {
+        if (!sec.rows || !sec.rows.length) return;
+        var s = el('section');
+        s.appendChild(el('h2', null, sec.title));
+        var dl = el('dl');
+        sec.rows.forEach(function (r) {
+          dl.appendChild(el('dt', null, r.label));
+          var dd = el('dd');
+          if (r.tel && /^\+?[0-9 ]{3,20}$/.test(r.tel)) dd.appendChild(el('a', { class: 'link', href: 'tel:' + r.tel.replace(/ /g, '') }, r.value));
+          else dd.textContent = r.value;
+          dl.appendChild(dd);
+        });
+        s.appendChild(dl);
+        acHost.appendChild(s);
+      });
+      if (ac.qr && typeof ac.qr.dataUrl === 'string' && ac.qr.dataUrl.indexOf('data:image/png;base64,') === 0) {
+        var q = el('section');
+        q.appendChild(el('h2', null, ac.qr.caption || 'QR'));
+        q.appendChild(el('img', { src: ac.qr.dataUrl, alt: ac.qr.caption || 'QR', width: '200', height: '200', style: 'background:#fff;padding:8px;border-radius:12px' }));
+        acHost.appendChild(q);
+      }
+    }
+
     var list = $('docs');
     list.textContent = '';
     if (L.documents) $('docs-title').textContent = L.documents;
@@ -117,7 +149,7 @@
       list.appendChild(li);
     });
     $('docs-section').hidden = docs.length === 0;
-    $('empty').hidden = docs.length > 0 || host.childNodes.length > 0;
+    $('empty').hidden = docs.length > 0 || host.childNodes.length > 0 || acHost.childNodes.length > 0;
   };
 
   if (!('caches' in window)) return;

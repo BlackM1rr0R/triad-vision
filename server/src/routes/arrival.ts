@@ -168,6 +168,7 @@ arrivalRouter.post('/:caseId/submit', async (req, res) => {
   const updated = await prisma.arrivalPlan.updateMany({ where: { id: plan.id, status: 'DRAFT' }, data: { status: 'SUBMITTED', submittedAt: new Date() } });
   if (!updated.count) throw conflict('PLAN_NOT_DRAFT');
   await audit(req, 'ARRIVAL_PLAN_SUBMITTED', plan.id, { caseId: plan.caseId });
+  void import('../lib/employerPipeline/realtime.js').then((m) => m.publishPipelineChange(plan.caseId)).catch(() => undefined); // employer pipeline
   const fresh = (await loadPlan(plan.caseId))!;
   await notifyPlanStaff(fresh, 'SUBMITTED', 'responsible');
   res.json({ plan: clientView(fresh) });
@@ -179,6 +180,7 @@ arrivalRouter.post('/:caseId/cancel', async (req, res) => {
   if (plan.status === 'CANCELLED' || plan.status === 'COMPLETED') throw conflict('PLAN_CLOSED');
   await prisma.arrivalPlan.update({ where: { id: plan.id }, data: { status: 'CANCELLED' } });
   await audit(req, 'ARRIVAL_PLAN_CANCELLED', plan.id, { caseId: plan.caseId, from: plan.status });
+  void import('../lib/employerPipeline/realtime.js').then((m) => m.publishPipelineChange(plan.caseId)).catch(() => undefined); // employer pipeline
   const fresh = (await loadPlan(plan.caseId))!;
   if (plan.status !== 'DRAFT') await notifyPlanStaff(fresh, 'CLIENT_CANCELLED', 'responsible');
   res.json({ plan: clientView(fresh) });

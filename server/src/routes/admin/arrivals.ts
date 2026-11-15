@@ -150,6 +150,7 @@ adminArrivalsRouter.patch('/:caseId', async (req, res) => {
     return;
   }
   if (changed.length) await prisma.arrivalPlan.update({ where: { id: plan.id }, data });
+  if (changed.includes('status')) void import('../../lib/employerPipeline/realtime.js').then((m) => m.publishPipelineChange(plan.caseId)).catch(() => undefined); // employer pipeline
   const fresh = (await loadPlan(plan.caseId))!;
   await audit(req, 'ARRIVAL_PLAN_UPDATED', plan.id, { caseId: plan.caseId, fields: changed as string[], status: fresh.status });
 

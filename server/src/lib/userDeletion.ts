@@ -314,6 +314,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await prisma.candidateShareLink.deleteMany({ where: { candidateId: userId } });
   await prisma.interviewEvaluation.deleteMany({ where: { candidateId: userId } });
   await prisma.waitingRoomProgress.deleteMany({ where: { userId } }); // waiting room progress (plain id, no foreign key)
+  await prisma.clientBadge.deleteMany({ where: { userId } }); // earned badges (plain id)
+  await prisma.packingChecklist.deleteMany({ where: { userId } }); // My Germany day packing checklist (plain id)
   await deleteCourseData(userId); // pre-departure course: enrollments, progress, quiz attempts, certificates (plain ids)
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };

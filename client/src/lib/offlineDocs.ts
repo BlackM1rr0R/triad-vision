@@ -51,7 +51,22 @@ export interface OfflineIndex {
   labels: Record<string, string>;
   docs: OfflineDoc[];
   appointment: { savedAt: string; cases: OfflineCase[] } | null;
+  /** The digital arrival card (pages/account/ArrivalCard.tsx): rendered rows + the QR as a data URL. */
+  arrivalCard?: OfflineArrivalCard | null;
 }
+
+export interface OfflineArrivalCard {
+  savedAt: string;
+  title: string;
+  /** Sections of label / value rows, already in the user's language (the static page only prints them). */
+  sections: { title: string; rows: { label: string; value: string; tel?: string }[] }[];
+  qr: { dataUrl: string; caption: string } | null;
+  /** The card's API data, for the portal page when it opens without internet. */
+  data: unknown;
+}
+
+/** localStorage copy of the arrival card for browsers without Cache Storage (same rules: opt-in, cleared on logout). */
+export const ARRIVAL_CARD_LS = 'tv_arrival_card';
 
 export const offlineSupported = () => typeof window !== 'undefined' && 'caches' in window && window.isSecureContext !== false;
 
@@ -90,7 +105,7 @@ export const readIndex = async (): Promise<OfflineIndex | null> => {
 
 const writeIndex = async (idx: OfflineIndex | null) => {
   const cache = await open();
-  if (!idx || (!idx.docs.length && !idx.appointment)) {
+  if (!idx || (!idx.docs.length && !idx.appointment && !idx.arrivalCard)) {
     await caches.delete(OFFLINE_CACHE);
     snapshot = null;
   } else {
@@ -133,15 +148,24 @@ const initOfflineLocked = async (userId: string | null) => {
   const cache = await open();
   const keep = idx.docs.filter((d) => !expired(d.savedAt));
   await Promise.all(idx.docs.filter((d) => !keep.includes(d)).map((d) => cache.delete(docUrl(d.id))));
-  await writeIndex({ ...idx, docs: keep, appointment: idx.appointment && !expired(idx.appointment.savedAt) ? idx.appointment : null });
+  await writeIndex({
+    ...idx,
+    docs: keep,
+    appointment: idx.appointment && !expired(idx.appointment.savedAt) ? idx.appointment : null,
+    arrivalCard: idx.arrivalCard && !expired(idx.arrivalCard.savedAt) ? idx.arrivalCard : null,
+  });
 };
 
 /** Logout / user change: everything offline goes. */
 export const clearOffline = async () => {
-  if (!offlineSupported()) return;
+  if (!offlineSupported()) {
+    clearArrivalCardLocal();
+    return;
+  }
   await withIndexLock(clearLocked);
 };
 const clearLocked = async () => {
+  clearArrivalCardLocal();
   await caches.delete(OFFLINE_CACHE).catch(() => false);
   snapshot = null;
   emit();
@@ -155,6 +179,7 @@ const baseIndex = (prev: OfflineIndex | null, who: { userId: string; holder: str
   labels: who.labels,
   docs: prev?.userId === who.userId ? prev.docs : [],
   appointment: prev?.userId === who.userId ? prev.appointment : null,
+  arrivalCard: prev?.userId === who.userId ? (prev.arrivalCard ?? null) : null,
 });
 
 export type SaveError = 'UNSUPPORTED' | 'TOO_BIG' | 'FULL' | 'FAILED';
@@ -231,4 +256,60 @@ export const openOfflineDoc = async (id: string) => {
   window.open(url, '_blank', 'noopener');
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   return true;
+};
+
+// ─── Arrival card ────────────────────────────────────────────────────
+
+const clearArrivalCardLocal = () => {
+  try {
+    localStorage.removeItem(ARRIVAL_CARD_LS);
+  } catch {
+    // storage blocked: nothing kept there either
+  }
+};
+
+/** The arrival card kept in localStorage for this user (null: none, expired, another user or storage blocked). */
+export const readArrivalCardLocal = (userId: string): OfflineArrivalCard | null => {
+  try {
+    const raw = localStorage.getItem(ARRIVAL_CARD_LS);
+    const v = raw ? (JSON.parse(raw) as { userId?: string; card?: OfflineArrivalCard }) : null;
+    if (!v?.card || v.userId !== userId || expired(v.card.savedAt)) return null;
+    return v.card;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * "Save offline" on the arrival card: into the offline cache (the static /offline-docs.html shows it when the portal
+ * cannot load) and into localStorage (the portal page itself, opened without internet). Either one is enough.
+ */
+export const saveArrivalCardOffline = async (card: Omit<OfflineArrivalCard, 'savedAt'>, who: { userId: string; holder: string; lang: string; labels: Record<string, string> }): Promise<SaveError | null> => {
+  const entry: OfflineArrivalCard = { ...card, savedAt: new Date().toISOString() };
+  let local = false;
+  try {
+    localStorage.setItem(ARRIVAL_CARD_LS, JSON.stringify({ userId: who.userId, card: entry }));
+    local = true;
+  } catch {
+    local = false;
+  }
+  if (!offlineSupported()) return local ? null : 'UNSUPPORTED';
+  try {
+    await withIndexLock(async () => {
+      const idx = baseIndex(await readIndex(), who);
+      await writeIndex({ ...idx, arrivalCard: entry });
+    });
+    return null;
+  } catch {
+    return local ? null : 'FAILED';
+  }
+};
+
+export const removeArrivalCardOffline = async () => {
+  clearArrivalCardLocal();
+  if (!offlineSupported()) return;
+  await withIndexLock(async () => {
+    const idx = await readIndex();
+    if (idx) await writeIndex({ ...idx, arrivalCard: null });
+  });
 };

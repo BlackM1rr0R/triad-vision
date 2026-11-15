@@ -26,6 +26,9 @@ import { isHydrating } from '@/lib/ssr';
 
 // Germany placement map: own chunk, renders nothing when hidden by the admin or empty.
 const PlacementMapSection = lazy(() => import('@/components/growth/PlacementMap').then((m) => ({ default: m.PlacementMapSection })));
+// Baku → Germany scroll journey and the live numbers board: one own chunk (text + SVG only, below the fold).
+const BakuJourney = lazy(() => import('@/components/life/home').then((m) => ({ default: m.BakuJourney })));
+const LiveNumbers = lazy(() => import('@/components/life/home').then((m) => ({ default: m.LiveNumbers })));
 // The audience view (after "Who are you?"): own chunk, fetched only once a visitor has chosen.
 const AudienceHome = lazy(() => import('@/components/audience/AudienceHome'));
 
@@ -69,6 +72,8 @@ const NeutralHome = () => (
     <WhySection />
     <TestimonialsSection />
     <Suspense fallback={null}>
+      <BakuJourney />
+      <LiveNumbers where="home" />
       <PlacementMapSection where="home" />
     </Suspense>
     <AusbildungSection />

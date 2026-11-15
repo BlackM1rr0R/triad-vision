@@ -311,6 +311,18 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Зарплата нетто, застава, витрати до першої зарплати, місячний бюджет і скільки грошей узяти з собою — оцінка за містом і зарплатою.',
     },
   },
+  '/life-in-germany': {
+    name: { az: 'Almaniyada həyat', de: 'Leben in Deutschland', en: 'Life in Germany', ru: 'Жизнь в Германии', tr: 'Almanya\'da yaşam', uk: 'Життя в Німеччині' },
+    title: { az: 'Almaniyada həyat simulyatoru: maaş və xərclər', de: 'Leben in Deutschland: Gehalt und Kosten 2026', en: 'Life in Germany simulator: salary and costs', ru: 'Жизнь в Германии: зарплата и расходы 2026', tr: 'Almanya\'da yaşam: maaş ve giderler 2026', uk: 'Життя в Німеччині: зарплата й витрати 2026' },
+    description: {
+      az: 'Peşə, şəhər və ailəyə görə Almaniyada aylıq həyat: brutto və xalis maaş, kirayə, ərzaq, nəqliyyat və qənaət — avro və AMB məzənnəsi ilə manatla.',
+      de: 'Leben in Deutschland nach Beruf, Stadt und Haushalt: Brutto und Netto, Miete, Essen, Deutschlandticket und Ersparnis – in Euro und Manat (CBAR-Kurs).',
+      en: 'Monthly life in Germany by profession, city and household: gross and net pay, rent, food, transport and savings — in euro and manat at the CBAR rate.',
+      ru: 'Жизнь в Германии по профессии, городу и семье: зарплата брутто и нетто, аренда, еда, транспорт и сбережения — в евро и манатах по курсу ЦБА.',
+      tr: 'Mesleğe, şehre ve haneye göre Almanya\'da aylık yaşam: brüt ve net maaş, kira, gıda, ulaşım ve birikim — euro ve CBAR kuruyla manat olarak.',
+      uk: 'Життя в Німеччині за професією, містом і родиною: зарплата брутто й нетто, оренда, їжа, транспорт і заощадження — в євро та манатах за курсом ЦБА.',
+    },
+  },
   '/map': {
     name: { az: 'İşçilərimizin xəritəsi', de: 'Karte unserer Fachkräfte', en: 'Placement map', ru: 'Карта трудоустройства', tr: 'Yerleştirme haritası', uk: 'Карта працевлаштування' },
     title: { az: 'Almaniyada işçilərimiz harada çalışır', de: 'Wo unsere Fachkräfte arbeiten', en: 'Where our workers are in Germany', ru: 'Где работают наши специалисты', tr: 'Çalışanlarımız Almanya\'da nerede?', uk: 'Де працюють наші фахівці' },
@@ -804,7 +816,7 @@ export const SPA_ROUTES = [
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany'] },
   { key: 'plan', paths: ['/calculator', '/cities', '/events', '/status'] },
   { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },
 ];

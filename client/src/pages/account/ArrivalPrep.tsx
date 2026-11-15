@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, BedDouble, Check, CheckCircle2, ChevronDown, Circle, Compass, ExternalLink, ListChecks, Plane, PlaneLanding, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowRight, BedDouble, IdCard, Check, CheckCircle2, ChevronDown, Circle, Compass, ExternalLink, ListChecks, Plane, PlaneLanding, Sparkles, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -12,6 +12,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import type { L10n } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesPortalPlans } from '@/i18n/pagesPortalPlans';
+import { pagesGermanyDay } from '@/i18n/pagesGermanyDay';
 import { Icon, hasIcon } from '@/components/ui/Icon';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Skeleton, SkeletonList } from '@/components/ui/Skeleton';
@@ -21,6 +22,7 @@ import { useApiError } from '@/components/portal/useApiError';
 import { ONBOARDING_KEY } from '@/components/journey/api';
 
 registerCopy(pagesPortalPlans);
+registerCopy(pagesGermanyDay); // arrival card link
 
 type BeforeKey = 'flight' | 'housing' | 'firstDay';
 
@@ -277,6 +279,9 @@ export default function AccountArrivalPrep() {
           {d.firstWorkDay && <p className="text-sm text-muted">{t('pplan.prep.firstWork', { date: day(d.firstWorkDay) })}</p>}
         </div>
         {p.percent === 100 && <Sparkles className="size-6 text-highlight" aria-hidden />}
+        <Link to="/account/arrival-card" className="btn-secondary min-h-11 w-full sm:w-auto">
+          <IdCard className="size-4" aria-hidden /> {t('acard.title')}
+        </Link>
       </div>
 
       <section className="card p-4 sm:p-6" aria-labelledby="prep-before">

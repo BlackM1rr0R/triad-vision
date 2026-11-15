@@ -26,6 +26,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       stories: 'Başarı hikâyeleri',
       faq: 'Sorular ve cevaplar',
       events: 'Etkinlikler ve webinarlar',
+      life: 'Almanya’da yaşam simülatörü',
       apply: 'Ücretsiz kayıt ol',
     },
     e: {

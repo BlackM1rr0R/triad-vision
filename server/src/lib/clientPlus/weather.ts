@@ -29,7 +29,7 @@ export interface WeatherDay {
 export interface Weather {
   city: string;
   country: string | null;
-  days: WeatherDay[]; // today + next 3 days
+  days: WeatherDay[]; // today + next 3 days (or the requested number of days, max 16)
   fetchedAt: string;
 }
 
@@ -72,7 +72,10 @@ export const cleanCity = (raw: string | null | undefined) => {
   return c.length >= 2 && c.length <= 80 ? c : null;
 };
 
-const load = async (city: string): Promise<Weather | null> => {
+/** Open-Meteo's daily forecast horizon. */
+export const MAX_FORECAST_DAYS = 16;
+
+const load = async (city: string, count: number): Promise<Weather | null> => {
   const geo = (await fetcher(`${GEO_URL}?name=${encodeURIComponent(city)}&count=5&language=de&format=json`)) as {
     results?: { name: string; latitude: number; longitude: number; country_code?: string }[];
   };
@@ -84,30 +87,34 @@ const load = async (city: string): Promise<Weather | null> => {
     longitude: hit.longitude.toFixed(4),
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
     timezone: 'auto',
-    forecast_days: '4',
+    forecast_days: String(count),
   });
   const fc = (await fetcher(`${FORECAST_URL}?${q}`)) as {
     daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[]; temperature_2m_min?: number[]; precipitation_probability_max?: number[] };
   };
   const d = fc.daily;
   if (!d?.time?.length) return null;
-  const days = d.time.slice(0, 4).map((date, i) => {
+  const days = d.time.slice(0, count).map((date, i) => {
     const code = num(d.weather_code?.[i]) ?? 3;
     return { date, code, icon: iconFor(code), max: num(d.temperature_2m_max?.[i]), min: num(d.temperature_2m_min?.[i]), rain: num(d.precipitation_probability_max?.[i]) };
   });
   return { city: hit.name, country: hit.country_code ?? null, days, fetchedAt: new Date().toISOString() };
 };
 
-/** Forecast for a city (today + 3 days), cached; null when unknown or Open-Meteo is unreachable. */
-export const weatherFor = async (rawCity: string | null | undefined): Promise<Weather | null> => {
+/**
+ * Forecast for a city (today + 3 days by default; "My Germany day" asks for the week), cached per city and
+ * length; null when unknown or Open-Meteo is unreachable.
+ */
+export const weatherFor = async (rawCity: string | null | undefined, count = 4): Promise<Weather | null> => {
   const city = cleanCity(rawCity);
   if (!city) return null;
-  const key = city.toLocaleLowerCase('de');
+  const days = Math.min(MAX_FORECAST_DAYS, Math.max(1, Math.round(count)));
+  const key = `${city.toLocaleLowerCase('de')}|${days}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < hit.ttl) return hit.value;
   const pending = inflight.get(key);
   if (pending) return pending;
-  const p = load(city)
+  const p = load(city, days)
     .then((value) => {
       cache.set(key, { at: Date.now(), ttl: value ? WEATHER_TTL_MS : FAIL_TTL_MS, value });
       return value;

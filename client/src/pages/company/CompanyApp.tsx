@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, ShieldAlert, Users, Video } from 'lucide-react';
+import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, Package, ShieldAlert, Users, Video, Workflow } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -27,12 +27,18 @@ import { CompanyRequests } from '@/components/requests/CompanyRequests';
 import { pagesRequests } from '@/i18n/pagesRequests';
 import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
+import { CompanyPipeline } from '@/components/pipeline/CompanyPipeline'; // candidate pipeline: board / list / arrivals strip (live)
+import { CompanyConfigurator } from '@/components/configurator/CompanyConfigurator'; // package configurator → offer request
+import { pagesEmployerPipeline } from '@/i18n/pagesEmployerPipeline';
+import { pagesConfigurator } from '@/i18n/pagesConfigurator';
 
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
 registerCopy(pagesRequests);
 registerCopy(pagesQuotes);
 registerCopy(pagesOfficialForms);
+registerCopy(pagesEmployerPipeline);
+registerCopy(pagesConfigurator);
 
 /** Employer portal, mounted at /company/* behind RequireAuth roles=['COMPANY']. */
 export default function CompanyApp() {
@@ -48,10 +54,12 @@ export default function CompanyApp() {
     { to: '/company/vacancies', label: t('jobsArea.portal.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/company/vacancies') },
     { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates') },
     { to: '/company/requests', label: t('requests.nav'), icon: ClipboardList, match: (p: string) => p.startsWith('/company/requests') },
+    { to: '/company/pipeline', label: t('employerPipeline.nav'), icon: Workflow, match: (p: string) => p.startsWith('/company/pipeline') },
     { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
     { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms') },
+    { to: '/company/configurator', label: t('packageConfigurator.nav'), icon: Package, match: (p: string) => p.startsWith('/company/configurator') },
     { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes') },
     { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
     { to: '/company/profile', label: t('jobsArea.portal.nav.profile'), icon: Building2, match: (p: string) => p.startsWith('/company/profile') },
@@ -164,12 +172,14 @@ export default function CompanyApp() {
                 <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
                 <Route path="candidates/*" element={<CompanyCandidatesArea />} />
                 <Route path="requests/*" element={<CompanyRequests />} />
+                <Route path="pipeline" element={<CompanyPipeline />} />
                 <Route path="workers" element={<CompanyWorkers />} />
                 <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="contracts" element={<CompanyContracts />} />
                 <Route path="contracts/:signerId" element={<CompanyContracts />} />
                 <Route path="forms" element={<CompanyForms />} />
                 <Route path="forms/:id" element={<CompanyForms />} />
+                <Route path="configurator" element={<CompanyConfigurator />} />
                 <Route path="quotes" element={<CompanyQuotes />} />
                 <Route path="quotes/:id" element={<CompanyQuotes />} />
                 <Route path="invoices" element={<CompanyInvoices />} />

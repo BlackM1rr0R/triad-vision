@@ -19,6 +19,7 @@ import { useSiteContent } from '@/lib/content';
 import { registerCopy } from '@/i18n';
 import { pagesCompany } from '@/i18n/pagesCompany';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { LiveNumbers } from '@/components/life/LiveNumbers';
 
 registerCopy(pagesCompany);
 
@@ -46,6 +47,7 @@ export default function About() {
         </div>
       </section>
 
+      <LiveNumbers where="about" className="section" />
       <TeamSection />
       {offices.length > 0 && <PresenceSection offices={offices} />}
       <ComplianceSection />

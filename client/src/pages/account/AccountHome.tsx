@@ -23,6 +23,8 @@ import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
 import { AccountHomeSkeleton } from './portal/HomeSkeleton';
 import { CountdownCards } from '@/components/portal/CountdownCards'; // embassy / flight / Anmeldung countdowns + destination weather
+import { GermanyDayCard } from '@/components/portal/GermanyDayCard'; // visa approved: countdown, week weather, packing list, first-day phrases
+import { BadgesPanel } from '@/components/portal/BadgesPanel'; // private achievements (compact)
 
 registerCopy(pagesAccount);
 registerCopy(pagesPortalUx);
@@ -88,6 +90,8 @@ export default function AccountHome() {
       {/* Countdown cards of the current case (hidden without dates). */}
       {cases.length > 0 && <CountdownCards />}
 
+      {cases.some((c) => c.status === 'APPROVED') && <GermanyDayCard />}
+
       {cases.some((c) => c.status === 'APPROVED') && <SuccessShareCard dismissible />}
       {cases.some((c) => c.status === 'APPROVED') && <PermitExpiryCard />}
 
@@ -97,6 +101,8 @@ export default function AccountHome() {
       {step?.case && <JourneyCard next={step} />}
 
       <PartnerSharingCard />
+
+      {cases.length > 0 && <BadgesPanel compact />}
 
       {(lastMessage || appointmentAhead || waitingStage) && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">

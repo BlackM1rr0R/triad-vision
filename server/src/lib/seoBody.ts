@@ -110,7 +110,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
-const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
+const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/anerkennung', '/calculator', '/cities', '/map', '/tools'];
 const FOOTER = ['/jobs', '/ausbildung', '/study', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];
@@ -448,6 +448,7 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/cities':
       case '/cost-calculator':
       case '/budget':
+      case '/life-in-germany':
       case '/calculator':
         // The guides of this tool first (lib/seoLinks.ts; the page shows them as "Related guides").
         out.push(section(t.guides, guideList(orderGuidesForTool(path, guides))), cta);

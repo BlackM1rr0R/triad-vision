@@ -20,6 +20,7 @@ import { useApiError } from '@/components/portal/useApiError';
 import { GERMAN_STATUS_KEY, useGermanCourses, useGermanStatus } from '@/components/journey/api';
 import { GermanProgressBoard } from '@/components/german/GermanProgressBoard';
 import { VocabTrainer } from '@/components/german/VocabTrainer';
+import { BadgesPanel } from '@/components/portal/BadgesPanel'; // German badges: 7 / 30-day streak, 100 / 500 words, levels
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
 import { Learning } from '@/components/illustrations';
 
@@ -439,6 +440,9 @@ export default function German() {
 
       {/* Daily vocabulary practice (spaced repetition, streak). */}
       <VocabTrainer />
+
+      {/* Private German badges (streak, words learned, level reached). */}
+      <BadgesPanel group="german" />
 
       {/* Goal, courses, exams (Baku exam dates), timeline and certificate upload. */}
       <GermanProgressBoard />

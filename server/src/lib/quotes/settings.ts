@@ -14,6 +14,14 @@ export const QUOTE_SETTING_KEY = 'quotes';
 
 const id = z.string().trim().min(1).max(40).regex(/^[A-Za-z0-9_-]+$/);
 
+/**
+ * Services of the employer package configurator (lib/packageConfigurator). A catalogue line tagged with one of
+ * them is the configurator's price for that service. Apostille, translations and embassy appointment booking
+ * are deliberately not services: Triad Vision does not offer them.
+ */
+export const CONFIGURATOR_SERVICES = ['RECRUITMENT', 'RECOGNITION', 'VISA_DOCUMENTS', 'RELOCATION', 'LANGUAGE_COURSE', 'ONBOARDING'] as const;
+export type ConfiguratorService = (typeof CONFIGURATOR_SERVICES)[number];
+
 export const catalogueItemSchema = z.object({
   id,
   name: z.string().trim().min(1).max(300),
@@ -21,6 +29,15 @@ export const catalogueItemSchema = z.object({
   unitPriceCents: z.coerce.number().int().min(0).max(100_000_000),
   vatRate: z.coerce.number().int().min(0).max(100).nullable().default(null),
   active: z.boolean().default(true),
+  /** Package configurator: the service this line prices (null = not offered there). */
+  service: z.enum(CONFIGURATOR_SERVICES).nullable().default(null),
+  /** RECRUITMENT only: profession keys (lib/matching) this price applies to; empty = every other profession. */
+  professions: z.array(z.string().trim().min(1).max(40)).max(30).default([]),
+  /** Volume discount of the line: from `minQty` units on, `discountBp` basis points off (10 % = 1000). */
+  volumeTiers: z
+    .array(z.object({ minQty: z.coerce.number().int().min(2).max(10_000), discountBp: z.coerce.number().int().min(1).max(9_000) }))
+    .max(10)
+    .default([]),
 });
 
 const templateSchema = z.object({
@@ -45,14 +62,14 @@ export type CatalogueItem = z.infer<typeof catalogueItemSchema>;
 
 export const DEFAULT_QUOTE_SETTINGS: QuoteSettings = {
   catalogue: [
-    { id: 'placement-ce', name: 'Personalvermittlung LKW-Fahrer (CE) – je Fachkraft', unit: 'PERSON', unitPriceCents: 450000, vatRate: null, active: true },
-    { id: 'placement-skilled', name: 'Personalvermittlung Fachkraft (allgemein) – je Fachkraft', unit: 'PERSON', unitPriceCents: 350000, vatRate: null, active: true },
-    { id: 'visa-service', name: 'Visa- und Behördenservice (vollständige Botschaftsunterlagen, Begleitung)', unit: 'PERSON', unitPriceCents: 90000, vatRate: null, active: true },
-    { id: 'recognition', name: 'Anerkennungsverfahren (Berufsabschluss / Führerschein)', unit: 'PERSON', unitPriceCents: 60000, vatRate: null, active: true },
-    { id: 'language-a2-b1', name: 'Sprachkurs Deutsch A2–B1', unit: 'PERSON', unitPriceCents: 120000, vatRate: null, active: true },
-    { id: 'relocation', name: 'Relocation / Ankunft (Abholung, Anmeldung, Wohnungssuche)', unit: 'PERSON', unitPriceCents: 50000, vatRate: null, active: true },
-    { id: 'integration', name: 'Betreuung nach Arbeitsantritt (Integration)', unit: 'MONTH', unitPriceCents: 15000, vatRate: null, active: true },
-    { id: 'project-flat', name: 'Projektpauschale Recruiting-Kampagne', unit: 'FLAT', unitPriceCents: 150000, vatRate: null, active: true },
+    { id: 'placement-ce', name: 'Personalvermittlung LKW-Fahrer (CE) – je Fachkraft', unit: 'PERSON', unitPriceCents: 450000, vatRate: null, active: true, service: 'RECRUITMENT', professions: ['truck_driver'], volumeTiers: [] },
+    { id: 'placement-skilled', name: 'Personalvermittlung Fachkraft (allgemein) – je Fachkraft', unit: 'PERSON', unitPriceCents: 350000, vatRate: null, active: true, service: 'RECRUITMENT', professions: [], volumeTiers: [] },
+    { id: 'visa-service', name: 'Visa- und Behördenservice (vollständige Botschaftsunterlagen, Begleitung)', unit: 'PERSON', unitPriceCents: 90000, vatRate: null, active: true, service: 'VISA_DOCUMENTS', professions: [], volumeTiers: [] },
+    { id: 'recognition', name: 'Anerkennungsverfahren (Berufsabschluss / Führerschein)', unit: 'PERSON', unitPriceCents: 60000, vatRate: null, active: true, service: 'RECOGNITION', professions: [], volumeTiers: [] },
+    { id: 'language-a2-b1', name: 'Sprachkurs Deutsch A2–B1', unit: 'PERSON', unitPriceCents: 120000, vatRate: null, active: true, service: 'LANGUAGE_COURSE', professions: [], volumeTiers: [] },
+    { id: 'relocation', name: 'Relocation / Ankunft (Abholung, Anmeldung, Wohnungssuche)', unit: 'PERSON', unitPriceCents: 50000, vatRate: null, active: true, service: 'RELOCATION', professions: [], volumeTiers: [] },
+    { id: 'integration', name: 'Betreuung nach Arbeitsantritt (Integration)', unit: 'MONTH', unitPriceCents: 15000, vatRate: null, active: true, service: 'ONBOARDING', professions: [], volumeTiers: [] },
+    { id: 'project-flat', name: 'Projektpauschale Recruiting-Kampagne', unit: 'FLAT', unitPriceCents: 150000, vatRate: null, active: true, service: null, professions: [], volumeTiers: [] },
   ],
   introTemplates: [
     {
@@ -79,6 +96,29 @@ export const DEFAULT_QUOTE_SETTINGS: QuoteSettings = {
   reminderDays: 3,
 };
 
+/**
+ * Catalogues stored before the package configurator have no `service` tags: the shipped default lines are then
+ * recognised by their ids, so the configurator works and the admin editor shows (and on save stores) the tags.
+ * As soon as one line carries a tag, only the stored tags count.
+ */
+const LEGACY_TAGS: Record<string, { service: ConfiguratorService; professions?: string[] }> = {
+  'placement-ce': { service: 'RECRUITMENT', professions: ['truck_driver'] },
+  'placement-skilled': { service: 'RECRUITMENT' },
+  'visa-service': { service: 'VISA_DOCUMENTS' },
+  recognition: { service: 'RECOGNITION' },
+  'language-a2-b1': { service: 'LANGUAGE_COURSE' },
+  relocation: { service: 'RELOCATION' },
+  integration: { service: 'ONBOARDING' },
+};
+
+export const withLegacyTags = (catalogue: CatalogueItem[]): CatalogueItem[] =>
+  catalogue.some((c) => c.service)
+    ? catalogue
+    : catalogue.map((c) => {
+        const tag = LEGACY_TAGS[c.id];
+        return tag ? { ...c, service: tag.service, professions: c.professions.length ? c.professions : (tag.professions ?? []) } : c;
+      });
+
 /** Stored settings over the defaults; a field that does not validate falls back to its default. */
 export const readQuoteSettings = (value: unknown): QuoteSettings => {
   const o = (value && typeof value === 'object' && !Array.isArray(value) ? value : {}) as Record<string, unknown>;
@@ -88,6 +128,7 @@ export const readQuoteSettings = (value: unknown): QuoteSettings => {
     const r = (schema as z.ZodTypeAny).safeParse(o[k]);
     if (r.success) out[k] = r.data;
   }
+  out.catalogue = withLegacyTags(out.catalogue as CatalogueItem[]);
   return out as QuoteSettings;
 };
 

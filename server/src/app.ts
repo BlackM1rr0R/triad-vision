@@ -23,6 +23,7 @@ import { impersonation } from './lib/privacy/impersonation.js';
 import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
 import { accountPlusRouter } from './routes/accountPlus.js';
+import { accountGermanyRouter } from './routes/accountGermany.js';
 import { accountBillingRouter } from './routes/billing.js'; // client portal: invoices, receipts, payment plan
 import { packagesRouter } from './routes/packages.js'; // public service packages + online order
 import { messagingRouter } from './routes/messaging.js';
@@ -86,6 +87,8 @@ import { companyAiRouter } from './routes/companyAi.js';
 import { companyFormsRouter } from './routes/companyForms.js'; // official forms the employer completes and signs
 import { companyWorkersRouter } from './routes/companyWorkers.js';
 import { companyReportsRouter } from './routes/companyReports.js';
+import { companyPipelineRouter } from './routes/companyPipeline.js'; // employer candidate pipeline (board / list / arrivals strip, weekly digest)
+import { companyConfiguratorRouter, configuratorPublicRouter } from './routes/configurator.js'; // package configurator (catalogue prices → lead / draft quote)
 import { publicAiRouter } from './routes/publicAi.js';
 import { aiDocsRouter } from './routes/aiDocs.js';
 import { originalsRouter } from './routes/originals.js';
@@ -119,10 +122,12 @@ import { accountPermitsRouter } from './routes/accountPermits.js'; // client por
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
+import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
 import { jobFeedsRouter } from './routes/jobFeeds.js'; // /feeds/*.xml: job board feeds (Indeed, StepStone, generic) behind a secret token
 import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
 import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
 import { licenseGuard } from './middleware/license.js'; // white-label licence: read-only mode for staff
+import { tvRouter } from './routes/tv.js'; // office TV mode: dashboard data + stream behind a read-only display token
 import { certificatePublicRouter, courseRouter } from './routes/course.js'; // pre-departure course (client) + public certificate verification
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
@@ -198,6 +203,7 @@ export const createApp = () => {
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
+  app.use('/api/tv', tvRouter); // office wall TV: display token only (lib/tvDisplay), no session
   app.use('/api/auth/2fa', twoFactorRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/public', publicRouter);
@@ -219,6 +225,7 @@ export const createApp = () => {
   app.use('/api/photo-check', photoCheckRouter); // "check my passport photo" (signed in, nothing stored)
   app.use('/api/angebot', quotePublicRouter); // public quote link (accept / decline)
   app.use('/api/packages', packagesRouter); // service packages: list, order, order status (token)
+  app.use('/api/configurator', configuratorPublicRouter); // public package configurator for employers (catalogue prices, request → lead)
   app.use('/api/share', shareRouter);
   app.use('/api/candidate-share', candidateShareRouter); // employer share link of a candidate (no login)
   app.use('/api/intro-video', introVideoRouter); // candidate's video introduction for employers
@@ -232,6 +239,7 @@ export const createApp = () => {
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
+  app.use('/api/account/germany', accountGermanyRouter); // My Germany day (countdown, weather, packing), arrival card, badges
   app.use('/api/account/plus', accountPlusRouter); // family switcher, countdown cards + weather, offline pack (lib/clientPlus)
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
@@ -244,6 +252,8 @@ export const createApp = () => {
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
   app.use('/api/company/team', companyTeamRouter); // employer team: invite / list / deactivate colleagues (owner)
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
+  app.use('/api/company/pipeline', companyPipelineRouter); // candidate pipeline + weekly digest preference
+  app.use('/api/company/configurator', companyConfiguratorRouter); // package configurator → DRAFT quote for staff review
   app.use('/api/company', companyRouter);
   app.use('/api/vacancies', vacanciesRouter);
   app.use('/api/booking', bookingRouter);
@@ -256,6 +266,7 @@ export const createApp = () => {
   app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
+  app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);

@@ -14,7 +14,8 @@
  *                        writes them into the tv-offline-v1 cache, the worker only serves them from there (never from
  *                        the network), refuses items older than 30 days and deletes the whole cache once its index is
  *                        gone or expired. Offline navigations to /account/* open /offline-docs.html when something is
- *                        kept. Logout deletes the cache (src/lib/auth.tsx).
+ *                        kept (documents, the appointment card and the arrival card). Logout deletes the cache
+ *                        (src/lib/auth.tsx).
  *
  * Updates: the build stamps BUILD below (vite.config.ts → swBuildStamp), so every deployment ships a changed
  * sw.js. The new worker waits until the page asks it to take over ("New version available — Reload" toast,
@@ -106,13 +107,14 @@ const offlineIndex = async () => {
   }
   const keep = idx.docs.filter((d) => !expiredAt(d.savedAt));
   const appointment = idx.appointment && !expiredAt(idx.appointment.savedAt) ? idx.appointment : null;
-  if (!keep.length && !appointment) {
+  const arrivalCard = idx.arrivalCard && !expiredAt(idx.arrivalCard.savedAt) ? idx.arrivalCard : null;
+  if (!keep.length && !appointment && !arrivalCard) {
     await caches.delete(OFFLINE_CACHE);
     return null;
   }
-  if (keep.length !== idx.docs.length || appointment !== idx.appointment) {
+  if (keep.length !== idx.docs.length || appointment !== idx.appointment || arrivalCard !== (idx.arrivalCard || null)) {
     await Promise.all(idx.docs.filter((d) => !keep.includes(d)).map((d) => cache.delete('/__offline/doc/' + d.id)));
-    idx = Object.assign({}, idx, { docs: keep, appointment });
+    idx = Object.assign({}, idx, { docs: keep, appointment, arrivalCard });
     await cache.put(OFFLINE_INDEX, new Response(JSON.stringify(idx), { headers: { 'content-type': 'application/json' } }));
   }
   return idx;

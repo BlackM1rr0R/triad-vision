@@ -128,6 +128,8 @@ interface Totals {
   acceptanceRate: number | null;
   byStatus: Record<QuoteStatus, number>;
 }
+const CONFIG_SERVICES = ['RECRUITMENT', 'RECOGNITION', 'VISA_DOCUMENTS', 'RELOCATION', 'LANGUAGE_COURSE', 'ONBOARDING'] as const;
+type ConfigService = (typeof CONFIG_SERVICES)[number];
 interface CatalogueItem {
   id: string;
   name: string;
@@ -135,7 +137,22 @@ interface CatalogueItem {
   unitPriceCents: number;
   vatRate: number | null;
   active: boolean;
+  /** Package configurator (server lib/packageConfigurator): the service this line prices, its professions and volume tiers. */
+  service?: ConfigService | null;
+  professions?: string[];
+  volumeTiers?: { minQty: number; discountBp: number }[];
 }
+
+/** "5:5, 10:8" (from count : percent) ↔ volume tiers; invalid parts are left out. */
+const parseTiers = (s: string) =>
+  s
+    .split(',')
+    .map((p) => p.trim().match(/^(\d+)\s*:\s*(\d+(?:\.\d+)?)$/))
+    .filter((m): m is RegExpMatchArray => !!m)
+    .map((m) => ({ minQty: Number(m[1]), discountBp: Math.round(Number(m[2]) * 100) }))
+    .filter((x) => x.minQty >= 2 && x.discountBp >= 1 && x.discountBp <= 9000)
+    .slice(0, 10);
+const tiersText = (tiers: CatalogueItem['volumeTiers']) => (tiers ?? []).map((x) => `${x.minQty}:${x.discountBp / 100}`).join(', ');
 interface Template {
   id: string;
   name: string;
@@ -1614,6 +1631,32 @@ const SettingsTab = ({ q }: { q: { data?: SettingsResponse; isLoading: boolean; 
               <button type="button" className="grid size-10 place-items-center justify-self-end rounded-lg text-muted hover:bg-danger-bg hover:text-danger-fg" aria-label={t('adminQuotes.settings.remove')} onClick={() => set('catalogue', form.catalogue.filter((x) => x.id !== c.id))}>
                 <Trash2 className="size-4" />
               </button>
+              <div className="col-span-2 grid gap-2 sm:col-span-6 sm:grid-cols-[14rem_minmax(0,1fr)_minmax(0,1fr)]">
+                <select className="input text-xs" aria-label={t('adminQuotes.settings.configService')} title={t('adminQuotes.settings.configService')} value={c.service ?? ''} onChange={(e) => setItem(c.id, { service: (e.target.value || null) as ConfigService | null })}>
+                  <option value="">{t('adminQuotes.settings.configNone')}</option>
+                  {CONFIG_SERVICES.map((s) => (
+                    <option key={s} value={s}>
+                      {t('adminQuotes.settings.configService')}: {t(`adminQuotes.settings.configServices.${s}`)}
+                    </option>
+                  ))}
+                </select>
+                {c.service === 'RECRUITMENT' ? (
+                  <input
+                    className="input text-xs"
+                    aria-label={t('adminQuotes.settings.configProfessions')}
+                    placeholder={t('adminQuotes.settings.configProfessions')}
+                    defaultValue={(c.professions ?? []).join(', ')}
+                    onChange={(e) => setItem(c.id, { professions: e.target.value.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 30) })}
+                  />
+                ) : (
+                  <span className="hidden sm:block" />
+                )}
+                {c.service ? (
+                  <input className="input text-xs" aria-label={t('adminQuotes.settings.configTiers')} placeholder={t('adminQuotes.settings.configTiers')} defaultValue={tiersText(c.volumeTiers)} onChange={(e) => setItem(c.id, { volumeTiers: parseTiers(e.target.value) })} />
+                ) : (
+                  <span className="hidden sm:block" />
+                )}
+              </div>
             </li>
           ))}
         </ul>

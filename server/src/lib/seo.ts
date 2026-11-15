@@ -679,6 +679,7 @@ export const TOOL_PAGES = new Set([
   '/cost-calculator',
   '/anerkennung',
   '/budget',
+  '/life-in-germany',
   '/cities',
   '/eligibility',
   '/uygunluq-testi',
@@ -690,6 +691,7 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/salary-calculator': 'FinanceApplication',
   '/cost-calculator': 'FinanceApplication',
   '/budget': 'FinanceApplication',
+  '/life-in-germany': 'FinanceApplication',
   '/cities': 'FinanceApplication',
 };
 

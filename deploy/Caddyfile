@@ -134,7 +134,7 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	# API and CMS images come from the Node service. X-Forwarded-For is replaced with the real visitor IP
 	# resolved above, so the API (TRUST_PROXY=1) rate-limits and audits per visitor, not per Cloudflare edge.
 	# Server-sent events (realtime chat/notifications): stream immediately, never buffer.
-	@sse path /api/messaging/events
+	@sse path /api/messaging/events /api/tv/stream /api/admin/tv-display/stream
 	handle @sse {
 		reverse_proxy api:4000 {
 			header_up X-Forwarded-For {client_ip}

@@ -49,6 +49,8 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'compare-visas',
   'blue-card-thresholds',
   'referral-terms',
+  'life-config', // /life-in-germany: professions, cities, yearly parameters, CBAR rate (article figures)
+  'live-numbers', // home / about live numbers board: anonymous aggregates (≥ 3), the same for everyone
 ]);
 
 export interface RenderResult {

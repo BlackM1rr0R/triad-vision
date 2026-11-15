@@ -164,6 +164,8 @@ const transition = async (
   void notifyPartnerCaseStatus(caseId, to, opts.eventType); // referral partner portal (never throws)
   void import('./partners/owned.js').then((m) => m.partnerCommissionOnStatus(caseId, to)).catch(() => undefined); // partner commission trigger (never throws)
   void syncSettlementsForCase(caseId); // settlement ledger rows follow the case (never throws)
+  void import('./employerPipeline/realtime.js').then((m) => m.publishPipelineChange(caseId)).catch(() => undefined); // employer pipeline board refetches (never throws)
+  if (to === 'APPROVED') void import('./tvDisplay/events.js').then((m) => m.onCaseApproved(caseId)).catch(() => undefined); // office TV celebration (never throws)
   // Payment plans: instalments whose trigger is this status (or ON_SIGN on the contract signature) get their invoice (lazy import: no cycle; never throws).
   void import('./billing/plans.js').then((m) => m.fireCaseStatusInstallments(caseId, to)).catch(() => undefined);
   // ── Automation hook: one central place for every status change, contract signature and appointment ──

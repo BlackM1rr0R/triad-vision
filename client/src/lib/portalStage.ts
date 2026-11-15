@@ -190,7 +190,10 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
     case 'arrival':
       return 'arrival';
     case 'arrival-prep':
+    case 'arrival-card': // the digital arrival card belongs to the arrival preparation
       return 'arrivalPrep';
+    case 'badges': // achievements: part of the overview
+      return 'overview';
     case 'checklist':
       return 'docChecklist';
     case 'onboarding':

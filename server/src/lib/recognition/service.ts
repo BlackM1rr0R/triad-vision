@@ -239,6 +239,7 @@ export const changeStatus = async (id: string, input: z.infer<typeof statusInput
   await prisma.recognitionProcess.update({ where: { id: p.id }, data });
   await addEvent({ processId: p.id, type: 'STATUS', fromStatus: p.status, toStatus: to, note: input.note || null, actorId, at: when });
   await syncUserRecognition(p.clientId);
+  void import('../employerPipeline/realtime.js').then((m) => m.publishPipelineChange(p.caseId)).catch(() => undefined); // employer pipeline (never throws)
   if (opts.notifyClient !== false) {
     const client = await prisma.user.findUnique({ where: { id: p.clientId }, select: { id: true, firstName: true, locale: true, isActive: true } });
     if (client?.isActive) {

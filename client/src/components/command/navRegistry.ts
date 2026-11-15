@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
+  MonitorPlay,
   Sun,
   AtSign,
   Banknote,
@@ -325,6 +326,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true, module: 'agents' }),
   a('oversight', '/admin/oversight', Eye, 'system', { superOnly: true }),
   a('kpi', '/admin/kpi', Gauge, 'system', { adminOnly: true, module: 'kpi' }), // staff KPI leaderboard
+  a('tvDisplay', '/admin/tv-settings', MonitorPlay, 'system', { adminOnly: true }), // office TV mode: display tokens + settings (the TV itself: /admin/tv)
   a('teamLoad', '/admin/team-load', Scale, 'system'), // workload board: ADMIN+ the team, STAFF their own card
   a('training', '/admin/training', GraduationCap, 'system', { badge: 'training', module: 'training' }), // internal training (badge: unfinished required courses)
   a('help', '/admin/help', LifeBuoy, 'system'),
@@ -399,7 +401,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

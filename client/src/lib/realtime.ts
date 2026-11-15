@@ -51,6 +51,8 @@ const EVENT_TYPES = [
   'livechat.typing', // visitor typing in a live chat (staff side)
   // live presence on a case / inquiry (components/presence)
   'viewers.updated',
+  // employer portal: a worker's pipeline stage changed (payload: caseId only; the portal refetches)
+  'pipeline.updated',
 ] as const;
 export type RealtimeEventType = (typeof EVENT_TYPES)[number];
 

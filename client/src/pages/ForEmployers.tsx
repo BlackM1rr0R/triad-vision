@@ -3,6 +3,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { PartnersSection } from '@/components/home/Sections';
 import { AudienceCta, AudienceCtas, AudienceFaq, AudienceServices, AudienceTestimonials, EmployerBenefits, EmployerProcess } from '@/components/audience/AudienceSections';
 import { usePageTitle } from '@/lib/usePageTitle';
+import ConfiguratorSection from '@/components/configurator/ConfiguratorSection';
 
 const IMG = 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=2000&q=70';
 
@@ -18,6 +19,7 @@ export default function ForEmployers() {
       <EmployerBenefits />
       <AudienceServices audience="employer" />
       <EmployerProcess />
+      <ConfiguratorSection />
       <PartnersSection />
       <AudienceTestimonials audience="employer" />
       <AudienceFaq audience="employer" />

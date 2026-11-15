@@ -53,6 +53,7 @@ import { adminMgmtRouter } from './aiMgmt.js';
 import { adminMyWorkRouter } from './myWork.js';
 import { adminClient360Router } from './client360.js'; // client 360° page
 import { adminWorkloadRouter } from './workload.js'; // team workload board + assignment suggestion
+import { adminTvDisplayRouter } from './tvDisplay.js'; // office TV mode: settings, display tokens, staff preview
 import { adminOpsCalendarRouter } from './opsCalendar.js'; // embassy / operations calendar layer
 import { adminCannedRepliesRouter } from './cannedReplies.js'; // canned replies ("/" picker)
 import { adminCaseProcessingRouter } from './caseProcessing.js'; // team document workflow: Schon geschrieben → Fertig, Ablehnung
@@ -96,6 +97,7 @@ import { adminPresenceRouter } from './presence.js'; // live "who is viewing thi
 import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
+import { adminLifeRouter } from './life.js'; // Life in Germany: live numbers board toggle, Baku salary reference, CBAR rate
 import { adminStudyRouter } from './study.js'; // Study in Germany catalogue: CRUD (STAFF+, delete ADMIN+), CSV import / export, application files
 import { adminGermanyJobsRouter } from './germanyJobs.js'; // Adzuna search status, CVs of "apply via Triad Vision" leads
 import { adminExternalApplicationsRouter } from './externalApplications.js'; // apply via Triad Vision: status for the client, Anschreiben
@@ -191,6 +193,7 @@ adminRouter.use('/client-process', adminClientProcessRouter); // client tasks, o
 adminRouter.use('/my-work', adminMyWorkRouter); // "my work today" queue + snooze / expiry remind
 adminRouter.use('/clients', adminClient360Router); // client 360°: header, sections, timeline, tags
 adminRouter.use('/workload', adminWorkloadRouter); // team workload board (ADMIN+ team, STAFF own row) + /suggest
+adminRouter.use('/tv-display', adminTvDisplayRouter); // office TV mode (ADMIN+ settings + tokens; STAFF+ preview data / stream)
 adminRouter.use('/ops-calendar', adminOpsCalendarRouter); // embassy appointments, interviews, arrivals, consultations
 adminRouter.use('/canned-replies', adminCannedRepliesRouter); // personal + team canned replies, /picker with variables
 adminRouter.use('/history', adminHistoryRouter); // field-level change history + one-click revert
@@ -216,6 +219,7 @@ adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my document
 adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals
 adminRouter.use('/city-costs', requireMinRole('ADMIN'), adminCityCostsRouter); // first-month budget city costs (ADMIN+, audited)
+adminRouter.use('/life', requireMinRole('ADMIN'), adminLifeRouter); // Life in Germany settings (ADMIN+, audited)
 adminRouter.use('/marketing', adminMarketingRouter); // lead scoring, landing pages, cost calculator, origin → destination analytics
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);

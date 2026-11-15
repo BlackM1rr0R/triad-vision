@@ -15,6 +15,7 @@ import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { AutoAssignSettings, normalizeAutoAssign } from '@/components/ops/AutoAssignSettings';
 import { ThemePanel } from '@/components/admin/theme/ThemePanel'; // design tokens: brand colours, radius, density (SUPER_ADMIN)
+import { LifeSettingsPanel } from '@/components/admin/LifeSettingsPanel'; // Life in Germany: live numbers board, Baku reference, CBAR rate
 import { useAuth } from '@/lib/auth';
 import {
   LEGAL_FIELDS,
@@ -727,6 +728,7 @@ export default function Settings() {
           <ContactForm initial={contact} />
           <SocialForm initial={social} />
           <AutoAssignSettings initial={autoAssign} />
+          <LifeSettingsPanel />
           <LawyerNote />
           <LegalForm initial={legal} />
           <PrivacyForm initial={privacy} />

@@ -13,7 +13,7 @@ import { notifyUser } from '../notifications.js';
 export const INQUIRY_STATUSES = ['NEW', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 export const INQUIRY_SORTS = ['hot', 'newest', 'oldest', 'score', 'workers'] as const;
 /** Source groups of the filter: "web" = the site's contact form (no source), the rest a `source` prefix. */
-export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share', 'external-job', 'study-programme'] as const;
+export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share', 'external-job', 'study-programme', 'configurator'] as const;
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 

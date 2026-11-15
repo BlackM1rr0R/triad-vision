@@ -6700,3 +6700,45 @@ model StudyApplication {
   @@index([userId])
   @@index([programmeId])
 }
+
+// ─── Office TV mode (lib/tvDisplay) ────────────────────────────────────
+
+/// Read-only display token for the office wall TV (/admin/tv): opens the TV dashboard data + stream only, no
+/// other API access. Only the SHA-256 of the token is stored; ADMIN+ create and revoke them (Settings → TV mode).
+model TvDisplayToken {
+  id          String    @id @default(cuid())
+  name        String    @db.VarChar(80)
+  tokenHash   String    @unique @db.VarChar(64)
+  /// First characters of the token, shown in the list so a device can be recognised.
+  tokenPrefix String    @db.VarChar(16)
+  createdById String?   @db.VarChar(40)
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime?
+  lastSeenIp  String?   @db.VarChar(64)
+  revokedAt   DateTime?
+  revokedById String?   @db.VarChar(40)
+
+  @@index([revokedAt])
+}
+
+// ─── Client portal: badges, packing checklist ("My Germany day") ─────────
+
+/// An achievement a client earned (lib/badges: deterministic rules, kept once earned). Plain ids.
+model ClientBadge {
+  id       String    @id @default(cuid())
+  userId   String    @db.VarChar(40)
+  key      String    @db.VarChar(40)
+  earnedAt DateTime  @default(now())
+  /// When the portal showed the "new badge" celebration (null: not yet).
+  seenAt   DateTime?
+
+  @@unique([userId, key])
+}
+
+/// "My Germany day" packing checklist of a client (lib/departure): { itemKey: ISO date ticked }. Plain ids.
+model PackingChecklist {
+  id        String   @id @default(cuid())
+  userId    String   @unique @db.VarChar(40)
+  checked   Json
+  updatedAt DateTime @updatedAt
+}
