@@ -1,7 +1,7 @@
 import { useId, useMemo, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Calculator, Clock, Info, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Calculator, Clock, Info, ReceiptText, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion';
@@ -333,6 +333,16 @@ export default function SalaryCalculator() {
           </div>
         </div>
       </section>
+
+      {/* The same figures as a German payslip, line by line (/payslip-explained). */}
+      <div className="container-x -mt-6 mb-6">
+        <Link
+          to={`/payslip-explained?gross=${Math.round(result.monthly.gross)}&class=${input.taxClass}&state=${input.state}${input.church ? '&church=1' : ''}${input.children > 0 ? '&kids=1' : ''}`}
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-link hover:underline"
+        >
+          <ReceiptText className="size-4" aria-hidden /> {t('siteNav.w.payslip')} <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
 
       {/* Explanatory article + FAQ (server-rendered; examples computed with the same engine) */}
       <SalaryArticle />

@@ -23,9 +23,17 @@ export const CalculatorTeaser = ({ visa, inline = false }: { visa?: string; inli
           <p className="mt-1 max-w-[60ch] text-muted">{t('gp.calc.teaserText')}</p>
         </div>
       </div>
-      <Link to={to} className={buttonClass({ variant: 'outline', size: 'lg', className: 'shrink-0' })}>
-        {t('gp.calc.teaserCta')} <ArrowRight className="size-4" aria-hidden />
-      </Link>
+      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+        <Link to={to} className={buttonClass({ variant: 'outline', size: 'lg', className: 'shrink-0' })}>
+          {t('gp.calc.teaserCta')} <ArrowRight className="size-4" aria-hidden />
+        </Link>
+        {/* Home: the case-history estimator (/when-in-germany) next to the start-date calculator. */}
+        {!visa && (
+          <Link to="/when-in-germany" className="inline-flex min-h-10 items-center justify-center gap-1 text-sm font-semibold text-link hover:underline">
+            {t('siteNav.w.whenInGermany')} <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        )}
+      </div>
     </div>
   );
   if (inline) return card;

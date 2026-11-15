@@ -27,6 +27,8 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       faq: 'Запитання та відповіді',
       events: 'Заходи та вебінари',
       life: 'Симулятор життя в Німеччині',
+      whenInGermany: 'Коли я буду в Німеччині?',
+      payslip: 'Розрахунковий лист (Lohnabrechnung) з поясненнями',
       apply: 'Безкоштовна реєстрація',
     },
     e: {

@@ -6742,3 +6742,23 @@ model PackingChecklist {
   checked   Json
   updatedAt DateTime @updatedAt
 }
+
+// ─── "Welcome to Germany" arrival certificate (lib/arrivalCertificate) ────
+
+/// Certificate of a client's confirmed arrival (arrival plan COMPLETED). One per case; the PDF is rendered on
+/// demand in the chosen language. The public check (/arrival-certificate/:code) shows only the number, first
+/// name + initial and the arrival date. Staff can revoke it. Plain ids (erased with the account).
+model ArrivalCertificate {
+  id           String    @id @default(cuid())
+  number       String    @unique @db.VarChar(40)
+  code         String    @unique @db.VarChar(32)
+  caseId       String    @unique @db.VarChar(40)
+  userId       String    @db.VarChar(40)
+  arrivedAt    DateTime
+  issuedAt     DateTime  @default(now())
+  revokedAt    DateTime?
+  revokedById  String?   @db.VarChar(40)
+  revokeReason String?   @db.VarChar(300)
+
+  @@index([userId])
+}

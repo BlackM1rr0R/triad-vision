@@ -27,6 +27,8 @@ const az = {
       faq: 'Suallar və cavablar',
       events: 'Tədbirlər və vebinarlar',
       life: 'Almaniyada həyat simulyatoru',
+      whenInGermany: 'Almaniyada nə vaxt ola bilərəm?',
+      payslip: 'Maaş vərəqəsi (Lohnabrechnung) izahlı',
       apply: 'Pulsuz qeydiyyat',
     },
     e: {
@@ -88,6 +90,8 @@ const de: typeof az = {
       faq: 'Fragen und Antworten',
       events: 'Veranstaltungen und Webinare',
       life: 'Leben in Deutschland (Simulator)',
+      whenInGermany: 'Wann bin ich in Deutschland?',
+      payslip: 'Lohnabrechnung erklärt',
       apply: 'Kostenlos registrieren',
     },
     e: {
@@ -149,6 +153,8 @@ const en: typeof az = {
       faq: 'Questions and answers',
       events: 'Events and webinars',
       life: 'Life in Germany simulator',
+      whenInGermany: 'When could I be in Germany?',
+      payslip: 'German payslip explained',
       apply: 'Register for free',
     },
     e: {
@@ -210,6 +216,8 @@ const ru: typeof az = {
       faq: 'Вопросы и ответы',
       events: 'Мероприятия и вебинары',
       life: 'Симулятор жизни в Германии',
+      whenInGermany: 'Когда я буду в Германии?',
+      payslip: 'Расчётный лист (Lohnabrechnung) с пояснениями',
       apply: 'Бесплатная регистрация',
     },
     e: {

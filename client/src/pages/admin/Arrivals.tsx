@@ -8,6 +8,7 @@ import { AlertTriangle, BedDouble, Car, CheckCircle2, ChevronLeft, ChevronRight,
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { StaffEmployerChecklistCard } from '@/components/employerExtras/ArrivalChecklist';
+import { StaffArrivalCertificate } from '@/components/arrival/StaffArrivalCertificate'; // arrival certificate: revoke / restore
 import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
@@ -261,6 +262,7 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
                 </div>
               </Section>
               <StaffEmployerChecklistCard caseId={caseId} />
+              <StaffArrivalCertificate caseId={caseId} />
             </>
           )}
     </UiDrawer>

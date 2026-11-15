@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Copy, Download, Link2, Pencil, Share2, Trash2, X } from 'lucide-react';
+import { Copy, Download, Instagram, Link2, Pencil, Share2, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Button, buttonClass } from '@/components/ui/Button';
@@ -14,20 +14,25 @@ import { Success } from '@/components/illustrations';
 import { registerCopy } from '@/i18n';
 import { pagesSuccessShare } from '@/i18n/pagesSuccessShare';
 import { getBrand } from '@/lib/brand';
+import { pagesMilestoneDocs } from '@/i18n/pagesMilestoneDocs';
+import { InstagramCardDialog } from './InstagramCardDialog';
 
 registerCopy(pagesSuccessShare);
+registerCopy(pagesMilestoneDocs); // anonymous name / square format labels
 
 /*
  * Visa approved: congratulations card in the client portal (case overview + home) with "Share my success".
  * The dialog asks for explicit consent first (DSGVO: nothing is public before), then shows the branded
- * card (post 1080×1350 / story 1080×1920, rendered by the API), download, native share (Web Share API with
+ * card (post 1080×1350 / square 1080×1080 / story 1080×1920, rendered by the API), download, native share (Web Share API with
  * the image file where supported) and the public link /success/:token — which the client can revoke.
  */
 
-type Format = 'post' | 'story';
-type NameStyle = 'first' | 'initials';
+type Format = 'post' | 'story' | 'square';
+type NameStyle = 'first' | 'initials' | 'anonymous';
 const CARD_LANGS = ['az', 'de', 'en', 'ru'] as const;
 const LANG_NAMES: Record<(typeof CARD_LANGS)[number], string> = { az: 'Azərbaycanca', de: 'Deutsch', en: 'English', ru: 'Русский' };
+const ANON_NAMES: Record<(typeof CARD_LANGS)[number], string> = { az: 'Triad Vision müştərisi', de: 'Ein Triad Vision Kunde', en: 'A Triad Vision client', ru: 'Клиент Triad Vision' };
+const FORMAT_SIZE: Record<Format, number> = { post: 1350, story: 1920, square: 1080 };
 
 interface Share {
   token: string;
@@ -159,6 +164,7 @@ const ShareDialog = ({ open, onClose, item, referralEnabled }: { open: boolean; 
               <div className="mt-1 space-y-2">
                 <Radio name={ids.name} checked={nameStyle === 'first'} onChange={() => setNameStyle('first')} label={p('nameFirst', { name: firstName })} />
                 <Radio name={ids.name} checked={nameStyle === 'initials'} onChange={() => setNameStyle('initials')} label={p('nameInitials', { name: initials(user?.firstName ?? '', user?.lastName ?? '', locale) })} />
+                <Radio name={ids.name} checked={nameStyle === 'anonymous'} onChange={() => setNameStyle('anonymous')} label={p('nameAnonymous', { name: ANON_NAMES[locale] })} />
               </div>
             </fieldset>
             <div className="space-y-3">
@@ -195,7 +201,7 @@ const ShareDialog = ({ open, onClose, item, referralEnabled }: { open: boolean; 
           <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div>
               <div role="group" aria-label={p('formatLabel')} className="mb-3 inline-flex rounded-full border border-line bg-sunken p-1">
-                {(['post', 'story'] as const).map((f) => (
+                {(['post', 'square', 'story'] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
@@ -203,17 +209,17 @@ const ShareDialog = ({ open, onClose, item, referralEnabled }: { open: boolean; 
                     onClick={() => setFormat(f)}
                     className={clsx('min-h-10 rounded-full px-4 text-sm font-semibold transition-colors', format === f ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink')}
                   >
-                    {f === 'post' ? p('formatPost') : p('formatStory')}
+                    {f === 'post' ? p('formatPost') : f === 'square' ? p('formatSquare') : p('formatStory')}
                   </button>
                 ))}
               </div>
               <img
                 key={`${share.cards[format]}:${share.nameStyle}:${share.locale}:${share.showReferral}`}
                 src={`${share.cards[format]}?v=${encodeURIComponent(`${share.nameStyle}${share.locale}${share.showReferral}`)}`}
-                alt={p('previewAlt', { format: format === 'post' ? p('formatPost') : p('formatStory') })}
+                alt={p('previewAlt', { format: format === 'post' ? p('formatPost') : format === 'square' ? p('formatSquare') : p('formatStory') })}
                 width={1080}
-                height={format === 'post' ? 1350 : 1920}
-                className={clsx('mx-auto h-auto w-full rounded-xl border border-line bg-sunken shadow-sm', format === 'post' ? 'max-w-xs' : 'max-w-[13rem]')}
+                height={FORMAT_SIZE[format]}
+                className={clsx('mx-auto h-auto w-full rounded-xl border border-line bg-sunken shadow-sm', format === 'story' ? 'max-w-[13rem]' : 'max-w-xs')}
               />
             </div>
             <div className="space-y-4">
@@ -281,6 +287,7 @@ export const SuccessShareCard = ({ caseId, dismissible = false }: { caseId?: str
   const item = caseId ? data?.items.find((i) => i.caseId === caseId) : data?.items[0];
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
+  const [instaOpen, setInstaOpen] = useState(false);
   useEffect(() => {
     if (item && dismissible) setHidden(readHidden(item.caseId));
   }, [item, dismissible]);
@@ -319,10 +326,15 @@ export const SuccessShareCard = ({ caseId, dismissible = false }: { caseId?: str
             <Button icon={Share2} onClick={() => setOpen(true)}>
               {item.share ? p('openCard') : p('shareCta')}
             </Button>
+            {/* Private card: only the client sees it, nothing public. */}
+            <Button variant="secondary" icon={Instagram} onClick={() => setInstaOpen(true)}>
+              {t('milestones.insta.cta')}
+            </Button>
           </div>
         </div>
       </div>
       <ShareDialog open={open} onClose={() => setOpen(false)} item={item} referralEnabled={data.referralEnabled} />
+      {instaOpen && <InstagramCardDialog open={instaOpen} onClose={() => setInstaOpen(false)} caseId={item.caseId} />}
     </section>
   );
 };

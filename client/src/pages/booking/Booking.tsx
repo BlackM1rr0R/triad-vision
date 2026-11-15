@@ -69,7 +69,8 @@ export default function Booking() {
   const [topic, setTopic] = useState<Topic | null>((TOPICS as readonly string[]).includes(initialTopic ?? '') ? (initialTopic as Topic) : null);
   const [day, setDay] = useState<string | null>(null);
   const [slot, setSlot] = useState<Slot | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', consent: false, website: '' });
+  // ?note= prefills the message (e.g. the "When could I be in Germany?" estimate carried over); the visitor can edit it.
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: (params.get('note') ?? '').slice(0, 2000), consent: false, website: '' });
   const [done, setDone] = useState<BookResult | null>(null);
 
   // Prefill from the logged-in account once it is known (never overwrite what the visitor typed).

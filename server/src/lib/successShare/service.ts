@@ -22,7 +22,7 @@ import { CARD_LOCALES, CARD_TEXTS, PAGE_HEAD, PAGE_LOCALES, asCardLocale, type C
 
 export const SHARE_KEY_PREFIX = 'successShare:';
 export const SHARE_TOKEN_RE = /^[A-Za-z0-9_-]{22}$/;
-export const NAME_STYLES = ['first', 'initials'] as const;
+export const NAME_STYLES = ['first', 'initials', 'anonymous'] as const;
 export type NameStyle = (typeof NAME_STYLES)[number];
 
 const recordSchema = z.object({
@@ -64,8 +64,9 @@ export const sharesOf = async (userId: string) => {
   });
 };
 
-/** First name only, or initials ("A. Q."). Never the surname. */
+/** First name only, initials ("A. Q.") or an anonymous label ("A Triad Vision client"). Never the surname. */
 export const displayNameOf = (user: { firstName: string; lastName: string }, style: NameStyle, locale: string) => {
+  if (style === 'anonymous') return CARD_TEXTS[asCardLocale(locale)].anonymous;
   const first = user.firstName.trim().split(/\s+/)[0] ?? '';
   if (style === 'first' && first) return first;
   const initial = (s: string) => (s.trim()[0] ?? '').toLocaleUpperCase(locale);
@@ -177,7 +178,7 @@ export const publicShareJson = (v: ShareView) => ({
   referralCode: v.referralCode,
   allowIndexing: v.record.allowIndexing,
   shareUrl: v.shareUrl,
-  cards: { post: `/api/success/${v.token}/card-post.png`, story: `/api/success/${v.token}/card-story.png` },
+  cards: { post: `/api/success/${v.token}/card-post.png`, story: `/api/success/${v.token}/card-story.png`, square: `/api/success/${v.token}/card-square.png` },
 });
 
 export const cardInputOf = (v: ShareView, format: CardFormat): CardInput => {

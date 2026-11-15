@@ -156,6 +156,9 @@ const InfoEventDetail = lazyRoute('InfoEventDetail', () => import('./pages/growt
 const CostCalculatorPage = lazyRoute('CostCalculatorPage', () => import('./pages/growth/CostCalculator')); // client cost calculator
 const BudgetPage = lazyRoute('BudgetPage', () => import('./pages/tools/Budget')); // first-month budget in Germany (/budget)
 const LifeInGermanyPage = lazyRoute('LifeInGermanyPage', () => import('./pages/tools/LifeInGermany')); // Life in Germany simulator (/life-in-germany)
+const PhraseOfTheDayPage = lazyRoute('PhraseOfTheDayPage', () => import('./pages/PhraseOfTheDay')); // German phrase of the day + last 30 days (/phrase-of-the-day)
+const WhenInGermanyPage = lazyRoute('WhenInGermanyPage', () => import('./pages/tools/WhenInGermany')); // arrival-month estimator (/when-in-germany)
+const PayslipExplainedPage = lazyRoute('PayslipExplainedPage', () => import('./pages/tools/PayslipExplained')); // German payslip explainer (/payslip-explained)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
 const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
@@ -237,6 +240,7 @@ const AdminTraining = lazyRoute('AdminTraining', () => import('./pages/admin/Tra
 const AdminCourse = lazyRoute('AdminCourse', () => import('./pages/admin/Course')); // pre-departure course: builder + progress report
 const AccountCourse = lazyRoute('AccountCourse', () => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
 const CertificateVerify = lazyRoute('CertificateVerify', () => import('./pages/CertificateVerify')); // public course certificate check
+const ArrivalCertificateVerify = lazyRoute('ArrivalCertificateVerify', () => import('./pages/ArrivalCertificateVerify')); // public arrival certificate check
 const AdminShifts = lazyRoute('AdminShifts', () => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
 const AdminCheckIns = lazyRoute('AdminCheckIns', () => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
 const AdminAgents = lazyRoute('AdminAgents', () => import('./pages/admin/Agents'));
@@ -438,10 +442,14 @@ export default function App() {
             <Route path="cost-calculator" element={<CostCalculatorPage />} />
             <Route path="budget" element={<BudgetPage />} />
             <Route path="life-in-germany" element={<LifeInGermanyPage />} />
+            <Route path="phrase-of-the-day" element={<PhraseOfTheDayPage />} />
+            <Route path="when-in-germany" element={<WhenInGermanyPage />} />
+            <Route path="payslip-explained" element={<PayslipExplainedPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
             <Route path="certificate/:code" element={<CertificateVerify />} />
+            <Route path="arrival-certificate/:code" element={<ArrivalCertificateVerify />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
             <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
             <Route path="r/:slug" element={<ReferralLandingPage />} />

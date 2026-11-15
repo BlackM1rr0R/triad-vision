@@ -323,6 +323,30 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Життя в Німеччині за професією, містом і родиною: зарплата брутто й нетто, оренда, їжа, транспорт і заощадження — в євро та манатах за курсом ЦБА.',
     },
   },
+  '/when-in-germany': {
+    name: { az: 'Almaniyada nə vaxt?', de: 'Wann in Deutschland?', en: 'When in Germany?', ru: 'Когда в Германии?', tr: 'Almanya\'da ne zaman?', uk: 'Коли в Німеччині?' },
+    title: { az: 'Almaniyaya nə vaxt gedə bilərəm? 2026', de: 'Wann kann ich nach Deutschland? Rechner 2026', en: 'When can I move to Germany? Estimator 2026', ru: 'Когда я смогу переехать в Германию? 2026', tr: 'Almanya\'ya ne zaman gidebilirim? 2026', uk: 'Коли я зможу переїхати до Німеччини? 2026' },
+    description: {
+      az: 'Peşə, alman dili və sənədlərə görə Almaniyaya təxmini gəliş ayı: sənədlər, dil, tanınma, müqavilə, səfirlik və viza — real müraciətlərin müddətləri ilə.',
+      de: 'Voraussichtlicher Ankunftsmonat in Deutschland nach Beruf, Deutschniveau und Unterlagen: Zeitstrahl von Anerkennung, Vertrag, Botschaft und Visum.',
+      en: 'Estimated arrival month in Germany by profession, German level and documents: a timeline of recognition, contract, embassy and visa from real case data.',
+      ru: 'Примерный месяц переезда в Германию по профессии, уровню немецкого и документам: шкала признания, договора, посольства и визы по реальным делам.',
+      tr: 'Mesleğe, Almanca seviyesine ve belgelere göre Almanya\'ya tahmini varış ayı: denklik, sözleşme, konsolosluk ve vize zaman çizelgesi, gerçek verilerle.',
+      uk: 'Орієнтовний місяць переїзду до Німеччини за професією, рівнем німецької та документами: шкала визнання, договору, посольства й візи за реальними справами.',
+    },
+  },
+  '/payslip-explained': {
+    name: { az: 'Maaş vərəqəsi izahlı', de: 'Lohnabrechnung erklärt', en: 'Payslip explained', ru: 'Расчётный лист', tr: 'Maaş bordrosu', uk: 'Розрахунковий лист' },
+    title: { az: 'Almaniyada maaş vərəqəsi izahlı 2026', de: 'Lohnabrechnung erklärt: jede Zeile 2026', en: 'German payslip explained line by line 2026', ru: 'Расчётный лист в Германии: пояснения 2026', tr: 'Almanya\'da maaş bordrosu açıklaması 2026', uk: 'Розрахунковий лист у Німеччині 2026' },
+    description: {
+      az: 'Alman maaş vərəqəsi sətir-sətir: brutto, gəlir vergisi, kilsə vergisi, sağlamlıq, pensiya, işsizlik və qulluq sığortası, xalis maaş və işəgötürən xərci.',
+      de: 'Lohnabrechnung Zeile für Zeile: Brutto, Lohnsteuer, Kirchensteuer, Kranken-, Renten-, Arbeitslosen- und Pflegeversicherung, Netto und Arbeitgeberkosten.',
+      en: 'A German payslip line by line: gross, wage tax, church tax, health, pension, unemployment and care insurance, net pay and what the employer pays on top.',
+      ru: 'Немецкий расчётный лист по строкам: брутто, подоходный и церковный налог, медстраховка, пенсия, безработица, уход, нетто и расходы работодателя.',
+      tr: 'Alman maaş bordrosu satır satır: brüt, gelir ve kilise vergisi, sağlık, emeklilik, işsizlik ve bakım sigortası, net maaş ve işverenin ek maliyeti.',
+      uk: 'Німецький розрахунковий лист по рядках: брутто, податок на зарплату, церковний податок, медичне й пенсійне страхування, нетто й витрати роботодавця.',
+    },
+  },
   '/map': {
     name: { az: 'İşçilərimizin xəritəsi', de: 'Karte unserer Fachkräfte', en: 'Placement map', ru: 'Карта трудоустройства', tr: 'Yerleştirme haritası', uk: 'Карта працевлаштування' },
     title: { az: 'Almaniyada işçilərimiz harada çalışır', de: 'Wo unsere Fachkräfte arbeiten', en: 'Where our workers are in Germany', ru: 'Где работают наши специалисты', tr: 'Çalışanlarımız Almanya\'da nerede?', uk: 'Де працюють наші фахівці' },
@@ -333,6 +357,18 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'В каких городах и профессиях Германии работают специалисты, трудоустроенные через Triad Vision, — интерактивная карта по городам.',
       tr: 'Triad Vision aracılığıyla Almanya\'ya giden çalışanlar hangi şehirlerde ve mesleklerde çalışıyor — şehirlere göre harita.',
       uk: 'У яких містах і професіях Німеччини працюють фахівці, працевлаштовані через Triad Vision, — інтерактивна карта за містами.',
+    },
+  },
+  '/phrase-of-the-day': {
+    name: { az: 'Günün alman ifadəsi', de: 'Deutscher Satz des Tages', en: 'German phrase of the day', ru: 'Немецкая фраза дня', tr: 'Günün Almanca ifadesi', uk: 'Німецька фраза дня' },
+    title: { az: 'Günün alman ifadəsi: tərcümə və oxunuş', de: 'Deutscher Satz des Tages mit Übersetzung', en: 'German phrase of the day with translation', ru: 'Немецкая фраза дня с переводом', tr: 'Günün Almanca ifadesi ve çevirisi', uk: 'Німецька фраза дня з перекладом' },
+    description: {
+      az: 'Hər gün Almaniyada iş və gündəlik həyat üçün bir sadə alman ifadəsi: azərbaycanca tərcümə, oxunuş və dinləmə. Son 30 günün ifadələri də buradadır.',
+      de: 'Jeden Tag ein einfacher deutscher Satz für Arbeit und Alltag: mit Übersetzung ins Aserbaidschanische, Russische und Englische, Aussprache und Archiv.',
+      en: 'One simple German phrase a day for work and everyday life in Germany, with translation, pronunciation help and audio, plus the phrases of the last 30 days.',
+      ru: 'Каждый день — простая немецкая фраза для работы и жизни в Германии: перевод, произношение русскими буквами, озвучка и фразы последних 30 дней.',
+      tr: 'Her gün Almanya\'da iş ve günlük yaşam için basit bir Almanca ifade: Türkçe çeviri, okunuş ve sesli dinleme, ayrıca son 30 günün ifadeleri.',
+      uk: 'Щодня — проста німецька фраза для роботи й життя в Німеччині: переклад українською, вимова, озвучення та фрази за останні 30 днів.',
     },
   },
   '/events': {
@@ -799,6 +835,7 @@ export const SPA_ROUTES = [
   '/l/:slug',
   '/success/:token',
   '/certificate/:code',
+  '/arrival-certificate/:code',
   '/referral-terms',
   '/status',
   '/p/:code',
@@ -816,8 +853,8 @@ export const SPA_ROUTES = [
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany'] },
-  { key: 'plan', paths: ['/calculator', '/cities', '/events', '/status'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained'] },
+  { key: 'plan', paths: ['/when-in-germany', '/calculator', '/cities', '/events', '/status'] },
   { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },
 ];
 

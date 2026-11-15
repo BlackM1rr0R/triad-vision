@@ -12,6 +12,8 @@ import { GERMAN_LEVELS, RECOGNITION_STATUSES } from '../lib/matching.js';
 import { POOL_LIMITS, POOL_PAGE_SIZE, POOL_REGIONS, POOL_SCAN_LIMIT } from '../lib/pool/constants.js';
 import { matchesFilters, normaliseCode, poolCard, poolUserSelect, visibleProfileWhere, type PoolFilters } from '../lib/pool/anonymous.js';
 import { logPoolView } from '../lib/pool/service.js';
+import { onePagerPdf, poolOnePagerInput } from '../lib/onePager/pdf.js';
+import { pickLoc } from '../lib/employerWorkers/texts.js';
 
 /**
  * Employer side of the anonymous candidate pool — mounted at /api/company/pool (COMPANY users of an ACTIVE
@@ -22,6 +24,9 @@ import { logPoolView } from '../lib/pool/service.js';
  *   GET    /saved                 the company's shortlist
  *   GET    /interests             the company's interest requests and their status (set by staff)
  *   GET    /:code                 one anonymous profile; logged as DETAIL
+ *   GET    /:code/one-pager.pdf   ?lang=de|en|az|ru&branding=0|1 → designed one-page PDF of the anonymous card fields
+ *                                 (code, profession, experience, German, licences, recognition, regions, start) + QR;
+ *                                 counts as a profile view (DETAIL log, daily cap)
  *   PUT    /:code/saved           add to the shortlist      DELETE /:code/saved  remove
  *   POST   /:code/interest        { message?, positions } → request for staff (notification + e-mail, audit)
  *
@@ -143,6 +148,19 @@ companyPoolRouter.get('/:code', async (req, res) => {
     prisma.candidatePoolInterest.findMany({ where: { companyId: company.id, profileId: p.id }, orderBy: { createdAt: 'desc' }, select: { id: true, status: true, positions: true, message: true, createdAt: true } }),
   ]);
   res.json({ candidate: { ...poolCard(p, p.user), saved: !!saved }, interests });
+});
+
+companyPoolRouter.get('/:code/one-pager.pdf', async (req, res) => {
+  const company = co(res);
+  const q = parse(z.object({ lang: z.string().max(10).optional(), branding: z.enum(['0', '1']).default('1') }), req.query);
+  const p = await findVisible(String(req.params.code));
+  // A PDF download is a profile view: same log and daily cap as GET /:code.
+  await logPoolView({ companyId: company.id, companyName: company.name, userId: req.user!.id, kind: 'DETAIL', profileId: p.id });
+  const locale = pickLoc(q.lang) ?? pickLoc(req.user!.locale) ?? 'de';
+  const pdf = await onePagerPdf(poolOnePagerInput(poolCard(p, p.user), locale, q.branding === '1' ? company.name : null));
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${p.code}.pdf"`);
+  res.send(pdf);
 });
 
 companyPoolRouter.put('/:code/saved', async (req, res) => {

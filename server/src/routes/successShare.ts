@@ -24,6 +24,7 @@ import {
   visaLineOf,
 } from '../lib/successShare/service.js';
 import { CARD_LOCALES, asCardLocale } from '../lib/successShare/texts.js';
+import { privateCardInput, privateCardPng } from '../lib/successShare/privateCard.js';
 
 /**
  * "Visa approved" share cards (lib/successShare).
@@ -32,11 +33,15 @@ import { CARD_LOCALES, asCardLocale } from '../lib/successShare/texts.js';
  *   GET    /           approved cases that can be shared + the existing share of each
  *   POST   /           create / update the share of a case (explicit consent required)
  *   DELETE /:token     revoke: the public page, the images and the lead form answer 404 from now on
+ *   GET    /card/:caseId/:format.png?name=first|initials|anonymous&lang=az|de|en|ru[&download=1]
+ *                      private Instagram card (story / square / post) of the client's own approved case:
+ *                      nothing public, cached on disk per case + variant (lib/successShare/privateCard)
  *
  * Public — mounted at /api/success:
  *   GET  /:token                     what the public page shows (first name / initials only)
  *   GET  /:token/card-post.png       1080×1350 card (…?download=1 → attachment)
  *   GET  /:token/card-story.png      1080×1920 card
+ *   GET  /:token/card-square.png     1080×1080 card
  *   POST /:token/lead                "Start your journey" form → Inquiry (source success-share:<token>), lead scoring
  */
 export const accountSuccessShareRouter = Router();
@@ -53,7 +58,7 @@ const shareJson = (token: string, r: { nameStyle: string; showReferral: boolean;
   updatedAt: r.updatedAt,
   leads: r.leads,
   url: shareUrlOf(token, r.locale),
-  cards: { post: `/api/success/${token}/card-post.png`, story: `/api/success/${token}/card-story.png` },
+  cards: { post: `/api/success/${token}/card-post.png`, story: `/api/success/${token}/card-story.png`, square: `/api/success/${token}/card-square.png` },
 });
 
 accountSuccessShareRouter.get('/', async (req, res) => {
@@ -99,6 +104,29 @@ accountSuccessShareRouter.post('/', async (req, res) => {
   res.status(201).json({ share: shareJson(result.token, result.record) });
 });
 
+const privateCardQuery = z.object({
+  name: z.enum(NAME_STYLES).default('first'),
+  lang: z.enum(CARD_LOCALES).optional(),
+  download: z.string().max(5).optional(),
+});
+
+accountSuccessShareRouter.get('/card/:caseId/:file', async (req, res) => {
+  const format = /^(story|square|post)\.png$/.exec(String(req.params.file))?.[1] as CardFormat | undefined;
+  if (!format) throw notFound();
+  const q = parse(privateCardQuery, req.query);
+  const locale = q.lang ?? asCardLocale(req.user!.locale);
+  const opts = { format, nameStyle: q.name, locale };
+  const caseId = String(req.params.caseId);
+  const input = await privateCardInput(req.user!.id, caseId, opts);
+  if (!input) throw notFound('CASE_NOT_FOUND');
+  const { png } = await privateCardPng(caseId, opts, input);
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  if (q.download) res.setHeader('Content-Disposition', `attachment; filename="triad-vision-${format}.png"`);
+  res.send(png);
+});
+
 accountSuccessShareRouter.delete('/:token', async (req, res) => {
   if (!(await revokeShare(req.user!.id, String(req.params.token)))) throw notFound('SHARE_NOT_FOUND');
   res.json({ ok: true });
@@ -123,7 +151,7 @@ publicSuccessShareRouter.get('/:token', readLimiter, async (req, res) => {
 });
 
 publicSuccessShareRouter.get('/:token/:file', readLimiter, async (req, res) => {
-  const format = /^card-(post|story)\.png$/.exec(String(req.params.file))?.[1] as CardFormat | undefined;
+  const format = /^card-(post|story|square)\.png$/.exec(String(req.params.file))?.[1] as CardFormat | undefined;
   if (!format || !CARD_FORMATS[format]) throw notFound();
   const view = await viewOr404(String(req.params.token));
   const png = await successCardPng(cardInputOf(view, format));

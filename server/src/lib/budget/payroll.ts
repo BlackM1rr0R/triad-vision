@@ -58,6 +58,14 @@ export interface PayrollResult {
   midijob: boolean;
   /** Low-wage rule actually applied (only with `lowWageRules`). */
   lowWage: 'minijob' | 'midijob' | null;
+  /** Monthly contribution bases actually used (SV-Brutto after the ceilings): pension / unemployment and health / care. */
+  bases: { pension: number; health: number };
+  /**
+   * Employer shares of the four social insurances on the same bases (payslip explainer). Null for a Minijob or
+   * in the Übergangsbereich (Midijob), where the employer's share follows other rules not modelled here.
+   * Not included: Umlagen U1 / U2 / U3 (Insolvenzgeld) and the accident insurance (vary by fund and trade).
+   */
+  employer: { pension: number; unemployment: number; health: number; care: number; total: number; careRate: number } | null;
 }
 
 const floor2 = (n: number) => Math.floor(n * 100 + 1e-7) / 100;
@@ -197,6 +205,20 @@ export const estimatePayroll = (i: PayrollInput, p: PayrollParams = CURRENT_PARA
   const social = round2(pension + unemployment + health + care);
   const net = round2(gross - incomeTax - soli - churchTax - social);
 
+  const employerCare = i.state === 'SN' ? s.careEmployerSaxony : s.careEmployer;
+  const plainBases = lowWage === null && !(gross > 0 && gross <= p.midijobUpTo);
+  const employer = plainBases
+    ? (() => {
+        const e = {
+          pension: round2(rvBase * s.pensionEmployer),
+          unemployment: round2(rvBase * s.unemploymentEmployer),
+          health: round2(kvBase * (s.healthEmployer + zusatz / 2)),
+          care: round2(kvBase * employerCare),
+        };
+        return { ...e, total: round2(e.pension + e.unemployment + e.health + e.care), careRate: employerCare };
+      })()
+    : null;
+
   return {
     year: p.year,
     gross,
@@ -214,5 +236,7 @@ export const estimatePayroll = (i: PayrollInput, p: PayrollParams = CURRENT_PARA
     yearly: { gross: round2(gross * 12), vorsorgepauschale: year.vorsorgepauschale, taxableIncome: year.taxableIncome, incomeTax: year.incomeTax },
     midijob: !i.lowWageRules && gross > 0 && gross <= p.midijobUpTo,
     lowWage,
+    bases: { pension: rvBase, health: kvBase },
+    employer,
   };
 };

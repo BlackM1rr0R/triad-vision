@@ -14,6 +14,7 @@ import { pagesPool } from '@/i18n/pagesPool';
 import { Empty, Loading, Section } from '@/components/company/shared';
 import { CompanyCandidates } from '@/components/company/CompanyCandidates';
 import { PoolCardView } from './PoolCardView';
+import { OnePagerButton } from '@/components/company/OnePagerButton'; // one-page PDF of the anonymous card (counts as a view)
 import { fmtDay, INTEREST_TONE, poolError, POOL_GERMAN_LEVELS, POOL_RECOGNITION, POOL_REGIONS, type PoolCard, type PoolInterestStatus } from './types';
 
 registerCopy(pagesPool);
@@ -333,6 +334,7 @@ const PoolDetail = () => {
                   </button>
                 )}
                 <SaveButton card={q.data.candidate} />
+                <OnePagerButton path={`/company/pool/${encodeURIComponent(q.data.candidate.code)}/one-pager.pdf`} fileName={`${q.data.candidate.code}.pdf`} />
               </>
             }
           />

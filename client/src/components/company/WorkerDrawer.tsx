@@ -16,6 +16,7 @@ import { CHECKIN_TONE, CheckInCell, DateCell, RISK_TONE, useMilestoneText } from
 import { plannedArrival, type WorkerDetail } from './workerTypes';
 import { EmployerAcceleratedBlock } from '@/components/recognition/EmployerAcceleratedBlock'; // § 81a (registers its copy)
 import { euro } from '@/components/recognition/api';
+import { OnePagerButton } from './OnePagerButton'; // one-page PDF of what this panel shows
 
 registerCopy(pagesTimeCare); // check-in topic labels (checkIn.topics.*)
 registerCopy(pagesEmployerWorkers);
@@ -55,6 +56,9 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
         <p className="text-sm text-muted">{t('jobsArea.errors.generic')}</p>
       ) : (
         <div className="space-y-7">
+          <div className="flex justify-end">
+            <OnePagerButton path={`/company/workers/${encodeURIComponent(w.id)}/one-pager.pdf`} fileName={`worker-${w.id.slice(-8)}.pdf`} />
+          </div>
           <Block title={t('employerWorkers.drawer.overview')} icon={UserRound}>
             <dl className="divide-y divide-line rounded-2xl border border-line px-4">
               <Def label={t('employerWorkers.cols.status')}>

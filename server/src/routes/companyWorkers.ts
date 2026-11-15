@@ -11,6 +11,7 @@ import { workersCsv } from '../lib/employerWorkers/csv.js';
 import { pickLoc } from '../lib/employerWorkers/texts.js';
 import { sendPdf } from '../lib/esign/http.js';
 import { storedPath } from '../lib/esign/service.js';
+import { onePagerPdf, workerOnePagerInput } from '../lib/onePager/pdf.js';
 import { addItem, companyChecklist, companyOverview, createInput, deleteItem, patchInput, updateItem } from '../lib/employerArrival.js';
 
 /**
@@ -21,6 +22,7 @@ import { addItem, companyChecklist, companyOverview, createInput, deleteItem, pa
  *   GET /export.xlsx|csv        the panel as a sheet (?lang=de|en|az|ru)
  *   GET /:caseId                worker drawer: timeline, upcoming dates, documents, check-in history, contact
  *   GET /:caseId/documents/:kind/:id   download of an employer-visible PDF (kind = signature | form)
+ *   GET /:caseId/one-pager.pdf  ?lang=&branding=0|1 → one-page PDF of what the panel shows about this worker
  *   GET /checklists/overview   arrival checklist progress of every approved / arrived worker (lib/employerArrival)
  *   GET|POST /:caseId/checklist, PATCH|DELETE /:caseId/checklist/:itemId   the company's arrival checklist of one worker
  *
@@ -72,6 +74,17 @@ const caseIdOf = (req: { params: Record<string, string> }) => {
   if (!ID_RE.test(caseId)) throw notFound('WORKER_NOT_FOUND');
   return caseId;
 };
+
+companyWorkersRouter.get('/:caseId/one-pager.pdf', async (req, res) => {
+  const caseId = caseIdOf(req);
+  const branding = req.query.branding !== '0';
+  const row = (await buildPanel(co(res).id, new Date(), req.user!.id)).find((r) => r.id === caseId);
+  if (!row) throw notFound('WORKER_NOT_FOUND');
+  const pdf = await onePagerPdf(workerOnePagerInput(row, langOf(req), branding ? co(res).name : null));
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="worker-${caseId.slice(-8)}.pdf"`);
+  res.send(pdf);
+});
 
 companyWorkersRouter.get('/:caseId/checklist', async (req, res) => {
   res.json(await companyChecklist(co(res).id, caseIdOf(req)));

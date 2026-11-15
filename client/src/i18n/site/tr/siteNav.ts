@@ -27,6 +27,8 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       faq: 'Sorular ve cevaplar',
       events: 'Etkinlikler ve webinarlar',
       life: 'Almanya’da yaşam simülatörü',
+      whenInGermany: 'Almanya’da ne zaman olabilirim?',
+      payslip: 'Maaş bordrosu (Lohnabrechnung) açıklamalı',
       apply: 'Ücretsiz kayıt ol',
     },
     e: {

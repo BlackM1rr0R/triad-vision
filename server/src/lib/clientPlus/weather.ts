@@ -47,6 +47,7 @@ let fetcher: Fetcher = defaultFetch;
 export const setWeatherFetch = (fn: Fetcher | null) => {
   fetcher = fn ?? defaultFetch;
   cache.clear();
+  currentCache.clear();
 };
 
 const cache = new Map<string, { at: number; ttl: number; value: Weather | null }>();
@@ -99,6 +100,58 @@ const load = async (city: string, count: number): Promise<Weather | null> => {
     return { date, code, icon: iconFor(code), max: num(d.temperature_2m_max?.[i]), min: num(d.temperature_2m_min?.[i]), rain: num(d.precipitation_probability_max?.[i]) };
   });
   return { city: hit.name, country: hit.country_code ?? null, days, fetchedAt: new Date().toISOString() };
+};
+
+/** Current conditions at fixed coordinates (home page "Baku ↔ Berlin" block): no geocoding, one request. */
+export interface CurrentWeather {
+  temp: number | null; // °C, rounded
+  code: number;
+  icon: WeatherIcon;
+  isDay: boolean;
+  wind: number | null; // km/h, rounded
+  fetchedAt: string;
+}
+
+/** Current conditions are cached for 30 minutes (Open-Meteo updates them every 15). */
+export const CURRENT_TTL_MS = 30 * 60 * 1000;
+const currentCache = new Map<string, { at: number; ttl: number; value: CurrentWeather | null }>();
+const currentInflight = new Map<string, Promise<CurrentWeather | null>>();
+
+const loadCurrent = async (lat: number, lng: number): Promise<CurrentWeather | null> => {
+  const q = new URLSearchParams({
+    latitude: lat.toFixed(4),
+    longitude: lng.toFixed(4),
+    current: 'temperature_2m,weather_code,is_day,wind_speed_10m',
+    timezone: 'auto',
+  });
+  const fc = (await fetcher(`${FORECAST_URL}?${q}`)) as {
+    current?: { temperature_2m?: number; weather_code?: number; is_day?: number; wind_speed_10m?: number };
+  };
+  const c = fc.current;
+  if (!c) return null;
+  const code = num(c.weather_code) ?? 3;
+  return { temp: num(c.temperature_2m), code, icon: iconFor(code), isDay: c.is_day !== 0, wind: num(c.wind_speed_10m), fetchedAt: new Date().toISOString() };
+};
+
+/** Current weather at a fixed point, cached per point (30 min; failures 15 min); null when Open-Meteo is unreachable. */
+export const currentWeatherAt = async (lat: number, lng: number): Promise<CurrentWeather | null> => {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+  const hit = currentCache.get(key);
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.value;
+  const pending = currentInflight.get(key);
+  if (pending) return pending;
+  const p = loadCurrent(lat, lng)
+    .then((value) => {
+      currentCache.set(key, { at: Date.now(), ttl: value ? CURRENT_TTL_MS : FAIL_TTL_MS, value });
+      return value;
+    })
+    .catch(() => {
+      currentCache.set(key, { at: Date.now(), ttl: FAIL_TTL_MS, value: null });
+      return null;
+    })
+    .finally(() => currentInflight.delete(key));
+  currentInflight.set(key, p);
+  return p;
 };
 
 /**

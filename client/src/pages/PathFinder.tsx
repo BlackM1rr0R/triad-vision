@@ -12,6 +12,7 @@ import {
   BookOpenCheck,
   Briefcase,
   CalendarCheck,
+  CalendarRange,
   CheckCircle2,
   CircleAlert,
   Clock,
@@ -394,6 +395,15 @@ export default function PathFinder() {
                       <Link to="/register" className="btn-secondary" onClick={() => gaEvent('path_finder_cta', { cta: 'register' })}>
                         <UserPlus className="size-4" aria-hidden /> {t('pf.register')}
                       </Link>
+                      {result.data && result.data.paths[0] && (
+                        <Link
+                          to={`/when-in-germany?${new URLSearchParams({ profession: String(answers.profession ?? ''), education: String(answers.education ?? ''), german: String(answers.german ?? ''), route: result.data.paths[0].key }).toString()}`}
+                          className="btn-ghost"
+                          onClick={() => gaEvent('path_finder_cta', { cta: 'when_in_germany' })}
+                        >
+                          <CalendarRange className="size-4" aria-hidden /> {t('siteNav.w.whenInGermany')}
+                        </Link>
+                      )}
                       {result.data && result.data.jobs.count > 0 && (
                         <Link to={result.data.jobs.sector ? `/jobs?sector=${result.data.jobs.sector}` : '/jobs'} className="btn-ghost">
                           <Briefcase className="size-4" aria-hidden /> {t('pf.jobs', { count: result.data.jobs.count })}

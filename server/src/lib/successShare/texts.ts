@@ -15,6 +15,10 @@ export const asCardLocale = (l: string | null | undefined): CardLocale => ((CARD
 interface CardTexts {
   kicker: string;
   headline: string;
+  /** Headline of the private Instagram card ("Visa approved ✈"). */
+  approved: string;
+  /** Display name of the "anonymous" style. */
+  anonymous: string;
   subline: string;
   country: string;
   withUs: string;
@@ -27,6 +31,8 @@ export const CARD_TEXTS: Record<CardLocale, CardTexts> = {
   az: {
     kicker: 'Uğur hekayəsi',
     headline: 'Vizam təsdiqləndi!',
+    approved: 'Viza təsdiqləndi ✈',
+    anonymous: 'Triad Vision müştərisi',
     subline: 'Almaniyaya yolum başlayır',
     country: 'Almaniya',
     withUs: 'Triad Vision ilə',
@@ -45,6 +51,8 @@ export const CARD_TEXTS: Record<CardLocale, CardTexts> = {
   de: {
     kicker: 'Erfolgsgeschichte',
     headline: 'Mein Visum ist genehmigt!',
+    approved: 'Visum genehmigt ✈',
+    anonymous: 'Ein Triad Vision Kunde',
     subline: 'Mein Weg nach Deutschland beginnt',
     country: 'Deutschland',
     withUs: 'mit Triad Vision',
@@ -63,6 +71,8 @@ export const CARD_TEXTS: Record<CardLocale, CardTexts> = {
   en: {
     kicker: 'Success story',
     headline: 'My visa is approved!',
+    approved: 'Visa approved ✈',
+    anonymous: 'A Triad Vision client',
     subline: 'My journey to Germany begins',
     country: 'Germany',
     withUs: 'with Triad Vision',
@@ -81,6 +91,8 @@ export const CARD_TEXTS: Record<CardLocale, CardTexts> = {
   ru: {
     kicker: 'История успеха',
     headline: 'Моя виза одобрена!',
+    approved: 'Виза одобрена ✈',
+    anonymous: 'Клиент Triad Vision',
     subline: 'Мой путь в Германию начинается',
     country: 'Германия',
     withUs: 'с Triad Vision',

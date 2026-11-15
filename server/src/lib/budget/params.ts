@@ -87,6 +87,12 @@ export interface PayrollParams {
     vspCap: number;
     /** Versicherungspflichtgrenze (Jahresarbeitsentgeltgrenze): above it private health insurance is possible. Shown on the salary page only. */
     jaegYear: number;
+    /** Employer shares (payslip explainer, employer-cost view): pension, unemployment, health general rate (+ half the Zusatzbeitrag), care (Saxony: the employer pays 0.5 points less). */
+    pensionEmployer: number;
+    unemploymentEmployer: number;
+    healthEmployer: number;
+    careEmployer: number;
+    careEmployerSaxony: number;
   };
   /** Gross per month up to which the Übergangsbereich (Midijob, §20 Abs. 2 SGB IV) applies. */
   midijobUpTo: number;
@@ -174,6 +180,11 @@ export const BUDGET_PARAMS_2026: BudgetParams = {
       careReductionMaxChildren: 4,
       vspCap: 1_900,
       jaegYear: 77_400,
+      pensionEmployer: 0.093,
+      unemploymentEmployer: 0.013,
+      healthEmployer: 0.073,
+      careEmployer: 0.018,
+      careEmployerSaxony: 0.013,
     },
     midijobUpTo: 2_000,
     minijobUpTo: 603,

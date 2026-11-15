@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LucideIcon } from 'lucide-react';
-import { BookOpen, ChevronRight, Gift, Home, ListChecks, PartyPopper, PlaneLanding } from 'lucide-react';
+import { BookOpen, ChevronRight, Gift, Home, Instagram, ListChecks, PartyPopper, PlaneLanding } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { Success } from '@/components/illustrations';
@@ -13,6 +13,7 @@ import { getImpersonation } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments';
 import { caseToCelebrate } from './celebration';
+import { InstagramCardDialog } from '@/components/portal/InstagramCardDialog'; // private Instagram success card
 
 registerCopy(pagesPortalMoments);
 
@@ -53,6 +54,7 @@ export function ApprovedCelebration() {
   const isClient = user?.role === 'CLIENT' && getImpersonation() === null;
   const { data } = useOverview(!!user && user.role === 'CLIENT');
   const [shown, setShown] = useState<{ id: string; number: string } | null>(null);
+  const [instaCase, setInstaCase] = useState<string | null>(null);
 
   const target = isClient && data ? caseToCelebrate(data.cases) : null;
   const targetId = target?.id ?? null;
@@ -70,7 +72,7 @@ export function ApprovedCelebration() {
     return () => window.clearTimeout(timer);
   }, [shownId]);
 
-  if (!shown) return null;
+  if (!shown) return instaCase ? <InstagramCardDialog open onClose={() => setInstaCase(null)} caseId={instaCase} /> : null;
   const close = () => setShown(null);
 
   return (
@@ -100,6 +102,19 @@ export function ApprovedCelebration() {
         <div className="flex items-center gap-4">
           <Success className="hidden w-28 shrink-0 sm:block" />
           <p className="text-ink/85">{t('pmom.approved.text', { number: shown.number })}</p>
+        </div>
+        <div>
+          <Button
+            variant="secondary"
+            icon={Instagram}
+            className="w-full sm:w-auto"
+            onClick={() => {
+              setInstaCase(shown.id);
+              close();
+            }}
+          >
+            {t('milestones.insta.cta')}
+          </Button>
         </div>
 
         <section aria-labelledby="approved-next-title">

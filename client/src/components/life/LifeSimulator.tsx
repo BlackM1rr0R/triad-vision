@@ -377,6 +377,9 @@ export const LifeSimulator = () => {
               <Link to={`/salary-calculator?gross=${r.input.gross}`} className={buttonClass({ variant: 'ghost' })}>
                 {t('life.actions.salary')} <ArrowRight className="size-4" aria-hidden />
               </Link>
+              <Link to={`/payslip-explained?gross=${Math.max(2100, Math.round(r.input.gross))}${r.input.taxClass !== 1 ? `&class=${r.input.taxClass}` : ''}`} className={buttonClass({ variant: 'ghost' })}>
+                {t('siteNav.w.payslip')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
             </div>
           </>
         )}

@@ -36,6 +36,8 @@ export const TOOL_GUIDES: Record<string, string[]> = {
   '/cost-calculator': ['first-month', 'chancenkarte', 'familiennachzug'],
   '/budget': ['first-month', 'salary-net'],
   '/life-in-germany': ['first-month', 'salary-net', 'familiennachzug'],
+  '/when-in-germany': ['work-visa', 'anerkennung', 'blue-card'],
+  '/payslip-explained': ['salary-net', 'first-month'],
   '/calculator': ['work-visa', 'anerkennung'],
   '/eligibility': ['work-visa', 'chancenkarte', 'blue-card', 'ausbildung'],
   '/uygunluq-testi': ['work-visa', 'chancenkarte', 'blue-card', 'ausbildung'],

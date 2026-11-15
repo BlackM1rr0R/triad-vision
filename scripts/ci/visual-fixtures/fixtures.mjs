@@ -357,6 +357,36 @@ const ROUTES = [
   // public
   ['GET', '/api/vacancies', { items: vacancies, total: vacancies.length, page: 1, pageSize: 12, facets: { sectors: facet('sector'), cities: facet('city') } }],
   ['GET', '/api/job-alerts/options', { professions: [], germanLevels: ['none', 'A1', 'A2', 'B1', 'B2'], kinds: ['work', 'ausbildung', 'seasonal'], suggested: null }],
+  // home: globe / placement map (aggregates ≥ 3 per city) and the Baku ↔ Berlin weather
+  [
+    'GET',
+    '/api/growth/map',
+    {
+      enabled: true,
+      showOnHome: true,
+      showOnStories: true,
+      minPerCity: 3,
+      total: 41,
+      cities: [
+        { city: 'Berlin', workers: 14, professions: ['Berufskraftfahrer'], lat: null, lng: null },
+        { city: 'Hamburg', workers: 9, professions: ['Lagerist'], lat: null, lng: null },
+        { city: 'München', workers: 7, professions: ['Pflegefachkraft'], lat: null, lng: null },
+        { city: 'Köln', workers: 6, professions: ['Elektriker'], lat: null, lng: null },
+        { city: 'Leipzig', workers: 5, professions: ['Koch'], lat: null, lng: null },
+      ],
+    },
+  ],
+  [
+    'GET',
+    '/api/life/clock-weather',
+    {
+      source: 'open-meteo',
+      cities: [
+        { key: 'baku', timeZone: 'Asia/Baku', weather: { temp: 9, code: 1, icon: 'partly', isDay: true, wind: 14, fetchedAt: '2026-01-15T10:00:00.000Z' } },
+        { key: 'berlin', timeZone: 'Europe/Berlin', weather: { temp: 2, code: 3, icon: 'cloud', isDay: true, wind: 9, fetchedAt: '2026-01-15T10:00:00.000Z' } },
+      ],
+    },
+  ],
 
   // client portal
   ['GET', '/api/account/overview', accountOverview],

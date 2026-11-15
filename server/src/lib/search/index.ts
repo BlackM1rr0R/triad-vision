@@ -38,6 +38,8 @@ export const TOOL_PATHS = new Set([
   '/cost-calculator',
   '/budget',
   '/life-in-germany',
+  '/when-in-germany',
+  '/payslip-explained',
   '/anerkennung',
   '/cities',
   '/map',
@@ -54,10 +56,13 @@ const TOOL_KEYWORDS: Record<string, string> = {
   '/calculator': 'start date startdatum başlama tarixi başlama tarihi срок термін when wann',
   '/cost-calculator': 'cost kosten xərc maliyet расходы витрати price',
   '/budget': 'budget first month erster monat ilk ay büdcə bütçe kaution deposit depozit sperrkonto blocked account rent miete kirayə бюджет залог аренда застава оренда',
+  '/when-in-germany': 'when wann nə vaxt ne zaman когда коли arrival ankunft gəliş varış приезд приїзд timeline zeitstrahl duration dauer müddət süre срок строк visa viza виза віза',
+  '/payslip-explained': 'payslip lohnabrechnung gehaltsabrechnung maaş vərəqəsi bordro расчётный лист розрахунковий lohnsteuer netto brutto sozialversicherung',
   '/life-in-germany': 'life leben həyat yaşam жизнь життя simulator simulyator simülatör симулятор cost of living lebenshaltungskosten manat azn savings sparen qənaət birikim сбережения заощадження baku bakı',
   '/anerkennung': 'recognition diploma zab anabin',
   '/cities': 'city stadt şəhər şehir город місто rent miete kirayə kira аренда оренда cost of living',
   '/map': 'map karte xəritə harita карта',
+  '/phrase-of-the-day': 'phrase satz ifadə ifade фраза german deutsch alman almanca немецкий німецька learn lernen öyrən öğren учить вчити',
   '/booking': 'consultation termin beratung konsultasiya danışmanlık randevu консультация консультація appointment',
 };
 

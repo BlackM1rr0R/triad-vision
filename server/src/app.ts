@@ -123,11 +123,13 @@ import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/su
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
+import { whenInGermanyRouter } from './routes/whenInGermany.js'; // "When could I be in Germany?" estimator (case-history percentiles, daily cache)
 import { jobFeedsRouter } from './routes/jobFeeds.js'; // /feeds/*.xml: job board feeds (Indeed, StepStone, generic) behind a secret token
 import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
 import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
 import { licenseGuard } from './middleware/license.js'; // white-label licence: read-only mode for staff
 import { tvRouter } from './routes/tv.js'; // office TV mode: dashboard data + stream behind a read-only display token
+import { accountArrivalCertificateRouter, publicArrivalCertificateRouter } from './routes/arrivalCertificate.js'; // "Welcome to Germany" arrival certificate + public check
 import { certificatePublicRouter, courseRouter } from './routes/course.js'; // pre-departure course (client) + public certificate verification
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
@@ -237,6 +239,7 @@ export const createApp = () => {
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
+  app.use('/api/account/arrival-certificate', accountArrivalCertificateRouter); // arrival certificate PDF (own arrived cases)
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
   app.use('/api/account/germany', accountGermanyRouter); // My Germany day (countdown, weather, packing), arrival card, badges
@@ -267,6 +270,7 @@ export const createApp = () => {
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
   app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
+  app.use('/api/when-in-germany', whenInGermanyRouter); // arrival-month estimator (public, aggregates only)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
@@ -318,6 +322,7 @@ export const createApp = () => {
   app.use('/api/success', publicSuccessShareRouter); // public success share page data, card PNGs, lead form
   app.use('/api/r/review', googleReviewPublicRouter); // Google review link (click counter) + opt-out
   app.use('/api/course', courseRouter); // pre-departure course: lessons, video, quizzes, certificate PDF (CLIENT)
+  app.use('/api/arrival-certificates', publicArrivalCertificateRouter); // public arrival certificate check (number, first name + initial, date)
   app.use('/api/certificates', certificatePublicRouter); // public course certificate check (initials, course, date)
   app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 

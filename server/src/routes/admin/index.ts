@@ -31,6 +31,7 @@ import { adminPrivacyRouter } from './privacy.js';
 import { adminLegalRouter } from './legal.js';
 import { adminWaitingRoomRouter } from './waitingRoom.js';
 import { adminArrivalsRouter } from './arrivals.js';
+import { adminArrivalCertificateRouter } from '../arrivalCertificate.js'; // revoke / restore arrival certificates
 import { adminHousingRouter } from './housing.js'; // housing + Anmeldung, partner landlord listings
 import { adminInterviewPrepRouter } from './interviewPrep.js';
 import { adminFinanceRouter } from './finance.js';
@@ -233,6 +234,7 @@ adminRouter.use('/privacy', adminPrivacyRouter);
 adminRouter.use('/legal', adminLegalRouter); // versioned AGB / privacy / cookie texts (ADMIN+)
 adminRouter.use('/waiting-room', adminWaitingRoomRouter); // client waiting room CMS (STAFF read, ADMIN+ edit)
 adminRouter.use('/arrivals', adminArrivalsRouter);
+adminRouter.use('/arrival-certificates', adminArrivalCertificateRouter); // "Welcome to Germany" certificates: view, revoke, restore
 adminRouter.use('/housing', adminHousingRouter); // STAFF+; listing edits ADMIN+ (checked in the router)
 adminRouter.use('/interview-prep', adminInterviewPrepRouter);
 adminRouter.use('/finance', adminFinanceRouter);

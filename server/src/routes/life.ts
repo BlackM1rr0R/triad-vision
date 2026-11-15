@@ -3,6 +3,7 @@ import { limiter, parse } from '../lib/http.js';
 import { getEurAzn } from '../lib/life/cbar.js';
 import { lifeConfig, lifeEstimate, lifeQuerySchema } from '../lib/life/service.js';
 import { publicLiveNumbers } from '../lib/life/liveNumbers.js';
+import { clockWeather } from '../lib/home/clockWeather.js';
 
 /**
  * "Life in Germany" — mounted at /api/life (public, no login):
@@ -10,6 +11,7 @@ import { publicLiveNumbers } from '../lib/life/liveNumbers.js';
  *   GET /estimate       monthly life budget for ?profession&city&household&children&taxClass&housing&gross
  *   GET /rate           EUR → AZN (CBAR, fetched server-side at most daily; last known rate as fallback)
  *   GET /live-numbers   board "this month": visas granted, arrivals, top professions / cities (≥ 3 each, 1 h cache)
+ *   GET /clock-weather  home "Baku ↔ Berlin" block: current weather of both cities (Open-Meteo, cached 30 min)
  */
 export const lifeRouter = Router();
 
@@ -35,4 +37,9 @@ lifeRouter.get('/rate', async (_req, res) => {
 lifeRouter.get('/live-numbers', async (_req, res) => {
   publicCache(res, 600);
   res.json(await publicLiveNumbers());
+});
+
+lifeRouter.get('/clock-weather', async (_req, res) => {
+  publicCache(res, 1800);
+  res.json(await clockWeather());
 });

@@ -29,6 +29,19 @@ const PlacementMapSection = lazy(() => import('@/components/growth/PlacementMap'
 // Baku → Germany scroll journey and the live numbers board: one own chunk (text + SVG only, below the fold).
 const BakuJourney = lazy(() => import('@/components/life/home').then((m) => ({ default: m.BakuJourney })));
 const LiveNumbers = lazy(() => import('@/components/life/home').then((m) => ({ default: m.LiveNumbers })));
+// Baku ↔ Berlin clock + weather, German phrase of the day, 3D globe of our workers: one own chunk (the WebGL
+// globe itself is a further chunk, loaded only when its section comes into view).
+const WorldBand = lazy(() => import('@/components/world/home').then((m) => ({ default: m.WorldBand })));
+const GlobeSection = lazy(() => import('@/components/world/home').then((m) => ({ default: m.GlobeSection })));
+/** Same box as WorldBand (components/world/WorldBand.tsx) while its chunk loads after a client-side navigation. */
+const WorldBandPlaceholder = () => (
+  <div className="py-8 sm:py-10" aria-hidden>
+    <div className="container-x grid gap-4 md:grid-cols-2 md:gap-6">
+      <div className="min-h-[22rem] rounded-3xl bg-sunken sm:min-h-[20rem]" />
+      <div className="min-h-[22rem] rounded-3xl bg-sunken sm:min-h-[20rem]" />
+    </div>
+  </div>
+);
 // The audience view (after "Who are you?"): own chunk, fetched only once a visitor has chosen.
 const AudienceHome = lazy(() => import('@/components/audience/AudienceHome'));
 
@@ -72,6 +85,7 @@ const NeutralHome = () => (
     <WhySection />
     <TestimonialsSection />
     <Suspense fallback={null}>
+      <GlobeSection />
       <BakuJourney />
       <LiveNumbers where="home" />
       <PlacementMapSection where="home" />
@@ -127,6 +141,9 @@ export default function Home() {
     <>
       <Hero audience={audience} onChoose={choose} />
       <StatsBar />
+      <Suspense fallback={<WorldBandPlaceholder />}>
+        <WorldBand />
+      </Suspense>
       <div id="home-content" className="scroll-mt-16">
         {/* Until then, hold the space so the footer never flashes up into view. */}
         {!rest ? (

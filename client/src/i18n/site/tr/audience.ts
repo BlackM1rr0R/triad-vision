@@ -26,6 +26,8 @@ const copy: SiteCopy<(typeof pagesAudience)['en']> = {
       cost: { title: 'Maliyet hesaplayıcı', text: 'Vize, tercüme, dil kursu ve taşınma maliyetlerini tahmin edin.' },
       budget: { title: 'İlk ay bütçesi', text: 'Net maaş, depozito, ilk maaşa kadar masraflar ve yanınıza almanız gereken para.' },
       life: { title: 'Almanya’da yaşam simülatörü', text: 'Mesleğe ve şehre göre maaş, kira, giderler ve birikim — euro ve manat olarak.' },
+      payslip: { title: 'Maaş bordrosu açıklamalı', text: 'Alman bordrosunun her satırı: vergiler, sigortalar, net maaş ve işveren maliyeti.' },
+      whenInGermany: { title: 'Almanya’da ne zaman?', text: 'Gerçek dosyalarımızın sürelerine göre tahmini varış ayı ve zaman çizelgesi.' },
       startDate: { title: 'Ne zaman başlayabilirim?', text: 'Vize türüne göre Almanya’da işe başlama tarihinizi tahmin edin.' },
       cities: { title: 'Alman şehirleri', text: '14 şehri karşılaştırın: kira, toplu taşıma, market ve aylık bütçe.' },
       events: { title: 'Etkinlikler ve webinarlar', text: 'Çevrim içi veya yüz yüze ücretsiz bilgilendirme oturumlarına katılın.' },

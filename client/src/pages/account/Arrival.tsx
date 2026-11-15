@@ -27,6 +27,7 @@ import {
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { WorkerEmployerChecklist } from '@/components/employerExtras/ArrivalChecklist';
+import { ArrivalCertificateCard } from '@/components/portal/ArrivalCertificateCard'; // "Welcome to Germany" certificate PDF
 import { pagesArrival } from '@/i18n/pagesArrival';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
@@ -371,6 +372,7 @@ const PlanView = ({ plan }: { plan: ArrivalPlan }) => {
           </Link>
         </section>
       )}
+      {plan.status === 'COMPLETED' && <ArrivalCertificateCard caseId={plan.caseId} />}
       {plan.status === 'CANCELLED' && <p className="rounded-xl border border-line bg-sunken p-4 text-sm text-muted">{t('arrival.cancelledBanner')}</p>}
 
       <StaffAnswer plan={plan} />
