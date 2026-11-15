@@ -9,6 +9,7 @@ import { pagesRecognition } from '@/i18n/pagesRecognition';
 import { Card } from '@/components/ui/Card';
 import { TONE_CLASS } from '@/components/ui/status';
 import { STATUS_TONE, type CheckKey, type ProcedureType, type ProcessStatus } from './api';
+import { RecognitionLinks } from './RecognitionLinks'; // anabin + Anerkennungs-Finder
 
 registerCopy(pagesRecognition);
 
@@ -96,6 +97,7 @@ export const ClientRecognitionCard = ({ caseId }: { caseId: string }) => {
               </div>
             </section>
           ))}
+          <RecognitionLinks compact />
         </div>
       </Card>
     </div>

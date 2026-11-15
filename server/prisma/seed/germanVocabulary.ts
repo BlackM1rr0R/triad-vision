@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 
 /**
- * Starter vocabulary of the German trainer (portal "Alman dili", mobile app): about 320 words A1–B1,
+ * Starter vocabulary of the German trainer (portal "Alman dili", mobile app): about 370 words A1–B1,
  * grouped by job field. Upserted by slug (article + word), so a re-seed adds new words and corrects
  * translations; words removed here stay in the database (unpublish them instead of deleting progress).
  *
@@ -9,10 +9,12 @@ import type { PrismaClient } from '@prisma/client';
  */
 
 type Entry = [article: '' | 'der' | 'die' | 'das', de: string, plural: string, az: string, ru: string, en: string, example?: string];
-type Field = 'GENERAL' | 'WORK' | 'CARE' | 'CONSTRUCTION' | 'HOSPITALITY' | 'DRIVING';
+type BaseField = 'GENERAL' | 'WORK' | 'CARE' | 'CONSTRUCTION' | 'HOSPITALITY' | 'DRIVING';
+/** ELECTRICAL (electricians) only has A2 / B1 words, kept in their own lists below. */
+type Field = BaseField | 'ELECTRICAL';
 type Level = 'A1' | 'A2' | 'B1';
 
-const A1: Record<Field, Entry[]> = {
+const A1: Record<BaseField, Entry[]> = {
   GENERAL: [
     ['der', 'Mann', 'Männer', 'kişi', 'мужчина', 'man'],
     ['die', 'Frau', 'Frauen', 'qadın', 'женщина', 'woman'],
@@ -162,7 +164,7 @@ const A1: Record<Field, Entry[]> = {
   ],
 };
 
-const A2: Record<Field, Entry[]> = {
+const A2: Record<BaseField, Entry[]> = {
   GENERAL: [
     ['der', 'Nachbar', 'Nachbarn', 'qonşu', 'сосед', 'neighbour'],
     ['die', 'Miete', 'Mieten', 'kirayə haqqı', 'арендная плата', 'rent', 'Die Miete kostet 600 Euro im Monat.'],
@@ -281,7 +283,7 @@ const A2: Record<Field, Entry[]> = {
   ],
 };
 
-const B1: Record<Field, Entry[]> = {
+const B1: Record<BaseField, Entry[]> = {
   GENERAL: [
     ['die', 'Aufenthaltserlaubnis', 'Aufenthaltserlaubnisse', 'yaşayış icazəsi', 'вид на жительство', 'residence permit'],
     ['das', 'Visum', 'Visa', 'viza', 'виза', 'visa'],
@@ -378,7 +380,62 @@ const B1: Record<Field, Entry[]> = {
   ],
 };
 
-const LISTS: Record<Level, Record<Field, Entry[]>> = { A1, A2, B1 };
+// Electricians (Elektroniker/in für Energie- und Gebäudetechnik): workshop and site words, the five VDE safety rules.
+const ELECTRICAL_A2: Entry[] = [
+  ['der', 'Strom', '', 'elektrik cərəyanı', 'электрический ток', '(electric) current, electricity', 'Vor der Arbeit den Strom abschalten.'],
+  ['die', 'Spannung', 'Spannungen', 'gərginlik', 'напряжение', 'voltage', 'Die Spannung in der Steckdose beträgt 230 Volt.'],
+  ['die', 'Leitung', 'Leitungen', 'elektrik xətti, naqil', 'провод, линия', 'cable run, line'],
+  ['der', 'Draht', 'Drähte', 'məftil', 'проволока, провод', 'wire'],
+  ['der', 'Stecker', 'Stecker', 'ştepsel (vilka)', 'вилка, штекер', 'plug'],
+  ['die', 'Mehrfachsteckdose', 'Mehrfachsteckdosen', 'çoxyerli rozetka (uzadıcı)', 'удлинитель, тройник', 'power strip'],
+  ['der', 'Schalter', 'Schalter', 'açar (elektrik açarı)', 'выключатель', 'switch', 'Der Schalter ist neben der Tür.'],
+  ['die', 'Lampe', 'Lampen', 'lampa', 'лампа', 'lamp'],
+  ['die', 'Leuchte', 'Leuchten', 'işıq cihazı (çıraq)', 'светильник', 'light fitting, luminaire'],
+  ['die', 'Sicherung', 'Sicherungen', 'qoruyucu (predoxranitel)', 'предохранитель', 'fuse', 'Die Sicherung ist rausgeflogen.'],
+  ['der', 'Stromzähler', 'Stromzähler', 'elektrik sayğacı', 'электросчётчик', 'electricity meter'],
+  ['der', 'Kurzschluss', 'Kurzschlüsse', 'qısa qapanma', 'короткое замыкание', 'short circuit'],
+  ['die', 'Zange', 'Zangen', 'kəlbətin', 'плоскогубцы, клещи', 'pliers'],
+  ['der', 'Schraubendreher', 'Schraubendreher', 'vintaçan (otvyortka)', 'отвёртка', 'screwdriver'],
+  ['der', 'Spannungsprüfer', 'Spannungsprüfer', 'gərginlik indikatoru', 'индикатор напряжения', 'voltage tester'],
+  ['das', 'Messgerät', 'Messgeräte', 'ölçü cihazı', 'измерительный прибор', 'measuring instrument'],
+  ['die', 'Klemme', 'Klemmen', 'klemma', 'клемма', 'terminal (clamp)'],
+  ['die', 'Isolierung', 'Isolierungen', 'izolyasiya', 'изоляция', 'insulation'],
+  ['der', 'Motor', 'Motoren', 'mühərrik', 'двигатель', 'motor'],
+  ['der', 'Akku', 'Akkus', 'akkumulyator', 'аккумулятор', 'rechargeable battery'],
+  ['', 'einschalten', '', 'yandırmaq (qoşmaq)', 'включать', 'to switch on'],
+  ['', 'abschalten', '', 'söndürmək (cərəyanı kəsmək)', 'отключать', 'to switch off', 'Schalten Sie zuerst die Sicherung ab.'],
+  ['', 'anschließen', '', 'qoşmaq (birləşdirmək)', 'подключать', 'to connect', 'Ich schließe die Lampe an.'],
+  ['', 'abisolieren', '', 'izolyasiyanı soymaq', 'зачищать (снимать изоляцию)', 'to strip (insulation)'],
+];
+
+const ELECTRICAL_B1: Entry[] = [
+  ['die', 'Elektrofachkraft', 'Elektrofachkräfte', 'ixtisaslı elektrik mütəxəssisi', 'квалифицированный электрик', 'qualified electrician'],
+  ['die', 'Elektroinstallation', 'Elektroinstallationen', 'elektrik quraşdırma işləri', 'электромонтаж', 'electrical installation'],
+  ['der', 'Verteiler', 'Verteiler', 'elektrik paylayıcı şiti', 'распределительный щит', 'distribution board'],
+  ['der', 'Leitungsschutzschalter', 'Leitungsschutzschalter', 'avtomatik açar (avtomat)', 'автоматический выключатель', 'circuit breaker (MCB)'],
+  ['der', 'FI-Schutzschalter', 'FI-Schutzschalter', 'qaçaq cərəyan qoruyucusu (UZO)', 'устройство защитного отключения (УЗО)', 'residual current device (RCD)'],
+  ['die', 'Erdung', 'Erdungen', 'torpaqlama', 'заземление', 'earthing, grounding'],
+  ['der', 'Schutzleiter', 'Schutzleiter', 'qoruyucu naqil (PE, torpaqlama)', 'защитный провод (PE)', 'protective earth conductor (PE)', 'Der Schutzleiter ist grün-gelb.'],
+  ['der', 'Neutralleiter', 'Neutralleiter', 'neytral naqil (N)', 'нейтральный провод (N)', 'neutral conductor (N)', 'Der Neutralleiter ist blau.'],
+  ['der', 'Außenleiter', 'Außenleiter', 'faza naqili (L)', 'фазный провод (L)', 'line (phase) conductor (L)'],
+  ['die', 'Ader', 'Adern', 'kabel damarı', 'жила (кабеля)', 'core (of a cable)'],
+  ['die', 'Abzweigdose', 'Abzweigdosen', 'paylayıcı qutu', 'распределительная коробка', 'junction box'],
+  ['das', 'Leerrohr', 'Leerrohre', 'kabel borusu (qofra)', 'гофра, кабельная труба', 'conduit'],
+  ['der', 'Kabelkanal', 'Kabelkanäle', 'kabel kanalı', 'кабель-канал', 'cable trunking'],
+  ['der', 'Schaltplan', 'Schaltpläne', 'elektrik sxemi', 'электрическая схема', 'wiring diagram'],
+  ['die', 'Leistung', 'Leistungen', 'güc', 'мощность', 'power (output)'],
+  ['der', 'Widerstand', 'Widerstände', 'müqavimət', 'сопротивление', 'resistance'],
+  ['die', 'Stromstärke', 'Stromstärken', 'cərəyan şiddəti', 'сила тока', 'current (amperage)'],
+  ['die', 'Messung', 'Messungen', 'ölçmə', 'измерение', 'measurement'],
+  ['der', 'Bewegungsmelder', 'Bewegungsmelder', 'hərəkət sensoru', 'датчик движения', 'motion detector'],
+  ['die', 'Photovoltaikanlage', 'Photovoltaikanlagen', 'günəş paneli qurğusu (fotovoltaik)', 'солнечная электростанция', 'solar PV system'],
+  ['die', 'Sicherheitsregel', 'Sicherheitsregeln', 'təhlükəsizlik qaydası', 'правило безопасности', 'safety rule', 'Die fünf Sicherheitsregeln gelten vor jeder Arbeit an elektrischen Anlagen.'],
+  ['', 'freischalten', '', 'gərginlikdən ayırmaq', 'отключать от напряжения', 'to isolate (disconnect from the supply)', 'Erste Sicherheitsregel: freischalten.'],
+  ['', 'erden', '', 'torpaqlamaq', 'заземлять', 'to earth, to ground'],
+  ['', 'verlegen', '', '(kabel) çəkmək', 'прокладывать (кабель)', 'to lay (cables)', 'Wir verlegen heute die Kabel im Keller.'],
+];
+
+const LISTS: Record<Level, Partial<Record<Field, Entry[]>>> = { A1, A2: { ...A2, ELECTRICAL: ELECTRICAL_A2 }, B1: { ...B1, ELECTRICAL: ELECTRICAL_B1 } };
 
 const SLUG_MAP: Record<string, string> = { ä: 'ae', ö: 'oe', ü: 'ue', ß: 'ss' };
 export const wordSlug = (article: string, de: string) =>
@@ -389,7 +446,7 @@ export const wordSlug = (article: string, de: string) =>
     .replace(/^-|-$/g, '')
     .slice(0, 80);
 
-export const germanVocabulary = (Object.entries(LISTS) as [Level, Record<Field, Entry[]>][]).flatMap(([level, fields]) =>
+export const germanVocabulary = (Object.entries(LISTS) as [Level, Partial<Record<Field, Entry[]>>][]).flatMap(([level, fields]) =>
   (Object.entries(fields) as [Field, Entry[]][]).flatMap(([field, entries]) =>
     entries.map(([article, de, plural, az, ru, en, example], i) => ({
       slug: wordSlug(article, de),

@@ -27,6 +27,7 @@ import {
   type ProcedureType,
   type RecognitionProcess,
 } from './api';
+import { RecognitionLinks } from './RecognitionLinks'; // anabin + Anerkennungs-Finder
 
 registerCopy(pagesRecognition);
 
@@ -67,6 +68,7 @@ export const RecognitionPanel = ({ caseId, isAdmin }: { caseId: string; isAdmin:
       }
     >
       <p className="text-xs text-muted">{t('recognition.hint')}</p>
+      <RecognitionLinks />
       {data?.clientStatus && (
         <p className="text-xs text-ink/80">{t('recognition.clientStatus', { status: t(`recognition.userStatus.${data.clientStatus}`, { defaultValue: data.clientStatus }) })}</p>
       )}

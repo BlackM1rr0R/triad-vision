@@ -12,6 +12,7 @@ import type { L10n } from '@/lib/types';
 import { PageLoader, Spinner } from '@/components/ui/Spinner';
 import { clientTasksKey, uploadCaseFile, type ClientConfirmation, type ConfirmAnswer } from '@/components/clientData/api';
 import { Success } from '@/components/illustrations';
+import { NameChecker } from '@/components/nameCheck/NameChecker'; // name transliteration checker
 
 type Draft = Record<string, ConfirmAnswer & { proofName?: string }>;
 
@@ -112,6 +113,9 @@ export default function ConfirmDataPage() {
           </div>
         )}
       </header>
+
+      {/* Name spelling: Azerbaijani letters → passport MRZ form, compared with the passport on file. */}
+      <NameChecker caseId={id} />
 
       <input
         ref={fileRef}

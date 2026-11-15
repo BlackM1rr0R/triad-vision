@@ -347,6 +347,54 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Німецький розрахунковий лист по рядках: брутто, податок на зарплату, церковний податок, медичне й пенсійне страхування, нетто й витрати роботодавця.',
     },
   },
+  '/which-city': {
+    name: { az: 'Hansı şəhər sənə uyğundur?', de: 'Welche Stadt passt zu dir?', en: 'Which German city suits you?', ru: 'Какой город тебе подходит?', tr: 'Hangi şehir sana uygun?', uk: 'Яке місто тобі підходить?' },
+    title: { az: 'Hansı alman şəhəri sənə uyğundur? Test', de: 'Welche deutsche Stadt passt zu dir? Quiz', en: 'Which German city suits you? Quiz', ru: 'Какой город Германии тебе подходит? Тест', tr: 'Hangi Alman şehri sana uygun? Test', uk: 'Яке місто Німеччини тобі підходить? Тест' },
+    description: {
+      az: '8 sual — iqlim, büdcə, peşə, nəqliyyat, azərbaycanlı icması və dil — və 14 alman şəhəri arasından sənin şəhərin, səbəbləri və paylaşıla bilən kartla.',
+      de: '8 Fragen zu Klima, Budget, Beruf, Verkehr, Community und Sprache – und aus 14 deutschen Städten deine Stadt, mit Gründen und teilbarer Karte.',
+      en: '8 questions on climate, budget, job, transport, community and language — your city out of 14 German cities, with reasons and a shareable card.',
+      ru: '8 вопросов — климат, бюджет, профессия, транспорт, община и язык — и твой город из 14 городов Германии с объяснением и карточкой.',
+      tr: 'İklim, bütçe, meslek, ulaşım, topluluk ve dil üzerine 8 soru — 14 Alman şehri arasından gerekçeleriyle senin şehrin ve paylaşılabilir kart.',
+      uk: '8 запитань — клімат, бюджет, професія, транспорт, громада й мова — і твоє місто з 14 міст Німеччини з поясненням і карткою.',
+    },
+  },
+  '/permanent-residence': {
+    name: { az: 'Daimi yaşayış və vətəndaşlıq', de: 'Niederlassung & Einbürgerung', en: 'Permanent residence & citizenship', ru: 'ПМЖ и гражданство', tr: 'Süresiz oturum ve vatandaşlık', uk: 'ПМП і громадянство' },
+    title: { az: 'Daimi yaşayış və vətəndaşlıq: nə vaxt?', de: 'Niederlassung & Einbürgerung: wann?', en: 'Permanent residence & citizenship: when?', ru: 'ПМЖ и гражданство Германии: когда? Расчёт', tr: 'Süresiz oturum ve vatandaşlık: ne zaman?', uk: 'ПМП і громадянство Німеччини: коли?' },
+    description: {
+      az: 'Mavi Kart, mütəxəssis, Ausbildung, Chancenkarte və ailə üçün Niederlassungserlaubnis və vətəndaşlığın ən tez tarixi — 2026 qaydaları, zaman xətti.',
+      de: 'Frühester Termin für Niederlassungserlaubnis und Einbürgerung mit Blauer Karte, als Fachkraft, nach Ausbildung oder Chancenkarte – Rechtsstand 2026.',
+      en: 'Earliest settlement permit and citizenship dates for Blue Card, skilled workers, Ausbildung, Chancenkarte and family — 2026 rules with a timeline.',
+      ru: 'Самые ранние даты ПМЖ и гражданства Германии для Голубой карты, специалистов, Ausbildung, Chancenkarte и семьи — правила 2026 года.',
+      tr: 'Mavi Kart, nitelikli işçi, Ausbildung, Chancenkarte ve aile için süresiz oturum ve vatandaşlığın en erken tarihi — 2026 kuralları.',
+      uk: 'Найраніші дати ПМП і громадянства Німеччини для Блакитної карти, фахівців, Ausbildung, Chancenkarte та сім’ї — правила 2026 року.',
+    },
+  },
+  '/driving-licence-germany': {
+    name: { az: 'Sürücülük vəsiqəsi Almaniyada', de: 'Führerschein in Deutschland', en: 'Driving licence in Germany', ru: 'Водительские права в Германии', tr: 'Almanya’da ehliyet', uk: 'Посвідчення водія в Німеччині' },
+    title: { az: 'Azərbaycan sürücülük vəsiqəsi Almaniyada', de: 'Aserbaidschanischer Führerschein: Umschreiben', en: 'Azerbaijani driving licence in Germany', ru: 'Азербайджанские права в Германии: замена', tr: 'Azerbaycan ehliyeti Almanya’da', uk: 'Азербайджанське посвідчення водія в Німеччині' },
+    description: {
+      az: 'Azərbaycan vəsiqəsi ilə Almaniyada 6 ay, sonra imtahanla alman vəsiqəsi: addımlar, sənədlər, xərclər və C/CE yük maşını sürücüləri üçün tələblər.',
+      de: '6 Monate mit dem aserbaidschanischen Führerschein, dann Umschreibung mit Prüfung: Schritte, Unterlagen, Kosten und was Lkw-Fahrer (C/CE) brauchen.',
+      en: '6 months on an Azerbaijani licence, then a German one with tests: steps, documents, costs and what C/CE truck drivers need.',
+      ru: '6 месяцев с азербайджанскими правами, затем немецкие с экзаменами: шаги, документы, расходы и что нужно водителям грузовиков C/CE.',
+      tr: 'Azerbaycan ehliyetiyle 6 ay, ardından sınavla Alman ehliyeti: adımlar, belgeler, maliyetler ve C/CE tır şoförleri için gerekenler.',
+      uk: '6 місяців з азербайджанським посвідченням, далі німецьке з іспитами: кроки, документи, витрати й вимоги для водіїв вантажівок C/CE.',
+    },
+  },
+  '/family-reunification-check': {
+    name: { az: 'Ailə birləşməsi yoxlaması', de: 'Familiennachzug-Check', en: 'Family reunification check', ru: 'Проверка воссоединения семьи', tr: 'Aile birleşimi kontrolü', uk: 'Перевірка возз’єднання сім’ї' },
+    title: { az: 'Ailəmi Almaniyaya gətirə bilərəmmi? Yoxlama', de: 'Familiennachzug: Kann meine Familie kommen?', en: 'Can I bring my family to Germany? Free check', ru: 'Могу ли я перевезти семью в Германию?', tr: 'Ailemi Almanya’ya getirebilir miyim? Kontrol', uk: 'Чи можу я перевезти сім’ю до Німеччини?' },
+    description: {
+      az: 'Ailə birləşməsi üçün pulsuz yoxlama: icazə növü, gəlir, mənzil, A1 və uşaqların yaşı — kim indi, kim sonra gələ bilər və hansı sənədlər lazımdır.',
+      de: 'Gratis-Check Familiennachzug: Titel, Einkommen, Wohnraum, A1 und Alter der Kinder – wer jetzt oder später kommen kann und welche Unterlagen nötig sind.',
+      en: 'Free family reunification self-check: permit, income, flat, A1 and children’s ages — who can join you now or later and which documents you need.',
+      ru: 'Бесплатная проверка воссоединения семьи: ВНЖ, доход, жильё, A1 и возраст детей — кто может приехать сейчас или позже и какие нужны документы.',
+      tr: 'Ücretsiz aile birleşimi kontrolü: oturum, gelir, konut, A1 ve çocukların yaşı — kim şimdi, kim sonra gelebilir ve hangi belgeler gerekli.',
+      uk: 'Безкоштовна перевірка возз’єднання сім’ї: дозвіл, дохід, житло, A1 і вік дітей — хто може приїхати зараз чи пізніше та які потрібні документи.',
+    },
+  },
   '/map': {
     name: { az: 'İşçilərimizin xəritəsi', de: 'Karte unserer Fachkräfte', en: 'Placement map', ru: 'Карта трудоустройства', tr: 'Yerleştirme haritası', uk: 'Карта працевлаштування' },
     title: { az: 'Almaniyada işçilərimiz harada çalışır', de: 'Wo unsere Fachkräfte arbeiten', en: 'Where our workers are in Germany', ru: 'Где работают наши специалисты', tr: 'Çalışanlarımız Almanya\'da nerede?', uk: 'Де працюють наші фахівці' },
@@ -529,6 +577,26 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Бакалавриат и магистратура в Германии: язык обучения, языковые требования, стоимость и сроки подачи. Подайте заявку на программу через Triad Vision.',
       tr: 'Almanya\'da lisans ve yüksek lisans programları: eğitim dili, dil şartları, ücretler ve başvuru tarihleri. Uygun programa Triad Vision ile başvurun.',
       uk: 'Бакалаврат і магістратура в Німеччині: мова навчання, мовні вимоги, вартість і строки подання. Подайте заявку на програму через Triad Vision.',
+    },
+  },
+  // German bureaucracy glossary (/glossary, /glossary/:slug): static terms in lib/glossary.
+  '/glossary': {
+    name: { az: 'Alman bürokratiya lüğəti', de: 'Glossar Behördendeutsch', en: 'German bureaucracy glossary', ru: 'Словарь немецкой бюрократии', tr: 'Alman bürokrasi sözlüğü', uk: 'Словник німецької бюрократії' },
+    title: {
+      az: 'Alman bürokratiya lüğəti: 200 termin izahlı',
+      de: 'Glossar: Behördendeutsch einfach erklärt',
+      en: 'German bureaucracy glossary: 200 terms',
+      ru: 'Словарь немецкой бюрократии: 200 терминов',
+      tr: 'Alman bürokrasi sözlüğü: 200 terim açıklamalı',
+      uk: 'Словник німецької бюрократії: 200 термінів',
+    },
+    description: {
+      az: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution və digər alman terminləri: artikl, oxunuş, sadə izah və nümunə cümlə.',
+      de: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution und mehr: rund 200 Begriffe mit Artikel, Aussprache, Erklärung und Beispielsatz.',
+      en: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution and more: about 200 German terms with article, pronunciation and a plain explanation.',
+      ru: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution и другие термины: артикль, произношение, простое объяснение и пример.',
+      tr: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution ve diğer Almanca terimler: artikel, okunuş, kısa açıklama ve örnek.',
+      uk: 'Anmeldung, Aufenthaltstitel, Steuer-ID, Krankenkasse, Kaution та інші терміни: артикль, вимова, просте пояснення і приклад.',
     },
   },
   // Service packages (Basic / Standard / Premium) with online order and e-signature.
@@ -818,6 +886,8 @@ export const PRIVATE_PREFIXES = [
   '/unsubscribe',
   '/job-alert', // job alert confirm / manage link (token)
   '/r', // personal referral landing pages (/r/<slug>) and tracked review links
+  '/upload', // login-free case upload link (/upload/<token>)
+  '/originals', // hand-over receipt check (/originals/verify/<code>, QR on the act)
 ];
 
 /**
@@ -852,10 +922,10 @@ export const SPA_ROUTES = [
  */
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
-  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung'] },
+  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check'] },
   { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained'] },
-  { key: 'plan', paths: ['/when-in-germany', '/calculator', '/cities', '/events', '/status'] },
-  { key: 'explore', paths: ['/map', '/guides', '/jobs', '/visas'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/calculator', '/cities', '/events', '/status'] },
+  { key: 'explore', paths: ['/map', '/guides', '/glossary', '/jobs', '/visas'] },
 ];
 
 /** Static routes listed in sitemap.xml, in this order. */

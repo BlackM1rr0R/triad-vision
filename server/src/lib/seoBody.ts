@@ -20,6 +20,7 @@ import { guidePath, renderGuide, type GuideRow } from './guides/service.js';
 import { compareContent } from './compare/visaCompare.js';
 import { findJobLanding, jobLandings, jobLandingTexts, landingOfJob, parseJobLandingPath, relatedLandings, type JobLanding } from './jobLandings.js';
 import { studyDetailBody, studyDetailSlug, studyListBody } from './study/seo.js';
+import { glossaryListBody, glossaryTermBody, glossaryTermOfPath } from './glossary/seo.js';
 
 /*
  * Crawlable page body ("SSR-lite") for search engines and link previews that do not run JavaScript.
@@ -111,7 +112,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
 const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/map', '/tools'];
-const FOOTER = ['/jobs', '/ausbildung', '/study', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
+const FOOTER = ['/jobs', '/ausbildung', '/study', '/glossary', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];
 
@@ -209,6 +210,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
   // Study programme page (lib/study/seo.ts).
   const studySlug = studyDetailSlug(path);
   const studyItem = studySlug ? (data.study ?? []).find((x) => x.slug === studySlug) : undefined;
+  // Glossary term page (lib/glossary/seo.ts).
+  const glossaryItem = glossaryTermOfPath(path);
   if (landing) {
     const lt = jobLandingTexts(landing, lng, jobRegion(landing.city));
     const jl = JL[lng];
@@ -226,6 +229,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       rel.sameProfession.length ? section(lt.labels.sameProfession, landingLinks(rel.sameProfession)) : '',
       `<p>${link('/jobs', lt.labels.allJobs)} · ${link('/booking', t.cta)}</p>`,
     );
+  } else if (glossaryItem) {
+    out.push(...glossaryTermBody(glossaryItem, lng, link), `<p>${link('/guides', staticLabel('/guides'))} · ${link('/booking', t.cta)}</p>`);
   } else if (studyItem) {
     out.push(...studyDetailBody(studyItem, data.study ?? [], lng, link), `<p>${link('/study', staticLabel('/study'))} · ${link('/booking', t.cta)}</p>`);
   } else if (detail) {
@@ -311,6 +316,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         cta,
         '</article>',
         r.related.length ? section(t.related, `<ul>${r.related.map((x) => `<li><a href="${e(x.path)}">${e(x.title)}</a></li>`).join('')}</ul>`) : '',
+        // The glossary of the German terms used in the guides.
+        `<p>${link('/glossary', staticLabel('/glossary'))}</p>`,
         // The tools of this guide (lib/seoLinks.ts; the page shows the same box).
         section(staticLabel('/tools'), linkList(guideTools(g.key))),
       );
@@ -391,6 +398,9 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         out.push(jobList(200), landings.length ? section(LANDINGS_HEADING[lng], landingLinks(landings.slice(0, 60))) : '', `<p>${link('/jobs/germany', staticLabel('/jobs/germany'))}</p>`, cta);
         break;
       }
+      case '/glossary':
+        out.push(...glossaryListBody(lng, link), `<p>${link('/guides', staticLabel('/guides'))} · ${link('/anerkennung', staticLabel('/anerkennung'))}</p>`, cta);
+        break;
       case '/study':
         out.push(...studyListBody(data.study ?? [], lng, link), `<p>${link('/ausbildung', staticLabel('/ausbildung'))} · ${link('/anerkennung', staticLabel('/anerkennung'))}</p>`, cta);
         break;

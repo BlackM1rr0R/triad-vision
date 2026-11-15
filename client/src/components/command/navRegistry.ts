@@ -90,6 +90,7 @@ import {
   Wand2,
   Workflow,
   ScrollText,
+  ClipboardCheck,
   BookOpenCheck,
   Signature as SignatureIcon,
   Palette,
@@ -230,6 +231,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('officialForms', '/admin/official-forms', FileText, 'work'), // official fillable PDFs: templates + mapping (ADMIN edits, STAFF uses)
   a('expiring', '/admin/expiring', Hourglass, 'work'),
   a('recognition', '/admin/recognition', GraduationCap, 'work'), // Anerkennung procedures of all cases
+  a('dataQuality', '/admin/data-quality', ClipboardCheck, 'work'), // active cases with missing data, scored worst first
   a('accelerated', '/admin/accelerated', Rocket, 'work'), // § 81a accelerated skilled-worker procedures
   a('authorities', '/admin/authorities', Landmark, 'work'), // authorities catalogue: Botschaft / Ausländerbehörde / … (STAFF read, ADMIN+ edit)
   a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
@@ -268,6 +270,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('mailboxes', '/admin/mailboxes', AtSign, 'system', { adminOnly: true }), // our own @domain mailboxes (Team hub, next to users)
   a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
   a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
+  a('ruleChanges', '/admin/rule-changes', Scale, 'comms'), // rule-change notices to affected clients (publish ADMIN+)
   a('calls', '/admin/calls', PhoneCall, 'comms', { module: 'calls' }),
   a('bookings', '/admin/bookings', CalendarClock, 'comms', { module: 'bookings' }),
   a('events', '/admin/events', CalendarHeart, 'comms', { module: 'events' }),
@@ -387,10 +390,10 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
-  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
+  { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates'] },
-  { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'referralPartners', 'agents'] },
   {

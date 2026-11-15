@@ -10,6 +10,7 @@ import { PageCta } from '@/components/visa/PageCta';
 import { SalaryArticle } from '@/components/tools/SalaryArticle';
 import { SalaryBreakdown } from '@/components/tools/SalaryBreakdown';
 import { useMoney } from '@/components/tools/format';
+import { AznEquivalent } from '@/components/tools/AznEquivalent';
 import { registerCopy } from '@/i18n';
 import { pagesTools } from '@/i18n/pagesTools';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -293,6 +294,7 @@ export default function SalaryCalculator() {
                   <p className="mt-1 font-display text-2xl font-semibold text-ink tabular-nums sm:text-3xl">{euro(result.yearly.net)}</p>
                 </div>
               </div>
+              <AznEquivalent netMonth={result.monthly.net} netYear={result.yearly.net} className="mt-3" />
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="size-3.5" aria-hidden /> {t('salaryPage.result.hourly', { value: euroCents(result.hourlyNet) })}

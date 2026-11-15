@@ -86,7 +86,7 @@ describe('starter vocabulary', () => {
       if (w.article) expect(['der', 'die', 'das']).toContain(w.article);
     }
     for (const level of ['A1', 'A2', 'B1']) expect(germanVocabulary.filter((w) => w.level === level).length).toBeGreaterThanOrEqual(60);
-    for (const field of ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING']) expect(germanVocabulary.filter((w) => w.field === field).length).toBeGreaterThanOrEqual(25);
+    for (const field of ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING', 'ELECTRICAL']) expect(germanVocabulary.filter((w) => w.field === field).length).toBeGreaterThanOrEqual(25);
     expect(wordSlug('die', 'Bohrmaschine')).toBe('die-bohrmaschine');
     expect(wordSlug('', 'sich gewöhnen an')).toBe('sich-gewoehnen-an');
   });

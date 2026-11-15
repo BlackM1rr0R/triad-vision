@@ -4,6 +4,7 @@ import { useOverview } from '@/components/portal/useOverview';
 import { ManagerCard } from '@/components/portal/Dashboard';
 import { PortalCallbackCard } from '@/components/calls/CallbackForm';
 import { NotificationCenterPage } from '@/components/notifications/center/NotificationCenter';
+import { RuleChangesCard } from '@/components/ruleChanges/ClientRuleChanges'; // "Qayda dəyişiklikləri" (latest two)
 
 /**
  * Messages › Notifications: the notification center (day groups, type filters, infinite scroll, read / unread,
@@ -18,6 +19,7 @@ export default function Notifications() {
       prefs={{ to: '/account/profile' }}
       aside={
         <>
+          <RuleChangesCard />
           <ManagerCard c={overview?.activeCase ?? null} />
           <PortalCallbackCard />
         </>

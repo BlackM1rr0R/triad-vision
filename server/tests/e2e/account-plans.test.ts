@@ -128,6 +128,9 @@ describe('GET /api/account/plus/arrival-prep', () => {
     // Core tasks first (Anmeldung, bank, SIM …), the rest after.
     expect(body.after.map((t: { slug: string }) => t.slug)).toEqual(['anmeldung', 'bankkonto', 'mobilfunk', 'integrationskurs']);
     expect(body.progress).toEqual({ done: 0, total: 7, percent: 0 });
+    // Sample forms (Anmeldung, bank account …) and the client's own data for the cheat-sheet.
+    expect(body.after.filter((t: { sample: boolean }) => t.sample).map((t: { slug: string }) => t.slug)).toEqual(['anmeldung', 'bankkonto']);
+    expect(body.person).toMatchObject({ firstName: client.user.firstName, lastName: client.user.lastName });
 
     // The plan was created on the first visit; fill in the flight and the move-in day.
     const arrival = new Date(Date.now() + 20 * DAY);

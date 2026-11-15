@@ -81,6 +81,7 @@ import { sheetsRouter } from './routes/sheets.js';
 import { tasksRouter } from './routes/tasks.js';
 import { signRouter, signaturesRouter } from './routes/signatures.js';
 import { photoCheckRouter } from './routes/photoCheck.js'; // on-demand biometric passport photo check
+import { nameCheckRouter } from './routes/nameCheck.js'; // name transliteration checker (passport MRZ vs. typed name)
 import { aiRouter } from './routes/ai.js';
 import { aiWritingRouter } from './routes/aiWriting.js';
 import { companyAiRouter } from './routes/companyAi.js';
@@ -112,6 +113,7 @@ import { companySkillVideosRouter } from './routes/companySkillVideos.js'; // em
 import { searchRouter } from './routes/search.js';
 import { germanyJobsRouter } from './routes/germanyJobs.js';
 import { studyRouter } from './routes/study.js';
+import { glossaryRouter } from './routes/glossary.js';
 import { externalApplicationsRouter } from './routes/externalApplications.js';
 import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
@@ -124,6 +126,7 @@ import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google r
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
 import { whenInGermanyRouter } from './routes/whenInGermany.js'; // "When could I be in Germany?" estimator (case-history percentiles, daily cache)
+import { familyCheckRouter } from './routes/familyCheck.js'; // public family reunification self-check (rules of lib/family/legal.ts, nothing stored)
 import { jobFeedsRouter } from './routes/jobFeeds.js'; // /feeds/*.xml: job board feeds (Indeed, StepStone, generic) behind a secret token
 import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
 import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
@@ -131,6 +134,8 @@ import { licenseGuard } from './middleware/license.js'; // white-label licence: 
 import { tvRouter } from './routes/tv.js'; // office TV mode: dashboard data + stream behind a read-only display token
 import { accountArrivalCertificateRouter, publicArrivalCertificateRouter } from './routes/arrivalCertificate.js'; // "Welcome to Germany" arrival certificate + public check
 import { certificatePublicRouter, courseRouter } from './routes/course.js'; // pre-departure course (client) + public certificate verification
+import { uploadLinksRouter } from './routes/uploadLinks.js'; // login-free case upload links (/upload/:token), staff side on the admin router
+import { accountRuleChangesRouter } from './routes/accountRuleChanges.js'; // client portal: "Qayda dəyişiklikləri" (published rule changes)
 
 type RequestWithRawBody = import('express').Request & { rawBody?: Buffer };
 
@@ -225,6 +230,7 @@ export const createApp = () => {
   app.use('/api/tasks', tasksRouter);
   app.use('/api/sign', signRouter);
   app.use('/api/photo-check', photoCheckRouter); // "check my passport photo" (signed in, nothing stored)
+  app.use('/api/name-check', nameCheckRouter); // Azerbaijani name → MRZ / German spellings, vs. the passport MRZ on file
   app.use('/api/angebot', quotePublicRouter); // public quote link (accept / decline)
   app.use('/api/packages', packagesRouter); // service packages: list, order, order status (token)
   app.use('/api/configurator', configuratorPublicRouter); // public package configurator for employers (catalogue prices, request → lead)
@@ -237,6 +243,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
+  app.use('/api/account/rule-changes', accountRuleChangesRouter); // rule changes sent to the client (lib/ruleChanges)
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/arrival-certificate', accountArrivalCertificateRouter); // arrival certificate PDF (own arrived cases)
@@ -263,6 +270,7 @@ export const createApp = () => {
   app.use('/api/guides', guidesRouter); // public topic guides (SEO)
   app.use('/api/search', searchRouter); // public site search (guides, visas, services, FAQ, news, jobs, events, tools)
   app.use('/api/study', studyRouter); // Study in Germany: programme catalogue (curated by staff) + "apply via Triad Vision"
+  app.use('/api/glossary', glossaryRouter); // German bureaucracy glossary (static terms, lib/glossary)
   app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (Adzuna API) + "apply via Triad Vision" for external listings
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
@@ -271,6 +279,7 @@ export const createApp = () => {
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
   app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
   app.use('/api/when-in-germany', whenInGermanyRouter); // arrival-month estimator (public, aggregates only)
+  app.use('/api/family-check', familyCheckRouter); // family reunification self-check (public, no case)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
@@ -324,6 +333,7 @@ export const createApp = () => {
   app.use('/api/course', courseRouter); // pre-departure course: lessons, video, quizzes, certificate PDF (CLIENT)
   app.use('/api/arrival-certificates', publicArrivalCertificateRouter); // public arrival certificate check (number, first name + initial, date)
   app.use('/api/certificates', certificatePublicRouter); // public course certificate check (initials, course, date)
+  app.use('/api/upload-links', uploadLinksRouter); // public login-free upload page data + file upload (token, rate limited)
   app.use('/api', campaignPublicRouter); // campaigns: /o/:token.gif, /c/:token/:link, /unsubscribe/:token
 
   app.use('/feeds', jobFeedsRouter); // job board XML feeds (Caddy forwards /feeds/* here)

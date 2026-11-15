@@ -48,6 +48,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       cookiePolicy: 'Політика cookie',
       status: 'Статус заявки',
       packages: 'Пакети та ціни',
+      glossary: 'Словник',
     },
     home: {
       question: 'Хто ви?',

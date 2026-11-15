@@ -149,7 +149,7 @@ describe('originals register', () => {
     const stored = expectStatus(await move(staff.agent, o.id, { action: 'STORED', location: 'Rəf 1' }), 200).body;
     expect(stored.act).toBeNull();
     const unsigned = expectStatus(await move(staff.agent, o.id, { action: 'GIVEN_OUT', holder: 'Tərcüməçi' }), 200).body;
-    expect(await imageCount((await pdfOf(staff.agent.get(`/api/originals/events/${unsigned.original.events[0].id}/act`))).body)).toBe(0);
+    expect(await imageCount((await pdfOf(staff.agent.get(`/api/originals/events/${unsigned.original.events[0].id}/act`))).body)).toBe(1); // no signatures, only the verification QR code
     expectStatus(await move(staff.agent, o.id, { action: 'RETURNED_TO_OFFICE' }), 200);
     const back = expectStatus(await move(staff.agent, o.id, { action: 'RETURNED_TO_CLIENT', condition: 'Zədəsiz' }), 200).body;
     expect(back.act.nodeId).toBeTruthy();

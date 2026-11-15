@@ -20,6 +20,7 @@ import { useApiError } from '@/components/portal/useApiError';
 import { GERMAN_STATUS_KEY, useGermanCourses, useGermanStatus } from '@/components/journey/api';
 import { GermanProgressBoard } from '@/components/german/GermanProgressBoard';
 import { VocabTrainer } from '@/components/german/VocabTrainer';
+import { VocabQuiz } from '@/components/german/VocabQuiz'; // per-profession multiple-choice quiz
 import { PhraseOfDayCard } from '@/components/world/PhraseOfDay';
 import { BadgesPanel } from '@/components/portal/BadgesPanel'; // German badges: 7 / 30-day streak, 100 / 500 words, levels
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
@@ -441,6 +442,9 @@ export default function German() {
 
       {/* Daily vocabulary practice (spaced repetition, streak). */}
       <VocabTrainer />
+
+      {/* Per-profession quiz: 10 multiple-choice questions from one job field's words. */}
+      <VocabQuiz />
 
       {/* Phrase of the day: one everyday / work phrase, picked by the day in Germany (same as the home page). */}
       <PhraseOfDayCard />

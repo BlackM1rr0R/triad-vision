@@ -21,14 +21,19 @@ export type PrepTaskKey = 'flight' | 'housing' | 'firstDay';
 /** Onboarding slugs shown in the "after arrival" group first, in this order (the rest follow by sortOrder). */
 export const CORE_SLUGS = ['anmeldung', 'krankenversicherung', 'bankkonto', 'steuer-id', 'mobilfunk'];
 
+/** Onboarding slugs with an illustrated sample form / letter in the portal (client: ArrivalSampleForm). */
+export const SAMPLE_FORM_SLUGS = ['anmeldung', 'bankkonto', 'krankenversicherung', 'steuer-id'];
+
 export const arrivalPrep = async (clientId: string, caseId: string | null, now = new Date()) => {
   const c = await approvedCaseFor(clientId, caseId);
   if (!c) return { case: null, arrivalAt: null, before: [], after: [], progress: null };
   await ensurePlans(clientId);
-  const [plan, housing, employer] = await Promise.all([
+  const [plan, housing, employer, me] = await Promise.all([
     prisma.arrivalPlan.findUnique({ where: { caseId: c.id } }),
     prisma.caseHousing.findUnique({ where: { caseId: c.id }, select: { moveInDate: true, contractUploadedAt: true, appointmentAt: true, anmeldungDoneAt: true, city: true } }),
     workerChecklist(c.id),
+    // Pre-fills the sample forms' cheat-sheet (name, birth date, nationality as in the profile).
+    prisma.user.findUnique({ where: { id: clientId }, select: { firstName: true, lastName: true, birthDate: true, nationality: true } }),
   ]);
 
   const arrivalAt = plan?.arrivalTime ?? plan?.flightDate ?? null;
@@ -84,6 +89,7 @@ export const arrivalPrep = async (clientId: string, caseId: string | null, now =
         overdue: !done && !!dueAt && dueAt.getTime() < now.getTime(),
         core: CORE_SLUGS.includes(i.slug),
         appointmentAt: i.slug === 'anmeldung' ? (housing?.appointmentAt ?? null) : null,
+        sample: SAMPLE_FORM_SLUGS.includes(i.slug),
       };
     })
     .sort((a, b) => rank(a.slug) - rank(b.slug));
@@ -97,5 +103,7 @@ export const arrivalPrep = async (clientId: string, caseId: string | null, now =
     before,
     after,
     progress: { done, total, percent: total ? Math.round((done / total) * 100) : 0 },
+    // The client's own data for the sample forms (never sent anywhere; a printable cheat-sheet in the portal).
+    person: me ? { ...me, city: housing?.city ?? plan?.housingCity ?? null, moveInDate: housing?.moveInDate ?? null } : null,
   };
 };

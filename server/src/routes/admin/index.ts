@@ -110,6 +110,9 @@ import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquirie
 import { adminReviewRouter } from './review.js'; // fast document review queue
 import { adminInboxRouter } from './inbox.js'; // staff message inbox (phone "Mesajlar" tab)
 import { adminAuthoritiesRouter } from './authorities.js'; // authorities catalogue: embassies, Ausländerbehörden, … (STAFF read, ADMIN+ edit)
+import { adminUploadLinksRouter } from '../uploadLinks.js'; // "request documents via link": /cases/:id/upload-links*, /upload-links/:id/revoke
+import { adminDataQualityRouter } from './dataQuality.js'; // data-quality panel: active cases with missing data, scored
+import { adminRuleChangesRouter } from './ruleChanges.js'; // rule-change notices: drafts STAFF+, publish ADMIN+
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
@@ -272,6 +275,9 @@ adminRouter.use(adminOfficialFormsRouter); // /official-forms/*, /cases/:id/offi
 adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embassy-package*
 adminRouter.use(adminClientDataRouter); // /case-forms/*, /cases/:id/forms*, /cases/:id/data-confirmation*, /doc-guides*
 adminRouter.use(adminDocumentExpiryRouter); // /cases/:caseId/documents/:docId/expiry, /expiring
+adminRouter.use(adminUploadLinksRouter); // /cases/:id/upload-links*, /upload-links/:linkId/revoke (audited)
+adminRouter.use('/data-quality', adminDataQualityRouter); // active cases: missing profile fields / documents / expiry, score
+adminRouter.use('/rule-changes', adminRuleChangesRouter); // rule changes → affected clients (portal + e-mail)
 adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
 adminRouter.use('/duplicates', requireMinRole('ADMIN'), adminDuplicatesRouter); // duplicate clients: review, not-a-duplicate, merge

@@ -1,3 +1,4 @@
+import QRCode from 'qrcode';
 import { A4, BAND, BRAND, Flow, INK, LINE, MM, MUTED, createDoc, embedImage, fit, numberPages, wrap } from '../cv/pdfKit.js';
 import { loadLetterhead } from '../docCreate/letterhead.js';
 import { ACTION_LABEL, KIND_LABEL, type OriginalAction } from './constants.js';
@@ -26,6 +27,8 @@ export interface ActInput {
   items: ActItem[];
   condition?: string | null;
   signatures?: { client?: Buffer | null; staff?: Buffer | null };
+  /** Public verification page (/originals/verify/<code>), drawn as a QR code next to the title. */
+  verifyUrl?: string | null;
 }
 
 const MARGIN = 18 * MM;
@@ -56,16 +59,31 @@ export const buildActPdf = async (input: ActInput): Promise<Buffer> => {
   flow.rule(MARGIN, A4[0] - MARGIN, BRAND, 1);
   flow.gap(26);
 
-  // Title
+  // Title (with the verification QR code on the right when there is one)
+  const QR = 66;
+  const titleTop = flow.y;
+  let qrBottom = titleTop;
+  if (input.verifyUrl) {
+    const png = await QRCode.toBuffer(input.verifyUrl, { type: 'png', errorCorrectionLevel: 'M', margin: 1, width: 360 });
+    const img = await pdf.embedPng(png);
+    const x = A4[0] - MARGIN - QR;
+    const top = titleTop + 12;
+    flow.page.drawImage(img, { x, y: top - QR, width: QR, height: QR });
+    const cap = 'Yoxla / Prüfen';
+    flow.page.drawText(cap, { x: x + (QR - fonts.regular.widthOfTextAtSize(cap, 7)) / 2, y: top - QR - 9, size: 7, font: fonts.regular, color: MUTED });
+    qrBottom = top - QR - 16;
+  }
+  const textW = input.verifyUrl ? W - QR - 12 : W;
   flow.draw('QƏBUL-TƏHVİL AKTI', MARGIN, { size: 16, bold: true, color: INK });
   flow.gap(18);
   flow.draw('ÜBERGABEPROTOKOLL', MARGIN, { size: 12, bold: true, color: MUTED });
   flow.gap(16);
   const sub = SUBTITLE[input.action] ?? ACTION_LABEL[input.action];
-  flow.para(`${sub.az} / ${sub.de}`, MARGIN, W, { size: 10, color: INK });
+  flow.para(`${sub.az} / ${sub.de}`, MARGIN, textW, { size: 10, color: INK });
   flow.gap(4);
-  flow.para(`№ ${input.number}  ·  Müraciət / Antrag: ${input.caseNumber}`, MARGIN, W, { size: 9, color: MUTED });
-  flow.para(`Tarix / Datum: ${fmtDate(input.at)}`, MARGIN, W, { size: 9, color: MUTED });
+  flow.para(`№ ${input.number}  ·  Müraciət / Antrag: ${input.caseNumber}`, MARGIN, textW, { size: 9, color: MUTED });
+  flow.para(`Tarix / Datum: ${fmtDate(input.at)}`, MARGIN, textW, { size: 9, color: MUTED });
+  if (flow.y > qrBottom) flow.y = qrBottom;
   flow.gap(10);
 
   // Parties

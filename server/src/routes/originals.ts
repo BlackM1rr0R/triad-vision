@@ -4,7 +4,8 @@ import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { hasMinRole, requireAuth, requireMinRole } from '../middleware/auth.js';
 import { audit } from '../lib/audit.js';
-import { HttpError, notFound, parse } from '../lib/http.js';
+import { HttpError, limiter, notFound, parse } from '../lib/http.js';
+import { receiptVerifyUrl, verifyReceipt } from '../lib/originals/receipts.js';
 import { ORIGINAL_ACTIONS, ORIGINAL_KINDS, ORIGINAL_STATUSES, trackingUrl } from '../lib/originals/constants.js';
 import { readAct } from '../lib/originals/acts.js';
 import { LABEL_LAYOUTS, buildLabelPdf } from '../lib/originals/labelPdf.js';
@@ -55,6 +56,9 @@ originalsRouter.get('/my/cases/:caseId', requireAuth, async (req, res) => {
   // Only acts whose file still exists.
   const liveActs = await prisma.driveNode.findMany({ where: { id: { in: [...acts.keys()] }, deletedAt: null }, select: { id: true } });
   const live = new Set(liveActs.map((n) => n.id));
+  const receipts = new Map(
+    (await prisma.originalReceipt.findMany({ where: { actNodeId: { in: [...live] } }, select: { actNodeId: true, number: true, code: true } })).map((r) => [r.actNodeId, r]),
+  );
   res.json({
     originals: rows.map((o) => ({
       id: o.id,
@@ -69,7 +73,10 @@ originalsRouter.get('/my/cases/:caseId', requireAuth, async (req, res) => {
     })),
     acts: [...acts.entries()]
       .filter(([nodeId]) => live.has(nodeId))
-      .map(([, a]) => a)
+      .map(([nodeId, a]) => {
+        const r = receipts.get(nodeId);
+        return { ...a, receiptNumber: r?.number ?? null, verifyUrl: r ? receiptVerifyUrl(r.code) : null };
+      })
       .sort((a, b) => b.at.getTime() - a.at.getTime()),
   });
 });
@@ -94,6 +101,18 @@ originalsRouter.get('/qr/:caseId', requireAuth, async (req, res) => {
   if (!c) throw notFound('NOT_FOUND');
   const folder = c.driveFolderId ? await prisma.driveNode.findFirst({ where: { id: c.driveFolderId, deletedAt: null }, select: { id: true } }) : null;
   res.json({ caseId: c.id, number: c.number, driveFolderId: folder?.id ?? null });
+});
+
+// ─── Public receipt check (QR on the act): non-sensitive snapshot only, no login ──────
+
+const verifyLimiter = limiter({ windowMs: 60 * 1000, limit: 30, skip: () => config.isTest });
+
+originalsRouter.get('/verify/:code', verifyLimiter, async (req, res) => {
+  res.setHeader('X-Robots-Tag', 'noindex');
+  res.setHeader('Cache-Control', 'no-store');
+  const r = await verifyReceipt(param(req, 'code').toUpperCase().slice(0, 32));
+  if (!r) throw notFound('RECEIPT_NOT_FOUND');
+  res.json(r);
 });
 
 // ─── Staff ────────────────────────────────────────────────────────────────

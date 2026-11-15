@@ -209,6 +209,7 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
     case 'letters-explain':
       return 'letterExplain';
     case 'notifications':
+    case 'rule-changes': // "Qayda dəyişiklikləri" belongs to the notifications
       return 'notifications';
     case 'course':
       return 'course';

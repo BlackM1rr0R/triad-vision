@@ -8,7 +8,7 @@
 
 export const VOCAB_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 export type VocabLevel = (typeof VOCAB_LEVELS)[number];
-export const VOCAB_FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING'] as const;
+export const VOCAB_FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING', 'ELECTRICAL'] as const;
 export type VocabField = (typeof VOCAB_FIELDS)[number];
 
 /** New words introduced per day; reviews are not capped (they are what keeps words). */

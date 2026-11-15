@@ -30,6 +30,7 @@ import type { CityCost } from '@prisma/client';
 import { findJobLanding, jobLandingTexts, jobLandings, parseJobLandingPath } from './jobLandings.js';
 import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, studyListLd, type StudySeoRow } from './study/seo.js';
 import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
+import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -682,6 +683,9 @@ export const TOOL_PAGES = new Set([
   '/life-in-germany',
   '/when-in-germany',
   '/payslip-explained',
+  '/which-city',
+  '/permanent-residence',
+  '/family-reunification-check',
   '/cities',
   '/eligibility',
   '/uygunluq-testi',
@@ -954,6 +958,7 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       const ld = studyListLd(data.study ?? [], lng, textIn(page.name, lng), berlinToday());
       if (ld) resolved.jsonLd.push(ld);
     }
+    if (path === '/glossary') resolved.jsonLd.push(glossarySetLd(lng, textIn(page.name, lng), textIn(page.description, lng)));
     if (path === '/packages' && (data.packages ?? []).length) {
       // One Service with an OfferCatalog: each package is an Offer with its price (VAT included).
       resolved.jsonLd.push({
@@ -1069,6 +1074,22 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
           itemListElement: landing.jobs.map((j, i) => ({ '@type': 'ListItem', position: i + 1, name: collapse(pick(j.title, lng)), url: pageUrl(`/jobs/${j.slug}`, lng) })),
         },
       ],
+      extraMeta: [],
+    };
+  }
+
+  // Glossary terms (lib/glossary/seo.ts): static texts in every language (same path), so all six are alternates.
+  if (glossarySlugOf(path)) {
+    const term = glossaryTermOfPath(path);
+    if (!term) return generic;
+    return {
+      title: glossaryTitle(term, lng),
+      description: glossaryDescription(term, lng),
+      index: true,
+      image: null,
+      ogType: 'article',
+      crumbs: [home, { name: staticName('/glossary', lng), path: '/glossary' }, { name: term.term, path }],
+      jsonLd: [glossaryTermLd(term, lng, staticName('/glossary', lng))],
       extraMeta: [],
     };
   }
@@ -1301,7 +1322,7 @@ export const isKnownRoute = (path: string) =>
   !!STATIC_PAGES[path] ||
   isPrivatePath(path) ||
   SPA_ROUTES.some((r) => routeMatches(r, path)) ||
-  /^\/(visas|services|news|jobs|events|guides|study)\/[^/]+$/.test(path);
+  /^\/(visas|services|news|jobs|events|guides|study|glossary)\/[^/]+$/.test(path);
 
 /**
  * HTTP status of a page URL for the HTML shell (Caddy include /__seo/status, deploy/Caddyfile): 404 for
@@ -1319,6 +1340,8 @@ export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
   // Study programme: only while it is published.
   const studySlug = studyDetailSlug(path);
   if (studySlug) return (data.study ?? []).some((x) => x.slug === studySlug) ? 200 : 404;
+  // Glossary term (lib/glossary, static data).
+  if (glossarySlugOf(path)) return glossaryTermOfPath(path) ? 200 : 404;
   const m = /^\/(visas|services|news|jobs|events|guides|ebook|l)\/([^/]+)$/.exec(path);
   // A hand-written page under a content section (/jobs/germany) is not a slug.
   if (m && !STATIC_PAGES[path]) {
@@ -1469,7 +1492,7 @@ const latest = (dates: Date[], fallback = STATIC_LASTMOD) =>
   dates.reduce((max, d) => (d.getTime() > max.getTime() ? d : max), fallback);
 
 /** Child sitemaps of /sitemap.xml (/sitemaps/<group>.xml). */
-export const SITEMAP_GROUPS = ['pages', 'content', 'guides', 'jobs', 'events', 'landing', 'study'] as const;
+export const SITEMAP_GROUPS = ['pages', 'content', 'guides', 'jobs', 'events', 'landing', 'study', 'glossary'] as const;
 export type SitemapGroup = (typeof SITEMAP_GROUPS)[number];
 
 interface SitemapUrl {
@@ -1522,6 +1545,7 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/guides': latest((data.guides ?? []).map((g) => g.updatedAt)),
         '/packages': latest((data.packages ?? []).map((p) => p.updatedAt)),
         '/study': latest((data.study ?? []).map((p) => p.updatedAt)),
+        '/glossary': latest([GLOSSARY_LASTMOD]),
       };
       return SITEMAP_STATIC.flatMap((path) =>
         allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
@@ -1554,6 +1578,9 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
       ];
     case 'events':
       return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt, undefined, e.title));
+    case 'glossary':
+      // Every language: the term pages have their texts in all six (tr / uk with the English long text).
+      return glossarySitemapPaths().flatMap((p) => allLanguages(p, GLOSSARY_LASTMOD));
     case 'study':
       // Every language: the programme pages generate their texts in all six.
       return (data.study ?? []).flatMap((p) => allLanguages(`/study/${p.slug}`, p.updatedAt));

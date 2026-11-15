@@ -28,6 +28,7 @@ import { RecognitionNotice } from '@/components/uploadAi/RecognitionNotice';
 import { qualityOf, type Quality } from '@/components/uploadAi/api';
 import { PHOTO_KEYS, PhotoCheckNotice, photoCheckOf, type PhotoCheck } from '@/components/uploadAi/PhotoCheckNotice'; // biometric photo checklist
 import { optimizeImages } from '@/lib/imageCompress';
+import { PhotoCameraButton } from '@/components/uploadAi/PhotoCamera'; // live camera with the biometric face frame
 import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // in-browser camera document scanner
 import DocGuideButton from '@/components/clientData/DocGuideButton'; // "Necə almalı?" guide per requirement key
 import { HowToShoot } from '@/components/docGuide/HowToShoot'; // "Necə çəkməli?" good / bad example + tips
@@ -359,6 +360,8 @@ const RequirementCard = ({
               <FileStack className="size-4" aria-hidden />
               {t('expiry.scan.button')}
             </button>
+            {/* Biometric photo: live camera with the 35 × 45 face frame and the server photo check before the upload. */}
+            {PHOTO_KEYS.includes((req as Requirement & { key?: string | null }).key ?? '') && <PhotoCameraButton onPhoto={upload} disabled={pdfProgress !== null || progress !== null} />}
             {/* Camera scanner: edge detection, perspective correction, enhancement → the same PDF endpoint. */}
             <ScanCameraButton onPages={sendPages} disabled={pdfProgress !== null || progress !== null} progress={pdfProgress} title={tr(req.title)} />
             {pdfProgress !== null ? (

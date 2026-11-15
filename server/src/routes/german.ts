@@ -30,6 +30,7 @@ import {
   updateExam,
 } from '../lib/german/service.js';
 import { recordReview, reviewSchema, sessionQuerySchema, vocabSession, vocabSummary } from '../lib/german/vocabService.js';
+import { quizQuerySchema, vocabQuiz } from '../lib/german/quiz.js'; // per-profession multiple-choice quiz
 
 /**
  * German language progress of the signed-in candidate — mounted at /api/german ("Alman dili" page, app).
@@ -43,6 +44,7 @@ import { recordReview, reviewSchema, sessionQuerySchema, vocabSession, vocabSumm
  *   GET    /vocab                       vocabulary trainer: streak, today, due, groups by level / job field
  *   GET    /vocab/session?level&field   today's cards (due reviews, then new words)
  *   POST   /vocab/review                { wordId, grade 0–5 } → SM-2 state + fresh summary
+ *   GET    /vocab/quiz?field&lang       10 multiple-choice questions from one job field's words (nothing stored)
  *
  * The level itself changes through the self-test (journey), staff, or an accepted certificate.
  */
@@ -117,6 +119,11 @@ germanRouter.get('/vocab/session', async (req, res) => {
 
 germanRouter.post('/vocab/review', async (req, res) => {
   res.json(await recordReview(clientOnly(req), parse(reviewSchema, req.body ?? {})));
+});
+
+germanRouter.get('/vocab/quiz', async (req, res) => {
+  clientOnly(req);
+  res.json(await vocabQuiz(parse(quizQuerySchema, req.query)));
 });
 
 const removeFile = (storedName: string) => fs.unlink(path.join(config.uploads.privateDir, storedName)).catch(() => undefined);

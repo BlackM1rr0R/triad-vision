@@ -30,6 +30,7 @@ const az = {
       CONSTRUCTION: 'Tikinti',
       HOSPITALITY: 'Otel və restoran',
       DRIVING: 'Sürücülük və logistika',
+      ELECTRICAL: 'Elektrik işləri',
     },
     card: {
       new: 'Yeni söz',
@@ -98,6 +99,7 @@ const de: Copy = {
       CONSTRUCTION: 'Bau',
       HOSPITALITY: 'Hotel und Gastronomie',
       DRIVING: 'Fahren und Logistik',
+      ELECTRICAL: 'Elektrotechnik',
     },
     card: {
       new: 'Neues Wort',
@@ -164,6 +166,7 @@ const en: Copy = {
       CONSTRUCTION: 'Construction',
       HOSPITALITY: 'Hotels and restaurants',
       DRIVING: 'Driving and logistics',
+      ELECTRICAL: 'Electrical work',
     },
     card: {
       new: 'New word',
@@ -230,6 +233,7 @@ const ru: Copy = {
       CONSTRUCTION: 'Строительство',
       HOSPITALITY: 'Отели и рестораны',
       DRIVING: 'Вождение и логистика',
+      ELECTRICAL: 'Электромонтаж',
     },
     card: {
       new: 'Новое слово',

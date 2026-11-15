@@ -6762,3 +6762,78 @@ model ArrivalCertificate {
 
   @@index([userId])
 }
+
+// ─── Staff tools: originals receipt verification, login-free upload links, rule-change notices ─
+
+/// Public check of a hand-over receipt (QR on the Übergabeprotokoll): a non-sensitive snapshot only —
+/// receipt number, date, number of documents, kind (received / given out / returned), staff first name and
+/// the client's initials. Plain ids, no foreign keys (lib/originals/receipts.ts).
+model OriginalReceipt {
+  id             String   @id @default(cuid())
+  code           String   @unique @db.VarChar(32)
+  actNodeId      String   @unique @db.VarChar(40)
+  number         String   @db.VarChar(80)
+  caseId         String   @db.VarChar(40)
+  action         String   @db.VarChar(30)
+  at             DateTime
+  itemCount      Int
+  staffFirstName String?  @db.VarChar(80)
+  clientInitials String   @db.VarChar(8)
+  createdAt      DateTime @default(now())
+
+  @@index([caseId])
+}
+
+/// "Request documents via link": a login-free upload page (/upload/:token) for one case and a set of
+/// requirements. Only the SHA-256 of the token is stored; expires, revocable (lib/uploadLinks).
+model CaseUploadLink {
+  id             String    @id @default(cuid())
+  caseId         String    @db.VarChar(40)
+  tokenHash      String    @unique @db.VarChar(64)
+  tokenPrefix    String    @db.VarChar(16)
+  requirementIds Json
+  note           String?   @db.VarChar(500)
+  sentTo         String?   @db.VarChar(190)
+  createdById    String    @db.VarChar(40)
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  revokedById    String?   @db.VarChar(40)
+  uploadCount    Int       @default(0)
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([caseId])
+}
+
+/// A rule change (law / embassy practice) published to the clients of the affected visa types:
+/// texts per language { az, de?, en?, ru? }, in-portal notice + e-mail (lib/ruleChanges).
+model RuleChange {
+  id             String    @id @default(cuid())
+  title          Json
+  body           Json
+  visaTypes      Json
+  effectiveDate  DateTime?
+  sourceUrl      String?   @db.VarChar(500)
+  status         String    @default("DRAFT") @db.VarChar(12) // DRAFT | PUBLISHED
+  createdById    String    @db.VarChar(40)
+  publishedAt    DateTime?
+  publishedById  String?   @db.VarChar(40)
+  recipientCount Int       @default(0)
+  emailCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+/// Who received a published rule change (the client's "Qayda dəyişiklikləri" list).
+model RuleChangeRecipient {
+  id           String   @id @default(cuid())
+  ruleChangeId String   @db.VarChar(40)
+  userId       String   @db.VarChar(40)
+  emailed      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@unique([ruleChangeId, userId])
+  @@index([userId])
+}

@@ -131,6 +131,8 @@ const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'))
 const JobLanding = lazyRoute('JobLanding', () => import('./pages/jobs/JobLanding')); // /jobs/in/:city/:profession (server lib/jobLandings.ts)
 const StudyCatalogue = lazyRoute('StudyCatalogue', () => import('./pages/study/StudyCatalogue')); // /study: programme catalogue (curated by staff)
 const StudyProgrammeDetail = lazyRoute('StudyProgrammeDetail', () => import('./pages/study/StudyProgrammeDetail')); // /study/:slug + apply via Triad Vision
+const GlossaryIndex = lazyRoute('GlossaryIndex', () => import('./pages/glossary/GlossaryIndex')); // /glossary: German bureaucracy glossary (static terms, server lib/glossary)
+const GlossaryTermPage = lazyRoute('GlossaryTermPage', () => import('./pages/glossary/GlossaryTermPage')); // /glossary/:slug
 const AdminStudyProgrammes = lazyRoute('AdminStudyProgrammes', () => import('./pages/admin/StudyProgrammes')); // /admin/study: catalogue CRUD + CSV
 const GermanyJobs = lazyRoute('GermanyJobs', () => import('./pages/jobs/GermanyJobs')); // /jobs/germany(/search): Adzuna search, BA link, apply via Triad Vision
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
@@ -159,6 +161,10 @@ const LifeInGermanyPage = lazyRoute('LifeInGermanyPage', () => import('./pages/t
 const PhraseOfTheDayPage = lazyRoute('PhraseOfTheDayPage', () => import('./pages/PhraseOfTheDay')); // German phrase of the day + last 30 days (/phrase-of-the-day)
 const WhenInGermanyPage = lazyRoute('WhenInGermanyPage', () => import('./pages/tools/WhenInGermany')); // arrival-month estimator (/when-in-germany)
 const PayslipExplainedPage = lazyRoute('PayslipExplainedPage', () => import('./pages/tools/PayslipExplained')); // German payslip explainer (/payslip-explained)
+const WhichCityPage = lazyRoute('WhichCityPage', () => import('./pages/tools/WhichCity')); // "Which German city suits you?" quiz (/which-city)
+const PermanentResidencePage = lazyRoute('PermanentResidencePage', () => import('./pages/tools/PermanentResidence')); // settlement permit + citizenship timeline (/permanent-residence)
+const DrivingLicencePage = lazyRoute('DrivingLicencePage', () => import('./pages/tools/DrivingLicence')); // Azerbaijani licence in Germany guide (/driving-licence-germany)
+const FamilyReunificationCheckPage = lazyRoute('FamilyReunificationCheckPage', () => import('./pages/tools/FamilyReunificationCheck')); // public family reunification self-check
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
 const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
@@ -241,6 +247,11 @@ const AdminCourse = lazyRoute('AdminCourse', () => import('./pages/admin/Course'
 const AccountCourse = lazyRoute('AccountCourse', () => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
 const CertificateVerify = lazyRoute('CertificateVerify', () => import('./pages/CertificateVerify')); // public course certificate check
 const ArrivalCertificateVerify = lazyRoute('ArrivalCertificateVerify', () => import('./pages/ArrivalCertificateVerify')); // public arrival certificate check
+const OriginalsVerify = lazyRoute('OriginalsVerify', () => import('./pages/OriginalsVerify')); // public hand-over receipt check (QR on the act)
+const UploadByLink = lazyRoute('UploadByLink', () => import('./pages/UploadByLink')); // login-free case upload link
+const AccountRuleChanges = lazyRoute('AccountRuleChanges', () => import('./pages/account/RuleChanges')); // Qayda dəyişiklikləri (portal)
+const AdminDataQuality = lazyRoute('AdminDataQuality', () => import('./pages/admin/DataQuality')); // data-quality panel
+const AdminRuleChanges = lazyRoute('AdminRuleChanges', () => import('./pages/admin/RuleChanges')); // rule-change notices
 const AdminShifts = lazyRoute('AdminShifts', () => import('./pages/admin/Shifts')); // team calendar: shifts, leave, handovers
 const AdminCheckIns = lazyRoute('AdminCheckIns', () => import('./pages/admin/CheckIns')); // post-arrival check-ins + retention
 const AdminAgents = lazyRoute('AdminAgents', () => import('./pages/admin/Agents'));
@@ -445,11 +456,17 @@ export default function App() {
             <Route path="phrase-of-the-day" element={<PhraseOfTheDayPage />} />
             <Route path="when-in-germany" element={<WhenInGermanyPage />} />
             <Route path="payslip-explained" element={<PayslipExplainedPage />} />
+            <Route path="which-city" element={<WhichCityPage />} />
+            <Route path="permanent-residence" element={<PermanentResidencePage />} />
+            <Route path="driving-licence-germany" element={<DrivingLicencePage />} />
+            <Route path="family-reunification-check" element={<FamilyReunificationCheckPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
             <Route path="certificate/:code" element={<CertificateVerify />} />
             <Route path="arrival-certificate/:code" element={<ArrivalCertificateVerify />} />
+            <Route path="originals/verify/:code" element={<OriginalsVerify />} />
+            <Route path="upload/:token" element={<UploadByLink />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
             <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
             <Route path="r/:slug" element={<ReferralLandingPage />} />
@@ -478,6 +495,8 @@ export default function App() {
             <Route path="jobs" element={<Jobs />} />
             <Route path="study" element={<StudyCatalogue />} />
             <Route path="study/:slug" element={<StudyProgrammeDetail />} />
+            <Route path="glossary" element={<GlossaryIndex />} />
+            <Route path="glossary/:slug" element={<GlossaryTermPage />} />
             <Route path="jobs/germany" element={<GermanyJobs />} />
             <Route path="jobs/germany/search" element={<GermanyJobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
@@ -555,6 +574,7 @@ export default function App() {
               <Route path="arrival-prep" element={<AccountArrivalPrep />} />
               <Route path="arrival-card" element={<AccountArrivalCard />} />
               <Route path="badges" element={<AccountBadges />} />
+              <Route path="rule-changes" element={<AccountRuleChanges />} />
               <Route path="checklist" element={<AccountDocChecklist />} />
               <Route path="budget" element={<AccountBudget />} />
               <Route path="interview-prep" element={<AccountInterviewPrep />} />
@@ -817,6 +837,8 @@ export default function App() {
             <Route path="partner-housing" element={<AdminPartnerHousing />} />
             <Route path="expiring" element={<AdminExpiring />} />
             <Route path="recognition" element={<AdminRecognition />} />
+            <Route path="data-quality" element={<AdminDataQuality />} />
+            <Route path="rule-changes" element={<AdminRuleChanges />} />
             <Route path="accelerated" element={<AdminAccelerated />} />
             <Route path="authorities/*" element={<AdminAuthorities />} />
             <Route path="family-reunion" element={<AdminFamilyReunion />} />

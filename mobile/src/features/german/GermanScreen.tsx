@@ -20,7 +20,7 @@ import { colors, fonts, radius, space } from '@/theme';
  * Same API as the web portal (/api/german/vocab*, /api/german/me).
  */
 
-const FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING'] as const;
+const FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING', 'ELECTRICAL'] as const;
 const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 const GRADES = { again: 1, hard: 3, good: 4, easy: 5 } as const;
 type GradeKey = keyof typeof GRADES;

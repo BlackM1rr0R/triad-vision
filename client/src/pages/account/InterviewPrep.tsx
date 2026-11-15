@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Building2, Dumbbell, Eye, EyeOff, Landmark, Lightbulb, RotateCcw, Shuffle, Square, Timer, Volume2 } from 'lucide-react';
+import { Building2, Dumbbell, GalleryHorizontal, Eye, EyeOff, Landmark, Lightbulb, RotateCcw, Shuffle, Square, Timer, Volume2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -16,6 +16,7 @@ import { categoryLabel, PREP_KINDS, type PrepKind, type PrepQuestion, type VisaT
 import { useGermanSpeech } from '@/components/prep/useSpeech';
 import { usePractised } from '@/components/prep/usePractised';
 import { Learning } from '@/components/illustrations';
+import { FlipCards } from '@/components/prep/FlipCards'; // flip-card mode (3D flip, swipe, knew / again marks)
 
 registerCopy(pagesPrep);
 
@@ -241,6 +242,7 @@ export default function AccountInterviewPrep() {
   const [category, setCategory] = useState<string | null>(null);
   const [allTypes, setAllTypes] = useState(false);
   const [practice, setPractice] = useState(false);
+  const [flipCards, setFlipCards] = useState(false);
   const speech = useGermanSpeech();
   const { practised, toggle, reset } = usePractised();
 
@@ -320,6 +322,9 @@ export default function AccountInterviewPrep() {
                     <RotateCcw className="size-3.5" aria-hidden /> {t('prep.page.resetProgress')}
                   </button>
                 )}
+                <button type="button" className={btnSecondary} disabled={!visible.length} onClick={() => setFlipCards(true)}>
+                  <GalleryHorizontal className="size-3.5" aria-hidden /> {t('prep.flip.start')}
+                </button>
                 <button type="button" className="btn-primary btn-sm" disabled={!visible.length} onClick={() => setPractice(true)}>
                   <Dumbbell className="size-3.5" aria-hidden /> {t('prep.page.practice.start')}
                 </button>
@@ -371,6 +376,7 @@ export default function AccountInterviewPrep() {
         </>
       )}
 
+      {flipCards && visible.length > 0 && <FlipCards items={visible} onClose={() => setFlipCards(false)} speech={speech} onKnew={(id) => toggle(id, true)} />}
       {practice && visible.length > 0 && <PracticeMode items={visible} onClose={() => setPractice(false)} speech={speech} onDone={(id) => toggle(id, true)} />}
     </div>
   );

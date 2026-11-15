@@ -14,6 +14,8 @@ import { RequirementsSection } from '../Requirements';
 import type { CaseTabProps } from './types';
 import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
 import { FastReviewButton } from '@/components/staffPower/review/FastReviewButton'; // "Sürətli yoxlama" for this case
+import { NameChecker } from '@/components/nameCheck/NameChecker'; // name transliteration checker
+import { UploadLinkPanel } from '@/components/uploadLinks/UploadLinkPanel'; // "request documents via link"
 
 /**
  * Sənədlər: requirement review (accept / reject / request, smart-upload suggestions), the embassy package,
@@ -45,6 +47,8 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
         <RequirementsSection c={c} stage="INITIAL" />
       </div>
       {!embassyFirst && embassy}
+      {/* "Request documents via link": login-free upload page for chosen requirements (expires, revocable). */}
+      <UploadLinkPanel caseId={c.id} />
       <EmbassyPackagePanel c={c} />
       {/* Four-eyes check of the package before the embassy step (from the embassy stage on). */}
       {showEmbassy && <FourEyesPanel c={c} />}
@@ -55,6 +59,8 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
       <EmploymentContractPanel caseId={c.id} />
       {/* Official forms: national visa application, Erklärung zum Beschäftigungsverhältnis … (fill, missing data, employer signature). */}
       <CaseOfficialFormsPanel caseId={c.id} />
+      {/* Name spelling: typed name → passport MRZ form / German spellings, vs. the passport MRZ on file. */}
+      <NameChecker caseId={c.id} audience="staff" />
       {/* Recognition of the qualification (Anerkennung): procedures, checklist, letters, deficits, fee, deadline. */}
       <RecognitionPanel caseId={c.id} isAdmin={isAdmin} />
       {/* § 81a accelerated skilled-worker procedure (needs the case's employer): stepper, correspondence, deadlines. */}

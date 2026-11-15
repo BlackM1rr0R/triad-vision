@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, Building2, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BookA, Building2, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
@@ -208,6 +208,12 @@ export default function GuideDetail() {
                     </Link>
                   </li>
                 ))}
+                {/* German terms of the guides explained (Lüğət, /glossary). */}
+                <li>
+                  <Link to="/glossary" className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-semibold text-ink hover:bg-sunken">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg chip-sky"><BookA className="size-4" aria-hidden /></span> {t('siteNav.footer.glossary')}
+                  </Link>
+                </li>
               </ul>
             </div>
           </aside>

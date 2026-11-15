@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, BedDouble, IdCard, Check, CheckCircle2, ChevronDown, Circle, Compass, ExternalLink, ListChecks, Plane, PlaneLanding, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowRight, BedDouble, IdCard, Check, CheckCircle2, ChevronDown, Circle, Compass, ExternalLink, FileText, ListChecks, Plane, PlaneLanding, Sparkles, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -20,9 +20,14 @@ import { Traveller } from '@/components/illustrations';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { ONBOARDING_KEY } from '@/components/journey/api';
+// Sample forms of the first weeks (Anmeldung, bank, Krankenkasse, Steuer-ID) with a printable cheat-sheet.
+import { SampleFormDialog } from '@/components/arrivalSamples/SampleFormDialog';
+import { isSampleSlug, type SamplePerson } from '@/components/arrivalSamples/forms';
+import { pagesArrivalSamples } from '@/i18n/pagesArrivalSamples';
 
 registerCopy(pagesPortalPlans);
 registerCopy(pagesGermanyDay); // arrival card link
+registerCopy(pagesArrivalSamples);
 
 type BeforeKey = 'flight' | 'housing' | 'firstDay';
 
@@ -48,6 +53,8 @@ interface AfterTask {
   overdue: boolean;
   core: boolean;
   appointmentAt: string | null;
+  /** Has an illustrated sample form (Anmeldung, bank account, health insurance, tax ID). */
+  sample?: boolean;
 }
 
 /** GET /api/account/plus/arrival-prep (server: lib/account/arrivalPrep.ts). */
@@ -58,6 +65,7 @@ interface ArrivalPrepResponse {
   before: BeforeTask[];
   after: AfterTask[];
   progress: { done: number; total: number; percent: number } | null;
+  person?: SamplePerson | null;
 }
 
 const PREP_KEY = ['account-arrival-prep'] as const;
@@ -103,13 +111,15 @@ const BeforeRow = ({ task }: { task: BeforeTask }) => {
   );
 };
 
-const AfterRow = ({ task, caseId }: { task: AfterTask; caseId: string }) => {
+const AfterRow = ({ task, caseId, person }: { task: AfterTask; caseId: string; person: SamplePerson | null }) => {
   const { t } = useTranslation();
   const { tr, date } = useL10n();
   const qc = useQueryClient();
   const onError = useApiError();
   const panelId = useId();
   const [open, setOpen] = useState(false);
+  const [sampleOpen, setSampleOpen] = useState(false);
+  const sampleSlug = task.sample !== false && isSampleSlug(task.slug) ? task.slug : null;
   const m = useMutation({
     mutationFn: async (done: boolean) => (await api.put(`/journey/onboarding/${task.id}`, { done, caseId })).data,
     onMutate: async (done) => {
@@ -160,12 +170,21 @@ const AfterRow = ({ task, caseId }: { task: AfterTask; caseId: string }) => {
             )}
           </p>
           {task.appointmentAt && !task.done && <p className="mt-0.5 text-xs font-medium text-ink">{t('pplan.prep.appointment', { date: day(task.appointmentAt) })}</p>}
-          {paragraphs.length > 0 && (
-            <button type="button" className="mt-1 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((v) => !v)}>
-              <ChevronDown className={clsx('size-3.5 transition-transform', open && 'rotate-180')} aria-hidden />
-              {open ? t('pplan.prep.less') : t('pplan.prep.more')}
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-x-4">
+            {paragraphs.length > 0 && (
+              <button type="button" className="mt-1 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((v) => !v)}>
+                <ChevronDown className={clsx('size-3.5 transition-transform', open && 'rotate-180')} aria-hidden />
+                {open ? t('pplan.prep.less') : t('pplan.prep.more')}
+              </button>
+            )}
+            {sampleSlug && (
+              <button type="button" className="mt-1 inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline" aria-haspopup="dialog" onClick={() => setSampleOpen(true)}>
+                <FileText className="size-3.5" aria-hidden />
+                {t('asample.open')}
+              </button>
+            )}
+          </div>
+          {sampleSlug && sampleOpen && <SampleFormDialog slug={sampleSlug} person={person} open onClose={() => setSampleOpen(false)} />}
         </div>
         <button
           type="button"
@@ -303,7 +322,7 @@ export default function AccountArrivalPrep() {
         <p className="mt-0.5 text-sm text-muted">{t('pplan.prep.after.text')}</p>
         <ul className="mt-4 space-y-3">
           {d.after.map((task) => (
-            <AfterRow key={task.id} task={task} caseId={caseId} />
+            <AfterRow key={task.id} task={task} caseId={caseId} person={d.person ?? null} />
           ))}
         </ul>
       </section>

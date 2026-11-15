@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { glossarySitemapPaths } from '../../src/lib/glossary/seo.js';
 import { describe, expect, it } from 'vitest';
 import {
   escapeHtml,
@@ -480,7 +481,8 @@ describe('robots.txt, sitemaps and RSS', () => {
   it('lists one <url> per language with prefixed hreflang alternates and escapes XML', () => {
     const xml = renderSitemap(emptyData({ posts: [{ slug: 'a&b', title: {}, excerpt: {}, cover: '', publishedAt: new Date(), updatedAt: new Date('2026-10-01T00:00:00Z') }] }));
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
-    expect(xml.match(/<url>/g)).toHaveLength((SITEMAP_STATIC.length + 1) * 6);
+    // + the glossary terms (static data, lib/glossary), every language.
+    expect(xml.match(/<url>/g)).toHaveLength((SITEMAP_STATIC.length + 1 + glossarySitemapPaths().length) * 6);
     expect(xml).toContain(`<loc>${ORIGIN}/de/news/a&amp;b</loc>`);
     expect(xml).toContain(`<loc>${ORIGIN}/news/a&amp;b</loc>`);
     expect(xml).toContain(`hreflang="uk" href="${ORIGIN}/uk/news/a&amp;b"`);

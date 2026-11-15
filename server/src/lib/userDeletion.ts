@@ -323,6 +323,10 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await revokeAllShares(userId); // public "visa approved" share links (Setting rows keyed by token)
   await purgeCaseCards(ownCaseIds); // cached private Instagram cards of the cases (disk)
   await eraseArrivalCertificates(userId, ownCaseIds); // "Welcome to Germany" certificates (plain ids)
+  // Staff tools (plain ids): rule-change receipts, login-free upload links and hand-over receipt checks of the cases.
+  await prisma.ruleChangeRecipient.deleteMany({ where: { userId } });
+  await prisma.caseUploadLink.deleteMany({ where: { caseId: { in: ownCaseIds } } });
+  await prisma.originalReceipt.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };
 };

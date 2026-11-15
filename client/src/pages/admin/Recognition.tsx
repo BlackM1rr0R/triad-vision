@@ -15,6 +15,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { toastError } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
 import { DeadlineChip } from '@/components/recognition/RecognitionPanel';
+import { RecognitionLinks } from '@/components/recognition/RecognitionLinks'; // anabin + Anerkennungs-Finder
 import { PROCEDURE_TYPES, RECOGNITION_STATUSES, STATUS_TONE, type RecognitionList } from '@/components/recognition/api';
 
 registerCopy(pagesRecognition);
@@ -61,6 +62,9 @@ export default function AdminRecognition() {
   return (
     <div>
       <PageHead title={t('recognition.list.title')} subtitle={t('recognition.list.subtitle')} />
+      <div className="mb-4 sm:max-w-xl">
+        <RecognitionLinks compact />
+      </div>
       {data && (
         <div className="mb-4 grid grid-cols-3 gap-3 sm:max-w-xl">
           <StatTile label={t('recognition.list.counts.open')} value={data.counts.open} />

@@ -98,7 +98,7 @@ export const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) :
 // ─── Vocabulary trainer (server/src/lib/german/vocabService.ts) ───────
 
 export const VOCAB_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
-export const VOCAB_FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING'] as const;
+export const VOCAB_FIELDS = ['GENERAL', 'WORK', 'CARE', 'CONSTRUCTION', 'HOSPITALITY', 'DRIVING', 'ELECTRICAL'] as const;
 export type VocabField = (typeof VOCAB_FIELDS)[number];
 /** SM-2 grades the answer buttons send. */
 export const GRADES = { again: 1, hard: 3, good: 4, easy: 5 } as const;

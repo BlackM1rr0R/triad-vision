@@ -95,6 +95,7 @@ export const Footer = () => {
   ];
   const resources: FooterLink[] = [
     { to: '/guides', label: t('nav.guides') },
+    { to: '/glossary', label: t('siteNav.footer.glossary') },
     { to: '/tools', label: t('siteNav.tools') },
     { to: '/news', label: t('nav.news') },
     { to: '/faq', label: t('nav.faq') },

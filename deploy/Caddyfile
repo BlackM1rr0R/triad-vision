@@ -215,7 +215,7 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	}
 	@lnglegacy {
 		query lng=*
-		not path_regexp ^(/(de|en|ru|tr|uk))?/(api|uploads|__seo|__ssr|assets|og|sitemaps|feeds|admin|workspace|account|company|agent|partner|booking/manage|review|verify-email|confirm-email-change|login/2fa|reset-password|sign|angebot|share|q|survey|check-in|unsubscribe|kandidat|job-alert|r)(/|$)|[.][A-Za-z0-9]+$
+		not path_regexp ^(/(de|en|ru|tr|uk))?/(api|uploads|__seo|__ssr|assets|og|sitemaps|feeds|admin|workspace|account|company|agent|partner|booking/manage|review|verify-email|confirm-email-change|login/2fa|reset-password|sign|angebot|share|q|survey|check-in|unsubscribe|kandidat|job-alert|r|upload|originals)(/|$)|[.][A-Za-z0-9]+$
 	}
 	handle @lnglegacy {
 		route {

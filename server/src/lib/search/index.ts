@@ -63,6 +63,7 @@ const TOOL_KEYWORDS: Record<string, string> = {
   '/cities': 'city stadt şəhər şehir город місто rent miete kirayə kira аренда оренда cost of living',
   '/map': 'map karte xəritə harita карта',
   '/phrase-of-the-day': 'phrase satz ifadə ifade фраза german deutsch alman almanca немецкий німецька learn lernen öyrən öğren учить вчити',
+  '/glossary': 'glossary glossar lüğət lugat sözlük словарь словник term begriff termin wörterbuch dictionary bürokratie bürokratiya bürokrasi бюрократия бюрократія anmeldung aufenthaltstitel steuer-id krankenkasse kaution',
   '/booking': 'consultation termin beratung konsultasiya danışmanlık randevu консультация консультація appointment',
 };
 

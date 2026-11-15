@@ -1,18 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Download, ExternalLink, FileText, Vault } from 'lucide-react';
+import { Download, ExternalLink, FileText, ShieldCheck, Vault } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesOriginals } from '@/i18n/pagesOriginals';
 import { useL10n } from '@/lib/l10n';
 import { myActUrl, type Kind, type OriginalStatus } from './api';
 import { StatusChip } from './parts';
+import { pagesStaffTools } from '@/i18n/pagesStaffTools';
 
 registerCopy(pagesOriginals);
+registerCopy(pagesStaffTools); // receipt check link (staffTools.verify)
 
 interface MyOriginals {
   originals: { id: string; title: string; kind: Kind; status: OriginalStatus; receivedAt: string; updatedAt: string; carrier: string | null; trackingNo: string | null; trackingUrl: string | null }[];
-  acts: { eventId: string; action: string; at: string; titles: string[] }[];
+  acts: { eventId: string; action: string; at: string; titles: string[]; receiptNumber?: string | null; verifyUrl?: string | null }[];
 }
 
 /** Client portal: read-only list of the originals the office holds for this case, plus the acts to download. */
@@ -62,8 +64,14 @@ export const ClientOriginals = ({ caseId }: { caseId: string }) => {
                   <FileText className="size-4 shrink-0 text-muted" aria-hidden />
                   <span className="truncate">
                     {t(`originals.actions.${a.action}`)} · {date(a.at)}
+                    {a.receiptNumber ? <span className="text-xs text-muted"> · № {a.receiptNumber}</span> : null}
                   </span>
                 </span>
+                {a.verifyUrl && (
+                  <a href={a.verifyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline">
+                    <ShieldCheck className="size-3.5" aria-hidden /> {t('staffTools.verify.title')}
+                  </a>
+                )}
                 <a href={myActUrl(a.eventId, true)} className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-link hover:underline">
                   <Download className="size-3.5" aria-hidden /> {t('originals.portal.download')}
                 </a>

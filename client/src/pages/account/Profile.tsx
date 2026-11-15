@@ -65,6 +65,7 @@ import { SkillVideosPanel } from '@/components/skillVideos/SkillVideosPanel';
 import { RECOGNITION_STATUSES } from '@/components/placement/api';
 import { MyJobAlerts } from '@/components/jobs/MyJobAlerts';
 import { CandidatePoolPanel } from '@/components/pool/CandidatePoolPanel'; // anonymous candidate pool opt-in
+import { NameChecker } from '@/components/nameCheck/NameChecker'; // name spelling: Azerbaijani → passport MRZ / German forms
 
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
@@ -1135,6 +1136,11 @@ export default function Profile() {
 
       <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${tab}`} className="min-w-0">
         {tab === 'personal' && <PersonalPanel key={user.id} user={user} />}
+        {tab === 'personal' && user.role === 'CLIENT' && (
+          <div className="mt-6">
+            <NameChecker />
+          </div>
+        )}
         {tab === 'professional' && <ProfessionalPanel key={user.id} user={user} />}
         {tab === 'professional' && <IntroVideoPanel className="mt-6" />}
         {tab === 'professional' && <SkillVideosPanel className="mt-6" />}

@@ -6,6 +6,7 @@ import { createFileIn, readNodeBuffer, saveFileVersion } from '../drive/files.js
 import { renderEmail, sendMail } from '../mailer.js';
 import { ACTS_FOLDER_NAME, ACTION_LABEL, type OriginalAction } from './constants.js';
 import { buildActPdf, type ActItem } from './actPdf.js';
+import { initialsOf, randomReceiptCode, receiptCodeFor, receiptVerifyUrl, saveReceipt, staffFirstNameOf } from './receipts.js';
 
 /**
  * Hand-over acts in the drive: the PDF goes into "<client folder>/Übergabeprotokolle" (created on first
@@ -62,13 +63,15 @@ export interface ActRequest {
   actorId: string;
 }
 
-const renderAct = async (req: ActRequest) => {
+const renderAct = async (req: ActRequest, receiptCode: string) => {
   const [c, actor] = await Promise.all([
     caseForAct(req.caseId),
     prisma.user.findUnique({ where: { id: req.actorId }, select: { firstName: true, lastName: true } }),
   ]);
+  const number = actNumber(c.number, req.at);
   const pdf = await buildActPdf({
-    number: actNumber(c.number, req.at),
+    number,
+    verifyUrl: receiptVerifyUrl(receiptCode), // QR → public receipt check (lib/originals/receipts.ts)
     action: req.action,
     at: req.at,
     caseNumber: c.number,
@@ -79,22 +82,36 @@ const renderAct = async (req: ActRequest) => {
     condition: req.condition,
     signatures: req.signatures,
   });
-  return { c, pdf };
+  // Non-sensitive snapshot for the public check (initials + staff first name only).
+  const snapshot = (actNodeId: string) => ({
+    code: receiptCode,
+    actNodeId,
+    number,
+    caseId: c.id,
+    action: req.action,
+    at: req.at,
+    itemCount: req.items.length,
+    staffFirstName: staffFirstNameOf(actor?.firstName),
+    clientInitials: initialsOf(c.client.firstName, c.client.lastName),
+  });
+  return { c, pdf, snapshot };
 };
 
 /** Renders the act and stores it in the client folder. Returns the drive node id and the PDF. */
 export const createAct = async (req: ActRequest) => {
-  const { c, pdf } = await renderAct(req);
+  const { c, pdf, snapshot } = await renderAct(req, randomReceiptCode());
   const parent = await actsFolder(c.id);
   const file = await createFileIn(parent, actFileName(req.action, req.at), pdf, 'application/pdf', req.actorId);
+  await saveReceipt(snapshot(file.id));
   return { nodeId: file.id, name: file.name, pdf };
 };
 
-/** Re-renders an existing act (e.g. after signing on screen) and saves it as the next version of its file. */
+/** Re-renders an existing act (e.g. after signing on screen) and saves it as the next version of its file (same QR code). */
 export const rerenderAct = async (nodeId: string, req: ActRequest) => {
-  const { pdf } = await renderAct(req);
+  const { pdf, snapshot } = await renderAct(req, (await receiptCodeFor(nodeId)) ?? randomReceiptCode());
   const node = await prisma.driveNode.findUniqueOrThrow({ where: { id: nodeId }, select: { version: true } });
   await saveFileVersion(nodeId, pdf, 'application/pdf', node.version);
+  await saveReceipt(snapshot(nodeId));
   return pdf;
 };
 

@@ -7,6 +7,7 @@ import { registerCopy } from '@/i18n';
 import { pagesOfficialForms } from '@/i18n/pagesOfficialForms';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
+import { PhotoCameraButton } from './PhotoCamera'; // live camera with the biometric face frame
 
 registerCopy(pagesOfficialForms);
 
@@ -84,7 +85,7 @@ export const PhotoCheckNotice = ({ check, onRetake, onDismiss, className, compac
             </>
           )}
           {onRetake && failed.length > 0 && (
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <input
                 ref={input}
                 type="file"
@@ -102,6 +103,8 @@ export const PhotoCheckNotice = ({ check, onRetake, onDismiss, className, compac
                 <Camera className="size-4" aria-hidden />
                 {t('photoCheck.retake')}
               </button>
+              {/* Live camera with the 35 × 45 face frame → the same check → onRetake. */}
+              <PhotoCameraButton onPhoto={onRetake} />
             </div>
           )}
         </div>

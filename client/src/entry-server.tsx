@@ -37,6 +37,8 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'job-landing', // /jobs/in/:city/:profession (GET /vacancies/landing/…)
   'study-programmes', // /study: the curated programme catalogue (GET /study/programmes)
   'study-programme', // /study/:slug
+  'glossary', // /glossary: every term with its short definition (GET /glossary?lng=)
+  'glossary-term', // /glossary/:slug (GET /glossary/:slug?lng=)
   'germany-jobs-config', // /jobs/germany: whether the Adzuna search is on (the results themselves are never server-rendered)
   'guides',
   'guide',
@@ -52,6 +54,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'life-config', // /life-in-germany: professions, cities, yearly parameters, CBAR rate (article figures)
   'live-numbers', // home / about live numbers board: anonymous aggregates (≥ 3), the same for everyone
   'globe-map', // home globe: placement map aggregates (GET /growth/map, cities with ≥ 3 workers only)
+  'eur-azn', // /salary-calculator (+ other tools): the CBAR EUR→AZN rate (GET /life/rate), the same for everyone
   'when-estimate', // /when-in-germany: percentiles of groups ≥ 10 cases (daily), the same for everyone with the same answers
 ]);
 
