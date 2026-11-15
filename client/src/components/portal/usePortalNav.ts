@@ -107,6 +107,14 @@ export function usePortalNav() {
   const { data: signatures } = useMySignatures({ enabled: !!user });
   const impersonating = getImpersonation() !== null;
   const courses = useMyCourses(!!user && isClient); // Learn › Course appears once the client is enrolled
+  // Learn › External applications also after the job search stages, once one was sent (same query as the page).
+  const externalApps = useQuery({
+    queryKey: ['my-external-applications'],
+    queryFn: async () => (await api.get<{ items: unknown[]; linked: number }>('/external-applications')).data,
+    staleTime: 5 * 60_000,
+    enabled: !!user && isClient,
+    retry: false,
+  });
   const legal = useQuery({
     queryKey: PENDING_KEY,
     queryFn: async () => (await api.get<{ pending: PendingAcceptance[]; blocking: boolean }>('/legal/me/pending')).data,
@@ -139,6 +147,7 @@ export function usePortalNav() {
     openDocActions: actions.some((a) => DOC_KINDS.includes(a.kind)),
     hasPayments: !!next.data?.counts.hasBilling,
     hasCourse: (courses.data?.length ?? 0) > 0,
+    hasExternalApplications: (externalApps.data?.items.length ?? 0) > 0,
   });
 
   const badges: SectionBadges = {

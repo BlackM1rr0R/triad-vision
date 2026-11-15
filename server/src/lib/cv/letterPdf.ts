@@ -1,5 +1,6 @@
 import { BRAND, Flow, INK, LINE, MM, MUTED, A4, clean, createDoc, fit, numberPages, wrap } from './pdfKit.js';
 import { fmtDate } from './texts.js';
+import { germanLongDate } from '../coverLetters/fill.js';
 import type { LetterLang } from './letters.js';
 
 /**
@@ -14,6 +15,8 @@ export interface LetterPdfInput {
   title: string;
   body: string;
   date?: Date;
+  /** German letters: "Baku, 15. November 2026" instead of 15.11.2026 (both DIN 5008). */
+  longDate?: boolean;
 }
 
 export const renderLetterPdf = async (input: LetterPdfInput): Promise<Buffer> => {
@@ -58,7 +61,8 @@ export const renderLetterPdf = async (input: LetterPdfInput): Promise<Buffer> =>
   }
 
   // Place and date
-  const date = `${clean(s.city?.trim() || 'Baku')}, ${fmtDate(input.date ?? new Date(), input.language)}`;
+  const when = input.date ?? new Date();
+  const date = `${clean(s.city?.trim() || 'Baku')}, ${input.longDate && de ? germanLongDate(when) : fmtDate(when, input.language)}`;
   page.drawText(date, { x: right - fonts.regular.widthOfTextAtSize(date, 10.5), y: H - 98 * MM, size: 10.5, font: fonts.regular, color: INK });
 
   // Subject + body

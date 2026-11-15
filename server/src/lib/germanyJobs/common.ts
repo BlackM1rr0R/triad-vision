@@ -176,6 +176,12 @@ export class QueryCache<T> {
     }
   }
 
+  /** The cached value, if still fresh (no load). */
+  peek(key: string, now = Date.now()): T | undefined {
+    const hit = this.map.get(key);
+    return hit && now - hit.at < this.ttlMs ? hit.data : undefined;
+  }
+
   clear() {
     this.map.clear();
     this.inflight.clear();

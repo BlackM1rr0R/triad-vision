@@ -17,6 +17,8 @@ import {
   siteLocale,
   type StoredCv,
 } from '../lib/germanyJobs/apply.js';
+import { germanyJobAlertsRouter, savedGermanyJobsRouter } from './germanyJobAlerts.js';
+import { attachLebenslaufCopy } from '../lib/germanyJobs/lebenslaufAttach.js';
 
 /**
  * Almaniya iş bazası — mounted at /api/germany-jobs (public):
@@ -26,9 +28,15 @@ import {
  *                  (404 FEATURE_DISABLED when none is enabled; 30 per minute per IP; provider caches)
  *   POST /apply    multipart: listing + candidate fields + optional CV ("cv": PDF / DOC / DOCX) → Inquiry lead,
  *                  staff notice, confirmation e-mail. Honeypot `website`, consent required, 10 per hour per IP.
- * Third-party listings are never stored beyond the short search cache (lib/germanyJobs/adzuna.ts).
+ *   /alerts/…      "notify me about new jobs like this" (routes/germanyJobAlerts.ts)
+ *   /saved/…       saved listings of signed-in clients (snapshot only; routes/germanyJobAlerts.ts)
+ * Third-party listings are never stored beyond the short search cache (lib/germanyJobs/adzuna.ts); saved jobs and
+ * alert e-mails keep a small snapshot (title, company, place, link) only.
  */
 export const germanyJobsRouter = Router();
+
+germanyJobsRouter.use('/alerts', germanyJobAlertsRouter);
+germanyJobsRouter.use('/saved', savedGermanyJobsRouter);
 
 const searchLimiter = limiter({ windowMs: 60 * 1000, limit: 30 });
 const applyLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 10 });
@@ -78,6 +86,8 @@ germanyJobsRouter.post('/apply', applyLimiter, cvUpload.single('cv'), async (req
     }
     const lng = siteLocale(body.lng);
     const account = accountOf(req);
+    // Signed-in client without an upload: a copy of the newest saved Lebenslauf (built now when none is saved yet).
+    if (!cv && account && body.attachLebenslauf) cv = await attachLebenslaufCopy(account.id);
     const inquiry = await createExternalApplication(body, {
       phone,
       lng,

@@ -11,6 +11,7 @@ import { seedInterviewPrep } from './seed/interviewPrep';
 import { seedGuideCalculators, seedGuides } from './seed/guides/index';
 import { seedGuideRevisions } from './seed/guides/revisions';
 import { seedGuideDrafts } from './seed/guideDrafts/index';
+import { seedStudyProgrammes } from './seed/studyProgrammes';
 import { createStarterCourse } from '../src/lib/course/starter';
 
 /**
@@ -580,6 +581,7 @@ async function main() {
   await seedGuideRevisions(prisma); // updated shipped guide texts, only where the row still holds the previous shipped text
   // SEO landing guides as UNPUBLISHED drafts (owner reviews facts in /admin/guides); Triad Vision's own content.
   if (!WHITELABEL) await seedGuideDrafts(prisma);
+  if (!WHITELABEL) await seedStudyProgrammes(prisma); // Study in Germany: verified starter programmes, UNPUBLISHED, once per database
   await createStarterCourse(prisma); // pre-departure course "Almaniyaya hazırlıq" (draft, once by slug)
 
   console.log(`Seed complete (${SEED_PROFILE} profile). Admin login: ${adminEmail}`);

@@ -73,6 +73,8 @@ export const cvDataSchema = z
     certificates: z.array(certificateSchema).max(20).default([]),
     drivingLicences: z.array(text(10).min(1)).max(16).default([]),
     interests: z.array(text(80).min(1)).max(20).default([]),
+    /** Earliest start date (YYYY-MM), used by the Anschreiben ("Eintrittstermin"); null = by arrangement. */
+    availableFrom: optMonth,
   })
   .strict();
 
@@ -98,6 +100,7 @@ export const emptyCv = (): CvData => ({
   certificates: [],
   drivingLicences: [],
   interests: [],
+  availableFrom: null,
 });
 
 /** Stored JSON → CvData; invalid entries are dropped instead of failing the whole CV. */
@@ -120,6 +123,7 @@ export const readCv = (value: unknown): CvData => {
   out.certificates = list(o.certificates, certificateSchema, 20);
   out.drivingLicences = list(o.drivingLicences, text(10).min(1), 16);
   out.interests = list(o.interests, text(80).min(1), 20);
+  out.availableFrom = typeof o.availableFrom === 'string' && MONTH_RE.test(o.availableFrom) ? o.availableFrom : null;
   return out;
 };
 

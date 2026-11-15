@@ -32,6 +32,7 @@ import {
   Users,
   Wrench,
   X,
+  School,
   type LucideIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -69,6 +70,7 @@ const useAudienceMenus = () => {
       { to: '/for-workers#process', label: t('siteNav.w.how'), icon: Route },
       { to: '/visas', label: t('siteNav.w.visas'), icon: MapIcon },
       { to: '/ausbildung', label: t('siteNav.w.ausbildung'), icon: GraduationCap },
+      { to: '/study', label: t('siteNav.w.study'), icon: School },
       { to: '/jobs', label: t('siteNav.w.jobs'), icon: Briefcase },
       { to: '/tools', label: t('siteNav.w.tools'), icon: Wrench },
       { to: '/stories', label: t('siteNav.w.stories'), icon: Star },

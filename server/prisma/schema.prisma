@@ -150,6 +150,7 @@ model User {
   privacyRequests         PrivacyRequest[]         @relation("PrivacyRequester")
   privacyHandled          PrivacyRequest[]         @relation("PrivacyHandler")
   cv                      CandidateCv?
+  lebenslaufVersions      LebenslaufVersion[]
   motivationLetters       MotivationLetter[]
   vaultDocuments          VaultDocument[]
   arrivalPlans            ArrivalPlan[]            @relation("ArrivalClient")
@@ -202,6 +203,7 @@ model User {
   referralsMade           ClientReferral[]         @relation("ReferralReferrer")
   referredBy              ClientReferral?          @relation("ReferralReferred")
   skillVideos             SkillVideo[]             @relation("SkillVideoOwner")
+  candidatePool           CandidatePoolProfile?    @relation("CandidatePoolOwner") // anonymous candidate pool entry (lib/pool)
 
   @@index([companyId])
   @@index([mergedIntoId])
@@ -805,6 +807,8 @@ model Inquiry {
   anonymizedAt       DateTime?
   /// "Apply via Triad Vision" for a listing on another job site (source "external-job:…").
   externalJob        ExternalJobApplication?
+  /// "Apply via Triad Vision" for a study programme of the catalogue (source "study-programme:<slug>").
+  studyApplication   StudyApplication?
 
   @@index([status, createdAt])
   @@index([score])
@@ -924,6 +928,10 @@ model Company {
   bic                   String?                      @db.VarChar(11)
   partnerContracts      PartnerContract[]
   partnerActivities     PartnerActivity[]
+  // Anonymous candidate pool (lib/pool): interest requests, shortlist, view log
+  poolInterests         CandidatePoolInterest[]      @relation("CompanyPoolInterests")
+  poolSaved             CandidatePoolSaved[]         @relation("CompanyPoolSaved")
+  poolViews             CandidatePoolView[]          @relation("CompanyPoolViews")
 
   @@index([status])
 }
@@ -2980,6 +2988,115 @@ model CandidateRequest {
 
   @@index([companyId, status])
   @@index([status, createdAt])
+}
+
+// ─── Anonymous candidate pool (employer portal /company/candidates/pool) ─────────
+
+/// A client's entry in the anonymous candidate pool (lib/pool). Employers see it only while the client's own
+/// opt-in is on (consentAt set; the proof is the CANDIDATE_POOL row in ConsentRecord) and staff have not hidden
+/// it. Employers only ever get the whitelisted fields of lib/pool/anonymous.ts: never name, photo, contact,
+/// birth date, IDs, address or documents. Removed with the account (cascade).
+model CandidatePoolProfile {
+  id             String                  @id @default(cuid())
+  userId         String                  @unique
+  user           User                    @relation("CandidatePoolOwner", fields: [userId], references: [id], onDelete: Cascade)
+  /// Pseudonymous code shown to employers (TV-K-1234); random, never derived from the account.
+  code           String                  @unique @db.VarChar(16)
+  /// Set while the client consents (cleared on withdrawal); version of the consent text they agreed to.
+  consentAt      DateTime?
+  consentVersion String?                 @db.VarChar(40)
+  withdrawnAt    DateTime?
+  /// Further professions besides User.profession (string[], max 3).
+  professions    Json?
+  /// Other languages: { lang: ISO code, level: A1..C2 | native }[].
+  languages      Json?
+  /// Preferred German states (Bundesland codes, "ANY" = anywhere); empty = anywhere.
+  regions        Json?
+  earliestStart  DateTime?
+  /// IMMEDIATE | ONE_MONTH | THREE_MONTHS | LATER
+  availability   String?                 @db.VarChar(16)
+  /// Short skills list (string[], max 12).
+  skills         Json?
+  /// JOB | AUSBILDUNG | BOTH
+  track          String                  @default("JOB") @db.VarChar(12)
+  /// Staff: recommended for the pool (the client's consent is still required to be visible).
+  staffReady     Boolean                 @default(false)
+  /// Staff: taken out of the pool (consent kept).
+  hidden         Boolean                 @default(false)
+  hiddenReason   String?                 @db.VarChar(300)
+  /// Public pool summary written by staff (shown to employers instead of any client free text).
+  summary        String?                 @db.Text
+  staffUpdatedById String?             @db.VarChar(40)
+  staffUpdatedAt   DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  interests      CandidatePoolInterest[]
+  saved          CandidatePoolSaved[]
+  views          CandidatePoolView[]
+
+  @@index([consentAt, hidden])
+}
+
+enum PoolInterestStatus {
+  NEW
+  CONTACTED
+  INTERVIEW
+  CLOSED
+}
+
+/// "I'm interested" of an employer in a pool candidate: a request for staff (status set by staff).
+model CandidatePoolInterest {
+  id              String               @id @default(cuid())
+  profileId       String
+  profile         CandidatePoolProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  companyId       String
+  company         Company              @relation("CompanyPoolInterests", fields: [companyId], references: [id], onDelete: Cascade)
+  /// Employer user who sent it (plain id).
+  createdById     String?              @db.VarChar(40)
+  message         String?              @db.Text
+  positions       Int                  @default(1)
+  status          PoolInterestStatus   @default(NEW)
+  staffNote       String?              @db.Text
+  handledById     String?              @db.VarChar(40)
+  statusChangedAt DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([companyId, createdAt])
+  @@index([status, createdAt])
+  @@index([profileId])
+}
+
+/// Employer shortlist ("saved candidates"), shared by the company's team.
+model CandidatePoolSaved {
+  id        String               @id @default(cuid())
+  companyId String
+  company   Company              @relation("CompanyPoolSaved", fields: [companyId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   CandidatePoolProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  savedById String?              @db.VarChar(40)
+  createdAt DateTime             @default(now())
+
+  @@unique([companyId, profileId])
+}
+
+/// View log of the pool (searches and opened profiles) per employer user, so scraping is visible to staff.
+model CandidatePoolView {
+  id        String                @id @default(cuid())
+  companyId String
+  company   Company               @relation("CompanyPoolViews", fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String                @db.VarChar(40)
+  /// SEARCH (a result page) | DETAIL (one profile opened)
+  kind      String                @db.VarChar(10)
+  profileId String?
+  profile   CandidatePoolProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// SEARCH: number of profiles on the page.
+  results   Int                   @default(0)
+  createdAt DateTime              @default(now())
+
+  @@index([companyId, kind, createdAt])
+  @@index([profileId, createdAt])
+  @@index([createdAt])
 }
 
 // ─── Shared documents: partners (middlemen) and the client register ─────────
@@ -6364,7 +6481,222 @@ model ExternalJobApplication {
   cvOriginalName  String?  @db.VarChar(255)
   cvMime          String?  @db.VarChar(120)
   cvSize          Int?
+  /// The CV is a snapshot of this Lebenslauf version (attached from the portal instead of an upload).
+  lebenslaufVersionId String?  @db.VarChar(40)
+  /// Progress shown to the client: SUBMITTED | FORWARDED | INTERVIEW | ACCEPTED | REJECTED | NO_REPLY (set by staff).
+  status          String   @default("SUBMITTED") @db.VarChar(20)
+  /// Latest note for the client (shown in the portal timeline).
+  statusNote      String?  @db.VarChar(1000)
+  statusChangedAt DateTime?
+  /// Anschreiben edited by staff and attached to the application (subject + body as written).
+  coverLetterSubject String?  @db.VarChar(300)
+  coverLetterBody    String?  @db.Text
+  coverLetterAt      DateTime?
   createdAt       DateTime @default(now())
+  events          ExternalJobApplicationEvent[]
 
   @@index([userId])
+}
+
+/// Status timeline of an external job application (one row per change; the note is visible to the client).
+model ExternalJobApplicationEvent {
+  id            String                 @id @default(cuid())
+  applicationId String
+  application   ExternalJobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status        String                 @db.VarChar(20)
+  note          String?                @db.VarChar(1000)
+  /// Staff member who set it (plain id).
+  staffId       String?                @db.VarChar(40)
+  createdAt     DateTime               @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
+/// Generated German CV (tabellarischer Lebenslauf) PDFs of a client, numbered per client; the newest is the one
+/// attached to applications. Files in the private uploads folder (lebenslauf/<storageKey>), removed with the account.
+model LebenslaufVersion {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version    Int
+  storageKey String   @db.VarChar(120)
+  size       Int
+  /// de | en
+  lang       String   @default("de") @db.VarChar(5)
+  withPhoto  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, version])
+}
+
+/// Anschreiben (cover letter) template per job type, edited by admins. Job types without a row use the built-in
+/// default (lib/coverLetters/defaults.ts). Placeholders {{name}} …, optional segments [[ … ]] (dropped when a
+/// placeholder inside is empty).
+model CoverLetterTemplate {
+  id          String   @id @default(cuid())
+  /// FAHRER | PFLEGE | HANDWERK | GASTRO | BUERO_IT | AUSBILDUNG | GENERAL
+  jobType     String   @unique @db.VarChar(20)
+  name        String   @db.VarChar(120)
+  subject     String   @db.VarChar(300)
+  body        String   @db.Text
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Saved ("heart") listing of the German job search (/jobs/germany) of a signed-in client. A small snapshot only
+/// (no description: the full ad stays at the source, linked through `url`). Plain user id (no foreign key):
+/// removed with the account (lib/userDeletion.ts). Visitors keep their saved jobs in the browser only.
+model SavedGermanyJob {
+  id        String    @id @default(cuid())
+  userId    String    @db.VarChar(40)
+  /// `<provider>:<provider's id>` (lib/germanyJobs/common.ts GermanyJob.id)
+  listingId String    @db.VarChar(160)
+  /// arbeitnow | careerjet | jooble | adzuna
+  source    String    @db.VarChar(20)
+  title     String    @db.VarChar(300)
+  company   String?   @db.VarChar(200)
+  location  String?   @db.VarChar(200)
+  url       String    @db.VarChar(1000)
+  /// job | ausbildung
+  jobType   String    @default("job") @db.VarChar(12)
+  postedAt  DateTime?
+  /// First time the listing was found missing at its source ("no longer available"); cleared when it returns.
+  goneAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId, createdAt])
+}
+
+/// "Notify me about new jobs like this" on /jobs/germany: a saved search of the German job sources, e-mailed
+/// daily or weekly (lib/germanyJobs/alerts.ts). Visitors: double opt-in; signed-in clients: confirmed for the
+/// account address. Plain user id (no foreign key), like JobAlert: removed with the account / e-mail erasure.
+model GermanyJobAlert {
+  id             String                @id @default(cuid())
+  email          String                @db.VarChar(190)
+  userId         String?               @db.VarChar(40)
+  locale         String                @default("az") @db.VarChar(8)
+  q              String                @default("") @db.VarChar(100)
+  place          String                @default("") @db.VarChar(100)
+  radius         Int                   @default(25)
+  /// job | ausbildung
+  jobType        String                @default("job") @db.VarChar(12)
+  /// any | full | part
+  workTime       String                @default("any") @db.VarChar(8)
+  remote         Boolean               @default(false)
+  visa           Boolean               @default(false)
+  /// daily | weekly
+  frequency      String                @default("daily") @db.VarChar(8)
+  tokenHash      String                @unique @db.Char(64)
+  /// Consent wording version the subscriber agreed to (lib/germanyJobs/alertTexts.ts CONSENT_VERSION).
+  consentVersion String?               @db.VarChar(20)
+  confirmedAt    DateTime?
+  /// Last matching run (whether or not anything was new).
+  lastRunAt      DateTime?
+  lastSentAt     DateTime?
+  sentCount      Int                   @default(0)
+  unsubscribedAt DateTime?
+  visitorId      String?               @db.VarChar(40)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  sent           GermanyJobAlertSent[]
+
+  @@index([email])
+  @@index([userId])
+  @@index([confirmedAt, unsubscribedAt])
+}
+
+/// Listing ids already e-mailed by a Germany job alert (never sent twice). Pruned after 120 days.
+model GermanyJobAlertSent {
+  alertId   String
+  alert     GermanyJobAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  listingId String          @db.VarChar(160)
+  sentAt    DateTime        @default(now())
+
+  @@id([alertId, listingId])
+  @@index([sentAt])
+}
+
+// ─── Study in Germany: programme catalogue ───────────────────────────
+
+/// Curated by staff (Admin → Study programmes, CSV import / export); public at /study and /study/:slug.
+/// Never scraped: every row is typed in or imported by the team from the university's own page.
+model StudyProgramme {
+  id                   String             @id @default(cuid())
+  slug                 String             @unique @db.VarChar(120)
+  university           String             @db.VarChar(200)
+  city                 String             @db.VarChar(100)
+  /// ISO 3166-2:DE subdivision code without "DE-": BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH
+  federalState         String             @db.VarChar(4)
+  /// BACHELOR | MASTER | STUDIENKOLLEG | AUSBILDUNG_DUAL (lib/study/catalogue.ts)
+  degree               String             @db.VarChar(20)
+  /// Subject key (lib/study/catalogue.ts SUBJECTS)
+  subjectArea          String             @db.VarChar(40)
+  /// Official programme name, as on the university's page
+  name                 String             @db.VarChar(250)
+  /// EN | DE | EN_DE
+  teachingLanguage     String             @db.VarChar(8)
+  /// As stated by the university, e.g. "IELTS 6.5 / TOEFL iBT 88", "TestDaF 4x4", "German C1"
+  languageRequirement  String?            @db.VarChar(500)
+  durationSemesters    Int
+  /// Tuition per semester for non-EU students in EUR (0 = none); the semester contribution is separate.
+  tuitionPerSemester   Int                @default(0)
+  semesterContribution Int?
+  /// [{ intake: WINTER | SUMMER, from: "MM-DD" | null, to: "MM-DD", note }] — yearly recurring (lib/study/deadlines.ts)
+  deadlines            Json
+  /// UNI_ASSIST | DIRECT | VPD | HOCHSCHULSTART
+  applicationRoute     String             @db.VarChar(20)
+  officialUrl          String             @db.VarChar(1000)
+  /// L10n { az, de, en, ru }
+  description          Json?
+  /// L10nList { az: [], de: [], en: [], ru: [] }
+  requirements         Json?
+  published            Boolean            @default(false)
+  featured             Boolean            @default(false)
+  /// Internal: where / when the facts were checked (never public).
+  staffNote            String?            @db.Text
+  checkedAt            DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  applications         StudyApplication[]
+
+  @@index([published])
+}
+
+/// "Apply via Triad Vision" for a catalogue programme: the applicant's study facts next to the Inquiry lead.
+model StudyApplication {
+  id                  String          @id @default(cuid())
+  inquiryId           String          @unique
+  inquiry             Inquiry         @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  /// Kept when the programme is deleted later (name / slug / university are a snapshot).
+  programmeId         String?
+  programme           StudyProgramme? @relation(fields: [programmeId], references: [id], onDelete: SetNull)
+  programmeSlug       String          @db.VarChar(120)
+  programmeName       String          @db.VarChar(250)
+  university          String          @db.VarChar(200)
+  /// SCHOOL | BACHELOR | MASTER | OTHER
+  currentDegree       String?         @db.VarChar(20)
+  fieldOfStudy        String?         @db.VarChar(160)
+  gpa                 String?         @db.VarChar(40)
+  /// IELTS | TOEFL | CAMBRIDGE | PTE | DUOLINGO | TESTDAF | DSH | GOETHE | TELC | OTHER | NONE
+  languageCertificate String?         @db.VarChar(20)
+  languageLevel       String?         @db.VarChar(40)
+  /// e.g. "WINTER-2027"
+  desiredIntake       String?         @db.VarChar(20)
+  /// Client account of a signed-in applicant.
+  userId              String?         @db.VarChar(40)
+  /// Uploads in the private folder (random names); null after anonymisation.
+  cvStoredName        String?         @db.VarChar(120)
+  cvOriginalName      String?         @db.VarChar(255)
+  cvMime              String?         @db.VarChar(120)
+  cvSize              Int?
+  diplomaStoredName   String?         @db.VarChar(120)
+  diplomaOriginalName String?         @db.VarChar(255)
+  diplomaMime         String?         @db.VarChar(120)
+  diplomaSize         Int?
+  createdAt           DateTime        @default(now())
+
+  @@index([userId])
+  @@index([programmeId])
 }

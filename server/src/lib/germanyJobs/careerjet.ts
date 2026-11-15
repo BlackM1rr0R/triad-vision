@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { isIP } from 'node:net';
 import { config } from '../../config.js';
 import {
   CallBudget,
@@ -15,8 +16,10 @@ import {
   type GermanyJob,
   type JobProvider,
   type ProviderPage,
+  type SearchContext,
   type SearchQuery,
 } from './common.js';
+import { prisma } from '../../db.js';
 
 /**
  * Careerjet publisher API (https://www.careerjet.com/partners/api/, free, revenue share for publishers):
@@ -87,6 +90,34 @@ export const careerjetParams = (q: SearchQuery, ctx: { ip: string; userAgent: st
   return p;
 };
 
+/**
+ * Careerjet rejects calls without a real public user_ip ("Invalid user_ip" for 0.0.0.0). Calls without a visitor
+ * (e-mail alerts) and visitors with a private / missing address send the server's own public IP instead
+ * (CAREERJET_SERVER_IP, the address whitelisted in the Careerjet panel).
+ */
+const isPublicIp = (ip: string | null | undefined): ip is string =>
+  !!ip && isIP(ip) !== 0 && !/^(0\.|10\.|127\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1$|f[cd][0-9a-f]{2}:|fe80:)/i.test(ip);
+export const careerjetUserIp = (ip: string | null | undefined, env = process.env) => (isPublicIp(ip) ? ip : env.CAREERJET_SERVER_IP || ip || '');
+
+/** One API call (no cache, no budget: the callers decide). */
+const callCareerjet = async (key: string, q: SearchQuery, ctx: SearchContext): Promise<ProviderPage> => {
+  try {
+    const body = (await fetchJson(`${CAREERJET_URL}?${careerjetParams(q, { ip: careerjetUserIp(ctx.ip), userAgent: ctx.userAgent ?? 'Mozilla/5.0' }).toString()}`, {
+      // Careerjet answers 403 "Undeclared referrer" without a Referer: the page the results are shown on.
+      headers: { Authorization: `Basic ${Buffer.from(`${key}:`).toString('base64')}`, Referer: `${config.clientUrl}/jobs/germany` },
+    })) as { type?: unknown; jobs?: unknown; hits?: unknown; pages?: unknown } | null;
+    const items = (Array.isArray(body?.jobs) ? body.jobs : []).map(normalizeCareerjet).filter((x): x is GermanyJob => !!x);
+    lastFetchAt = Date.now();
+    lastError = null;
+    const total = typeof body?.hits === 'number' ? body.hits : items.length;
+    return { items, total, pages: Math.min(10, Math.max(1, typeof body?.pages === 'number' ? body.pages : Math.ceil(total / PAGE_SIZE))) };
+  } catch (err) {
+    const msg = (err as Error).message;
+    lastError = msg === 'HTTP 403' ? 'HTTP 403 (key invalid, this server IP is not whitelisted, or the Referer is not accepted in the Careerjet panel)' : msg;
+    throw err;
+  }
+};
+
 export const careerjetProvider: JobProvider = {
   info: { id: 'careerjet', name: 'Careerjet', url: 'https://www.careerjet.de' },
   enabled: (env = process.env) => !!keyOf(env),
@@ -97,21 +128,7 @@ export const careerjetProvider: JobProvider = {
     if (q.remote || q.visa || q.page > 10) return { items: [], total: 0, pages: 1 };
     return cache.get(queryKey(q), async () => {
       if (!budget.take()) throw new UpstreamError('UPSTREAM_BUSY', 'own call budget reached');
-      try {
-        const body = (await fetchJson(`${CAREERJET_URL}?${careerjetParams(q, { ip: ctx.ip ?? '0.0.0.0', userAgent: ctx.userAgent ?? 'Mozilla/5.0' }).toString()}`, {
-          // Careerjet answers 403 "Undeclared referrer" without a Referer: the page the results are shown on.
-          headers: { Authorization: `Basic ${Buffer.from(`${key}:`).toString('base64')}`, Referer: `${config.clientUrl}/jobs/germany` },
-        })) as { type?: unknown; jobs?: unknown; hits?: unknown; pages?: unknown } | null;
-        const items = (Array.isArray(body?.jobs) ? body.jobs : []).map(normalizeCareerjet).filter((x): x is GermanyJob => !!x);
-        lastFetchAt = Date.now();
-        lastError = null;
-        const total = typeof body?.hits === 'number' ? body.hits : items.length;
-        return { items, total, pages: Math.min(10, Math.max(1, typeof body?.pages === 'number' ? body.pages : Math.ceil(total / PAGE_SIZE))) };
-      } catch (err) {
-        const msg = (err as Error).message;
-        lastError = msg === 'HTTP 403' ? 'HTTP 403 (key invalid, this server IP is not whitelisted, or the Referer is not accepted in the Careerjet panel)' : msg;
-        throw err;
-      }
+      return callCareerjet(key, q, ctx);
     });
   },
   status: (env = process.env) => {
@@ -132,4 +149,59 @@ export const careerjetProvider: JobProvider = {
     lastFetchAt = null;
     lastError = null;
   },
+};
+
+// ─── Job alerts: a separate, strict daily budget ─────────────────────
+
+/**
+ * Germany job alerts (lib/germanyJobs/alerts.ts) may call Careerjet only within their own daily budget
+ * (CAREERJET_ALERT_CALLS_PER_DAY, default 100; 0 = alerts never call Careerjet), kept apart from the visitors'
+ * budget and persisted (Setting row), so a restart does not hand out a fresh budget. A fresh entry of the shared
+ * 30-minute search cache costs nothing. Identical alert queries are grouped by the caller (one call serves all).
+ */
+export const ALERT_BUDGET_KEY = 'germanyJobAlerts.careerjetBudget';
+export const alertCallsPerDay = (env: NodeJS.ProcessEnv = process.env) => {
+  const raw = env.CAREERJET_ALERT_CALLS_PER_DAY;
+  const n = Number(raw);
+  return raw !== undefined && raw.trim() !== '' && Number.isInteger(n) && n >= 0 ? n : 100;
+};
+
+const utcDay = (now: Date) => now.toISOString().slice(0, 10);
+
+export const careerjetAlertBudget = async (now = new Date()) => {
+  const row = await prisma.setting.findUnique({ where: { key: ALERT_BUDGET_KEY } });
+  const v = (row?.value ?? null) as { day?: string; used?: number } | null;
+  const used = v?.day === utcDay(now) && typeof v.used === 'number' ? v.used : 0;
+  return { day: utcDay(now), used, limit: alertCallsPerDay() };
+};
+
+/** Takes one call of today's alert budget; false when it is used up. */
+const takeAlertCall = async (now: Date) => {
+  const b = await careerjetAlertBudget(now);
+  if (b.used >= b.limit) return false;
+  const value = { day: b.day, used: b.used + 1 };
+  await prisma.setting.upsert({ where: { key: ALERT_BUDGET_KEY }, create: { key: ALERT_BUDGET_KEY, value }, update: { value } });
+  return true;
+};
+
+export type AlertSearchStatus = 'off' | 'unsupported' | 'cache' | 'called' | 'budget' | 'error';
+
+/** Newest Careerjet listings of an alert query (page 1, by date). Never throws. */
+export const careerjetAlertSearch = async (q: SearchQuery, now = new Date()): Promise<{ items: GermanyJob[]; status: AlertSearchStatus }> => {
+  const key = keyOf(process.env);
+  if (!key) return { items: [], status: 'off' };
+  if (q.remote || q.visa) return { items: [], status: 'unsupported' }; // not known for these listings (as in a search)
+  const query: SearchQuery = { ...q, sort: 'date', page: 1 };
+  const ck = queryKey(query);
+  const hit = cache.peek(ck);
+  if (hit) return { items: hit.items, status: 'cache' };
+  if (!(await takeAlertCall(now))) return { items: [], status: 'budget' };
+  try {
+    // No visitor triggered this call: neutral values for the required user_ip / user_agent.
+    const page = await cache.get(ck, () => callCareerjet(key, query, { ip: null, userAgent: null }));
+    return { items: page.items, status: 'called' };
+  } catch (err) {
+    console.error('[germany-job-alerts] careerjet failed', (err as Error).message);
+    return { items: [], status: 'error' };
+  }
 };

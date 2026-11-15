@@ -18,6 +18,7 @@ export const CONSENT_TYPES = [
   'PASSPORT_OCR',
   'SKILL_VIDEO', // per skill video: may be shown to prospective employers (routes/skillVideos.ts)
   'PARTNER_SHARING', // the owning referral partner may see more of the client's case (lib/partners/owned.ts)
+  'CANDIDATE_POOL', // anonymous profile in the employer candidate pool (lib/pool; switched in the profile)
   // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
   'COOKIES',
   'COOKIES_ANALYTICS',

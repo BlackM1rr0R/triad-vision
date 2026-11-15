@@ -463,6 +463,26 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Результати пошуку вакансій і Ausbildung у Німеччині. Подайте заявку на відповідну через Triad Vision.',
     },
   },
+  // Study in Germany (/study, /study/:slug): programme catalogue curated by staff (lib/study), "apply via Triad Vision".
+  '/study': {
+    name: { az: 'Almaniyada təhsil', de: 'Studium in Deutschland', en: 'Study in Germany', ru: 'Учёба в Германии', tr: 'Almanya\'da eğitim', uk: 'Навчання в Німеччині' },
+    title: {
+      az: 'Almaniyada təhsil: proqramlar və müddətlər',
+      de: 'Studium in Deutschland: Studiengänge, Fristen',
+      en: 'Study in Germany: programmes and deadlines',
+      ru: 'Учёба в Германии: программы и сроки',
+      tr: 'Almanya\'da eğitim: programlar ve tarihler',
+      uk: 'Навчання в Німеччині: програми і строки',
+    },
+    description: {
+      az: 'Almaniyada bakalavr və magistr proqramları: tədris dili, dil tələbləri, təhsil haqqı və müraciət müddətləri. Uyğun proqrama Triad Vision ilə müraciət edin.',
+      de: 'Bachelor- und Masterstudiengänge in Deutschland: Unterrichtssprache, Sprachnachweis, Gebühren und Bewerbungsfristen — bewerben Sie sich über Triad Vision.',
+      en: 'Bachelor\'s and master\'s programmes in Germany: teaching language, language requirements, tuition and application deadlines. Apply via Triad Vision.',
+      ru: 'Бакалавриат и магистратура в Германии: язык обучения, языковые требования, стоимость и сроки подачи. Подайте заявку на программу через Triad Vision.',
+      tr: 'Almanya\'da lisans ve yüksek lisans programları: eğitim dili, dil şartları, ücretler ve başvuru tarihleri. Uygun programa Triad Vision ile başvurun.',
+      uk: 'Бакалаврат і магістратура в Німеччині: мова навчання, мовні вимоги, вартість і строки подання. Подайте заявку на програму через Triad Vision.',
+    },
+  },
   // Service packages (Basic / Standard / Premium) with online order and e-signature.
   '/packages': {
     name: { az: 'Paketlər və qiymətlər', de: 'Pakete und Preise', en: 'Packages and prices', ru: 'Пакеты и цены', tr: 'Paketler ve fiyatlar', uk: 'Пакети та ціни' },

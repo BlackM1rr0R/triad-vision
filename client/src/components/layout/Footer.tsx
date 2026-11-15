@@ -78,6 +78,7 @@ export const Footer = () => {
     { to: '/jobs', label: t('nav.jobs') },
     { to: '/visas', label: t('nav.visas') },
     { to: '/ausbildung', label: t('nav.ausbildung') },
+    { to: '/study', label: t('siteNav.w.study') },
     { to: '/eligibility', label: t('nav.eligibility') },
     { to: '/packages', label: t('siteNav.footer.packages') },
     { to: '/events', label: t('nav.events') },

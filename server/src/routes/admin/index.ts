@@ -37,6 +37,7 @@ import { adminFinanceRouter } from './finance.js';
 import { adminSurveysRouter } from './surveys.js';
 import { adminContractTemplatesRouter } from './contractTemplates.js';
 import { adminCandidateRequestsRouter } from './candidateRequests.js';
+import { adminCandidatePoolRouter } from './candidatePool.js'; // anonymous candidate pool: overview, interests, view log
 import { adminPartnersRouter } from './partners.js';
 import { adminPartnerRecordsRouter } from './partnerRecords.js'; // contracts, timeline, contact persons of employers + referral partners
 import { adminRegisterRouter } from './register.js';
@@ -95,7 +96,10 @@ import { adminPresenceRouter } from './presence.js'; // live "who is viewing thi
 import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
+import { adminStudyRouter } from './study.js'; // Study in Germany catalogue: CRUD (STAFF+, delete ADMIN+), CSV import / export, application files
 import { adminGermanyJobsRouter } from './germanyJobs.js'; // Adzuna search status, CVs of "apply via Triad Vision" leads
+import { adminExternalApplicationsRouter } from './externalApplications.js'; // apply via Triad Vision: status for the client, Anschreiben
+import { adminCoverLetterTemplatesRouter } from './coverLetterTemplates.js'; // Anschreiben templates per job type
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
 import { audit } from '../../lib/audit.js';
@@ -233,6 +237,7 @@ adminRouter.use('/profitability', adminProfitabilityRouter); // profitability pe
 adminRouter.use('/surveys', adminSurveysRouter);
 adminRouter.use('/contract-templates', adminContractTemplatesRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
+adminRouter.use('/candidate-pool', adminCandidatePoolRouter);
 adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log
 adminRouter.use('/partners', adminPartnersRouter);
 adminRouter.use('/partner-records', adminPartnerRecordsRouter); // /contracts*, /activities*, /contacts* (owner: companyId | referralPartnerId)
@@ -270,7 +275,10 @@ adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly emp
 adminRouter.use('/vacancies', adminVacanciesRouter);
 adminRouter.use('/search-console', requireMinRole('ADMIN'), adminSearchConsoleRouter); // Search performance: GSC queries / pages, 28 days, cached 6 h
 adminRouter.use('/job-feeds', requireMinRole('ADMIN'), adminJobFeedsRouter); // İş elanı kanalları (ADMIN+)
+adminRouter.use('/study', adminStudyRouter); // Almaniyada təhsil: programme catalogue (STAFF+; delete ADMIN+)
 adminRouter.use('/germany-jobs', adminGermanyJobsRouter); // Almaniya iş bazası: search status, application CVs (STAFF+)
+adminRouter.use('/external-applications', adminExternalApplicationsRouter); // status timeline + Anschreiben of external-job leads (STAFF+)
+adminRouter.use('/cover-letter-templates', requireMinRole('ADMIN'), adminCoverLetterTemplatesRouter); // Anschreiben templates (ADMIN+)
 adminRouter.use('/candidates', adminCandidatesRouter);
 adminRouter.use('/booking', adminBookingRouter);
 adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);

@@ -7,6 +7,8 @@ export { prisma };
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
   await prisma.cityCost.deleteMany(); // first-month budget city costs (no relations)
+  await prisma.studyApplication.deleteMany(); // study programme applications (cascade with the inquiry anyway)
+  await prisma.studyProgramme.deleteMany(); // Study in Germany catalogue
   await prisma.authority.deleteMany(); // authorities catalogue (contacts + case links cascade, Case FKs set null)
   await prisma.partnerClientChange.deleteMany(); // partner client ownership history (plain ids)
   // Pre-departure course (plain ids, no foreign keys)
@@ -166,6 +168,8 @@ export const resetDb = async () => {
   await prisma.landingPage.deleteMany();
   await prisma.guidePage.deleteMany(); // SEO topic guides (no foreign keys)
   await prisma.jobAlert.deleteMany(); // job alerts + e-book lead magnets (plain ids, no foreign keys)
+  await prisma.germanyJobAlert.deleteMany(); // Germany job search: alerts (sent ids cascade) + saved listings
+  await prisma.savedGermanyJob.deleteMany();
   await prisma.leadMagnet.deleteMany();
   await prisma.reminderLog.deleteMany();
   await prisma.analyticsDaily.deleteMany();
@@ -199,6 +203,7 @@ export const resetDb = async () => {
   await prisma.case.deleteMany();
   await prisma.vacancy.deleteMany();
   await prisma.emailLog.deleteMany();
+  await prisma.coverLetterTemplate.deleteMany(); // Anschreiben templates (no relations)
   await prisma.inquiry.deleteMany();
   await prisma.setting.deleteMany();
   await prisma.visaCategory.deleteMany();

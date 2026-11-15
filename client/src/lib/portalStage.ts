@@ -38,6 +38,8 @@ export type SubKey =
   | 'interviewPrep'
   | 'interviews'
   | 'jobs'
+  | 'savedJobs'
+  | 'externalJobs'
   | 'cv'
   | 'letters'
   | 'guides'
@@ -52,7 +54,7 @@ export const SECTION_SUBS: Record<SectionKey, readonly SubKey[]> = {
   home: ['overview', 'application', 'arrivalPrep', 'arrival', 'onboarding', 'housing'],
   documents: ['caseDocs', 'docChecklist', 'signatures', 'payments', 'vault', 'letterExplain'],
   messages: ['chat', 'notifications'],
-  learn: ['course', 'waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'cv', 'letters', 'guides'],
+  learn: ['course', 'waitingRoom', 'german', 'interviewPrep', 'interviews', 'jobs', 'savedJobs', 'externalJobs', 'cv', 'letters', 'guides'],
   profile: ['personal', 'family', 'privacy', 'referral'],
 };
 
@@ -99,6 +101,8 @@ export interface VisibilityContext {
   hasPayments?: boolean;
   /** Enrolled in a pre-departure course (Learn › Course). */
   hasCourse?: boolean;
+  /** Sent "apply via Triad Vision" applications to listings of other sites (Learn › External jobs). */
+  hasExternalApplications?: boolean;
 }
 
 const PRE_APPROVAL: PortalStage[] = ['LEAD', 'PREPARING', 'AT_EMBASSY'];
@@ -144,9 +148,12 @@ export const isSubVisible = (sub: SubKey, stage: PortalStage, ctx: VisibilityCon
       return PRE_APPROVAL.includes(stage);
     case 'interviews':
     case 'jobs':
+    case 'savedJobs': // saved Germany jobs + job alerts (/jobs/germany)
     case 'cv':
     case 'letters':
       return JOB_SEARCH.includes(stage);
+    case 'externalJobs': // "apply via Triad Vision" from /jobs/germany: job search stages, and whenever one was sent
+      return JOB_SEARCH.includes(stage) || !!ctx.hasExternalApplications;
     case 'family':
       // Family reunification: from the first application on, and above all once in Germany.
       return ctx.hasCase;
@@ -212,6 +219,10 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
       return 'interviews';
     case 'applications':
       return 'jobs';
+    case 'saved-jobs':
+      return 'savedJobs';
+    case 'job-applications':
+      return 'externalJobs';
     case 'cv':
       return 'cv';
     case 'letters':
@@ -278,6 +289,10 @@ export const subPath = (sub: SubKey, caseId: string | null, caseCount = caseId ?
       return '/account/interviews';
     case 'jobs':
       return '/account/applications';
+    case 'savedJobs':
+      return '/account/saved-jobs';
+    case 'externalJobs':
+      return '/account/job-applications';
     case 'cv':
       return '/account/cv';
     case 'letters':

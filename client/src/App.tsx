@@ -66,6 +66,7 @@ const CaseView = lazyRoute('CaseView', () => import('./pages/account/CaseView'))
 const Notifications = lazyRoute('Notifications', () => import('./pages/account/Notifications'));
 const Profile = lazyRoute('Profile', () => import('./pages/account/Profile'));
 const AccountApplications = lazyRoute('AccountApplications', () => import('./pages/account/Applications'));
+const AccountExternalApplications = lazyRoute('AccountExternalApplications', () => import('./pages/account/ExternalApplications')); // apply via Triad Vision: status
 
 const AdminLayout = lazyRoute('AdminLayout', () => import('./pages/admin/AdminLayout'));
 const AdminDashboard = lazyRoute('AdminDashboard', () => import('./pages/admin/Dashboard'));
@@ -81,6 +82,7 @@ const AdminUsers = lazyRoute('AdminUsers', () => import('./pages/admin/Users'));
 const AdminClient360 = lazyRoute('AdminClient360', () => import('./pages/admin/Client360')); // client 360° page
 const AdminTeamLoad = lazyRoute('AdminTeamLoad', () => import('./pages/admin/TeamLoad')); // team workload board
 const AdminCannedReplies = lazyRoute('AdminCannedReplies', () => import('./pages/admin/CannedReplies')); // canned replies
+const AdminCoverLetterTemplates = lazyRoute('AdminCoverLetterTemplates', () => import('./pages/admin/CoverLetterTemplates')); // Anschreiben templates
 const AdminMailboxes = lazyRoute('AdminMailboxes', () => import('./pages/admin/Mailboxes'));
 const AdminSignatures = lazyRoute('AdminSignatures', () => import('./pages/admin/Signatures'));
 const SignPage = lazyRoute('SignPage', () => import('./pages/SignPage'));
@@ -127,6 +129,9 @@ const Jobs = lazyRoute('Jobs', () => import('./pages/jobs/Jobs'));
 const JobCompare = lazyRoute('JobCompare', () => import('./pages/jobs/JobCompare')); // /compare-jobs?v=a,b,c (noindex)
 const JobDetail = lazyRoute('JobDetail', () => import('./pages/jobs/JobDetail'));
 const JobLanding = lazyRoute('JobLanding', () => import('./pages/jobs/JobLanding')); // /jobs/in/:city/:profession (server lib/jobLandings.ts)
+const StudyCatalogue = lazyRoute('StudyCatalogue', () => import('./pages/study/StudyCatalogue')); // /study: programme catalogue (curated by staff)
+const StudyProgrammeDetail = lazyRoute('StudyProgrammeDetail', () => import('./pages/study/StudyProgrammeDetail')); // /study/:slug + apply via Triad Vision
+const AdminStudyProgrammes = lazyRoute('AdminStudyProgrammes', () => import('./pages/admin/StudyProgrammes')); // /admin/study: catalogue CRUD + CSV
 const GermanyJobs = lazyRoute('GermanyJobs', () => import('./pages/jobs/GermanyJobs')); // /jobs/germany(/search): Adzuna search, BA link, apply via Triad Vision
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
 const CompanyApp = lazyRoute('CompanyApp', () => import('./pages/company/CompanyApp'));
@@ -160,6 +165,8 @@ const SearchPage = lazyRoute('SearchPage', () => import('./pages/SearchPage')); 
 const CompareVisas = lazyRoute('CompareVisas', () => import('./pages/tools/CompareVisas')); // "which visa fits me?" table + wizard
 const EbookPage = lazyRoute('EbookPage', () => import('./pages/growth/Ebook')); // e-book lead magnet /ebook/:slug
 const JobAlertManage = lazyRoute('JobAlertManage', () => import('./pages/JobAlertManage')); // job alert confirm / manage / unsubscribe link
+const JobAlertGermanyManage = lazyRoute('JobAlertGermanyManage', () => import('./pages/JobAlertGermanyManage')); // Germany job alert (/jobs/germany) confirm / manage / unsubscribe link
+const AccountSavedJobs = lazyRoute('AccountSavedJobs', () => import('./pages/account/SavedJobs')); // Learn › Saved jobs (Germany job search) + job alerts
 const AnerkennungGuide = lazyRoute('AnerkennungGuide', () => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazyRoute('CitiesGuide', () => import('./pages/tools/Cities'));
 // SEO: topic guides and interactive tools (Chancenkarte points, Blue Card salary check)
@@ -210,6 +217,7 @@ const AdminCampaigns = lazyRoute('AdminCampaigns', () => import('./pages/admin/C
 const Unsubscribe = lazyRoute('Unsubscribe', () => import('./pages/Unsubscribe'));
 const AdminContractTemplates = lazyRoute('AdminContractTemplates', () => import('./pages/admin/ContractTemplates'));
 const AdminCandidateRequests = lazyRoute('AdminCandidateRequests', () => import('./pages/admin/CandidateRequests'));
+const AdminCandidatePool = lazyRoute('AdminCandidatePool', () => import('./pages/admin/CandidatePool')); // anonymous candidate pool
 const AdminSkillVideos = lazyRoute('AdminSkillVideos', () => import('./pages/admin/SkillVideos'));
 const SurveyAnswer = lazyRoute('SurveyAnswer', () => import('./pages/SurveyAnswer'));
 const SuccessSharePage = lazyRoute('SuccessSharePage', () => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
@@ -414,6 +422,7 @@ export default function App() {
             <Route path="compare-visas" element={<CompareVisas />} />
             <Route path="ebook/:slug" element={<EbookPage />} />
             <Route path="job-alert" element={<JobAlertManage />} />
+            <Route path="job-alert/germany" element={<JobAlertGermanyManage />} />
             <Route path="guides/:slug" element={<GuideDetail />} />
             <Route path="chancenkarte-calculator" element={<ChancenkarteCalculator />} />
             <Route path="blue-card-check" element={<BlueCardCheck />} />
@@ -453,6 +462,8 @@ export default function App() {
             <Route path="cookies" element={<CookiesPage />} />
             <Route path="legal/:kind/:version" element={<LegalArchivedVersion />} />
             <Route path="jobs" element={<Jobs />} />
+            <Route path="study" element={<StudyCatalogue />} />
+            <Route path="study/:slug" element={<StudyProgrammeDetail />} />
             <Route path="jobs/germany" element={<GermanyJobs />} />
             <Route path="jobs/germany/search" element={<GermanyJobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
@@ -509,6 +520,8 @@ export default function App() {
               <Route path="notifications" element={<Notifications />} />
               <Route path="profile" element={<Profile />} />
               <Route path="applications" element={<AccountApplications />} />
+              <Route path="saved-jobs" element={<AccountSavedJobs />} />
+              <Route path="job-applications" element={<AccountExternalApplications />} />
               <Route path="onboarding" element={<AccountOnboarding />} />
               <Route path="housing" element={<AccountHousing />} />
               <Route path="german" element={<AccountGerman />} />
@@ -687,6 +700,7 @@ export default function App() {
             <Route path="clients/:id" element={<AdminClient360 />} />
             <Route path="team-load" element={<AdminTeamLoad />} />
             <Route path="canned-replies" element={<AdminCannedReplies />} />
+            <Route path="cover-letter-templates" element={<AdminCoverLetterTemplates />} />
             <Route
               path="mailboxes"
               element={
@@ -854,6 +868,7 @@ export default function App() {
               }
             />
             <Route path="events" element={<AdminGrowthEvents />} />
+            <Route path="study" element={<AdminStudyProgrammes />} />
             <Route path="site-tools" element={<AdminGrowthTools />} />
             <Route
               path="city-costs"
@@ -867,6 +882,7 @@ export default function App() {
             <Route path="lead-magnets" element={<AdminLeadMagnets />} />
             <Route path="contract-templates/*" element={<AdminContractTemplates />} />
             <Route path="candidate-requests/*" element={<AdminCandidateRequests />} />
+            <Route path="candidate-pool" element={<AdminCandidatePool />} />
             <Route path="skill-videos" element={<AdminSkillVideos />} />
             <Route path="agents/*" element={<AdminAgents />} />
             <Route path="translations/*" element={<AdminTranslations />} />

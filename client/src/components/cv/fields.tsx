@@ -14,12 +14,15 @@ export const MonthPicker = ({
   label,
   disabled,
   optional,
+  future = 0,
 }: {
   value: string | null;
   onChange: (v: string | null) => void;
   label: string;
   disabled?: boolean;
   optional?: boolean;
+  /** Also offer this many years ahead (earliest start date). */
+  future?: number;
 }) => {
   const { t, i18n } = useTranslation();
   const id = useId();
@@ -29,7 +32,7 @@ export const MonthPicker = ({
   const y = value ? year : draft.y;
   const m = value ? month : draft.m;
   const now = new Date().getFullYear();
-  const years = useMemo(() => Array.from({ length: now - 1955 + 1 }, (_, i) => String(now - i)), [now]);
+  const years = useMemo(() => Array.from({ length: now + future - 1955 + 1 }, (_, i) => String(now + future - i)), [now, future]);
   const monthName = (mm: string) => new Intl.DateTimeFormat(i18n.language, { month: 'short' }).format(new Date(2020, Number(mm) - 1, 1));
   const set = (ny: string, nm: string) => {
     setDraft({ y: ny, m: nm });

@@ -42,6 +42,8 @@ export interface CvData {
   certificates: CvCertificate[];
   drivingLicences: string[];
   interests: string[];
+  /** Earliest start date YYYY-MM (Anschreiben "Eintritt"); null = by arrangement. */
+  availableFrom?: string | null;
 }
 export interface CvState {
   data: CvData;
@@ -106,6 +108,7 @@ export const toPayload = (d: CvData): CvData => ({
   certificates: d.certificates.filter((c) => c.name.trim()),
   drivingLicences: d.drivingLicences.map((s) => s.trim()).filter(Boolean),
   interests: d.interests.map((s) => s.trim()).filter(Boolean),
+  availableFrom: d.availableFrom && MONTH_RE.test(d.availableFrom) ? d.availableFrom : null,
 });
 
 /** Same score as the server (cvCompleteness). */

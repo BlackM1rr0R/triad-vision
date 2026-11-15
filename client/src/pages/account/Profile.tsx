@@ -64,6 +64,7 @@ import { IntroVideoPanel } from '@/components/placement/IntroVideo';
 import { SkillVideosPanel } from '@/components/skillVideos/SkillVideosPanel';
 import { RECOGNITION_STATUSES } from '@/components/placement/api';
 import { MyJobAlerts } from '@/components/jobs/MyJobAlerts';
+import { CandidatePoolPanel } from '@/components/pool/CandidatePoolPanel'; // anonymous candidate pool opt-in
 
 registerCopy(pagesAccount);
 registerCopy(pagesGrowth);
@@ -1137,6 +1138,7 @@ export default function Profile() {
         {tab === 'professional' && <ProfessionalPanel key={user.id} user={user} />}
         {tab === 'professional' && <IntroVideoPanel className="mt-6" />}
         {tab === 'professional' && <SkillVideosPanel className="mt-6" />}
+        {tab === 'professional' && <CandidatePoolPanel className="mt-6" />}
         {tab === 'notifications' && <NotificationsPanel user={user} />}
         {tab === 'notifications' && <CalendarSubscribe className="mt-6" />}
         {tab === 'notifications' && <MyJobAlerts className="mt-6" />}

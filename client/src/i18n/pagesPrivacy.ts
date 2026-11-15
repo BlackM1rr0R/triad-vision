@@ -18,6 +18,7 @@ const az = {
       SMS: 'SMS xatırlatmaları',
       EMPLOYER_SHARING: 'Profilin işəgötürənlərlə paylaşılması',
       PASSPORT_OCR: 'Pasportun avtomatik oxunması',
+      CANDIDATE_POOL: 'Anonim profil işəgötürənlər üçün (namizəd bazası)',
     },
     source: { REGISTER: 'Qeydiyyat', PROFILE: 'Profil', PRIVACY_CENTER: 'Məxfilik bölməsi', BOOKING: 'Konsultasiya', INQUIRY: 'Əlaqə forması', MOBILE: 'Mobil tətbiq', other: 'Digər' },
     page: {
@@ -226,6 +227,7 @@ const de: Copy = {
       SMS: 'SMS-Erinnerungen',
       EMPLOYER_SHARING: 'Profil an Arbeitgeber weitergeben',
       PASSPORT_OCR: 'Automatisches Auslesen des Passes',
+      CANDIDATE_POOL: 'Anonymes Profil für Arbeitgeber (Kandidatenpool)',
     },
     source: { REGISTER: 'Registrierung', PROFILE: 'Profil', PRIVACY_CENTER: 'Datenschutzbereich', BOOKING: 'Beratung', INQUIRY: 'Kontaktformular', MOBILE: 'Mobile App', other: 'Sonstiges' },
     page: {
@@ -432,6 +434,7 @@ const en: Copy = {
       SMS: 'SMS reminders',
       EMPLOYER_SHARING: 'Share my profile with employers',
       PASSPORT_OCR: 'Automatic passport reading',
+      CANDIDATE_POOL: 'Anonymous profile for employers (candidate pool)',
     },
     source: { REGISTER: 'Sign-up', PROFILE: 'Profile', PRIVACY_CENTER: 'Privacy centre', BOOKING: 'Consultation', INQUIRY: 'Contact form', MOBILE: 'Mobile app', other: 'Other' },
     page: {
@@ -638,6 +641,7 @@ const ru: Copy = {
       SMS: 'SMS-напоминания',
       EMPLOYER_SHARING: 'Показ профиля работодателям',
       PASSPORT_OCR: 'Автоматическое чтение паспорта',
+      CANDIDATE_POOL: 'Анонимный профиль для работодателей (база кандидатов)',
     },
     source: { REGISTER: 'Регистрация', PROFILE: 'Профиль', PRIVACY_CENTER: 'Раздел конфиденциальности', BOOKING: 'Консультация', INQUIRY: 'Форма связи', MOBILE: 'Мобильное приложение', other: 'Другое' },
     page: {

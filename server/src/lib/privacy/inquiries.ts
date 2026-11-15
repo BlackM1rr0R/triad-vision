@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { clearExternalApplications } from '../germanyJobs/apply.js';
+import { clearStudyApplications } from '../study/apply.js';
 
 /**
  * DSGVO storage limitation for website leads (Inquiry). A lead that was never converted into a
@@ -58,6 +59,7 @@ export const anonymizeInquiries = async (ids: string[], now = new Date(), tx: Pr
     const r = await tx.inquiry.updateMany({ where: { id, anonymizedAt: null }, data: anonymizedData(id, now) as Prisma.InquiryUpdateManyMutationInput });
     count += r.count;
     if (r.count) await clearExternalApplications([id], tx); // "apply via Triad Vision": candidate details + CV file
+    if (r.count) await clearStudyApplications([id], tx); // study programme application: study details + CV / diploma files
   }
   return count;
 };

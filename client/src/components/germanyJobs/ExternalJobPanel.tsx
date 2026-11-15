@@ -4,6 +4,7 @@ import { Download, ExternalLink, FileText, Globe2, UserCheck } from 'lucide-reac
 import { registerCopy } from '@/i18n';
 import { pagesGermanyJobsAdmin } from '@/i18n/pagesGermanyJobsAdmin';
 import type { ExternalJobInfo } from '@/components/admin/types';
+import { ExternalJobStatus } from './ExternalJobStatus'; // status for the client + Anschreiben
 
 registerCopy(pagesGermanyJobsAdmin);
 
@@ -65,6 +66,7 @@ export const ExternalJobPanel = ({ inquiryId, job }: { inquiryId: string; job: E
           </p>
         )}
       </div>
+      <ExternalJobStatus inquiryId={inquiryId} />
     </section>
   );
 };

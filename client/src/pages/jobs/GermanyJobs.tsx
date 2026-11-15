@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, BadgeCheck, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Landmark, Link2, MapPin, Search, Send } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Heart, Landmark, Link2, MapPin, Search, Send } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -11,10 +11,13 @@ import { pagesJobs } from '@/i18n/pagesJobs';
 import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
 import { useL10n } from '@/lib/l10n';
 import {
+  APPLY_PARAMS,
   RADII,
+  applyFromParams,
   baJobboerseUrl,
   isListingUrl,
   searchFromParams,
+  savedSnapshot,
   searchToParams,
   type GermanyJob,
   type GermanyJobResults,
@@ -29,9 +32,15 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Lost, SearchEmpty } from '@/components/illustrations';
 import { useJobLabels } from '@/components/jobs/labels';
 import { ApplyDialog, type ExternalListing } from '@/components/germanyJobs/ApplyDialog';
+import { AlertDialog } from '@/components/germanyJobs/AlertDialog';
+import { SaveJobButton } from '@/components/germanyJobs/SaveJobButton';
+import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
+import { useAuth } from '@/lib/auth';
+import { pagesGermanyJobAlerts } from '@/i18n/pagesGermanyJobAlerts';
 
 registerCopy(pagesJobs);
 registerCopy(pagesGermanyJobs);
+registerCopy(pagesGermanyJobAlerts);
 
 /** Suggestions for the "type or pick" fields (German terms: the job sources are German). */
 const JOB_PICKS = ['LKW-Fahrer', 'Berufskraftfahrer', 'Pflegefachkraft', 'Altenpfleger', 'Koch', 'Elektriker', 'Elektroniker', 'Mechatroniker', 'Schweißer', 'Bauarbeiter', 'Maurer', 'Lagerarbeiter', 'Kommissionierer', 'Reinigungskraft', 'Hotelfachmann', 'Servicekraft', 'Bäcker', 'Metzger', 'Erzieher', 'Ingenieur', 'Softwareentwickler', 'IT-Administrator', 'Buchhalter', 'Zahnarzt', 'Arzt'];
@@ -87,9 +96,24 @@ export default function GermanyJobs() {
   const [listing, setListing] = useState<ExternalListing | null>(null);
   const [pasted, setPasted] = useState('');
   const [pastedTouched, setPastedTouched] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const saved = useSavedJobs();
+  const { user } = useAuth();
 
   // Back / forward and shared URLs: the form follows the URL.
   useEffect(() => setForm(search), [search]);
+
+  // "Apply via Triad Vision" link of a job alert e-mail (?apply=<id>&at&ac&al&au): opens the apply form for that
+  // listing once, then the listing parameters leave the URL (browser only, after hydration).
+  useEffect(() => {
+    const fromMail = applyFromParams(params);
+    if (!APPLY_PARAMS.some((k) => params.has(k))) return;
+    if (fromMail) setListing({ ...fromMail, type: search.type });
+    const next = new URLSearchParams(params);
+    APPLY_PARAMS.forEach((k) => next.delete(k));
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   const config = useQuery({
     queryKey: ['germany-jobs-config'],
@@ -139,7 +163,7 @@ export default function GermanyJobs() {
   };
   const sourceOf = (id: string) => results.data?.sources.find((x) => x.id === id) ?? config.data?.sources.find((x) => x.id === id) ?? FALLBACK_SOURCE[id];
   const applyFor = (j: GermanyJob) =>
-    setListing({ provider: j.source, url: j.url, externalId: j.id.slice(0, 64), title: j.title, company: j.company, location: j.location, type: search.type });
+    setListing({ provider: j.source, url: j.url, listingId: j.id, externalId: j.id.slice(0, 64), title: j.title, company: j.company, location: j.location, type: search.type, created: j.created });
   const sourceList = results.data?.sources ?? config.data?.sources ?? [];
 
   const field = 'input h-11';
@@ -249,6 +273,21 @@ export default function GermanyJobs() {
                 ))}
               </div>
             </div>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Button variant="outline" icon={BellRing} onClick={() => setAlertOpen(true)}>
+                {t('gjAlert.button')}
+              </Button>
+              {saved.items.length > 0 &&
+                (user?.role === 'CLIENT' ? (
+                  <Link to="/account/saved-jobs" className={buttonClass({ variant: 'secondary' })}>
+                    <Heart className="size-4" aria-hidden /> {t('gjSaved.count', { count: saved.items.length })}
+                  </Link>
+                ) : (
+                  <span className="inline-flex min-h-10 items-center gap-1.5 px-2 text-sm text-muted">
+                    <Heart className="size-4" aria-hidden /> {t('gjSaved.count', { count: saved.items.length })}
+                  </span>
+                ))}
+            </div>
             <p className="mb-5 flex items-start gap-2 rounded-xl border border-line bg-card px-4 py-3 text-sm text-muted">
               <Globe2 className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>
@@ -333,6 +372,7 @@ export default function GermanyJobs() {
                             {t('gj.card.original')} <ExternalLink className="size-3.5" aria-hidden />
                             <span className="sr-only">{t('gj.card.newTab')}</span>
                           </a>
+                          <SaveJobButton job={savedSnapshot(j, search.type)} className="ml-auto" />
                         </div>
                       </li>
                     );
@@ -461,6 +501,7 @@ export default function GermanyJobs() {
       </section>
 
       <ApplyDialog listing={listing} onClose={() => setListing(null)} />
+      <AlertDialog search={search} open={alertOpen} onClose={() => setAlertOpen(false)} />
     </>
   );
 }

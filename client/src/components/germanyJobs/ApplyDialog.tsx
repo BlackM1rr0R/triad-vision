@@ -5,10 +5,14 @@ import { CheckCircle2, ExternalLink, FileText, Send, X } from 'lucide-react';
 import i18n, { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
 import { pagesJobs } from '@/i18n/pagesJobs';
+import { pagesExternalApps } from '@/i18n/pagesExternalApps';
+import { useLebenslaufVersions } from '@/components/cv/LebenslaufVersions'; // "attach my Lebenslauf" for signed-in clients
+import { fmtDate } from '@/components/admin/labels';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { leadVisitorId } from '@/lib/leadVisitor';
-import { isListingUrl, listingHost, type GermanyJobSource, type GermanyJobType } from '@/lib/germanyJobs';
+import { isListingUrl, listingHost, savedSnapshot, type GermanyJobSource, type GermanyJobType } from '@/lib/germanyJobs';
+import { SaveJobButton } from './SaveJobButton';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
@@ -17,6 +21,7 @@ import { GERMAN_LEVELS } from '@/components/jobs/types';
 
 registerCopy(pagesJobs);
 registerCopy(pagesGermanyJobs);
+registerCopy(pagesExternalApps);
 
 /** The listing the visitor applies for: a search result (prefilled) or a pasted link. */
 export interface ExternalListing {
@@ -27,6 +32,10 @@ export interface ExternalListing {
   company?: string | null;
   location?: string | null;
   type?: GermanyJobType;
+  /** Full listing id (`<provider>:<id>`; externalId is cut to the apply form's 64 characters), for the heart. */
+  listingId?: string;
+  /** Posting date (search results), kept when the listing is saved. */
+  created?: string | null;
 }
 
 const CV_ACCEPT = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -54,6 +63,10 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
   const empty = { url: '', title: '', company: '', name: '', email: '', phone: '', germanLevel: '', profession: '', experience: '', message: '', consent: false, website: '' };
   const [f, setF] = useState(empty);
   const [cv, setCv] = useState<File | null>(null);
+  // Signed-in clients attach their newest saved Lebenslauf by default (server builds one when none is saved).
+  const [cvMode, setCvMode] = useState<'lebenslauf' | 'upload'>('upload');
+  const versions = useLebenslaufVersions(!!client && !!listing);
+  const latest = versions.data?.latest ?? null;
   const [cvError, setCvError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -77,6 +90,7 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
       experience: client?.experienceYears != null ? String(client.experienceYears) : '',
     });
     setCv(null);
+    setCvMode(client ? 'lebenslauf' : 'upload');
     setCvError(null);
     setError(null);
     setDone(false);
@@ -130,7 +144,8 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
     if (f.website) fd.set('website', f.website);
     const visitorId = leadVisitorId();
     if (visitorId) fd.set('visitorId', visitorId);
-    if (cv) fd.set('cv', cv);
+    if (client && cvMode === 'lebenslauf') fd.set('attachLebenslauf', 'true');
+    else if (cv) fd.set('cv', cv);
     setSending(true);
     setError(null);
     try {
@@ -155,6 +170,16 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
       size="lg"
       mobile="full"
       busy={sending}
+      headerActions={
+        listing && listing.provider !== 'link' && (listing.listingId ?? listing.externalId) && listing.title ? (
+          <SaveJobButton
+            job={savedSnapshot(
+              { id: (listing.listingId ?? listing.externalId)!, source: listing.provider, title: listing.title, company: listing.company ?? null, location: listing.location ?? null, url: listing.url, created: listing.created ?? null },
+              listing.type ?? 'job',
+            )}
+          />
+        ) : undefined
+      }
       footer={
         done ? (
           <Button onClick={onClose}>{t('gj.apply.cancel')}</Button>
@@ -274,6 +299,29 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
               </div>
             </div>
 
+            {client && (
+              <fieldset className="space-y-2">
+                <legend className="label">{t('xapp.apply.cvMode')}</legend>
+                <label className="flex items-start gap-2.5 rounded-lg border border-line bg-card px-3 py-2 text-sm">
+                  <input type="radio" name={id('cvmode')} className="mt-0.5 size-4 accent-brand-600" checked={cvMode === 'lebenslauf'} onChange={() => setCvMode('lebenslauf')} />
+                  <span className="min-w-0">
+                    <span className="font-semibold text-ink">{t('xapp.apply.useLebenslauf')}</span>
+                    <span className="block text-xs text-muted">
+                      {latest ? t('xapp.apply.lebenslaufVersion', { n: latest.version, date: fmtDate(latest.createdAt) }) : t('xapp.apply.lebenslaufNew')} ·{' '}
+                      <Link to="/account/cv" target="_blank" className="text-link underline">
+                        {t('xapp.apply.editCv')}
+                      </Link>
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-center gap-2.5 rounded-lg border border-line bg-card px-3 py-2 text-sm">
+                  <input type="radio" name={id('cvmode')} className="size-4 accent-brand-600" checked={cvMode === 'upload'} onChange={() => setCvMode('upload')} />
+                  <span className="font-semibold text-ink">{t('xapp.apply.upload')}</span>
+                </label>
+              </fieldset>
+            )}
+
+            {(!client || cvMode === 'upload') && (
             <div>
               <label className="label" htmlFor={id('cv')}>{t('gj.apply.cv')}</label>
               {cv ? (
@@ -313,6 +361,7 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
                 </p>
               )}
             </div>
+            )}
 
             <div>
               <label className="label" htmlFor={id('message')}>{t('gj.apply.message')}</label>

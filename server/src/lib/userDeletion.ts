@@ -11,6 +11,8 @@ import { pickFreeName, safeUploadName } from './drive/names.js';
 import { purgeNodes } from './drive/trash.js';
 import { deleteCourseData } from './course/service.js';
 import { eraseInquiries } from './privacy/inquiries.js';
+import { LEBENSLAUF_SUBDIR, lebenslaufKeysOf } from './cv/versions.js';
+import { eraseGermanyJobAlerts } from './germanyJobs/alerts.js';
 
 /**
  * Hard delete of a user account by the super admin (Admin → Users → "Delete").
@@ -142,6 +144,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   const introVideo = (await prisma.user.findUnique({ where: { id: userId }, select: { introVideoKey: true } }))?.introVideoKey ?? null;
   // Skill videos (rows cascade with the user): video + poster files.
   const skillVideoFiles = (await prisma.skillVideo.findMany({ where: { userId }, select: { storedName: true, posterName: true } })).flatMap((v) => [v.storedName, v.posterName]);
+  const lebenslaufFiles = await lebenslaufKeysOf(userId); // saved Lebenslauf PDFs (rows cascade with the user)
   const translationFiles = await prisma.translationOrderFile.findMany({ where: { storageKey: { not: null }, order: { clientId: userId } }, select: { storageKey: true } });
   const mailFiles = await prisma.mailAttachment.findMany({
     where: { storageKey: { not: null }, message: { account: { userId } } },
@@ -215,6 +218,9 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
         await tx.webPushSubscription.deleteMany({ where: { userId } });
         // Job alerts of the account and of its e-mail address (plain ids, no foreign key).
         await tx.jobAlert.deleteMany({ where: { OR: [{ userId }, { email: target.email.toLowerCase() }] } });
+        // Germany job search: alerts of the account / address and saved listings (plain ids).
+        await eraseGermanyJobAlerts(target.email, userId, tx);
+        await tx.savedGermanyJob.deleteMany({ where: { userId } });
         if (ownCaseIds.length) await tx.casePublicStatus.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 
         // Website enquiries of the address / converted account: anonymised (the row stays for statistics).
@@ -292,6 +298,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
     ['intro-video', introVideo ? [introVideo] : []],
     ['skill-video', skillVideoFiles],
     ['translations', translationFiles.map((t) => t.storageKey)],
+    [LEBENSLAUF_SUBDIR, lebenslaufFiles],
   ] as const) {
     for (const key of keys) {
       if (!key) continue;

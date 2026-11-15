@@ -5,17 +5,19 @@ import { audit } from '../../lib/audit.js';
 import { notFound } from '../../lib/http.js';
 import { providerStatuses } from '../../lib/germanyJobs/providers.js';
 import { cvPath } from '../../lib/germanyJobs/apply.js';
+import { germanyAlertStats } from '../../lib/germanyJobs/alerts.js';
 
 /**
  * Almaniya iş bazası, staff side — mounted at /api/admin/germany-jobs (STAFF+):
- *   GET /status                 each job source: configured / enabled, last fetch, last error (Admin → job channels)
+ *   GET /status                 each job source: configured / enabled, last fetch, last error (Admin → job channels),
+ *                               plus the Germany job alerts / saved jobs counts and today's Careerjet alert budget
  *   GET /applications/:id/cv    CV of an "apply via Triad Vision" lead (`id` = inquiry id), as a download
  */
 export const adminGermanyJobsRouter = Router();
 
-adminGermanyJobsRouter.get('/status', (_req, res) => {
+adminGermanyJobsRouter.get('/status', async (_req, res) => {
   const providers = providerStatuses();
-  res.json({ search: providers.some((p) => p.enabled), providers });
+  res.json({ search: providers.some((p) => p.enabled), providers, alerts: await germanyAlertStats() });
 });
 
 adminGermanyJobsRouter.get('/applications/:id/cv', async (req, res) => {

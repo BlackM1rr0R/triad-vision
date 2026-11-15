@@ -13,7 +13,7 @@ import { notifyUser } from '../notifications.js';
 export const INQUIRY_STATUSES = ['NEW', 'IN_PROGRESS', 'DONE', 'ARCHIVED'] as const;
 export const INQUIRY_SORTS = ['hot', 'newest', 'oldest', 'score', 'workers'] as const;
 /** Source groups of the filter: "web" = the site's contact form (no source), the rest a `source` prefix. */
-export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share', 'external-job'] as const;
+export const INQUIRY_SOURCES = ['web', 'agent', 'event', 'landing', 'ebook', 'package', 'cost-calculator', 'quiz', 'success-share', 'external-job', 'study-programme'] as const;
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -100,7 +100,8 @@ export const enrichInquiries = async (rows: Inquiry[]) => {
   const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))];
   const userIds = uniq([...rows.map((r) => r.assignedStaffId), ...rows.map((r) => r.convertedUserId)]);
   const externalIds = rows.filter((r) => r.source?.startsWith('external-job')).map((r) => r.id);
-  const [users, agents, partners, companies, externalJobs] = await Promise.all([
+  const studyIds = rows.filter((r) => r.source?.startsWith('study-programme:')).map((r) => r.id);
+  const [users, agents, partners, companies, externalJobs, studyApps] = await Promise.all([
     userIds.length ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true, email: true, role: true } }) : [],
     uniq(rows.map((r) => r.agentId)).length
       ? prisma.agent.findMany({ where: { id: { in: uniq(rows.map((r) => r.agentId)) } }, select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } })
@@ -108,9 +109,12 @@ export const enrichInquiries = async (rows: Inquiry[]) => {
     uniq(rows.map((r) => r.partnerId)).length ? prisma.referralPartner.findMany({ where: { id: { in: uniq(rows.map((r) => r.partnerId)) } }, select: { id: true, name: true } }) : [],
     uniq(rows.map((r) => r.convertedCompanyId)).length ? prisma.company.findMany({ where: { id: { in: uniq(rows.map((r) => r.convertedCompanyId)) } }, select: { id: true, name: true } }) : [],
     // "Apply via Triad Vision" for an external listing (routes/germanyJobs.ts): the listing + CV facts, never the stored file name.
-    externalIds.length ? prisma.externalJobApplication.findMany({ where: { inquiryId: { in: externalIds } }, omit: { cvStoredName: true } }) : [],
+    externalIds.length ? prisma.externalJobApplication.findMany({ where: { inquiryId: { in: externalIds } }, omit: { cvStoredName: true, coverLetterBody: true } }) : [],
+    // "Apply via Triad Vision" for a catalogue study programme (routes/study.ts): study facts + file names, never the stored names.
+    studyIds.length ? prisma.studyApplication.findMany({ where: { inquiryId: { in: studyIds } }, omit: { cvStoredName: true, diplomaStoredName: true } }) : [],
   ]);
   const ext = new Map(externalJobs.map((x) => [x.inquiryId, x]));
+  const study = new Map(studyApps.map((x) => [x.inquiryId, x]));
   const u = new Map(users.map((x) => [x.id, x]));
   const a = new Map(agents.map((x) => [x.id, { id: x.id, code: x.code, name: fullName(x.user) }]));
   const p = new Map(partners.map((x) => [x.id, x]));
@@ -126,6 +130,7 @@ export const enrichInquiries = async (rows: Inquiry[]) => {
       convertedUser: client ? { id: client.id, name: fullName(client), email: client.email, role: client.role } : null,
       convertedCompany: r.convertedCompanyId ? (c.get(r.convertedCompanyId) ?? null) : null,
       externalJob: ext.get(r.id) ?? null,
+      studyApplication: study.get(r.id) ?? null,
     };
   });
 };

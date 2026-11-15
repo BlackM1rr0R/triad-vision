@@ -256,6 +256,27 @@ export const arbeitnowProvider: JobProvider = {
   },
 };
 
+/**
+ * Job alerts (lib/germanyJobs/alerts.ts): every feed listing that matches a query, newest first. Served from the
+ * cached feed: a refetch happens only when the feed is due anyway (same hourly rule as a search), never per alert.
+ */
+export const arbeitnowMatches = async (q: SearchQuery): Promise<GermanyJob[]> => {
+  if (!arbeitnowProvider.enabled()) return [];
+  const now = Date.now();
+  await loadFile(now);
+  if (!state.fetchedAt || now - state.fetchedAt >= FEED_TTL_MS) await refreshArbeitnow({ now });
+  return filterFeed(state.items, { ...q, sort: 'date' }).map(strip);
+};
+
+/** Saved jobs: is the listing still in the feed? null = unknown (provider off or no feed loaded yet). */
+export const arbeitnowHas = async (ids: string[]): Promise<Map<string, boolean> | null> => {
+  if (!arbeitnowProvider.enabled()) return null;
+  await loadFile(Date.now());
+  if (!state.fetchedAt) return null;
+  const present = new Set(state.items.map((j) => j.id));
+  return new Map(ids.map((id) => [id, present.has(id)]));
+};
+
 /** Scheduler entry (jobs/germanyJobs.ts): refresh when due and enabled. */
 export const scheduledArbeitnowRefresh = async () => {
   if (!arbeitnowProvider.enabled()) return;

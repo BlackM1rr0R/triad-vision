@@ -4,7 +4,10 @@ import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
 import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
 import { listFieldDefs } from '../partners/fieldDefs.js';
+import { exportGermanyJobAlerts } from '../germanyJobs/alerts.js'; // Germany job search: alerts and saved listings
+import { exportSavedJobs } from '../germanyJobs/saved.js';
 import { exportInquiries } from './inquiries.js'; // website contact / employer enquiries sent with this e-mail
+import { cvPrivacyExport } from '../cv/privacy.js'; // CV builder, Lebenslauf versions, letters, external job applications
 
 /** The user's AI assistant conversations: their questions, the answers and proposed actions (no tool internals). */
 const aiAssistantExport = (userId: string) =>
@@ -31,6 +34,35 @@ const withLegalVersions = async <T extends { legalDocumentId: string | null }>(r
     const d = docs.find((x) => x.id === legalDocumentId);
     return { ...r, legalDocument: d ? { kind: d.kind, version: d.version, publishedAt: d.publishedAt, effectiveAt: d.effectiveAt } : null };
   });
+};
+
+/** The client's anonymous pool entry (lib/pool) with employer interest requests and the number of profile views. */
+const poolExport = async (userId: string) => {
+  const p = await prisma.candidatePoolProfile.findUnique({
+    where: { userId },
+    include: {
+      interests: { orderBy: { createdAt: 'asc' }, select: { createdAt: true, status: true, positions: true, message: true, company: { select: { name: true } } } },
+      _count: { select: { views: true } },
+    },
+  });
+  if (!p) return null;
+  return {
+    code: p.code,
+    consentAt: p.consentAt,
+    consentVersion: p.consentVersion,
+    withdrawnAt: p.withdrawnAt,
+    professions: p.professions,
+    languages: p.languages,
+    regions: p.regions,
+    earliestStart: p.earliestStart,
+    availability: p.availability,
+    skills: p.skills,
+    track: p.track,
+    hiddenByTeam: p.hidden,
+    publicSummary: p.summary,
+    profileViewsByEmployers: p._count.views,
+    employerInterests: p.interests.map(({ company, ...i }) => ({ ...i, company: company.name })),
+  };
 };
 
 /**
@@ -151,6 +183,9 @@ export const buildUserExport = async (userId: string) => {
     privacyRequests,
     // Contact and employer enquiries sent from the website with this e-mail address.
     inquiries: await exportInquiries(user.email, userId),
+    // Germany job search (/jobs/germany): job alerts of this account / e-mail address and saved listings.
+    germanyJobAlerts: await exportGermanyJobAlerts(user.email, userId),
+    savedGermanyJobs: await exportSavedJobs(userId),
     notifications,
     devices,
     supportViews: supportViews.map((v) => ({
@@ -160,6 +195,11 @@ export const buildUserExport = async (userId: string) => {
       pagesViewed: v.requestCount,
       note: 'A Triad Vision team member viewed your portal read-only (no changes possible).',
     })),
+    // Anonymous candidate pool: the opt-in (date, text version), pool details, the staff summary shown to employers,
+    // and which employers asked about the profile (consent history: `consents`, type CANDIDATE_POOL).
+    candidatePool: await poolExport(userId),
+    // CV as entered, saved Lebenslauf PDFs (metadata), cover / motivation letters, "apply via Triad Vision" applications.
+    cvAndApplications: await cvPrivacyExport(userId),
     // Questions to the AI assistant and its answers (deleted together with the account).
     aiAssistant: await aiAssistantExport(userId),
     // A referral partner's login: the partner profile kept about them (internal notes excluded).

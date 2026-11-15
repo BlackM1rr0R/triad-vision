@@ -57,6 +57,8 @@ import { surveysRouter } from './routes/surveys.js';
 import { checkInsRouter } from './routes/checkIns.js'; // post-arrival check-ins (answer side)
 import { accessLogRouter } from './routes/accessLog.js'; // "who viewed my documents"
 import { companyRequestsRouter } from './routes/companyRequests.js';
+import { companyPoolRouter } from './routes/companyPool.js'; // anonymous candidate pool (employer side)
+import { accountPoolRouter } from './routes/accountPool.js'; // anonymous candidate pool (client opt-in)
 import { twoFactorRouter } from './routes/twoFactor.js';
 import { companyRouter } from './routes/company.js';
 import { companyInvoicesRouter } from './routes/companyInvoices.js';
@@ -106,6 +108,8 @@ import { skillVideosRouter } from './routes/skillVideos.js'; // candidate skill 
 import { companySkillVideosRouter } from './routes/companySkillVideos.js'; // employer side of the skill videos
 import { searchRouter } from './routes/search.js';
 import { germanyJobsRouter } from './routes/germanyJobs.js';
+import { studyRouter } from './routes/study.js';
+import { externalApplicationsRouter } from './routes/externalApplications.js';
 import { compareRouter } from './routes/compare.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
@@ -227,11 +231,13 @@ export const createApp = () => {
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
+  app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
   app.use('/api/account/plus', accountPlusRouter); // family switcher, countdown cards + weather, offline pack (lib/clientPlus)
   app.use('/api/account', accountRouter);
   app.use('/api/company/invoices', companyInvoicesRouter);
   app.use('/api/company/quotes', companyQuotesRouter);
   app.use('/api/company/requests', companyRequestsRouter);
+  app.use('/api/company/pool', companyPoolRouter); // anonymous candidate pool: search, profile, shortlist, interest requests
   app.use('/api/company/ai', companyAiRouter);
   app.use('/api/company/skill-videos', companySkillVideosRouter); // approved + consented skill videos of presented candidates
   app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
@@ -243,6 +249,7 @@ export const createApp = () => {
   app.use('/api/booking', bookingRouter);
   app.use('/api/guides', guidesRouter); // public topic guides (SEO)
   app.use('/api/search', searchRouter); // public site search (guides, visas, services, FAQ, news, jobs, events, tools)
+  app.use('/api/study', studyRouter); // Study in Germany: programme catalogue (curated by staff) + "apply via Triad Vision"
   app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (Adzuna API) + "apply via Triad Vision" for external listings
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
@@ -277,6 +284,7 @@ export const createApp = () => {
   app.use('/api/privacy/access-log', accessLogRouter); // before the privacy centre router
   app.use('/api/privacy', privacyRouter);
   app.use('/api/cv', cvRouter);
+  app.use('/api/external-applications', externalApplicationsRouter); // client portal: "apply via Triad Vision" applications, status, Anschreiben
   app.use('/api/vault', vaultRouter);
   app.use('/api/arrival', arrivalRouter);
   app.use('/api/housing', housingRouter);

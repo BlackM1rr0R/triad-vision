@@ -30,6 +30,7 @@ export const SYNONYMS: Record<string, string> = {
   companies: 'şirkət, işəgötürən, company, employer, firma, arbeitgeber, компания, работодатель',
   vacancies: 'vakansiya, iş elanı, job, vacancy, stelle, stellenangebot, вакансия',
   candidateRequests: 'toplu sorğu, bulk, candidate request, kandidatenanfrage, запрос кандидатов',
+  candidatePool: 'namizəd bazası, anonim, talent pool, kandidatenpool, база кандидатов',
   skillVideos: 'video, bacarıq videosu, skill video, kompetenzvideo, видео навыков, yoxlama',
   quotes: 'təklif, angebot, quote, offer, kostenvoranschlag, предложение, смета',
   interviews: 'müsahibə, interview, vorstellungsgespräch, собеседование',

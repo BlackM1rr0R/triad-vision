@@ -14,6 +14,8 @@ import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useApiError } from '@/components/portal/useApiError';
 import { useBlobDownload } from '@/components/cv/CvDownloadButton';
 import { AiCvWizard } from '@/components/aiWriting/AiCvWizard';
+import { LebenslaufVersions } from '@/components/cv/LebenslaufVersions'; // saved Lebenslauf PDFs (attached to external applications)
+import { pagesExternalApps } from '@/i18n/pagesExternalApps';
 import { EntryToolbar, MonthPicker, SaveIndicator, SectionCard, Switch, TagInput, TemplatePreview, TextField, moveItem, type SaveState } from '@/components/cv/fields';
 import {
   CV_LEVELS,
@@ -36,6 +38,7 @@ import {
 } from '@/components/cv/types';
 
 registerCopy(pagesCv);
+registerCopy(pagesExternalApps);
 
 const CV_KEY = ['cv'] as const;
 
@@ -442,6 +445,10 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
             <div className="space-y-4">
               <TextField label={t('cvb.fields.headline')} value={draft.headline} max={CV_MAX.headline} placeholder={t('cvb.fields.headlinePh')} onChange={patch('headline')} />
               <SummaryField value={draft.summary} onChange={patch('summary')} />
+              <div>
+                <MonthPicker label={t('xapp.cv.availableFrom')} value={draft.availableFrom ?? null} onChange={(v) => setDraft((d) => ({ ...d, availableFrom: v }))} optional future={3} />
+                <p className="mt-1 text-xs text-muted">{t('xapp.cv.availableFromHint')}</p>
+              </div>
             </div>
           </SectionCard>
 
@@ -563,6 +570,8 @@ const Editor = ({ cv, profile }: { cv: CvState; profile: CvProfile }) => {
               <Switch checked={settings.shareWithEmployers} onChange={(v) => setSettings({ shareWithEmployers: v })} labelledBy={`${shareId}-l`} describedBy={`${shareId}-h`} />
             </div>
           </div>
+
+          <LebenslaufVersions beforeSave={flush} />
 
           <ProfileBasics profile={profile} />
         </aside>

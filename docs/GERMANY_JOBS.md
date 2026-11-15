@@ -37,3 +37,28 @@ creates an `Inquiry` (kind `contact`, source `external-job:<provider>:<host>`) a
 sends a localised confirmation e-mail. Honeypot, consent and 10 requests per hour per IP. Signed-in clients get
 the form prefilled and the lead linked to their account. When a lead is anonymised, its candidate details and
 the CV file are removed.
+
+## Saved jobs and job alerts
+
+**Saved jobs** (heart on each card and in the apply form): visitors keep them in the browser only (localStorage);
+signed-in clients in their account (`SavedGermanyJob`, portal Learn › Saved jobs, `/account/saved-jobs`). A list
+saved before signing in is merged into the account once. Only a snapshot is stored — title, company, place,
+source, link, job type, posting date — never the description; the ad is opened at its source. Arbeitnow listings
+that left the cached feed show "no longer available"; the other sources cannot be checked without extra calls,
+so they count as expired 60 days after posting / saving.
+
+**Job alerts** ("Notify me about new jobs like this", `GermanyJobAlert`): the current search (keywords, place +
+radius, job / Ausbildung, working time, remote, visa sponsorship), daily or weekly, at most 5 per address.
+Visitors confirm by e-mail first (double opt-in, consent wording version stored); signed-in clients subscribe
+their account address directly and manage alerts in the portal. Every e-mail has a manage page
+(`/job-alert/germany?token=`) and an unsubscribe link. Unconfirmed alerts are deleted after 7 days, unsubscribed
+ones 30 days later; alerts are part of the Art. 15 export, the account deletion and the admin erase-by-e-mail.
+
+Matching (`lib/germanyJobs/alerts.ts`, every 30 minutes): due alerts are grouped by search, so one lookup serves
+every subscriber of the same search. Arbeitnow comes from the cached hourly feed (no extra calls). Careerjet is
+used only within `CAREERJET_ALERT_CALLS_PER_DAY` (default 100, persisted per UTC day, separate from the visitors'
+budget; a fresh search-cache entry costs nothing; skipped once used up; never for remote / visa searches). Jooble
+and Adzuna are never called for alerts. Listing ids already e-mailed are stored per alert (pruned after 120 days),
+so nothing is sent twice. An e-mail lists up to 10 new listings, each with "Apply via Triad Vision" — a link to our
+search page that opens the apply form for that listing, never straight to the source. Admin → Job channels shows
+the alert counts, the most subscribed searches and today's Careerjet alert budget.

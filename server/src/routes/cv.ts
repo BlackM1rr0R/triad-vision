@@ -13,6 +13,9 @@ import { buildCvPdf, cvProfileSelect, cvView, ensureCv } from '../lib/cv/load.js
 import { attachmentHeader, asciiName } from '../lib/cv/pdf.js';
 import { LETTER_KINDS, LETTER_LANGS, buildLetter, letterAnswersSchema, letterRecipient, type LetterAnswers, type LetterContext, type LetterKind, type LetterLang } from '../lib/cv/letters.js';
 import { renderLetterPdf } from '../lib/cv/letterPdf.js';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import { createLebenslaufVersion, lebenslaufFileName, lebenslaufPath, lebenslaufView } from '../lib/cv/versions.js';
 
 /** CV builder and motivation letters — mounted at /api/cv (clients). */
 export const cvRouter = Router();
@@ -72,6 +75,43 @@ cvRouter.get('/pdf', async (req, res) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', attachmentHeader(out.filename, q.inline === '1'));
   res.send(out.pdf);
+});
+
+// ─── Lebenslauf versions (saved PDFs; the newest is attached to "apply via Triad Vision") ─────
+
+cvRouter.get('/lebenslauf', async (req, res) => {
+  const items = await prisma.lebenslaufVersion.findMany({ where: { userId: uid(req) }, orderBy: { version: 'desc' } });
+  res.json({ items: items.map(lebenslaufView), latest: items[0] ? lebenslaufView(items[0]) : null });
+});
+
+cvRouter.post('/lebenslauf', async (req, res) => {
+  const body = parse(z.object({ lang: z.enum(CV_LANGS).default('de'), photo: z.boolean().default(false) }).strict(), req.body ?? {});
+  const row = await createLebenslaufVersion(uid(req), body);
+  await audit(req, 'LEBENSLAUF_VERSION_CREATED', `user:${uid(req)}`, { version: row.version });
+  res.status(201).json({ version: lebenslaufView(row) });
+});
+
+const ownVersion = async (userId: string, id: string) => {
+  const v = await prisma.lebenslaufVersion.findFirst({ where: { id, userId } });
+  if (!v) throw notFound('LEBENSLAUF_NOT_FOUND');
+  return v;
+};
+
+cvRouter.get('/lebenslauf/:id/pdf', async (req, res) => {
+  const v = await ownVersion(uid(req), String(req.params.id));
+  const file = lebenslaufPath(v.storageKey);
+  if (!fs.existsSync(file)) throw notFound('FILE_NOT_FOUND');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Content-Disposition', attachmentHeader(await lebenslaufFileName(uid(req), v), req.query.inline === '1'));
+  res.sendFile(file);
+});
+
+cvRouter.delete('/lebenslauf/:id', async (req, res) => {
+  const v = await ownVersion(uid(req), String(req.params.id));
+  await prisma.lebenslaufVersion.delete({ where: { id: v.id } });
+  await fsp.unlink(lebenslaufPath(v.storageKey)).catch(() => undefined);
+  res.json({ ok: true });
 });
 
 // ─── Motivation letters ────────────────────────────────────────────────

@@ -15,7 +15,7 @@ import { CompanyQuotes } from '@/components/company/CompanyQuotes';
 import { pagesQuotes } from '@/i18n/pagesQuotes';
 import { CompanyDashboard } from '@/components/company/CompanyDashboard';
 import { CompanyVacancies, CompanyVacancyEditor } from '@/components/company/CompanyVacancies';
-import { CompanyCandidates } from '@/components/company/CompanyCandidates';
+import { CompanyCandidatesArea } from '@/components/pool/CompanyPool'; // proposed candidates + anonymous candidate pool
 import { CompanyWorkers } from '@/components/company/CompanyWorkers';
 import { CompanyProfile } from '@/components/company/CompanyProfile';
 import { CompanyInterviews } from '@/components/company/Interviews';
@@ -162,7 +162,7 @@ export default function CompanyApp() {
                 <Route path="vacancies" element={<CompanyVacancies company={company} />} />
                 <Route path="vacancies/new" element={<CompanyVacancyEditor company={company} />} />
                 <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
-                <Route path="candidates" element={<CompanyCandidates />} />
+                <Route path="candidates/*" element={<CompanyCandidatesArea />} />
                 <Route path="requests/*" element={<CompanyRequests />} />
                 <Route path="workers" element={<CompanyWorkers />} />
                 <Route path="interviews" element={<CompanyInterviews />} />

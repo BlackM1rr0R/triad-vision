@@ -3,6 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { dedupeKey, plainText } from '../../src/lib/germanyJobs/common.js';
 import { joobleRadius } from '../../src/lib/germanyJobs/jooble.js';
+import { careerjetUserIp } from '../../src/lib/germanyJobs/careerjet.js';
 
 /**
  * Almaniya iş bazası: the Bundesagentur Jobbörse link builder and the URL state of /jobs/germany
@@ -84,5 +85,17 @@ describe('provider helpers', () => {
     expect(joobleRadius(25)).toBe(26);
     expect(joobleRadius(0)).toBe(0);
     expect(joobleRadius(200)).toBe(80);
+  });
+});
+
+
+describe('careerjetUserIp', () => {
+  it('keeps a public visitor IP and falls back to the server IP otherwise', () => {
+    const env = { CAREERJET_SERVER_IP: '203.0.113.7' } as NodeJS.ProcessEnv;
+    expect(careerjetUserIp('198.51.100.4', env)).toBe('198.51.100.4');
+    expect(careerjetUserIp(undefined, env)).toBe('203.0.113.7');
+    expect(careerjetUserIp('0.0.0.0', env)).toBe('203.0.113.7');
+    expect(careerjetUserIp('172.18.0.3', env)).toBe('203.0.113.7');
+    expect(careerjetUserIp('192.168.1.2', env)).toBe('203.0.113.7');
   });
 });

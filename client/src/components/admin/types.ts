@@ -172,6 +172,28 @@ export interface Inquiry {
   anonymizedAt?: string | null;
   /** "Apply via Triad Vision" for an external listing (source "external-job:…"). */
   externalJob?: ExternalJobInfo | null;
+  /** "Apply via Triad Vision" for a catalogue study programme (source "study-programme:<slug>"). */
+  studyApplication?: StudyApplicationInfo | null;
+}
+
+/** Study facts of a study-programme lead (server lib/inquiries enrichInquiries; no stored file names). */
+export interface StudyApplicationInfo {
+  programmeId: string | null;
+  programmeSlug: string;
+  programmeName: string;
+  university: string;
+  currentDegree: string | null;
+  fieldOfStudy: string | null;
+  gpa: string | null;
+  languageCertificate: string | null;
+  languageLevel: string | null;
+  desiredIntake: string | null;
+  userId: string | null;
+  cvOriginalName: string | null;
+  cvSize: number | null;
+  diplomaOriginalName: string | null;
+  diplomaSize: number | null;
+  createdAt: string;
 }
 
 /** Listing + candidate facts of an external-job lead (server lib/inquiries enrichInquiries; no stored file name). */

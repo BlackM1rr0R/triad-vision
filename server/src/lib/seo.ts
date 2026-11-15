@@ -28,6 +28,8 @@ import { DEFAULT_CITY_COSTS, matchCity } from './budget/cities.js';
 import type { FederalState } from './budget/params.js';
 import type { CityCost } from '@prisma/client';
 import { findJobLanding, jobLandingTexts, jobLandings, parseJobLandingPath } from './jobLandings.js';
+import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, studyListLd, type StudySeoRow } from './study/seo.js';
+import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -259,6 +261,8 @@ export interface SeoData {
   compareThresholds?: CompareThresholds;
   /** Published service packages (/packages: Offer JSON-LD, crawlable body). Optional for older fixtures. */
   packages?: { slug: string; tier: string; title: unknown; summary: unknown; features: unknown; priceCents: number; currency: string; updatedAt: Date }[];
+  /** Published study programmes (/study, /study/:slug, lib/study/seo.ts). Optional for older fixtures. */
+  study?: StudySeoRow[];
 }
 
 const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
@@ -340,7 +344,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     }),
     prisma.guidePage.findMany({ where: { published: true }, orderBy: [{ key: 'asc' }, { locale: 'asc' }] }),
   ]);
-  const [testimonials, leadMagnets, caseAi, packages] = await Promise.all([
+  const [testimonials, leadMagnets, caseAi, packages, study] = await Promise.all([
     prisma.testimonial.findMany({
       where: { published: true },
       orderBy: { sortOrder: 'asc' },
@@ -350,6 +354,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     getCaseAiSettings(),
     // Service packages (/packages): cards, Offer JSON-LD, crawlable body.
     prisma.servicePackage.findMany({ where: { published: true }, orderBy: [{ sortOrder: 'asc' }, { priceCents: 'asc' }], select: { slug: true, tier: true, title: true, summary: true, features: true, priceCents: true, currency: true, updatedAt: true } }),
+    // Study programme catalogue (/study): curated by staff, published rows only.
+    prisma.studyProgramme.findMany({ where: { published: true }, orderBy: { name: 'asc' }, omit: { id: true, published: true, staffNote: true, checkedAt: true, createdAt: true } }),
   ]);
   const count = rating._count.rating;
   return {
@@ -363,6 +369,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     testimonials,
     leadMagnets,
     packages,
+    study,
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
@@ -938,6 +945,10 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       if (ld) resolved.jsonLd.push(ld);
     }
     if (path === '/stories') resolved.jsonLd.push(...storyVideosLd(data, lng));
+    if (path === '/study') {
+      const ld = studyListLd(data.study ?? [], lng, textIn(page.name, lng), berlinToday());
+      if (ld) resolved.jsonLd.push(ld);
+    }
     if (path === '/packages' && (data.packages ?? []).length) {
       // One Service with an OfferCatalog: each package is an Offer with its price (VAT included).
       resolved.jsonLd.push({
@@ -1053,6 +1064,24 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
           itemListElement: landing.jobs.map((j, i) => ({ '@type': 'ListItem', position: i + 1, name: collapse(pick(j.title, lng)), url: pageUrl(`/jobs/${j.slug}`, lng) })),
         },
       ],
+      extraMeta: [],
+    };
+  }
+
+  // Study programmes (lib/study/seo.ts): facts and labels generated in every language, so all six are alternates.
+  const studySlug = studyDetailSlug(path);
+  if (studySlug) {
+    const p = (data.study ?? []).find((x) => x.slug === studySlug);
+    if (!p) return generic;
+    const today = berlinToday();
+    return {
+      title: programmeTitle(p),
+      description: programmeDescription(p, lng, upcomingDeadlines(p.deadlines, today)[0] ?? null),
+      index: true,
+      image: null,
+      ogType: 'website',
+      crumbs: [home, { name: staticName('/study', lng), path: '/study' }, { name: p.name, path }],
+      jsonLd: [programmeLd(p, lng, url, today)],
       extraMeta: [],
     };
   }
@@ -1267,7 +1296,7 @@ export const isKnownRoute = (path: string) =>
   !!STATIC_PAGES[path] ||
   isPrivatePath(path) ||
   SPA_ROUTES.some((r) => routeMatches(r, path)) ||
-  /^\/(visas|services|news|jobs|events|guides)\/[^/]+$/.test(path);
+  /^\/(visas|services|news|jobs|events|guides|study)\/[^/]+$/.test(path);
 
 /**
  * HTTP status of a page URL for the HTML shell (Caddy include /__seo/status, deploy/Caddyfile): 404 for
@@ -1282,6 +1311,9 @@ export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
     const jl = parseJobLandingPath(path);
     return jl && findJobLanding(liveJobs(data), jl.citySlug, jl.professionSlug) ? 200 : 404;
   }
+  // Study programme: only while it is published.
+  const studySlug = studyDetailSlug(path);
+  if (studySlug) return (data.study ?? []).some((x) => x.slug === studySlug) ? 200 : 404;
   const m = /^\/(visas|services|news|jobs|events|guides|ebook|l)\/([^/]+)$/.exec(path);
   // A hand-written page under a content section (/jobs/germany) is not a slug.
   if (m && !STATIC_PAGES[path]) {
@@ -1432,7 +1464,7 @@ const latest = (dates: Date[], fallback = STATIC_LASTMOD) =>
   dates.reduce((max, d) => (d.getTime() > max.getTime() ? d : max), fallback);
 
 /** Child sitemaps of /sitemap.xml (/sitemaps/<group>.xml). */
-export const SITEMAP_GROUPS = ['pages', 'content', 'guides', 'jobs', 'events', 'landing'] as const;
+export const SITEMAP_GROUPS = ['pages', 'content', 'guides', 'jobs', 'events', 'landing', 'study'] as const;
 export type SitemapGroup = (typeof SITEMAP_GROUPS)[number];
 
 interface SitemapUrl {
@@ -1484,6 +1516,7 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/events': latest((data.events ?? []).map((e) => e.updatedAt)),
         '/guides': latest((data.guides ?? []).map((g) => g.updatedAt)),
         '/packages': latest((data.packages ?? []).map((p) => p.updatedAt)),
+        '/study': latest((data.study ?? []).map((p) => p.updatedAt)),
       };
       return SITEMAP_STATIC.flatMap((path) =>
         allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
@@ -1516,6 +1549,9 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
       ];
     case 'events':
       return (data.events ?? []).flatMap((e) => allLanguages(`/events/${e.slug}`, e.updatedAt, undefined, e.title));
+    case 'study':
+      // Every language: the programme pages generate their texts in all six.
+      return (data.study ?? []).flatMap((p) => allLanguages(`/study/${p.slug}`, p.updatedAt));
     case 'landing':
       return (data.landings ?? []).map((l) => {
         const img = absoluteImage(l.ogImage || l.heroImage);

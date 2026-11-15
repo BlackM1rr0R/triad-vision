@@ -80,6 +80,8 @@ export const applyInput = z.object({
     .transform((v) => (v === '' || v === undefined ? undefined : v)),
   message: opt(3000),
   consent: z.enum(['true', '1', 'on'], { errorMap: () => ({ message: 'CONSENT_REQUIRED' }) }),
+  /** Signed-in client: attach the newest saved Lebenslauf (lib/cv/versions) instead of uploading a file. */
+  attachLebenslauf: z.enum(['true', '1', 'on']).optional().catch(undefined),
   lng: z.string().optional(),
   // honeypot: real users never fill this hidden field
   website: z.string().max(200).optional(),
@@ -129,6 +131,8 @@ export interface StoredCv {
   originalName: string;
   mime: string;
   size: number;
+  /** Snapshot of this Lebenslauf version (attached from the portal). */
+  lebenslaufVersionId?: string | null;
 }
 
 /** Creates the lead + the listing row in one transaction. */
@@ -165,6 +169,7 @@ export const createExternalApplication = async (b: ApplyInput, ctx: { phone: str
         cvOriginalName: ctx.cv?.originalName.slice(0, 255) ?? null,
         cvMime: ctx.cv?.mime ?? null,
         cvSize: ctx.cv?.size ?? null,
+        lebenslaufVersionId: ctx.cv?.lebenslaufVersionId ?? null,
       },
     },
   };
@@ -182,8 +187,24 @@ export const clearExternalApplications = async (inquiryIds: string[], tx: Prisma
     if (!rows.length) return;
     await tx.externalJobApplication.updateMany({
       where: { id: { in: rows.map((r) => r.id) } },
-      data: { germanLevel: null, profession: null, experienceYears: null, userId: null, cvStoredName: null, cvOriginalName: null, cvMime: null, cvSize: null },
+      data: {
+        germanLevel: null,
+        profession: null,
+        experienceYears: null,
+        userId: null,
+        cvStoredName: null,
+        cvOriginalName: null,
+        cvMime: null,
+        cvSize: null,
+        lebenslaufVersionId: null,
+        statusNote: null,
+        coverLetterSubject: null,
+        coverLetterBody: null,
+        coverLetterAt: null,
+      },
     });
+    // Staff notes to the client may name the person; the status steps stay for statistics.
+    await tx.externalJobApplicationEvent.updateMany({ where: { applicationId: { in: rows.map((r) => r.id) } }, data: { note: null } });
     for (const r of rows) if (r.cvStoredName) await fsp.unlink(cvPath(r.cvStoredName)).catch(() => undefined);
   } catch (err) {
     console.error('[germany-jobs] clearing application data failed', err);

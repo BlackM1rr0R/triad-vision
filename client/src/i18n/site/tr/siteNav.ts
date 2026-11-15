@@ -20,6 +20,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       how: 'Nasıl işler',
       visas: 'Vizeler',
       ausbildung: 'Ausbildung',
+      study: "Almanya'da eğitim",
       jobs: 'İş ilanları',
       tools: 'Hesaplayıcılar ve testler',
       stories: 'Başarı hikâyeleri',

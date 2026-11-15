@@ -138,3 +138,69 @@ export const listingHost = (raw: string) => {
     return '';
   }
 };
+
+// ─── Saved jobs and job alerts (server lib/germanyJobs/saved.ts, alerts.ts) ──────────────
+
+/** What a saved listing keeps: a small snapshot (no description — the ad stays at its source). */
+export interface SavedGermanyJob {
+  id: string;
+  source: GermanyJobSource;
+  title: string;
+  company: string | null;
+  location: string | null;
+  url: string;
+  type: GermanyJobType;
+  created: string | null;
+  savedAt: string;
+  /** Server only: available = still listed, gone = no longer available, unknown = cannot be checked cheaply. */
+  status?: 'available' | 'gone' | 'unknown';
+}
+
+export const savedSnapshot = (j: Pick<GermanyJob, 'id' | 'source' | 'title' | 'company' | 'location' | 'url' | 'created'>, type: GermanyJobType): SavedGermanyJob => ({
+  id: j.id.slice(0, 160),
+  source: j.source,
+  title: j.title.slice(0, 300),
+  company: j.company?.slice(0, 200) ?? null,
+  location: j.location?.slice(0, 200) ?? null,
+  url: j.url,
+  type,
+  created: j.created,
+  savedAt: new Date().toISOString(),
+});
+
+export type AlertFrequency = 'daily' | 'weekly';
+
+/** GET /api/germany-jobs/alerts/mine | /manage. */
+export interface GermanyJobAlertView {
+  id: string;
+  email: string;
+  locale: string;
+  search: { q: string; where: string; radius: number; type: GermanyJobType; time: GermanyJobTime; remote: boolean; visa: boolean };
+  summary: string;
+  frequency: AlertFrequency;
+  confirmed: boolean;
+  unsubscribed: boolean;
+  lastSentAt: string | null;
+  sentCount: number;
+  createdAt: string;
+}
+
+/** The alert part of a search (the page number is not part of it). */
+export const alertSearchOf = (s: GermanyJobSearch) => ({ q: s.q, where: s.where, radius: s.radius, type: s.type, time: s.time, remote: s.remote, visa: s.visa });
+
+/**
+ * The listing an alert e-mail's "Apply via Triad Vision" link carries (?apply=<id>&at=<title>&ac&al&au=<url>,
+ * server lib/germanyJobs/alerts.ts applyUrl). Null unless id, title and a valid link are present.
+ */
+export const applyFromParams = (p: URLSearchParams) => {
+  const id = p.get('apply');
+  const url = p.get('au') ?? '';
+  const title = clean(p.get('at'));
+  if (!id || !title || !isListingUrl(url)) return null;
+  const [source] = id.split(':');
+  const provider = (['arbeitnow', 'careerjet', 'jooble', 'adzuna'] as const).find((s) => s === source);
+  if (!provider) return null;
+  return { provider, listingId: id.slice(0, 160), externalId: id.slice(0, 64), url, title, company: clean(p.get('ac')) || null, location: clean(p.get('al')) || null };
+};
+
+export const APPLY_PARAMS = ['apply', 'at', 'ac', 'al', 'au'] as const;

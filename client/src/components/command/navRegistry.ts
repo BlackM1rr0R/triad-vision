@@ -58,6 +58,7 @@ import {
   Newspaper,
   Package,
   PanelsTopLeft,
+  PenLine,
   PhoneCall,
   PlaneLanding,
   Plug,
@@ -252,6 +253,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('vacancies', '/admin/vacancies', BriefcaseBusiness, 'employers'),
   a('jobChannels', '/admin/job-channels', Rss, 'employers', { adminOnly: true }), // job board feeds: Indeed, StepStone, BA Jobbörse, generic XML
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
+  a('candidatePool', '/admin/candidate-pool', UserSearch, 'employers'), // anonymous candidate pool: consent, employer interest requests, view log
   a('quotes', '/admin/quotes', FileSignature, 'employers', { adminOnly: true, module: 'quotes' }),
   a('interviews', '/admin/interviews', Video, 'employers'),
   a('employmentContracts', '/admin/employment-contracts', FileText, 'employers'),
@@ -261,6 +263,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('notifications', '/admin/notifications', Bell, undefined), // notification center history + settings (header bell "Bütün bildirişlər")
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
   a('cannedReplies', '/admin/canned-replies', MessageSquareQuote, 'comms'), // canned replies for the "/" picker in composers
+  a('coverLetterTemplates', '/admin/cover-letter-templates', PenLine, 'employers', { adminOnly: true }), // Anschreiben templates for "apply via Triad Vision"
   a('mailboxes', '/admin/mailboxes', AtSign, 'system', { adminOnly: true }), // our own @domain mailboxes (Team hub, next to users)
   a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
   a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
@@ -296,6 +299,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('kb', '/admin/kb', BookOpenText, 'site', { module: 'knowledgeBase' }),
   a('translations', '/admin/translations', Languages, 'site', { module: 'translations' }),
   a('docGuides', '/admin/doc-guides', BookOpen, 'site'),
+  a('studyProgrammes', '/admin/study', GraduationCap, 'site'), // Study in Germany catalogue (/study): STAFF+ edit / CSV import, ADMIN+ delete
   a('waitingRoom', '/admin/waiting-room', Hourglass, 'site', { module: 'waitingRoom' }),
   a('preCourse', '/admin/course', GraduationCap, 'clients'), // pre-departure course for candidates: builder (ADMIN+), progress report (STAFF+)
   a('caseForms', '/admin/case-forms', ListChecks, 'site'),
@@ -383,14 +387,14 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
-  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'interviews', 'employmentContracts', 'interviewPrep'] },
+  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'referralPartners', 'agents'] },
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'searchPerformance', 'docGuides', 'events', 'siteTools', 'cityCosts'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'docGuides', 'events', 'siteTools', 'cityCosts'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
