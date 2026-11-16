@@ -172,7 +172,7 @@ describe('Erklärung zum Beschäftigungsverhältnis: wizard', () => {
 
     const started = expectStatus(await employer.agent.post('/api/company/forms/start').send({ caseId: c.id }), 201);
     const fillId = started.body.fill.id;
-    expect(await prisma.notification.count({ where: { type: 'OFFICIAL_FORM_EMPLOYER_STARTED' } })).toBeGreaterThan(0);
+    expect(await prisma.notification.count({ where: { caseId: c.id, title: { contains: 'Beschäftigungsverhältnis gestartet' } } })).toBeGreaterThan(0);
 
     const detail = expectStatus(await employer.agent.get(`/api/company/forms/${fillId}`), 200);
     expect(detail.body.form.steps).toEqual(['employer', 'job', 'place', 'time', 'pay', 'insurance']);
