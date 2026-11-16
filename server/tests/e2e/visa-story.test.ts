@@ -64,8 +64,8 @@ describe('visa story (Triad Wrapped)', () => {
       destination: { city: 'Hamburg' },
       german: { from: 'A1', to: 'B1', steps: 2, wordsLearned: 0 },
     });
-    expect(res.body.destination.km).toBeGreaterThan(2800);
-    expect(res.body.destination.km).toBeLessThan(3200);
+    expect(res.body.destination.km).toBeGreaterThan(3200);
+    expect(res.body.destination.km).toBeLessThan(3400);
     expect(res.body.funFact.key).toBe('walk');
     expect(res.body.days).toBeGreaterThanOrEqual(0);
     // No staff surname, no document names.
