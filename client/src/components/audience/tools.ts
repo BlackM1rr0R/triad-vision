@@ -25,6 +25,21 @@ import {
   Sparkles,
   PiggyBank,
   WalletCards,
+  HandCoins,
+  Moon,
+  House,
+  PartyPopper,
+  TrainFront,
+  Flag,
+  School,
+  Sofa,
+  IdCard,
+  Gauge,
+  Mic,
+  Coins,
+  Recycle,
+  TriangleAlert,
+  MessagesSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -33,7 +48,7 @@ import {
  * the header menus. Titles and descriptions: pagesAudience copy (toolsPage.items.<key>).
  * Mirrors TOOLS_GROUPS in server/src/lib/seoBody.ts (crawlable /tools body).
  */
-export type ToolGroup = 'eligibility' | 'costs' | 'plan' | 'explore';
+export type ToolGroup = 'eligibility' | 'costs' | 'plan' | 'learn' | 'explore';
 
 export interface ToolItem {
   key: string;
@@ -42,7 +57,7 @@ export interface ToolItem {
   group: ToolGroup;
 }
 
-export const TOOL_GROUPS: ToolGroup[] = ['eligibility', 'costs', 'plan', 'explore'];
+export const TOOL_GROUPS: ToolGroup[] = ['eligibility', 'costs', 'plan', 'learn', 'explore'];
 
 export const TOOLS: ToolItem[] = [
   { key: 'pathFinder', to: '/path-finder', icon: Compass, group: 'eligibility' },
@@ -53,22 +68,38 @@ export const TOOLS: ToolItem[] = [
   { key: 'chancenkarte', to: '/chancenkarte-calculator', icon: Calculator, group: 'eligibility' },
   { key: 'anerkennung', to: '/anerkennung', icon: GraduationCap, group: 'eligibility' },
   { key: 'familyCheck', to: '/family-reunification-check', icon: Users, group: 'eligibility' },
+  { key: 'gradeConverter', to: '/grade-converter', icon: School, group: 'eligibility' },
   { key: 'salary', to: '/salary-calculator', icon: BadgeEuro, group: 'costs' },
   { key: 'cost', to: '/cost-calculator', icon: WalletCards, group: 'costs' },
   { key: 'budget', to: '/budget', icon: PiggyBank, group: 'costs' },
   { key: 'life', to: '/life-in-germany', icon: HeartHandshake, group: 'costs' },
   { key: 'payslip', to: '/payslip-explained', icon: ReceiptText, group: 'costs' },
+  { key: 'taxRefund', to: '/tax-refund-calculator', icon: HandCoins, group: 'costs' },
+  { key: 'shiftPay', to: '/shift-pay-calculator', icon: Moon, group: 'costs' },
+  { key: 'rentCheck', to: '/rent-check', icon: House, group: 'costs' },
   { key: 'whenInGermany', to: '/when-in-germany', icon: CalendarRange, group: 'plan' },
   { key: 'permanentResidence', to: '/permanent-residence', icon: Landmark, group: 'plan' },
   { key: 'whichCity', to: '/which-city', icon: MapPin, group: 'plan' },
   { key: 'drivingLicence', to: '/driving-licence-germany', icon: Car, group: 'plan' },
+  { key: 'germanApartment', to: '/german-apartment', icon: Sofa, group: 'plan' },
+  { key: 'residenceCard', to: '/residence-card-explained', icon: IdCard, group: 'plan' },
   { key: 'startDate', to: '/calculator', icon: CalendarClock, group: 'plan' },
   { key: 'cities', to: '/cities', icon: Building, group: 'plan' },
+  { key: 'holidayPlanner', to: '/holiday-planner', icon: PartyPopper, group: 'plan' },
+  { key: 'weekendTrips', to: '/weekend-trips', icon: TrainFront, group: 'plan' },
   { key: 'events', to: '/events', icon: CalendarDays, group: 'plan' },
   { key: 'status', to: '/status', icon: ScanSearch, group: 'plan' },
   { key: 'map', to: '/map', icon: MapPinned, group: 'explore' },
+  { key: 'azInGermany', to: '/azerbaijan-in-germany', icon: Flag, group: 'explore' },
   { key: 'guides', to: '/guides', icon: BookOpen, group: 'explore' },
   { key: 'glossary', to: '/glossary', icon: BookA, group: 'explore' },
+  { key: 'shortageBarometer', to: '/shortage-barometer', icon: Gauge, group: 'explore' },
   { key: 'jobs', to: '/jobs', icon: Briefcase, group: 'explore' },
   { key: 'visas', to: '/visas', icon: MapIcon, group: 'explore' },
+  // Learning games (pages/games): also linked from the portal German page (components/games/GameLinks).
+  { key: 'simulator', to: '/german-simulator', icon: MessagesSquare, group: 'learn' },
+  { key: 'pronunciation', to: '/pronunciation', icon: Mic, group: 'learn' },
+  { key: 'priceGame', to: '/price-game', icon: Coins, group: 'learn' },
+  { key: 'trafficSigns', to: '/traffic-signs', icon: TriangleAlert, group: 'learn' },
+  { key: 'wasteSorting', to: '/waste-sorting', icon: Recycle, group: 'learn' },
 ];

@@ -79,6 +79,7 @@ import { adminMarketingRouter } from './marketing.js'; // lead scoring, landing 
 import { adminCommandSearchRouter } from './commandSearch.js'; // Ctrl+K command palette search
 import { adminPlacementRouter } from './placement.js'; // recognition, employer share links, evaluations, employment contracts
 import { adminKpiRouter } from './kpi.js'; // staff KPI card + team leaderboard
+import { adminYearReviewRouter } from '../visaStory.js'; // staff 'Year in review' (per-staff counts ADMIN+)
 import { adminStaffOpsRouter } from './staffOps.js'; // morning digest preference + backup restore test status
 import { adminTrainingRouter } from './training.js'; // internal training courses / lessons / quizzes
 import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
@@ -206,6 +207,7 @@ adminRouter.use('/assignment', adminAssignmentRouter); // auto-assignment settin
 adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segments (ADMIN+)
 adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
 adminRouter.use('/kpi', adminKpiRouter); // staff KPI (own card STAFF; team + others ADMIN+)
+adminRouter.use('/year-review', adminYearReviewRouter); // year in review: cases, professions, cities, fastest case (per-staff ADMIN+)
 adminRouter.use('/staff-ops', adminStaffOpsRouter); // /digest (own morning e-mail opt-out), /backup-check (ADMIN+)
 adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
 adminRouter.use('/course', adminCourseRouter); // pre-departure course (client LMS): builder ADMIN+, report STAFF+

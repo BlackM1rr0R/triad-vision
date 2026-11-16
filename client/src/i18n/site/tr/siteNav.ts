@@ -37,6 +37,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       cooperation: 'İş birliği',
       request: 'Aday talep et',
       register: 'Şirket kaydı',
+      guideAz: 'Rehber: Azerbaycan’dan işe alım',
       partners: 'Partnerlerimiz',
       stories: 'Şirketlerin görüşleri',
     },

@@ -683,6 +683,15 @@ export const TOOL_PAGES = new Set([
   '/life-in-germany',
   '/when-in-germany',
   '/payslip-explained',
+  '/german-apartment',
+  '/residence-card-explained',
+  '/shortage-barometer',
+  '/tax-refund-calculator',
+  '/shift-pay-calculator',
+  '/rent-check',
+  '/holiday-planner',
+  '/grade-converter',
+  '/weekend-trips',
   '/which-city',
   '/permanent-residence',
   '/family-reunification-check',
@@ -690,6 +699,11 @@ export const TOOL_PAGES = new Set([
   '/eligibility',
   '/uygunluq-testi',
   '/path-finder',
+  '/german-simulator',
+  '/pronunciation',
+  '/price-game',
+  '/traffic-signs',
+  '/waste-sorting',
 ]);
 
 /** schema.org applicationCategory of each tool (UtilitiesApplication for checks, FinanceApplication for money). */
@@ -699,7 +713,15 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/budget': 'FinanceApplication',
   '/life-in-germany': 'FinanceApplication',
   '/payslip-explained': 'FinanceApplication',
+  '/tax-refund-calculator': 'FinanceApplication',
+  '/shift-pay-calculator': 'FinanceApplication',
+  '/rent-check': 'FinanceApplication',
   '/cities': 'FinanceApplication',
+  '/german-simulator': 'EducationalApplication',
+  '/pronunciation': 'EducationalApplication',
+  '/traffic-signs': 'EducationalApplication',
+  '/price-game': 'GameApplication',
+  '/waste-sorting': 'GameApplication',
 };
 
 const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>

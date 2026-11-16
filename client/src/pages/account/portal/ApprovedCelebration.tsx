@@ -14,8 +14,11 @@ import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments';
 import { caseToCelebrate } from './celebration';
 import { InstagramCardDialog } from '@/components/portal/InstagramCardDialog'; // private Instagram success card
+import { Sparkles } from 'lucide-react';
+import { pagesVisaStory } from '@/i18n/pagesVisaStory'; // "Your visa story" button
 
 registerCopy(pagesPortalMoments);
+registerCopy(pagesVisaStory);
 
 const seenKey = (caseId: string) => `tv_approved_screen:${caseId}`;
 
@@ -115,6 +118,10 @@ export function ApprovedCelebration() {
           >
             {t('milestones.insta.cta')}
           </Button>
+          {/* "Your visa story" (Triad Wrapped): full-screen slides from the real numbers. */}
+          <Link to={`/account/visa-story/${encodeURIComponent(shown.id)}`} onClick={close} className={buttonClass({ variant: 'secondary', className: 'mt-2 w-full sm:mt-0 sm:ml-2 sm:w-auto' })}>
+            <Sparkles className="size-4" aria-hidden /> {t('vstory.cta.open')}
+          </Link>
         </div>
 
         <section aria-labelledby="approved-next-title">

@@ -122,6 +122,7 @@ import { accountRecognitionRouter } from './routes/accountRecognition.js'; // cl
 import { accountAuthoritiesRouter } from './routes/accountAuthorities.js'; // client portal: embassy / Ausländerbehörde info (catalogue)
 import { accountPermitsRouter } from './routes/accountPermits.js'; // client portal: own permit / passport / insurance expiry dates
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
+import { accountVisaStoryRouter } from './routes/visaStory.js'; // client 'Your visa story' (Triad Wrapped) + share card
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
@@ -248,6 +249,7 @@ export const createApp = () => {
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/arrival-certificate', accountArrivalCertificateRouter); // arrival certificate PDF (own arrived cases)
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
+  app.use('/api/account/visa-story', accountVisaStoryRouter); // visa approved: 'Your visa story' slides + share card (own case only)
   app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
   app.use('/api/account/germany', accountGermanyRouter); // My Germany day (countdown, weather, packing), arrival card, badges
   app.use('/api/account/plus', accountPlusRouter); // family switcher, countdown cards + weather, offline pack (lib/clientPlus)

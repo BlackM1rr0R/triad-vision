@@ -37,6 +37,7 @@ const copy: SiteCopy<(typeof siteNavCopy)['en']> = {
       cooperation: 'Співпраця',
       request: 'Запросити кандидатів',
       register: 'Реєстрація компанії',
+      guideAz: 'Гід: найм з Азербайджану',
       partners: 'Наші партнери',
       stories: 'Відгуки компаній',
     },

@@ -347,6 +347,139 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Німецький розрахунковий лист по рядках: брутто, податок на зарплату, церковний податок, медичне й пенсійне страхування, нетто й витрати роботодавця.',
     },
   },
+  '/tax-refund-calculator': {
+    name: { az: 'Vergi qaytarılması', de: 'Steuererstattung', en: 'Tax refund calculator', ru: 'Возврат налога', tr: 'Vergi iadesi', uk: 'Повернення податку' },
+    title: { az: 'Almaniyada vergi qaytarılması 2026', de: 'Steuererstattung berechnen 2026: Rechner', en: 'German tax refund calculator 2026', ru: 'Возврат налога в Германии: калькулятор 2026', tr: 'Almanya vergi iadesi hesaplama 2026', uk: 'Повернення податку в Німеччині 2026' },
+    description: {
+      az: 'Bəyannamə ilə nə qədər vergi geri alarsınız: yol pulu 0,38 €/km, ev ofisi, iş ləvazimatı, ikiqat təsərrüfat, köçmə — 2026 qaydaları, manatla.',
+      de: 'Wie viel Steuer bekommen Sie zurück? Entfernungspauschale 0,38 €/km, Homeoffice, Arbeitsmittel, doppelte Haushaltsführung, Umzug – Regeln 2026.',
+      en: 'How much tax will you get back? Commuting allowance 0.38 €/km, home office, equipment, double household, moving costs — 2026 rules, in euro and manat.',
+      ru: 'Сколько налога вы вернёте: дорога 0,38 €/км, хоум-офис, рабочие расходы, двойное хозяйство, переезд — правила 2026 года, в евро и манатах.',
+      tr: 'Ne kadar vergi geri alırsınız? Yol götürüsü 0,38 €/km, ev ofisi, iş malzemesi, çifte hane, taşınma — 2026 kuralları, euro ve manat olarak.',
+      uk: 'Скільки податку ви повернете: дорога 0,38 €/км, хоум-офіс, робочі витрати, подвійне господарство, переїзд — правила 2026 року.',
+    },
+  },
+  '/shift-pay-calculator': {
+    name: { az: 'Gecə və bayram əlavələri', de: 'Zuschlagsrechner', en: 'Shift pay calculator', ru: 'Калькулятор надбавок', tr: 'Vardiya zammı hesaplama', uk: 'Калькулятор надбавок' },
+    title: { az: 'Gecə və bayram əlavələri: vergisiz?', de: 'Nacht- und Feiertagszuschlag: steuerfrei?', en: 'Night & holiday pay in Germany: tax-free?', ru: 'Надбавки за ночь и праздники в Германии', tr: 'Gece, pazar ve tatil zammı: vergisiz mi?', uk: 'Надбавки за ніч і свята в Німеччині' },
+    description: {
+      az: 'Gecə (25/40%), bazar (50%), bayram (125/150%) əlavələrinin vergisiz və sığortasız hissəsi §3b EStG üzrə: tibb bacısı, aşpaz və sürücü nümunələri.',
+      de: 'Steuer- und beitragsfreie Zuschläge nach §3b EStG: Nacht 25/40 %, Sonntag 50 %, Feiertag 125/150 %. Mit Beispielen für Pflege, Küche und Fahrer.',
+      en: 'Tax- and contribution-free supplements under §3b EStG: night 25/40 %, Sunday 50 %, holidays 125/150 %. With presets for nurses, cooks and drivers.',
+      ru: 'Необлагаемые надбавки по §3b EStG: ночь 25/40 %, воскресенье 50 %, праздники 125/150 %. С примерами для медсестёр, поваров и водителей.',
+      tr: '§3b EStG’ye göre vergisiz ve primsiz zamlar: gece %25/40, pazar %50, tatil %125/150. Hemşire, aşçı ve şoför örnekleriyle.',
+      uk: 'Неоподатковувані надбавки за §3b EStG: ніч 25/40 %, неділя 50 %, свята 125/150 %. З прикладами для медсестер, кухарів і водіїв.',
+    },
+  },
+  '/rent-check': {
+    name: { az: 'Kirayə yoxlaması', de: 'Mietcheck', en: 'Rent check', ru: 'Проверка аренды', tr: 'Kira kontrolü', uk: 'Перевірка оренди' },
+    title: { az: 'Kirayə yoxlaması: qiymət normaldır?', de: 'Mietcheck: Ist meine Miete zu hoch?', en: 'Rent check Germany: is my rent fair?', ru: 'Проверка аренды в Германии: не дорого ли?', tr: 'Almanya kira kontrolü: kiram makul mü?', uk: 'Перевірка оренди в Німеччині: чи не дорого?' },
+    description: {
+      az: 'Soyuq kirayəni m²-yə görə şəhərin tipik aralığı ilə müqayisə edin: ucuz, normal və ya baha. Kommunal xərclər və Mietpreisbremse (+10%) qeydi ilə.',
+      de: 'Kaltmiete pro m² mit der typischen Spanne der Stadt vergleichen: günstig, normal oder teuer. Mit Nebenkosten-Check und Hinweis zur Mietpreisbremse.',
+      en: 'Compare your cold rent per m² with the city’s typical range: cheap, normal or expensive. With a utilities check and a note on the rent cap (+10 %).',
+      ru: 'Сравните холодную аренду за м² с типичным диапазоном города: дёшево, нормально или дорого. С проверкой коммуналки и Mietpreisbremse.',
+      tr: 'Soğuk kiranızı m² başına şehrin tipik aralığıyla karşılaştırın: ucuz, normal veya pahalı. Yan gider kontrolü ve kira freni notuyla.',
+      uk: 'Порівняйте холодну оренду за м² із типовим діапазоном міста: дешево, нормально чи дорого. З перевіркою комуналки й Mietpreisbremse.',
+    },
+  },
+  '/holiday-planner': {
+    name: { az: 'Bayramlar və körpü günləri', de: 'Feiertage & Brückentage', en: 'Holidays & bridge days', ru: 'Праздники и «мостики»', tr: 'Tatiller ve köprü günleri', uk: 'Свята й «містки»' },
+    title: { az: 'Almaniyada bayramlar və körpü günləri', de: 'Feiertage 2026–2028 und Brückentage', en: 'German holidays 2026–2028 & bridge days', ru: 'Праздники Германии 2026–2028 и «мостики»', tr: 'Almanya tatilleri ve köprü günleri', uk: 'Свята Німеччини 2026–2028 і «містки»' },
+    description: {
+      az: 'Bütün 16 federal ştat üçün 2026–2028 rəsmi bayramları, təqvim və ən yaxşı körpü günləri: 4 gün məzuniyyət → 9 gün istirahət. .ics yükləyin.',
+      de: 'Gesetzliche Feiertage 2026–2028 aller 16 Bundesländer, Jahreskalender und die besten Brückentage: 4 Urlaubstage → 9 Tage frei. Als .ics laden.',
+      en: 'Public holidays 2026–2028 for all 16 German states, a year calendar and the best bridge days: 4 vacation days → 9 days off. Download as .ics.',
+      ru: 'Официальные праздники 2026–2028 всех 16 земель Германии, календарь и лучшие «мостики»: 4 дня отпуска → 9 дней отдыха. Скачать .ics.',
+      tr: 'Almanya’nın 16 eyaleti için 2026–2028 resmî tatilleri, yıllık takvim ve en iyi köprü günleri: 4 gün izin → 9 gün tatil. .ics indirin.',
+      uk: 'Офіційні свята 2026–2028 усіх 16 земель Німеччини, календар і найкращі «містки»: 4 дні відпустки → 9 днів відпочинку. Завантажити .ics.',
+    },
+  },
+  '/grade-converter': {
+    name: { az: 'Qiymət çevirici', de: 'Notenumrechnung', en: 'Grade converter', ru: 'Пересчёт оценок', tr: 'Not dönüştürücü', uk: 'Перерахунок оцінок' },
+    title: { az: 'Azərbaycan qiymətini alman qiymətinə çevir', de: 'Notenumrechnung Aserbaidschan → deutsche Note', en: 'Convert Azerbaijani grades to German grades', ru: 'Пересчёт азербайджанских оценок в немецкие', tr: 'Azerbaycan notunu Alman notuna çevirme', uk: 'Перерахунок оцінок з Азербайджану' },
+    description: {
+      az: 'Attestat (5 ballıq) və ya universitet qiymətini (100 ballıq) modifikasiya olunmuş Bavariya formulu ilə alman 1,0–4,0 qiymətinə çevirin — uni-assist üçün.',
+      de: 'Attestat (5-Punkte-Skala) oder Hochschulnote (100 Punkte) mit der modifizierten bayerischen Formel in die deutsche Note 1,0–4,0 umrechnen.',
+      en: 'Convert an Azerbaijani attestat (5-point) or university grade (100-point) into the German 1.0–4.0 scale with the modified Bavarian formula.',
+      ru: 'Аттестат (5 баллов) или оценку вуза (100 баллов) — в немецкую шкалу 1,0–4,0 по модифицированной баварской формуле. Для uni-assist.',
+      tr: 'Azerbaycan attestatını (5’lik) veya üniversite notunu (100’lük) değiştirilmiş Bavyera formülüyle Alman 1,0–4,0 ölçeğine çevirin.',
+      uk: 'Атестат (5 балів) або оцінку вишу (100 балів) — у німецьку шкалу 1,0–4,0 за модифікованою баварською формулою. Для uni-assist.',
+    },
+  },
+  // Content pages: Deutschlandticket day trips, employer guide Azerbaijan (German first), Azerbaijan in Germany map.
+  '/weekend-trips': {
+    name: { az: 'Həftəsonu səfərləri', de: 'Wochenendausflüge', en: 'Weekend trips', ru: 'Поездки на выходные', tr: 'Hafta sonu gezileri', uk: 'Поїздки на вихідні' },
+    title: { az: 'Deutschlandticket ilə həftəsonu səfərləri', de: 'Ausflüge mit dem Deutschlandticket', en: 'Day trips with the Deutschlandticket', ru: 'Поездки с Deutschlandticket на выходные', tr: 'Deutschlandticket ile hafta sonu gezileri', uk: 'Поїздки з Deutschlandticket на вихідні' },
+    description: {
+      az: 'Deutschlandticket ilə 14 alman şəhərindən günlük səfərlər: hər biri üçün yalnız RE, RB və S-Bahn ilə 10 yer — yol vaxtı, mövsüm və bahn.de linki.',
+      de: 'Tagesausflüge mit dem Deutschlandticket ab 14 Städten: je 10 Ziele nur mit RE, RB und S-Bahn – mit Fahrzeit, Jahreszeit und Link zu bahn.de.',
+      en: 'Day trips with the Deutschlandticket from 14 German cities: 10 destinations each by RE, RB and S-Bahn only — travel time, season and bahn.de link.',
+      ru: 'Поездки на день с Deutschlandticket из 14 городов Германии: по 10 мест только на RE, RB и S-Bahn — время в пути, сезон и ссылка на bahn.de.',
+      tr: 'Deutschlandticket ile 14 Alman şehrinden günübirlik geziler: her biri için yalnız RE, RB ve S-Bahn ile 10 yer — yol süresi, mevsim ve bahn.de.',
+      uk: 'Поїздки на день із Deutschlandticket із 14 міст Німеччини: по 10 місць лише RE, RB і S-Bahn — час у дорозі, сезон і посилання на bahn.de.',
+    },
+  },
+  '/employer-guide-azerbaijan': {
+    name: { az: 'İşəgötürən bələdçisi: Azərbaycan', de: 'Leitfaden Aserbaidschan', en: 'Employer guide Azerbaijan', ru: 'Гид: найм из Азербайджана', tr: 'İşveren rehberi: Azerbaycan', uk: 'Гід: найм з Азербайджану' },
+    title: { az: 'Azərbaycandan işçi: işəgötürən bələdçisi', de: 'Leitfaden: Mitarbeiter aus Aserbaidschan', en: 'Hiring from Azerbaijan: employer guide', ru: 'Найм работников из Азербайджана: гид', tr: 'Azerbaycan’dan işçi alımı: işveren rehberi', uk: 'Найм працівників з Азербайджану: гід' },
+    description: {
+      az: 'Təhsil sistemi, tanınma (anabin, EQF), Bakıda alman dili imtahanları, iş mədəniyyəti, bayramlar və § 81a daxil viza yolları — işəgötürənlər üçün.',
+      de: 'Bildungssystem, Anerkennung (anabin, DQR), Deutschprüfungen in Baku, Arbeitskultur, Feiertage und Visumwege inkl. § 81a – für Arbeitgeber.',
+      en: 'Education system, recognition (anabin, EQF), German exams in Baku, work culture, holidays and visa routes incl. § 81a — a guide for employers.',
+      ru: 'Образование, признание (anabin, EQF), экзамены по немецкому в Баку, рабочая культура, праздники и визы, включая § 81a, — для работодателей.',
+      tr: 'Eğitim sistemi, denklik (anabin, EQF), Bakü’de Almanca sınavları, iş kültürü, bayramlar ve § 81a dahil vize yolları — işverenler için.',
+      uk: 'Освіта, визнання (anabin, EQF), іспити з німецької в Баку, робоча культура, свята й візи, зокрема § 81a, — для роботодавців.',
+    },
+  },
+  '/azerbaijan-in-germany': {
+    name: { az: 'Almaniyada Azərbaycan', de: 'Aserbaidschan in Deutschland', en: 'Azerbaijan in Germany', ru: 'Азербайджан в Германии', tr: 'Almanya’da Azerbaycan', uk: 'Азербайджан у Німеччині' },
+    title: { az: 'Almaniyada Azərbaycan: səfirlik və icma', de: 'Aserbaidschan in Deutschland: Karte', en: 'Azerbaijan in Germany: embassy and community', ru: 'Азербайджан в Германии: посольство и община', tr: 'Almanya’da Azerbaycan: harita', uk: 'Азербайджан у Німеччині: посольство й громада' },
+    description: {
+      az: 'Almaniyada Azərbaycan səfirliyi, fəxri konsulluq, mədəniyyət mərkəzi, birliklər və kafe: xəritə, mənbə və tarixlə yoxlanılmış siyahı.',
+      de: 'Botschaft, Honorarkonsulat, Kulturzentrum, Vereine und aserbaidschanisches Café in Deutschland: geprüfte Liste mit Karte, Quellen und Datum.',
+      en: 'Embassy, honorary consulate, cultural centre, associations and an Azerbaijani café in Germany: a verified list with map, sources and dates.',
+      ru: 'Посольство, почётное консульство, культурный центр, объединения и азербайджанское кафе в Германии: проверенный список с картой и источниками.',
+      tr: 'Almanya’da büyükelçilik, fahri konsolosluk, kültür merkezi, dernekler ve Azerbaycan kafesi: harita ve kaynaklarla doğrulanmış liste.',
+      uk: 'Посольство, почесне консульство, культурний центр, об’єднання й азербайджанське кафе в Німеччині: перевірений список із мапою та джерелами.',
+    },
+  },
+  '/german-apartment': {
+    name: { az: 'Virtual alman mənzili', de: 'Virtuelle deutsche Wohnung', en: 'Virtual German apartment', ru: 'Виртуальная немецкая квартира', tr: 'Sanal Alman dairesi', uk: 'Віртуальна німецька квартира' },
+    title: { az: 'Alman mənzili: Nebenkosten, Pfand və qaydalar', de: 'Deutsche Wohnung erklärt: Heizung bis Pfand', en: 'German apartment explained: rules and tips', ru: 'Немецкая квартира: правила и советы', tr: 'Alman dairesi: kurallar ve ipuçları', uk: 'Німецька квартира: правила й поради' },
+    description: {
+      az: 'İnteraktiv alman mənzili: termostat, havalandırma və kif, zibil və Pfand, Nebenkosten, sakitlik saatları, Kaution — məsləhət və tipik səhvlərlə.',
+      de: 'Interaktive Mietwohnung: Thermostat, Stoßlüften und Schimmel, Mülltrennung, Pfand, Nebenkosten, Ruhezeiten, Kaution — mit Tipps und typischen Fehlern.',
+      en: 'An interactive German flat: thermostat numbers, airing and mould, bins and Pfand, Nebenkosten, quiet hours and Kaution — with tips and common mistakes.',
+      ru: 'Интерактивная немецкая квартира: термостат, проветривание, мусор и Pfand, Nebenkosten, часы тишины и Kaution — с советами и частыми ошибками.',
+      tr: 'Etkileşimli Alman dairesi: termostat, havalandırma ve küf, çöp ve Pfand, Nebenkosten, sessizlik saatleri ve Kaution — ipuçları ve sık hatalarla.',
+      uk: 'Інтерактивна німецька квартира: термостат, провітрювання, сміття й Pfand, Nebenkosten, години тиші й Kaution — з порадами та частими помилками.',
+    },
+  },
+  '/residence-card-explained': {
+    name: { az: 'Yaşayış kartı (eAT) izahlı', de: 'Aufenthaltstitel (eAT) erklärt', en: 'Residence card (eAT) explained', ru: 'Карта ВНЖ (eAT) с пояснениями', tr: 'Oturum kartı (eAT) açıklaması', uk: 'Картка посвідки (eAT) з поясненнями' },
+    title: { az: 'Alman yaşayış kartı (eAT) izahlı', de: 'Aufenthaltstitel (eAT) erklärt: jedes Feld', en: 'German residence card (eAT) explained', ru: 'Карта ВНЖ Германии (eAT): все поля', tr: 'Alman oturum kartı (eAT) açıklaması', uk: 'Картка посвідки Німеччини (eAT)' },
+    description: {
+      az: 'Nümunə kartda eAT-ın hər sahəsi: icazənin növü və paraqrafı, etibarlılıq, qeydlər, CAN, MRZ, PIN məktubu, Zusatzblatt və uzatmadan əvvəl nə etməli.',
+      de: 'Jedes Feld des eAT am Muster: Art und Paragraf, Gültigkeit, Anmerkungen, CAN, MRZ, PIN-Brief, Zusatzblatt und was vor der Verlängerung zu tun ist.',
+      en: 'Every field of the German eAT on a specimen: permit type and §, validity, remarks, CAN, MRZ, PIN letter, Zusatzblatt and what to do before it expires.',
+      ru: 'Каждое поле eAT на образце: вид разрешения и параграф, срок, примечания, CAN, MRZ, письмо с PIN, Zusatzblatt и что делать до окончания срока.',
+      tr: 'Örnek kartta eAT’ın her alanı: izin türü ve paragraf, geçerlilik, notlar, CAN, MRZ, PIN mektubu, Zusatzblatt ve süre dolmadan yapılacaklar.',
+      uk: 'Кожне поле eAT на зразку: вид дозволу й параграф, строк дії, примітки, CAN, MRZ, лист із PIN, Zusatzblatt і що робити до закінчення строку.',
+    },
+  },
+  '/shortage-barometer': {
+    name: { az: 'Kadr çatışmazlığı barometri', de: 'Engpass-Barometer', en: 'Skilled-shortage barometer', ru: 'Барометр дефицита кадров', tr: 'Eleman açığı barometresi', uk: 'Барометр дефіциту кадрів' },
+    title: { az: 'Almaniyada kadr çatışmazlığı 2025: xəritə', de: 'Fachkräfteengpass 2025 nach Bundesland', en: 'Skilled shortage in Germany 2025 by state', ru: 'Дефицит кадров в Германии 2025 по землям', tr: 'Almanya’da eleman açığı 2025: eyaletler', uk: 'Дефіцит кадрів у Німеччині 2025: землі' },
+    description: {
+      az: 'BA Engpassanalyse 2025: tibb bacısı, aşpaz, sürücü, elektrik, SHK, IT və digər peşələr üçün çatışmazlıq — ölkə üzrə və federal ştatlar xəritəsində.',
+      de: 'BA-Engpassanalyse 2025 für Pflege, Köche, Berufskraftfahrer, Elektriker, SHK, IT und mehr — bundesweit und als Karte der Bundesländer, mit Quellen.',
+      en: 'BA shortage analysis 2025 for nursing, cooks, truck drivers, electricians, SHK, IT and more — nationally and on a map of the German states, with sources.',
+      ru: 'Анализ дефицита BA 2025: медсёстры, повара, водители, электрики, SHK, IT и другие — по Германии и на карте федеральных земель, с источниками.',
+      tr: 'BA eleman açığı analizi 2025: hemşire, aşçı, şoför, elektrikçi, SHK, BT ve diğerleri — ülke geneli ve eyalet haritasında, kaynaklarıyla.',
+      uk: 'Аналіз дефіциту BA 2025: медсестри, кухарі, водії, електрики, SHK, IT та інші — по Німеччині й на карті федеральних земель, із джерелами.',
+    },
+  },
   '/which-city': {
     name: { az: 'Hansı şəhər sənə uyğundur?', de: 'Welche Stadt passt zu dir?', en: 'Which German city suits you?', ru: 'Какой город тебе подходит?', tr: 'Hangi şehir sana uygun?', uk: 'Яке місто тобі підходить?' },
     title: { az: 'Hansı alman şəhəri sənə uyğundur? Test', de: 'Welche deutsche Stadt passt zu dir? Quiz', en: 'Which German city suits you? Quiz', ru: 'Какой город Германии тебе подходит? Тест', tr: 'Hangi Alman şehri sana uygun? Test', uk: 'Яке місто Німеччини тобі підходить? Тест' },
@@ -393,6 +526,67 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Бесплатная проверка воссоединения семьи: ВНЖ, доход, жильё, A1 и возраст детей — кто может приехать сейчас или позже и какие нужны документы.',
       tr: 'Ücretsiz aile birleşimi kontrolü: oturum, gelir, konut, A1 ve çocukların yaşı — kim şimdi, kim sonra gelebilir ve hangi belgeler gerekli.',
       uk: 'Безкоштовна перевірка возз’єднання сім’ї: дозвіл, дохід, житло, A1 і вік дітей — хто може приїхати зараз чи пізніше та які потрібні документи.',
+    },
+  },
+  // Learning games (client pages/games): static pages, no API besides the CBAR rate on /price-game.
+  '/german-simulator': {
+    name: { az: 'Bürgeramt simulyatoru', de: 'Bürgeramt-Simulator', en: 'Bürgeramt simulator', ru: 'Симулятор бюргерамта', tr: 'Bürgeramt simülatörü', uk: 'Симулятор бюргерамту' },
+    title: { az: 'Bürgeramt simulyatoru: almanca dialoqlar', de: 'Bürgeramt-Simulator: Deutsch im Amt üben', en: 'Bürgeramt simulator: practise German', ru: 'Симулятор бюргерамта: немецкий в диалогах', tr: 'Bürgeramt simülatörü: Almanca diyalog', uk: 'Симулятор бюргерамту: німецька в діалогах' },
+    description: {
+      az: 'Almanca dialoq məşqi: Bürgeramt-da qeydiyyat, bank hesabı, həkimə zəng, ilk iş günü və istilik problemi. Cavab seçin, əsas ifadələri öyrənin.',
+      de: 'Gespräche auf Deutsch üben: Anmeldung, Girokonto, Arzttermin am Telefon, erster Arbeitstag und kaputte Heizung. Antworten wählen, Ausdrücke lernen.',
+      en: 'Practise German dialogues: Anmeldung, a bank account, a doctor’s appointment by phone, your first workday and broken heating. Pick replies, learn phrases.',
+      ru: 'Тренируйте диалоги на немецком: регистрация, счёт в банке, запись к врачу по телефону, первый рабочий день и отопление. Выбирайте ответы, учите фразы.',
+      tr: 'Almanca diyalog alıştırması: ikamet kaydı, banka hesabı, telefonla doktor randevusu, ilk iş günü ve bozuk kalorifer. Cevap seçin, önemli ifadeleri öğrenin.',
+      uk: 'Тренуйте діалоги німецькою: реєстрація, рахунок у банку, запис до лікаря телефоном, перший робочий день і опалення. Обирайте відповіді, вчіть фрази.',
+    },
+  },
+  '/pronunciation': {
+    name: { az: 'Tələffüz məşqçisi', de: 'Aussprachetrainer', en: 'Pronunciation trainer', ru: 'Тренажёр произношения', tr: 'Telaffuz antrenörü', uk: 'Тренажер вимови' },
+    title: { az: 'Alman dili tələffüz məşqçisi', de: 'Aussprachetrainer Deutsch: online üben', en: 'German pronunciation trainer online', ru: 'Тренажёр немецкого произношения', tr: 'Almanca telaffuz antrenörü', uk: 'Тренажер німецької вимови' },
+    description: {
+      az: 'Alman cümlələrini dinləyin, mikrofona deyin və hansı sözlərin düz tanındığını görün: A1–B1, gündəlik həyat, qulluq, tikinti, sürücülər və restoran.',
+      de: 'Deutsche Sätze anhören, nachsprechen und sehen, welche Wörter erkannt wurden: A1–B1, Alltag, Amt, Pflege, Bau, Fahrer, Gastronomie und Elektro.',
+      en: 'Listen to German sentences, say them and see which words were recognised: A1–B1, everyday life, offices, care, construction, drivers and hospitality.',
+      ru: 'Слушайте немецкие фразы, произносите их и смотрите, какие слова распознаны: A1–B1, быт, ведомства, уход, стройка, водители и рестораны.',
+      tr: 'Almanca cümleleri dinleyin, söyleyin ve hangi kelimelerin tanındığını görün: A1–B1, günlük hayat, daireler, bakım, inşaat, şoförler ve restoran.',
+      uk: 'Слухайте німецькі речення, промовляйте їх і дивіться, які слова розпізнано: A1–B1, побут, установи, догляд, будівництво, водії та ресторани.',
+    },
+  },
+  '/price-game': {
+    name: { az: 'Qiyməti tap', de: 'Preis-Raten', en: 'Guess the price', ru: 'Угадай цену', tr: 'Fiyatı tahmin et', uk: 'Вгадай ціну' },
+    title: { az: 'Qiyməti tap: Almaniyada nə neçəyədir?', de: 'Preis-Raten: Was kostet das in Deutschland?', en: 'Guess the price: what things cost in Germany', ru: 'Угадай цену: сколько стоит в Германии?', tr: 'Fiyatı tahmin et: Almanya’da ne kadar?', uk: 'Вгадай ціну: скільки коштує в Німеччині?' },
+    description: {
+      az: 'Almaniyada çörək, süd, Döner, kirayə, benzin və Deutschlandticket neçəyədir? 10 raundluq oyun, 2026 qiymətləri, mənbələr və manatla ekvivalent.',
+      de: 'Was kosten Brot, Milch, Döner, Miete, Benzin und das Deutschlandticket? 10 Runden Preis-Raten mit Preisen von 2026, Quellen und Umrechnung in Manat.',
+      en: 'What do bread, milk, a döner, rent, petrol and the Deutschlandticket cost in Germany? A 10-round game with 2026 prices, sources and manat equivalents.',
+      ru: 'Сколько стоят хлеб, молоко, дёнер, аренда, бензин и Deutschlandticket в Германии? Игра из 10 раундов: цены 2026 года, источники и перевод в манаты.',
+      tr: 'Almanya’da ekmek, süt, döner, kira, benzin ve Deutschlandticket ne kadar? 2026 fiyatları, kaynaklar ve manat karşılığıyla 10 turluk oyun.',
+      uk: 'Скільки коштують хліб, молоко, дьонер, оренда, бензин і Deutschlandticket у Німеччині? Гра з 10 раундів: ціни 2026 року, джерела та манати.',
+    },
+  },
+  '/traffic-signs': {
+    name: { az: 'Alman yol nişanları', de: 'Verkehrszeichen-Test', en: 'German traffic signs', ru: 'Дорожные знаки Германии', tr: 'Alman trafik işaretleri', uk: 'Дорожні знаки Німеччини' },
+    title: { az: 'Alman yol nişanları: test və öyrənmə', de: 'Verkehrszeichen lernen: Test mit 30 Fragen', en: 'German traffic signs: learn and test', ru: 'Дорожные знаки Германии: учить и тест', tr: 'Alman trafik işaretleri: öğren ve sına', uk: 'Дорожні знаки Німеччини: вивчення і тест' },
+    description: {
+      az: 'Ən vacib alman yol nişanları (StVO): xəbərdarlıq, qadağa, üstünlük və məlumat nişanları izahla, 30 suallıq imtahan və səhvlərin təhlili.',
+      de: 'Die wichtigsten Verkehrszeichen der StVO: Gefahr-, Vorschrift-, Vorfahrt- und Richtzeichen mit Erklärung, Prüfung mit 30 Fragen und Fehleranalyse.',
+      en: 'The key German StVO traffic signs: warning, regulatory, priority and information signs explained, a 30-question exam and a review of your mistakes.',
+      ru: 'Главные дорожные знаки Германии (StVO): предупреждающие, запрещающие, знаки приоритета и информационные с пояснениями, экзамен из 30 вопросов.',
+      tr: 'En önemli Alman trafik işaretleri (StVO): uyarı, yasak, öncelik ve bilgi işaretleri açıklamalı, 30 soruluk sınav ve hata analizi.',
+      uk: 'Найважливіші дорожні знаки Німеччини (StVO): попереджувальні, заборонні, знаки пріоритету й інформаційні з поясненнями, іспит із 30 питань.',
+    },
+  },
+  '/waste-sorting': {
+    name: { az: 'Zibili çeşidlə', de: 'Mülltrennung-Spiel', en: 'Waste sorting game', ru: 'Сортировка мусора', tr: 'Atık ayrıştırma oyunu', uk: 'Сортування сміття' },
+    title: { az: 'Almaniyada zibil çeşidləmə: oyun', de: 'Mülltrennung lernen: das Spiel', en: 'Waste sorting in Germany: the game', ru: 'Сортировка мусора в Германии: игра', tr: 'Almanya’da atık ayrıştırma: oyun', uk: 'Сортування сміття в Німеччині: гра' },
+    description: {
+      az: 'Gelber Sack, Papier, Bio, Restmüll, Glas, Pfand və ya Wertstoffhof? 60-dan çox əşya, çətin hallar (pizza qutusu, çek, batareya) izahla, taymer və xal.',
+      de: 'Gelber Sack, Papier, Bio, Restmüll, Glas, Pfand oder Wertstoffhof? Über 60 Dinge mit Erklärung, knifflige Fälle wie Pizzakarton, Kassenbon und Batterie.',
+      en: 'Yellow bag, paper, bio, residual waste, glass, Pfand or recycling centre? 60+ items explained, tricky cases like pizza boxes, receipts and batteries.',
+      ru: 'Жёлтый мешок, бумага, био, остаточный мусор, стекло, Pfand или пункт приёма? Более 60 предметов с пояснениями: коробка от пиццы, чеки, батарейки.',
+      tr: 'Sarı torba, kâğıt, bio, karışık atık, cam, Pfand ya da geri dönüşüm merkezi? 60’tan fazla eşya açıklamalı: pizza kutusu, fiş, pil gibi zor durumlar.',
+      uk: 'Жовтий мішок, папір, біо, залишкове сміття, скло, Pfand чи пункт прийому? Понад 60 предметів із поясненнями: коробка з-під піци, чеки, батарейки.',
     },
   },
   '/map': {
@@ -920,12 +1114,13 @@ export const SPA_ROUTES = [
  * The tools hub (/tools): every calculator, check and planning aid, grouped as on the page
  * (client/src/components/audience/tools.ts). Paths without a catalogue entry are skipped in the crawlable body.
  */
-export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'explore';
+export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'learn' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
-  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained'] },
-  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/calculator', '/cities', '/events', '/status'] },
-  { key: 'explore', paths: ['/map', '/guides', '/glossary', '/jobs', '/visas'] },
+  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/german-apartment', '/residence-card-explained', '/calculator', '/cities', '/holiday-planner', '/weekend-trips', '/events', '/status'] },
+  { key: 'learn', paths: ['/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting'] },
+  { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },
 ];
 
 /** Static routes listed in sitemap.xml, in this order. */

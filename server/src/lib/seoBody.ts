@@ -111,19 +111,19 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
-const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/map', '/tools'];
+const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/german-apartment', '/residence-card-explained', '/shortage-barometer', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/holiday-planner', '/grade-converter', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/weekend-trips', '/map', '/azerbaijan-in-germany', '/tools'];
 const FOOTER = ['/jobs', '/ausbildung', '/study', '/glossary', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
-const EMPLOYER_LINKS = ['/cooperation', '/employers/register', '/partners', '/stories', '/booking'];
+const EMPLOYER_LINKS = ['/cooperation', '/employer-guide-azerbaijan', '/employers/register', '/partners', '/stories', '/booking'];
 
 /** Labels of the audience / tools sections (home, /for-workers, /for-employers, /tools). */
 const AL: Record<SeoLocale, { who: string; stories: string; groups: Record<ToolGroupKey, string> }> = {
-  az: { who: 'Siz kimsiniz?', stories: 'Rəylər', groups: { eligibility: 'Uyğunluğu yoxla', costs: 'Xərc və maaşı hesabla', plan: 'Köçünü planla', explore: 'Kəşf et' } },
-  de: { who: 'Wer sind Sie?', stories: 'Stimmen', groups: { eligibility: 'Eignung prüfen', costs: 'Kosten und Gehalt berechnen', plan: 'Umzug planen', explore: 'Entdecken' } },
-  en: { who: 'Who are you?', stories: 'Testimonials', groups: { eligibility: 'Check eligibility', costs: 'Calculate costs and salary', plan: 'Plan your move', explore: 'Explore' } },
-  ru: { who: 'Кто вы?', stories: 'Отзывы', groups: { eligibility: 'Проверить соответствие', costs: 'Рассчитать расходы и зарплату', plan: 'Спланировать переезд', explore: 'Узнать больше' } },
-  tr: { who: 'Siz kimsiniz?', stories: 'Görüşler', groups: { eligibility: 'Uygunluğu kontrol et', costs: 'Maliyet ve maaşı hesapla', plan: 'Taşınmanı planla', explore: 'Keşfet' } },
-  uk: { who: 'Хто ви?', stories: 'Відгуки', groups: { eligibility: 'Перевірити відповідність', costs: 'Розрахувати витрати й зарплату', plan: 'Спланувати переїзд', explore: 'Дізнатися більше' } },
+  az: { who: 'Siz kimsiniz?', stories: 'Rəylər', groups: { eligibility: 'Uyğunluğu yoxla', costs: 'Xərc və maaşı hesabla', plan: 'Köçünü planla', learn: 'Oyunlarla öyrən', explore: 'Kəşf et' } },
+  de: { who: 'Wer sind Sie?', stories: 'Stimmen', groups: { eligibility: 'Eignung prüfen', costs: 'Kosten und Gehalt berechnen', plan: 'Umzug planen', learn: 'Spielend lernen', explore: 'Entdecken' } },
+  en: { who: 'Who are you?', stories: 'Testimonials', groups: { eligibility: 'Check eligibility', costs: 'Calculate costs and salary', plan: 'Plan your move', learn: 'Learn by playing', explore: 'Explore' } },
+  ru: { who: 'Кто вы?', stories: 'Отзывы', groups: { eligibility: 'Проверить соответствие', costs: 'Рассчитать расходы и зарплату', plan: 'Спланировать переезд', learn: 'Учитесь играя', explore: 'Узнать больше' } },
+  tr: { who: 'Siz kimsiniz?', stories: 'Görüşler', groups: { eligibility: 'Uygunluğu kontrol et', costs: 'Maliyet ve maaşı hesapla', plan: 'Taşınmanı planla', learn: 'Oynayarak öğren', explore: 'Keşfet' } },
+  uk: { who: 'Хто ви?', stories: 'Відгуки', groups: { eligibility: 'Перевірити відповідність', costs: 'Розрахувати витрати й зарплату', plan: 'Спланувати переїзд', learn: 'Навчайтеся граючи', explore: 'Дізнатися більше' } },
 };
 
 const paragraphs = (text: string) =>
@@ -461,6 +461,14 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/life-in-germany':
       case '/when-in-germany':
       case '/payslip-explained':
+      case '/german-apartment':
+      case '/residence-card-explained':
+      case '/shortage-barometer':
+      case '/tax-refund-calculator':
+      case '/shift-pay-calculator':
+      case '/rent-check':
+      case '/holiday-planner':
+      case '/grade-converter':
       case '/calculator':
         // The guides of this tool first (lib/seoLinks.ts; the page shows them as "Related guides").
         out.push(section(t.guides, guideList(orderGuidesForTool(path, guides))), cta);

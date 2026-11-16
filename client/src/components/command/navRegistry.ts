@@ -289,6 +289,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
   a('overview', '/admin/overview', PieChart, 'finance'), // analytics landing: trend, KPIs, funnel, cases that need a look, goal
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
+  a('yearReview', '/admin/year-review', CalendarHeart, 'finance'), // year in review: cases, professions, cities, records (per-staff ADMIN+)
   a('bizAnalytics', '/admin/business-analytics', ChartNoAxesCombined, 'finance', { adminOnly: true }), // stage times, partner performance, client funnel (management)
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
   // Sayt
@@ -395,7 +396,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
-  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'referralPartners', 'agents'] },
+  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'agents'] },
   {
     key: 'site',
     icon: Globe,

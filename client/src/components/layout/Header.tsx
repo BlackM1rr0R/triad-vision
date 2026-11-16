@@ -87,6 +87,7 @@ const useAudienceMenus = () => {
       { to: '/cooperation', label: t('siteNav.e.cooperation'), icon: Handshake },
       { to: '/cooperation#form', label: t('siteNav.e.request'), icon: Users },
       { to: '/employers/register', label: t('siteNav.e.register'), icon: FileSignature },
+      { to: '/employer-guide-azerbaijan', label: t('siteNav.e.guideAz'), icon: BookOpen },
       { to: '/partners', label: t('siteNav.e.partners'), icon: BookOpen },
       { to: '/stories', label: t('siteNav.e.stories'), icon: MessagesSquare },
     ],

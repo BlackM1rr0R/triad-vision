@@ -22,6 +22,7 @@ import { GermanProgressBoard } from '@/components/german/GermanProgressBoard';
 import { VocabTrainer } from '@/components/german/VocabTrainer';
 import { VocabQuiz } from '@/components/german/VocabQuiz'; // per-profession multiple-choice quiz
 import { PhraseOfDayCard } from '@/components/world/PhraseOfDay';
+import { GameLinks } from '@/components/games/GameLinks'; // public learning games (simulator, pronunciation, prices, signs, waste)
 import { BadgesPanel } from '@/components/portal/BadgesPanel'; // German badges: 7 / 30-day streak, 100 / 500 words, levels
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
 import { Learning } from '@/components/illustrations';
@@ -448,6 +449,9 @@ export default function German() {
 
       {/* Phrase of the day: one everyday / work phrase, picked by the day in Germany (same as the home page). */}
       <PhraseOfDayCard />
+
+      {/* Learning games: the public pages, also useful for clients preparing for Germany. */}
+      <GameLinks title={t('games.portalTitle')} text={t('games.portalText')} />
 
       {/* Private German badges (streak, words learned, level reached). */}
       <BadgesPanel group="german" />

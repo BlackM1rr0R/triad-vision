@@ -56,6 +56,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'globe-map', // home globe: placement map aggregates (GET /growth/map, cities with ≥ 3 workers only)
   'eur-azn', // /salary-calculator (+ other tools): the CBAR EUR→AZN rate (GET /life/rate), the same for everyone
   'when-estimate', // /when-in-germany: percentiles of groups ≥ 10 cases (daily), the same for everyone with the same answers
+  'rent-check-cities', // /rent-check: city rent ranges (GET /budget/config, CityCost table), the same for everyone
 ]);
 
 export interface RenderResult {

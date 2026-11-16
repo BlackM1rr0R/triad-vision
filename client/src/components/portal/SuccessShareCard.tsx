@@ -16,8 +16,12 @@ import { pagesSuccessShare } from '@/i18n/pagesSuccessShare';
 import { getBrand } from '@/lib/brand';
 import { pagesMilestoneDocs } from '@/i18n/pagesMilestoneDocs';
 import { InstagramCardDialog } from './InstagramCardDialog';
+import { Link } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
+import { pagesVisaStory } from '@/i18n/pagesVisaStory'; // "Your visa story" button
 
 registerCopy(pagesSuccessShare);
+registerCopy(pagesVisaStory);
 registerCopy(pagesMilestoneDocs); // anonymous name / square format labels
 
 /*
@@ -330,6 +334,10 @@ export const SuccessShareCard = ({ caseId, dismissible = false }: { caseId?: str
             <Button variant="secondary" icon={Instagram} onClick={() => setInstaOpen(true)}>
               {t('milestones.insta.cta')}
             </Button>
+            {/* "Your visa story" (Triad Wrapped): full-screen slides from the real numbers + share card. */}
+            <Link to={`/account/visa-story/${encodeURIComponent(item.caseId)}`} className={buttonClass({ variant: 'secondary' })}>
+              <Sparkles className="size-4" aria-hidden /> {t('vstory.cta.open')}
+            </Link>
           </div>
         </div>
       </div>

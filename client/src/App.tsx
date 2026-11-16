@@ -149,6 +149,7 @@ const AccountArrival = lazyRoute('AccountArrival', () => import('./pages/account
 const AccountArrivalPrep = lazyRoute('AccountArrivalPrep', () => import('./pages/account/ArrivalPrep')); // Home › Arrival preparation
 const AccountArrivalCard = lazyRoute('AccountArrivalCard', () => import('./pages/account/ArrivalCard')); // digital arrival card (offline)
 const AccountBadges = lazyRoute('AccountBadges', () => import('./pages/account/Badges')); // badges / achievements (private)
+const AccountVisaStory = lazyRoute('AccountVisaStory', () => import('./pages/account/VisaStory')); // visa approved: 'Your visa story' (Triad Wrapped) slides
 const AccountDocChecklist = lazyRoute('AccountDocChecklist', () => import('./pages/account/DocChecklist')); // Documents › Document checklist
 const SalaryCalculator = lazyRoute('SalaryCalculator', () => import('./pages/tools/SalaryCalculator'));
 const StartCalculator = lazyRoute('StartCalculator', () => import('./pages/growth/Calculator'));
@@ -161,12 +162,29 @@ const LifeInGermanyPage = lazyRoute('LifeInGermanyPage', () => import('./pages/t
 const PhraseOfTheDayPage = lazyRoute('PhraseOfTheDayPage', () => import('./pages/PhraseOfTheDay')); // German phrase of the day + last 30 days (/phrase-of-the-day)
 const WhenInGermanyPage = lazyRoute('WhenInGermanyPage', () => import('./pages/tools/WhenInGermany')); // arrival-month estimator (/when-in-germany)
 const PayslipExplainedPage = lazyRoute('PayslipExplainedPage', () => import('./pages/tools/PayslipExplained')); // German payslip explainer (/payslip-explained)
+const GermanApartmentPage = lazyRoute('GermanApartmentPage', () => import('./pages/tools/GermanApartment')); // virtual German apartment (/german-apartment)
+const ResidenceCardExplainedPage = lazyRoute('ResidenceCardExplainedPage', () => import('./pages/tools/ResidenceCardExplained')); // eAT specimen explained (/residence-card-explained)
+const ShortageBarometerPage = lazyRoute('ShortageBarometerPage', () => import('./pages/tools/ShortageBarometer')); // BA Engpassanalyse barometer (/shortage-barometer)
+const TaxRefundCalculatorPage = lazyRoute('TaxRefundCalculatorPage', () => import('./pages/tools/TaxRefundCalculator')); // tax refund estimate (/tax-refund-calculator)
+const ShiftPayCalculatorPage = lazyRoute('ShiftPayCalculatorPage', () => import('./pages/tools/ShiftPayCalculator')); // night / Sunday / holiday supplements (/shift-pay-calculator)
+const RentCheckPage = lazyRoute('RentCheckPage', () => import('./pages/tools/RentCheck')); // fair rent check (/rent-check)
+const HolidayPlannerPage = lazyRoute('HolidayPlannerPage', () => import('./pages/tools/HolidayPlanner')); // public holidays + bridge days (/holiday-planner)
+const GradeConverterPage = lazyRoute('GradeConverterPage', () => import('./pages/tools/GradeConverter')); // grade conversion, modified Bavarian formula (/grade-converter)
+const WeekendTripsPage = lazyRoute('WeekendTripsPage', () => import('./pages/tools/WeekendTrips')); // Deutschlandticket day trips (/weekend-trips)
+const EmployerGuideAzerbaijanPage = lazyRoute('EmployerGuideAzerbaijanPage', () => import('./pages/EmployerGuideAzerbaijan')); // employer guide, German first (/employer-guide-azerbaijan)
+const AzerbaijanInGermanyPage = lazyRoute('AzerbaijanInGermanyPage', () => import('./pages/AzerbaijanInGermany')); // embassy, culture, associations map (/azerbaijan-in-germany)
 const WhichCityPage = lazyRoute('WhichCityPage', () => import('./pages/tools/WhichCity')); // "Which German city suits you?" quiz (/which-city)
 const PermanentResidencePage = lazyRoute('PermanentResidencePage', () => import('./pages/tools/PermanentResidence')); // settlement permit + citizenship timeline (/permanent-residence)
 const DrivingLicencePage = lazyRoute('DrivingLicencePage', () => import('./pages/tools/DrivingLicence')); // Azerbaijani licence in Germany guide (/driving-licence-germany)
 const FamilyReunificationCheckPage = lazyRoute('FamilyReunificationCheckPage', () => import('./pages/tools/FamilyReunificationCheck')); // public family reunification self-check
+const GermanSimulatorPage = lazyRoute('GermanSimulatorPage', () => import('./pages/games/GermanSimulator')); // Bürgeramt dialogue simulator (/german-simulator)
+const PronunciationPage = lazyRoute('PronunciationPage', () => import('./pages/games/Pronunciation')); // pronunciation trainer (/pronunciation)
+const PriceGamePage = lazyRoute('PriceGamePage', () => import('./pages/games/PriceGame')); // "guess the price" (/price-game)
+const TrafficSignsPage = lazyRoute('TrafficSignsPage', () => import('./pages/games/TrafficSigns')); // StVO signs learn + exam (/traffic-signs)
+const WasteSortingPage = lazyRoute('WasteSortingPage', () => import('./pages/games/WasteSorting')); // Mülltrennung game (/waste-sorting)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
 const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
+const AdminYearReview = lazyRoute('AdminYearReview', () => import('./pages/admin/YearReview')); // staff 'Year in review' (per-staff counts ADMIN+, server-side)
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
 const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
 const LandingPageView = lazyRoute('LandingPageView', () => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
@@ -456,10 +474,26 @@ export default function App() {
             <Route path="phrase-of-the-day" element={<PhraseOfTheDayPage />} />
             <Route path="when-in-germany" element={<WhenInGermanyPage />} />
             <Route path="payslip-explained" element={<PayslipExplainedPage />} />
+            <Route path="german-apartment" element={<GermanApartmentPage />} />
+            <Route path="residence-card-explained" element={<ResidenceCardExplainedPage />} />
+            <Route path="shortage-barometer" element={<ShortageBarometerPage />} />
+            <Route path="tax-refund-calculator" element={<TaxRefundCalculatorPage />} />
+            <Route path="shift-pay-calculator" element={<ShiftPayCalculatorPage />} />
+            <Route path="rent-check" element={<RentCheckPage />} />
+            <Route path="holiday-planner" element={<HolidayPlannerPage />} />
+            <Route path="grade-converter" element={<GradeConverterPage />} />
+            <Route path="weekend-trips" element={<WeekendTripsPage />} />
+            <Route path="employer-guide-azerbaijan" element={<EmployerGuideAzerbaijanPage />} />
+            <Route path="azerbaijan-in-germany" element={<AzerbaijanInGermanyPage />} />
             <Route path="which-city" element={<WhichCityPage />} />
             <Route path="permanent-residence" element={<PermanentResidencePage />} />
             <Route path="driving-licence-germany" element={<DrivingLicencePage />} />
             <Route path="family-reunification-check" element={<FamilyReunificationCheckPage />} />
+            <Route path="german-simulator" element={<GermanSimulatorPage />} />
+            <Route path="pronunciation" element={<PronunciationPage />} />
+            <Route path="price-game" element={<PriceGamePage />} />
+            <Route path="traffic-signs" element={<TrafficSignsPage />} />
+            <Route path="waste-sorting" element={<WasteSortingPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
@@ -574,6 +608,7 @@ export default function App() {
               <Route path="arrival-prep" element={<AccountArrivalPrep />} />
               <Route path="arrival-card" element={<AccountArrivalCard />} />
               <Route path="badges" element={<AccountBadges />} />
+              <Route path="visa-story/:caseId" element={<AccountVisaStory />} />
               <Route path="rule-changes" element={<AccountRuleChanges />} />
               <Route path="checklist" element={<AccountDocChecklist />} />
               <Route path="budget" element={<AccountBudget />} />
@@ -887,6 +922,7 @@ export default function App() {
             />
             <Route path="surveys/*" element={<AdminSurveys />} />
             <Route path="time" element={<AdminTimeTracking />} />
+            <Route path="year-review" element={<AdminYearReview />} />
             <Route
               path="kpi"
               element={
