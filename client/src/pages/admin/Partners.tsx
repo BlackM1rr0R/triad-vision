@@ -3,7 +3,7 @@ import { Link, Route, Routes, useNavigate, useSearchParams } from 'react-router-
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Building2, Download, HandCoins, Handshake, Info, Mail, Pencil, Phone, Plus, Search, Settings2, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Ban, Building2, Download, GraduationCap, HandCoins, Handshake, Info, Mail, Pencil, Phone, Plus, Search, Settings2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
@@ -24,6 +24,7 @@ import { ContractBadge } from '@/components/partners/hub/parts';
 import { CONTRACT_STATUSES } from '@/components/partners/hub/types';
 import { QuotaMeter } from '@/components/partners/QuotaMeter'; // "needed clients" progress (registers its copy)
 import { PartnerInfoDrawer } from '@/components/partners/PartnerInfoDrawer'; // the row's info button
+import { PartnerSchoolsAdmin } from '@/components/partners/SchoolsAdmin'; // colleges / language schools: categories + records review (registers pagesPartnerSchools)
 
 type ActiveFilter = 'all' | 'true' | 'false';
 type SortKey = 'name' | 'clients' | 'activeCases' | 'commissions' | 'pending' | 'lastActivity' | 'contractEnd' | 'quota';
@@ -125,6 +126,9 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
         actions={
           <>
             {isFetching && !isLoading && <Spinner className="size-4 text-link" />}
+            <Link to="/admin/partners/schools" className="btn-secondary btn-sm">
+              <GraduationCap className="size-4" /> {t('partnerSchools.admin.open')}
+            </Link>
             <Link to="/admin/partners/refusals" className="btn-secondary btn-sm">
               <Ban className="size-4" /> {t('refPartners.refusals.open')}
             </Link>
@@ -419,6 +423,7 @@ export default function AdminPartners() {
       <Route index element={<PartnerList isAdmin={isAdmin} />} />
       <Route path="commissions" element={<AllCommissions isAdmin={isAdmin} />} />
       <Route path="refusals" element={<Refusals />} />
+      <Route path="schools" element={<PartnerSchoolsAdmin isAdmin={isAdmin} />} />
       <Route path=":id" element={<PartnerHub isAdmin={isAdmin} />} />
     </Routes>
   );

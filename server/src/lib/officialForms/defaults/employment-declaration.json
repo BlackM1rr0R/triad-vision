@@ -4,7 +4,7 @@
   "version": "EzB-02-2024",
   "url": "https://www.arbeitsagentur.de/datei/erklaerung-zum-beschaeftigungsverhaeltnis_ba047549.pdf",
   "sha256": "789fddf0b8a440dc7c6f72299da3fcf56468d086a2defe9943eed72aa5ec9914",
-  "notes": "Bundesagentur für Arbeit, form EzB 02/2024 (AcroForm, 69 fields). Downloaded at runtime from arbeitsagentur.de; the PDF is not part of the repository. The employer reviews and signs it in the company portal. Not prefilled: residence since (9), degree / training details (26-36), overtime extent (39-40), collective agreement name / pay group (44-45), benefits in kind and variable pay (47-51), DVKA exemption (53-55).",
+  "notes": "Bundesagentur für Arbeit, form EzB 02/2024 (AcroForm, 69 fields; still the version served at the official URL on 16.11.2026, same SHA-256). Not stored in the repository: redistribution terms of the BA form are not stated, so an admin installs it once (Admin › Official forms › Install default templates) into private storage — no external fetch happens while an employer or staff member fills the form. Without an installed template the wizard produces a data sheet in the official question order (to copy into the form from arbeitsagentur.de). Not prefilled: residence since (9), degree / training details (26-33, 34 free text), DVKA exemption (54-55).",
   "fieldMap": {
     "rbtn_1_Erklaerung": {
       "source": "const",
@@ -127,6 +127,23 @@
       "optional": true,
       "when": "vocational"
     },
+    "chbx_34_keine_Ausbildung": {
+      "source": "employment.qualificationRequired",
+      "optional": true,
+      "when": "NONE"
+    },
+    "rbtn_35_Berufsausuebungserlaubnis": {
+      "source": "employment.licenceRequired",
+      "optional": true,
+      "map": {
+        "yes": "ja",
+        "no": "nein - weiter mit Abschnitt G."
+      }
+    },
+    "txtf_36_erforderliche_Qualifikation": {
+      "source": "employment.licenceDetails",
+      "optional": true
+    },
     "rbtn_37_Arbeitszeit": {
       "source": "contract.workingTime",
       "map": {
@@ -145,6 +162,14 @@
         "no": "nein - weiter mit Abschnitt I."
       }
     },
+    "txtf_39_Ueberstundenumpfang": {
+      "source": "employment.overtimeExtent",
+      "optional": true
+    },
+    "txtf_40_Ueberstundenausgleich": {
+      "source": "employment.overtimeCompensation",
+      "optional": true
+    },
     "txtf_41_Urlaubsanpruch": {
       "source": "contract.vacationDays"
     },
@@ -155,6 +180,22 @@
         "no": "nein - weiter mit 46"
       }
     },
+    "rbtn_43_tarifliche_Arbeitsbedingungen": {
+      "source": "employment.tariffApplied",
+      "optional": true,
+      "map": {
+        "yes": "ja",
+        "no": "nein - weiter mit 46"
+      }
+    },
+    "txtf_44_Tarifvertrag": {
+      "source": "employment.collectiveAgreementName",
+      "optional": true
+    },
+    "txtf_45_Entgeltgruppe": {
+      "source": "employment.payGroup",
+      "optional": true
+    },
     "chbx_46_Arbeitsentgelt": {
       "source": "const",
       "value": "pro Monat"
@@ -163,12 +204,48 @@
       "source": "contract.grossMonthly",
       "format": "money"
     },
+    "chbx_47_zusaetzlich_geldwerte_Leistungen": {
+      "source": "employment.benefitsInKind",
+      "optional": true,
+      "when": "*"
+    },
+    "txtf_48_Art_geldwerten_Leistung": {
+      "source": "employment.benefitsInKind",
+      "optional": true
+    },
+    "txtf_49_Hoehe_geldwerten_Leistung": {
+      "source": "employment.benefitsInKindAmount",
+      "optional": true,
+      "format": "money"
+    },
+    "chbx_47_sonstige_Berechnung": {
+      "source": "employment.variablePay",
+      "optional": true,
+      "when": "*"
+    },
+    "txtf_50_Art_variablen_Verguetung": {
+      "source": "employment.variablePay",
+      "optional": true
+    },
+    "txtf_51_Hoehe_variable_Verguetung": {
+      "source": "employment.variablePayAmount",
+      "optional": true,
+      "format": "money"
+    },
     "rbtn_52_besteht_Versicherungspflicht": {
       "source": "employment.socialInsurance",
       "map": {
         "yes": "ja - weiter mit 54",
         "no": "nein"
       }
+    },
+    "txtf_53_Begruendung_Versicherungspflicht": {
+      "source": "employment.socialInsuranceReason",
+      "optional": true
+    },
+    "txtf_56_Ergaemzungen": {
+      "source": "employment.remarks",
+      "optional": true
     },
     "txtf_57_Ort": {
       "source": "company.city"

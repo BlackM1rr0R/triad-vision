@@ -20,6 +20,7 @@ export const GUIDE_TOOLS: Record<string, string[]> = {
   'work-visa': ['/cost-calculator', '/blue-card-check'],
   'driver-jobs': ['/salary-calculator', '/cities'],
   'jobs-azerbaijan': ['/salary-calculator', '/cities'],
+  'anerkennung-bau': ['/anerkennung', '/salary-calculator', '/cities'],
 };
 
 /** Every guide links the visa check last. */
@@ -53,12 +54,16 @@ export const TOOL_GUIDES: Record<string, string[]> = {
   '/tax-class-chooser': ['salary-net', 'familiennachzug'],
   '/employer-cost-calculator': ['work-visa', 'anerkennung'],
   '/rent-check': ['first-month', 'familiennachzug'],
+  '/real-salaries': ['salary-net', 'driver-jobs', 'blue-card'],
   '/health-insurance-comparison': ['salary-net', 'first-month'],
   '/emergency-wallpaper': ['first-month'],
   '/holiday-planner': ['first-month', 'salary-net'],
   '/grade-converter': ['anerkennung', 'ausbildung'],
   '/which-city': ['first-month', 'salary-net', 'jobs-azerbaijan'],
   '/permanent-residence': ['blue-card', 'work-visa', 'familiennachzug'],
+  '/germany-vs-other-countries': ['work-visa', 'blue-card', 'salary-net', 'familiennachzug'],
+  '/visa-refusal': ['work-visa', 'anerkennung', 'familiennachzug'],
+  '/visa-document-checklist': ['work-visa', 'anerkennung', 'familiennachzug', 'ausbildung'],
   '/driving-licence-germany': ['driver-jobs', 'first-month'],
   '/family-reunification-check': ['familiennachzug', 'blue-card', 'work-visa'],
   '/german-simulator': ['first-month', 'work-visa'],
@@ -69,7 +74,7 @@ export const TOOL_GUIDES: Record<string, string[]> = {
   '/work-scenes/restaurant-kitchen': ['anerkennung-koch', 'first-month'],
   '/work-scenes/truck-cab': ['driver-jobs', 'first-month'],
   '/work-scenes/hospital-ward': ['pflege', 'anerkennung'],
-  '/work-scenes/construction-site': ['work-visa', 'first-month'],
+  '/work-scenes/construction-site': ['anerkennung-bau', 'work-visa', 'first-month'],
   '/work-scenes/electrical-panel': ['anerkennung-elektroniker', 'anerkennung'],
   '/calculator': ['work-visa', 'anerkennung'],
   '/eligibility': ['work-visa', 'chancenkarte', 'blue-card', 'ausbildung'],

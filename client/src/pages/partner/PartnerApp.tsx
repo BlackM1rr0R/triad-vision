@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { ArrowUpRight, CircleUser, Coins, FolderOpen, LayoutDashboard, LogOut, PauseCircle, Users } from 'lucide-react';
+import { ArrowUpRight, CircleUser, Coins, FolderOpen, GraduationCap, LayoutDashboard, LogOut, PauseCircle, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { errorCode } from '@/lib/api';
@@ -18,6 +18,7 @@ import PartnerClientDetailPage from './ClientDetail';
 import PartnerCommissionsPage from './Commissions';
 import PartnerProfilePage from './Profile';
 import PartnerPeoplePage from './People';
+import PartnerStudentsPage from './Students'; // colleges / language schools (registers pagesPartnerSchools)
 import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 
 registerCopy(pagesPartnerPortal);
@@ -41,6 +42,10 @@ export default function PartnerApp() {
   const tabs = [
     { to: '/partner', label: t('partnerPortal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/partner' || p === '/partner/' },
     { to: '/partner/people', label: t('partnerClients.nav'), icon: Users, match: (p: string) => p.startsWith('/partner/people') },
+    // Colleges and language schools: referred students (stage with consent, attendance / exam records).
+    ...(me?.partner.category === 'SCHOOL' || me?.partner.category === 'LANGUAGE_SCHOOL'
+      ? [{ to: '/partner/students', label: t('partnerSchools.nav'), icon: GraduationCap, match: (p: string) => p.startsWith('/partner/students') }]
+      : []),
     { to: '/partner/clients', label: t('partnerPortal.nav.clients'), icon: FolderOpen, match: (p: string) => p.startsWith('/partner/clients') },
     { to: '/partner/commissions', label: t('partnerPortal.nav.commissions'), icon: Coins, match: (p: string) => p.startsWith('/partner/commissions') },
     { to: '/partner/profile', label: t('partnerPortal.nav.profile'), icon: CircleUser, match: (p: string) => p.startsWith('/partner/profile') },
@@ -125,6 +130,7 @@ export default function PartnerApp() {
               <Routes>
                 <Route index element={<PartnerDashboardPage me={me} />} />
                 <Route path="people" element={<PartnerPeoplePage me={me} />} />
+                {(me.partner.category === 'SCHOOL' || me.partner.category === 'LANGUAGE_SCHOOL') && <Route path="students" element={<PartnerStudentsPage me={me} />} />}
                 <Route path="clients" element={<PartnerClientsPage />} />
                 <Route path="clients/:id" element={<PartnerClientDetailPage />} />
                 <Route path="commissions" element={<PartnerCommissionsPage />} />

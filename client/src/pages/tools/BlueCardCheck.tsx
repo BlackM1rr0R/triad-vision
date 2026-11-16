@@ -7,6 +7,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
 import { BlueCardArticle } from '@/components/tools/BlueCardArticle';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesSeo } from '@/i18n/pagesSeo';
 import { BLUE_CARD_GROUPS, checkBlueCard, euroFormat, useBlueCardThresholds, type BlueCardGroup as Group } from '@/lib/calculators/blueCard';
@@ -168,6 +169,21 @@ export default function BlueCardCheck() {
             )}
           </div>
         </div>
+        {threshold != null && (
+          <div className="container-x mt-6">
+            <EmailResult
+              tool="blue-card-check"
+              summary={[
+                { label: t('bcCheck.group'), value: t(`bcCheck.groups.${group}`) },
+                { label: t('bcCheck.salary'), value: t('bcCheck.yourSalary', { amount: fmt.format(yearly) }) },
+                { label: t('bcCheck.yearLabel'), value: t('bcCheck.threshold', { year, amount: fmt.format(threshold) }) },
+                { label: t('bcCheck.result'), value: salaryOk ? t('bcCheck.ok') : t('bcCheck.below') },
+                ...(!degreeOk ? [{ label: t('bcCheck.degree'), value: t('bcCheck.missDegree') }] : []),
+                ...(!contract ? [{ label: t('bcCheck.contract'), value: t('bcCheck.missContract') }] : []),
+              ]}
+            />
+          </div>
+        )}
       </section>
       <BlueCardArticle />
       <div className="pt-16 sm:pt-20 lg:pt-28" />

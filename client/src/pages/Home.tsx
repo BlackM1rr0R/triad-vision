@@ -23,6 +23,7 @@ import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 import { AUDIENCE_PATH, useAudience, type Audience } from '@/lib/audience';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import { isHydrating } from '@/lib/ssr';
+import { ProfessionPicker } from '@/components/tools/ProfessionPicker';
 
 // Germany placement map: own chunk, renders nothing when hidden by the admin or empty.
 const PlacementMapSection = lazy(() => import('@/components/growth/PlacementMap').then((m) => ({ default: m.PlacementMapSection })));
@@ -144,6 +145,10 @@ export default function Home() {
       <Suspense fallback={<WorldBandPlaceholder />}>
         <WorldBand />
       </Suspense>
+      {/* 'I am a …': profession hubs (/for/<slug>) for every audience. */}
+      <section className="container-x py-8 sm:py-10">
+        <ProfessionPicker />
+      </section>
       <div id="home-content" className="scroll-mt-16">
         {/* Until then, hold the space so the footer never flashes up into view. */}
         {!rest ? (

@@ -6,6 +6,7 @@ import { BadgeEuro, HeartPulse, ChefHat, Truck, RotateCcw } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesShiftPay } from '@/i18n/pagesShiftPay';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -182,6 +183,13 @@ export default function ShiftPayCalculatorPage() {
                   </div>
                 ))}
               </dl>
+              <EmailResult
+                tool="shift-pay-calculator"
+                summary={[
+                  { label: `${t('shiftPay.result.advantage')} (${t('shiftPay.result.perMonth')})`, value: `+ ${money(r.advantage, true)}` },
+                  ...(['base', 'supplements', 'gross', 'taxFree', 'net', 'netFullyTaxed'] as const).map((k) => ({ label: t(`shiftPay.result.${k}`), value: money(r[k], true) })),
+                ]}
+              />
               <div className="overflow-x-auto rounded-3xl border border-line bg-card">
                 <table className="w-full min-w-[30rem] border-collapse text-sm">
                   <thead>

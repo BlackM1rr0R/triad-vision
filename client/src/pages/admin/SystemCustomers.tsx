@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import type { BadgeTone } from '@/components/ui/status';
+import { SaasPipeline } from '@/components/admin/saas/SaasPipeline'; // demo requests from /platform: demo → trial → customer
 
 registerCopy(pagesWhitelabel);
 
@@ -164,6 +165,8 @@ export default function SystemCustomers() {
           <pre className="overflow-x-auto rounded-md bg-sunken p-3 text-xs text-ink">{ISSUE_CMD}</pre>
         </Card>
       </div>
+
+      <SaasPipeline onCustomersChanged={refresh} />
 
       {items.length === 0 ? (
         <EmptyState icon={Store} title={t('wl.customers.empty')} />

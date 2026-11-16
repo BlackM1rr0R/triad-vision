@@ -30,6 +30,8 @@ import {
   withdrawFill,
 } from '../../lib/officialForms/service.js';
 import { sendToEmployer } from '../../lib/officialForms/employer.js';
+import { staffWizardDataSheet, staffWizardDetail, staffWizardSave } from '../../lib/officialForms/staffWizard.js';
+import { searchOccupations } from '../../lib/jobFeeds/occupations.js';
 import type { FieldMap } from '../../lib/officialForms/catalog.js';
 
 /**
@@ -52,6 +54,9 @@ import type { FieldMap } from '../../lib/officialForms/catalog.js';
  *   POST   /cases/:id/official-forms/:key/fill             { fieldOverrides?, flatten? } → generate + store + drive
  *   GET    /cases/:id/official-forms/:key/datasheet        data sheet PDF (fallback)
  *   POST   /cases/:id/official-forms/:key/send-to-employer Erklärung zum Beschäftigungsverhältnis → company portal
+ *   GET    /cases/:id/ezb-wizard                          employer declaration wizard (staff version): fields, rules, prefill
+ *   PUT    /cases/:id/ezb-wizard                          { values, generate? } → saved as employer corrections (+ PDF)
+ *   POST   /cases/:id/ezb-wizard/datasheet                { values } → data sheet PDF (official question order)
  *   GET    /official-forms/fills/:fillId/file              generated PDF (?download=1)
  *   POST   /official-forms/fills/:fillId/withdraw          take it back from the employer
  *   POST   /official-forms/fills/:fillId/submitted         mark as handed in
@@ -209,6 +214,33 @@ adminOfficialFormsRouter.post('/cases/:id/official-forms/:key/send-to-employer',
   const fill = await sendToEmployer(String(req.params.id), req.user!.id);
   await audit(req, 'OFFICIAL_FORM_SENT_TO_EMPLOYER', `case:${req.params.id}`, { fillId: fill.id, companyId: fill.companyId });
   res.status(201).json({ fill });
+});
+
+// ─── Employer declaration wizard (staff version) ─────────────────────────
+
+adminOfficialFormsRouter.get('/official-forms/kldb', (req, res) => {
+  const q = String(req.query.q ?? '').slice(0, 80);
+  res.json({ items: searchOccupations(q, 12).map((o) => ({ code: o.code, de: o.de, en: o.en, az: o.az, verify: !!o.verify })) });
+});
+
+adminOfficialFormsRouter.get('/cases/:id/ezb-wizard', async (req, res) => {
+  res.json(await staffWizardDetail(String(req.params.id)));
+});
+
+adminOfficialFormsRouter.put('/cases/:id/ezb-wizard', async (req, res) => {
+  const body = parse(z.object({ values: z.record(z.string().max(80), z.unknown()).default({}), generate: z.boolean().default(false) }), req.body ?? {});
+  const out = await staffWizardSave(String(req.params.id), body.values, { userId: req.user!.id, generate: body.generate });
+  await audit(req, 'OFFICIAL_FORM_WIZARD_SAVED', `case:${req.params.id}`, { generate: body.generate, fillId: out.generated?.id ?? null });
+  res.json(out);
+});
+
+adminOfficialFormsRouter.post('/cases/:id/ezb-wizard/datasheet', async (req, res) => {
+  const out = await staffWizardDataSheet(String(req.params.id), (req.body ?? {}).values);
+  await audit(req, 'OFFICIAL_FORM_DATASHEET', `case:${req.params.id}`, { key: 'EMPLOYMENT_DECLARATION', wizard: true });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${out.name}"`);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.send(out.pdf);
 });
 
 // ─── Fills ──────────────────────────────────────────────────────────────

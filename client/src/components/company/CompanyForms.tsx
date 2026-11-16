@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, CheckCircle2, ChevronRight, Eye, FileSignature, FileText, PenLine } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Eye, FilePlus2, FileSignature, FileSpreadsheet, FileText, PenLine } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
@@ -12,7 +13,8 @@ import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
 import { Documents, Success } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
-import { openPdfBlob, toastFormError, type L10n } from '@/components/officialForms/api';
+import { openPdfBlob, toastFormError } from '@/components/officialForms/api';
+import { EzbWizard, wizardHasErrors, type WizardField, type WizardMeta } from '@/components/officialForms/EzbWizard';
 
 registerCopy(pagesOfficialForms);
 
@@ -31,23 +33,20 @@ interface FormListItem {
   updatedAt: string;
   signature: SignatureState | null;
 }
-interface EmployerField {
-  key: string;
-  group: string;
-  kind: 'text' | 'date' | 'code' | 'money' | 'number';
-  codes: string[] | null;
-  label: L10n;
-  value: string;
-  required: boolean;
+interface Startable {
+  caseId: string;
+  caseNumber: string;
+  worker: string;
+  profession: string;
 }
-interface FormDetail {
+interface FormDetail extends WizardMeta {
   id: string;
   status: FormListItem['status'];
   title: string;
   version: string;
   caseNumber: string;
   worker: { name: string; birthDate: string; nationality: string; profession: string };
-  fields: EmployerField[];
+  fields: WizardField[];
   editable: boolean;
   submittedAt: string | null;
   signature: SignatureState | null;
@@ -64,49 +63,87 @@ export const CompanyForms = () => {
 const FormList = () => {
   const { t } = useTranslation();
   const { date } = useL10n();
-  const { data, isLoading } = useQuery({ queryKey: ['company-forms'], queryFn: async () => (await api.get<{ items: FormListItem[]; open: number }>('/company/forms')).data });
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['company-forms'],
+    queryFn: async () => (await api.get<{ items: FormListItem[]; open: number; startable: Startable[] }>('/company/forms')).data,
+  });
+  const start = useMutation({
+    mutationFn: async (caseId: string) => (await api.post<{ fill: { id: string } }>('/company/forms/start', { caseId })).data.fill,
+    onSuccess: (fill) => {
+      toast.success(t('ezbWizard.company.started'));
+      void qc.invalidateQueries({ queryKey: ['company-forms'] });
+      navigate(`/company/forms/${fill.id}`);
+    },
+    onError: toastFormError,
+  });
   if (isLoading) return <Loading />;
   return (
-    <Section title={t('officialForms.company.title')} icon={FileSignature}>
-      <p className="-mt-3 mb-4 text-sm text-muted">{t('officialForms.company.subtitle')}</p>
-      {!data?.items.length ? (
-        <Empty icon={FileText} illustration={<Documents className="w-32" />} title={t('officialForms.company.empty')} />
-      ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
-          {data.items.map((f) => (
-            <li key={f.id}>
-              <Link to={`/company/forms/${f.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-sunken">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-sky">
-                  <FileText className="size-5" aria-hidden />
-                </span>
+    <div className="space-y-6">
+      <Section title={t('officialForms.company.title')} icon={FileSignature}>
+        <p className="-mt-3 mb-4 text-sm text-muted">{t('officialForms.company.subtitle')}</p>
+        {!data?.items.length ? (
+          <Empty icon={FileText} illustration={<Documents className="w-32" />} title={t('officialForms.company.empty')} />
+        ) : (
+          <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
+            {data.items.map((f) => (
+              <li key={f.id}>
+                <Link to={`/company/forms/${f.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-sunken">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl chip-sky">
+                    <FileText className="size-5" aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-ink">{f.title}</p>
+                    <p className="truncate text-xs text-muted">
+                      {f.worker} · {f.profession} · {date(f.updatedAt)}
+                    </p>
+                  </div>
+                  <span className={clsx('badge shrink-0', TONE_CLASS[STATUS_TONE[f.status]])}>{t(`officialForms.company.status.${f.status}`)}</span>
+                  <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+      {!!data?.startable?.length && (
+        <Section title={t('ezbWizard.company.startTitle')} icon={FilePlus2}>
+          <p className="-mt-3 mb-4 text-sm text-muted">{t('ezbWizard.company.startHint')}</p>
+          <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
+            {data.startable.map((s) => (
+              <li key={s.caseId} className="flex min-h-14 flex-wrap items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-ink">{f.title}</p>
+                  <p className="truncate font-semibold text-ink">{s.worker}</p>
                   <p className="truncate text-xs text-muted">
-                    {f.worker} · {f.profession} · {date(f.updatedAt)}
+                    {s.profession} · {s.caseNumber}
                   </p>
                 </div>
-                <span className={clsx('badge shrink-0', TONE_CLASS[STATUS_TONE[f.status]])}>{t(`officialForms.company.status.${f.status}`)}</span>
-                <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
-              </Link>
-            </li>
-          ))}
-        </ul>
+                <button type="button" className="btn-secondary btn-sm" disabled={start.isPending} onClick={() => start.mutate(s.caseId)}>
+                  {start.isPending && start.variables === s.caseId ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
+                  {t('ezbWizard.company.start')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Section>
       )}
-    </Section>
+    </div>
   );
 };
 
-const SECTION_OF: Record<string, 'company' | 'job' | 'pay' | 'conditions'> = {
-  company: 'company',
-  contract: 'job',
-  employment: 'conditions',
+const downloadBlob = (data: Blob, name: string) => {
+  const url = URL.createObjectURL(data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 };
-const PAY_KEYS = new Set(['contract.grossMonthly', 'contract.weeklyHours', 'contract.vacationDays', 'contract.probationMonths']);
-const sectionOf = (f: EmployerField) => (PAY_KEYS.has(f.key) ? 'pay' : f.key === 'employment.jobDescription' || f.key === 'employment.workplaceMode' || f.key === 'employment.workplaceAddress' ? 'job' : (SECTION_OF[f.group] ?? 'conditions'));
 
 const FormEditor = ({ id }: { id: string }) => {
   const { t } = useTranslation();
-  const { tr, date } = useL10n();
+  const { date } = useL10n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({ queryKey: ['company-forms', id], queryFn: async () => (await api.get<{ form: FormDetail }>(`/company/forms/${id}`)).data.form });
@@ -117,6 +154,11 @@ const FormEditor = ({ id }: { id: string }) => {
   const preview = useMutation({
     mutationFn: async () => (await api.post<Blob>(`/company/forms/${id}/preview`, { values: v }, { responseType: 'blob' })).data,
     onSuccess: openPdfBlob,
+    onError: toastFormError,
+  });
+  const datasheet = useMutation({
+    mutationFn: async () => (await api.post<Blob>(`/company/forms/${id}/datasheet`, { values: v }, { responseType: 'blob' })).data,
+    onSuccess: (blob) => downloadBlob(blob, `ezb-datenblatt-${data?.caseNumber ?? ''}.pdf`),
     onError: toastFormError,
   });
   const submit = useMutation({
@@ -143,19 +185,13 @@ const FormEditor = ({ id }: { id: string }) => {
       </Section>
     );
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const missing = data.fields.filter((f) => f.required && !(v[f.key] ?? '').trim()).map((f) => f.key);
-    setInvalid(missing);
-    if (!missing.length) submit.mutate();
-  };
   const set = (k: string, val: string) => {
     setValues({ ...v, [k]: val });
     if (invalid.includes(k)) setInvalid(invalid.filter((x) => x !== k));
   };
-  const sections = (['company', 'job', 'pay', 'conditions'] as const).map((s) => ({ s, fields: data.fields.filter((f) => sectionOf(f) === s) }));
   const sig = data.signature;
   const canSign = sig?.signerId && sig.requestStatus === 'SENT' && (sig.signerStatus === 'PENDING' || sig.signerStatus === 'VIEWED');
+  const hasErrors = wizardHasErrors(data.fields, v);
 
   return (
     <div className="space-y-6">
@@ -207,74 +243,32 @@ const FormEditor = ({ id }: { id: string }) => {
         )}
       </Section>
       {data.editable && (
-        <form onSubmit={onSubmit} className="space-y-6" noValidate>
-          {sections
-            .filter((x) => x.fields.length)
-            .map(({ s, fields }) => (
-              <Section key={s} title={t(`officialForms.company.sections.${s}`)}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {fields.map((f) => (
-                    <EmployerInput key={f.key} field={f} value={v[f.key] ?? ''} invalid={invalid.includes(f.key)} label={tr(f.label)} onChange={(val) => set(f.key, val)} />
-                  ))}
-                </div>
-              </Section>
-            ))}
-          <Section>
-            <p className="mb-4 text-sm text-muted">{t('officialForms.company.submitHint')}</p>
-            <div className="flex flex-wrap gap-2">
+        <EzbWizard
+          fields={data.fields}
+          meta={data}
+          values={v}
+          onChange={set}
+          serverInvalid={invalid}
+          kldbUrl="/company/forms/kldb"
+          reviewActions={
+            <>
+              <button type="button" className="btn-secondary" onClick={() => datasheet.mutate()} disabled={datasheet.isPending} title={t('ezbWizard.datasheetHint')}>
+                {datasheet.isPending ? <Spinner className="size-4" /> : <FileSpreadsheet className="size-4" aria-hidden />}
+                {t('ezbWizard.datasheet')}
+              </button>
               <button type="button" className="btn-secondary" onClick={() => preview.mutate()} disabled={preview.isPending}>
                 {preview.isPending ? <Spinner className="size-4" /> : <Eye className="size-4" aria-hidden />}
                 {t('officialForms.company.preview')}
               </button>
-              <button type="submit" className="btn-primary" disabled={submit.isPending}>
+              <button type="button" className="btn-primary" onClick={() => submit.mutate()} disabled={submit.isPending || hasErrors}>
                 {submit.isPending ? <Spinner className="size-4" /> : <PenLine className="size-4" aria-hidden />}
-                {t('officialForms.company.submit')}
+                {t('ezbWizard.company.submit')}
               </button>
-            </div>
-          </Section>
-        </form>
-      )}
-    </div>
-  );
-};
-
-const EmployerInput = ({ field, value, invalid, label, onChange }: { field: EmployerField; value: string; invalid: boolean; label: string; onChange: (v: string) => void }) => {
-  const { t } = useTranslation();
-  const id = `cf-${field.key.replace(/\./g, '-')}`;
-  const wide = field.key === 'employment.jobDescription' || field.key === 'employment.workplaceAddress' || field.key === 'company.name';
-  const cls = clsx('input', invalid && 'border-danger ring-1 ring-danger');
-  return (
-    <div className={clsx(wide && 'sm:col-span-2')}>
-      <label className="label" htmlFor={id}>
-        {label}
-        {field.required && <span className="ml-1 text-xs font-normal text-muted">({t('officialForms.company.required')})</span>}
-      </label>
-      {field.kind === 'code' && field.codes ? (
-        <select id={id} className={cls} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid} required={field.required}>
-          <option value="">{t('officialForms.company.choose')}</option>
-          {field.codes.map((c) => (
-            <option key={c} value={c}>
-              {c === 'yes' ? t('officialForms.company.yes') : c === 'no' ? t('officialForms.company.no') : t(`officialForms.company.codes.${c}`, { defaultValue: c })}
-            </option>
-          ))}
-        </select>
-      ) : field.key === 'employment.jobDescription' ? (
-        <textarea id={id} rows={3} maxLength={1000} className={cls} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={invalid} />
-      ) : (
-        <input
-          id={id}
-          className={cls}
-          type={field.kind === 'date' ? 'date' : field.kind === 'money' || field.kind === 'number' ? 'number' : field.key === 'company.email' ? 'email' : 'text'}
-          inputMode={field.kind === 'money' || field.kind === 'number' ? 'decimal' : undefined}
-          step={field.kind === 'money' ? '0.01' : field.kind === 'number' ? '0.5' : undefined}
-          min={field.kind === 'money' || field.kind === 'number' ? 0 : undefined}
-          maxLength={300}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-invalid={invalid}
-          required={field.required}
+            </>
+          }
         />
       )}
+      {data.editable && <p className="text-xs text-muted">{t('officialForms.company.submitHint')}</p>}
     </div>
   );
 };

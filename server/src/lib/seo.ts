@@ -1,6 +1,7 @@
 import { prisma } from '../db.js';
 import { config } from '../config.js';
 import { cached } from './cache.js';
+import { getLicense } from './license/index.js';
 import {
   GENERIC_META,
   PRIVATE_PREFIXES,
@@ -32,6 +33,8 @@ import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, stu
 import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
 import { germanExamFaqFor } from './germanExam/seo.js';
+import { getCatalogue } from './candidateCatalogue/index.js';
+import { professionLabel } from './candidateCatalogue/labels.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -265,6 +268,8 @@ export interface SeoData {
   packages?: { slug: string; tier: string; title: unknown; summary: unknown; features: unknown; priceCents: number; currency: string; updatedAt: Date }[];
   /** Published study programmes (/study, /study/:slug, lib/study/seo.ts). Optional for older fixtures. */
   study?: StudySeoRow[];
+  /** Anonymous candidate catalogue (/kandidaten, lib/candidateCatalogue): profession counts of the k-anonymous groups. Optional. */
+  candidateCatalogue?: { professions: { profession: string; count: number }[]; total: number } | null;
 }
 
 const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
@@ -374,6 +379,7 @@ const loadSeoData = async (): Promise<SeoData> => {
     study,
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
+    candidateCatalogue: await getCatalogue().catch(() => null),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
   };
@@ -415,6 +421,8 @@ export interface ResolvedPage {
   alternates?: Partial<Record<SeoLocale, string>> | null;
   /** Language of the canonical URL when it differs from the requested one (single-language pages). */
   canonicalLng?: SeoLocale;
+  /** Canonical page when it is another page (noindex embeddable widgets → the full tool); emitted even when noindex. */
+  canonicalPath?: string;
 }
 
 const staticName = (path: string, lng: SeoLocale) => (STATIC_PAGES[path] ? textIn(STATIC_PAGES[path].name, lng) : '');
@@ -701,6 +709,9 @@ export const TOOL_PAGES = new Set([
   '/weekend-trips',
   '/which-city',
   '/permanent-residence',
+  '/germany-vs-other-countries',
+  '/visa-refusal',
+  '/visa-document-checklist',
   '/family-reunification-check',
   '/cities',
   '/eligibility',
@@ -734,6 +745,7 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/employer-cost-calculator': 'FinanceApplication',
   '/rent-check': 'FinanceApplication',
   '/health-insurance-comparison': 'FinanceApplication',
+  '/germany-vs-other-countries': 'ReferenceApplication',
   '/cities': 'FinanceApplication',
   '/german-simulator': 'EducationalApplication',
   '/pronunciation': 'EducationalApplication',
@@ -943,10 +955,11 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       title: page.fullTitle ? textIn(page.title, lng) : pageTitle(textIn(page.title, lng)),
       description: textIn(page.description, lng),
       index: page.index !== false,
+      ...(page.canonical ? { canonicalPath: page.canonical } : {}),
       image: null,
       ogType: 'website',
       // Calculators and checks sit under the tools hub (Home › Tools › Salary calculator), as on the page.
-      crumbs: path === '/' ? [] : [home, ...(TOOL_CRUMB_PAGES.has(path) ? [{ name: staticName('/tools', lng), path: '/tools' }] : []), { name: textIn(page.name, lng), path }],
+      crumbs: path === '/' ? [] : [home, ...(TOOL_CRUMB_PAGES.has(path) ? [{ name: staticName('/tools', lng), path: '/tools' }] : []), ...(path.startsWith('/for/') ? [{ name: staticName('/for-workers', lng), path: '/for-workers' }] : []), { name: textIn(page.name, lng), path }],
       jsonLd: [],
       extraMeta: [],
     };
@@ -1012,6 +1025,21 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       if (ld) resolved.jsonLd.push(ld);
     }
     if (path === '/glossary') resolved.jsonLd.push(glossarySetLd(lng, textIn(page.name, lng), textIn(page.description, lng)));
+    if (path === '/kandidaten' && data.candidateCatalogue?.professions.length) {
+      // Anonymous candidate catalogue: one list item per profession with its (k-anonymous) count, no individuals.
+      resolved.jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: textIn(page.title, lng),
+        numberOfItems: data.candidateCatalogue.professions.length,
+        itemListElement: data.candidateCatalogue.professions.map((p, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: `${professionLabel(p.profession, lng)} (${p.count})`,
+          url: `${pageUrl('/kandidaten', lng)}?beruf=${encodeURIComponent(p.profession)}`,
+        })),
+      });
+    }
     if (path === '/packages' && (data.packages ?? []).length) {
       // One Service with an OfferCatalog: each package is an Offer with its price (VAT included).
       resolved.jsonLd.push({
@@ -1475,6 +1503,9 @@ export const renderHead = (rawPath: string, queryLng: SeoLocale | null, data: Se
       if (xd) out.push(`<link data-seo rel="alternate" hreflang="x-default" href="${a(xd)}">`);
     }
     out.push(`<link data-seo rel="alternate" type="application/rss+xml" title="${a(RSS_TITLE[lng])}" href="${a(rssUrl(lng))}">`);
+  } else if (page.canonicalPath) {
+    // noindex page that duplicates another one (an embeddable widget): point search engines at the full page.
+    out.push(`<link data-seo rel="canonical" href="${a(pageUrl(page.canonicalPath, lng))}">`);
   }
   meta('property', 'og:site_name', SITE_NAME);
   meta('property', 'og:type', page.ogType);
@@ -1600,7 +1631,8 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/study': latest((data.study ?? []).map((p) => p.updatedAt)),
         '/glossary': latest([GLOSSARY_LASTMOD]),
       };
-      return SITEMAP_STATIC.flatMap((path) =>
+      // /platform sells the platform: only the owner's instance lists it (customer instances answer 404 there).
+      return SITEMAP_STATIC.filter((path) => path !== '/platform' || getLicense().role === 'owner').flatMap((path) =>
         allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
       );
     }

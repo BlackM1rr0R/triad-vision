@@ -5,6 +5,7 @@ import { BookOpen, CheckCircle2, Info, Lightbulb, RotateCcw, XCircle } from 'luc
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
 import { ContentArticle, ContentTable, useContentLocale } from '@/components/seo/ContentArticle';
 import { CK_EXAMPLES, chancenkarteContent } from '@/lib/seoContent/chancenkarte';
@@ -239,6 +240,17 @@ export default function ChancenkarteCalculator() {
               </Link>
             )}
           </div>
+        </div>
+        <div className="container-x mt-6">
+          <EmailResult
+            tool="chancenkarte-calculator"
+            summary={[
+              { label: t('ckCalc.result'), value: `${t('ckCalc.points', { count: result.points })} ${t('ckCalc.of')}` },
+              { label: t('ckCalc.form'), value: t(`ckCalc.${result.status}`) },
+              ...result.rows.filter((r) => r.points > 0).slice(0, 5).map((r) => ({ label: t(`ckCalc.rows.${r.row}`), value: `+${r.points}` })),
+              ...(result.missing.length ? [{ label: t('ckCalc.missing'), value: result.missing.map((m) => (m === 'points' ? t('ckCalc.missPoints', { count: result.pointsShort }) : t(`ckCalc.miss${m[0].toUpperCase()}${m.slice(1)}`))).join('; ') }] : []),
+            ]}
+          />
         </div>
       </section>
       <ChancenkarteArticle />

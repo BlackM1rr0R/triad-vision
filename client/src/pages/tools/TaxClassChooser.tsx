@@ -6,6 +6,7 @@ import { BadgeEuro, HandCoins, RotateCcw } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesTaxClass } from '@/i18n/pagesTaxClass';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -131,6 +132,18 @@ export default function TaxClassChooserPage() {
               </table>
               <p className="border-t border-line px-3 py-2 text-[11px] leading-snug text-muted">{t('taxClass.result.settlementHint')}</p>
             </div>
+            <EmailResult
+              tool="tax-class-chooser"
+              summary={[
+                { label: t('taxClass.form.grossA'), value: money(input.grossA) },
+                { label: t('taxClass.form.grossB'), value: money(input.grossB) },
+                { label: t('taxClass.result.bestMonthly', { combo: comboLabel(r.bestMonthly) }), value: money(best.netMonthly) },
+                ...r.combos.slice(0, 5).map((c) => ({
+                  label: `${comboLabel(c.combo)} · ${t('taxClass.result.netTotal')}`,
+                  value: `${money(c.netMonthly, true)} (${t('taxClass.result.settlement')}: ${c.settlement >= 0 ? '+' : '−'}${money(Math.abs(c.settlement))})`,
+                })),
+              ]}
+            />
 
             <div className="grid gap-4 md:grid-cols-2">
               {(['same', 'risk', 'factor', 'benefits'] as const).map((k) => (

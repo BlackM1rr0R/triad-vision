@@ -17,6 +17,7 @@ import { goToCaseSection } from '@/components/admin/case/sections';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
 import { FILL_TONE, fillFileUrl, toastFormError, type CaseFormEntry, type CaseFormResolution, type Fill, type MissingEntry } from './api';
+import { StaffEzbWizard } from './StaffEzbWizard'; // employer declaration wizard (staff version)
 
 registerCopy(pagesOfficialForms);
 
@@ -32,6 +33,7 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
   const { data, isLoading } = useQuery({ queryKey: key, queryFn: async () => (await api.get<{ companyId: string | null; forms: CaseFormEntry[] }>(`/admin/cases/${caseId}/official-forms`)).data });
   const [open, setOpen] = useState<CaseFormEntry | null>(null);
   const [confirmSend, setConfirmSend] = useState<CaseFormEntry | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: key });
 
   const send = useMutation({
@@ -134,6 +136,12 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
                       {t('officialForms.panel.markSubmitted')}
                     </button>
                   )}
+                  {f.employerForm && (
+                    <button type="button" className="btn-secondary btn-sm" onClick={() => setWizardOpen(true)}>
+                      <Wand2 className="size-3.5" aria-hidden />
+                      {t('ezbWizard.staff.open')}
+                    </button>
+                  )}
                   {(f.template || f.builtIn) && (
                     <a className="btn-secondary btn-sm" href={`/api/admin/cases/${caseId}/official-forms/${f.key}/datasheet`} title={t('officialForms.panel.datasheetHint')}>
                       <FileSpreadsheet className="size-3.5" aria-hidden />
@@ -163,6 +171,16 @@ export const CaseOfficialFormsPanel = ({ caseId }: { caseId: string }) => {
             );
           })}
         </ul>
+      )}
+      {wizardOpen && (
+        <StaffEzbWizard
+          caseId={caseId}
+          open={wizardOpen}
+          onClose={() => {
+            setWizardOpen(false);
+            void qc.invalidateQueries({ queryKey: key });
+          }}
+        />
       )}
       {open && (
         <FillDialog

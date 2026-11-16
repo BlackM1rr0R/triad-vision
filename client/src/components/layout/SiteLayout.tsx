@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { isHydrating, setHydrating } from '@/lib/ssr';
 import { afterLoad } from '@/lib/idle';
 import { TrackBeacon } from '../analytics/TrackBeacon';
+import { ToolViewTracker } from '../analytics/ToolViewTracker';
 import { SeoManager } from '@/lib/usePageTitle';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
@@ -161,6 +162,7 @@ export const SiteLayout = () => {
       <FloatingActions />
       <SearchPalette />
       <TrackBeacon />
+      <ToolViewTracker />
       <SeoManager />
       <CookieConsent />
     </>

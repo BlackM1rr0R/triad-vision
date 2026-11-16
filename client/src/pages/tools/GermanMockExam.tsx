@@ -8,6 +8,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { GlossaryChips } from '@/components/glossary/GlossaryChips';
 import { PartView, type ExamApi } from '@/components/germanExam/Parts';
 import { useScriptSpeech } from '@/components/germanExam/useScriptSpeech';
@@ -308,6 +309,25 @@ const ResultPanel = ({ set, saved }: { set: ExamSet; saved: SavedExam }) => {
       </ul>
       <p className="mt-3 text-xs leading-relaxed text-muted">{t(level === 'a1' ? 'mockExam.result.a1Note' : 'mockExam.result.b1Note')}</p>
       <p className="mt-1 text-xs leading-relaxed text-muted">{t('mockExam.result.selfScored')}</p>
+      <EmailResult
+        tool={`german-mock-exam/${level}`}
+        countUse="mount"
+        className="mt-4"
+        summary={[
+          {
+            label: t('mockExam.result.cardLead', { level: level.toUpperCase() }),
+            value:
+              outcome.total !== null
+                ? `${t('mockExam.result.total', { points: outcome.total })} · ${outcome.passed ? t('mockExam.result.passed') : t('mockExam.result.failed')}`
+                : outcome.passed !== null
+                  ? outcome.passed
+                    ? t('mockExam.result.passed')
+                    : t('mockExam.result.failed')
+                  : t('mockExam.result.incomplete'),
+          },
+          ...outcome.modules.map((r) => ({ label: t(`mockExam.modules.${r.key}`), value: t('mockExam.result.points', { points: pts(r), max: r.pointsMax }) })),
+        ]}
+      />
     </section>
   );
 };

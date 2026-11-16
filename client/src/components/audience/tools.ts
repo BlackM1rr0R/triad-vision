@@ -48,6 +48,9 @@ import {
   MessagesSquare,
   type LucideIcon,
   HardHat,
+  Globe2,
+  ListChecks,
+  FileWarning,
 } from 'lucide-react';
 
 /**
@@ -75,6 +78,9 @@ export const TOOLS: ToolItem[] = [
   { key: 'chancenkarte', to: '/chancenkarte-calculator', icon: Calculator, group: 'eligibility' },
   { key: 'anerkennung', to: '/anerkennung', icon: GraduationCap, group: 'eligibility' },
   { key: 'familyCheck', to: '/family-reunification-check', icon: Users, group: 'eligibility' },
+  { key: 'countryCompare', to: '/germany-vs-other-countries', icon: Globe2, group: 'eligibility' },
+  { key: 'visaChecklist', to: '/visa-document-checklist', icon: ListChecks, group: 'eligibility' },
+  { key: 'visaRefusal', to: '/visa-refusal', icon: FileWarning, group: 'eligibility' },
   { key: 'gradeConverter', to: '/grade-converter', icon: School, group: 'eligibility' },
   { key: 'salary', to: '/salary-calculator', icon: BadgeEuro, group: 'costs' },
   { key: 'cost', to: '/cost-calculator', icon: WalletCards, group: 'costs' },
@@ -86,6 +92,7 @@ export const TOOLS: ToolItem[] = [
   { key: 'taxClass', to: '/tax-class-chooser', icon: Percent, group: 'costs' },
   { key: 'employerCost', to: '/employer-cost-calculator', icon: Building2, group: 'costs' },
   { key: 'rentCheck', to: '/rent-check', icon: House, group: 'costs' },
+  { key: 'realSalaries', to: '/real-salaries', icon: BadgeEuro, group: 'costs' }, // contract salaries of placed workers (k-anonymous ranges)
   { key: 'healthInsurance', to: '/health-insurance-comparison', icon: HeartPulse, group: 'costs' },
   { key: 'whenInGermany', to: '/when-in-germany', icon: CalendarRange, group: 'plan' },
   { key: 'permanentResidence', to: '/permanent-residence', icon: Landmark, group: 'plan' },

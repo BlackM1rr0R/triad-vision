@@ -7,6 +7,7 @@ import { ArrowRight, BookOpen, CalendarCheck, Download, Ear, ExternalLink, Flag,
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { GlossaryChips } from '@/components/glossary/GlossaryChips';
 import { downloadResultCard } from '@/components/games/shareCard';
 import { registerCopy } from '@/i18n';
@@ -215,6 +216,15 @@ export default function GermanLevelSelfPage() {
                 <p className="mt-3 text-sm font-semibold text-ink">{t('levelSelf.result.weakest', { skill: t(`levelSelf.skills.${weakest}`) })}</p>
                 <p className="mt-2 text-xs text-muted">{t('levelSelf.result.note')}</p>
               </section>
+              <EmailResult
+                tool="german-level-test-self"
+                countUse="mount"
+                summary={[
+                  { label: t('levelSelf.result.overall'), value: `${levelLabel(t, overall)} · ${t(`levelSelf.levelNames.${overall}`)}` },
+                  ...SKILLS.map((s) => ({ label: t(`levelSelf.skills.${s}`), value: levelLabel(t, bySkill[s]) })),
+                  { label: t('levelSelf.result.perSkill'), value: t('levelSelf.result.weakest', { skill: t(`levelSelf.skills.${weakest}`) }) },
+                ]}
+              />
 
               <section aria-labelledby="ls-plan-h" className="space-y-4 rounded-3xl border border-line bg-card p-5 sm:p-7">
                 <h2 id="ls-plan-h" className="flex items-center gap-2 font-display text-xl font-semibold text-ink">

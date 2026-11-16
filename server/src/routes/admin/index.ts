@@ -17,6 +17,7 @@ import { adminBookingRouter } from './booking.js';
 import { adminInvoicesRouter } from './invoices.js';
 import { adminReviewsRouter } from './reviews.js';
 import { adminAnalyticsRouter } from './analytics.js';
+import { adminToolAnalyticsRouter } from './toolAnalytics.js';
 import { oversightRouter } from './oversight.js';
 import { adminMessagingRouter } from './messaging.js';
 import { adminRequirementsRouter } from './requirements.js';
@@ -41,6 +42,7 @@ import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminCandidatePoolRouter } from './candidatePool.js'; // anonymous candidate pool: overview, interests, view log
 import { adminPartnersRouter } from './partners.js';
 import { adminPartnerRecordsRouter } from './partnerRecords.js'; // contracts, timeline, contact persons of employers + referral partners
+import { adminPartnerSchoolsRouter } from './partnerSchools.js'; // colleges / language schools: categories + student records review
 import { adminRegisterRouter } from './register.js';
 import { adminDocumentExpiryRouter } from './documentExpiry.js';
 import { adminSkillVideosRouter } from './skillVideos.js';
@@ -80,7 +82,10 @@ import { adminCommandSearchRouter } from './commandSearch.js'; // Ctrl+K command
 import { adminPlacementRouter } from './placement.js'; // recognition, employer share links, evaluations, employment contracts
 import { adminKpiRouter } from './kpi.js'; // staff KPI card + team leaderboard
 import { adminYearReviewRouter } from '../visaStory.js'; // staff 'Year in review' (per-staff counts ADMIN+)
+import { adminPublicApiKeysRouter } from './publicApiKeys.js'; // public vacancy API keys (ADMIN+)
+import { adminQuarterlyReportRouter } from './quarterlyReport.js'; // quarterly labour mobility report (PDF, publish ADMIN+)
 import { adminEmployerChecklistRouter } from './employerChecklist.js'; // employer arrival checklist: templates (ADMIN+ edit) + case card
+import { adminRealSalariesRouter } from './realSalaries.js'; // real salary database: records, exclusions, group preview, recompute
 import { adminStaffOpsRouter } from './staffOps.js'; // morning digest preference + backup restore test status
 import { adminTrainingRouter } from './training.js'; // internal training courses / lessons / quizzes
 import { adminShiftsRouter } from './shifts.js'; // team calendar: shifts, leave, handovers, coverage
@@ -90,6 +95,7 @@ import { adminSearchConsoleRouter } from './searchConsole.js'; // Google Search 
 import { adminNavRouter } from './nav.js'; // role desks, favourites, recent pages, module toggles, page usage
 import { adminClientBillingRouter } from './clientBilling.js'; // client invoices, payments, payment plans
 import { adminCountersignRouter } from './countersign.js'; // Triad Vision countersignature of service contracts
+import { adminTrustRouter } from './trust.js'; // Trust Center settings + AVV template approval / agreements
 import { adminAccountingRouter } from './accounting.js'; // currencies, billing entities, exchange rates, DATEV export, XRechnung
 import { adminPackagesRouter } from './packages.js'; // service packages + online orders
 import { adminSiteFeaturesRouter } from './siteFeatures.js'; // search stats, job alert stats, story video upload, e-book lead magnets
@@ -98,6 +104,7 @@ import { adminAcceleratedRouter, adminRecognitionRouter } from './recognition.js
 import { adminDashboardLayoutRouter } from './dashboardLayout.js'; // personal dashboard widget layout
 import { adminPresenceRouter } from './presence.js'; // live "who is viewing this case / inquiry"
 import { adminBrandRouter, adminLicenseRouter, adminWhitelabelRouter } from './whitelabel.js'; // white-label: brand, licence, owner's customer list
+import { adminOnboardingRouter, adminSaasLeadsRouter } from './saas.js'; // SaaS: demo-request pipeline (owner) + agency onboarding wizard
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
 import { adminLifeRouter } from './life.js'; // Life in Germany: live numbers board toggle, Baku salary reference, CBAR rate
@@ -187,6 +194,8 @@ adminRouter.use(adminNavRouter); // /me/nav*, /nav/* (desks, usage, modules)
 adminRouter.use('/brand', requireMinRole('SUPER_ADMIN'), adminBrandRouter); // white-label brand (System → Brand)
 adminRouter.use('/license', requireMinRole('SUPER_ADMIN'), adminLicenseRouter); // white-label licence status (System → License)
 adminRouter.use('/whitelabel', requireMinRole('SUPER_ADMIN'), adminWhitelabelRouter); // owner instance: customers / instances
+adminRouter.use('/saas-leads', requireMinRole('SUPER_ADMIN'), adminSaasLeadsRouter); // owner instance: SaaS demo-request pipeline
+adminRouter.use('/onboarding', requireMinRole('SUPER_ADMIN'), adminOnboardingRouter); // agency onboarding wizard (System → Onboarding)
 adminRouter.use(adminDashboardLayoutRouter); // /me/dashboard (widget order, sizes, hidden widgets)
 adminRouter.use(adminStaffUiRouter); // /me/saved-views, /me/table-prefs, /me/whats-new, /whats-new/overrides
 adminRouter.use('/bulk', adminBulkRouter); // /bulk/cases/*, /bulk/inquiries/*, /bulk/candidates/*
@@ -209,7 +218,10 @@ adminRouter.use('/campaigns', adminCampaignsRouter); // campaigns to client segm
 adminRouter.use('/time', adminTimeRouter); // time tracking (STAFF: own entries; rates SUPER_ADMIN)
 adminRouter.use('/kpi', adminKpiRouter); // staff KPI (own card STAFF; team + others ADMIN+)
 adminRouter.use('/year-review', adminYearReviewRouter); // year in review: cases, professions, cities, fastest case (per-staff ADMIN+)
+adminRouter.use('/quarterly-report', adminQuarterlyReportRouter); // quarterly report: aggregates k ≥ 3, intro, PDF (STAFF read, ADMIN+ edit / publish)
 adminRouter.use('/employer-checklist', adminEmployerChecklistRouter); // employer arrival checklist templates (STAFF read, ADMIN+ edit) + checklist of a case
+adminRouter.use('/real-salaries', adminRealSalariesRouter); // real salary database (STAFF exclude records, ADMIN+ recompute)
+adminRouter.use('/public-api-keys', adminPublicApiKeysRouter); // public vacancy API keys of referral partners + usage (ADMIN+)
 adminRouter.use('/staff-ops', adminStaffOpsRouter); // /digest (own morning e-mail opt-out), /backup-check (ADMIN+)
 adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
 adminRouter.use('/course', adminCourseRouter); // pre-departure course (client LMS): builder ADMIN+, report STAFF+
@@ -254,6 +266,7 @@ adminRouter.use('/candidate-pool', adminCandidatePoolRouter);
 adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log
 adminRouter.use('/partners', adminPartnersRouter);
 adminRouter.use('/partner-records', adminPartnerRecordsRouter); // /contracts*, /activities*, /contacts* (owner: companyId | referralPartnerId)
+adminRouter.use('/partner-schools', adminPartnerSchoolsRouter); // partner categories (ADMIN+ edit) + language-school records review (confirm → German level)
 adminRouter.use('/register', adminRegisterRouter);
 adminRouter.use('/settlements', adminSettlementsRouter);
 adminRouter.use('/signatures', adminSignaturesRouter);
@@ -301,10 +314,12 @@ adminRouter.use('/invoices', requireMinRole('ADMIN'), adminInvoicesRouter);
 adminRouter.use('/client-billing', adminClientBillingRouter); // case-level STAFF; list, CSV, settings ADMIN (per route)
 adminRouter.use('/packages', requireMinRole('ADMIN'), adminPackagesRouter);
 adminRouter.use('/countersign', requireMinRole('ADMIN'), adminCountersignRouter);
+adminRouter.use('/trust', requireMinRole('ADMIN'), adminTrustRouter);
 adminRouter.use('/accounting', requireMinRole('ADMIN'), adminAccountingRouter);
 adminRouter.use('/quotes', requireMinRole('ADMIN'), adminQuotesRouter); // Angebote for employers
 adminRouter.use('/reviews', adminReviewsRouter);
 adminRouter.use('/analytics', adminAnalyticsRouter);
+adminRouter.use('/tool-analytics', adminToolAnalyticsRouter); // per-tool views, interactions, result e-mails, attributed sign-ups (aggregates only)
 adminRouter.use('/upload', requireMinRole('ADMIN'), adminUploadRouter);
 adminRouter.use('/settings', requireMinRole('ADMIN'), adminSettingsRouter);
 adminRouter.use('/content', requireMinRole('ADMIN'), adminContentRouter);

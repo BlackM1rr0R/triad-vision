@@ -2,7 +2,10 @@ import type { Locale, OfficialFormFill, Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, forbidden, notFound } from '../http.js';
-import { notifyUser } from '../notifications.js';
+import { notifyStaff, notifyUser } from '../notifications.js';
+import { searchOccupations } from '../jobFeeds/occupations.js';
+import { EZB_CHECKED, EZB_FIELDS, EZB_FORM_URL, EZB_SHEET_NOTE, EZB_STEPS, EZB_VERSION_LABEL, ezbSheetSections, ruleView, validateEzb } from './ezbWizard.js';
+import { dataSheetPdf } from './pdf.js';
 import { cancelRequest, createRequest, sendRequest, type Actor } from '../esign/service.js';
 import { contractView, saveContract, type ContractInput } from '../placement/employmentContract.js';
 import { DATA_KEYS, DATA_KEY_MAP, type DataKeyDef } from './catalog.js';
@@ -34,6 +37,35 @@ export const EMPLOYER_KEYS: DataKeyDef[] = DATA_KEYS.filter((d) => d.employer);
 const EMPLOYER_KEY_SET = new Set(EMPLOYER_KEYS.map((d) => d.key));
 /** Answers the employer has to give before signing. */
 export const EMPLOYER_REQUIRED = ['company.name', 'company.street', 'company.postalCode', 'company.city', 'company.betriebsnummer', 'company.foundedRecently', 'contract.jobTitle', 'contract.startDate', 'contract.contractType', 'contract.weeklyHours', 'contract.grossMonthly', 'contract.vacationDays', 'employment.workplaceMode', 'employment.leasedToThirdParty', 'employment.overtime', 'employment.collectiveAgreement', 'employment.socialInsurance'];
+
+const WIZARD_ORDER = new Map(EZB_FIELDS.map((f, i) => [f.key, i]));
+const LONG_TEXT = new Set(['employment.jobDescription', 'employment.socialInsuranceReason', 'employment.remarks']);
+
+/** The employer-side fields with the wizard step, the official question number and the validation rules. */
+export const employerFieldsView = (data: Record<string, string>) =>
+  [...EMPLOYER_KEYS]
+    .sort((a, b) => (WIZARD_ORDER.get(a.key) ?? 999) - (WIZARD_ORDER.get(b.key) ?? 999))
+    .map((d) => ({ key: d.key, group: d.group, kind: d.kind, codes: d.codes ?? null, label: d.label, value: data[d.key] ?? '', required: EMPLOYER_REQUIRED.includes(d.key), ...ruleView(d.key) }));
+
+/** Static wizard info: steps, the official form link / version, KldB suggestions for the job title. */
+export const wizardMeta = (data: Record<string, string>) => ({
+  steps: EZB_STEPS,
+  officialForm: { url: EZB_FORM_URL, version: EZB_VERSION_LABEL, checked: EZB_CHECKED },
+  kldbSuggestions: searchOccupations(data['contract.jobTitle'] || data['client.profession'] || '', 6).map((o) => ({ code: o.code, de: o.de, en: o.en, az: o.az, verify: !!o.verify })),
+  warnings: validateEzb(data).warnings,
+});
+
+/** Required answers missing (base list + conditional questions) and the other rule errors, for the values after merging. */
+export const checkEmployerValues = (after: Record<string, string>) => {
+  const { errors } = validateEzb(after);
+  const missing = [...new Set([...EMPLOYER_REQUIRED.filter((k) => !(after[k] ?? '').trim()), ...errors.filter((e) => e.code === 'REQUIRED').map((e) => e.key)])];
+  const invalid = [...new Set(errors.filter((e) => e.code !== 'REQUIRED').map((e) => e.key))];
+  return { missing, invalid };
+};
+
+/** Data sheet PDF in the official question order (the fallback when the official PDF is not installed). */
+export const ezbDataSheet = async (data: Record<string, string>, subtitle: string) =>
+  dataSheetPdf({ title: `Erklärung zum Beschäftigungsverhältnis (${EZB_VERSION_LABEL}) – Datenblatt`, subtitle, note: EZB_SHEET_NOTE, sections: ezbSheetSections(data) });
 
 const label = (title: string, worker: string) => `${title} – ${worker}`.slice(0, 200);
 
@@ -124,7 +156,8 @@ export const listCompanyForms = async (companyId: string, userId: string) => {
       signature: await signerFor(f, userId),
     });
   }
-  return { items, open: items.filter((i) => i.status === 'SENT_TO_EMPLOYER').length };
+  const installed = !!(await activeTemplate(EMPLOYER_FORM_KEY));
+  return { items, open: items.filter((i) => i.status === 'SENT_TO_EMPLOYER').length, startable: installed ? await startableCases(companyId) : [] };
 };
 
 /** What the employer sees: the worker, the employer-side values (current) and the signing state. */
@@ -149,7 +182,8 @@ export const companyFormDetail = async (companyId: string, fillId: string, userI
       nationality: data['client.nationality'] ?? '',
       profession: data['client.profession'] || c.profession,
     },
-    fields: EMPLOYER_KEYS.map((d) => ({ key: d.key, group: d.group, kind: d.kind, codes: d.codes ?? null, label: d.label, value: data[d.key] ?? '', required: EMPLOYER_REQUIRED.includes(d.key) })),
+    fields: employerFieldsView(data),
+    ...wizardMeta(data),
     editable: f.status === 'SENT_TO_EMPLOYER',
     submittedAt: values.dataOverrides && Object.keys(values.dataOverrides).length ? f.updatedAt : null,
     signature: await signerFor(f, userId),
@@ -180,7 +214,7 @@ export const parseEmployerValues = (raw: unknown) => {
     } else if (d.kind === 'code') {
       if (!d.codes?.includes(value)) errors.push({ key, code: 'INVALID_OPTION' });
       else out[key] = value;
-    } else out[key] = value.slice(0, key === 'employment.jobDescription' ? 1000 : 300);
+    } else out[key] = value.slice(0, LONG_TEXT.has(key) ? 1000 : 300);
   }
   return { values: out, errors };
 };
@@ -258,8 +292,9 @@ export const submitEmployerForm = async (companyId: string, fillId: string, user
     else merged[k] = v;
   }
   const after = deriveData(base, merged);
-  const missing = EMPLOYER_REQUIRED.filter((k) => !(after[k] ?? '').trim());
+  const { missing, invalid } = checkEmployerValues(after);
   if (missing.length) throw badRequest('REQUIRED_MISSING', missing.join(','));
+  if (invalid.length) throw badRequest('INVALID_VALUES', invalid.join(','));
 
   const values: FillValues = { ...stored, dataOverrides: merged };
   const r = await resolveForCase(t, f.caseId, values);
@@ -327,4 +362,51 @@ export const assertCompanyUser = async (userId: string) => {
   if (!u?.companyId) throw forbidden('NO_COMPANY');
   if (u.company?.status === 'SUSPENDED') throw forbidden('COMPANY_SUSPENDED');
   return { ...u, companyId: u.companyId };
+};
+
+// ─── Wizard extras (data sheet, employer-started declarations) ──────────────
+
+/** The data sheet with the employer's current (unsaved) values — no official PDF needed. */
+export const employerDataSheet = async (companyId: string, fillId: string, raw: unknown) => {
+  const f = await companyFillOr404(companyId, fillId);
+  const stored = fillValuesOf(f);
+  const { values: incoming } = parseEmployerValues(raw);
+  const data = deriveData(await loadCaseData(f.caseId), { ...(stored.dataOverrides ?? {}), ...incoming });
+  const c = await prisma.case.findUniqueOrThrow({ where: { id: f.caseId }, select: { number: true } });
+  const pdf = await ezbDataSheet(data, `${c.number} · ${data['client.fullName'] ?? ''} · ${new Date().toISOString().slice(0, 10).split('-').reverse().join('.')}`);
+  return { pdf, name: `ezb-datenblatt-${c.number}.pdf` };
+};
+
+/** Workers (cases of the company) for whom the employer can start the declaration: no open / signed one yet. */
+export const startableCases = async (companyId: string) => {
+  const cases = await prisma.case.findMany({
+    where: { companyId, status: { notIn: ['CANCELLED', 'REJECTED'] } },
+    select: { id: true, number: true, profession: true, client: { select: { firstName: true, lastName: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 200,
+  });
+  const open = cases;
+  if (!open.length) return [];
+  const tplIds = (await prisma.officialFormTemplate.findMany({ where: { key: EMPLOYER_FORM_KEY }, select: { id: true } })).map((t) => t.id);
+  const fills = tplIds.length
+    ? await prisma.officialFormFill.findMany({ where: { caseId: { in: open.map((c) => c.id) }, templateId: { in: tplIds }, status: { in: ['SENT_TO_EMPLOYER', 'SIGNED', 'SUBMITTED'] } }, select: { caseId: true } })
+    : [];
+  const busy = new Set(fills.map((f) => f.caseId));
+  return open.filter((c) => !busy.has(c.id)).map((c) => ({ caseId: c.id, caseNumber: c.number, worker: `${c.client.firstName} ${c.client.lastName}`.trim(), profession: c.profession }));
+};
+
+/**
+ * The employer starts the declaration for one of its workers (same as staff "send to employer", prefilled from
+ * the contract / vacancy / company profile); staff are told. Only cases of the company; needs the installed form.
+ */
+export const startEmployerForm = async (companyId: string, caseId: string, userId: string) => {
+  const c = await prisma.case.findUnique({ where: { id: caseId }, select: { id: true, number: true, companyId: true, client: { select: { firstName: true, lastName: true } } } });
+  if (!c || c.companyId !== companyId) throw notFound('CASE_NOT_FOUND');
+  const fill = await sendToEmployer(c.id, userId);
+  await notifyStaff('Erklärung zum Beschäftigungsverhältnis gestartet', `${c.number} · ${c.client.firstName} ${c.client.lastName}: der Arbeitgeber füllt die Erklärung im Portal aus.`, {
+    caseId: c.id,
+    link: `/admin/cases/${c.id}?tab=documents#case-official-forms`,
+    type: 'OFFICIAL_FORM_EMPLOYER_STARTED',
+  });
+  return fill;
 };

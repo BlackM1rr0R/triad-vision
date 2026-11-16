@@ -6,6 +6,7 @@ import { AlertTriangle, BadgeEuro, CheckCircle2, ChefHat, HeartPulse, Info, Moon
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesWorkSchedule } from '@/i18n/pagesWorkSchedule';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -208,6 +209,14 @@ export default function WorkScheduleCheckPage() {
                   ))}
                 </dl>
               </div>
+              <EmailResult
+                tool="work-schedule-check"
+                summary={[
+                  { label: t('workSchedule.result.findings'), value: t(`workSchedule.result.${r.status}`) },
+                  ...r.weeks.map((m, n) => ({ label: t('workSchedule.result.week', { n: n + 1 }), value: `${hm(m)} h` })),
+                  ...r.findings.slice(0, 5).map((f) => ({ label: dayLabel(f.day), value: `${t(`workSchedule.codes.${f.code}`, { m: hm(f.minutes) })} (${f.rule})` })),
+                ]}
+              />
 
               <div className="rounded-3xl border border-line bg-card p-4 sm:p-5">
                 <h2 className="font-display text-lg font-semibold text-ink">{t('workSchedule.result.findings')}</h2>

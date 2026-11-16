@@ -11,10 +11,12 @@ import { openConsentSettings } from '@/lib/consent';
 import { registerCopy } from '@/i18n';
 import { cookieConsentCopy } from '@/i18n/cookieConsent';
 import { siteNavCopy } from '@/i18n/siteNav';
+import { platformFooterCopy } from '@/i18n/platformFooter';
 import { getBrand } from '@/lib/brand';
 
 registerCopy(cookieConsentCopy); // "AGB" + "Cookie settings" links
 registerCopy(siteNavCopy); // footer columns (also registered by the header)
+registerCopy(platformFooterCopy); // small "platform for agencies" link (/platform)
 
 // "Mənə zəng edin": the form, its copy and the dialog are their own chunk, loaded when the browser is idle.
 const CallbackButton = lazy(() => import('@/components/calls/CallbackForm'));
@@ -198,6 +200,12 @@ export const Footer = () => {
             <Link to="/accessibility" className={LEGAL}>
               {t('a11y.statementLink')}
             </Link>
+            {/* Product page of the platform for other agencies: owner's default brand only (never on a white-label site). */}
+            {getBrand().isDefault && (
+              <Link to="/platform" className={LEGAL}>
+                {t('platformLink.label')}
+              </Link>
+            )}
           </nav>
         </div>
       </div>

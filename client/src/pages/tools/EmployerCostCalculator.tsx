@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Building2, RotateCcw } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesEmployerCost } from '@/i18n/pagesEmployerCost';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -141,6 +142,16 @@ export default function EmployerCostCalculatorPage() {
               </dl>
               {r.lowWage && <p className="mt-2 text-sm text-warning-fg">{t(`employerCost.result.${r.lowWage}`)}</p>}
             </div>
+            <EmailResult
+              tool="employer-cost-calculator"
+              summary={[
+                { label: t('employerCost.lines.gross'), value: money(r.gross, true) },
+                { label: t('employerCost.result.monthly'), value: money(r.monthly, true) },
+                { label: t('employerCost.result.linesTitle'), value: t('employerCost.result.surcharge', { amount: money(r.social, true), pct: decimal(r.surchargePct, lng, 1) }) },
+                { label: t('employerCost.result.yearly'), value: money(r.yearly) },
+                { label: t('employerCost.result.firstYear', { n: input.hires }), value: money(r.firstYear) },
+              ]}
+            />
 
             <div className="overflow-x-auto rounded-3xl border border-line bg-card">
               <table className="w-full min-w-[20rem] border-collapse text-sm">

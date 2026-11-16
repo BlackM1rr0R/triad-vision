@@ -42,6 +42,7 @@ import { pagesPartnerClients } from '@/i18n/pagesPartnerClients';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
 import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB checkbox copy
 import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCookie';
+import { trackToolConversion } from '@/lib/toolAnalytics';
 
 registerCopy(pagesLegal);
 registerCopy(campaignConsentCopy);
@@ -371,6 +372,7 @@ export default function Register() {
       });
       forgetRef();
       clearRefCookie();
+      trackToolConversion('register'); // tool analytics: first tool of this browser (analytics consent only)
       setUser(data.user);
       const next = landingAfterLogin(data.user.role, from);
       // New accounts confirm their email first ("check your inbox"); pre-verified ones go straight on.

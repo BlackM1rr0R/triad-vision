@@ -3,6 +3,7 @@ import { publicUser } from '../../routes/auth.js';
 import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
 import { readinessExport } from '../readiness/service.js'; // Germany readiness score history + money self-check
+import { studentRecordsExport } from '../partners/schools.js'; // language-school attendance / exam records about the client
 import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
 import { listFieldDefs } from '../partners/fieldDefs.js';
 import { exportGermanyJobAlerts } from '../germanyJobs/alerts.js'; // Germany job search: alerts and saved listings
@@ -180,6 +181,8 @@ export const buildUserExport = async (userId: string) => {
     // Housing search checklist, Anmeldung (appointment, deadline, contract review) and partner listings.
     housing: await housingExport(userId),
     readiness: await readinessExport(userId),
+    // Attendance and exam results a partner language school recorded about the client (with review status).
+    partnerSchoolRecords: await studentRecordsExport(userId),
     // Each consent with the legal text version it refers to (AGB / privacy / cookie policy).
     consents: await withLegalVersions(consents),
     privacyRequests,

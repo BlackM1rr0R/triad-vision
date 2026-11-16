@@ -31,6 +31,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { OptionCard } from '@/components/quiz/OptionCard';
 import { LeadForm } from '@/components/publicAi/LeadForm';
+import { EmailResult } from '@/components/tools/EmailResult';
 
 registerCopy(pagesPublicAi);
 
@@ -212,6 +213,21 @@ export default function EligibilityQuiz() {
                       <PathCard key={p.key} p={p} best={i === 0} />
                     ))}
                   </div>
+
+                  <EmailResult
+                    tool="uygunluq-testi"
+                    countUse="mount"
+                    summary={[
+                      ...paths.slice(0, 4).map((p) => ({
+                        label: t(`pai.paths.${p.key}.title`),
+                        value: `${t(`pai.quiz.fit.${p.fit}`)} · ${p.score}/100 · ${t('pai.quiz.duration', { min: p.minWeeks, max: p.maxWeeks })}`,
+                      })),
+                      ...(paths[0]?.missing ?? []).slice(0, 4).map((m) => ({
+                        label: t('pai.quiz.missing'),
+                        value: t(`pai.gaps.${m.code}`, { ...m, from: m.from !== undefined ? (m.from === 'none' ? t('pai.levelNone') : String(m.from)) : undefined }),
+                      })),
+                    ]}
+                  />
 
                   {explanation ? (
                     <div className="rounded-2xl border border-line bg-sunken p-4">

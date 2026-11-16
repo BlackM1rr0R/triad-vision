@@ -17,6 +17,7 @@ import { toursRouter } from './routes/tours.js'; // guided-tour progress per use
 import { filesRouter } from './routes/files.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { publicRouter } from './routes/public.js';
+import { publicApiCors, publicApiRouter } from './routes/publicApi.js'; // public vacancy API for partners (/api/public/v1)
 import { adminRouter } from './routes/admin/index.js';
 import { impersonationRouter } from './routes/admin/privacyTools.js';
 import { impersonation } from './lib/privacy/impersonation.js';
@@ -25,6 +26,7 @@ import { accountRouter } from './routes/account.js';
 import { accountPlusRouter } from './routes/accountPlus.js';
 import { accountGermanyRouter } from './routes/accountGermany.js';
 import { accountReadinessRouter } from './routes/accountReadiness.js'; // Germany readiness score (own data)
+import { quarterlyReportsRouter } from './routes/quarterlyReports.js'; // published quarterly labour mobility reports (public list + PDF)
 import { accountBillingRouter } from './routes/billing.js'; // client portal: invoices, receipts, payment plan
 import { packagesRouter } from './routes/packages.js'; // public service packages + online order
 import { messagingRouter } from './routes/messaging.js';
@@ -69,6 +71,8 @@ import { vacanciesRouter } from './routes/vacancies.js';
 import { bookingRouter } from './routes/booking.js';
 import { reviewsRouter } from './routes/reviews.js';
 import { trackRouter } from './routes/track.js';
+import { professionHubsRouter } from './routes/professionHubs.js'; // /for/:slug hubs: vacancies of the hub's professions
+import { toolsRouter } from './routes/tools.js'; // public tools: analytics beacon, 'e-mail me my result'
 import { seoRouter } from './routes/seo.js';
 import { guidesRouter } from './routes/guides.js';
 import { driveRouter } from './routes/drive.js';
@@ -87,6 +91,9 @@ import { aiRouter } from './routes/ai.js';
 import { aiWritingRouter } from './routes/aiWriting.js';
 import { companyAiRouter } from './routes/companyAi.js';
 import { companyFormsRouter } from './routes/companyForms.js'; // official forms the employer completes and signs
+import { companyAvvRouter } from './routes/companyAvv.js'; // AVV (Art. 28 DSGVO): company signs, Triad Vision countersigns
+import { trustRouter } from './routes/trust.js'; // public Trust Center data
+import { candidateCatalogueRouter } from './routes/candidateCatalogue.js'; // public anonymous candidate catalogue (/kandidaten)
 import { companyWorkersRouter } from './routes/companyWorkers.js';
 import { companyReportsRouter } from './routes/companyReports.js';
 import { companyPipelineRouter } from './routes/companyPipeline.js'; // employer candidate pipeline (board / list / arrivals strip, weekly digest)
@@ -117,6 +124,7 @@ import { studyRouter } from './routes/study.js';
 import { glossaryRouter } from './routes/glossary.js';
 import { externalApplicationsRouter } from './routes/externalApplications.js';
 import { compareRouter } from './routes/compare.js';
+import { visaChecklistRouter } from './routes/visaChecklist.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
@@ -128,6 +136,8 @@ import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google r
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
 import { whenInGermanyRouter } from './routes/whenInGermany.js'; // "When could I be in Germany?" estimator (case-history percentiles, daily cache)
+import { realSalariesRouter } from './routes/realSalaries.js'; // real salary database (public ranges, groups with >= 3 workers, monthly snapshot)
+import { platformRouter } from './routes/platform.js'; // /platform: product page of the platform for other agencies (status, demo request)
 import { familyCheckRouter } from './routes/familyCheck.js'; // public family reunification self-check (rules of lib/family/legal.ts, nothing stored)
 import { jobFeedsRouter } from './routes/jobFeeds.js'; // /feeds/*.xml: job board feeds (Indeed, StepStone, generic) behind a secret token
 import { brandTextResponses, registerBrandApp } from './lib/brand/index.js'; // white-label brand (API JSON follows it)
@@ -172,6 +182,8 @@ export const createApp = () => {
     }),
   );
   app.use(compression());
+  // Public vacancy API for partners: CORS for any origin (no credentials), preflights answered here.
+  app.use('/api/public/v1', publicApiCors);
   // Mobile apps send no Origin header, so CORS only applies to browsers.
   app.use(cors({ origin: config.allowedOrigins, credentials: true, maxAge: 600 }));
 
@@ -215,6 +227,7 @@ export const createApp = () => {
   app.use('/api/tv', tvRouter); // office wall TV: display token only (lib/tvDisplay), no session
   app.use('/api/auth/2fa', twoFactorRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/public/v1', publicApiRouter); // public vacancy API for partners (tvp_ keys, per-key rate limit, CORS *); docs /developers
   app.use('/api/public', publicRouter);
   app.use('/api/cases', scanUploadRouter); // POST /:caseId/documents/scan (before the cases router)
   app.use('/api/scan', scanPdfRouter); // POST /pdf: scanner pages → one PDF for any upload spot
@@ -263,6 +276,7 @@ export const createApp = () => {
   app.use('/api/company/ai', companyAiRouter);
   app.use('/api/company/skill-videos', companySkillVideosRouter); // approved + consented skill videos of presented candidates
   app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
+  app.use('/api/company/avv', companyAvvRouter); // AVV: hidden until the owner approved the template
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
   app.use('/api/company/team', companyTeamRouter); // employer team: invite / list / deactivate colleagues (owner)
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
@@ -273,20 +287,28 @@ export const createApp = () => {
   app.use('/api/booking', bookingRouter);
   app.use('/api/guides', guidesRouter); // public topic guides (SEO)
   app.use('/api/search', searchRouter); // public site search (guides, visas, services, FAQ, news, jobs, events, tools)
+  app.use('/api/reports', quarterlyReportsRouter); // published quarterly labour mobility reports: list + PDF (aggregates k ≥ 3 only)
   app.use('/api/study', studyRouter); // Study in Germany: programme catalogue (curated by staff) + "apply via Triad Vision"
   app.use('/api/glossary', glossaryRouter); // German bureaucracy glossary (static terms, lib/glossary)
+  app.use('/api/trust', trustRouter); // Trust Center (public)
+  app.use('/api/candidate-catalogue', candidateCatalogueRouter); // anonymous k-anonymous candidate groups (public)
   app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (Adzuna API) + "apply via Triad Vision" for external listings
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
+  app.use('/api/visa-checklist', visaChecklistRouter); // public document checklist generator (/visa-document-checklist)
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
   app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
   app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
+  app.use('/api/platform', platformRouter); // platform for other agencies: demo request → SaaS lead (owner instance only)
   app.use('/api/when-in-germany', whenInGermanyRouter); // arrival-month estimator (public, aggregates only)
+  app.use('/api/real-salaries', realSalariesRouter); // real salaries of placed workers (public, k-anonymous ranges only)
   app.use('/api/family-check', familyCheckRouter); // family reunification self-check (public, no case)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
+  app.use('/api/profession-hubs', professionHubsRouter); // profession hubs (/for/:slug): open vacancies by canonical profession
+  app.use('/api/tools', toolsRouter); // tool counters (cookie-less), 'e-mail me my result' + confirm / unsubscribe (lib/toolLeads)
   app.use('/api/messaging-plus', messagingPlusRouter); // translation, three-party threads, voice messages
   app.use('/api/messaging', messagingRouter);
   app.use('/api/documents', documentsRouter);

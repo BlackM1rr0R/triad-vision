@@ -9,6 +9,7 @@ import { Germany } from '@/components/illustrations';
 import { Spinner } from '@/components/ui/Spinner';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesWhenInGermany } from '@/i18n/pagesWhenInGermany';
 import { localePath } from '@/lib/localeRouter';
@@ -209,6 +210,19 @@ const Result = ({ r, form }: { r: WhenEstimate; form: WhenForm }) => {
           </button>
         </div>
       </section>
+
+      <EmailResult
+        tool="when-in-germany"
+        summary={[
+          { label: t('when.timeline.arrival'), value: `${when} (${t('when.result.range', { min: monthYear(r.arrival.min), max: monthYear(r.arrival.max) })})` },
+          { label: t('when.timeline.title'), value: t('when.result.total', { typical: duration(r.totalDays.typical), min: duration(r.totalDays.min), max: duration(r.totalDays.max) }) },
+          { label: t('when.form.profession'), value: t(`when.form.professions.${form.profession}`) },
+          { label: t('when.form.german'), value: t(`when.form.germanLevels.${form.german}`) },
+          { label: t('when.form.documents'), value: t(`when.form.docs.${form.documents}`) },
+          { label: t('when.form.route'), value: routeName },
+          { label: t('when.form.recognition'), value: t(r.recognition.needed ? 'when.form.recognitions.yes' : 'when.form.recognitions.no') },
+        ]}
+      />
 
       <Timeline r={r} />
 

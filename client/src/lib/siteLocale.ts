@@ -112,7 +112,8 @@ export const initialLocaleRedirect = () => {
   if (fromQuery !== null) {
     params.delete('lng');
     target = isSiteLocale(fromQuery) ? fromQuery : null;
-  } else {
+  } else if (!rest.startsWith('/embed/')) {
+    // Embedded widgets keep the language the embedding site chose (the URL), never the visitor's stored one.
     const stored = storedLanguage();
     target = stored && isPrefixLocale(stored) ? stored : null;
   }

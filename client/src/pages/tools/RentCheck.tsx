@@ -7,6 +7,7 @@ import { Building, Home, Scale } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesRentCheck } from '@/i18n/pagesRentCheck';
 import { api } from '@/lib/api';
@@ -133,6 +134,16 @@ export default function RentCheckPage() {
                 </dl>
                 <RangeBar value={r.coldPerM2} range={r.expectedPerM2} label={t('rentCheck.result.bar')} />
                 <Manat eur={input.warm > 0 ? input.warm : input.cold} />
+                <EmailResult
+                  tool="rent-check"
+                  summary={[
+                    { label: t('rentCheck.result.title', { city: city.name }), value: t(`rentCheck.verdict.${r.verdict}`) },
+                    { label: t('rentCheck.result.yours'), value: perM2(r.coldPerM2) },
+                    { label: t('rentCheck.result.typical'), value: `${decimal(r.expectedPerM2[0], lng, 2)}–${perM2(r.expectedPerM2[1])}` },
+                    { label: t('rentCheck.result.typicalCold', { size: input.sizeM2 }), value: `${money(r.expectedCold[0])} – ${money(r.expectedCold[1])}` },
+                    ...(r.utilitiesPerM2 != null && r.utilitiesVerdict ? [{ label: t('rentCheck.utilities.title'), value: t(`rentCheck.utilities.${r.utilitiesVerdict}`, { value: perM2(r.utilitiesPerM2) }) }] : []),
+                  ]}
+                />
 
                 <div className="rounded-3xl border border-line bg-card p-4 sm:p-5">
                   <h2 className="font-display text-lg font-semibold text-ink">{t('rentCheck.utilities.title')}</h2>

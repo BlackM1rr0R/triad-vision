@@ -21,6 +21,7 @@ import {
   visaForMatch,
 } from '../lib/vacancies.js';
 import { syncApplicationFolder } from '../lib/drive/vacancyFolders.js';
+import { recordApiAttribution } from '../lib/publicApi/keys.js'; // partner API apply links (tv_src cookie)
 import { getSeoData, jobRegion, liveJobs, parseLocale } from '../lib/seo.js';
 import { SEO_LOCALES } from '../lib/seoCatalogue.js';
 import { jobLandingTexts, jobLandings, landingOfJob, relatedLandings, type JobLanding } from '../lib/jobLandings.js';
@@ -272,6 +273,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     const sentDocs = [...(uploads?.documents ?? []), ...picked];
     // The applicant's folder in the vacancy's drive folder: summary, CV, the files sent (lib/drive/vacancyFolders.ts).
     void syncApplicationFolder(application.id, { summary: true });
+    // Came through a partner's public-API apply link (cookie tv_src): attribution for the partner's usage stats.
+    void recordApiAttribution(req, application.id, v.id);
     await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
     const title = (v.title as Record<string, string>).az ?? '';
     const docsLine = sentDocs.length ? `\n\nSənədlər: ${sentDocs.map((d) => d.title).join(', ')}` : '';

@@ -5,6 +5,8 @@
  * Also: `/register?visa=<slug>` remembers the chosen visa category for the "start your application" card.
  */
 export const REF_COOKIE = 'tv_ref';
+/** Public vacancy API apply links (`?src=<key prefix>`): which partner key an application came through. */
+export const SRC_COOKIE = 'tv_src';
 const REF_DAYS = 60;
 const VISA_KEY = 'tv_visa';
 
@@ -33,8 +35,11 @@ export const captureRefFromUrl = (search = window.location.search) => {
     const params = new URLSearchParams(search);
     // ?p=CODE is the referral partner's link (/p/CODE redirects to /register?ref=CODE); same cookie.
     const code = normaliseRef(params.get('ref') ?? params.get('p'));
-    if (!code) return;
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    // ?src=tvp_xxxxxxxx: apply link of a partner's public vacancy API key (/developers); the apply route records it.
+    const src = params.get('src') ?? '';
+    if (/^tvp_[A-Za-z0-9_-]{8}$/.test(src)) document.cookie = `${SRC_COOKIE}=${src}; Max-Age=${REF_DAYS * 24 * 60 * 60}; Path=/; SameSite=Lax${secure}`;
+    if (!code) return;
     document.cookie = `${REF_COOKIE}=${encodeURIComponent(code)}; Max-Age=${REF_DAYS * 24 * 60 * 60}; Path=/; SameSite=Lax${secure}`;
   } catch {
     // cookies blocked: the register page still reads ?ref= from its own URL

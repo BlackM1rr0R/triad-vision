@@ -28,6 +28,7 @@ import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer'; // ? cheat
 import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, hubOf, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
 import { LicenseBanner } from '@/components/admin/LicenseBanner'; // white-label licence: grace / read-only notice
+import { OnboardingBanner } from '@/components/admin/OnboardingBanner'; // setup wizard of a new agency instance (SUPER_ADMIN, until completed)
 import { ModuleDisabled } from '@/components/admin/nav/ModuleDisabled';
 import { isStringArray, navGroupsKey, navPinsKey, readJson, writeJson } from '@/components/command/storage';
 import { useSurface } from '@/lib/theme'; // crisp admin surface tokens (index.css [data-surface=admin])
@@ -626,6 +627,7 @@ export default function AdminLayout() {
 
         <main id="admin-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8">
           <LicenseBanner />
+          <OnboardingBanner />
           {blocked && page ? <ModuleDisabled item={page} /> : <Outlet />}
           <LiveChatAlerts />
         </main>

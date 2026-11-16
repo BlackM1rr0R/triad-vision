@@ -6,6 +6,7 @@ import { AlertTriangle, BadgeEuro, Briefcase, CheckCircle2, Copy, Info, Plus, Ro
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesDrivingTime } from '@/i18n/pagesDrivingTime';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -275,6 +276,18 @@ export default function DrivingTimeCalculatorPage() {
                   )}
                 </dl>
               </div>
+              <EmailResult
+                tool="driving-time-calculator"
+                summary={[
+                  { label: t('drivingTime.result.findings'), value: t(`drivingTime.result.${r.status}`) },
+                  ...r.weeks.flatMap((w, n) => [
+                    { label: t('drivingTime.result.weekDrive', { n: n + 1 }), value: `${hm(w.drive)} / 56:00` },
+                    { label: t('drivingTime.result.weekWork', { n: n + 1 }), value: `${hm(w.drive + w.work)} / 48:00` },
+                  ]),
+                  ...(r.twoWeeks != null ? [{ label: t('drivingTime.result.twoWeeks'), value: `${hm(r.twoWeeks)} / 90:00` }] : []),
+                  ...r.findings.slice(0, 3).map((f) => ({ label: dayLabel(f.day), value: findingText(f) })),
+                ]}
+              />
 
               <div className="rounded-3xl border border-line bg-card p-4 sm:p-5">
                 <h2 className="font-display text-lg font-semibold text-ink">{t('drivingTime.result.findings')}</h2>

@@ -54,7 +54,7 @@ const visitCount = () => {
   return n;
 };
 
-const QUIET = ['/sign/', '/share/', '/survey/', '/workspace/sheet/', '/workspace/pdf/', '/angebot/'];
+const QUIET = ['/sign/', '/share/', '/survey/', '/workspace/sheet/', '/workspace/pdf/', '/angebot/', '/embed/']; // /embed/: widgets in other sites' iframes
 
 const usePwa = () => useSyncExternalStore(subscribePwa, () => `${!!pwaState().waiting}|${!!pwaState().installEvent}`);
 

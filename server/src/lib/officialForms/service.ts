@@ -243,7 +243,26 @@ export interface InstallResult {
   mapped?: number;
   dropped?: string[];
   sha256Matches?: boolean;
+  /** EXISTS: mapping entries of a newer release added to the installed built-in version (fields it was missing). */
+  added?: string[];
 }
+
+/**
+ * A built-in template installed by an older release gets the mapping entries added since (only for PDF fields it
+ * has and that are not mapped yet — admin edits are never overwritten). Returns the added field names.
+ */
+export const mergeDefaultMapping = async (t: OfficialFormTemplate, d: DefaultTemplate) => {
+  const current = asFieldMap(t.fieldMap);
+  const missing: FieldMap = {};
+  for (const [field, m] of Object.entries(d.fieldMap)) if (!current[field]) missing[field] = m;
+  if (!Object.keys(missing).length) return [];
+  const { fields } = await templateFields(t);
+  const { map } = cleanFieldMap(missing, fields);
+  const added = Object.keys(map);
+  if (!added.length) return [];
+  await prisma.officialFormTemplate.update({ where: { id: t.id }, data: { fieldMap: { ...current, ...map } as unknown as Prisma.InputJsonValue } });
+  return added;
+};
 
 /**
  * "Install default templates" (idempotent): downloads each official PDF from its URL, checks it is a fillable PDF
@@ -255,7 +274,8 @@ export const installDefaultTemplates = async (userId: string | null): Promise<In
   for (const d of DEFAULT_TEMPLATES) {
     const existing = await prisma.officialFormTemplate.findUnique({ where: { key_version: { key: d.key, version: d.version } } });
     if (existing) {
-      out.push({ key: d.key, version: d.version, status: 'EXISTS', templateId: existing.id });
+      const added = await mergeDefaultMapping(existing, d).catch(() => [] as string[]);
+      out.push({ key: d.key, version: d.version, status: 'EXISTS', templateId: existing.id, ...(added.length ? { added } : {}) });
       continue;
     }
     try {

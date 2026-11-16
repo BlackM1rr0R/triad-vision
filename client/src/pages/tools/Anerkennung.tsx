@@ -97,6 +97,7 @@ const PROFESSION_GUIDE_KEYS = [
   'anerkennung-ingenieur',
   'anerkennung-architekt',
   'anerkennung-elektroniker',
+  'anerkennung-bau',
   'anerkennung-buchhalter',
   'anerkennung-oekonom',
   'driver-jobs',
@@ -108,6 +109,9 @@ const GUIDE_BY_PROFESSION: Record<string, (typeof PROFESSION_GUIDE_KEYS)[number]
   nurse: 'pflege',
   engineer: 'anerkennung-ingenieur',
   electrician: 'anerkennung-elektroniker',
+  plumber: 'anerkennung-bau',
+  welder: 'anerkennung-bau',
+  construction: 'anerkennung-bau',
   accountant: 'anerkennung-buchhalter',
   truck: 'driver-jobs',
 };

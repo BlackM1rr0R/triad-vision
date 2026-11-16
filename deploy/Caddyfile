@@ -16,7 +16,13 @@
 # page falls back to defaults. googletagmanager / google-analytics: optional GA4, loaded only after analytics
 # consent (src/lib/analytics.ts).
 (spa_csp) {
-	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-sNwUVmDspMX6YHVZ8Jci0RFWQlS7b6Bm5BlswyrkSJA=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-sNwUVmDspMX6YHVZ8Jci0RFWQlS7b6Bm5BlswyrkSJA=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+}
+
+# Embeddable widgets (/embed/*, client src/pages/embed): the same policy, but any site may frame them
+# (frame-ancestors *). Only these pages; everything else keeps frame-ancestors 'none' and X-Frame-Options DENY.
+(embed_csp) {
+	header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-sNwUVmDspMX6YHVZ8Jci0RFWQlS7b6Bm5BlswyrkSJA=' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://www.openstreetmap.org https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors *; upgrade-insecure-requests"
 }
 
 # The HTML shell is a Caddy template (custom delimiters, so the actions are plain HTML comments in
@@ -58,12 +64,14 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
-		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
 		Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()"
 		Cross-Origin-Opener-Policy same-origin
 		-Server
 	}
+	# Clickjacking protection everywhere except the embeddable widgets (/embed/*, see (embed_csp)).
+	@framedeny not path_regexp framedeny ^(/(de|en|ru|tr|uk))?/embed/
+	header @framedeny X-Frame-Options DENY
 
 	# robots.txt, the sitemaps (index + /sitemaps/*.xml), the RSS feeds (/rss.xml, /de/rss.xml …) and the
 	# generated Open Graph title cards (/og/…) and the IndexNow key file come from the API (cached there).
@@ -256,6 +264,19 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 	@aliasEmployers path_regexp aliasEmployers ^(/(?:de|en|ru|tr|uk))?/employers$
 	handle @aliasEmployers {
 		redir {re.aliasEmployers.1}/for-employers{?query} permanent
+	}
+
+	# Embeddable widgets: the SPA shell (with SSR / SEO includes) like below, but framable by any site.
+	@embed path_regexp embed ^(/(de|en|ru|tr|uk))?/embed/[^/]+$
+	handle @embed {
+		import embed_csp
+		root * /srv
+		@shell path / /index.html
+		import spa_templates
+		try_files {path} /index.html
+		file_server {
+			precompressed br
+		}
 	}
 
 	# Single-page app: hashed assets are immutable, everything else falls back to index.html.

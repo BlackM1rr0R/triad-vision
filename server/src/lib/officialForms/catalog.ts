@@ -38,6 +38,8 @@ export const CONTRACT_TYPE_CODES = ['UNLIMITED', 'FIXED', 'AUSBILDUNG'];
 export const WORKING_TIME_CODES = ['FULL', 'PART', 'MINI'];
 export const YES_NO = ['yes', 'no'];
 export const WORKPLACE_CODES = ['EMPLOYER_SEAT', 'CHANGING', 'ADDRESS'];
+/** Qualification the job requires (EzB section E / 34): none (helper job), vocational training, university degree. */
+export const QUALIFICATION_CODES = ['NONE', 'VOCATIONAL', 'UNIVERSITY'];
 /** Children rows the catalogue offers (the national visa form has six). */
 export const CHILD_ROWS = 6;
 
@@ -148,6 +150,22 @@ export const DATA_KEYS: DataKeyDef[] = [
   k('employment.overtime', 'employment', 'code', 'Überstunden verpflichtend', 'Əlavə iş saatları', 'Overtime required', 'Сверхурочные', { codes: YES_NO, employer: true }),
   k('employment.collectiveAgreement', 'employment', 'code', 'Tarifgebunden', 'Kollektiv müqavilə (Tarif)', 'Bound by collective agreement', 'Коллективный договор', { codes: YES_NO, employer: true }),
   k('employment.socialInsurance', 'employment', 'code', 'Sozialversicherungspflicht in Deutschland', 'Almaniyada sosial sığorta', 'Social insurance in Germany', 'Соцстрахование в Германии', { codes: YES_NO, employer: true }),
+  // ── Employer declaration wizard (EzB 02/2024, questions 25–56; lib/officialForms/ezbWizard.ts) ──
+  k('employment.kldbCode', 'employment', 'text', 'KldB-2010-Code der Tätigkeit', 'KldB 2010 peşə kodu', 'KldB 2010 occupation code', 'Код профессии KldB 2010', { employer: true }),
+  k('employment.qualificationRequired', 'employment', 'code', 'Erforderliche Qualifikation', 'Tələb olunan ixtisas', 'Qualification required', 'Требуемая квалификация', { codes: QUALIFICATION_CODES, employer: true }),
+  k('employment.licenceRequired', 'employment', 'code', 'Berufsausübungserlaubnis erforderlich', 'Peşə icazəsi tələb olunur', 'Professional licence required', 'Нужно разрешение на профессию', { codes: YES_NO, employer: true }),
+  k('employment.licenceDetails', 'employment', 'text', 'Erforderliche Qualifikation / Erlaubnis', 'Tələb olunan ixtisas / icazə', 'Required qualification / licence', 'Требуемая квалификация / разрешение', { employer: true }),
+  k('employment.overtimeExtent', 'employment', 'text', 'Überstundenumfang', 'Əlavə saatların həcmi', 'Extent of overtime', 'Объём сверхурочных', { employer: true }),
+  k('employment.overtimeCompensation', 'employment', 'text', 'Überstundenausgleich durch', 'Əlavə saatların kompensasiyası', 'Overtime compensated by', 'Компенсация сверхурочных', { employer: true }),
+  k('employment.tariffApplied', 'employment', 'code', 'Beschäftigung zu tariflichen Bedingungen', 'Tarif şərtləri ilə məşğulluq', 'Employed on collective-agreement terms', 'Работа на условиях тарифа', { codes: YES_NO, employer: true }),
+  k('employment.collectiveAgreementName', 'employment', 'text', 'Tarifvertrag', 'Kollektiv müqavilə (Tarifvertrag)', 'Collective agreement', 'Тарифный договор', { employer: true }),
+  k('employment.payGroup', 'employment', 'text', 'Entgeltgruppe', 'Əmək haqqı qrupu', 'Pay group', 'Тарифная группа', { employer: true }),
+  k('employment.benefitsInKind', 'employment', 'text', 'Art der geldwerten Leistung', 'Natura müavinətin növü', 'Type of benefit in kind', 'Вид натуральной выплаты', { employer: true }),
+  k('employment.benefitsInKindAmount', 'employment', 'money', 'Höhe der geldwerten Leistung (EUR)', 'Natura müavinətin məbləği (EUR)', 'Benefit in kind amount (EUR)', 'Сумма натуральной выплаты (EUR)', { employer: true }),
+  k('employment.variablePay', 'employment', 'text', 'Art der variablen Vergütung', 'Dəyişkən ödənişin növü', 'Type of variable pay', 'Вид переменной оплаты', { employer: true }),
+  k('employment.variablePayAmount', 'employment', 'money', 'Höhe der variablen Vergütung (EUR)', 'Dəyişkən ödənişin məbləği (EUR)', 'Variable pay amount (EUR)', 'Сумма переменной оплаты (EUR)', { employer: true }),
+  k('employment.socialInsuranceReason', 'employment', 'text', 'Begründung: keine Sozialversicherungspflicht', 'Sosial sığorta yoxdursa səbəb', 'Reason: no social insurance', 'Причина: нет соцстрахования', { employer: true }),
+  k('employment.remarks', 'employment', 'text', 'Ergänzende Angaben', 'Əlavə məlumat', 'Additional information', 'Дополнительные сведения', { employer: true }),
   // ── Meta ──
   k('meta.today', 'meta', 'date', 'Heutiges Datum', 'Bugünkü tarix', 'Today', 'Сегодня'),
   k('meta.placeAndDate', 'meta', 'text', 'Ort und Datum (Antragsteller)', 'Yer və tarix (müraciətçi)', 'Place and date (applicant)', 'Место и дата (заявитель)'),

@@ -5,6 +5,8 @@ import { Reveal, Stagger, StaggerItem } from '@/components/motion';
 import { ConsultStrip, ToolCard } from '@/components/audience/AudienceSections';
 import { TOOL_GROUPS, TOOLS } from '@/components/audience/tools';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { ProfessionPicker } from '@/components/tools/ProfessionPicker';
+import { WidgetsLink } from '@/components/embed/WidgetsLink';
 
 const IMG = 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=2000&q=70';
 
@@ -27,6 +29,11 @@ export default function Tools() {
           </ul>
         </nav>
       </PageHero>
+
+      {/* "I am a …": the profession hubs (/for/<slug>). */}
+      <section className="container-x pt-10 sm:pt-12">
+        <ProfessionPicker />
+      </section>
 
       {TOOL_GROUPS.map((g, gi) => (
         <section key={g} id={g} aria-labelledby={`${g}-title`} className={gi % 2 ? 'section scroll-mt-20 bg-sunken' : 'section scroll-mt-20'}>
@@ -53,6 +60,7 @@ export default function Tools() {
 
       <section className="pb-16 sm:pb-20 lg:pb-28">
         <div className="container-x">
+          <WidgetsLink />
           <ConsultStrip title={t('toolsPage.ctaTitle')} text={t('toolsPage.ctaText')} />
         </div>
       </section>

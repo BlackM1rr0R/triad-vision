@@ -21,6 +21,7 @@ import { compareContent } from './compare/visaCompare.js';
 import { findJobLanding, jobLandings, jobLandingTexts, landingOfJob, parseJobLandingPath, relatedLandings, type JobLanding } from './jobLandings.js';
 import { studyDetailBody, studyDetailSlug, studyListBody } from './study/seo.js';
 import { glossaryListBody, glossaryTermBody, glossaryTermOfPath } from './glossary/seo.js';
+import { hubOfPath } from './professionHubs.js';
 
 /*
  * Crawlable page body ("SSR-lite") for search engines and link previews that do not run JavaScript.
@@ -111,7 +112,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
-const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/german-apartment', '/residence-card-explained', '/shortage-barometer', '/tax-refund-calculator', '/shift-pay-calculator', '/driving-time-calculator', '/work-schedule-check', '/tax-class-chooser', '/employer-cost-calculator', '/rent-check', '/health-insurance-comparison', '/emergency-wallpaper', '/holiday-planner', '/grade-converter', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/weekend-trips', '/map', '/azerbaijan-in-germany', '/tools'];
+const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/german-apartment', '/residence-card-explained', '/shortage-barometer', '/tax-refund-calculator', '/shift-pay-calculator', '/driving-time-calculator', '/work-schedule-check', '/tax-class-chooser', '/employer-cost-calculator', '/rent-check', '/real-salaries', '/health-insurance-comparison', '/emergency-wallpaper', '/holiday-planner', '/grade-converter', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/weekend-trips', '/map', '/azerbaijan-in-germany', '/tools'];
 const FOOTER = ['/jobs', '/ausbildung', '/study', '/glossary', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employer-guide-azerbaijan', '/employers/register', '/partners', '/stories', '/booking'];
@@ -471,6 +472,7 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/tax-class-chooser':
       case '/employer-cost-calculator':
       case '/rent-check':
+      case '/real-salaries':
       case '/health-insurance-comparison':
       case '/emergency-wallpaper':
       case '/holiday-planner':
@@ -489,8 +491,12 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
         );
         break;
       }
-      default:
+      default: {
+        // Profession hubs (/for/<slug>): the hub's tools, then the CTA.
+        const hub = hubOfPath(path);
+        if (hub) out.push(section(staticLabel('/tools'), linkList(hub.tools)), `<p>${link('/jobs', staticLabel('/jobs'))}</p>`);
         out.push(cta);
+      }
     }
     if ((TOOLS.includes(path) && path !== '/tools') || path === '/' || path === '/for-workers') out.push(section(staticLabel('/tools'), linkList(TOOLS)));
   }

@@ -6,6 +6,7 @@ import { ExternalLink, GraduationCap } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesGradeConverter } from '@/i18n/pagesGradeConverter';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -126,6 +127,18 @@ export default function GradeConverterPage() {
               </div>
             ) : (
               <p className="rounded-2xl border border-danger-border bg-danger-bg p-3 text-sm text-danger-fg">{t('gradeConverter.result.invalid')}</p>
+            )}
+            {r && (
+              <EmailResult
+                tool="grade-converter"
+                summary={[
+                  { label: t('gradeConverter.form.system'), value: `${t(`gradeConverter.systems.${system}.label`)} (${scale.max}–${scale.min})` },
+                  { label: t('gradeConverter.form.grade'), value: decimal(grade, lng, 2) },
+                  { label: t('gradeConverter.result.title'), value: r.german != null ? decimal(r.german, lng, 1) : '—' },
+                  { label: t('gradeConverter.table.de'), value: t(`gradeConverter.bands.${r.band}`) },
+                  { label: t('gradeConverter.formula.title'), value: r.passed ? t('gradeConverter.result.raw', { raw: decimal(r.raw, lng, 3) }) : t('gradeConverter.result.fail') },
+                ]}
+              />
             )}
 
             <div className="rounded-3xl border border-line bg-card p-4 sm:p-5">

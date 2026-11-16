@@ -32,6 +32,8 @@ export interface StaticPageMeta {
   fullTitle?: boolean;
   sitemap?: boolean;
   index?: boolean;
+  /** Canonical URL path when it is another page (embeddable widget → the full tool), also emitted on noindex pages. */
+  canonical?: string;
 }
 
 export const SITE_NAME = 'Triad Vision';
@@ -94,6 +96,121 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Проверенные работники из-за рубежа для компаний Германии: подбор, собеседования, виза, признание дипломов и интеграция под ключ.',
       tr: 'Alman şirketleri için yurt dışından elemeden geçmiş personel: aday seçimi, mülakat, vize, diploma denkliği ve uyum tek ekipten.',
       uk: 'Перевірені працівники з-за кордону для компаній Німеччини: підбір, співбесіди, віза, визнання дипломів та інтеграція під ключ.',
+    },
+  },
+  // Profession hubs (lib/professionHubs.ts): tools, work scene, vocabulary, mock exam, guides and vacancies per profession.
+  '/for/truck-driver': {
+    name: { az: 'Sürücülər üçün', de: 'Für Berufskraftfahrer', en: 'For truck drivers', ru: 'Водителям', tr: 'Şoförler için', uk: 'Водіям' },
+    title: {
+      az: 'Almaniyada sürücü işi: alətlər və işlər',
+      de: 'LKW-Fahrer in Deutschland: Tools und Jobs',
+      en: 'Truck driver in Germany: tools and jobs',
+      ru: 'Водитель в Германии: инструменты и вакансии',
+      tr: 'Almanya\'da TIR şoförü: araçlar ve ilanlar',
+      uk: 'Водій у Німеччині: інструменти й вакансії',
+    },
+    description: {
+      az: 'Almaniyada sürücü olmaq istəyənlər üçün: maaş, sürmə vaxtı, sürücülük vəsiqəsi, kabin lüğəti, alman dili testi və açıq vakansiyalar.',
+      de: 'Für Berufskraftfahrer: Gehalt, Lenk- und Ruhezeiten, Führerschein, Vokabeln im LKW, Deutsch-Probetest und offene Stellen in Deutschland.',
+      en: 'For truck drivers moving to Germany: salary, driving hours, licence, cab vocabulary, a German mock exam and open driver jobs.',
+      ru: 'Для водителей: зарплата, время вождения, права, лексика кабины, пробный тест по немецкому и открытые вакансии в Германии.',
+      tr: 'Almanya\'ya gitmek isteyen şoförler için: maaş, sürüş süreleri, ehliyet, kabin kelimeleri, Almanca deneme sınavı ve açık ilanlar.',
+      uk: 'Для водіїв: зарплата, час керування, посвідчення, лексика кабіни, пробний тест з німецької та відкриті вакансії в Німеччині.',
+    },
+  },
+  '/for/cook': {
+    name: { az: 'Aşpazlar üçün', de: 'Für Köche', en: 'For cooks', ru: 'Поварам', tr: 'Aşçılar için', uk: 'Кухарям' },
+    title: {
+      az: 'Almaniyada aşpaz işi: alətlər və vakansiyalar',
+      de: 'Koch in Deutschland: Tools und offene Stellen',
+      en: 'Cook in Germany: tools and open jobs',
+      ru: 'Повар в Германии: инструменты и вакансии',
+      tr: 'Almanya\'da aşçı olmak: araçlar ve ilanlar',
+      uk: 'Кухар у Німеччині: інструменти й вакансії',
+    },
+    description: {
+      az: 'Almaniyada aşpaz və ya otel işçisi olmaq üçün: maaş, növbə əlavələri, diplomun tanınması, mətbəx lüğəti, dil testi və vakansiyalar.',
+      de: 'Für Köche und Gastro-Fachkräfte: Gehalt, Schichtzuschläge, Anerkennung, Küchenvokabeln, Deutsch-Probetest und offene Stellen.',
+      en: 'For cooks and hospitality staff: salary, shift supplements, recognition, kitchen vocabulary, a German mock exam and open jobs.',
+      ru: 'Для поваров и работников гостиниц: зарплата, надбавки за смены, признание диплома, лексика кухни, тест по немецкому и вакансии.',
+      tr: 'Aşçılar ve otel-restoran çalışanları için: maaş, vardiya zamları, denklik, mutfak kelimeleri, Almanca deneme sınavı ve ilanlar.',
+      uk: 'Для кухарів і працівників готелів: зарплата, доплати за зміни, визнання диплома, лексика кухні, тест з німецької та вакансії.',
+    },
+  },
+  '/for/nurse': {
+    name: { az: 'Tibb bacıları üçün', de: 'Für Pflegefachkräfte', en: 'For nurses', ru: 'Медсёстрам', tr: 'Hemşireler için', uk: 'Медсестрам' },
+    title: {
+      az: 'Almaniyada tibb bacısı: tanınma və işlər',
+      de: 'Pflegekraft in Deutschland: Tools und Jobs',
+      en: 'Nurse in Germany: recognition and jobs',
+      ru: 'Медсестра в Германии: признание и работа',
+      tr: 'Almanya\'da hemşirelik: denklik ve ilanlar',
+      uk: 'Медсестра в Німеччині: визнання й робота',
+    },
+    description: {
+      az: 'Almaniyada tibb bacısı kimi işləmək üçün: diplomun tanınması, maaş, növbə əlavələri, xəstəxana lüğəti, B1 testi və vakansiyalar.',
+      de: 'Für Pflegefachkräfte: Anerkennung, Gehalt, Schichtzuschläge, Vokabeln auf Station, Deutsch-Probetest B1 und offene Stellen.',
+      en: 'For nurses: recognition of your diploma, salary, shift supplements, hospital vocabulary, a B1 German mock exam and open jobs.',
+      ru: 'Для медсестёр: признание диплома, зарплата, надбавки за смены, лексика отделения, пробный тест B1 и открытые вакансии в Германии.',
+      tr: 'Hemşireler için: diploma denkliği, maaş, vardiya zamları, hastane kelimeleri, B1 Almanca deneme sınavı ve Almanya\'daki açık ilanlar.',
+      uk: 'Для медсестер: визнання диплома, зарплата, доплати за зміни, лексика відділення, пробний тест B1 та відкриті вакансії в Німеччині.',
+    },
+  },
+  '/for/care-worker': {
+    name: { az: 'Qulluq işçiləri üçün', de: 'Für Pflegehilfskräfte', en: 'For care workers', ru: 'Работникам по уходу', tr: 'Bakım çalışanları için', uk: 'Працівникам догляду' },
+    title: {
+      az: 'Almaniyada qulluq işi: alətlər və işlər',
+      de: 'Pflegehilfe in Deutschland: Tools und Jobs',
+      en: 'Care worker in Germany: tools and jobs',
+      ru: 'Работа по уходу в Германии: всё в одном',
+      tr: 'Almanya\'da bakım işi: araçlar ve ilanlar',
+      uk: 'Догляд у Німеччині: інструменти й робота',
+    },
+    description: {
+      az: 'Yaşlılara qulluq və köməkçi tibbi işlər üçün: maaş, növbə əlavələri, dil səviyyəsi, xəstəxana lüğəti, büdcə və açıq vakansiyalar.',
+      de: 'Für Pflegehilfskräfte und Altenpflege: Gehalt, Schichtzuschläge, Sprachniveau, Vokabeln auf Station, Budget und offene Stellen.',
+      en: 'For care assistants and elderly care: salary, shift supplements, your German level, ward vocabulary, budget and open jobs.',
+      ru: 'Для помощников по уходу и в домах престарелых: зарплата, надбавки, уровень немецкого, лексика, бюджет и открытые вакансии.',
+      tr: 'Yaşlı bakımı ve bakım yardımcıları için: maaş, vardiya zamları, Almanca seviyesi, servis kelimeleri, bütçe ve açık ilanlar.',
+      uk: 'Для помічників з догляду та догляду за літніми: зарплата, доплати, рівень німецької, лексика, бюджет і відкриті вакансії.',
+    },
+  },
+  '/for/electrician': {
+    name: { az: 'Elektriklər üçün', de: 'Für Elektriker', en: 'For electricians', ru: 'Электрикам', tr: 'Elektrikçiler için', uk: 'Електрикам' },
+    title: {
+      az: 'Almaniyada elektrik işi: alətlər və işlər',
+      de: 'Elektriker in Deutschland: Tools und Jobs',
+      en: 'Electrician in Germany: tools and jobs',
+      ru: 'Электрик в Германии: инструменты и работа',
+      tr: 'Almanya\'da elektrikçi: araçlar ve ilanlar',
+      uk: 'Електрик у Німеччині: інструменти й робота',
+    },
+    description: {
+      az: 'Almaniyada elektrik kimi işləmək üçün: diplomun tanınması, maaş, Mavi Kart, elektrik şitinin lüğəti, dil testi və vakansiyalar.',
+      de: 'Für Elektriker: Anerkennung, Gehalt, Blaue Karte, Vokabeln am Schaltschrank, Deutsch-Probetest und offene Stellen in Deutschland.',
+      en: 'For electricians: recognition, salary, Blue Card check, switchboard vocabulary, a German mock exam and open jobs in Germany.',
+      ru: 'Для электриков: признание диплома, зарплата, Голубая карта, лексика электрощита, тест по немецкому и вакансии в Германии.',
+      tr: 'Elektrikçiler için: denklik, maaş, Mavi Kart kontrolü, elektrik panosu kelimeleri, Almanca deneme sınavı ve açık ilanlar.',
+      uk: 'Для електриків: визнання диплома, зарплата, Блакитна карта, лексика електрощита, тест з німецької та вакансії в Німеччині.',
+    },
+  },
+  '/for/construction-worker': {
+    name: { az: 'İnşaatçılar üçün', de: 'Für Bauarbeiter', en: 'For construction workers', ru: 'Строителям', tr: 'İnşaat işçileri için', uk: 'Будівельникам' },
+    title: {
+      az: 'Almaniyada inşaat işi: alətlər və işlər',
+      de: 'Bauarbeiter in Deutschland: Tools und Jobs',
+      en: 'Construction work in Germany: tools and jobs',
+      ru: 'Стройка в Германии: инструменты и вакансии',
+      tr: 'Almanya\'da inşaat işi: araçlar ve ilanlar',
+      uk: 'Будівництво в Німеччині: інструменти й робота',
+    },
+    description: {
+      az: 'İnşaatçı, qaynaqçı, dülgər və santexniklər üçün: maaş, növbə əlavələri, tikinti sahəsinin lüğəti, dil testi və açıq vakansiyalar.',
+      de: 'Für Bauarbeiter, Schweißer, Tischler und SHK: Gehalt, Zuschläge, Vokabeln auf der Baustelle, Deutsch-Probetest und offene Stellen.',
+      en: 'For construction workers, welders, carpenters and plumbers: salary, supplements, site vocabulary, a German mock exam and jobs.',
+      ru: 'Для строителей, сварщиков, столяров и сантехников: зарплата, надбавки, лексика стройплощадки, тест по немецкому и вакансии.',
+      tr: 'İnşaat işçisi, kaynakçı, marangoz ve tesisatçılar için: maaş, zamlar, şantiye kelimeleri, Almanca deneme sınavı ve ilanlar.',
+      uk: 'Для будівельників, зварників, столярів і сантехніків: зарплата, доплати, лексика будмайданчика, тест з німецької та вакансії.',
     },
   },
   '/tools': {
@@ -173,6 +290,25 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Реальные истории и видео людей, которые начали работать в Германии с Triad Vision, и отзывы компаний-партнёров о сотрудничестве.',
       tr: 'Triad Vision ile Almanya\'da işe başlayan insanların gerçek hikâyeleri, video röportajlar ve partner şirketlerimizin görüşleri.',
       uk: 'Реальні історії та відео людей, які почали працювати в Німеччині з Triad Vision, і відгуки компаній-партнерів про співпрацю.',
+    },
+  },
+  '/reports': {
+    name: { az: 'Rüblük hesabatlar', de: 'Quartalsberichte', en: 'Quarterly reports', ru: 'Квартальные отчёты', tr: 'Üç aylık raporlar', uk: 'Квартальні звіти' },
+    title: {
+      az: 'Azərbaycan → Almaniya: rüblük hesabatlar',
+      de: 'Aserbaidschan → Deutschland: Quartalsberichte',
+      en: 'Azerbaijan → Germany: labour mobility reports',
+      ru: 'Азербайджан → Германия: квартальные отчёты',
+      tr: 'Azerbaycan → Almanya: üç aylık raporlar',
+      uk: 'Азербайджан → Німеччина: квартальні звіти',
+    },
+    description: {
+      az: 'Təsdiqlənmiş vizalar, peşələr, viza növləri, əyalətlər və müddətlər üzrə anonim rüblük statistika (PDF). Yalnız 3 və daha çox müraciəti olan qruplar.',
+      de: 'Anonyme Quartalsstatistik (PDF): erteilte Visa nach Beruf, Visumart, Bundesland und Bearbeitungsdauer. Nur Gruppen ab 3 Anträgen.',
+      en: 'Anonymous quarterly statistics (PDF): visas approved by profession, visa type, German state and processing time. Only groups of 3+ applications.',
+      ru: 'Анонимная квартальная статистика (PDF): одобренные визы по профессиям, типам виз, землям и срокам. Только группы от 3 заявлений.',
+      tr: 'Anonim üç aylık istatistik (PDF): mesleğe, vize türüne, eyalete ve süreye göre onaylanan vizeler. Yalnızca 3+ başvurulu gruplar.',
+      uk: 'Анонімна квартальна статистика (PDF): схвалені візи за професіями, типами віз, землями й строками. Лише групи від 3 заяв.',
     },
   },
   '/ausbildung': {
@@ -381,6 +517,25 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Сравните холодную аренду за м² с типичным диапазоном города: дёшево, нормально или дорого. С проверкой коммуналки и Mietpreisbremse.',
       tr: 'Soğuk kiranızı m² başına şehrin tipik aralığıyla karşılaştırın: ucuz, normal veya pahalı. Yan gider kontrolü ve kira freni notuyla.',
       uk: 'Порівняйте холодну оренду за м² із типовим діапазоном міста: дешево, нормально чи дорого. З перевіркою комуналки й Mietpreisbremse.',
+    },
+  },
+  '/real-salaries': {
+    name: { az: 'Real maaşlar', de: 'Echte Gehälter', en: 'Real salaries', ru: 'Реальные зарплаты', tr: 'Gerçek maaşlar', uk: 'Реальні зарплати' },
+    title: {
+      az: 'Almaniyada real maaşlar: peşə və şəhər',
+      de: 'Echte Gehälter nach Beruf und Stadt',
+      en: 'Real salaries in Germany by job and city',
+      ru: 'Реальные зарплаты в Германии по городам',
+      tr: 'Almanya’da gerçek maaşlar: meslek, şehir',
+      uk: 'Реальні зарплати в Німеччині за містами',
+    },
+    description: {
+      az: 'İşçilərimizin əmək müqavilələrindəki brutto aylıq maaşlar: peşə və şəhər üzrə P25–P75 aralığı və median. Ən azı 3 işçi, fərdi məbləğ yoxdur.',
+      de: 'Bruttomonatsgehälter aus Arbeitsverträgen unserer Fachkräfte: Spanne P25–P75 und Median nach Beruf und Stadt. Ab 3 Personen, keine Einzelwerte.',
+      en: 'Gross monthly pay from our placed workers’ contracts: P25–P75 range and median by profession and city. Groups of 3+ workers only, no single values.',
+      ru: 'Брутто-зарплаты из трудовых договоров наших работников: диапазон P25–P75 и медиана по профессии и городу. От 3 человек, без отдельных сумм.',
+      tr: 'Çalışanlarımızın iş sözleşmelerindeki brüt aylık maaşlar: mesleğe ve şehre göre P25–P75 aralığı ve medyan. En az 3 kişi, tek tutar yok.',
+      uk: 'Брутто-зарплати з трудових договорів наших працівників: діапазон P25–P75 і медіана за професією та містом. Від 3 осіб, без окремих сум.',
     },
   },
   '/health-insurance-comparison': {
@@ -650,6 +805,42 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Найраніші дати ПМП і громадянства Німеччини для Блакитної карти, фахівців, Ausbildung, Chancenkarte та сім’ї — правила 2026 року.',
     },
   },
+  '/germany-vs-other-countries': {
+    name: { az: 'Almaniya və digər ölkələr', de: 'Deutschland im Ländervergleich', en: 'Germany vs other countries', ru: 'Германия и другие страны', tr: 'Almanya ve diğer ülkeler', uk: 'Німеччина та інші країни' },
+    title: { az: 'Almaniya, Polşa, Çexiya, UK, Avstriya', de: 'Deutschland vs. Polen, Tschechien, Österreich', en: 'Germany vs Poland, Czechia, UK, Austria', ru: 'Германия, Польша, Чехия, UK, Австрия', tr: 'Almanya, Polonya, Çekya, UK, Avusturya', uk: 'Німеччина, Польща, Чехія, UK, Австрія' },
+    description: {
+      az: 'Azərbaycanlı işçi üçün maaş, minimum əmək haqqı, viza yolu, rüsumlar, dil, ailə, daimi yaşayış və vətəndaşlıq — rəsmi mənbələrlə müqayisə 2026.',
+      de: 'Für Fachkräfte aus Aserbaidschan: Gehalt, Mindestlohn, Visumweg, Gebühren, Sprache, Familie, Daueraufenthalt und Einbürgerung im Vergleich 2026.',
+      en: 'For workers from Azerbaijan: pay, minimum wage, visa route, fees, language, family, permanent residence and citizenship compared, 2026, with sources.',
+      ru: 'Для работника из Азербайджана: зарплата, МРОТ, путь к визе, сборы, язык, семья, ПМЖ и гражданство — сравнение 2026 с источниками.',
+      tr: 'Azerbaycanlı çalışan için maaş, asgari ücret, vize yolu, ücretler, dil, aile, kalıcı oturum ve vatandaşlık — kaynaklı karşılaştırma 2026.',
+      uk: 'Для працівника з Азербайджану: зарплата, мінімалка, шлях до візи, збори, мова, родина, ПМП і громадянство — порівняння 2026 з джерелами.',
+    },
+  },
+  '/visa-refusal': {
+    name: { az: 'Vizadan imtina', de: 'Visum abgelehnt', en: 'Visa refusal', ru: 'Отказ в визе', tr: 'Vize reddi', uk: 'Відмова у візі' },
+    title: { az: 'Alman vizasından imtina: indi nə etməli?', de: 'Visum abgelehnt: Gründe und was jetzt?', en: 'German visa refused: reasons and next steps', ru: 'Отказ в немецкой визе: что делать?', tr: 'Almanya vizesi reddi: şimdi ne yapmalı?', uk: 'Відмова в німецькій візі: що робити?' },
+    description: {
+      az: 'Milli vizadan imtinanın səbəbləri, remonstrasiyanın ləğvi (2025), yeni müraciət və Berlin məhkəməsi. Alman dilində müşayiət məktubu yaradın.',
+      de: 'Häufige Ablehnungsgründe beim nationalen Visum, Ende der Remonstration (2025), neuer Antrag oder Klage in Berlin. Mit Anschreiben-Generator.',
+      en: 'Common national visa refusal reasons, the end of remonstration (2025), a new application or a lawsuit in Berlin. With a German cover letter generator.',
+      ru: 'Частые причины отказа в национальной визе, отмена ремонстрации (2025), новая подача или иск в Берлине. Генератор письма на немецком.',
+      tr: 'Ulusal vize retlerinin sık nedenleri, itirazın kaldırılması (2025), yeni başvuru veya Berlin’de dava. Almanca ön yazı oluşturucu ile.',
+      uk: 'Часті причини відмови в національній візі, скасування ремонстрації (2025), нова подача або позов у Берліні. Генератор листа німецькою.',
+    },
+  },
+  '/visa-document-checklist': {
+    name: { az: 'Viza sənədləri siyahısı', de: 'Visum-Checkliste', en: 'Visa document checklist', ru: 'Чек-лист документов на визу', tr: 'Vize belge listesi', uk: 'Чек-лист документів на візу' },
+    title: { az: 'Alman vizası üçün sənəd siyahısı', de: 'Checkliste: Unterlagen fürs Visum', en: 'German visa document checklist', ru: 'Документы на визу в Германию: чек-лист', tr: 'Almanya vizesi belge kontrol listesi', uk: 'Документи на візу до Німеччини' },
+    description: {
+      az: 'Viza növü və peşəyə görə Bakıdakı Almaniya səfirliyi üçün sənəd siyahısı: mütəxəssis, Mavi Kart, Ausbildung, Chancenkarte, ailə, təhsil. Çap / PDF.',
+      de: 'Unterlagenliste für die Botschaft Baku nach Visumart und Beruf: Fachkraft, Blaue Karte, Ausbildung, Chancenkarte, Familie, Studium. Drucken / PDF.',
+      en: 'Document list for the German Embassy Baku by visa type and profession: skilled worker, Blue Card, Ausbildung, Chancenkarte, family, study. Print / PDF.',
+      ru: 'Список документов для посольства Германии в Баку по типу визы и профессии: специалист, Голубая карта, Ausbildung, семья, учёба. Печать / PDF.',
+      tr: 'Bakü Almanya Büyükelçiliği için vize türü ve mesleğe göre belge listesi: nitelikli işçi, Mavi Kart, Ausbildung, aile, öğrenim. Yazdır / PDF.',
+      uk: 'Список документів для посольства Німеччини в Баку за типом візи та професією: фахівець, Блакитна карта, Ausbildung, родина, навчання. PDF.',
+    },
+  },
   '/driving-licence-germany': {
     name: { az: 'Sürücülük vəsiqəsi Almaniyada', de: 'Führerschein in Deutschland', en: 'Driving licence in Germany', ru: 'Водительские права в Германии', tr: 'Almanya’da ehliyet', uk: 'Посвідчення водія в Німеччині' },
     title: { az: 'Azərbaycan sürücülük vəsiqəsi Almaniyada', de: 'Aserbaidschanischer Führerschein: Umschreiben', en: 'Azerbaijani driving licence in Germany', ru: 'Азербайджанские права в Германии: замена', tr: 'Azerbaycan ehliyeti Almanya’da', uk: 'Азербайджанське посвідчення водія в Німеччині' },
@@ -887,6 +1078,26 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Шукаєте працівників з-за кордону для компанії в Німеччині? Надішліть запит на співпрацю — підбір, візи й інтеграцію візьмемо на себе.',
     },
   },
+  // Public vacancy API for partners (docs; the API itself: /api/public/v1, server/src/routes/publicApi.ts).
+  '/developers': {
+    name: { az: 'Tərtibatçılar üçün API', de: 'Entwickler-API', en: 'Developer API', ru: 'API для разработчиков', tr: 'Geliştirici API', uk: 'API для розробників' },
+    title: {
+      az: 'Vakansiya API-si: tərəfdaşlar üçün sənədlər',
+      de: 'Stellen-API für Partner: Dokumentation',
+      en: 'Vacancy API for partners: documentation',
+      ru: 'API вакансий для партнёров: документация',
+      tr: 'Ortaklar için iş ilanı API: belgeler',
+      uk: 'API вакансій для партнерів: документація',
+    },
+    description: {
+      az: 'Kolleclər, dil məktəbləri və tərəfdaşlar üçün Triad Vision vakansiyalarının JSON API-si: açar, limitlər, filtrlər və müraciət linki.',
+      de: 'JSON-API der Triad-Vision-Stellen für Partner, Schulen und Sprachschulen: API-Schlüssel, Limits, Filter und Bewerbungslink mit Zuordnung.',
+      en: 'JSON API of Triad Vision vacancies for partners, colleges and language schools: API keys, rate limits, filters and attributed apply links.',
+      ru: 'JSON API вакансий Triad Vision для партнёров, колледжей и языковых школ: ключи, лимиты, фильтры и ссылка на отклик с атрибуцией.',
+      tr: 'Ortaklar, kolejler ve dil okulları için Triad Vision iş ilanı JSON API: anahtarlar, limitler, filtreler ve başvuru bağlantısı.',
+      uk: 'JSON API вакансій Triad Vision для партнерів, коледжів і мовних шкіл: API-ключі, ліміти запитів, фільтри та посилання на відгук.',
+    },
+  },
   '/jobs': {
     name: { az: 'Vakansiyalar', de: 'Stellenangebote', en: 'Jobs', ru: 'Вакансии', tr: 'İş ilanları', uk: 'Вакансії' },
     title: {
@@ -968,7 +1179,66 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Бакалаврат і магістратура в Німеччині: мова навчання, мовні вимоги, вартість і строки подання. Подайте заявку на програму через Triad Vision.',
     },
   },
+  // Product page of the platform for other visa / recruitment agencies (owner instance only; lib/saas).
+  '/platform': {
+    name: { az: 'Agentliklər üçün platforma', de: 'Plattform für Agenturen', en: 'Platform for agencies', ru: 'Платформа для агентств', tr: 'Ajanslar için platform', uk: 'Платформа для агенцій' },
+    title: {
+      az: 'Viza və işə qəbul agentlikləri üçün platforma',
+      de: 'Software für Visa- und Personalagenturen',
+      en: 'Software for visa and recruitment agencies',
+      ru: 'Платформа для визовых и кадровых агентств',
+      tr: 'Vize ve işe alım ajansları için platform',
+      uk: 'Платформа для візових і кадрових агенцій',
+    },
+    description: {
+      az: 'CRM, müştəri və işəgötürən kabineti, sənədlər, səfirlik paketi, alman dili və iş axtarışı alətləri — öz brendinizlə. Demo istəyin.',
+      de: 'CRM, Kunden- und Arbeitgeberportal, Dokumente, Botschaftspaket, Deutsch-Lerntools und Jobsuche – unter Ihrer Marke. Demo anfragen.',
+      en: 'CRM, client and employer portals, documents, embassy package, German learning and job search tools – under your own brand. Request a demo.',
+      ru: 'CRM, кабинеты клиентов и работодателей, документы, пакет для посольства, немецкий язык и поиск работы — под вашим брендом. Запросите демо.',
+      tr: 'CRM, müşteri ve işveren portalı, belgeler, konsolosluk paketi, Almanca ve iş arama araçları — kendi markanızla. Demo isteyin.',
+      uk: 'CRM, кабінети клієнтів і роботодавців, документи, пакет для посольства, німецька мова та пошук роботи — під вашим брендом. Демо.',
+    },
+  },
   // German bureaucracy glossary (/glossary, /glossary/:slug): static terms in lib/glossary.
+  // Employer B2B (German first): anonymous candidate catalogue (lib/candidateCatalogue) and the Trust Center (lib/trust).
+  '/kandidaten': {
+    name: { az: 'Namizəd kataloqu', de: 'Kandidatenkatalog', en: 'Candidate catalogue', ru: 'Каталог кандидатов', tr: 'Aday kataloğu', uk: 'Каталог кандидатів' },
+    title: {
+      az: 'Azərbaycandan namizədlər: anonim kataloq',
+      de: 'Fachkräfte aus Aserbaidschan: Kandidaten',
+      en: 'Candidates from Azerbaijan: catalogue',
+      ru: 'Кандидаты из Азербайджана: каталог',
+      tr: "Azerbaycan'dan adaylar: anonim katalog",
+      uk: 'Кандидати з Азербайджану: каталог',
+    },
+    description: {
+      az: 'Almaniyada işləməyə hazır namizədlər peşə, alman dili səviyyəsi, təcrübə və başlama vaxtına görə — anonim qruplar, ad və şəkil olmadan.',
+      de: 'Kandidaten aus Aserbaidschan nach Beruf, Deutschniveau, Berufserfahrung und Starttermin – anonyme Gruppen ohne Namen oder Fotos. Jetzt anfragen.',
+      en: 'Candidates from Azerbaijan by profession, German level, experience and start date — anonymous groups without names or photos. Request candidates.',
+      ru: 'Кандидаты из Азербайджана по профессии, уровню немецкого, опыту и сроку выхода — анонимные группы без имён и фото. Запросите кандидатов.',
+      tr: "Azerbaycan'dan adaylar: meslek, Almanca seviyesi, deneyim ve başlangıç tarihine göre — isim ve fotoğraf olmadan anonim gruplar.",
+      uk: 'Кандидати з Азербайджану за професією, рівнем німецької, досвідом і датою старту — анонімні групи без імен і фото. Запитайте кандидатів.',
+    },
+  },
+  '/trust': {
+    name: { az: 'Etibar mərkəzi', de: 'Trust Center', en: 'Trust Center', ru: 'Центр доверия', tr: 'Güven Merkezi', uk: 'Центр довіри' },
+    title: {
+      az: 'Etibar mərkəzi: məlumat və təhlükəsizlik',
+      de: 'Trust Center: Datenschutz und Sicherheit',
+      en: 'Trust Center: data protection, security',
+      ru: 'Центр доверия: данные и безопасность',
+      tr: 'Güven Merkezi: veri koruma ve güvenlik',
+      uk: 'Центр довіри: захист даних і безпека',
+    },
+    description: {
+      az: 'DSGVO sənədləri, AVV, tətbiq olunan təhlükəsizlik tədbirləri, alt-emalçılar, status səhifəsi və təhlükəsizlik problemləri üçün əlaqə.',
+      de: 'DSGVO-Dokumente, AVV nach Art. 28, umgesetzte Sicherheitsmaßnahmen, Unterauftragsverarbeiter, Statusseite und Kontakt für Sicherheitsmeldungen.',
+      en: 'GDPR documents, data processing agreement, implemented security measures, sub-processors, status page and a contact for security reports.',
+      ru: 'Документы DSGVO, договор AVV, реализованные меры безопасности, субподрядчики, страница статуса и контакт для сообщений об уязвимостях.',
+      tr: 'GDPR belgeleri, AVV sözleşmesi, uygulanan güvenlik önlemleri, alt işleyenler, durum sayfası ve güvenlik bildirimi iletişimi.',
+      uk: 'Документи GDPR, договір AVV, впроваджені заходи безпеки, субпідрядники, сторінка статусу та контакт для повідомлень про вразливості.',
+    },
+  },
   '/glossary': {
     name: { az: 'Alman bürokratiya lüğəti', de: 'Glossar Behördendeutsch', en: 'German bureaucracy glossary', ru: 'Словарь немецкой бюрократии', tr: 'Alman bürokrasi sözlüğü', uk: 'Словник німецької бюрократії' },
     title: {
@@ -1234,6 +1504,71 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       tr: 'Triad Vision hesabınızın şifresini sıfırlayın.',
       uk: 'Відновіть пароль від акаунта Triad Vision.',
     },
+  },  // Widget configurator (/widgets) and the embeddable widgets themselves (client lib/embeds.ts): the /embed/*
+  // pages are made for other sites' iframes — noindex, with a canonical to the full tool.
+  '/widgets': {
+    name: { az: 'Vidjetlər', de: 'Widgets', en: 'Widgets', ru: 'Виджеты', tr: 'Widget\'lar', uk: 'Віджети' },
+    title: {
+      az: 'Saytınız üçün pulsuz vidjetlər',
+      de: 'Kostenlose Widgets für Ihre Website',
+      en: 'Free widgets for your website',
+      ru: 'Бесплатные виджеты для вашего сайта',
+      tr: 'Siteniz için ücretsiz widget\'lar',
+      uk: 'Безкоштовні віджети для вашого сайту',
+    },
+    description: {
+      az: 'Maaş kalkulyatoru, Mavi Kart yoxlaması və şəhər testi — öz saytınıza və ya bloqunuza bir neçə sətir kodla pulsuz əlavə edin.',
+      de: 'Brutto-Netto-Rechner, Blaue-Karte-Check und Städte-Quiz kostenlos mit wenigen Zeilen Code in Ihre Website oder Ihren Blog einbinden.',
+      en: 'Add the German salary calculator, the Blue Card check and the city quiz to your website or blog for free with a few lines of code.',
+      ru: 'Калькулятор зарплаты, проверка Голубой карты и тест по городам — бесплатно на ваш сайт или блог несколькими строками кода.',
+      tr: 'Almanya maaş hesaplayıcı, Mavi Kart kontrolü ve şehir testi — birkaç satır kodla sitenize veya blogunuza ücretsiz ekleyin.',
+      uk: 'Калькулятор зарплати, перевірка Блакитної карти й тест за містами — безкоштовно на ваш сайт чи блог кількома рядками коду.',
+    },
+  },
+  '/embed/salary-calculator': {
+    index: false,
+    sitemap: false,
+    canonical: '/salary-calculator',
+    name: { az: 'Maaş kalkulyatoru (vidjet)', de: 'Brutto-Netto-Rechner (Widget)', en: 'Salary calculator (widget)', ru: 'Калькулятор зарплаты (виджет)', tr: 'Maaş hesaplayıcı (widget)', uk: 'Калькулятор зарплати (віджет)' },
+    title: { az: 'Maaş kalkulyatoru (vidjet)', de: 'Brutto-Netto-Rechner (Widget)', en: 'Salary calculator (widget)', ru: 'Калькулятор зарплаты (виджет)', tr: 'Maaş hesaplayıcı (widget)', uk: 'Калькулятор зарплати (віджет)' },
+    description: {
+      az: 'Almaniyada brutto maaşdan xalis maaşı hesablayan yerləşdirilə bilən vidjet.',
+      de: 'Einbettbares Widget: Netto aus Brutto in Deutschland berechnen.',
+      en: 'Embeddable widget: work out German net pay from gross pay.',
+      ru: 'Встраиваемый виджет: зарплата на руки в Германии из брутто.',
+      tr: 'Gömülebilir widget: Almanya\'da brüt maaştan net maaşı hesaplayın.',
+      uk: 'Вбудовуваний віджет: зарплата на руки в Німеччині з брутто.',
+    },
+  },
+  '/embed/blue-card-check': {
+    index: false,
+    sitemap: false,
+    canonical: '/blue-card-check',
+    name: { az: 'Mavi Kart yoxlaması (vidjet)', de: 'Blaue-Karte-Check (Widget)', en: 'Blue Card check (widget)', ru: 'Проверка Голубой карты (виджет)', tr: 'Mavi Kart kontrolü (widget)', uk: 'Перевірка Блакитної карти (віджет)' },
+    title: { az: 'Mavi Kart yoxlaması (vidjet)', de: 'Blaue-Karte-Check (Widget)', en: 'Blue Card check (widget)', ru: 'Проверка Голубой карты (виджет)', tr: 'Mavi Kart kontrolü (widget)', uk: 'Перевірка Блакитної карти (віджет)' },
+    description: {
+      az: 'Maaşın AB Mavi Kartı həddinə çatdığını yoxlayan yerləşdirilə bilən vidjet.',
+      de: 'Einbettbares Widget: Gehalt gegen die Gehaltsgrenze der Blauen Karte EU prüfen.',
+      en: 'Embeddable widget: check a salary against the EU Blue Card threshold.',
+      ru: 'Встраиваемый виджет: проверка зарплаты по порогу Голубой карты ЕС.',
+      tr: 'Gömülebilir widget: maaşı AB Mavi Kart sınırına göre kontrol edin.',
+      uk: 'Вбудовуваний віджет: перевірка зарплати за порогом Блакитної карти ЄС.',
+    },
+  },
+  '/embed/which-city': {
+    index: false,
+    sitemap: false,
+    canonical: '/which-city',
+    name: { az: 'Şəhər testi (vidjet)', de: 'Städte-Quiz (Widget)', en: 'City quiz (widget)', ru: 'Тест по городам (виджет)', tr: 'Şehir testi (widget)', uk: 'Тест за містами (віджет)' },
+    title: { az: 'Şəhər testi (vidjet)', de: 'Städte-Quiz (Widget)', en: 'City quiz (widget)', ru: 'Тест по городам (виджет)', tr: 'Şehir testi (widget)', uk: 'Тест за містами (віджет)' },
+    description: {
+      az: 'Almaniyanın hansı şəhərinin sizə uyğun olduğunu göstərən yerləşdirilə bilən test.',
+      de: 'Einbettbares Quiz: Welche deutsche Stadt passt zu Ihnen?',
+      en: 'Embeddable quiz: which German city suits you best?',
+      ru: 'Встраиваемый тест: какой город Германии вам подходит?',
+      tr: 'Gömülebilir test: Almanya\'nın hangi şehri size uygun?',
+      uk: 'Вбудовуваний тест: яке місто Німеччини вам підходить?',
+    },
   },
 };
 
@@ -1303,6 +1638,7 @@ export const SPA_ROUTES = [
   '/cookies',
   '/legal/:kind/:version',
   '/packages/order/:token',
+  '/result-email', // "e-mail me my result": confirm / unsubscribe link (token in the query, lib/toolLeads)
 ];
 
 /**
@@ -1311,8 +1647,8 @@ export const SPA_ROUTES = [
  */
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'learn' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
-  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/employer-cost-calculator'] },
+  { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/germany-vs-other-countries', '/visa-document-checklist', '/visa-refusal', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/employer-cost-calculator', '/real-salaries'] },
   { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/german-apartment', '/residence-card-explained', '/calculator', '/cities', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/events', '/status', '/driving-time-calculator', '/work-schedule-check'] },
   { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
   { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },

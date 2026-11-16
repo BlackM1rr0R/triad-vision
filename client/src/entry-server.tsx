@@ -35,6 +35,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'jobs',
   'job',
   'job-landing', // /jobs/in/:city/:profession (GET /vacancies/landing/…)
+  'profession-hub-vacancies', // /for/:profession: open vacancies of the hub (GET /profession-hubs/:slug/vacancies)
   'study-programmes', // /study: the curated programme catalogue (GET /study/programmes)
   'study-programme', // /study/:slug
   'glossary', // /glossary: every term with its short definition (GET /glossary?lng=)
@@ -56,7 +57,12 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'globe-map', // home globe: placement map aggregates (GET /growth/map, cities with ≥ 3 workers only)
   'eur-azn', // /salary-calculator (+ other tools): the CBAR EUR→AZN rate (GET /life/rate), the same for everyone
   'when-estimate', // /when-in-germany: percentiles of groups ≥ 10 cases (daily), the same for everyone with the same answers
+  'candidate-catalogue', // /kandidaten: k-anonymous groups of the consented pool (≥ 3), the same for everyone
+  'trust-center', // /trust: implemented measures, configured sub-processors, owner-confirmed facts
   'rent-check-cities', // /rent-check: city rent ranges (GET /budget/config, CityCost table), the same for everyone
+  'real-salaries', // /real-salaries: monthly snapshot of salary ranges (groups >= 3 workers only), the same for everyone
+  'visa-checklist', // /visa-document-checklist: the public document list per visa type + profession (GET /visa-checklist), the same for everyone
+  'public-quarterly-reports', // /reports: published quarterly reports (titles + headline figure k ≥ 3), the same for everyone
 ]);
 
 export interface RenderResult {

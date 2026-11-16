@@ -21,6 +21,7 @@ import { XLSX_MIME, markClientsExcelDirty } from '../lib/clientsExcel.js';
 import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 import { intlPhone, passportNo } from './auth.js';
 import { partnerPortalProfileRouter } from '../lib/partners/portalProfileRoutes.js'; // own legal data, change requests, own contracts
+import { partnerSchoolRouter } from '../lib/partners/schoolPortalRoutes.js'; // colleges / language schools: students, attendance + exam records
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
@@ -30,6 +31,7 @@ import { partnerPortalProfileRouter } from '../lib/partners/portalProfileRoutes.
 export const partnerPortalRouter = Router();
 partnerPortalRouter.use(requireRole('AGENT'));
 partnerPortalRouter.use('/', partnerPortalProfileRouter); // GET/PATCH /profile, POST /profile/change-request, GET /contracts[/:id/file]
+partnerPortalRouter.use('/', partnerSchoolRouter); // schools: GET /students[/:clientId], POST /students/:clientId/records, /student-records/:id[/certificate]
 
 const partnerOf = async (req: Request): Promise<ReferralPartner> => {
   const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id } });
@@ -62,6 +64,8 @@ partnerPortalRouter.get('/me', async (req, res) => {
       ...(partner.code ? partnerLinks(partner.code) : { shareLink: null, shortLink: null }),
       commissionTrigger: partner.commissionTrigger,
       visibility: partner.visibility,
+      // AGENCY | SCHOOL | LANGUAGE_SCHOOL: schools get the Students view (lib/partners/schools.ts).
+      category: partner.category,
     },
     user,
     // The same login may also take part in the agent programme: the portal then links to /agent.

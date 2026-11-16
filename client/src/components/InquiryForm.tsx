@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { useSiteContent } from '@/lib/content';
 import { leadContext } from '@/lib/leadVisitor';
+import { trackToolConversion } from '@/lib/toolAnalytics';
 import { Spinner } from './ui/Spinner';
 
 /** Contact form or company cooperation request. Posts to /api/public/inquiries, which emails the team. */
@@ -33,6 +34,7 @@ export const InquiryForm = ({ kind }: { kind: 'company' | 'contact' }) => {
     setError(null);
     try {
       await api.post('/public/inquiries', body);
+      trackToolConversion('inquiry'); // tool analytics: first tool of this browser (analytics consent only)
       setSent(true);
     } catch {
       setError(t('common.error'));

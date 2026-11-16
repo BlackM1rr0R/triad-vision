@@ -82,7 +82,7 @@ export const sourceKeyOf = (q: Pick<Inquiry, 'kind' | 'source' | 'sector'>): Sou
   const s = (q.source ?? '').toLowerCase();
   if (s.startsWith('event:')) return 'event';
   if (s.startsWith('landing:') || s.startsWith('ebook:')) return 'landing'; // e-book lead magnets score like a landing page form
-  if (s === 'cost-calculator' || s.startsWith('calculator')) return 'calculator';
+  if (s === 'cost-calculator' || s.startsWith('calculator') || s.startsWith('tool:')) return 'calculator'; // tool:<slug> = 'e-mail me my result' (lib/toolLeads)
   if (s === 'quiz') return 'quiz';
   if (s === 'booking') return 'booking';
   if (s === 'whatsapp') return 'whatsapp';

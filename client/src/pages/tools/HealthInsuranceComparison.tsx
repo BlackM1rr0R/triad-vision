@@ -6,6 +6,7 @@ import { ArrowLeftRight, BadgeEuro, HeartPulse, ReceiptText, Scale } from 'lucid
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesHealthInsurance } from '@/i18n/pagesHealthInsurance';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -104,6 +105,17 @@ export default function HealthInsuranceComparisonPage() {
               </div>
             )}
             {r.capped && <p className="rounded-2xl border border-line bg-card p-3 text-sm text-muted">{t('hic.summary.capped', { bbg })}</p>}
+            <EmailResult
+              tool="health-insurance-comparison"
+              summary={[
+                { label: t('hic.form.gross'), value: money(gross, true) },
+                { label: t('hic.form.state'), value: STATE_NAMES[state] },
+                ...(r.cheapest ? [{ label: t('hic.summary.cheapest'), value: `${r.cheapest.kasse.name}: ${t('hic.summary.perMonth', { amount: money(r.cheapest.monthly, true) })}` }] : []),
+                { label: t('hic.summary.average', { avg: pct(AVERAGE_ZB, 1) }), value: t('hic.summary.perMonth', { amount: money(r.average.monthly, true) }) },
+                ...(r.priciest ? [{ label: t('hic.summary.priciest'), value: `${r.priciest.kasse.name}: ${t('hic.summary.perMonth', { amount: money(r.priciest.monthly, true) })}` }] : []),
+                ...(r.cheapest && r.priciest && r.cheapest !== r.priciest ? [{ label: t('hic.table.yearly'), value: t('hic.summary.savings', { name: r.cheapest.kasse.name, amount: money(r.cheapest.vsMaxYear, true) }) }] : []),
+              ]}
+            />
 
             <div className="overflow-hidden rounded-3xl border border-line bg-card">
               <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">

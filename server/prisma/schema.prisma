@@ -3161,6 +3161,8 @@ model ReferralPartner {
   signatoryRole     String?             @db.VarChar(80)
   /// How many clients the partner should bring / needs (quota; null = no target). Progress = distinct clients via cases + owned clients.
   clientQuota       Int?
+  /// What kind of partner (lib/partners/schools.ts): AGENCY (default) | SCHOOL (college) | LANGUAGE_SCHOOL. Separate from partnerType (legal form).
+  category          String              @default("AGENCY") @db.VarChar(20)
   partnerContracts  PartnerContract[]
   partnerActivities PartnerActivity[]
   contacts          Contact[]
@@ -6885,4 +6887,218 @@ model EmployerChecklistTemplate {
   updatedById     String?  @db.VarChar(40)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// ─── SaaS: platform for other agencies (owner instance) + onboarding wizard (every instance) ──
+
+/// Sales pipeline of the platform ("/platform" demo requests, owner instance only). The contact person's data
+/// lives in the linked Inquiry (kind company, source "saas:demo"), so the lead retention / anonymisation covers it;
+/// this row keeps only the B2B pipeline fields. Plain ids, no foreign keys (lib/saas/pipeline.ts).
+model SaasLead {
+  id             String    @id @default(cuid())
+  inquiryId      String?   @unique @db.VarChar(40)
+  /// demo_requested | demo_done | trial | customer | lost
+  stage          String    @default("demo_requested") @db.VarChar(20)
+  agencyName     String    @db.VarChar(200)
+  country        String?   @db.VarChar(80)
+  website        String?   @db.VarChar(200)
+  /// Team size band: 1-5 | 6-20 | 21-50 | 51+
+  teamSize       String?   @db.VarChar(10)
+  /// Module / feature interests (keys of lib/saas/demoRequest.ts INTERESTS).
+  interests      Json?
+  demoAt         DateTime?
+  /// White-label customer record (Setting whitelabel.customers) once the lead became a trial / customer.
+  customerId     String?   @db.VarChar(64)
+  staffNotes     String?   @db.Text
+  stageChangedAt DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([stage])
+  @@index([createdAt])
+}
+
+/// Onboarding wizard of a freshly provisioned instance (one row, id "instance"), shown to its SUPER_ADMINs
+/// until completed (lib/saas/onboarding.ts). `steps` = { [stepKey]: { done, at, by, data? } }.
+model AgencyOnboarding {
+  id            String    @id @db.VarChar(20)
+  steps         Json
+  currentStep   String    @db.VarChar(30)
+  completedAt   DateTime?
+  completedById String?   @db.VarChar(40)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+/// Quarterly "Azerbaijan → Germany labour mobility report" (lib/quarterlyReport): editable intro per language,
+/// the aggregates frozen at publish time (only buckets with ≥ 3 cases), public on /reports when published.
+model QuarterlyReport {
+  id          String    @id @default(cuid())
+  year        Int
+  quarter     Int
+  /// { az, en, de } intro text (plain text, paragraphs separated by blank lines).
+  intro       Json?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  /// QuarterStats frozen when published (the public PDF never changes afterwards).
+  snapshot    Json?
+  generatedAt DateTime?
+  createdById String?   @db.VarChar(40)
+  updatedById String?   @db.VarChar(40)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([year, quarter])
+  @@index([published, year])
+}
+
+// ─── Public vacancy API for referral partners (/api/public/v1, lib/publicApi) ─────────────
+// Separate from ApiKey (/api/v1, employer integrations): these keys only read published vacancies. Plain ids, no FKs.
+
+/// Read-only key of a referral partner for GET /api/public/v1/vacancies. Only the sha256 is stored; the key is shown once.
+model PublicApiKey {
+  id                 String    @id @default(cuid())
+  referralPartnerId  String    @db.VarChar(40)
+  name               String    @db.VarChar(80)
+  /// "tvp_" + 8 characters: shown in the UI and used as `src` in the apply links (attribution).
+  prefix             String    @unique @db.VarChar(16)
+  keyHash            String    @unique @db.VarChar(64)
+  rateLimitPerMinute Int       @default(60)
+  revokedAt          DateTime?
+  lastUsedAt         DateTime?
+  createdById        String?   @db.VarChar(40)
+  createdAt          DateTime  @default(now())
+
+  @@index([referralPartnerId])
+}
+
+/// Requests per key and day (UTC) and how many of them were rate-limited.
+model PublicApiKeyUsage {
+  id          String   @id @default(cuid())
+  keyId       String   @db.VarChar(40)
+  day         DateTime @db.Date
+  requests    Int      @default(0)
+  rateLimited Int      @default(0)
+
+  @@unique([keyId, day])
+}
+
+/// A vacancy application that came through a partner's API apply link (cookie tv_src = key prefix).
+model PublicApiAttribution {
+  id            String   @id @default(cuid())
+  applicationId String   @unique @db.VarChar(40)
+  vacancyId     String   @db.VarChar(40)
+  keyId         String   @db.VarChar(40)
+  partnerId     String   @db.VarChar(40)
+  createdAt     DateTime @default(now())
+
+  @@index([keyId])
+}
+
+/// Language-school partner record of a referred student (lib/partners/schools.ts): attendance or an exam result.
+/// Staff confirm it before it reaches the client's profile (an exam result then raises User.germanLevel). Plain ids.
+model PartnerStudentRecord {
+  id               String    @id @default(cuid())
+  partnerId        String    @db.VarChar(40)
+  clientId         String    @db.VarChar(40)
+  /// ATTENDANCE | EXAM
+  kind             String    @db.VarChar(12)
+  courseName       String?   @db.VarChar(160)
+  periodFrom       DateTime? @db.Date
+  periodTo         DateTime? @db.Date
+  attendancePct    Int?
+  /// A1 … C2 (exam results)
+  level            String?   @db.VarChar(4)
+  examDate         DateTime? @db.Date
+  provider         String?   @db.VarChar(40)
+  passed           Boolean?
+  note             String?   @db.Text
+  /// Certificate in the private uploads folder (stored name), with the original name / type / size.
+  certificateKey   String?   @db.VarChar(120)
+  certificateName  String?   @db.VarChar(255)
+  certificateMime  String?   @db.VarChar(100)
+  certificateSize  Int?
+  /// PENDING | CONFIRMED | REJECTED
+  status           String    @default("PENDING") @db.VarChar(12)
+  reviewedById     String?   @db.VarChar(40)
+  reviewedAt       DateTime?
+  reviewNote       String?   @db.Text
+  /// The client's level before / after a confirmed exam (null when it did not change).
+  levelBefore      String?   @db.VarChar(4)
+  levelApplied     String?   @db.VarChar(4)
+  createdById      String?   @db.VarChar(40)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([partnerId, clientId])
+  @@index([clientId])
+  @@index([status, createdAt])
+}
+
+// ─── AVV (Auftragsverarbeitungsvertrag, Art. 28 DSGVO) with employers (lib/avv) ───
+
+/// One AVV per company and template version: the company fills its data in the portal, signs it with the e-signature
+/// module, Triad Vision countersigns (/admin/countersign). Plain ids (no foreign keys), like other add-on tables.
+model AvvAgreement {
+  id                 String    @id @default(cuid())
+  companyId          String    @db.VarChar(40)
+  /// DRAFT | SENT (waiting for the company / the countersignature) | COMPLETED | CANCELLED
+  status             String    @default("DRAFT") @db.VarChar(12)
+  templateVersion    String    @db.VarChar(40)
+  /// Company inputs (legal name, address, representative, privacy contact …) as signed.
+  data               Json
+  signatureRequestId String?   @unique @db.VarChar(40)
+  pdfSha256          String?   @db.Char(64)
+  createdById        String?   @db.VarChar(40)
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([companyId, createdAt])
+  @@index([status])
+}
+
+// ─── "E-mail me my result" on the public tools (lib/toolLeads) ──────────
+
+/// One result e-mail requested under a public tool. The lead for the team is the Inquiry (source "tool:<slug>",
+/// inquiryId, plain id); this row only holds the e-mail state: the separate follow-up consent, its double opt-in
+/// confirmation, the one follow-up 3 days later and the unsubscribe. Deleted after 60 days (jobs/toolLeads.ts).
+model ToolResultLead {
+  id              String    @id @default(cuid())
+  tool            String    @db.VarChar(60)
+  email           String    @db.VarChar(190)
+  name            String?   @db.VarChar(120)
+  locale          String    @db.VarChar(5)
+  inquiryId       String?   @db.VarChar(40)
+  /// The visitor ticked the follow-up checkbox (false again when never confirmed within 7 days).
+  followUpConsent Boolean   @default(false)
+  confirmedAt     DateTime?
+  followUpDueAt   DateTime?
+  followUpSentAt  DateTime?
+  unsubscribedAt  DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([followUpDueAt])
+  @@index([email])
+  @@index([createdAt])
+}
+
+/// Real salary database (lib/realSalaries): a contract staff left out of the public salary ranges (wrong amount, special case …).
+model RealSalaryExclusion {
+  id          String   @id @default(cuid())
+  caseId      String   @unique @db.VarChar(40)
+  reason      String?  @db.VarChar(300)
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+}
+
+/// Real salary database: the published table (groups with ≥ 3 workers, ranges only), recomputed monthly (lib/realSalaries/service.ts).
+model RealSalarySnapshot {
+  id         String   @id @default(cuid())
+  /// "YYYY-MM" (Baku) the snapshot belongs to
+  month      String   @db.VarChar(7)
+  data       Json
+  computedAt DateTime @default(now())
+
+  @@index([computedAt])
 }

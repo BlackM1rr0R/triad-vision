@@ -27,6 +27,7 @@ import {
   type TaxClass,
 } from '@/lib/salary';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 
 registerCopy(pagesTools);
 
@@ -337,7 +338,19 @@ export default function SalaryCalculator() {
       </section>
 
       {/* The same figures as a German payslip, line by line (/payslip-explained). */}
-      <div className="container-x -mt-6 mb-6">
+      <div className="container-x -mt-6 mb-6 space-y-4">
+        <EmailResult
+          tool="salary-calculator"
+          summary={[
+            { label: t('salaryPage.form.gross'), value: `${euro(result.monthly.gross)} / ${t('salaryPage.form.month')}` },
+            { label: t('salaryPage.form.taxClass'), value: t(`salaryPage.form.classes.${input.taxClass}`) },
+            { label: t('salaryPage.form.state'), value: STATE_NAMES[input.state] },
+            { label: t('salaryPage.result.netMonth'), value: euroCents(result.monthly.net) },
+            { label: t('salaryPage.result.netYear'), value: euro(result.yearly.net) },
+            { label: t('salaryPage.result.title'), value: t('salaryPage.result.deductions', { pct: percent(result.deductionRate) }) },
+            { label: t('salaryPage.result.monthly'), value: t('salaryPage.result.hourly', { value: euroCents(result.hourlyNet) }) },
+          ]}
+        />
         <Link
           to={`/payslip-explained?gross=${Math.round(result.monthly.gross)}&class=${input.taxClass}&state=${input.state}${input.church ? '&church=1' : ''}${input.children > 0 ? '&kids=1' : ''}`}
           className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-link hover:underline"

@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, Package, ShieldAlert, Users, Video, Workflow } from 'lucide-react';
+import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, Package, ShieldAlert, ShieldCheck, Users, Video, Workflow } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -23,6 +23,8 @@ import { Loading, Section, useCompany } from '@/components/company/shared';
 import { CompanyContracts } from '@/components/company/CompanyContracts';
 import { CompanyForms } from '@/components/company/CompanyForms'; // official forms to complete + sign (Erklärung zum Beschäftigungsverhältnis)
 import { pagesOfficialForms } from '@/i18n/pagesOfficialForms';
+import { CompanyAvv, useCompanyAvv } from '@/components/company/CompanyAvv'; // AVV (Art. 28 DSGVO): shown once the owner approved the template
+import { pagesAvv } from '@/i18n/pagesAvv';
 import { CompanyRequests } from '@/components/requests/CompanyRequests';
 import { pagesRequests } from '@/i18n/pagesRequests';
 import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
@@ -37,6 +39,7 @@ registerCopy(pagesSign);
 registerCopy(pagesRequests);
 registerCopy(pagesQuotes);
 registerCopy(pagesOfficialForms);
+registerCopy(pagesAvv);
 registerCopy(pagesEmployerPipeline);
 registerCopy(pagesConfigurator);
 
@@ -47,6 +50,7 @@ export default function CompanyApp() {
   const location = useLocation();
   const L = useJobLabels();
   const { data: company, isLoading, isError, refetch } = useCompany();
+  const avv = useCompanyAvv(); // 404 until the AVV template is approved → no tab
   usePageTitle(t('jobsArea.portal.title'));
 
   const tabs = [
@@ -59,6 +63,7 @@ export default function CompanyApp() {
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
     { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms') },
+    ...(avv.isSuccess ? [{ to: '/company/avv', label: t('avv.nav'), icon: ShieldCheck, match: (p: string) => p.startsWith('/company/avv') }] : []),
     { to: '/company/configurator', label: t('packageConfigurator.nav'), icon: Package, match: (p: string) => p.startsWith('/company/configurator') },
     { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes') },
     { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
@@ -179,6 +184,7 @@ export default function CompanyApp() {
                 <Route path="contracts/:signerId" element={<CompanyContracts />} />
                 <Route path="forms" element={<CompanyForms />} />
                 <Route path="forms/:id" element={<CompanyForms />} />
+                <Route path="avv" element={<CompanyAvv />} />
                 <Route path="configurator" element={<CompanyConfigurator />} />
                 <Route path="quotes" element={<CompanyQuotes />} />
                 <Route path="quotes/:id" element={<CompanyQuotes />} />

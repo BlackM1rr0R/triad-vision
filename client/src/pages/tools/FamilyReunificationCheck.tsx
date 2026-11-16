@@ -11,6 +11,7 @@ import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesFamilyCheck } from '@/i18n/pagesFamilyCheck';
 import { api } from '@/lib/api';
@@ -290,6 +291,14 @@ export default function FamilyReunificationCheckPage() {
                   <p className="mt-3 rounded-xl bg-sunken p-3 text-xs leading-relaxed text-muted">{t('fc.docs.note')}</p>
                 </section>
                 <p className="text-xs text-muted">{t('fc.asOf', { date: r.asOf.split('-').reverse().join('.') })}</p>
+                <EmailResult
+                  tool="family-reunification-check"
+                  summary={[
+                    ...(r.spouse ? [{ label: t('fc.who.spouse'), value: t(`fc.verdict.${r.spouse.verdict}`) }] : []),
+                    ...r.children.slice(0, 5).map((c) => ({ label: t('fc.who.child', { age: c.age }), value: t(`fc.verdict.${c.verdict}`) })),
+                    ...(r.parents ? [{ label: t('fc.who.parents', { count: r.parents.count }), value: t(`fc.verdict.${r.parents.verdict}`) }] : []),
+                  ]}
+                />
               </>
             ) : q.isError ? (
               <div className="rounded-2xl border border-danger-border bg-danger-bg p-4 text-sm text-danger-fg" role="alert">

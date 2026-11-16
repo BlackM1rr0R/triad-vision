@@ -43,7 +43,7 @@ let copy: Copy;
 beforeAll(async () => {
   r = (await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'components/command/navRegistry.ts')).href)) as Registry;
   copy = ((await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'i18n/adminNav.ts')).href)) as { adminNavCopy: Copy }).adminNavCopy;
-});
+}, 60_000); // loading the client modules can be slow under a full parallel run
 
 describe('admin navigation registry', () => {
   it('puts every admin page in exactly one hub (the workspace link aside)', () => {

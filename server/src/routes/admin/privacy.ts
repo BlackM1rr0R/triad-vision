@@ -10,6 +10,7 @@ import { CONSENT_TYPES } from '../../lib/privacy/consents.js';
 import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/privacy/requests.js';
 import { eraseInquiries, exportInquiries } from '../../lib/privacy/inquiries.js';
 import { eraseGermanyJobAlerts, exportGermanyJobAlerts } from '../../lib/germanyJobs/alerts.js';
+import { eraseToolLeads, exportToolLeads } from '../../lib/toolLeads/service.js';
 import { pageArgs, pageMeta, pageShape, splitPage } from '../../lib/paging.js';
 
 /**
@@ -221,13 +222,14 @@ adminPrivacyRouter.get('/inquiries', async (req, res) => {
   if (q.format === 'download') {
     res.setHeader('Content-Disposition', `attachment; filename="inquiries-${new Date().toISOString().slice(0, 10)}.json"`);
   }
-  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts });
+  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts, toolResultEmails: await exportToolLeads(q.email) });
 });
 
 adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
   const body = parse(inquiryPerson.extend({ requestId: z.string().trim().max(40).optional() }), req.body ?? {});
   const anonymized = await eraseInquiries(body.email, body.userId);
   const germanyJobAlerts = await eraseGermanyJobAlerts(body.email, body.userId);
+  await eraseToolLeads(body.email); // "e-mail me my result" rows (lib/toolLeads)
   await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized, germanyJobAlerts });
   res.json({ ok: true, anonymized, germanyJobAlerts });
 });

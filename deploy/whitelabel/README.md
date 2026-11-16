@@ -137,3 +137,26 @@ brand differs).
 
 Scripts: `issue-license.mjs`, `new-instance.sh`, `update-instance.sh`, `setup-link.sh`, `env.template`,
 `docker-compose.instance.yml`, `lib.sh`.
+
+---
+
+## Selling and onboarding (code: `server/src/lib/saas`, `client/src/pages/platform`, `client/src/pages/admin/AgencyOnboarding.tsx`)
+
+- **Product page `/platform`** (owner instance only — on a customer instance `GET /api/platform/status` says
+  `available: false`, the demo endpoint answers 404, the sitemap leaves it out and the footer link is hidden for a
+  custom brand). Six languages, no prices ("on request"), module list from `navModules` (`MODULE_KEYS`).
+- **Demo**: a guided screenshot tour, not a live demo. The screenshots are the visual-regression baselines
+  (`tests/visual/baseline`), rendered by `scripts/ci/visual.mjs` with every `/api` call answered from
+  `scripts/ci/visual-fixtures/fixtures.mjs` (made-up people, example.com, placeholder phones), converted to WebP into
+  `client/public/platform/`. Nothing in the tour talks to an API, so no real client data can appear. A live demo
+  backed by fixtures was rejected: it would run the real admin pages and one unmocked request could reach real data.
+  Refresh after UI changes: re-run the visual job, then convert the baselines again (sharp, quality 72).
+- **"Request a demo"** (`POST /api/platform/demo-request`, consent required, honeypot, 10/h per IP) → an Inquiry
+  (`source "saas:demo"`, `sector "SAAS"`; normal leads inbox, scoring, GDPR retention) + a `SaasLead` row, a notice to
+  ADMIN / SUPER_ADMIN and a confirmation e-mail.
+- **Pipeline** in `System → Customers`: demo requested → demo done → trial → customer (or lost). "Trial" creates the
+  customer record of this page (status trial), "customer" sets it active.
+- **Onboarding wizard** `System → Onboarding` on the new instance: brand (logo, icon, colours), languages, countries /
+  visa types, modules, staff invitations (set-password link), requirement templates, sender + test e-mail, first
+  employer / vacancy, go-live checklist. Progress in `AgencyOnboarding` (resumable); a banner reminds the
+  SUPER_ADMINs of a customer instance until it is completed.

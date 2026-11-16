@@ -34,6 +34,8 @@ export interface PartnerMe {
     shortLink?: string | null;
     commissionTrigger?: 'ASSIGNED' | 'CONTRACT_SIGNED' | 'VISA_APPROVED';
     visibility?: 'MINIMAL' | 'EXTENDED';
+    /** Schools get the Students view (/partner/students); language schools also record attendance / exams. */
+    category?: 'AGENCY' | 'SCHOOL' | 'LANGUAGE_SCHOOL';
   };
   user: { firstName: string; lastName: string; email: string; phone: string | null; locale: string };
   alsoAgent: boolean;

@@ -6,6 +6,7 @@ import type { ContractResult, ContractTerms } from '../ai/features/caseAi/contra
 import { salaryOf } from '../placement/employmentContract.js';
 import { CHILD_ROWS, DATA_KEY_MAP, type DataGroup, type FieldMap, type FieldMapping, type L10n, type PdfFieldInfo } from './catalog.js';
 import type { PdfValue } from './pdf.js';
+import { ezbPrefill } from './ezbWizard.js';
 
 /**
  * Resolves every catalogue data key for one case and applies a template's field map.
@@ -317,12 +318,26 @@ export const loadCaseData = async (caseId: string, now = new Date()): Promise<Ca
   }
   if (!d['contract.jobTitle']) set('contract.jobTitle', v('position'));
   set('case.stayUntil', d['contract.contractType'] === 'FIXED' ? d['contract.endDate'] : '');
+  // Employer declaration: suggestions from the vacancy and the company profile (lib/officialForms/ezbWizard.ts).
+  const placement = await prisma.case.findUnique({
+    where: { id: caseId },
+    select: {
+      vacancyId: true,
+      vacancy: { select: { description: true, city: true } },
+      company: { select: { city: true, foundedYear: true, collectiveAgreement: true } },
+    },
+  });
+  // KldB code / postcode of the vacancy live on its job-board distribution settings.
+  const distribution = placement?.vacancyId ? await prisma.vacancyDistribution.findFirst({ where: { vacancyId: placement.vacancyId }, select: { occupationCode: true, postalCode: true } }) : null;
+  const vacancy = placement?.vacancy ? { ...placement.vacancy, occupationCode: distribution?.occupationCode ?? null, postalCode: distribution?.postalCode ?? null } : null;
+  for (const [key, value] of Object.entries(ezbPrefill({ vacancy, company: placement?.company ?? null, profession: d['client.profession'], jobTitle: d['contract.jobTitle'], now }))) set(key, value);
   // Employment details: defaults the employer confirms in the portal.
   set('employment.workplaceMode', 'EMPLOYER_SEAT');
   set('employment.leasedToThirdParty', 'no');
   set('employment.overtime', 'no');
   set('employment.collectiveAgreement', 'no');
   set('employment.socialInsurance', 'yes');
+  set('employment.licenceRequired', 'no');
   // Meta
   const today = iso(now);
   set('meta.today', today);
@@ -347,8 +362,9 @@ export const deriveData = (base: CaseData, overrides: Record<string, string> = {
     if (!touched('contract.hourlyWage')) d['contract.hourlyWage'] = Number.isFinite(m) && Number.isFinite(h) && h > 0 && d['contract.grossMonthly'] ? String(Math.round((m / (h * 4.33)) * 100) / 100) : '';
     if (!touched('contract.workingTime') && d['contract.weeklyHours']) d['contract.workingTime'] = h >= 30 ? 'FULL' : 'PART';
   }
-  if (['contract.jobTitle', 'employment.jobDescription'].some(touched) || !d['employment.jobTitleDescription']) {
-    d['employment.jobTitleDescription'] = [d['contract.jobTitle'], d['employment.jobDescription']].filter(Boolean).join(' – ');
+  if (['contract.jobTitle', 'employment.jobDescription', 'employment.kldbCode'].some(touched) || !d['employment.jobTitleDescription']) {
+    const kldb = /^\d{5}$/.test(d['employment.kldbCode'] ?? '') ? ` (KldB 2010: ${d['employment.kldbCode']})` : '';
+    d['employment.jobTitleDescription'] = [d['contract.jobTitle'] ? `${d['contract.jobTitle']}${kldb}` : '', d['employment.jobDescription']].filter(Boolean).join(' – ');
   }
   if (touched('contract.jobTitle') && !touched('case.position')) d['case.position'] = d['contract.jobTitle'];
   if (['contract.contractType', 'contract.endDate'].some(touched)) d['case.stayUntil'] = d['contract.contractType'] === 'FIXED' ? (d['contract.endDate'] ?? '') : '';

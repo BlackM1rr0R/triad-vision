@@ -48,6 +48,8 @@ const News = lazyRoute('News', () => import('./pages/News'));
 const NewsDetail = lazyRoute('NewsDetail', () => import('./pages/NewsDetail'));
 const Contact = lazyRoute('Contact', () => import('./pages/Contact'));
 const Cooperation = lazyRoute('Cooperation', () => import('./pages/Cooperation'));
+const DevelopersPage = lazyRoute('DevelopersPage', () => import('./pages/Developers')); // public vacancy API docs for partners (/developers)
+const AdminPublicApiKeys = lazyRoute('AdminPublicApiKeys', () => import('./pages/admin/PublicApiKeys')); // partner vacancy API keys + usage (ADMIN+)
 const Login = lazyRoute('Login', () => import('./pages/auth/Login'));
 const Register = lazyRoute('Register', () => import('./pages/auth/Register'));
 const PartnerLink = lazyRoute('PartnerLink', () => import('./pages/auth/PartnerLink')); // /p/:code — referral partner's short sign-up link
@@ -94,6 +96,7 @@ const AdminClientInvoices = lazyRoute('AdminClientInvoices', () => import('./pag
 const AdminPackages = lazyRoute('AdminPackages', () => import('./pages/admin/Packages'));
 const AdminAccounting = lazyRoute('AdminAccounting', () => import('./pages/admin/Accounting'));
 const AdminCountersign = lazyRoute('AdminCountersign', () => import('./pages/admin/Countersign'));
+const AdminTrust = lazyRoute('AdminTrust', () => import('./pages/admin/TrustAdmin')); // Trust Center facts + AVV template approval (/admin/trust)
 const SharePage = lazyRoute('SharePage', () => import('./pages/SharePage'));
 const CandidateSharePage = lazyRoute('CandidateSharePage', () => import('./pages/CandidateSharePage')); // employer share link of a candidate
 const AccountSignatures = lazyRoute('AccountSignatures', () => import('./pages/account/Signatures'));
@@ -133,6 +136,7 @@ const StudyCatalogue = lazyRoute('StudyCatalogue', () => import('./pages/study/S
 const StudyProgrammeDetail = lazyRoute('StudyProgrammeDetail', () => import('./pages/study/StudyProgrammeDetail')); // /study/:slug + apply via Triad Vision
 const GlossaryIndex = lazyRoute('GlossaryIndex', () => import('./pages/glossary/GlossaryIndex')); // /glossary: German bureaucracy glossary (static terms, server lib/glossary)
 const GlossaryTermPage = lazyRoute('GlossaryTermPage', () => import('./pages/glossary/GlossaryTermPage')); // /glossary/:slug
+const PlatformPage = lazyRoute('PlatformPage', () => import('./pages/platform/PlatformPage')); // /platform: the platform for other agencies (owner instance only; demo request)
 const AdminStudyProgrammes = lazyRoute('AdminStudyProgrammes', () => import('./pages/admin/StudyProgrammes')); // /admin/study: catalogue CRUD + CSV
 const GermanyJobs = lazyRoute('GermanyJobs', () => import('./pages/jobs/GermanyJobs')); // /jobs/germany(/search): Adzuna search, BA link, apply via Triad Vision
 const EmployerRegister = lazyRoute('EmployerRegister', () => import('./pages/company/EmployerRegister'));
@@ -168,6 +172,7 @@ const WorkSceneKitchen = lazyRoute('WorkSceneKitchen', () => import('./pages/too
 const WorkSceneTruck = lazyRoute('WorkSceneTruck', () => import('./pages/tools/workScenes/TruckCab')); // /work-scenes/truck-cab
 const WorkSceneHospital = lazyRoute('WorkSceneHospital', () => import('./pages/tools/workScenes/HospitalWard')); // /work-scenes/hospital-ward
 const WorkSceneConstruction = lazyRoute('WorkSceneConstruction', () => import('./pages/tools/workScenes/ConstructionSite')); // /work-scenes/construction-site
+const ProfessionHubPage = lazyRoute('ProfessionHubPage', () => import('./pages/tools/ProfessionHub')); // profession hubs (/for/:profession)
 const WorkSceneElectrical = lazyRoute('WorkSceneElectrical', () => import('./pages/tools/workScenes/ElectricalPanel')); // /work-scenes/electrical-panel
 const ResidenceCardExplainedPage = lazyRoute('ResidenceCardExplainedPage', () => import('./pages/tools/ResidenceCardExplained')); // eAT specimen explained (/residence-card-explained)
 const ShortageBarometerPage = lazyRoute('ShortageBarometerPage', () => import('./pages/tools/ShortageBarometer')); // BA Engpassanalyse barometer (/shortage-barometer)
@@ -178,6 +183,8 @@ const WorkScheduleCheckPage = lazyRoute('WorkScheduleCheckPage', () => import('.
 const TaxClassChooserPage = lazyRoute('TaxClassChooserPage', () => import('./pages/tools/TaxClassChooser')); // Steuerklassenwahl III/V, IV/IV, Faktor (/tax-class-chooser)
 const EmployerCostCalculatorPage = lazyRoute('EmployerCostCalculatorPage', () => import('./pages/tools/EmployerCostCalculator')); // employer cost, B2B (/employer-cost-calculator)
 const RentCheckPage = lazyRoute('RentCheckPage', () => import('./pages/tools/RentCheck')); // fair rent check (/rent-check)
+const RealSalariesPage = lazyRoute('RealSalariesPage', () => import('./pages/tools/RealSalaries')); // real salary database, k-anonymous ranges (/real-salaries)
+const AdminRealSalaries = lazyRoute('AdminRealSalaries', () => import('./pages/admin/RealSalaries')); // real salary database: records, exclusions, recompute
 const HealthInsuranceComparisonPage = lazyRoute('HealthInsuranceComparisonPage', () => import('./pages/tools/HealthInsuranceComparison')); // Krankenkassen comparison (/health-insurance-comparison)
 const EmergencyWallpaperPage = lazyRoute('EmergencyWallpaperPage', () => import('./pages/tools/EmergencyWallpaper')); // lock-screen emergency wallpaper (/emergency-wallpaper, rendered on the device)
 const AccountReadiness = lazyRoute('AccountReadiness', () => import('./pages/account/Readiness')); // Germany readiness score 0–100 (/account/readiness)
@@ -190,6 +197,9 @@ const EmployerGuideAzerbaijanPage = lazyRoute('EmployerGuideAzerbaijanPage', () 
 const AzerbaijanInGermanyPage = lazyRoute('AzerbaijanInGermanyPage', () => import('./pages/AzerbaijanInGermany')); // embassy, culture, associations map (/azerbaijan-in-germany)
 const WhichCityPage = lazyRoute('WhichCityPage', () => import('./pages/tools/WhichCity')); // "Which German city suits you?" quiz (/which-city)
 const PermanentResidencePage = lazyRoute('PermanentResidencePage', () => import('./pages/tools/PermanentResidence')); // settlement permit + citizenship timeline (/permanent-residence)
+const CountryComparePage = lazyRoute('CountryComparePage', () => import('./pages/tools/CountryCompare')); // Germany vs PL / CZ / UK / AT (/germany-vs-other-countries)
+const VisaRefusalPage = lazyRoute('VisaRefusalPage', () => import('./pages/tools/VisaRefusal')); // refusal reasons + new-application cover letter (/visa-refusal)
+const VisaChecklistPage = lazyRoute('VisaChecklistPage', () => import('./pages/tools/VisaChecklist')); // public document checklist (/visa-document-checklist)
 const DrivingLicencePage = lazyRoute('DrivingLicencePage', () => import('./pages/tools/DrivingLicence')); // Azerbaijani licence in Germany guide (/driving-licence-germany)
 const FamilyReunificationCheckPage = lazyRoute('FamilyReunificationCheckPage', () => import('./pages/tools/FamilyReunificationCheck')); // public family reunification self-check
 const GermanSimulatorPage = lazyRoute('GermanSimulatorPage', () => import('./pages/games/GermanSimulator')); // Bürgeramt dialogue simulator (/german-simulator)
@@ -200,7 +210,11 @@ const WasteSortingPage = lazyRoute('WasteSortingPage', () => import('./pages/gam
 const GermanMockExamPage = lazyRoute('GermanMockExamPage', () => import('./pages/tools/GermanMockExam')); // German mock exams (/german-mock-exam, /a1, /b1)
 const GermanLevelSelfPage = lazyRoute('GermanLevelSelfPage', () => import('./pages/tools/GermanLevelSelf')); // CEFR self-assessment + study plan (/german-level-test-self)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
+const EmbedPage = lazyRoute('EmbedPage', () => import('./pages/embed/EmbedPage')); // embeddable widgets for other sites' iframes (/embed/:widget, outside the site layout)
+const WidgetsPage = lazyRoute('WidgetsPage', () => import('./pages/Widgets')); // widget configurator + iframe snippets (/widgets)
 const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
+const AdminQuarterlyReport = lazyRoute('AdminQuarterlyReport', () => import('./pages/admin/QuarterlyReport')); // quarterly labour mobility report PDF (STAFF read, ADMIN+ publish)
+const ReportsPage = lazyRoute('ReportsPage', () => import('./pages/Reports')); // published quarterly reports (/reports)
 const AdminYearReview = lazyRoute('AdminYearReview', () => import('./pages/admin/YearReview')); // staff 'Year in review' (per-staff counts ADMIN+, server-side)
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
 const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
@@ -224,6 +238,8 @@ const GuideDetail = lazyRoute('GuideDetail', () => import('./pages/guides/GuideD
 const ChancenkarteCalculator = lazyRoute('ChancenkarteCalculator', () => import('./pages/tools/ChancenkarteCalculator'));
 const BlueCardCheck = lazyRoute('BlueCardCheck', () => import('./pages/tools/BlueCardCheck'));
 const AdminGuides = lazyRoute('AdminGuides', () => import('./pages/admin/Guides'));
+const AdminToolAnalytics = lazyRoute('AdminToolAnalytics', () => import('./pages/admin/ToolAnalytics')); // per-tool views, interactions, result e-mails, attributed sign-ups (/admin/tool-analytics)
+const ResultEmailManage = lazyRoute('ResultEmailManage', () => import('./pages/ResultEmailManage')); // 'e-mail me my result' confirm / unsubscribe link (/result-email)
 const AdminSearchPerformance = lazyRoute('AdminSearchPerformance', () => import('./pages/admin/SearchPerformance')); // Google Search Console (ADMIN+)
 const AdminArrivals = lazyRoute('AdminArrivals', () => import('./pages/admin/Arrivals'));
 const AdminPartnerHousing = lazyRoute('AdminPartnerHousing', () => import('./pages/admin/PartnerHousing')); // partner landlords + Anmeldung deadlines
@@ -239,6 +255,8 @@ const AdminStorageReport = lazyRoute('AdminStorageReport', () => import('./pages
 const QrRedirect = lazyRoute('QrRedirect', () => import('./pages/QrRedirect'));
 const AdminToday = lazyRoute('AdminToday', () => import('./pages/admin/Today'));
 const StatusPage = lazyRoute('StatusPage', () => import('./pages/Status')); // public status check without login
+const TrustPage = lazyRoute('TrustPage', () => import('./pages/Trust')); // public Trust Center (/trust)
+const CandidateCataloguePage = lazyRoute('CandidateCataloguePage', () => import('./pages/CandidateCatalogue')); // anonymous candidate catalogue (/kandidaten, German first)
 const AdminProblemReports = lazyRoute('AdminProblemReports', () => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
 
 const AdminMyDay = lazyRoute('AdminMyDay', () => import('./pages/admin/MyDay')); // "Bu günüm": day plan on the my-work queue
@@ -324,6 +342,7 @@ const AdminModules = lazyRoute('AdminModules', () => import('./pages/admin/Syste
 const AdminBrand = lazyRoute('AdminBrand', () => import('./pages/admin/SystemBrand')); // white-label brand (SUPER_ADMIN)
 const AdminLicense = lazyRoute('AdminLicense', () => import('./pages/admin/SystemLicense')); // white-label licence status (SUPER_ADMIN)
 const AdminCustomers = lazyRoute('AdminCustomers', () => import('./pages/admin/SystemCustomers')); // owner instance: customer agencies (SUPER_ADMIN)
+const AdminOnboarding = lazyRoute('AdminOnboarding', () => import('./pages/admin/AgencyOnboarding')); // onboarding wizard of a new agency instance (SUPER_ADMIN)
 const AdminUsage = lazyRoute('AdminUsage', () => import('./pages/admin/SystemUsage')); // admin page usage statistics (SUPER_ADMIN)
 const AdminDesignSystem = lazyRoute('AdminDesignSystem', () => import('./pages/admin/DesignSystem')); // design tokens + component catalogue (ADMIN+)
 const AccountCaseForm = lazyRoute('AccountCaseForm', () => import('./pages/account/CaseForm'));
@@ -450,6 +469,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route path="tools" element={<ToolsPage />} />
+            <Route path="widgets" element={<WidgetsPage />} />
             <Route path="for-workers" element={<ForWorkers />} />
             <Route path="for-employers" element={<ForEmployers />} />
             {/* Short / guessable aliases of the new pages. */}
@@ -478,6 +498,7 @@ export default function App() {
             <Route path="ebook/:slug" element={<EbookPage />} />
             <Route path="job-alert" element={<JobAlertManage />} />
             <Route path="job-alert/germany" element={<JobAlertGermanyManage />} />
+            <Route path="result-email" element={<ResultEmailManage />} />
             <Route path="guides/:slug" element={<GuideDetail />} />
             <Route path="chancenkarte-calculator" element={<ChancenkarteCalculator />} />
             <Route path="blue-card-check" element={<BlueCardCheck />} />
@@ -498,6 +519,7 @@ export default function App() {
             <Route path="work-scenes/hospital-ward" element={<WorkSceneHospital />} />
             <Route path="work-scenes/construction-site" element={<WorkSceneConstruction />} />
             <Route path="work-scenes/electrical-panel" element={<WorkSceneElectrical />} />
+            <Route path="for/:profession" element={<ProfessionHubPage />} />
             <Route path="residence-card-explained" element={<ResidenceCardExplainedPage />} />
             <Route path="shortage-barometer" element={<ShortageBarometerPage />} />
             <Route path="tax-refund-calculator" element={<TaxRefundCalculatorPage />} />
@@ -507,7 +529,9 @@ export default function App() {
             <Route path="tax-class-chooser" element={<TaxClassChooserPage />} />
             <Route path="employer-cost-calculator" element={<EmployerCostCalculatorPage />} />
             <Route path="rent-check" element={<RentCheckPage />} />
+            <Route path="real-salaries" element={<RealSalariesPage />} />
             <Route path="health-insurance-comparison" element={<HealthInsuranceComparisonPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="emergency-wallpaper" element={<EmergencyWallpaperPage />} />
             <Route path="holiday-planner" element={<HolidayPlannerPage />} />
             <Route path="grade-converter" element={<GradeConverterPage />} />
@@ -516,6 +540,9 @@ export default function App() {
             <Route path="azerbaijan-in-germany" element={<AzerbaijanInGermanyPage />} />
             <Route path="which-city" element={<WhichCityPage />} />
             <Route path="permanent-residence" element={<PermanentResidencePage />} />
+            <Route path="germany-vs-other-countries" element={<CountryComparePage />} />
+            <Route path="visa-refusal" element={<VisaRefusalPage />} />
+            <Route path="visa-document-checklist" element={<VisaChecklistPage />} />
             <Route path="driving-licence-germany" element={<DrivingLicencePage />} />
             <Route path="family-reunification-check" element={<FamilyReunificationCheckPage />} />
             <Route path="german-simulator" element={<GermanSimulatorPage />} />
@@ -543,8 +570,11 @@ export default function App() {
             <Route path="news/:slug" element={<NewsDetail />} />
             <Route path="contact" element={<Contact />} />
             <Route path="cooperation" element={<Cooperation />} />
+            <Route path="developers" element={<DevelopersPage />} />
             <Route path="accessibility" element={<AccessibilityPage />} />
             <Route path="status" element={<StatusPage />} />
+            <Route path="trust" element={<TrustPage />} />
+            <Route path="kandidaten" element={<CandidateCataloguePage />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="p/:code" element={<PartnerLink />} />
@@ -564,6 +594,7 @@ export default function App() {
             <Route path="study/:slug" element={<StudyProgrammeDetail />} />
             <Route path="glossary" element={<GlossaryIndex />} />
             <Route path="glossary/:slug" element={<GlossaryTermPage />} />
+            <Route path="platform" element={<PlatformPage />} />
             <Route path="jobs/germany" element={<GermanyJobs />} />
             <Route path="jobs/germany/search" element={<GermanyJobs />} />
             <Route path="jobs/:slug" element={<JobDetail />} />
@@ -680,6 +711,8 @@ export default function App() {
           </Route>
 
           {/* Office wall TV: outside the admin layout and login (a read-only display token, or the staff session). */}
+          {/* Embeddable widgets: minimal chrome for iframes on other sites (framing allowed for /embed/* only, deploy/Caddyfile). */}
+          <Route path="embed/:widget" element={<EmbedPage />} />
           <Route path="admin/tv" element={<AdminTvDisplay />} />
           <Route
             path="admin"
@@ -729,6 +762,14 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminCustomers />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="system/onboarding"
+              element={
+                <RequireAuth roles={['SUPER_ADMIN']}>
+                  <AdminOnboarding />
                 </RequireAuth>
               }
             />
@@ -821,6 +862,7 @@ export default function App() {
             <Route path="docs/audit" element={<AdminDocsAudit />} />
             <Route path="content/:resource" element={<AdminContent />} />
             <Route path="guides" element={<AdminGuides />} />
+            <Route path="tool-analytics" element={<AdminToolAnalytics />} />
             <Route
               path="search-performance"
               element={
@@ -894,6 +936,14 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="trust"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminTrust />
+                </RequireAuth>
+              }
+            />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="overview" element={<AdminOverview />} />
@@ -958,7 +1008,10 @@ export default function App() {
             <Route path="surveys/*" element={<AdminSurveys />} />
             <Route path="time" element={<AdminTimeTracking />} />
             <Route path="year-review" element={<AdminYearReview />} />
+            <Route path="quarterly-report" element={<AdminQuarterlyReport />} />
             <Route path="employer-checklist-templates" element={<AdminEmployerChecklistTemplates />} />
+            <Route path="real-salaries" element={<AdminRealSalaries />} />
+            <Route path="public-api-keys" element={<RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}><AdminPublicApiKeys /></RequireAuth>} />
             <Route
               path="kpi"
               element={

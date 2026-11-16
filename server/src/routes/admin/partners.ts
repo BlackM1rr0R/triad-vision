@@ -41,6 +41,7 @@ import { csvSafe } from '../../lib/csvSafe.js';
 import { todayOf } from '../../lib/partnerRecords/contracts.js';
 import { QUOTA_FILTERS, assignedClientCounts, matchesQuotaFilter, quotaOf } from '../../lib/partners/quota.js'; // "needed clients" target
 import { partnerDashboard } from '../../lib/partners/dashboard.js'; // "Panel" tab of the profile
+import { PARTNER_CATEGORIES } from '../../lib/partners/schools.js'; // partner category filter
 
 /**
  * Referral partners (middlemen who bring visa clients) — /api/admin/partners.
@@ -178,6 +179,8 @@ const listQuery = z.object({
   search: z.string().trim().max(120).optional(),
   active: z.enum(['true', 'false', 'all']).default('all'),
   type: z.enum(PARTNER_TYPES).optional(),
+  /** AGENCY | SCHOOL | LANGUAGE_SCHOOL (lib/partners/schools.ts). */
+  category: z.enum(PARTNER_CATEGORIES).optional(),
   country: z.string().trim().max(80).optional(),
   tag: z.string().trim().max(40).optional(),
   /** active | expiring (≤ 30 days left) | expired | none (lib/partners/overview.ts). */
@@ -195,6 +198,7 @@ const listPartners = async (req: Request, q: ListQuery) => {
   const where: Prisma.ReferralPartnerWhereInput = {
     ...(q.active !== 'all' ? { active: q.active === 'true' } : {}),
     ...(q.type ? { partnerType: q.type } : {}),
+    ...(q.category ? { category: q.category } : {}),
     ...(q.country ? { country: q.country } : {}),
     ...(search ? { OR: [...SEARCH_COLUMNS.map((k) => ({ [k]: { contains: search } })), { id: { in: await jsonSearchIds(search) } }] } : {}),
   };

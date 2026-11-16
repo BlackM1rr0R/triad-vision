@@ -10,6 +10,7 @@ import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesPermanentResidence } from '@/i18n/pagesPermanentResidence';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -247,6 +248,17 @@ export default function PermanentResidencePage() {
                 )}
               </Card>
             </div>
+            <EmailResult
+              tool="permanent-residence"
+              summary={[
+                { label: t('pr.form.permit'), value: t(`pr.form.permits.${input.permit}`) },
+                { label: t('pr.form.german'), value: t(`pr.form.germanLevels.${input.german}`) },
+                { label: t('pr.result.settlementTitle'), value: r.settlementReached ? t('pr.result.reached') : `${t('pr.result.earliest')}: ${my(r.settlement)}` },
+                { label: t('pr.result.paragraph', { paragraph: r.paragraph }), value: t(`pr.result.routes.${r.route}`, { months: r.titleMonths, pension: r.pensionMonths }) },
+                { label: t('pr.result.citizenshipTitle'), value: r.citizenshipReached ? t('pr.result.reached') : `${t('pr.result.earliest')}: ${my(r.citizenship)}` },
+                ...(!r.germanOk ? [{ label: t('pr.form.german'), value: t('pr.result.germanMissing', { level: r.germanNeeded.toUpperCase() }) }] : []),
+              ]}
+            />
             <Timeline input={input} r={r} today={today} />
             <div className="grid gap-4 md:grid-cols-2">
               {[

@@ -58,6 +58,39 @@ echo "$CASES" | while IFS='|' read -r url status location; do
     echo fail >> "/tmp/$NAME.failed"
   fi
 done
+
+# Framing headers: only the embeddable widgets (/embed/*) may be framed by other sites. A second container serves a
+# stub index.html (the redirect cases above rely on the SPA files being absent).
+SRV=$(mktemp -d)
+echo '<!doctype html><title>stub</title>' > "$SRV/index.html"
+chmod -R a+rX "$SRV"
+NAME2=$NAME-srv
+docker run -d --name "$NAME2" --network "$NET" -e SITE_DOMAIN=localhost -e ACME_EMAIL=ci@example.com \
+  -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" -v "$SRV:/srv:ro" caddy:2-alpine >/dev/null
+sleep 3
+# path | X-Frame-Options DENY expected (yes/no) | frame-ancestors value expected in the CSP
+FRAMES="
+/embed/salary-calculator|no|*
+/de/embed/blue-card-check|no|*
+/tools|yes|'none'
+/salary-calculator|yes|'none'
+/embedded|yes|'none'
+"
+echo "$FRAMES" | while IFS='|' read -r url xfo fa; do
+  [ -z "$url" ] && continue
+  hdrs=$(docker run --rm --network "$NET" curlimages/curl:8.11.1 -sk --connect-to "localhost:443:$NAME2:443" -o /dev/null -D - "https://localhost$url" | tr -d '\r')
+  has_xfo=no
+  echo "$hdrs" | grep -qi '^x-frame-options: *deny' && has_xfo=yes
+  csp_fa=$(echo "$hdrs" | grep -i '^content-security-policy:' | sed -n 's/.*frame-ancestors \([^;]*\).*/\1/p')
+  if [ "$has_xfo" = "$xfo" ] && [ "$csp_fa" = "$fa" ]; then
+    echo "ok   $url -> x-frame-options:$has_xfo frame-ancestors:$csp_fa"
+  else
+    echo "FAIL $url -> x-frame-options:$has_xfo frame-ancestors:$csp_fa (want $xfo / $fa)"
+    echo fail >> "/tmp/$NAME.failed"
+  fi
+done
+docker rm -f "$NAME2" >/dev/null 2>&1
+rm -rf "$SRV"
 if [ -f "/tmp/$NAME.failed" ]; then
   rm -f "/tmp/$NAME.failed"
   exit 1

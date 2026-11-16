@@ -7,6 +7,7 @@ import { BadgeEuro, HeartHandshake, Info, Link2, Printer, RotateCcw } from 'luci
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesPayslip } from '@/i18n/pagesPayslip';
 import { localePath } from '@/lib/localeRouter';
@@ -448,6 +449,17 @@ export default function PayslipExplainedPage() {
             </p>
             <Sheet slip={slip} view={view} />
             {(slip.capped.health || slip.capped.pension) && <p className="text-xs text-muted">{t('payslip.capped')}</p>}
+            <EmailResult
+              tool="payslip-explained"
+              className="print:hidden"
+              summary={[
+                { label: t('payslip.form.taxClass'), value: ['I', 'II', 'III', 'IV', 'V', 'VI'][input.taxClass - 1] },
+                { label: t('payslip.form.state'), value: STATE_NAMES[input.state] },
+                ...slip.lines.filter((l) => l.key === 'brutto' || l.key === 'lohnsteuer' || l.key === 'netto').map((l) => ({ label: l.label, value: eur(l.amount) })),
+                { label: 'Summe Steuern', value: `− ${eur(slip.taxes)}` },
+                { label: 'Summe Sozialversicherung', value: `− ${eur(slip.social)}` },
+              ]}
+            />
             <div className="flex flex-wrap gap-2 print:hidden">
               <button type="button" className={buttonClass({ variant: 'outline' })} onClick={() => window.print()}>
                 <Printer className="size-4" aria-hidden /> {t('payslip.sheet.print')}

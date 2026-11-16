@@ -6,6 +6,7 @@ import { BadgeEuro, ReceiptText, RotateCcw } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { registerCopy } from '@/i18n';
 import { pagesTaxRefund } from '@/i18n/pagesTaxRefund';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -143,6 +144,17 @@ export default function TaxRefundCalculatorPage() {
               <Manat eur={Math.abs(r.refund)} className="mt-1" />
               {input.months < 12 && refund && <p className="mt-2 text-sm text-ink">{t('taxRefund.result.midYear', { months: input.months })}</p>}
             </div>
+            <EmailResult
+              tool="tax-refund-calculator"
+              summary={[
+                { label: refund ? t('taxRefund.result.refund') : t('taxRefund.result.backPayment'), value: money(Math.abs(r.refund)) },
+                { label: `${t('taxRefund.result.total')} · ${t('taxRefund.result.withheld')}`, value: money(r.withheld.total, true) },
+                { label: `${t('taxRefund.result.total')} · ${t('taxRefund.result.due')}`, value: money(r.due.total, true) },
+                { label: t('taxRefund.wk.total'), value: money(wk.total, true) },
+                { label: t('taxRefund.result.taxable'), value: money(r.taxableIncome) },
+                { label: t('taxRefund.result.married'), value: r.married ? t('calcCommon.yes') : t('calcCommon.no') },
+              ]}
+            />
 
             <div className="overflow-x-auto rounded-3xl border border-line bg-card">
               <table className="w-full min-w-[22rem] border-collapse text-sm">

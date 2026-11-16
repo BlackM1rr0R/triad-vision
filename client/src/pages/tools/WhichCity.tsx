@@ -11,6 +11,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Accordion } from '@/components/visa/Accordion';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { EmailResult } from '@/components/tools/EmailResult';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesWhichCity } from '@/i18n/pagesWhichCity';
 import { useBrand } from '@/lib/brand';
@@ -174,6 +175,17 @@ const Result = ({ city, score, runnersUp, answers, onRetake }: { city: City; sco
           <Building className="size-4" aria-hidden /> {t('whichCity.result.cityGuide')}
         </Link>
       </div>
+      {answers && (
+        <EmailResult
+          tool="which-city"
+          countUse="mount"
+          summary={[
+            { label: t('whichCity.result.lead'), value: `${name} · ${matchText} · ${city.state}` },
+            ...shown.map((reason) => ({ label: t('whichCity.result.why'), value: reason })),
+            ...(runnersUp.length ? [{ label: t('whichCity.result.runnersUp'), value: runnersUp.map((r) => `${r.city.name[locale] || r.city.name.en} (${t('whichCity.result.match', { pct: r.match })})`).join(', ') }] : []),
+          ]}
+        />
+      )}
       {!answers && <p className="rounded-2xl border border-line bg-sunken p-3 text-sm text-ink">{t('whichCity.result.shared')}</p>}
       {runnersUp.length > 0 && (
         <section aria-labelledby="wc-runners-h">

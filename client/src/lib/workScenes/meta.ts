@@ -23,7 +23,7 @@ export const SCENE_META: SceneMeta[] = [
   { id: 'restaurant-kitchen', path: '/work-scenes/restaurant-kitchen', vocabField: 'HOSPITALITY', professions: ['cook', 'baker', 'butcher', 'waiter'], guides: ['anerkennung-koch'], jobSearch: 'Koch' },
   { id: 'truck-cab', path: '/work-scenes/truck-cab', vocabField: 'DRIVING', professions: ['truck_driver', 'bus_driver', 'courier'], guides: ['driver-jobs'], jobSearch: 'Fahrer' },
   { id: 'hospital-ward', path: '/work-scenes/hospital-ward', vocabField: 'CARE', professions: ['nurse'], guides: ['pflege', 'anerkennung-arzt'], jobSearch: 'Pflege' },
-  { id: 'construction-site', path: '/work-scenes/construction-site', vocabField: 'CONSTRUCTION', professions: ['construction_worker', 'welder', 'carpenter', 'painter', 'plumber'], guides: ['ausbildung'], jobSearch: 'Bau' },
+  { id: 'construction-site', path: '/work-scenes/construction-site', vocabField: 'CONSTRUCTION', professions: ['construction_worker', 'welder', 'carpenter', 'painter', 'plumber'], guides: ['anerkennung-bau', 'ausbildung'], jobSearch: 'Bau' },
   { id: 'electrical-panel', path: '/work-scenes/electrical-panel', vocabField: 'ELECTRICAL', professions: ['electrician'], guides: ['anerkennung-elektroniker'], jobSearch: 'Elektriker' },
 ];
 

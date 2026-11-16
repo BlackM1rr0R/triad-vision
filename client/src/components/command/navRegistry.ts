@@ -228,6 +228,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('requirements', '/admin/requirements', ListChecks, 'work'),
   a('signatures', '/admin/signatures', FileSignature, 'work'),
   a('countersign', '/admin/countersign', SignatureIcon, 'work', { adminOnly: true }), // Triad Vision countersignature of service contracts
+  a('trust', '/admin/trust', ShieldCheck, 'system', { adminOnly: true }), // Trust Center facts + AVV template approval / agreements
   a('officialForms', '/admin/official-forms', FileText, 'work'), // official fillable PDFs: templates + mapping (ADMIN edits, STAFF uses)
   a('expiring', '/admin/expiring', Hourglass, 'work'),
   a('recognition', '/admin/recognition', GraduationCap, 'work'), // Anerkennung procedures of all cases
@@ -251,9 +252,11 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('inquiries', '/admin/inquiries', Inbox, 'clients'),
   a('privacyRequests', '/admin/privacy-requests', ShieldHalf, 'clients', { adminOnly: true }),
   a('referralPartners', '/admin/partners', Handshake, 'clients', { module: 'referrals' }),
+  a('publicApiKeys', '/admin/public-api-keys', Plug, 'clients', { adminOnly: true }), // public vacancy API keys of partners + usage (ADMIN+)
   // İşəgötürənlər
   a('companies', '/admin/companies', Building2, 'employers'),
   a('employerChecklist', '/admin/employer-checklist-templates', ClipboardCheck, 'employers'), // employer arrival checklist templates (STAFF read, ADMIN+ edit)
+  a('realSalaries', '/admin/real-salaries', Banknote, 'employers'), // real salary database: contract records, exclusions (STAFF), recompute (ADMIN+)
   a('vacancies', '/admin/vacancies', BriefcaseBusiness, 'employers'),
   a('jobChannels', '/admin/job-channels', Rss, 'employers', { adminOnly: true }), // job board feeds: Indeed, StepStone, BA Jobbörse, generic XML
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
@@ -290,6 +293,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
   a('overview', '/admin/overview', PieChart, 'finance'), // analytics landing: trend, KPIs, funnel, cases that need a look, goal
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
+  a('quarterlyReport', '/admin/quarterly-report', FileBarChart2, 'finance', { adminOnly: true }), // quarterly labour mobility report PDF (aggregates k ≥ 3; STAFF read, ADMIN+ publish)
   a('yearReview', '/admin/year-review', CalendarHeart, 'finance'), // year in review: cases, professions, cities, records (per-staff ADMIN+)
   a('bizAnalytics', '/admin/business-analytics', ChartNoAxesCombined, 'finance', { adminOnly: true }), // stage times, partner performance, client funnel (management)
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
@@ -315,6 +319,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
   a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
   a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
+  a('toolAnalytics', '/admin/tool-analytics', ChartNoAxesCombined, 'site'), // public tools: views, interactions, result e-mails, attributed sign-ups (aggregates)
   a('searchPerformance', '/admin/search-performance', ChartNoAxesCombined, 'site', { adminOnly: true }), // Google Search Console: queries, pages, CTR (ADMIN+)
   a('problemReports', '/admin/problems', Bug, 'site', { adminOnly: true }),
   // Sistem
@@ -343,6 +348,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('brand', '/admin/system/brand', BadgeCheck, 'system', { superOnly: true }),
   a('license', '/admin/system/license', KeyRound, 'system', { superOnly: true }),
   a('customers', '/admin/system/customers', Store, 'system', { superOnly: true, ownerOnly: true }),
+  a('onboarding', '/admin/system/onboarding', Rocket, 'system', { superOnly: true }), // setup wizard of a new agency instance (lib/saas/onboarding)
   // Sub-pages without a former sidebar entry
   a('docsAudit', '/admin/docs/audit', FileSearch, undefined),
   a('aiSettings', '/admin/ai/settings', Bot, undefined, { superOnly: true, module: 'aiAssistant' }),
@@ -394,19 +400,19 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
-  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist'] },
+  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist', 'realSalaries'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
-  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
-  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'agents'] },
+  { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports', 'quarterlyReport'] },
+  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'publicApiKeys', 'agents'] },
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'docGuides', 'events', 'siteTools', 'cityCosts'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

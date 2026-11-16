@@ -16,6 +16,7 @@ import { eraseGermanyJobAlerts } from './germanyJobs/alerts.js';
 import { revokeAllShares } from './successShare/service.js';
 import { purgeCaseCards } from './successShare/privateCard.js';
 import { eraseArrivalCertificates } from './arrivalCertificate/service.js';
+import { eraseStudentRecords } from './partners/schools.js';
 
 /**
  * Hard delete of a user account by the super admin (Admin → Users → "Delete").
@@ -321,6 +322,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await prisma.packingChecklist.deleteMany({ where: { userId } }); // My Germany day packing checklist (plain id)
   await prisma.readinessSnapshot.deleteMany({ where: { userId } }); // Germany readiness score history (plain id)
   await prisma.readinessSelfCheck.deleteMany({ where: { userId } }); // readiness money self-check (plain id)
+  await eraseStudentRecords(userId); // language-school attendance / exam records + certificate files (plain ids)
   await deleteCourseData(userId); // pre-departure course: enrollments, progress, quiz attempts, certificates (plain ids)
   await revokeAllShares(userId); // public "visa approved" share links (Setting rows keyed by token)
   await purgeCaseCards(ownCaseIds); // cached private Instagram cards of the cases (disk)
