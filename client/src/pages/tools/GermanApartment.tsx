@@ -1,20 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Info, Lightbulb, Minus, Plus, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Info, Lightbulb } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { GlossaryChips } from '@/components/glossary/GlossaryChips';
 import { ApartmentPlan } from '@/components/apartment/ApartmentPlan';
+import { HotspotMap } from '@/components/hotspots/HotspotMap';
 import { registerCopy } from '@/i18n';
 import { pagesApartment } from '@/i18n/pagesApartment';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { APARTMENT_AS_OF, APARTMENT_H, APARTMENT_SOURCES, APARTMENT_W, HOTSPOTS, ROOMS, hotspotById, hotspotNumber, type Hotspot, type Room } from '@/lib/apartment/hotspots';
 
 registerCopy(pagesApartment);
-
-const ZOOMS = [1, 1.5, 2, 2.5] as const;
 
 const Detail = ({ spot }: { spot: Hotspot }) => {
   const { t } = useTranslation();
@@ -65,9 +64,7 @@ export default function GermanApartmentPage() {
   const [params, setParams] = useSearchParams();
   const selected = hotspotById(params.get('spot'));
   const [room, setRoom] = useState<Room | null>(null);
-  const [zoom, setZoom] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = Object.fromEntries(ROOMS.map((r) => [r, t(`apt.rooms.${r}`)])) as Record<Room, string>;
   const visible = room ? HOTSPOTS.filter((h) => h.room === room) : HOTSPOTS;
 
@@ -83,17 +80,6 @@ export default function GermanApartmentPage() {
     const next = list[(i + dir + list.length) % list.length];
     if (next) select(next.id);
   };
-
-  // Keep the selected hotspot in view when zoomed in.
-  useEffect(() => {
-    const box = scrollRef.current;
-    if (!box || !selected || zoom === 0) return;
-    const x = (selected.x / APARTMENT_W) * box.scrollWidth - box.clientWidth / 2;
-    const y = (selected.y / APARTMENT_H) * box.scrollHeight - box.clientHeight / 2;
-    box.scrollTo({ left: x, top: y, behavior: 'smooth' });
-  }, [selected, zoom]);
-
-  const scale = ZOOMS[zoom];
 
   return (
     <>
@@ -116,48 +102,25 @@ export default function GermanApartmentPage() {
           <p className="text-sm text-muted">{t('apt.howTo')}</p>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-            <div className="relative rounded-3xl border border-line bg-card p-2 sm:p-3">
-              <div className="absolute top-4 right-4 z-10 flex flex-col gap-1 rounded-xl border border-line bg-card/95 p-1 shadow-sm">
-                <button type="button" className="grid size-10 place-items-center rounded-lg hover:bg-sunken disabled:opacity-40" onClick={() => setZoom((z) => Math.min(ZOOMS.length - 1, z + 1))} disabled={zoom === ZOOMS.length - 1} aria-label={t('apt.zoomIn')}>
-                  <Plus className="size-4" aria-hidden />
-                </button>
-                <button type="button" className="grid size-10 place-items-center rounded-lg hover:bg-sunken disabled:opacity-40" onClick={() => setZoom((z) => Math.max(0, z - 1))} disabled={zoom === 0} aria-label={t('apt.zoomOut')}>
-                  <Minus className="size-4" aria-hidden />
-                </button>
-                <button type="button" className="grid size-10 place-items-center rounded-lg hover:bg-sunken disabled:opacity-40" onClick={() => setZoom(0)} disabled={zoom === 0} aria-label={t('apt.zoomReset')}>
-                  <RotateCcw className="size-4" aria-hidden />
-                </button>
-              </div>
-              <div ref={scrollRef} className="overflow-auto rounded-2xl overscroll-contain" style={{ touchAction: 'pan-x pan-y' }}>
-                <div className="relative" style={{ width: `${scale * 100}%` }} role="group" aria-label={t('apt.mapLabel', { count: HOTSPOTS.length })}>
-                  <ApartmentPlan rooms={rooms} highlight={room} />
-                  {HOTSPOTS.map((h) => {
-                    const n = hotspotNumber(h.id);
-                    const active = selected?.id === h.id;
-                    const hidden = room !== null && h.room !== room;
-                    return (
-                      <button
-                        key={h.id}
-                        type="button"
-                        onClick={() => select(h.id, true)}
-                        aria-pressed={active}
-                        aria-label={`${n}. ${t(`apt.hotspots.${h.id}.title`)}`}
-                        title={t(`apt.hotspots.${h.id}.title`)}
-                        tabIndex={hidden ? -1 : 0}
-                        className={clsx(
-                          'absolute grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 text-xs font-bold shadow-md transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus motion-reduce:transition-none sm:size-8 sm:text-sm',
-                          active ? 'scale-125 border-white bg-highlight text-highlight-contrast' : 'border-white bg-primary text-primary-contrast hover:scale-110',
-                          hidden && 'pointer-events-none opacity-25',
-                        )}
-                        style={{ left: `${(h.x / APARTMENT_W) * 100}%`, top: `${(h.y / APARTMENT_H) * 100}%` }}
-                      >
-                        {n}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <HotspotMap
+              width={APARTMENT_W}
+              height={APARTMENT_H}
+              mapLabel={t('apt.mapLabel', { count: HOTSPOTS.length })}
+              zoomLabels={{ in: t('apt.zoomIn'), out: t('apt.zoomOut'), reset: t('apt.zoomReset') }}
+              onSelect={(id) => select(id, true)}
+              spots={HOTSPOTS.map((h) => ({
+                id: h.id,
+                x: h.x,
+                y: h.y,
+                content: hotspotNumber(h.id),
+                label: `${hotspotNumber(h.id)}. ${t(`apt.hotspots.${h.id}.title`)}`,
+                title: t(`apt.hotspots.${h.id}.title`),
+                active: selected?.id === h.id,
+                hidden: room !== null && h.room !== room,
+              }))}
+            >
+              <ApartmentPlan rooms={rooms} highlight={room} />
+            </HotspotMap>
 
             <div
               ref={panelRef}

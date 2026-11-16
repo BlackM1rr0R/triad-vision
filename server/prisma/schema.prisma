@@ -6355,6 +6355,8 @@ model EmployerArrivalItem {
   visibleToWorker Boolean   @default(true)
   /// First-work-day reminder to the company was sent (FIRST_DAY item only).
   remindedAt      DateTime?
+  /// The due date was computed from the template (arrival / first work day + offset) and follows date changes until edited.
+  dueAuto         Boolean   @default(false)
   createdById     String?   @db.VarChar(40)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -6836,4 +6838,51 @@ model RuleChangeRecipient {
 
   @@unique([ruleChangeId, userId])
   @@index([userId])
+}
+
+// ─── Germany readiness score (lib/readiness) + employer checklist templates (lib/employerArrival) ───
+
+/// One readiness score per client and day (the latest computation of that day) for the trend line. Plain ids.
+model ReadinessSnapshot {
+  id        String   @id @default(cuid())
+  userId    String   @db.VarChar(40)
+  /// Calendar day (UTC).
+  day       DateTime @db.Date
+  score     Int
+  /// Sub-scores 0–100: { language, documents, money, skills, housing }.
+  parts     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, day])
+}
+
+/// The client's short money self-check of the readiness score (the portal has no stored budget). Plain ids.
+model ReadinessSelfCheck {
+  userId    String   @id @db.VarChar(40)
+  /// { savings, budgetPlanned, firstMonth, bankReady } (lib/readiness/score.ts MONEY_QUESTIONS).
+  answers   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Employer arrival checklist template (admin-editable). Built-in keys are defined in code (lib/employerArrival);
+/// a row overrides a built-in (labels, due-date rule, active, order) or adds a new item key for all companies.
+model EmployerChecklistTemplate {
+  id              String   @id @default(cuid())
+  key             String   @unique @db.VarChar(30)
+  labelDe         String   @db.VarChar(200)
+  labelEn         String?  @db.VarChar(200)
+  labelAz         String?  @db.VarChar(200)
+  labelRu         String?  @db.VarChar(200)
+  /// ARRIVAL | FIRST_DAY: the date the offset counts from.
+  anchor          String   @default("ARRIVAL") @db.VarChar(12)
+  /// Days relative to the anchor (negative = before); null = no automatic due date.
+  offsetDays      Int?
+  visibleToWorker Boolean  @default(true)
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  updatedById     String?  @db.VarChar(40)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

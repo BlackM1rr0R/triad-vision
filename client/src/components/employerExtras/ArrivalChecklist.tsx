@@ -21,6 +21,10 @@ export interface ChecklistItem {
   id: string;
   key: string | null;
   label: string | null;
+  /** Admin-edited template labels (lib/employerArrivalTemplates); null = the built-in translation. */
+  labels?: Partial<Record<'de' | 'en' | 'az' | 'ru', string | null>> | null;
+  dueAuto?: boolean;
+  dueState?: 'done' | 'none' | 'ok' | 'soon' | 'overdue';
   custom?: boolean;
   done: boolean;
   doneAt: string | null;
@@ -42,11 +46,36 @@ interface OverviewRow {
   arrival: string | null;
   firstDay: string | null;
   progress: Progress;
+  overdue?: number;
 }
 
 const useItemLabel = () => {
+  const { t, i18n } = useTranslation();
+  const lng = (i18n.resolvedLanguage ?? 'de').slice(0, 2) as 'de' | 'en' | 'az' | 'ru';
+  return (i: Pick<ChecklistItem, 'key' | 'label' | 'labels'>) =>
+    i.key ? (i.labels?.[lng] ?? i.labels?.de ?? t(`employerChecklist.item.${i.key}`, { defaultValue: i.key })) : (i.label ?? '');
+};
+
+/** Short "why / when" hint of a built-in item (none for custom or admin-added items). */
+const useItemHint = () => {
+  const { t, i18n } = useTranslation();
+  return (i: Pick<ChecklistItem, 'key'>) => (i.key && i18n.exists(`employerChecklist.hints.${i.key}`) ? t(`employerChecklist.hints.${i.key}`) : null);
+};
+
+/** "overdue" / "due soon" chip (nothing for other states). */
+export const DueChip = ({ state }: { state?: ChecklistItem['dueState'] }) => {
   const { t } = useTranslation();
-  return (i: Pick<ChecklistItem, 'key' | 'label'>) => (i.key ? t(`employerChecklist.item.${i.key}`) : (i.label ?? ''));
+  if (state !== 'overdue' && state !== 'soon') return null;
+  return (
+    <span
+      className={clsx(
+        'ml-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold',
+        state === 'overdue' ? 'bg-danger-bg text-danger-fg' : 'bg-warning-bg text-warning-fg',
+      )}
+    >
+      {t(`employerChecklist.state.${state}`)}
+    </span>
+  );
 };
 
 const dayInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '');
@@ -69,6 +98,7 @@ export const ProgressBar = ({ progress, className }: { progress: Progress; class
 const ItemRow = ({ caseId, item, onSaved }: { caseId: string; item: ChecklistItem; onSaved: () => void }) => {
   const { t } = useTranslation();
   const label = useItemLabel();
+  const hint = useItemHint()(item);
   const [note, setNote] = useState(item.note ?? '');
   useEffect(() => setNote(item.note ?? ''), [item.note]);
   const patch = useMutation({
@@ -96,7 +126,11 @@ const ItemRow = ({ caseId, item, onSaved }: { caseId: string; item: ChecklistIte
           {patch.isPending ? <Spinner className="size-5" /> : item.done ? <CheckCircle2 className="size-5 text-success" /> : <Circle className="size-5 text-muted" />}
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-ink">{label(item)}</p>
+          <p className="text-sm font-semibold text-ink">
+            {label(item)}
+            <DueChip state={item.dueState} />
+          </p>
+          {hint && !item.done && <p className="text-[11px] leading-snug text-muted">{hint}</p>}
           {item.done && item.doneAt && (
             <p className="text-[11px] text-muted">{t('employerChecklist.doneBy', { name: item.doneByName ?? '—', date: fmtDate(item.doneAt) })}</p>
           )}
@@ -106,11 +140,13 @@ const ItemRow = ({ caseId, item, onSaved }: { caseId: string; item: ChecklistIte
               <input
                 type="date"
                 className="input mt-0.5 text-sm"
+                key={dayInput(item.dueDate)}
                 defaultValue={dayInput(item.dueDate)}
                 onBlur={(e) => {
                   if (e.target.value !== dayInput(item.dueDate)) patch.mutate({ dueDate: e.target.value || null });
                 }}
               />
+              {item.dueAuto && item.dueDate && <span className="mt-0.5 block text-[10px] font-normal">{t('employerChecklist.autoDate')}</span>}
             </label>
             <label className="text-[11px] font-medium text-muted">
               {t('employerChecklist.note')}
@@ -253,6 +289,7 @@ export const CompanyArrivalChecklists = () => {
                   )}
                 </div>
                 <ProgressBar progress={r.progress} className="mt-3" />
+                {!!r.overdue && <p className="mt-1 text-xs font-semibold text-danger-fg">{t('employerChecklist.overdueCount', { count: r.overdue })}</p>}
               </button>
             </li>
           ))}
@@ -278,6 +315,7 @@ export const ReadOnlyChecklist = ({ items, staff = false }: { items: ChecklistIt
               <span className="sr-only">{i.done ? t('employerChecklist.done') : ''} </span>
               {label(i)}
               {i.dueDate && <span className="ml-1.5 text-xs text-muted">· {fmtDate(i.dueDate)}</span>}
+              {!i.done && <DueChip state={i.dueState} />}
               {staff && i.visibleToWorker === false && <span className="ml-1.5 text-[11px] text-muted">({t('employerChecklist.internal')})</span>}
             </p>
             {staff && i.done && i.doneAt && <p className="text-[11px] text-muted">{t('employerChecklist.doneBy', { name: i.doneByName ?? '—', date: fmtDate(i.doneAt) })}</p>}
@@ -293,7 +331,7 @@ export const ReadOnlyChecklist = ({ items, staff = false }: { items: ChecklistIt
 export const StaffEmployerChecklist = ({
   checklist,
 }: {
-  checklist: { company: { id: string; name: string } | null; items: ChecklistItem[]; progress: Progress; firstDay: string | null } | null | undefined;
+  checklist: { company: { id: string; name: string } | null; items: ChecklistItem[]; progress: Progress; firstDay: string | null; overdue?: number } | null | undefined;
 }) => {
   const { t } = useTranslation();
   if (!checklist) return null;
@@ -306,6 +344,7 @@ export const StaffEmployerChecklist = ({
       {checklist.items.length ? (
         <>
           <ProgressBar progress={checklist.progress} />
+          {!!checklist.overdue && <p className="text-xs font-semibold text-danger-fg">{t('employerChecklist.overdueCount', { count: checklist.overdue })}</p>}
           <ReadOnlyChecklist items={checklist.items} staff />
         </>
       ) : (
@@ -347,5 +386,20 @@ export const StaffEmployerChecklistCard = ({ caseId }: { caseId: string }) => {
     <div className="rounded-2xl border border-line p-4">
       <StaffEmployerChecklist checklist={q.data} />
     </div>
+  );
+};
+
+/** Staff: the employer's checklist on the case page (GET /api/admin/employer-checklist/case/:caseId); nothing without an employer. */
+export const CaseEmployerChecklistCard = ({ caseId }: { caseId: string }) => {
+  const q = useQuery({
+    queryKey: ['admin-case-employer-checklist', caseId],
+    queryFn: async () =>
+      (await api.get<{ checklist: Parameters<typeof StaffEmployerChecklist>[0]['checklist'] }>(`/admin/employer-checklist/case/${caseId}`)).data.checklist,
+  });
+  if (!q.data) return null;
+  return (
+    <section className="card p-5">
+      <StaffEmployerChecklist checklist={q.data} />
+    </section>
   );
 };

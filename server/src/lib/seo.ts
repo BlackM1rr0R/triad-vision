@@ -31,6 +31,7 @@ import { findJobLanding, jobLandingTexts, jobLandings, parseJobLandingPath } fro
 import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, studyListLd, type StudySeoRow } from './study/seo.js';
 import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
+import { germanExamFaqFor } from './germanExam/seo.js';
 
 /*
  * SEO for a client-rendered SPA.
@@ -688,7 +689,13 @@ export const TOOL_PAGES = new Set([
   '/shortage-barometer',
   '/tax-refund-calculator',
   '/shift-pay-calculator',
+  '/driving-time-calculator',
+  '/work-schedule-check',
+  '/tax-class-chooser',
+  '/employer-cost-calculator',
   '/rent-check',
+  '/health-insurance-comparison',
+  '/emergency-wallpaper',
   '/holiday-planner',
   '/grade-converter',
   '/weekend-trips',
@@ -704,6 +711,14 @@ export const TOOL_PAGES = new Set([
   '/price-game',
   '/traffic-signs',
   '/waste-sorting',
+  '/work-scenes/restaurant-kitchen',
+  '/work-scenes/truck-cab',
+  '/work-scenes/hospital-ward',
+  '/work-scenes/construction-site',
+  '/work-scenes/electrical-panel',
+  '/german-mock-exam/a1',
+  '/german-mock-exam/b1',
+  '/german-level-test-self',
 ]);
 
 /** schema.org applicationCategory of each tool (UtilitiesApplication for checks, FinanceApplication for money). */
@@ -715,13 +730,24 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/payslip-explained': 'FinanceApplication',
   '/tax-refund-calculator': 'FinanceApplication',
   '/shift-pay-calculator': 'FinanceApplication',
+  '/tax-class-chooser': 'FinanceApplication',
+  '/employer-cost-calculator': 'FinanceApplication',
   '/rent-check': 'FinanceApplication',
+  '/health-insurance-comparison': 'FinanceApplication',
   '/cities': 'FinanceApplication',
   '/german-simulator': 'EducationalApplication',
   '/pronunciation': 'EducationalApplication',
   '/traffic-signs': 'EducationalApplication',
   '/price-game': 'GameApplication',
   '/waste-sorting': 'GameApplication',
+  '/work-scenes/restaurant-kitchen': 'EducationalApplication',
+  '/work-scenes/truck-cab': 'EducationalApplication',
+  '/work-scenes/hospital-ward': 'EducationalApplication',
+  '/work-scenes/construction-site': 'EducationalApplication',
+  '/work-scenes/electrical-panel': 'EducationalApplication',
+  '/german-mock-exam/a1': 'EducationalApplication',
+  '/german-mock-exam/b1': 'EducationalApplication',
+  '/german-level-test-self': 'EducationalApplication',
 };
 
 const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
@@ -973,6 +999,11 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     if (path === '/compare-visas') {
       const content = compareContent(lng, data.compareThresholds ?? COMPARE_FALLBACK);
       const ld = faqPageLd(content.faq, lng);
+      if (ld) resolved.jsonLd.push(ld);
+    }
+    const germanExamFaq = germanExamFaqFor(path, lng);
+    if (germanExamFaq) {
+      const ld = faqPageLd(germanExamFaq, lng);
       if (ld) resolved.jsonLd.push(ld);
     }
     if (path === '/stories') resolved.jsonLd.push(...storyVideosLd(data, lng));

@@ -25,6 +25,7 @@ import { AccountHomeSkeleton } from './portal/HomeSkeleton';
 import { CountdownCards } from '@/components/portal/CountdownCards'; // embassy / flight / Anmeldung countdowns + destination weather
 import { GermanyDayCard } from '@/components/portal/GermanyDayCard'; // visa approved: countdown, week weather, packing list, first-day phrases
 import { BadgesPanel } from '@/components/portal/BadgesPanel'; // private achievements (compact)
+import { ReadinessCard } from '@/components/readiness/Readiness'; // Germany readiness score 0–100 + the next step with the biggest gain
 
 registerCopy(pagesAccount);
 registerCopy(pagesPortalUx);
@@ -101,6 +102,8 @@ export default function AccountHome() {
       {step?.case && <JourneyCard next={step} />}
 
       <PartnerSharingCard />
+
+      <ReadinessCard />
 
       {cases.length > 0 && <BadgesPanel compact />}
 

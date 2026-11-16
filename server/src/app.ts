@@ -24,6 +24,7 @@ import { maskResponses } from './lib/privacy/mask.js';
 import { accountRouter } from './routes/account.js';
 import { accountPlusRouter } from './routes/accountPlus.js';
 import { accountGermanyRouter } from './routes/accountGermany.js';
+import { accountReadinessRouter } from './routes/accountReadiness.js'; // Germany readiness score (own data)
 import { accountBillingRouter } from './routes/billing.js'; // client portal: invoices, receipts, payment plan
 import { packagesRouter } from './routes/packages.js'; // public service packages + online order
 import { messagingRouter } from './routes/messaging.js';
@@ -251,6 +252,7 @@ export const createApp = () => {
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account/visa-story', accountVisaStoryRouter); // visa approved: 'Your visa story' slides + share card (own case only)
   app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
+  app.use('/api/account/readiness', accountReadinessRouter); // Germany readiness score 0–100: sub-scores, next steps, daily snapshots (own data only)
   app.use('/api/account/germany', accountGermanyRouter); // My Germany day (countdown, weather, packing), arrival card, badges
   app.use('/api/account/plus', accountPlusRouter); // family switcher, countdown cards + weather, offline pack (lib/clientPlus)
   app.use('/api/account', accountRouter);

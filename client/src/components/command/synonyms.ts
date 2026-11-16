@@ -71,6 +71,7 @@ export const SYNONYMS: Record<string, string> = {
   siteTools: 'kalkulyator, xəritə, calculator, map, rechner, karte, калькулятор, карта',
   searchPerformance: 'axtarış, google, search console, seo, klik, sorğu, suchanfragen, klicks, impressionen, queries, clicks, impressions, поиск, запросы, клики, показы',
   cityCosts: 'şəhər xərcləri, kirayə, büdcə, stadtkosten, miete, budget, city costs, rent, расходы, аренда, бюджет',
+  employerChecklist: 'gəliş siyahısı, işəgötürən, şablon, ankunft, checkliste, vorlage, arbeitgeber, arrival checklist, employer, template, чек-лист, работодатель, шаблон',
   yearReview: 'ilin yekunu, illik hesabat, jahresrückblick, jahresbilanz, year in review, wrapped, итоги года, годовой отчёт',
   problemReports: 'problem, xəta, bug, fehler, meldung, ошибка, проблема',
   settings: 'ayar, settings, einstellungen, konfiguration, настройки',

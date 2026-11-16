@@ -55,6 +55,8 @@ import { VaultApplyPicker } from '@/components/vault/VaultApplyPicker'; // docum
 import type { VaultDoc } from '@/components/vault/api';
 import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
+import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
+import { sceneForProfession } from '@/lib/workScenes/meta';
 
 registerCopy(pagesJobs);
 registerCopy(pagesPortalExtras); // px.apply.*, px.scan.*
@@ -526,6 +528,7 @@ export default function JobDetail() {
 
             {/* Job alert preselected with this vacancy's profession. */}
             <JobAlertForm profession={v.profession} />
+            <WorkSceneCard scene={sceneForProfession(v.profession)} />
           </div>
 
           <aside className="min-w-0">

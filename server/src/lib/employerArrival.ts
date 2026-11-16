@@ -7,6 +7,9 @@ import { audit } from './audit.js';
 import { notifyUser } from './notifications.js';
 import { anonymisedProfile, anonymisedProfileSelect } from './vacancies.js';
 import { isImpersonating } from './privacy/impersonationContext.js';
+import { dueFor, dueState, loadTemplates, utcDay, type Anchors, type Template } from './employerArrivalTemplates.js';
+
+export { DEFAULT_ITEMS, type DefaultItem } from './employerArrivalTemplates.js';
 
 /**
  * Employer arrival checklist (company portal → "Workers" → worker → "Arrival checklist").
@@ -19,10 +22,10 @@ import { isImpersonating } from './privacy/impersonationContext.js';
  *     without the company's notes or who ticked them
  *   - jobs/employerArrival.ts reminds the company's portal users when the first work day is near and items are open
  * The client's own "first steps" checklist (lib/housing, lib/journey) is separate: this one is the employer's side.
+ * Items come from templates (lib/employerArrivalTemplates.ts: built-ins + admin overrides / additions); their due
+ * dates follow the arrival date or the first work day (+/- offset) until the company sets a date itself (dueAuto).
  */
 
-export const DEFAULT_ITEMS = ['HOUSING', 'ANMELDUNG', 'BANK_ACCOUNT', 'HEALTH_INSURANCE', 'TAX_ID', 'FIRST_DAY', 'WORKWEAR', 'SAFETY_BRIEFING'] as const;
-export type DefaultItem = (typeof DEFAULT_ITEMS)[number];
 export const MAX_CUSTOM_ITEMS = 30;
 /** Reminder this many days before the first work day (when items are still open). */
 export const FIRST_DAY_REMIND_DAYS = 3;
@@ -39,36 +42,85 @@ const eligibleWhere = (companyId: string): Prisma.CaseWhereInput => ({
 export const eligibleCase = (companyId: string, caseId: string) =>
   prisma.case.findFirst({ where: { id: caseId, ...eligibleWhere(companyId) }, select: { id: true, companyId: true, clientId: true } });
 
-/** Creates the default items of a case once (idempotent); the first work day comes from the employment contract. */
-export const ensureItems = async (companyId: string, caseId: string) => {
+/** Arrival (non-cancelled arrival plan) and first work day (employer's own FIRST_DAY date, else the contract start). */
+const anchorsOf = async (caseId: string, firstDayItem: { dueDate: Date | null; dueAuto: boolean } | null): Promise<Anchors> => {
+  const [plan, contract] = await Promise.all([
+    prisma.arrivalPlan.findUnique({ where: { caseId }, select: { status: true, arrivalTime: true, flightDate: true } }),
+    prisma.employmentContract.findUnique({ where: { caseId }, select: { startDate: true } }),
+  ]);
+  const arrival = plan && plan.status !== 'CANCELLED' ? (plan.arrivalTime ?? plan.flightDate ?? null) : null;
+  const firstDay = firstDayItem?.dueDate && !firstDayItem.dueAuto ? firstDayItem.dueDate : (contract?.startDate ?? null);
+  return { arrival, firstDay };
+};
+
+const sameDay = (x: Date | null, y: Date | null) => (x ? utcDay(x).getTime() : null) === (y ? utcDay(y).getTime() : null);
+
+/**
+ * Creates the items of the active templates a case does not have yet (idempotent) and moves the automatic due dates
+ * of open items when the arrival or the first work day changed. Dates the company set itself are never touched.
+ */
+export const ensureItems = async (companyId: string, caseId: string, templates?: Template[]) => {
   if (isImpersonating()) return;
-  const existing = await prisma.employerArrivalItem.count({ where: { caseId, key: { not: null } } });
-  if (existing >= DEFAULT_ITEMS.length) return;
-  const contract = await prisma.employmentContract.findUnique({ where: { caseId }, select: { startDate: true } });
-  await prisma.employerArrivalItem.createMany({
-    data: DEFAULT_ITEMS.map((key, i) => ({ caseId, companyId, key, sortOrder: (i + 1) * 10, dueDate: key === 'FIRST_DAY' ? (contract?.startDate ?? null) : null })),
-    skipDuplicates: true,
+  const all = templates ?? (await loadTemplates());
+  const existing = await prisma.employerArrivalItem.findMany({
+    where: { caseId, key: { not: null } },
+    select: { id: true, key: true, done: true, dueDate: true, dueAuto: true },
   });
+  const have = new Set(existing.map((i) => i.key));
+  const missing = all.filter((t) => t.active && !have.has(t.key));
+  const anchors = await anchorsOf(caseId, existing.find((i) => i.key === 'FIRST_DAY') ?? null);
+  if (missing.length) {
+    await prisma.employerArrivalItem.createMany({
+      data: missing.map((t) => {
+        const dueDate = dueFor(t, anchors);
+        return { caseId, companyId, key: t.key, sortOrder: t.sortOrder, visibleToWorker: t.visibleToWorker, dueDate, dueAuto: dueDate !== null };
+      }),
+      skipDuplicates: true,
+    });
+  }
+  const byKey = new Map(all.map((t) => [t.key, t]));
+  for (const i of existing) {
+    const t = i.key ? byKey.get(i.key) : undefined;
+    if (!t || i.done || !(i.dueAuto || i.dueDate === null)) continue;
+    const due = dueFor(t, anchors);
+    if (due && !sameDay(due, i.dueDate)) await prisma.employerArrivalItem.update({ where: { id: i.id }, data: { dueDate: due, dueAuto: true } });
+  }
 };
 
 const ordered = { orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'asc' as const }] };
 
-export const itemView = (i: EmployerArrivalItem) => ({
+type TemplateMap = Map<string, Template>;
+const templateMap = async (): Promise<TemplateMap> => new Map((await loadTemplates()).map((t) => [t.key, t]));
+/** Admin-edited labels of a template item ({ de, en, az, ru }); null = the UI's own translation of the key. */
+const labelsOf = (i: Pick<EmployerArrivalItem, 'key'>, templates?: TemplateMap) => (i.key && templates?.get(i.key)?.labels) || null;
+
+export const itemView = (i: EmployerArrivalItem, templates?: TemplateMap, now = new Date()) => ({
   id: i.id,
   key: i.key,
   label: i.label,
+  labels: labelsOf(i, templates),
   custom: i.key === null,
   done: i.done,
   doneAt: i.doneAt,
   doneByName: i.doneByName,
   dueDate: i.dueDate,
+  dueAuto: i.dueAuto,
+  dueState: dueState(i, now),
   note: i.note,
   visibleToWorker: i.visibleToWorker,
   updatedAt: i.updatedAt,
 });
 
 /** What the worker sees: no notes, no names. */
-export const workerItemView = (i: EmployerArrivalItem) => ({ id: i.id, key: i.key, label: i.label, done: i.done, doneAt: i.doneAt, dueDate: i.dueDate });
+export const workerItemView = (i: EmployerArrivalItem, templates?: TemplateMap) => ({
+  id: i.id,
+  key: i.key,
+  label: i.label,
+  labels: labelsOf(i, templates),
+  done: i.done,
+  doneAt: i.doneAt,
+  dueDate: i.dueDate,
+});
 
 export const progressOf = (items: Pick<EmployerArrivalItem, 'done'>[]) => ({ done: items.filter((i) => i.done).length, total: items.length });
 
@@ -80,9 +132,18 @@ export const listItems = (caseId: string) => prisma.employerArrivalItem.findMany
 export const companyChecklist = async (companyId: string, caseId: string) => {
   const c = await eligibleCase(companyId, caseId);
   if (!c) throw notFound('WORKER_NOT_FOUND');
-  await ensureItems(companyId, caseId);
+  const templates = await loadTemplates();
+  await ensureItems(companyId, caseId, templates);
   const items = await listItems(caseId);
-  return { caseId, items: items.map(itemView), progress: progressOf(items), firstDay: firstDayOf(items) };
+  const map = new Map(templates.map((t) => [t.key, t]));
+  const now = new Date();
+  return {
+    caseId,
+    items: items.map((i) => itemView(i, map, now)),
+    progress: progressOf(items),
+    firstDay: firstDayOf(items),
+    overdue: items.filter((i) => dueState(i, now) === 'overdue').length,
+  };
 };
 
 /** All eligible workers of the company with checklist progress (company "arrival checklists" overview). */
@@ -92,7 +153,9 @@ export const companyOverview = async (companyId: string) => {
     orderBy: { createdAt: 'desc' },
     select: { id: true, profession: true, client: { select: anonymisedProfileSelect }, arrivalPlan: { select: { status: true, arrivalTime: true, flightDate: true } } },
   });
-  for (const c of cases) await ensureItems(companyId, c.id);
+  const templates = await loadTemplates();
+  for (const c of cases) await ensureItems(companyId, c.id, templates);
+  const now = new Date();
   const items = cases.length ? await prisma.employerArrivalItem.findMany({ where: { caseId: { in: cases.map((c) => c.id) } }, ...ordered }) : [];
   return cases.map((c) => {
     const mine = items.filter((i) => i.caseId === c.id);
@@ -104,6 +167,7 @@ export const companyOverview = async (companyId: string) => {
       arrival: plan ? (plan.arrivalTime ?? plan.flightDate) : null,
       firstDay: firstDayOf(mine),
       progress: progressOf(mine),
+      overdue: mine.filter((i) => dueState(i, now) === 'overdue').length,
       openKeys: mine.filter((i) => !i.done).map((i) => i.key ?? i.label ?? ''),
     };
   });
@@ -180,6 +244,7 @@ export const updateItem = async (req: Request, companyId: string, caseId: string
   }
   if (input.dueDate !== undefined) {
     data.dueDate = input.dueDate;
+    data.dueAuto = false; // the company's own date: no longer moved with the arrival / first work day
     // A moved first work day gets a fresh reminder.
     if (item.key === 'FIRST_DAY' && (input.dueDate?.getTime() ?? null) !== (item.dueDate?.getTime() ?? null)) data.remindedAt = null;
   }
@@ -188,7 +253,9 @@ export const updateItem = async (req: Request, companyId: string, caseId: string
   if (input.label !== undefined) data.label = input.label;
   const saved = await prisma.employerArrivalItem.update({ where: { id: item.id }, data });
   await audit(req, 'EMPLOYER_ARRIVAL_ITEM_UPDATED', `case:${caseId}`, { itemId: item.id, key: item.key, done: input.done });
-  return itemView(saved);
+  // A moved first work day moves the automatic dates that count from it.
+  if (item.key === 'FIRST_DAY' && input.dueDate !== undefined) await ensureItems(companyId, caseId);
+  return itemView(saved, await templateMap());
 };
 
 export const deleteItem = async (req: Request, companyId: string, caseId: string, itemId: string) => {
@@ -205,7 +272,15 @@ export const staffChecklist = async (caseId: string) => {
   const c = await prisma.case.findUnique({ where: { id: caseId }, select: { companyId: true, company: { select: { id: true, name: true } } } });
   if (!c?.companyId) return null;
   const items = await listItems(caseId);
-  return { company: c.company, items: items.map(itemView), progress: progressOf(items), firstDay: firstDayOf(items) };
+  const map = await templateMap();
+  const now = new Date();
+  return {
+    company: c.company,
+    items: items.map((i) => itemView(i, map, now)),
+    progress: progressOf(items),
+    firstDay: firstDayOf(items),
+    overdue: items.filter((i) => dueState(i, now) === 'overdue').length,
+  };
 };
 
 /** Staff list: progress per case id. */
@@ -223,7 +298,9 @@ export const progressByCase = async (caseIds: string[]) => {
 /** Worker: the items the employer shares (read-only). */
 export const workerChecklist = async (caseId: string) => {
   const items = await prisma.employerArrivalItem.findMany({ where: { caseId, visibleToWorker: true }, ...ordered });
-  return items.length ? { items: items.map(workerItemView), progress: progressOf(items) } : null;
+  if (!items.length) return null;
+  const map = await templateMap();
+  return { items: items.map((i) => workerItemView(i, map)), progress: progressOf(items) };
 };
 
 // ─── First-work-day reminder (jobs/employerArrival.ts) ──────────────────

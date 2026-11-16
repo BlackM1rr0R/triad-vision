@@ -22,6 +22,8 @@ const en: Messages = {
     cities: 'German cities',
     calculator: 'When can I start?',
     costCalculator: 'Cost calculator',
+    germanMockA1: 'A1 mock exam',
+    germanMockB1: 'B1 mock exam',
     events: 'Events',
     map: 'Placement map',
     referral: 'Refer a friend',

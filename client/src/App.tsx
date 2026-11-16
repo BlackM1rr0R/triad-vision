@@ -163,11 +163,26 @@ const PhraseOfTheDayPage = lazyRoute('PhraseOfTheDayPage', () => import('./pages
 const WhenInGermanyPage = lazyRoute('WhenInGermanyPage', () => import('./pages/tools/WhenInGermany')); // arrival-month estimator (/when-in-germany)
 const PayslipExplainedPage = lazyRoute('PayslipExplainedPage', () => import('./pages/tools/PayslipExplained')); // German payslip explainer (/payslip-explained)
 const GermanApartmentPage = lazyRoute('GermanApartmentPage', () => import('./pages/tools/GermanApartment')); // virtual German apartment (/german-apartment)
+const WorkScenesHub = lazyRoute('WorkScenesHub', () => import('./pages/tools/workScenes/WorkScenesHub')); // interactive work scenes hub (/work-scenes)
+const WorkSceneKitchen = lazyRoute('WorkSceneKitchen', () => import('./pages/tools/workScenes/RestaurantKitchen')); // /work-scenes/restaurant-kitchen
+const WorkSceneTruck = lazyRoute('WorkSceneTruck', () => import('./pages/tools/workScenes/TruckCab')); // /work-scenes/truck-cab
+const WorkSceneHospital = lazyRoute('WorkSceneHospital', () => import('./pages/tools/workScenes/HospitalWard')); // /work-scenes/hospital-ward
+const WorkSceneConstruction = lazyRoute('WorkSceneConstruction', () => import('./pages/tools/workScenes/ConstructionSite')); // /work-scenes/construction-site
+const WorkSceneElectrical = lazyRoute('WorkSceneElectrical', () => import('./pages/tools/workScenes/ElectricalPanel')); // /work-scenes/electrical-panel
 const ResidenceCardExplainedPage = lazyRoute('ResidenceCardExplainedPage', () => import('./pages/tools/ResidenceCardExplained')); // eAT specimen explained (/residence-card-explained)
 const ShortageBarometerPage = lazyRoute('ShortageBarometerPage', () => import('./pages/tools/ShortageBarometer')); // BA Engpassanalyse barometer (/shortage-barometer)
 const TaxRefundCalculatorPage = lazyRoute('TaxRefundCalculatorPage', () => import('./pages/tools/TaxRefundCalculator')); // tax refund estimate (/tax-refund-calculator)
 const ShiftPayCalculatorPage = lazyRoute('ShiftPayCalculatorPage', () => import('./pages/tools/ShiftPayCalculator')); // night / Sunday / holiday supplements (/shift-pay-calculator)
+const DrivingTimeCalculatorPage = lazyRoute('DrivingTimeCalculatorPage', () => import('./pages/tools/DrivingTimeCalculator')); // drivers' hours VO 561/2006 + §21a ArbZG (/driving-time-calculator)
+const WorkScheduleCheckPage = lazyRoute('WorkScheduleCheckPage', () => import('./pages/tools/WorkScheduleCheck')); // shift plan vs ArbZG (/work-schedule-check)
+const TaxClassChooserPage = lazyRoute('TaxClassChooserPage', () => import('./pages/tools/TaxClassChooser')); // Steuerklassenwahl III/V, IV/IV, Faktor (/tax-class-chooser)
+const EmployerCostCalculatorPage = lazyRoute('EmployerCostCalculatorPage', () => import('./pages/tools/EmployerCostCalculator')); // employer cost, B2B (/employer-cost-calculator)
 const RentCheckPage = lazyRoute('RentCheckPage', () => import('./pages/tools/RentCheck')); // fair rent check (/rent-check)
+const HealthInsuranceComparisonPage = lazyRoute('HealthInsuranceComparisonPage', () => import('./pages/tools/HealthInsuranceComparison')); // Krankenkassen comparison (/health-insurance-comparison)
+const EmergencyWallpaperPage = lazyRoute('EmergencyWallpaperPage', () => import('./pages/tools/EmergencyWallpaper')); // lock-screen emergency wallpaper (/emergency-wallpaper, rendered on the device)
+const AccountReadiness = lazyRoute('AccountReadiness', () => import('./pages/account/Readiness')); // Germany readiness score 0–100 (/account/readiness)
+const AccountEmergencyWallpaper = lazyRoute('AccountEmergencyWallpaper', () => import('./pages/account/EmergencyWallpaper')); // emergency wallpaper prefilled from the case
+const AdminEmployerChecklistTemplates = lazyRoute('AdminEmployerChecklistTemplates', () => import('./pages/admin/EmployerChecklistTemplates')); // employer arrival checklist templates (ADMIN+ edits)
 const HolidayPlannerPage = lazyRoute('HolidayPlannerPage', () => import('./pages/tools/HolidayPlanner')); // public holidays + bridge days (/holiday-planner)
 const GradeConverterPage = lazyRoute('GradeConverterPage', () => import('./pages/tools/GradeConverter')); // grade conversion, modified Bavarian formula (/grade-converter)
 const WeekendTripsPage = lazyRoute('WeekendTripsPage', () => import('./pages/tools/WeekendTrips')); // Deutschlandticket day trips (/weekend-trips)
@@ -182,6 +197,8 @@ const PronunciationPage = lazyRoute('PronunciationPage', () => import('./pages/g
 const PriceGamePage = lazyRoute('PriceGamePage', () => import('./pages/games/PriceGame')); // "guess the price" (/price-game)
 const TrafficSignsPage = lazyRoute('TrafficSignsPage', () => import('./pages/games/TrafficSigns')); // StVO signs learn + exam (/traffic-signs)
 const WasteSortingPage = lazyRoute('WasteSortingPage', () => import('./pages/games/WasteSorting')); // Mülltrennung game (/waste-sorting)
+const GermanMockExamPage = lazyRoute('GermanMockExamPage', () => import('./pages/tools/GermanMockExam')); // German mock exams (/german-mock-exam, /a1, /b1)
+const GermanLevelSelfPage = lazyRoute('GermanLevelSelfPage', () => import('./pages/tools/GermanLevelSelf')); // CEFR self-assessment + study plan (/german-level-test-self)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
 const AdminTvDisplay = lazyRoute('AdminTvDisplay', () => import('./pages/admin/TvDisplay')); // office wall TV (/admin/tv): display token or staff session, full screen
 const AdminYearReview = lazyRoute('AdminYearReview', () => import('./pages/admin/YearReview')); // staff 'Year in review' (per-staff counts ADMIN+, server-side)
@@ -475,11 +492,23 @@ export default function App() {
             <Route path="when-in-germany" element={<WhenInGermanyPage />} />
             <Route path="payslip-explained" element={<PayslipExplainedPage />} />
             <Route path="german-apartment" element={<GermanApartmentPage />} />
+            <Route path="work-scenes" element={<WorkScenesHub />} />
+            <Route path="work-scenes/restaurant-kitchen" element={<WorkSceneKitchen />} />
+            <Route path="work-scenes/truck-cab" element={<WorkSceneTruck />} />
+            <Route path="work-scenes/hospital-ward" element={<WorkSceneHospital />} />
+            <Route path="work-scenes/construction-site" element={<WorkSceneConstruction />} />
+            <Route path="work-scenes/electrical-panel" element={<WorkSceneElectrical />} />
             <Route path="residence-card-explained" element={<ResidenceCardExplainedPage />} />
             <Route path="shortage-barometer" element={<ShortageBarometerPage />} />
             <Route path="tax-refund-calculator" element={<TaxRefundCalculatorPage />} />
             <Route path="shift-pay-calculator" element={<ShiftPayCalculatorPage />} />
+            <Route path="driving-time-calculator" element={<DrivingTimeCalculatorPage />} />
+            <Route path="work-schedule-check" element={<WorkScheduleCheckPage />} />
+            <Route path="tax-class-chooser" element={<TaxClassChooserPage />} />
+            <Route path="employer-cost-calculator" element={<EmployerCostCalculatorPage />} />
             <Route path="rent-check" element={<RentCheckPage />} />
+            <Route path="health-insurance-comparison" element={<HealthInsuranceComparisonPage />} />
+            <Route path="emergency-wallpaper" element={<EmergencyWallpaperPage />} />
             <Route path="holiday-planner" element={<HolidayPlannerPage />} />
             <Route path="grade-converter" element={<GradeConverterPage />} />
             <Route path="weekend-trips" element={<WeekendTripsPage />} />
@@ -494,6 +523,10 @@ export default function App() {
             <Route path="price-game" element={<PriceGamePage />} />
             <Route path="traffic-signs" element={<TrafficSignsPage />} />
             <Route path="waste-sorting" element={<WasteSortingPage />} />
+            <Route path="german-mock-exam" element={<GermanMockExamPage />} />
+            <Route path="german-mock-exam/a1" element={<GermanMockExamPage level="a1" />} />
+            <Route path="german-mock-exam/b1" element={<GermanMockExamPage level="b1" />} />
+            <Route path="german-level-test-self" element={<GermanLevelSelfPage />} />
             <Route path="l/:slug" element={<LandingPageView />} />
             <Route path="survey/:token" element={<SurveyAnswer />} />
             <Route path="success/:token" element={<SuccessSharePage />} />
@@ -607,6 +640,8 @@ export default function App() {
               <Route path="arrival" element={<AccountArrival />} />
               <Route path="arrival-prep" element={<AccountArrivalPrep />} />
               <Route path="arrival-card" element={<AccountArrivalCard />} />
+              <Route path="readiness" element={<AccountReadiness />} />
+              <Route path="emergency-wallpaper" element={<AccountEmergencyWallpaper />} />
               <Route path="badges" element={<AccountBadges />} />
               <Route path="visa-story/:caseId" element={<AccountVisaStory />} />
               <Route path="rule-changes" element={<AccountRuleChanges />} />
@@ -923,6 +958,7 @@ export default function App() {
             <Route path="surveys/*" element={<AdminSurveys />} />
             <Route path="time" element={<AdminTimeTracking />} />
             <Route path="year-review" element={<AdminYearReview />} />
+            <Route path="employer-checklist-templates" element={<AdminEmployerChecklistTemplates />} />
             <Route
               path="kpi"
               element={

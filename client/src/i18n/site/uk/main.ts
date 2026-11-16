@@ -31,6 +31,8 @@ const uk: SiteCopy<Messages> = {
     cooperationShort: 'Співпраця',
     eligibility: 'Візовий тест',
     costCalculator: 'Калькулятор витрат',
+    germanMockA1: 'Пробний іспит A1',
+    germanMockB1: 'Пробний іспит B1',
     guides: 'Посібники',
     chancenkarte: 'Бали Chancenkarte',
     blueCard: 'Зарплата для Блакитної карти',

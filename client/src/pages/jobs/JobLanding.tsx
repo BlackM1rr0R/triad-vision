@@ -14,6 +14,8 @@ import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import type { PublicVacancy } from '@/components/jobs/types';
 import NotFound from '../NotFound';
+import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
+import { sceneForProfession } from '@/lib/workScenes/meta';
 
 registerCopy(pagesJobs);
 
@@ -121,6 +123,7 @@ export default function JobLanding() {
           <aside className="min-w-0 space-y-6">
             <LinkList title={landing.labels.sameCity} links={related.sameCity} />
             <LinkList title={landing.labels.sameProfession} links={related.sameProfession} />
+            <WorkSceneCard scene={sceneForProfession(items[0]?.profession)} />
             <div className="flex flex-col gap-3">
               <Link to="/jobs" className={buttonClass({ variant: 'outline' })}>
                 {landing.labels.allJobs}

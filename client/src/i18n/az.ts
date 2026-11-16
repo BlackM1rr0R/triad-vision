@@ -20,6 +20,8 @@ const az = {
     cities: 'Alman şəhərləri',
     calculator: 'Nə vaxt başlaya bilərəm?',
     costCalculator: 'Xərc kalkulyatoru',
+    germanMockA1: 'A1 sınaq imtahanı',
+    germanMockB1: 'B1 sınaq imtahanı',
     events: 'Tədbirlər',
     map: 'İşçilərimizin xəritəsi',
     referral: 'Dostunu gətir',

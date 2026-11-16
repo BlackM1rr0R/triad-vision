@@ -22,6 +22,8 @@ const ru: Messages = {
     cities: 'Города Германии',
     calculator: 'Когда я смогу начать?',
     costCalculator: 'Калькулятор расходов',
+    germanMockA1: 'Пробный экзамен A1',
+    germanMockB1: 'Пробный экзамен B1',
     events: 'Мероприятия',
     map: 'Карта трудоустройства',
     referral: 'Приведи друга',

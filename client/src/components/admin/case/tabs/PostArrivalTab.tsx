@@ -3,6 +3,7 @@ import { OnboardingAdminPanel } from '@/components/journey/OnboardingAdmin';
 import RenewalPanel from '@/components/postArrival/RenewalPanel';
 import PermitPanel from '@/components/postArrival/PermitPanel';
 import CaseCheckInsPanel from '@/components/postArrival/CaseCheckInsPanel';
+import { CaseEmployerChecklistCard } from '@/components/employerExtras/ArrivalChecklist'; // employer's arrival checklist with progress
 import type { CaseTabProps } from './types';
 
 /**
@@ -20,6 +21,8 @@ export default function PostArrivalTab({ c }: CaseTabProps) {
           <OnboardingAdminPanel caseId={c.id} />
         </div>
       )}
+      {/* The employer's own arrival checklist (housing, Wohnungsgeberbestätigung, buddy …) with progress and overdue items. */}
+      {approved && <CaseEmployerChecklistCard caseId={c.id} />}
       {approved && <CaseCheckInsPanel caseId={c.id} />}
       {/* Residence title expiry → renewal case, probation end, links to / from the renewal (renders nothing when not relevant). */}
       <RenewalPanel caseId={c.id} status={c.status} />

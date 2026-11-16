@@ -383,6 +383,30 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Порівняйте холодну оренду за м² із типовим діапазоном міста: дешево, нормально чи дорого. З перевіркою комуналки й Mietpreisbremse.',
     },
   },
+  '/health-insurance-comparison': {
+    name: { az: 'Krankenkasse müqayisəsi', de: 'Krankenkassen-Vergleich', en: 'Health insurance comparison', ru: 'Сравнение больничных касс', tr: 'Krankenkasse karşılaştırması', uk: 'Порівняння лікарняних кас' },
+    title: { az: 'Krankenkasse müqayisəsi 2026', de: 'Krankenkassen-Vergleich 2026', en: 'German health insurance compared 2026', ru: 'Сравнение больничных касс 2026', tr: 'Krankenkasse karşılaştırması 2026', uk: 'Порівняння лікарняних кас 2026' },
+    description: {
+      az: 'Bütün Almaniya üzrə açıq kassalar və AOK-lar 2026 Zusatzbeitrag ilə: brutto maaşa görə aylıq və illik payınız, qənaət və kassanı dəyişmə qaydası.',
+      de: 'Alle bundesweit geöffneten Kassen und die AOKs mit Zusatzbeitrag 2026: Ihr Anteil pro Monat und Jahr, Ersparnis und wie der Kassenwechsel funktioniert.',
+      en: 'All nationwide funds and the regional AOKs with their 2026 additional rate: your share per month and year, your savings and how to switch funds.',
+      ru: 'Все больничные кассы Германии и региональные AOK с доп. взносом 2026: ваша доля в месяц и год, экономия и как сменить кассу.',
+      tr: 'Tüm Almanya’ya açık kasalar ve bölgesel AOK’lar 2026 ek primiyle: aylık ve yıllık payınız, tasarruf ve kasa değiştirme kuralları.',
+      uk: 'Усі лікарняні каси Німеччини та регіональні AOK із дод. внеском 2026: ваша частка за місяць і рік, економія і як змінити касу.',
+    },
+  },
+  '/emergency-wallpaper': {
+    name: { az: 'Təcili yardım ekran şəkli', de: 'Notfall-Sperrbildschirm', en: 'Emergency lock screen', ru: 'Экстренные обои', tr: 'Acil durum kilit ekranı', uk: 'Екстрені шпалери' },
+    title: { az: 'Təcili yardım ekran şəkli (telefon)', de: 'Notfall-Sperrbildschirm fürs Handy', en: 'Emergency lock screen for Germany', ru: 'Экстренные обои для телефона', tr: 'Acil durum kilit ekranı (Almanya)', uk: 'Екстрені шпалери для телефону' },
+    description: {
+      az: '112, 110, 116 117, işəgötürən, ünvan və səfirlik nömrəsi ilə kilid ekranı şəkli yaradın. Telefonda yaradılır, heç nə göndərilmir. PNG yükləyin.',
+      de: 'Sperrbildschirm mit 112, 110, 116 117, Arbeitgeber, Adresse und Botschaft erstellen. Wird auf dem Gerät erzeugt, nichts wird hochgeladen. Als PNG.',
+      en: 'Create a lock screen with 112, 110, 116 117, your employer, address and the embassy. Made on your device, nothing is uploaded. Download as PNG.',
+      ru: 'Обои экрана блокировки с 112, 110, 116 117, работодателем, адресом и посольством. Создаются на устройстве, ничего не загружается. PNG.',
+      tr: '112, 110, 116 117, işveren, adres ve büyükelçilik numarasıyla kilit ekranı oluşturun. Cihazda üretilir, hiçbir şey yüklenmez. PNG indirin.',
+      uk: 'Шпалери екрана блокування з 112, 110, 116 117, роботодавцем, адресою й посольством. Створюються на пристрої, нічого не завантажується.',
+    },
+  },
   '/holiday-planner': {
     name: { az: 'Bayramlar və körpü günləri', de: 'Feiertage & Brückentage', en: 'Holidays & bridge days', ru: 'Праздники и «мостики»', tr: 'Tatiller ve köprü günleri', uk: 'Свята й «містки»' },
     title: { az: 'Almaniyada bayramlar və körpü günləri', de: 'Feiertage 2026–2028 und Brückentage', en: 'German holidays 2026–2028 & bridge days', ru: 'Праздники Германии 2026–2028 и «мостики»', tr: 'Almanya tatilleri ve köprü günleri', uk: 'Свята Німеччини 2026–2028 і «містки»' },
@@ -405,6 +429,55 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Аттестат (5 баллов) или оценку вуза (100 баллов) — в немецкую шкалу 1,0–4,0 по модифицированной баварской формуле. Для uni-assist.',
       tr: 'Azerbaycan attestatını (5’lik) veya üniversite notunu (100’lük) değiştirilmiş Bavyera formülüyle Alman 1,0–4,0 ölçeğine çevirin.',
       uk: 'Атестат (5 балів) або оцінку вишу (100 балів) — у німецьку шкалу 1,0–4,0 за модифікованою баварською формулою. Для uni-assist.',
+    },
+  },
+  // Work & employer calculators: drivers' hours, ArbZG shift plan, Steuerklassenwahl, employer cost (B2B, German first).
+  '/driving-time-calculator': {
+    name: { az: 'Sürmə və istirahət vaxtı', de: 'Lenk- und Ruhezeiten', en: 'Driving & rest times', ru: 'Время вождения и отдыха', tr: 'Sürüş ve dinlenme süresi', uk: 'Час керування й відпочинку' },
+    title: { az: 'Sürücülər üçün sürmə və istirahət vaxtı', de: 'Lenk- und Ruhezeiten-Rechner für Lkw-Fahrer', en: 'Truck driver hours & rest time checker', ru: 'Время вождения и отдыха водителя: проверка', tr: 'Tır şoförü sürüş ve dinlenme süresi', uk: 'Час керування й відпочинку водія' },
+    description: {
+      az: 'Həftəni gün-gün daxil edin: AB 561/2006 (9/10 saat, 45 dəq fasilə, 11/9 saat istirahət, 56/90 saat) və §21a ArbZG pozuntuları, təxmini cərimələr.',
+      de: 'Woche Tag für Tag eintragen: Verstöße gegen VO 561/2006 (9/10 h, 45 min, 11/9 h Ruhe, 56/90 h) und §21a ArbZG mit Bußgeld-Richtwerten.',
+      en: 'Enter your week day by day: breaches of EU 561/2006 (9/10 h, 45-min break, 11/9 h rest, 56/90 h) and German §21a ArbZG, with indicative fines.',
+      ru: 'Неделя по дням: нарушения Регламента ЕС 561/2006 (9/10 ч, перерыв 45 мин, отдых 11/9 ч, 56/90 ч) и §21a ArbZG с ориентировочными штрафами.',
+      tr: 'Haftanızı gün gün girin: AB 561/2006 (9/10 sa, 45 dk mola, 11/9 sa dinlenme, 56/90 sa) ve §21a ArbZG ihlalleri, tahmini cezalarla.',
+      uk: 'Тиждень по днях: порушення Регламенту ЄС 561/2006 (9/10 год, перерва 45 хв, відпочинок 11/9 год, 56/90 год) і §21a ArbZG з орієнтовними штрафами.',
+    },
+  },
+  '/work-schedule-check': {
+    name: { az: 'İş qrafiki yoxlaması', de: 'Dienstplan-Check', en: 'Work schedule check', ru: 'Проверка графика', tr: 'Çalışma planı kontrolü', uk: 'Перевірка графіка' },
+    title: { az: 'İş qrafikim qanunidirmi? ArbZG yoxlaması', de: 'Dienstplan prüfen: Ist er legal? (ArbZG)', en: 'Is my work schedule legal in Germany?', ru: 'Законен ли мой график работы в Германии?', tr: 'Çalışma planım Almanya’da yasal mı?', uk: 'Чи законний мій графік роботи?' },
+    description: {
+      az: 'Tibb bacısı, aşpaz və növbəli işçilər üçün: 8/10 saat, fasilələr, 11 saat istirahət, gecə və bazar işi alman iş vaxtı qanunu üzrə yoxlanılır.',
+      de: 'Für Pflege, Küche und Schichtdienst: 8/10 h, Pausen, 11 h Ruhezeit (10 h mit Ausgleich), Nacht- und Sonntagsarbeit nach dem Arbeitszeitgesetz prüfen.',
+      en: 'For nurses, cooks and shift workers: 8/10 h days, breaks, 11 h rest (10 h with compensation), night and Sunday work checked against the ArbZG.',
+      ru: 'Для медсестёр, поваров и сменных работников: 8/10 ч, перерывы, отдых 11 ч, ночная и воскресная работа — проверка по закону о рабочем времени.',
+      tr: 'Hemşire, aşçı ve vardiyalı çalışanlar için: 8/10 saat, molalar, 11 saat dinlenme, gece ve pazar çalışması Alman çalışma süresi kanununa göre.',
+      uk: 'Для медсестер, кухарів і змінних працівників: 8/10 год, перерви, відпочинок 11 год, нічна й недільна робота — перевірка за законом про робочий час.',
+    },
+  },
+  '/tax-class-chooser': {
+    name: { az: 'Vergi sinfi seçimi', de: 'Steuerklassenwahl', en: 'Tax class chooser', ru: 'Выбор налогового класса', tr: 'Vergi sınıfı seçimi', uk: 'Вибір податкового класу' },
+    title: { az: 'Evlilər üçün vergi sinfi: III/V və ya IV/IV', de: 'Steuerklassenwahl 2026: III/V, IV/IV, Faktor', en: 'Tax class chooser for couples 2026', ru: 'Налоговый класс для супругов 2026', tr: 'Evli çiftler için vergi sınıfı 2026', uk: 'Податковий клас для подружжя 2026' },
+    description: {
+      az: 'III/V, IV/IV və faktorlu IV/IV müqayisəsi: hər tərəfdaşın aylıq xalisi, bəyannamədən sonra qaytarma və ya əlavə ödəniş, Elterngeld təsiri.',
+      de: 'III/V, IV/IV oder IV/IV mit Faktor: Netto je Partner und gemeinsam, Erstattung oder Nachzahlung, Pflichtveranlagung und Folgen fürs Elterngeld.',
+      en: 'Compare III/V, IV/IV and IV/IV with factor: monthly net per partner and together, refund or back payment, mandatory return and parental allowance.',
+      ru: 'Сравнение III/V, IV/IV и IV/IV с фактором: нетто каждого и вместе, возврат или доплата, обязательная декларация и влияние на Elterngeld.',
+      tr: 'III/V, IV/IV ve faktörlü IV/IV karşılaştırması: eş başına ve toplam aylık net, iade veya ek ödeme, zorunlu beyanname ve Elterngeld etkisi.',
+      uk: 'Порівняння III/V, IV/IV та IV/IV з фактором: нетто кожного й разом, повернення чи доплата, обовʼязкова декларація та вплив на Elterngeld.',
+    },
+  },
+  '/employer-cost-calculator': {
+    name: { az: 'İşəgötürən xərci', de: 'Arbeitgeberkosten', en: 'Employer cost', ru: 'Расходы работодателя', tr: 'İşveren maliyeti', uk: 'Витрати роботодавця' },
+    title: { az: 'Almaniyada işəgötürən xərci 2026', de: 'Arbeitgeberkosten-Rechner 2026', en: 'Employer cost calculator Germany 2026', ru: 'Расходы работодателя в Германии 2026', tr: 'Almanya işveren maliyeti hesaplama 2026', uk: 'Витрати роботодавця в Німеччині 2026' },
+    description: {
+      az: 'Brutto maaşdan işəgötürən xərcinə: sosial sığorta payları, U1/U2/U3, BG, illik xərc, viza 75 €, §81a 411 € və boş vakansiyanın qiyməti.',
+      de: 'Vom Brutto zu den Personalkosten: Arbeitgeberanteile 2026, U1/U2/U3, BG, Jahreskosten, Visum 75 €, §81a-Verfahren 411 € und Kosten der Vakanz.',
+      en: 'From gross salary to employer cost: 2026 social contributions, U1/U2/U3, accident insurance, visa 75 €, §81a procedure 411 € and the cost of a vacancy.',
+      ru: 'От брутто к расходам работодателя: взносы 2026, U1/U2/U3, BG, годовые расходы, виза 75 €, процедура §81a 411 € и стоимость вакансии.',
+      tr: 'Brüt maaştan işveren maliyetine: 2026 primleri, U1/U2/U3, BG, yıllık maliyet, vize 75 €, §81a prosedürü 411 € ve boş pozisyonun maliyeti.',
+      uk: 'Від брутто до витрат роботодавця: внески 2026, U1/U2/U3, BG, річні витрати, віза 75 €, процедура §81a 411 € і вартість вакансії.',
     },
   },
   // Content pages: Deutschlandticket day trips, employer guide Azerbaijan (German first), Azerbaijan in Germany map.
@@ -454,6 +527,79 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Интерактивная немецкая квартира: термостат, проветривание, мусор и Pfand, Nebenkosten, часы тишины и Kaution — с советами и частыми ошибками.',
       tr: 'Etkileşimli Alman dairesi: termostat, havalandırma ve küf, çöp ve Pfand, Nebenkosten, sessizlik saatleri ve Kaution — ipuçları ve sık hatalarla.',
       uk: 'Інтерактивна німецька квартира: термостат, провітрювання, сміття й Pfand, Nebenkosten, години тиші й Kaution — з порадами та частими помилками.',
+    },
+  },
+  // Interactive work scenes (client pages/tools/workScenes, lib/workScenes): hub + one page per workplace.
+  '/work-scenes': {
+    name: { az: 'İş səhnələri', de: 'Arbeitsszenen', en: 'Work scenes', ru: 'Рабочие сцены', tr: 'İş sahneleri', uk: 'Робочі сцени' },
+    title: { az: 'İş yerində almanca: interaktiv səhnələr', de: 'Deutsch am Arbeitsplatz: interaktive Szenen', en: 'German at work: interactive workplace scenes', ru: 'Немецкий на работе: интерактивные сцены', tr: 'İş yerinde Almanca: etkileşimli sahneler', uk: 'Німецька на роботі: інтерактивні сцени' },
+    description: {
+      az: 'Mətbəx, yük maşını, xəstəxana, tikinti və elektrik lövhəsi: alman iş sözləri artikl, tələffüz, tərcümə, təhlükəsizlik qaydası və testlə.',
+      de: 'Küche, Lkw, Krankenstation, Baustelle und Sicherungskasten: deutsche Fachwörter mit Artikel, Aussprache, Übersetzung, Sicherheitsregel und Quiz.',
+      en: 'Kitchen, truck cab, hospital ward, construction site and fuse box: German work words with article, pronunciation, translation, safety rules and a quiz.',
+      ru: 'Кухня, грузовик, больница, стройка и электрощит: немецкие рабочие слова с артиклем, произношением, переводом, правилами безопасности и тестом.',
+      tr: 'Mutfak, tır, hastane, şantiye ve elektrik panosu: artikel, telaffuz, çeviri, güvenlik kuralı ve testle Almanca iş kelimeleri.',
+      uk: 'Кухня, вантажівка, лікарня, будмайданчик і електрощит: німецькі робочі слова з артиклем, вимовою, перекладом, правилами безпеки й тестом.',
+    },
+  },
+  '/work-scenes/restaurant-kitchen': {
+    name: { az: 'Restoran mətbəxi', de: 'Restaurantküche', en: 'Restaurant kitchen', ru: 'Кухня ресторана', tr: 'Restoran mutfağı', uk: 'Кухня ресторану' },
+    title: { az: 'Mətbəx almancası: HACCP və allergenlər', de: 'Küchendeutsch für Köche: HACCP und Allergene', en: 'Kitchen German for cooks: HACCP and allergens', ru: 'Немецкий для поваров: кухня, HACCP, аллергены', tr: 'Aşçılar için mutfak Almancası: HACCP, alerjen', uk: 'Німецька для кухарів: кухня, HACCP, алергени' },
+    description: {
+      az: 'İnteraktiv peşəkar mətbəx: Herd, Fritteuse, Kombidämpfer, Kühlhaus, HACCP lövhə rəngləri, 14 allergen, yağ yanğını — tələffüz və testlə.',
+      de: 'Interaktive Profiküche: Herd, Fritteuse, Kombidämpfer, Kühlhaus, HACCP-Brettfarben, 14 Allergene, Fettbrand — mit Aussprache und Quiz.',
+      en: 'An interactive professional kitchen: stove, fryer, combi steamer, cold room, HACCP board colours, 14 allergens, fat fires — with audio and a quiz.',
+      ru: 'Интерактивная профкухня: плита, фритюрница, пароконвектомат, холодильная камера, цвета досок HACCP, 14 аллергенов — с озвучкой и тестом.',
+      tr: 'Etkileşimli profesyonel mutfak: ocak, fritöz, kombi fırın, soğuk oda, HACCP tahta renkleri, 14 alerjen, yağ yangını — sesli ve testli.',
+      uk: 'Інтерактивна профкухня: плита, фритюрниця, пароконвектомат, холодильна камера, кольори дощок HACCP, 14 алергенів — з озвученням і тестом.',
+    },
+  },
+  '/work-scenes/truck-cab': {
+    name: { az: 'Yük maşını kabinəsi', de: 'Lkw-Fahrerhaus', en: 'Truck cab', ru: 'Кабина грузовика', tr: 'Tır kabini', uk: 'Кабіна вантажівки' },
+    title: { az: 'Sürücü almancası: takoqraf, Fahrerkarte', de: 'Lkw-Deutsch: Tachograf, Fahrerkarte, Spiegel', en: 'Truck driver German: tachograph, driver card', ru: 'Немецкий для водителя: тахограф и карта', tr: 'Tır şoförü Almancası: takograf, sürücü kartı', uk: 'Німецька для водія: тахограф і картка водія' },
+    description: {
+      az: 'İnteraktiv yük maşını kabinəsi: Fahrerkarte, takoqraf işarələri, Retarder, Rampenspiegel, Maut-Box, AdBlue, Ladungssicherung — qaydalar və testlə.',
+      de: 'Interaktives Lkw-Fahrerhaus: Fahrerkarte, Tachograf-Symbole, Retarder, Rampenspiegel, Maut-Box, AdBlue, Ladungssicherung — mit Regeln und Quiz.',
+      en: 'An interactive truck cab: driver card, tachograph symbols, retarder, mirrors, toll box, AdBlue, load securing, rest times — with rules and a quiz.',
+      ru: 'Интерактивная кабина грузовика: карта водителя, символы тахографа, ретардер, зеркала, Maut-Box, AdBlue, крепление груза — с правилами и тестом.',
+      tr: 'Etkileşimli tır kabini: sürücü kartı, takograf sembolleri, retarder, aynalar, Maut-Box, AdBlue, yük güvenliği — kurallar ve testle.',
+      uk: 'Інтерактивна кабіна вантажівки: картка водія, символи тахографа, ретардер, дзеркала, Maut-Box, AdBlue, кріплення вантажу — з правилами й тестом.',
+    },
+  },
+  '/work-scenes/hospital-ward': {
+    name: { az: 'Xəstəxana palatası', de: 'Krankenstation', en: 'Hospital ward', ru: 'Больничная палата', tr: 'Hastane servisi', uk: 'Лікарняна палата' },
+    title: { az: 'Tibb bacıları üçün almanca: palata, qaydalar', de: 'Pflegedeutsch: Station, Hygiene, 6-R-Regel', en: 'German for nurses: ward, hygiene, 6-R rule', ru: 'Немецкий для медсестёр: палата, гигиена, 6 R', tr: 'Hemşireler için Almanca: servis, hijyen, 6-R', uk: 'Німецька для медсестер: палата, гігієна, 6 R' },
+    description: {
+      az: 'İnteraktiv palata: Perfusor, Infusion, ÜST-ün 5 əl gigiyenası anı, 6-R qaydası, Dekubitus və yıxılmanın qarşısı, Notfallwagen — tələffüz və testlə.',
+      de: 'Interaktive Station: Perfusor, Infusion, 5 Momente der Händehygiene (WHO), 6-R-Regel, Dekubitus- und Sturzprophylaxe, Notfallwagen — mit Quiz.',
+      en: 'An interactive ward: syringe pump, infusion, WHO 5 moments of hand hygiene, 6-R rule, pressure-ulcer and fall prevention — with audio and a quiz.',
+      ru: 'Интерактивная палата: перфузор, капельница, 5 моментов гигиены рук ВОЗ, правило 6 R, пролежни и падения, реанимационная тележка — с тестом.',
+      tr: 'Etkileşimli servis: perfüzör, infüzyon, DSÖ el hijyeninin 5 anı, 6-R kuralı, bası yarası ve düşme önleme, acil arabası — sesli ve testli.',
+      uk: 'Інтерактивна палата: перфузор, крапельниця, 5 моментів гігієни рук ВООЗ, правило 6 R, пролежні й падіння, реанімаційний візок — з тестом.',
+    },
+  },
+  '/work-scenes/construction-site': {
+    name: { az: 'Tikinti sahəsi', de: 'Baustelle', en: 'Construction site', ru: 'Стройка', tr: 'Şantiye', uk: 'Будмайданчик' },
+    title: { az: 'Tikinti almancası: dəbilqə, iskələ, qaydalar', de: 'Baustellendeutsch: Helm, Gerüst, Sicherheit', en: 'Construction German: helmet, scaffold, safety', ru: 'Немецкий на стройке: каска, леса, правила', tr: 'Şantiye Almancası: baret, iskele, güvenlik', uk: 'Німецька на будові: каска, риштування' },
+    description: {
+      az: 'İnteraktiv tikinti sahəsi: Helm, S3 ayaqqabı, Gerüst, Absturzsicherung, Bagger təhlükə zonası, kran işarələri, nərdivan qaydaları, FFP2 — testlə.',
+      de: 'Interaktive Baustelle: Helm, S3-Schuhe, Gerüst, Absturzsicherung, Gefahrenbereich Bagger, Kranzeichen, Leiterregeln, Gehörschutz, FFP2 — mit Quiz.',
+      en: 'An interactive construction site: helmet, S3 boots, scaffold, fall protection, excavator danger zone, crane signals, ladder rules, FFP2 — with a quiz.',
+      ru: 'Интерактивная стройка: каска, обувь S3, леса, защита от падения, опасная зона экскаватора, сигналы крану, правила лестниц, FFP2 — с тестом.',
+      tr: 'Etkileşimli şantiye: baret, S3 ayakkabı, iskele, düşme koruması, ekskavatör tehlike alanı, vinç işaretleri, merdiven kuralları, FFP2 — testli.',
+      uk: 'Інтерактивний будмайданчик: каска, взуття S3, риштування, захист від падіння, небезпечна зона екскаватора, сигнали крану, FFP2 — з тестом.',
+    },
+  },
+  '/work-scenes/electrical-panel': {
+    name: { az: 'Elektrik lövhəsi', de: 'Sicherungskasten', en: 'Electrical panel', ru: 'Электрощит', tr: 'Elektrik panosu', uk: 'Електрощит' },
+    title: { az: 'Elektrik almancası: FI, LS, 5 qayda', de: 'Elektro-Deutsch: FI, LS, 5 Sicherheitsregeln', en: 'Electrician German: RCD, MCB, 5 safety rules', ru: 'Немецкий электрика: УЗО, автомат, 5 правил', tr: 'Elektrikçi Almancası: RCD, sigorta, 5 kural', uk: 'Німецька електрика: ПЗВ, автомат, 5 правил' },
+    description: {
+      az: 'İnteraktiv elektrik lövhəsi: LS, FI/RCD, Hauptschalter, Zähler, kabel rəngləri, 5 Sicherheitsregeln, iki qütblü yoxlayıcı, Schutzklassen, IP — testlə.',
+      de: 'Interaktiver Sicherungskasten: LS, FI/RCD, Hauptschalter, Zähler, Aderfarben, 5 Sicherheitsregeln, Spannungsprüfer, Schutzklassen, IP-Code — mit Quiz.',
+      en: 'An interactive fuse box: MCB, RCD, main switch, meter, wire colours, the 5 safety rules, voltage tester, protection classes, IP codes — with a quiz.',
+      ru: 'Интерактивный электрощит: автомат, УЗО, главный выключатель, счётчик, цвета жил, 5 правил безопасности, указатель, IP — с тестом.',
+      tr: 'Etkileşimli elektrik panosu: sigorta, kaçak akım rölesi, ana şalter, sayaç, kablo renkleri, 5 güvenlik kuralı, test cihazı, IP — testli.',
+      uk: 'Інтерактивний електрощит: автомат, ПЗВ, головний вимикач, лічильник, кольори жил, 5 правил безпеки, покажчик напруги, IP — з тестом.',
     },
   },
   '/residence-card-explained': {
@@ -587,6 +733,55 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Жёлтый мешок, бумага, био, остаточный мусор, стекло, Pfand или пункт приёма? Более 60 предметов с пояснениями: коробка от пиццы, чеки, батарейки.',
       tr: 'Sarı torba, kâğıt, bio, karışık atık, cam, Pfand ya da geri dönüşüm merkezi? 60’tan fazla eşya açıklamalı: pizza kutusu, fiş, pil gibi zor durumlar.',
       uk: 'Жовтий мішок, папір, біо, залишкове сміття, скло, Pfand чи пункт прийому? Понад 60 предметів із поясненнями: коробка з-під піци, чеки, батарейки.',
+    },
+  },
+  // German mock exams + level self-assessment (client pages/tools/GermanMockExam, GermanLevelSelf; lib/germanExam): static, no API.
+  '/german-mock-exam': {
+    name: { az: 'Alman dili sınaq imtahanı', de: 'Deutsch-Übungsprüfung', en: 'German mock exam', ru: 'Пробный экзамен по немецкому', tr: 'Almanca deneme sınavı', uk: 'Пробний іспит з німецької' },
+    title: { az: 'Alman dili sınaq imtahanı A1 və B1', de: 'Deutsch-Übungsprüfung A1 und B1', en: 'German mock exam A1 and B1', ru: 'Пробный экзамен по немецкому A1 и B1', tr: 'Almanca deneme sınavı A1 ve B1', uk: 'Пробний іспит з німецької A1 і B1' },
+    description: {
+      az: 'Goethe-Zertifikat A1 və B1 formatında pulsuz sınaq testləri: dinləmə, oxu, yazı və danışıq — taymer, bal, nümunə cavablar və səhvlərin izahı ilə.',
+      de: 'Kostenlose Übungstests im Format Goethe-Zertifikat A1 und B1: Hören, Lesen, Schreiben, Sprechen mit Timer, Punkten, Musterlösungen und Erklärungen.',
+      en: 'Free practice tests in the Goethe-Zertifikat A1 and B1 format: listening, reading, writing and speaking with timer, scores, model answers and explanations.',
+      ru: 'Бесплатные пробные тесты в формате Goethe-Zertifikat A1 и B1: аудирование, чтение, письмо и говорение с таймером, баллами и разбором ошибок.',
+      tr: 'Goethe-Zertifikat A1 ve B1 formatında ücretsiz deneme sınavları: süre, puan, örnek cevaplar ve açıklamalarla dinleme, okuma, yazma ve konuşma.',
+      uk: 'Безкоштовні пробні тести у форматі Goethe-Zertifikat A1 і B1: аудіювання, читання, письмо й говоріння з таймером, балами та розбором помилок.',
+    },
+  },
+  '/german-mock-exam/a1': {
+    name: { az: 'A1 sınaq imtahanı', de: 'Übungsprüfung A1', en: 'A1 mock exam', ru: 'Пробный экзамен A1', tr: 'A1 deneme sınavı', uk: 'Пробний іспит A1' },
+    title: { az: 'Alman dili A1 sınaq imtahanı', de: 'Übungsprüfung Deutsch A1 (Start Deutsch 1)', en: 'German A1 mock exam (Start Deutsch 1)', ru: 'Пробный экзамен по немецкому A1', tr: 'Almanca A1 deneme sınavı', uk: 'Пробний іспит з німецької A1' },
+    description: {
+      az: 'Start Deutsch 1 quruluşunda pulsuz A1 sınaq testi: dinləmə (səs), oxu, form və qısa mesaj, danışıq kartları. Avtomatik bal, 60/100 keçid həddi.',
+      de: 'Kostenloser A1-Übungstest im Aufbau von Start Deutsch 1: Hören mit Audio, Lesen, Formular und Kurznachricht, Sprechkarten. Bewertung mit 60/100.',
+      en: 'Free A1 practice test in the Start Deutsch 1 structure: listening with audio, reading, a form and a short message, speaking cards. Pass mark 60/100.',
+      ru: 'Бесплатный пробный тест A1 в формате Start Deutsch 1: аудирование, чтение, анкета и короткое сообщение, карточки для говорения. Порог 60/100.',
+      tr: 'Start Deutsch 1 yapısında ücretsiz A1 deneme sınavı: sesli dinleme, okuma, form ve kısa mesaj, konuşma kartları. 60/100 geçme puanıyla.',
+      uk: 'Безкоштовний пробний тест A1 у форматі Start Deutsch 1: аудіювання, читання, анкета й коротке повідомлення, картки для говоріння. Поріг 60/100.',
+    },
+  },
+  '/german-mock-exam/b1': {
+    name: { az: 'B1 sınaq imtahanı', de: 'Übungsprüfung B1', en: 'B1 mock exam', ru: 'Пробный экзамен B1', tr: 'B1 deneme sınavı', uk: 'Пробний іспит B1' },
+    title: { az: 'Alman dili B1 sınaq imtahanı', de: 'Übungsprüfung Deutsch B1 online', en: 'German B1 mock exam online', ru: 'Пробный экзамен по немецкому B1', tr: 'Almanca B1 deneme sınavı', uk: 'Пробний іспит з німецької B1' },
+    description: {
+      az: 'Goethe-Zertifikat B1 quruluşunda pulsuz sınaq testi: 4 modul, taymer, avtomatik dinləmə və oxu balı, e-poçt və təqdimat üçün nümunə cavablar.',
+      de: 'Kostenloser B1-Übungstest im Aufbau des Goethe-Zertifikats: 4 Module mit Timer, automatische Wertung für Hören und Lesen, Musterlösungen für Schreiben.',
+      en: 'Free B1 practice test in the Goethe-Zertifikat structure: 4 modules with timer, automatic scoring for listening and reading, model answers for writing.',
+      ru: 'Бесплатный пробный тест B1 в формате Goethe-Zertifikat: 4 модуля с таймером, автопроверка аудирования и чтения, образцы письма и презентации.',
+      tr: 'Goethe-Zertifikat yapısında ücretsiz B1 deneme sınavı: süreli 4 modül, dinleme ve okumada otomatik puan, yazma ve sunum için örnek cevaplar.',
+      uk: 'Безкоштовний пробний тест B1 у форматі Goethe-Zertifikat: 4 модулі з таймером, автоперевірка аудіювання й читання, зразки листів і презентації.',
+    },
+  },
+  '/german-level-test-self': {
+    name: { az: 'Alman dili səviyyə testi', de: 'Deutsch-Niveau-Selbsttest', en: 'German level self-assessment', ru: 'Самооценка уровня немецкого', tr: 'Almanca seviye öz değerlendirmesi', uk: 'Самооцінка рівня німецької' },
+    title: { az: 'Alman dili səviyyəm nədir? Özünüyoxlama', de: 'Welches Deutschniveau habe ich?', en: 'What is my German level? Self-test', ru: 'Какой у меня уровень немецкого?', tr: 'Almanca seviyem ne? Öz değerlendirme', uk: 'Який у мене рівень німецької?' },
+    description: {
+      az: 'CEFR “bacarıram” ifadələri ilə dinləmə, oxu, danışıq və yazı üzrə A1–B2 səviyyənizi təxmin edin və növbəti səviyyə üçün həftəlik öyrənmə planı alın.',
+      de: 'Schätzen Sie Ihr Niveau A1–B2 in Hören, Lesen, Sprechen und Schreiben mit GER-Kann-Beschreibungen und erhalten Sie einen Wochenplan zum nächsten Niveau.',
+      en: 'Estimate your A1–B2 level in listening, reading, speaking and writing with CEFR “can do” statements and get a week-by-week plan to the next level.',
+      ru: 'Оцените свой уровень A1–B2 по аудированию, чтению, говорению и письму по шкале CEFR и получите понедельный план до следующего уровня.',
+      tr: 'CEFR “yapabilirim” ifadeleriyle dinleme, okuma, konuşma ve yazmada A1–B2 seviyenizi tahmin edin, sonraki seviye için haftalık plan alın.',
+      uk: 'Оцініть свій рівень A1–B2 з аудіювання, читання, говоріння та письма за шкалою CEFR і отримайте потижневий план до наступного рівня.',
     },
   },
   '/map': {
@@ -1117,9 +1312,9 @@ export const SPA_ROUTES = [
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'learn' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check'] },
-  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/german-apartment', '/residence-card-explained', '/calculator', '/cities', '/holiday-planner', '/weekend-trips', '/events', '/status'] },
-  { key: 'learn', paths: ['/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/employer-cost-calculator'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/german-apartment', '/residence-card-explained', '/calculator', '/cities', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/events', '/status', '/driving-time-calculator', '/work-schedule-check'] },
+  { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
   { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },
 ];
 

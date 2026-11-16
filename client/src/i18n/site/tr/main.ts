@@ -31,6 +31,8 @@ const tr: SiteCopy<Messages> = {
     cooperationShort: 'İş birliği',
     eligibility: 'Vize testi',
     costCalculator: 'Maliyet hesaplayıcı',
+    germanMockA1: 'A1 deneme sınavı',
+    germanMockB1: 'B1 deneme sınavı',
     guides: 'Rehberler',
     chancenkarte: 'Fırsat Kartı puan hesaplama',
     blueCard: 'Mavi Kart maaş kontrolü',

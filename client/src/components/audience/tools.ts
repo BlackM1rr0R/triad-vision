@@ -15,6 +15,8 @@ import {
   CreditCard,
   GraduationCap,
   HeartHandshake,
+  HeartPulse,
+  Smartphone,
   Map as MapIcon,
   MapPinned,
   BookA,
@@ -27,6 +29,10 @@ import {
   WalletCards,
   HandCoins,
   Moon,
+  Truck,
+  ClipboardList,
+  Percent,
+  Building2,
   House,
   PartyPopper,
   TrainFront,
@@ -41,6 +47,7 @@ import {
   TriangleAlert,
   MessagesSquare,
   type LucideIcon,
+  HardHat,
 } from 'lucide-react';
 
 /**
@@ -76,7 +83,10 @@ export const TOOLS: ToolItem[] = [
   { key: 'payslip', to: '/payslip-explained', icon: ReceiptText, group: 'costs' },
   { key: 'taxRefund', to: '/tax-refund-calculator', icon: HandCoins, group: 'costs' },
   { key: 'shiftPay', to: '/shift-pay-calculator', icon: Moon, group: 'costs' },
+  { key: 'taxClass', to: '/tax-class-chooser', icon: Percent, group: 'costs' },
+  { key: 'employerCost', to: '/employer-cost-calculator', icon: Building2, group: 'costs' },
   { key: 'rentCheck', to: '/rent-check', icon: House, group: 'costs' },
+  { key: 'healthInsurance', to: '/health-insurance-comparison', icon: HeartPulse, group: 'costs' },
   { key: 'whenInGermany', to: '/when-in-germany', icon: CalendarRange, group: 'plan' },
   { key: 'permanentResidence', to: '/permanent-residence', icon: Landmark, group: 'plan' },
   { key: 'whichCity', to: '/which-city', icon: MapPin, group: 'plan' },
@@ -87,6 +97,9 @@ export const TOOLS: ToolItem[] = [
   { key: 'cities', to: '/cities', icon: Building, group: 'plan' },
   { key: 'holidayPlanner', to: '/holiday-planner', icon: PartyPopper, group: 'plan' },
   { key: 'weekendTrips', to: '/weekend-trips', icon: TrainFront, group: 'plan' },
+  { key: 'drivingTime', to: '/driving-time-calculator', icon: Truck, group: 'plan' },
+  { key: 'workSchedule', to: '/work-schedule-check', icon: ClipboardList, group: 'plan' },
+  { key: 'emergencyWallpaper', to: '/emergency-wallpaper', icon: Smartphone, group: 'plan' },
   { key: 'events', to: '/events', icon: CalendarDays, group: 'plan' },
   { key: 'status', to: '/status', icon: ScanSearch, group: 'plan' },
   { key: 'map', to: '/map', icon: MapPinned, group: 'explore' },
@@ -97,9 +110,12 @@ export const TOOLS: ToolItem[] = [
   { key: 'jobs', to: '/jobs', icon: Briefcase, group: 'explore' },
   { key: 'visas', to: '/visas', icon: MapIcon, group: 'explore' },
   // Learning games (pages/games): also linked from the portal German page (components/games/GameLinks).
+  { key: 'mockExam', to: '/german-mock-exam', icon: GraduationCap, group: 'learn' },
+  { key: 'levelSelf', to: '/german-level-test-self', icon: Gauge, group: 'learn' },
   { key: 'simulator', to: '/german-simulator', icon: MessagesSquare, group: 'learn' },
   { key: 'pronunciation', to: '/pronunciation', icon: Mic, group: 'learn' },
   { key: 'priceGame', to: '/price-game', icon: Coins, group: 'learn' },
   { key: 'trafficSigns', to: '/traffic-signs', icon: TriangleAlert, group: 'learn' },
   { key: 'wasteSorting', to: '/waste-sorting', icon: Recycle, group: 'learn' },
+  { key: 'workScenes', to: '/work-scenes', icon: HardHat, group: 'learn' }, // interactive workplaces (pages/tools/workScenes)
 ];

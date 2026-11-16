@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, BookA, Building2, Calculator, Calendar, ChevronDown, Clock, Euro, ListChecks, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BookA, Building2, Calculator, Calendar, ChevronDown, Clock, Euro, GraduationCap, ListChecks, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
@@ -21,6 +21,8 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { guideTools, TOOL_LABEL_KEY, type GuideToolPath } from '@/lib/guideTools';
 import NotFound from '../NotFound';
 import { LeadMagnetBlock } from '@/components/growth/LeadMagnetBlock';
+import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of the guide's profession
+import { sceneForGuide } from '@/lib/workScenes/meta';
 
 registerCopy(pagesSeo);
 
@@ -35,6 +37,8 @@ const TOOL_ICON: Record<GuideToolPath, typeof Calculator> = {
   '/cities': Building2,
   '/cost-calculator': Wallet,
   '/eligibility': ListChecks,
+  '/german-mock-exam/a1': GraduationCap,
+  '/german-mock-exam/b1': GraduationCap,
 };
 
 /** Body / sidebar placeholder with the same grid as the loaded guide, so nothing jumps when it arrives. */
@@ -216,6 +220,7 @@ export default function GuideDetail() {
                 </li>
               </ul>
             </div>
+            <WorkSceneCard scene={sceneForGuide(guide.key)} />
           </aside>
         </div>
       </section>

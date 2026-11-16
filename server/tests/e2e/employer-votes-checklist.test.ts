@@ -106,8 +106,20 @@ describe('employer arrival checklist', () => {
 
     const res = await employer.agent.get(`/api/company/workers/${c.id}/checklist`);
     expect(res.status).toBe(200);
-    expect(res.body.items.map((i: { key: string }) => i.key)).toEqual(['HOUSING', 'ANMELDUNG', 'BANK_ACCOUNT', 'HEALTH_INSURANCE', 'TAX_ID', 'FIRST_DAY', 'WORKWEAR', 'SAFETY_BRIEFING']);
-    expect(res.body.progress).toEqual({ done: 0, total: 8 });
+    expect(res.body.items.map((i: { key: string }) => i.key)).toEqual([
+      'HOUSING',
+      'WOHNUNGSGEBER',
+      'ANMELDUNG',
+      'BANK_ACCOUNT',
+      'HEALTH_INSURANCE',
+      'TAX_ID',
+      'BUDDY',
+      'FIRST_DAY',
+      'WORKWEAR',
+      'SAFETY_BRIEFING',
+      'LANGUAGE_SUPPORT',
+    ]);
+    expect(res.body.progress).toEqual({ done: 0, total: 11 });
     expect(res.body.firstDay).toBe(start.toISOString());
 
     const housing = res.body.items[0];
@@ -128,22 +140,22 @@ describe('employer arrival checklist', () => {
 
     const overview = await employer.agent.get('/api/company/workers/checklists/overview');
     expect(overview.body.items).toHaveLength(1);
-    expect(overview.body.items[0]).toMatchObject({ caseId: c.id, name: 'Nicat K.', progress: { done: 1, total: 9 } });
+    expect(overview.body.items[0]).toMatchObject({ caseId: c.id, name: 'Nicat K.', progress: { done: 1, total: 12 } });
 
     // Staff: arrival view.
     const staff = await asStaff();
     await prisma.arrivalPlan.create({ data: { caseId: c.id, clientId: worker.user.id, status: 'SUBMITTED' } });
     const sv = await staff.agent.get(`/api/admin/arrivals/${c.id}`);
     expect(sv.status).toBe(200);
-    expect(sv.body.employerChecklist.progress).toEqual({ done: 1, total: 9 });
+    expect(sv.body.employerChecklist.progress).toEqual({ done: 1, total: 12 });
     expect(sv.body.employerChecklist.items[0]).toMatchObject({ key: 'HOUSING', doneByName: 'Hans Becker', note: 'WG Hamburg-Altona' });
     const sl = await staff.agent.get('/api/admin/arrivals?status=all');
-    expect(sl.body.items.find((p: { caseId: string }) => p.caseId === c.id).employerChecklist).toMatchObject({ done: 1, total: 9 });
+    expect(sl.body.items.find((p: { caseId: string }) => p.caseId === c.id).employerChecklist).toMatchObject({ done: 1, total: 12 });
 
     // Worker: read-only, visible items without notes or names.
     const wv = await worker.agent.get(`/api/arrival/${c.id}`);
     expect(wv.status).toBe(200);
-    expect(wv.body.employerChecklist.items).toHaveLength(9);
+    expect(wv.body.employerChecklist.items).toHaveLength(12);
     const raw = JSON.stringify(wv.body.employerChecklist);
     expect(raw).not.toContain('Hans');
     expect(raw).not.toContain('Altona');
@@ -170,7 +182,7 @@ describe('employer arrival checklist', () => {
     for (const id of [employer.user.id, petra.user.id]) {
       const n = await prisma.notification.findMany({ where: { userId: id, type: 'EMPLOYER_ARRIVAL_CHECKLIST' } });
       expect(n).toHaveLength(1);
-      expect(n[0].body).toContain('8');
+      expect(n[0].body).toContain('11');
     }
 
     // Moving the first work day re-arms the reminder.

@@ -22,6 +22,8 @@ const de: Messages = {
     cities: 'Deutsche Städte',
     calculator: 'Wann kann ich anfangen?',
     costCalculator: 'Kostenrechner',
+    germanMockA1: 'Übungsprüfung A1',
+    germanMockB1: 'Übungsprüfung B1',
     events: 'Veranstaltungen',
     map: 'Karte unserer Fachkräfte',
     referral: 'Freunde werben',

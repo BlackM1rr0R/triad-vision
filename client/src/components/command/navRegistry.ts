@@ -253,6 +253,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('referralPartners', '/admin/partners', Handshake, 'clients', { module: 'referrals' }),
   // İşəgötürənlər
   a('companies', '/admin/companies', Building2, 'employers'),
+  a('employerChecklist', '/admin/employer-checklist-templates', ClipboardCheck, 'employers'), // employer arrival checklist templates (STAFF read, ADMIN+ edit)
   a('vacancies', '/admin/vacancies', BriefcaseBusiness, 'employers'),
   a('jobChannels', '/admin/job-channels', Rss, 'employers', { adminOnly: true }), // job board feeds: Indeed, StepStone, BA Jobbörse, generic XML
   a('candidateRequests', '/admin/candidate-requests', UsersRound, 'employers'),
@@ -393,7 +394,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
-  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates'] },
+  { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'agents'] },

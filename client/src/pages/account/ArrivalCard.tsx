@@ -17,8 +17,10 @@ import { useOfflineWho } from '@/components/offline/useOffline';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { registerCopy } from '@/i18n';
 import { pagesGermanyDay } from '@/i18n/pagesGermanyDay';
+import { pagesEmergencyWallpaper } from '@/i18n/pagesEmergencyWallpaper';
 
 registerCopy(pagesGermanyDay);
+registerCopy(pagesEmergencyWallpaper);
 
 type Row = { label: string; value: string; tel?: string };
 type Section = { key: string; title: string; icon: typeof Home; rows: Row[] };
@@ -296,6 +298,10 @@ export default function ArrivalCardPage() {
           <p className="mt-2 text-xs text-muted">{t('acard.qrHint')}</p>
         </section>
       )}
+
+      <Link to="/account/emergency-wallpaper" className="card flex min-h-14 items-center gap-3 px-4 py-2 text-sm font-semibold text-ink hover:bg-sunken print:hidden">
+        <Smartphone className="size-5 text-primary" aria-hidden /> {t('ewp.portalTitle')}
+      </Link>
 
       <p className="flex items-start gap-2 text-xs text-muted">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('acard.privacy')}
