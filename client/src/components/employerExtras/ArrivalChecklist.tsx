@@ -15,6 +15,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { fmtDate } from '@/components/admin/labels';
 import { toastJobsError } from '@/components/jobs/labels';
 import { WelcomePosterCard, WelcomePosterHint } from '@/components/welcomePoster/WelcomePoster'; // A3 welcome poster for the first work day
+import { useCompanyAccess } from '@/components/company/access'; // employer roles: manageArrivalChecklist (read-only without)
 
 registerCopy(pagesEmployerExtras);
 
@@ -183,6 +184,7 @@ export const ChecklistDrawer = ({ caseId, name, onClose }: { caseId: string | nu
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [label, setLabel] = useState('');
+  const canEdit = useCompanyAccess().can('manageArrivalChecklist');
   const q = useQuery({
     queryKey: ['company-arrival-checklist', caseId],
     enabled: !!caseId,
@@ -211,11 +213,14 @@ export const ChecklistDrawer = ({ caseId, name, onClose }: { caseId: string | nu
         <div className="space-y-4">
           <WelcomePosterCard caseId={caseId!} name={name} />
           <ProgressBar progress={q.data.progress} />
-          <ul className="space-y-2">
-            {q.data.items.map((i) => (
-              <ItemRow key={i.id} caseId={caseId!} item={i} onSaved={refresh} />
-            ))}
-          </ul>
+          <fieldset disabled={!canEdit} className="contents">
+            <ul className="space-y-2">
+              {q.data.items.map((i) => (
+                <ItemRow key={i.id} caseId={caseId!} item={i} onSaved={refresh} />
+              ))}
+            </ul>
+          </fieldset>
+          {canEdit && (
           <form
             className="flex gap-2"
             onSubmit={(e) => {
@@ -231,6 +236,7 @@ export const ChecklistDrawer = ({ caseId, name, onClose }: { caseId: string | nu
               {add.isPending ? <Spinner className="size-3.5" /> : <Plus className="size-3.5" />} {t('employerChecklist.add')}
             </button>
           </form>
+          )}
         </div>
       )}
     </Drawer>

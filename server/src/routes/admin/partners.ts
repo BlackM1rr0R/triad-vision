@@ -38,6 +38,8 @@ import {
 import { CONTRACT_STATUSES, contractSummaries, lastActivities, partnerClientTotals } from '../../lib/partners/overview.js'; // list filters, profile header
 import { loadRows, totalsOf } from '../../lib/settlement/service.js';
 import { csvSafe } from '../../lib/csvSafe.js';
+import { initNewPartnerAccess, syncClientListFromVisibility } from '../../lib/partnerAccess/context.js'; // per-partner portal permissions (Access Center)
+import { removeMembersOfPartner } from '../../lib/partnerAccess/members.js';
 import { todayOf } from '../../lib/partnerRecords/contracts.js';
 import { QUOTA_FILTERS, assignedClientCounts, matchesQuotaFilter, quotaOf } from '../../lib/partners/quota.js'; // "needed clients" target
 import { partnerDashboard } from '../../lib/partners/dashboard.js'; // "Panel" tab of the profile
@@ -704,6 +706,8 @@ adminPartnersRouter.post('/', async (req, res) => {
   // Field names only: bank data and custom values are not repeated in the audit log.
   await audit(req, 'PARTNER_CREATED', partner.id, { name: partner.name, fields: Object.entries(body).filter(([, v]) => v != null).map(([k]) => k) });
   // The partner's folder in "Gemeinsame Dokumente/Partner" exists from the start, even without clients.
+  // New partners start with the DEFAULT portal permissions (Access Center → Partners; existing partners stay LEGACY).
+  await initNewPartnerAccess(partner, req.user!.id);
   const folderId = await syncPartnerFolder(partner.id);
   res.status(201).json({ partner: view(req, partner), folderId });
 });
@@ -730,6 +734,7 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
     changes: changes as Prisma.InputJsonValue,
     ...(partner.name !== current.name ? { from: current.name, to: partner.name } : {}),
   });
+  if (partner.visibility !== current.visibility) await syncClientListFromVisibility(partner, req.user!.id); // the permission set's client list follows
   if (partner.name !== current.name) {
     // The partner's drive folder is renamed (files stay); the client folders inside follow.
     await syncPartnerFolder(partner.id, { previousName: current.name });
@@ -756,6 +761,7 @@ adminPartnersRouter.delete('/:id', requireMinRole('ADMIN'), async (req, res) => 
   }
   const summary = await deletePartner(partner.id, req.user!.id);
   if (!summary) throw notFound('PARTNER_NOT_FOUND');
+  await removeMembersOfPartner(partner.id); // team members logged out, permission rows gone
   await audit(req, 'PARTNER_DELETED', partner.id, { ...summary, force: partner._count.cases > 0 });
   res.json({ ok: true, ...summary });
 });

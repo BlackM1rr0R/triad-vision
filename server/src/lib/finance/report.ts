@@ -1,31 +1,32 @@
+import type { Prisma } from '@prisma/client';
 import { buildXlsxBook, type Cell } from '../xlsx.js';
 import { asOfFor, byType, commissionsByAgent, commissionsByPartner, monthly, receivables, staffStats, summarize } from './aggregate.js';
 import { loadAgents, loadCategories, loadDocsReviewed, loadFinanceData, loadPartners, loadSatisfaction, loadStaff } from './load.js';
 import { isoDay, type Period } from './period.js';
 
 /** Report sections as served by the API (amounts in cents). */
-export const summaryReport = async (p: Period, now = new Date()) => summarize(await loadFinanceData(p), p, now);
+export const summaryReport = async (p: Period, now = new Date(), scope: Prisma.CaseWhereInput = {}) => summarize(await loadFinanceData(p, scope), p, now);
 
-export const monthlyReport = async (p: Period, now = new Date()) => monthly(await loadFinanceData(p), p, now);
+export const monthlyReport = async (p: Period, now = new Date(), scope: Prisma.CaseWhereInput = {}) => monthly(await loadFinanceData(p, scope), p, now);
 
-export const receivablesReport = async (p: Period, now = new Date()) => {
-  const d = await loadFinanceData(p);
+export const receivablesReport = async (p: Period, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
+  const d = await loadFinanceData(p, scope);
   return receivables(d.invoices, asOfFor(p, now));
 };
 
-export const commissionsReport = async (p: Period) => {
-  const [d, agents, partners] = await Promise.all([loadFinanceData(p), loadAgents(p), loadPartners()]);
+export const commissionsReport = async (p: Period, scope: Prisma.CaseWhereInput = {}) => {
+  const [d, agents, partners] = await Promise.all([loadFinanceData(p, scope), loadAgents(p), loadPartners()]);
   // Agent programme rows at the top level (as before); referral partners as a separate section.
   return { ...commissionsByAgent(agents, d.commissions, p), partners: commissionsByPartner(partners, d.partnerCommissions ?? [], p) };
 };
 
-export const staffReport = async (p: Period) => {
-  const [d, staff, docs, sat] = await Promise.all([loadFinanceData(p), loadStaff(), loadDocsReviewed(p), loadSatisfaction(p)]);
+export const staffReport = async (p: Period, scope: Prisma.CaseWhereInput = {}) => {
+  const [d, staff, docs, sat] = await Promise.all([loadFinanceData(p, scope), loadStaff(), loadDocsReviewed(p), loadSatisfaction(p)]);
   return staffStats(staff, d.cases, docs, sat, p);
 };
 
-export const byTypeReport = async (p: Period) => {
-  const [d, categories] = await Promise.all([loadFinanceData(p), loadCategories()]);
+export const byTypeReport = async (p: Period, scope: Prisma.CaseWhereInput = {}) => {
+  const [d, categories] = await Promise.all([loadFinanceData(p, scope), loadCategories()]);
   const r = byType(d, p);
   const cat = new Map(categories.map((c) => [c.id, c]));
   return {
@@ -55,9 +56,9 @@ const ROLE_AZ: Record<string, string> = { STAFF: 'Əməkdaş', ADMIN: 'Admin', S
 const STATUS_AZ: Record<string, string> = { SENT: 'Göndərilib', OVERDUE: 'Gecikir', PAID: 'Ödənilib' };
 const NONE = '— (təyin edilməyib)';
 
-export const financeWorkbook = async (p: Period, now = new Date()) => {
+export const financeWorkbook = async (p: Period, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
   const [d, agents, staff, docs, sat, categories, partners] = await Promise.all([
-    loadFinanceData(p),
+    loadFinanceData(p, scope),
     loadAgents(p),
     loadStaff(),
     loadDocsReviewed(p),

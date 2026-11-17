@@ -2,6 +2,7 @@ import type { CaseStatus, Prisma, VisaType } from '@prisma/client';
 import { dateKey, dayRange } from '../reports/dates.js';
 import { COST_KEYS, computeProfitability, type CaseProfit, type CostKey } from './compute.js';
 import { getProfitSettings } from './settings.js';
+import { scoped } from '../accessAudit/scope.js';
 
 /** Profitability overview (Admin → Gəlirlilik): filters, totals, breakdowns, top / bottom cases. */
 
@@ -63,9 +64,10 @@ export const caseRow = (r: CaseProfit) => {
   return rest;
 };
 
-export const profitOverview = async (f: ProfitFilters) => {
+/** `scope` = the viewer's staff case scope (lib/access; {} = every case, the default). */
+export const profitOverview = async (f: ProfitFilters, scope: Prisma.CaseWhereInput = {}) => {
   const s = await getProfitSettings();
-  const rows = await computeProfitability(profitWhere(f), s);
+  const rows = await computeProfitability(scoped(profitWhere(f), scope), s);
   const revenue = rows.reduce((a, r) => a + r.revenue.total, 0);
   const costs = rows.reduce((a, r) => a + r.costs.total, 0);
   const margin = revenue - costs;

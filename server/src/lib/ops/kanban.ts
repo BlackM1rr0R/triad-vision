@@ -1,6 +1,7 @@
 import type { CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { FINAL_STATUSES } from '../caseFlow.js';
+import { scoped } from '../accessAudit/scope.js';
 
 /**
  * Kanban board figures. The per-row logic mirrors what the admin case list computes (days in the
@@ -36,6 +37,8 @@ export interface KanbanFilter {
   visaCategoryId?: string;
   /** Include closed cases (APPROVED / REJECTED / CANCELLED) — only the ones touched in the last 14 days. */
   includeFinal?: boolean;
+  /** Staff case scope of the viewer (lib/access caseScopeWhere); missing / {} = every case. */
+  scope?: Prisma.CaseWhereInput;
 }
 
 export interface KanbanCard {
@@ -66,7 +69,7 @@ export const kanbanBoard = async (filter: KanbanFilter = {}, now = new Date()) =
       : { status: { notIn: FINAL_STATUSES } }),
   };
   const items = await prisma.case.findMany({
-    where,
+    where: scoped(where, filter.scope),
     orderBy: { updatedAt: 'desc' },
     take: 1000,
     include: {
@@ -118,20 +121,21 @@ export const kanbanBoard = async (filter: KanbanFilter = {}, now = new Date()) =
 };
 
 /** Open cases per active staff member (for the "balance" preview next to the auto-assignment settings). */
-export const staffWorkload = async () => {
+/** `scope` = the viewer's case scope ({} = every case): counts over in-scope cases only. */
+export const staffWorkload = async (scope: Prisma.CaseWhereInput = {}) => {
   const staff = await prisma.user.findMany({
     where: { role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] }, isActive: true },
     select: { id: true, firstName: true, lastName: true, role: true },
     orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
   });
   const [open, waiting, unassigned] = await Promise.all([
-    prisma.case.groupBy({ by: ['assignedStaffId'], where: { status: { notIn: FINAL_STATUSES }, assignedStaffId: { not: null } }, _count: { _all: true } }),
+    prisma.case.groupBy({ by: ['assignedStaffId'], where: scoped({ status: { notIn: FINAL_STATUSES }, assignedStaffId: { not: null } }, scope), _count: { _all: true } }),
     prisma.case.groupBy({
       by: ['assignedStaffId'],
-      where: { status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, assignedStaffId: { not: null } },
+      where: scoped({ status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, assignedStaffId: { not: null } }, scope),
       _count: { _all: true },
     }),
-    prisma.case.count({ where: { status: { notIn: FINAL_STATUSES }, assignedStaffId: null } }),
+    prisma.case.count({ where: scoped({ status: { notIn: FINAL_STATUSES }, assignedStaffId: null }, scope) }),
   ]);
   const openBy = new Map(open.map((o) => [o.assignedStaffId as string, o._count._all]));
   const waitingBy = new Map(waiting.map((o) => [o.assignedStaffId as string, o._count._all]));

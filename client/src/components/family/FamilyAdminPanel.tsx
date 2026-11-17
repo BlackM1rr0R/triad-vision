@@ -18,7 +18,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { DefRow, EmptyState, Panel } from '@/components/admin/ui';
 import { RequirementsSection } from '@/components/admin/case/Requirements';
 import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
-import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
+import { SensitiveValue, isMaskedValue } from '@/components/privacyTools/SensitiveValue';
 import { useFamilyOverview, useFamilyRefresh } from './api';
 import { MemberFormFields } from './MemberFormFields';
 import { MemberProgress, RELATION_ICON, STATE_TONE } from './FamilyMembersSection';
@@ -61,7 +61,8 @@ const MemberReview = ({ caseId, onChanged }: { caseId: string; onChanged: () => 
 export const MemberDetails = ({ p }: { p: FamilyProfile }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
-  const d = (v: string | null) => (v ? date(v) : '—');
+  // FAMILY masked (Access Center): dates / e-mail arrive as "••••" and can be revealed with a reason.
+  const d = (v: string | null, field = 'birthDate') => (isMaskedValue(v) ? <SensitiveValue value={v} entity="familyPerson" id={p.id} field={field} /> : v ? date(v) : '—');
   return (
     <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
       <DefRow label={t('familyMembers.fields.birthDate')}>{d(p.birthDate)}</DefRow>
@@ -73,12 +74,16 @@ export const MemberDetails = ({ p }: { p: FamilyProfile }) => {
       <DefRow label={t('familyMembers.fields.passportNumber')}>
         <SensitiveValue value={p.passportNumber} entity="familyMember" id={p.id} field="passportNumber" />
       </DefRow>
-      <DefRow label={t('familyMembers.fields.passportExpiresAt')}>{d(p.passportExpiresAt)}</DefRow>
+      <DefRow label={t('familyMembers.fields.passportExpiresAt')}>{d(p.passportExpiresAt, 'passportExpiresAt')}</DefRow>
       <DefRow label={t('familyMembers.fields.joinsWhen')}>
         {t(`familyMembers.joins.${p.joinsWhen}`)}
         {p.joinsWhen === 'LATER' && p.plannedEntryAt ? ` · ${date(p.plannedEntryAt)}` : ''}
       </DefRow>
-      {p.email && <DefRow label={t('familyMembers.fields.email')}>{p.email}</DefRow>}
+      {p.email && (
+        <DefRow label={t('familyMembers.fields.email')}>
+          <SensitiveValue value={p.email} entity="familyPerson" id={p.id} field="email" />
+        </DefRow>
+      )}
       {p.relation === 'spouse' && p.germanExempt && (
         <DefRow label={t('familyMembers.fields.germanExempt')}>{p.germanExemptNote || '✓'}</DefRow>
       )}

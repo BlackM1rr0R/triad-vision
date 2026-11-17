@@ -31,6 +31,7 @@ import {
 } from './rules.js';
 import { DAY, atNoon, fullName, linkableDocuments, readDocument, storeCaseDocument } from './common.js';
 import { recognitionTexts, submissionMail, VOLLMACHT_TEMPLATE, VOLLMACHT_TITLE } from './texts.js';
+import { caseIdIn, scopeCaseIds } from '../accessAudit/scope.js';
 
 /**
  * Beschleunigtes Fachkräfteverfahren (§ 81a AufenthG), one per case: the employer (authorised by the worker
@@ -519,14 +520,16 @@ export const listQuery = z.object({
 });
 
 /** /admin/accelerated: procedures with their nearest deadline. */
-export const listProcedures = async (q: z.infer<typeof listQuery>, now = new Date()) => {
-  const where: Prisma.AcceleratedProcedureWhereInput = {};
+export const listProcedures = async (q: z.infer<typeof listQuery>, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
+  // `scope` = the viewer's staff case scope (lib/access; {} = every case): rows and counts over in-scope cases only.
+  const inScope = caseIdIn(await scopeCaseIds(scope));
+  const where: Prisma.AcceleratedProcedureWhereInput = { ...inScope };
   if (q.status === 'open') where.status = { notIn: [...ACCEL_FINAL] };
   else if (q.status !== 'all') where.status = q.status;
   if (q.companyId) where.companyId = q.companyId;
   const [rows, byStatus] = await Promise.all([
     prisma.acceleratedProcedure.findMany({ where, orderBy: { updatedAt: 'desc' }, take: 500 }),
-    prisma.acceleratedProcedure.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.acceleratedProcedure.groupBy({ by: ['status'], _count: { _all: true }, ...(inScope.caseId ? { where: inScope } : {}) }),
   ]);
   const [cases, companies, replies] = await Promise.all([
     rows.length

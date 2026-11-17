@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
@@ -76,6 +77,11 @@ import { adminRenewalsRouter } from './renewals.js'; // residence-title renewal 
 import { adminPermitsRouter } from './permits.js'; // permit expiry reminders (residence permit / Blue Card, passport, insurance)
 import { adminFourEyesRouter } from './fourEyes.js'; // four-eyes check of the embassy package
 import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
+import { adminAccessEmployersRouter } from './accessEmployers.js'; // Access Center › Employers (SUPER_ADMIN)
+import { adminAccessSensitiveRouter } from './accessSensitive.js'; // Access Center › Sensitive fields (SUPER_ADMIN / manage access)
+import { adminAccessPartnersRouter } from './accessPartners.js'; // Access Center › Partners: per-partner portal permissions, team members, messages
+import { adminAccessAuditRouter } from './accessAudit.js'; // Access Center › Audit: who can see what, access reviews, anomaly alerts (manage access)
+import { adminAccessLoginSecurityRouter } from './accessLoginSecurity.js'; // Access Center › Login security: 2FA, session lifetimes, partner contract
 import { adminClientProcessRouter } from './clientProcess.js';
 import { adminGrowthRouter } from './growth.js';
 import { adminMarketingRouter } from './marketing.js'; // lead scoring, landing pages, cost calculator, origin analytics
@@ -118,6 +124,7 @@ import { adminCoverLetterTemplatesRouter } from './coverLetterTemplates.js'; // 
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
 import { audit } from '../../lib/audit.js';
+import { canWith, loadAccess, scopeWhere, withCaseScope } from '../../lib/access/index.js'; // staff permissions + case scope (dashboard)
 import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
 import { adminReviewRouter } from './review.js'; // fast document review queue
 import { adminInboxRouter } from './inbox.js'; // staff message inbox (phone "Mesajlar" tab)
@@ -127,21 +134,45 @@ import { adminDataQualityRouter } from './dataQuality.js'; // data-quality panel
 import { adminSetupChecklistRouter, adminTrainingChecklistRouter, adminWhatsNewRouter } from './staffOnboarding.js'; // Yeniliklər feed, new staff training checklist, owner setup checklist
 import { trainingTracker } from '../../lib/staffOnboarding/service.js'; // records training-checklist tasks from successful staff GETs
 import { adminRuleChangesRouter } from './ruleChanges.js'; // rule-change notices: drafts STAFF+, publish ADMIN+
+import { adminAccessStaffRouter, adminMePermissionsRouter } from './accessStaff.js'; // Access Center: staff role templates, overrides, case scope, teams, break-glass (lib/access)
+
+/** Dashboard of a staff member without cases:view (lib/access): the same shape, no case data. */
+const EMPTY_DASHBOARD = {
+  counts: {}, newInquiries: 0, newClients30d: 0, recentEvents: [], waiting: [], docsPending: 0, casesNew7d: 0, appointments: [],
+  waitingOverdue3d: 0, decided30d: {}, inquiriesByStatus: {}, myOpenCases: 0, unansweredClientMessages: 0, avgDaysToDecision: null,
+};
+
+/** "Unanswered client messages" within a restricted case scope (the open in-scope cases, then the same rule). */
+const scopedUnanswered = async (cs: Prisma.CaseWhereInput): Promise<{ n: number }[]> => {
+  const ids = (await prisma.case.findMany({ where: withCaseScope({ status: { notIn: FINAL_STATUSES } }, cs), select: { id: true }, take: 5000 })).map((c) => c.id);
+  if (!ids.length) return [{ n: 0 }];
+  return prisma.$queryRaw<{ n: number }[]>`
+    SELECT COUNT(*) AS n FROM \`Case\` c
+    JOIN CaseMessage m ON m.id = (SELECT id FROM CaseMessage WHERE caseId = c.id ORDER BY createdAt DESC, id DESC LIMIT 1)
+    WHERE c.id IN (${Prisma.join(ids)}) AND m.authorId = c.clientId`;
+};
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
 adminRouter.use(trainingTracker); // new staff training checklist: detects opened cases, Ctrl+K, KB articles, ... (after the response)
 
 adminRouter.get('/dashboard', async (req, res) => {
+  // Staff permissions (lib/access): no case figures without cases:view; case figures follow the case scope ({} = all).
+  const dashAccess = await loadAccess(req.user!);
+  if (!canWith(dashAccess, 'cases', 'view')) return void res.json(EMPTY_DASHBOARD);
+  const cs = scopeWhere(dashAccess);
+  const scoped = Object.keys(cs).length > 0;
+  const sc = (w: Prisma.CaseWhereInput) => withCaseScope(w, cs);
   const now = Date.now();
   const DAY = 24 * 60 * 60 * 1000;
   const monthAgo = new Date(now - 30 * DAY);
   const weekAgo = new Date(now - 7 * DAY);
   const [byStatus, newInquiries, clients, recentEvents, waiting, docsPending, casesNew7d, appointments, waitingOverdue, decided30d, inquiriesByStatus, myOpen, unansweredClientMessages, decidedAll] = await Promise.all([
-    prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.case.groupBy({ by: ['status'], where: sc({}), _count: { _all: true } }),
     prisma.inquiry.count({ where: { status: 'NEW' } }),
     prisma.user.count({ where: { role: 'CLIENT', createdAt: { gte: monthAgo } } }),
     prisma.caseEvent.findMany({
+      where: scoped ? { case: cs } : {},
       orderBy: { createdAt: 'desc' },
       take: 15,
       include: {
@@ -151,31 +182,33 @@ adminRouter.get('/dashboard', async (req, res) => {
     }),
     // cases waiting for a staff action
     prisma.case.findMany({
-      where: { status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] } },
+      where: sc({ status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] } }),
       orderBy: { updatedAt: 'asc' },
       take: 10,
       include: { client: { select: { firstName: true, lastName: true } } },
     }),
     // the same documents as the review queue (/admin/review): pending uploads of open cases
-    prisma.document.count({ where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] }, case: { status: { notIn: FINAL_STATUSES } } } }),
-    prisma.case.count({ where: { createdAt: { gte: weekAgo } } }),
+    prisma.document.count({ where: { status: 'PENDING', stage: { in: ['INITIAL', 'EMBASSY'] }, case: sc({ status: { notIn: FINAL_STATUSES } }) } }),
+    prisma.case.count({ where: sc({ createdAt: { gte: weekAgo } }) }),
     // embassy appointments in the next 14 days
     prisma.case.findMany({
-      where: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: { gte: new Date(now), lte: new Date(now + 14 * DAY) } },
+      where: sc({ status: 'APPOINTMENT_SCHEDULED', appointmentAt: { gte: new Date(now), lte: new Date(now + 14 * DAY) } }),
       orderBy: { appointmentAt: 'asc' },
       take: 8,
       select: { id: true, number: true, appointmentAt: true, appointmentPlace: true, client: { select: { firstName: true, lastName: true } } },
     }),
-    prisma.case.count({ where: { status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, updatedAt: { lt: new Date(now - 3 * DAY) } } }),
-    prisma.case.groupBy({ by: ['status'], where: { status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { gte: monthAgo } }, _count: { _all: true } }),
+    prisma.case.count({ where: sc({ status: { in: ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'] }, updatedAt: { lt: new Date(now - 3 * DAY) } }) }),
+    prisma.case.groupBy({ by: ['status'], where: sc({ status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { gte: monthAgo } }), _count: { _all: true } }),
     prisma.inquiry.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.case.count({ where: { assignedStaffId: req.user!.id, status: { notIn: FINAL_STATUSES } } }),
     // open cases whose latest message came from the client (someone should answer)
-    prisma.$queryRaw<{ n: bigint | number }[]>`
+    scoped
+      ? scopedUnanswered(cs)
+      : prisma.$queryRaw<{ n: bigint | number }[]>`
       SELECT COUNT(*) AS n FROM \`Case\` c
       JOIN CaseMessage m ON m.id = (SELECT id FROM CaseMessage WHERE caseId = c.id ORDER BY createdAt DESC, id DESC LIMIT 1)
       WHERE c.status NOT IN ('APPROVED','REJECTED','CANCELLED') AND m.authorId = c.clientId`,
-    prisma.case.findMany({ where: { status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { not: null } }, select: { createdAt: true, decisionAt: true } }),
+    prisma.case.findMany({ where: sc({ status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { not: null } }), select: { createdAt: true, decisionAt: true } }),
   ]);
   const decisionDays = decidedAll.map((c) => (c.decisionAt!.getTime() - c.createdAt.getTime()) / DAY);
   res.json({
@@ -197,6 +230,8 @@ adminRouter.get('/dashboard', async (req, res) => {
 });
 
 adminRouter.use(adminNavRouter); // /me/nav*, /nav/* (desks, usage, modules)
+adminRouter.use(adminMePermissionsRouter); // /me/permissions: own effective permissions (sidebar filter, lib/access)
+adminRouter.use('/access', adminAccessStaffRouter); // /access/me, /access/break-glass, /access/staff/*, /access/scope/* (manage access)
 adminRouter.use('/brand', requireMinRole('SUPER_ADMIN'), adminBrandRouter); // white-label brand (System → Brand)
 adminRouter.use('/license', requireMinRole('SUPER_ADMIN'), adminLicenseRouter); // white-label licence status (System → License)
 adminRouter.use('/whitelabel', requireMinRole('SUPER_ADMIN'), adminWhitelabelRouter); // owner instance: customers / instances
@@ -244,6 +279,11 @@ adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigte
 adminRouter.use('/authorities', adminAuthoritiesRouter); // Botschaft / Ausländerbehörde catalogue + case links
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use(adminCaseProcessingRouter); // /cases/:id/processing, /case-processing/board (Schon geschrieben → Fertig, Ablehnung)
+adminRouter.use('/access/employers', adminAccessEmployersRouter); // employer roles per company member (SUPER_ADMIN)
+adminRouter.use('/access/sensitive', adminAccessSensitiveRouter); // mask groups × role / template / user, test as user
+adminRouter.use('/access/partners', adminAccessPartnersRouter); // per-partner permissions (manage access), team members + messages (partners:view/edit)
+adminRouter.use('/access/login-security', adminAccessLoginSecurityRouter);
+adminRouter.use('/access/audit', adminAccessAuditRouter); // who can see what, quarterly reviews, anomaly thresholds (manage access) // 2FA per role / user, session lifetimes, contract-bound partner logins (manage access)
 adminRouter.use('/access-log', adminAccessLogRouter); // "who viewed my documents" per client
 adminRouter.use('/placement', adminPlacementRouter); // recognition, employer share links, interview evaluations, Arbeitsvertrag tracker
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals

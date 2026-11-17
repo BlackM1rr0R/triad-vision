@@ -21,6 +21,7 @@ import { audit } from '../lib/audit.js';
 import { consumeVerificationToken, sendVerificationEmail } from '../lib/emailVerification.js';
 import { cancelEmailChange, confirmEmailChange, emailTaken, pendingEmailChange, requestEmailChange } from '../lib/emailChange.js';
 import { createLoginChallenge, securityFlags } from '../lib/twoFactor.js';
+import { partnerContractAllowsLogin } from '../lib/loginSecurity/index.js'; // contract-bound partner logins
 import { issueEmailOtp, loginMethods, maskEmail } from '../lib/emailOtp.js';
 import multer from 'multer';
 import { bufferMatches } from '../lib/fileCheck.js';
@@ -177,8 +178,8 @@ export const intlPhone = z
 /** Creates the session for a freshly authenticated user and writes it to the response. */
 export const startSession = async (req: Parameters<typeof wantsBearerToken>[0], res: Parameters<typeof setSessionCookie>[0], user: User) => {
   const client = wantsBearerToken(req) ? 'mobile' : 'web';
-  const { token, session } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
-  if (client === 'web') setSessionCookie(res, token, client);
+  const { token, session, maxMs } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
+  if (client === 'web') setSessionCookie(res, token, client, maxMs);
   return {
     user: publicUser(user),
     session: { id: session.id, expiresAt: session.expiresAt },
@@ -331,6 +332,11 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     await recordLoginFailure(body.email);
     await audit(req, 'LOGIN_FAILED', user ? `user:${user.id}` : undefined, { email: body.email });
     throw new HttpError(401, 'INVALID_CREDENTIALS');
+  }
+  // Partner logins only while the partner's contract is active (Access Center → Login security; off by default).
+  if (!(await partnerContractAllowsLogin(user))) {
+    await audit({ user: undefined, ip: req.ip }, 'LOGIN_REFUSED_CONTRACT', `user:`);
+    throw new HttpError(403, 'PARTNER_CONTRACT_INACTIVE');
   }
   const methods = loginMethods(user);
   if (methods) {

@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { DriveAccessCtx } from '../drive/access.js';
 import { allows } from '../drive/levels.js';
-import { loadMaskingSettings, maskedGroupsFor } from '../privacy/mask.js';
+import { maskGroupsForViewer } from '../privacy/mask.js';
+import { scoped } from '../accessAudit/scope.js';
 import { effectiveStage, emptyStageCounts, OPEN_STAGES, PROCESSING_SELECT, PROCESSING_STAGES, processingSummaries, type ProcessingStage } from './index.js';
 
 /**
@@ -57,7 +58,7 @@ const baseWhere = (viewerId: string, mine: boolean, search: string | undefined, 
 };
 
 /** Whether the viewer sees passport numbers in plaintext (only they may search by one). */
-const seesPassports = async (viewer: { role: Role }) => !maskedGroupsFor(viewer, await loadMaskingSettings()).has('PASSPORT');
+const seesPassports = async (viewer: { role: Role; id?: string }) => !(await maskGroupsForViewer(viewer)).has('PASSPORT');
 
 /** Files below each folder (a few levels deep), one query per level for all folders together. */
 export const fileCounts = async (rootIds: string[]) => {
@@ -77,8 +78,9 @@ export const fileCounts = async (rootIds: string[]) => {
 };
 
 /** GET /admin/case-processing/folders — counts per stage + the client folders of one stage. */
-export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer: { id: string; role: Role }) => {
-  const base = baseWhere(viewer.id, q.mine, q.search, await seesPassports(viewer));
+export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer: { id: string; role: Role }, scope: Prisma.CaseWhereInput = {}) => {
+  // `scope` = the viewer's staff case scope (lib/access; {} = every case): counts and folders over in-scope cases only.
+  const base = scoped(baseWhere(viewer.id, q.mine, q.search, await seesPassports(viewer)), scope);
   const stage: ProcessingStage = q.stage;
 
   // Drive permissions first: a restricted client folder the viewer cannot open is neither listed nor counted.
@@ -88,7 +90,7 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
       where: { AND: [base, { processingStage: { not: null } }] },
       select: { id: true, driveFolderId: true, status: true, processingStage: true, processingStageAt: true, updatedAt: true },
     }),
-    prisma.case.findMany({ where: { driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } }, select: { driveFolderId: true } }),
+    prisma.case.findMany({ where: scoped({ driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } }, scope), select: { driveFolderId: true } }),
   ]);
   const ctx = new DriveAccessCtx({ id: viewer.id, role: viewer.role });
   await ctx.load([...candidates.map((r) => r.driveFolderId!), ...waiting.map((r) => r.driveFolderId!)]);

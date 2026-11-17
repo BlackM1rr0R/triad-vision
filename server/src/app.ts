@@ -12,6 +12,8 @@ import { authRouter } from './routes/auth.js';
 import { casesRouter } from './routes/cases.js';
 import { scanPdfRouter, scanUploadRouter } from './routes/scanUpload.js';
 import { companyTeamRouter } from './routes/companyTeam.js';
+import { companyAccessRouter } from './routes/companyAccess.js'; // employer roles: own permissions
+import { companyAccessGuard } from './lib/companyAccess/guard.js'; // employer roles: server-side enforcement
 import { devicesRouter } from './routes/devices.js';
 import { toursRouter } from './routes/tours.js'; // guided-tour progress per user (first-login tours)
 import { filesRouter } from './routes/files.js';
@@ -22,6 +24,8 @@ import { adminRouter } from './routes/admin/index.js';
 import { impersonationRouter } from './routes/admin/privacyTools.js';
 import { impersonation } from './lib/privacy/impersonation.js';
 import { maskResponses } from './lib/privacy/mask.js';
+import { staffAccessGuard } from './lib/access/guard.js';
+import { recordTouchMiddleware } from './lib/accessAudit/recordTouch.js';
 import { accountRouter } from './routes/account.js';
 import { accountPlusRouter } from './routes/accountPlus.js';
 import { accountGermanyRouter } from './routes/accountGermany.js';
@@ -222,10 +226,13 @@ export const createApp = () => {
   app.use(csrfGuard);
   app.use(historyMiddleware); // field history: actor / source / request id for every Prisma update
   app.use(maskResponses); // sensitive fields masked for STAFF / ADMIN per settings (lib/privacy/mask.ts)
+  app.use(companyAccessGuard); // employer roles (lib/companyAccess): COMPANY logins only, no-op for everyone else
   // A broad per-IP ceiling for everything; sensitive routes add their own tighter limits.
   // (Skipped in tests: hundreds of requests go through one in-process app there.)
   app.use('/api', limiter({ windowMs: 60 * 1000, limit: 600, skip: () => config.isTest }));
   app.use('/api', noStore);
+  app.use('/api', staffAccessGuard); // staff permissions per area × action + case scope (lib/access; defaults = today's access)
+  app.use('/api', recordTouchMiddleware); // opened case / client records per hour (anomaly alerts, lib/accessAudit)
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
@@ -287,6 +294,7 @@ export const createApp = () => {
   app.use('/api/company/avv', companyAvvRouter); // AVV: hidden until the owner approved the template
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
   app.use('/api/company/readiness-profile', companyReadinessRouter); // consent-gated readiness card (own workers) + pool bands
+  app.use('/api/company/access', companyAccessRouter); // employer roles: GET /me (own role + permissions)
   app.use('/api/company/team', companyTeamRouter); // employer team: invite / list / deactivate colleagues (owner)
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
   app.use('/api/company/pipeline', companyPipelineRouter); // candidate pipeline + weekly digest preference

@@ -5,6 +5,7 @@ import { HttpError, badRequest, forbidden } from '../http.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { dateKey, dayRange, relativeRange } from './dates.js';
 import { datasetByKey } from './datasets.js';
+import { reportScopeWhere } from '../accessAudit/reportScope.js'; // staff case scope per dataset
 import type { Masker } from './mask.js';
 import {
   AGG_FNS,
@@ -419,7 +420,8 @@ const fetchRows = async (plan: Plan, ctx: RunCtx, limit: number): Promise<Fetche
     if (c.select) select = mergeSelect(select, c.select);
   }
   const dbSortable = !!sortCol?.path && !sortCol.get && !plan.groupBy.length;
-  const where = { AND: [def.baseWhere ?? {}, ...dbFilters] };
+  const scopeCond = await reportScopeWhere(def.key, ctx.caseScope); // staff case scope (null = ALL: query unchanged)
+  const where = { AND: [def.baseWhere ?? {}, ...(scopeCond ? [scopeCond] : []), ...dbFilters] };
   const orderBy = dbSortable ? [nest(sortCol!.path!, plan.sort.dir), { id: 'asc' }] : [{ id: 'asc' }];
   const delegate = (prisma as unknown as Record<string, { findMany: (a: unknown) => Promise<Rec[]> }>)[def.model!];
   const recs = await delegate.findMany({ where, select, orderBy, take: limit + 1 });

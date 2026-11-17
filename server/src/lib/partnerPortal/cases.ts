@@ -204,7 +204,9 @@ export const partnerCaseOr404 = async (partnerId: string, caseId: string) => {
   return c;
 };
 
-export const partnerCaseDetail = async (partnerId: string, caseId: string, partnerUserId: string) => {
+/** `partnerUserIds`: the logins whose uploads count as "ours" (the partner and its team members, lib/partnerAccess). */
+export const partnerCaseDetail = async (partnerId: string, caseId: string, partnerUserIds: string | string[]) => {
+  const ours = new Set(Array.isArray(partnerUserIds) ? partnerUserIds : [partnerUserIds]);
   const c = await prisma.case.findFirst({
     where: { id: caseId, partnerId },
     select: {
@@ -262,7 +264,7 @@ export const partnerCaseDetail = async (partnerId: string, caseId: string, partn
           documentCount: r.documents.length,
           // File names only of what the partner uploaded themself.
           myUploads: r.documents
-            .filter((d) => d.uploadedById === partnerUserId)
+            .filter((d) => !!d.uploadedById && ours.has(d.uploadedById))
             .map((d) => ({ id: d.id, name: d.originalName, status: d.status, createdAt: d.createdAt })),
         };
       }),

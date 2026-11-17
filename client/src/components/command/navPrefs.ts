@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
-import { DESKS, PINS_MAX, STAFF_NAV, activeNavItem, defaultDeskFor, isDesk, moduleOn, setOwnerInstance, type Desk, type ModuleFlags, type ModuleKey } from './navRegistry';
+import { DESKS, PINS_MAX, STAFF_NAV, activeNavItem, defaultDeskFor, isDesk, moduleOn, setOwnerInstance, setStaffPermissions, type Desk, type ModuleFlags, type ModuleKey, type StaffPermissions } from './navRegistry';
 import { defaultWorkProfile, isWorkProfile, resolveNavView, type NavView, type WorkProfile } from './workProfiles';
 import { isStringArray, navPinsKey, navStateKey, readJson, writeJson } from './storage';
 
@@ -83,6 +83,17 @@ export const useStaffNav = () => {
     retry: 1,
   });
   const data = query.data;
+
+  // Own staff permissions (server lib/access): the sidebar, hubs and Ctrl+K hide pages the API would refuse.
+  // Cosmetic only; unknown (loading / older server) = everything shown as before.
+  const perms = useQuery({
+    queryKey: ['admin-perms', userId ?? 'anon'],
+    queryFn: async () => (await api.get<StaffPermissions & { superAdmin: boolean }>('/admin/me/permissions')).data,
+    enabled: staff && !!userId,
+    staleTime: 60_000,
+    retry: 1,
+  });
+  setStaffPermissions(perms.data);
 
   // Favourites from before the server kept them (localStorage only) move to the server once.
   useEffect(() => {

@@ -156,7 +156,53 @@ export interface StaffNavItem {
   module?: ModuleKey;
   /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
   ownerOnly?: boolean;
+  /** Staff permission area of the page (server lib/access): hidden without `view` on it. Cosmetic only — the API enforces. */
+  perm?: PermArea;
+  /** Access Center: SUPER_ADMIN, or an ADMIN granted "manage access". */
+  manageAccessOnly?: boolean;
 }
+
+// ─── Staff permissions (GET /api/admin/me/permissions; navPrefs.ts sets them) ──────────────────────────
+
+/** Areas of the server's permission engine (server/src/lib/access/types.ts). */
+export type PermArea = 'cases' | 'clients' | 'documents' | 'finance' | 'employers' | 'partners' | 'content' | 'settings' | 'drive' | 'reports' | 'communications' | 'analytics';
+export interface StaffPermissions {
+  matrix: Partial<Record<PermArea, string[]>>;
+  manageAccess: boolean;
+}
+
+// Unknown (not loaded yet) = everything visible, as before the permission engine.
+let staffPerms: StaffPermissions | null = null;
+export const setStaffPermissions = (p: StaffPermissions | null | undefined) => {
+  staffPerms = p ?? null;
+};
+
+/** Page → permission area (pages not listed are personal / neutral and always shown). */
+const PERM_OF: Record<string, PermArea> = {
+  cases: 'cases', kanban: 'cases', recognition: 'cases', dataQuality: 'cases', accelerated: 'cases', authorities: 'cases', arrivals: 'cases',
+  partnerHousing: 'cases', checkIns: 'cases', familyReunion: 'cases', caseForms: 'cases', teamLoad: 'cases',
+  review: 'documents', requirements: 'documents', signatures: 'documents', countersign: 'documents', officialForms: 'documents', expiring: 'documents',
+  originals: 'documents', coverLetterTemplates: 'documents', translations: 'documents', contractTemplates: 'documents', docsAudit: 'documents',
+  clientTasks: 'clients', germanyReady: 'clients', examDates: 'clients', candidates: 'clients', skillVideos: 'clients', register: 'clients',
+  duplicates: 'clients', inquiries: 'clients', privacyRequests: 'clients', bookings: 'clients',
+  referralPartners: 'partners', publicApiKeys: 'partners', agents: 'partners',
+  companies: 'employers', employerChecklist: 'employers', realSalaries: 'employers', vacancies: 'employers', jobChannels: 'employers',
+  candidateRequests: 'employers', candidatePool: 'employers', interviews: 'employers', employmentContracts: 'employers', interviewPrep: 'employers',
+  inbox: 'communications', messaging: 'communications', mailboxes: 'communications', campaigns: 'communications', ruleChanges: 'communications',
+  calls: 'communications', surveys: 'communications', 'ws.mail': 'communications', 'ws.chat': 'communications', 'ws.contacts': 'communications',
+  'ws.liveChats': 'communications',
+  invoices: 'finance', clientInvoices: 'finance', packages: 'finance', accounting: 'finance', settlements: 'finance', finance: 'finance',
+  profitability: 'finance', quotes: 'finance', 'ws.settlements': 'finance',
+  reports: 'reports', quarterlyReport: 'reports',
+  overview: 'analytics', analytics: 'analytics', yearReview: 'analytics', bizAnalytics: 'analytics', weeklyReports: 'analytics',
+  toolAnalytics: 'analytics', searchPerformance: 'analytics', oversight: 'analytics', tvDisplay: 'analytics',
+  services: 'content', visaCategories: 'content', partners: 'content', visaSamples: 'content', testimonials: 'content', stats: 'content',
+  faqs: 'content', posts: 'content', journey: 'content', events: 'content', reviews: 'content', docGuides: 'content', studyProgrammes: 'content',
+  waitingRoom: 'content', preCourse: 'content', siteTools: 'content', cityCosts: 'content', dataFreshness: 'content', pastPlacements: 'content',
+  landingPages: 'content', leadMagnets: 'content', guides: 'content', legal: 'content',
+  users: 'settings', settings: 'settings', history: 'settings', automation: 'settings', integrations: 'settings', problemReports: 'settings',
+  'ws.drive': 'drive',
+};
 
 // White-label instance role from GET /admin/me/nav (navPrefs.ts sets it); unknown = not the owner's instance.
 let ownerInstance = false;
@@ -171,6 +217,7 @@ const a = (id: string, to: string, icon: LucideIcon, group: NavGroupKey | undefi
   icon,
   area: 'admin',
   group,
+  ...(PERM_OF[id] ? { perm: PERM_OF[id] } : {}),
   ...extra,
 });
 
@@ -184,6 +231,7 @@ const w = (id: string, path: string, icon: LucideIcon, module?: ModuleKey): Staf
   icon,
   area: 'workspace',
   module,
+  ...(PERM_OF[`ws.${id}`] ? { perm: PERM_OF[`ws.${id}`] } : {}),
 });
 
 export const STAFF_NAV: StaffNavItem[] = [
@@ -304,6 +352,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('security', '/admin/security', ShieldCheck, 'system'),
   a('securityAlerts', '/admin/security-alerts', ShieldAlert, 'system', { superOnly: true }),
   a('sensitiveAccess', '/admin/sensitive-access', ShieldHalf, 'system', { superOnly: true }),
+  a('accessCenter', '/admin/access', KeyRound, 'system', { adminOnly: true, manageAccessOnly: true }), // Access Center: staff roles, case scope, partners, employers, … (SUPER_ADMIN + "manage access")
   a('history', '/admin/history', History, 'system', { adminOnly: true }),
   a('storage', '/admin/storage', HardDrive, 'system', { adminOnly: true }),
   a('automation', '/admin/automation', Workflow, 'system', { adminOnly: true }),
@@ -345,11 +394,14 @@ export const STAFF_NAV: StaffNavItem[] = [
 ];
 
 /** Whether a role may open the item (mirrors the route guards). */
-export const canSee = (item: Pick<StaffNavItem, 'adminOnly' | 'superOnly' | 'ownerOnly'>, role: Role | null | undefined) =>
+export const canSee = (item: Pick<StaffNavItem, 'adminOnly' | 'superOnly' | 'ownerOnly' | 'perm' | 'manageAccessOnly'>, role: Role | null | undefined) =>
   hasMinRole(role, 'STAFF') &&
   (!item.superOnly || hasMinRole(role, 'SUPER_ADMIN')) &&
   (!item.adminOnly || hasMinRole(role, 'ADMIN')) &&
-  (!item.ownerOnly || ownerInstance);
+  (!item.ownerOnly || ownerInstance) &&
+  // Staff permissions (cosmetic; the API enforces): Access Center for managers, areas without `view` hidden.
+  (!item.manageAccessOnly || hasMinRole(role, 'SUPER_ADMIN') || !!staffPerms?.manageAccess) &&
+  (!item.perm || hasMinRole(role, 'SUPER_ADMIN') || !staffPerms || (staffPerms.matrix[item.perm] ?? []).includes('view'));
 
 /** Staff below ADMIN land on /admin/dashboard (the /admin index redirects them elsewhere). */
 export const hrefFor = (item: StaffNavItem, role: Role | null | undefined) =>
@@ -391,7 +443,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'trainingChecklist', 'whatsNew', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'setupChecklist', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['accessCenter', 'settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'setupChecklist', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

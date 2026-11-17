@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireMinRole } from '../../middleware/auth.js';
 import { badRequest, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js'; // staff case scope: figures over in-scope cases only ({} = all)
 import { PeriodError, resolvePeriod } from '../../lib/finance/period.js';
 import {
   byTypeReport,
@@ -39,37 +40,37 @@ const range = (p: ReturnType<typeof resolvePeriod>) => ({ from: p.from, to: p.to
 
 adminFinanceRouter.get('/summary', async (req, res) => {
   const p = period(req);
-  res.json({ range: range(p), summary: await summaryReport(p) });
+  res.json({ range: range(p), summary: await summaryReport(p, undefined, await caseScopeWhere(req.user)) });
 });
 
 adminFinanceRouter.get('/monthly', async (req, res) => {
   const p = period(req);
-  res.json({ range: { ...range(p), groupBy: 'month' }, months: await monthlyReport(p) });
+  res.json({ range: { ...range(p), groupBy: 'month' }, months: await monthlyReport(p, undefined, await caseScopeWhere(req.user)) });
 });
 
 adminFinanceRouter.get('/receivables', async (req, res) => {
   const p = period(req);
-  res.json({ range: range(p), ...(await receivablesReport(p)) });
+  res.json({ range: range(p), ...(await receivablesReport(p, undefined, await caseScopeWhere(req.user))) });
 });
 
 adminFinanceRouter.get('/commissions', async (req, res) => {
   const p = period(req);
-  res.json({ range: range(p), ...(await commissionsReport(p)) });
+  res.json({ range: range(p), ...(await commissionsReport(p, await caseScopeWhere(req.user))) });
 });
 
 adminFinanceRouter.get('/staff', async (req, res) => {
   const p = period(req);
-  res.json({ range: range(p), staff: await staffReport(p) });
+  res.json({ range: range(p), staff: await staffReport(p, await caseScopeWhere(req.user)) });
 });
 
 adminFinanceRouter.get('/by-type', async (req, res) => {
   const p = period(req);
-  res.json({ range: range(p), ...(await byTypeReport(p)) });
+  res.json({ range: range(p), ...(await byTypeReport(p, await caseScopeWhere(req.user))) });
 });
 
 adminFinanceRouter.get('/export.xlsx', async (req, res) => {
   const p = period(req);
-  const { buffer, filename, rows } = await financeWorkbook(p);
+  const { buffer, filename, rows } = await financeWorkbook(p, undefined, await caseScopeWhere(req.user));
   await audit(req, 'FINANCE_EXPORT', undefined, { from: p.from, to: p.to, ...rows });
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

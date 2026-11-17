@@ -3,6 +3,7 @@ import type { Prisma, TranslationStatus } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import {
   MAX_FILES_PER_KIND,
   OPEN_STATUSES,
@@ -94,6 +95,8 @@ adminTranslationsRouter.get('/', async (req, res) => {
       });
     }
   }
+  const scope = await caseScopeWhere(req.user); // staff case scope ({} = every case, the default)
+  if (Object.keys(scope).length) and.push({ case: scope });
   const where: Prisma.TranslationOrderWhereInput = and.length ? { AND: and } : {};
   const [total, rows] = await Promise.all([
     prisma.translationOrder.count({ where }),

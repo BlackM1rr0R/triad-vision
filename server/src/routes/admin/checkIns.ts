@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
@@ -23,7 +24,7 @@ import { recomputeRisk, runRiskRecompute } from '../../lib/checkIns/risk.js';
 export const adminCheckInsRouter = Router();
 
 adminCheckInsRouter.get('/overview', async (req, res) => {
-  res.json(await overview(parse(overviewQuery, req.query)));
+  res.json(await overview(parse(overviewQuery, req.query), undefined, await caseScopeWhere(req.user))); // staff case scope
 });
 
 adminCheckInsRouter.get('/cases/:caseId', async (req, res) => {

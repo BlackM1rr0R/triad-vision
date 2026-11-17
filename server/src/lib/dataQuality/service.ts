@@ -1,6 +1,7 @@
 import type { Prisma, VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { FINAL_STATUSES } from '../caseFlow.js';
+import { scoped } from '../accessAudit/scope.js';
 import { loadFormData, missingFields } from '../docsIntel/forms.js';
 import { expiryCounts, missingRequired, qualityScore, stagesDue } from './score.js';
 
@@ -14,6 +15,8 @@ export interface DataQualityFilter {
   staffId?: string; // 'none' = unassigned
   visaType?: VisaType;
   maxScore?: number;
+  /** Staff case scope of the viewer (lib/access caseScopeWhere); missing / {} = every case. */
+  scope?: Prisma.CaseWhereInput;
 }
 
 const MAX_CASES = 500;
@@ -35,10 +38,11 @@ const mapLimit = async <T, R>(items: T[], n: number, fn: (x: T) => Promise<R>) =
 };
 
 export const dataQualityList = async (f: DataQualityFilter, now = new Date()) => {
-  const where: Prisma.CaseWhereInput = { status: { notIn: FINAL_STATUSES } };
+  let where: Prisma.CaseWhereInput = { status: { notIn: FINAL_STATUSES } };
   if (f.visaType) where.visaType = f.visaType;
   if (f.staffId === 'none') where.assignedStaffId = null;
   else if (f.staffId) where.assignedStaffId = f.staffId;
+  where = scoped(where, f.scope);
   const [rows, total] = await Promise.all([
     prisma.case.findMany({
       where,

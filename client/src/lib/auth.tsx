@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, lazy, Suspense, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -26,6 +26,10 @@ export interface SecurityFlags {
   twoFactorRequired?: boolean;
   /** Candidates / employers: two-step login with a code sent by email. */
   emailOtpEnabled?: boolean;
+  /** Partners / employers / clients for whom the Access Center requires 2FA but who have none yet: the portal shows the set-up. */
+  twoFactorSetupNeeded?: boolean;
+  /** Web idle timeout (minutes) when the Access Center set one for this account; absent = the default. */
+  sessionIdleMinutes?: number;
 }
 export const securityOf = (u: User | null | undefined): SecurityFlags => (u ?? {}) as SecurityFlags;
 /** Staff member who still has to finish the 2FA enrollment wizard. */
@@ -34,6 +38,10 @@ export const needsTwoFactorEnrollment = (u: User | null | undefined) => {
   return !!u && isStaffRole(u.role) && !!s.twoFactorRequired && !s.twoFactorEnabled;
 };
 export const TWO_FACTOR_SETUP_PATH = '/admin/security';
+/** Non-staff account that must set up a second factor before using its portal (Access Center › Login security). */
+export const needsTwoFactorSetup = (u: User | null | undefined) => !!u && !isStaffRole(u.role) && !!securityOf(u).twoFactorSetupNeeded;
+// Lazy: the gate renders the e-mail code card, which imports this module.
+const TwoFactorSetupGate = lazy(() => import('@/components/auth/TwoFactorSetupGate'));
 
 /** Answer of POST /auth/login when the account has 2FA: no session yet, only a short-lived challenge. */
 export interface TwoFactorChallenge {
@@ -159,8 +167,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Client-side idle logout: one timer, activity only updates a timestamp (no re-render per event).
   const userId = user?.id;
+  // The Access Center may set another idle timeout for this account (the server sends it; else the default).
+  const idleMinutes = securityOf(user).sessionIdleMinutes;
   useEffect(() => {
     if (!userId) return;
+    const IDLE_LIMIT = idleMinutes && idleMinutes > 0 ? idleMinutes * 60 * 1000 : IDLE_LIMIT_MS;
     let lastActivity = Date.now();
     let lastSample = 0;
     let warned = false;
@@ -169,19 +180,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const schedule = () => {
       window.clearTimeout(timer);
       const elapsed = Date.now() - lastActivity;
-      const next = (warned ? IDLE_LIMIT_MS : IDLE_LIMIT_MS - IDLE_WARN_MS) - elapsed;
+      const next = (warned ? IDLE_LIMIT : IDLE_LIMIT - IDLE_WARN_MS) - elapsed;
       timer = window.setTimeout(tick, Math.max(next, 1000));
     };
     const tick = () => {
       const elapsed = Date.now() - lastActivity;
-      if (elapsed >= IDLE_LIMIT_MS) {
+      if (elapsed >= IDLE_LIMIT) {
         window.clearTimeout(timer);
         void api.post('/auth/logout').catch(() => undefined);
         forgetDevicePortalData(); // idle logout on a shared computer: offline documents go too
         sessionLostRef.current('IDLE');
         return;
       }
-      if (elapsed >= IDLE_LIMIT_MS - IDLE_WARN_MS && !warned) {
+      if (elapsed >= IDLE_LIMIT - IDLE_WARN_MS && !warned) {
         warned = true;
         toast.warning(sessionMessage('idleWarning'), { id: IDLE_TOAST_ID, duration: IDLE_WARN_MS });
       }
@@ -201,7 +212,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const onVisibility = () => {
       if (document.visibilityState !== 'visible') return;
       // Timers are throttled in background tabs: re-check the clock first, then count the return as activity.
-      if (Date.now() - lastActivity >= IDLE_LIMIT_MS) tick();
+      if (Date.now() - lastActivity >= IDLE_LIMIT) tick();
       else onActivity();
     };
 
@@ -215,7 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.dismiss(IDLE_TOAST_ID);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, idleMinutes]);
 
   return (
     <AuthContext.Provider value={{ user, loading: isLoading, setUser, logout }}>{children}</AuthContext.Provider>
@@ -241,6 +252,13 @@ export const RequireAuth = ({ roles, children }: { roles?: Role[]; children: Rea
   if (!user) return <Navigate to="/login" replace state={{ from: currentHref(location) }} />;
   // Staff who land on a client-only page (or vice versa) go to their own area instead of a dead end.
   if (roles && !roles.includes(user.role)) return <Navigate to={landingAfterLogin(user.role)} replace />;
+  // 2FA required by the Access Center but not set up: guided set-up instead of the portal (never a lock-out).
+  if (needsTwoFactorSetup(user))
+    return (
+      <Suspense fallback={<div className="grid min-h-[60vh] place-items-center"><Spinner className="size-10 border-4 text-brand-600" /></div>}>
+        <TwoFactorSetupGate />
+      </Suspense>
+    );
   return <>{children}</>;
 };
 

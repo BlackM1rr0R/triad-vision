@@ -3,6 +3,9 @@ import { prisma } from '../../db.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { HttpError, notFound } from '../http.js';
 import { allows, maxLevel, type Level } from './levels.js';
+import { caseRowInScope } from '../access/resolve.js';
+import { loadAccess } from '../access/store.js';
+import type { ResolvedAccess } from '../access/types.js';
 
 /**
  * Permission engine of the team drive.
@@ -13,6 +16,10 @@ import { allows, maxLevel, type Level } from './levels.js';
  *
  * A grant matches when it names the user, or names a role the user has at least (a STAFF grant covers
  * STAFF, ADMIN and SUPER_ADMIN). No matching grant anywhere on the chain = no access (the API answers 404).
+ *
+ * Staff case scope (lib/access): a staff member whose scope is ASSIGNED / TEAM loses every level on the client
+ * folder (Case.driveFolderId) of a case outside the scope and on everything below it. With the default scope ALL
+ * nothing changes.
  *
  * One context lives for one request: nodes are loaded in batches together with all their ancestors
  * (one query per tree level, never one per node) and levels are memoised, so a listing of thousands of
@@ -65,6 +72,11 @@ export const grantMatches = (g: Pick<GrantLite, 'userId' | 'role'>, user: DriveU
 export class DriveAccessCtx {
   readonly nodes = new Map<string, NodeLite>();
   private memo = new Map<string, Level>();
+  /** Case scope (lib/access): undefined = not loaded yet, null = every case (nothing to block). */
+  private scope: ResolvedAccess | null | undefined;
+  private scopeChecked = new Set<string>();
+  /** Client folders of cases outside the user's case scope. */
+  private blockedFolders = new Set<string>();
 
   constructor(readonly user: DriveUser) {}
 
@@ -82,13 +94,45 @@ export class DriveAccessCtx {
     for (let depth = 0; pending.length > 0 && depth < 100; depth++) {
       const rows = await prisma.driveNode.findMany({ where: { id: { in: pending } }, select: nodeLiteSelect });
       this.add(rows);
+      await this.checkCaseFolders(rows.map((r) => r.id));
       pending = [...new Set(rows.map((r) => r.parentId).filter((p): p is string => !!p && !this.nodes.has(p)))];
     }
+  }
+
+  /** Marks the client folders of out-of-scope cases among the given nodes (restricted case scope only). */
+  private async checkCaseFolders(ids: string[]) {
+    if (this.isSuper) return;
+    if (this.scope === undefined) {
+      const a = await loadAccess(this.user);
+      this.scope = a.caseScope === 'ALL' || a.superAdmin ? null : a;
+    }
+    if (!this.scope) return;
+    const fresh = ids.filter((id) => !this.scopeChecked.has(id));
+    if (!fresh.length) return;
+    for (const id of fresh) this.scopeChecked.add(id);
+    const cases = await prisma.case.findMany({
+      where: { driveFolderId: { in: fresh } },
+      select: { id: true, assignedStaffId: true, processingAssigneeId: true, driveFolderId: true },
+    });
+    for (const c of cases) if (c.driveFolderId && !caseRowInScope(this.scope, c)) this.blockedFolders.add(c.driveFolderId);
+    if (cases.length) this.memo.clear();
+  }
+
+  /** The node or one of its loaded ancestors is the client folder of an out-of-scope case. */
+  private blocked(id: string) {
+    if (!this.blockedFolders.size) return false;
+    let cur = this.nodes.get(id);
+    for (let i = 0; cur && i < 200; i++) {
+      if (this.blockedFolders.has(cur.id)) return true;
+      cur = cur.parentId ? this.nodes.get(cur.parentId) : undefined;
+    }
+    return false;
   }
 
   /** Adds already-fetched rows (e.g. the children of a listing) and loads their missing ancestors. */
   async addWithAncestors(rows: NodeLite[]) {
     this.add(rows);
+    await this.checkCaseFolders(rows.map((r) => r.id));
     await this.load(rows.map((r) => r.parentId).filter((p): p is string => !!p));
   }
 
@@ -105,6 +149,10 @@ export class DriveAccessCtx {
     if (this.memo.has(id)) return this.memo.get(id)!;
     const n = this.nodes.get(id);
     if (!n) return null;
+    if (this.blocked(id)) {
+      this.memo.set(id, null);
+      return null;
+    }
     let l: Level;
     if (n.space === 'PERSONAL' && n.ownerId === this.user.id) l = 'MANAGE';
     else {
@@ -130,6 +178,8 @@ export class DriveAccessCtx {
   reset() {
     this.memo.clear();
     this.nodes.clear();
+    this.scopeChecked.clear();
+    this.blockedFolders.clear();
   }
 }
 

@@ -32,6 +32,7 @@ interface Registry {
   hubTabs: (key: string, role: Role, modules: Record<string, boolean> | undefined) => Item[];
   isVisible: (item: Item, role: Role, modules: Record<string, boolean> | undefined) => boolean;
   setOwnerInstance: (v: boolean) => void;
+  setStaffPermissions: (p: { matrix: Record<string, string[]>; manageAccess: boolean } | null) => void;
   activeNavItem: (pathname: string, items?: Item[]) => Item | undefined;
   defaultDeskFor: (role: Role) => string;
 }
@@ -103,6 +104,28 @@ describe('admin navigation registry', () => {
     expect(r.isVisible(item('customers'), 'SUPER_ADMIN', {})).toBe(true);
     expect(r.isVisible(item('customers'), 'ADMIN', {})).toBe(false);
     r.setOwnerInstance(false);
+  });
+
+  it('Access Center + staff permissions: managers only, areas without view hidden (cosmetic; the API enforces)', async () => {
+    const item = (id: string) => r.STAFF_NAV.find((i) => i.id === id)!;
+    expect(r.hubOf('accessCenter')).toBe('system');
+    expect(item('accessCenter').to).toBe('/admin/access');
+    r.setStaffPermissions(null);
+    expect(r.isVisible(item('accessCenter'), 'SUPER_ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('accessCenter'), 'ADMIN', {})).toBe(false);
+    expect(r.isVisible(item('accessCenter'), 'STAFF', {})).toBe(false);
+    // unknown permissions (not loaded) = everything as before
+    expect(r.isVisible(item('invoices'), 'ADMIN', {})).toBe(true);
+    r.setStaffPermissions({ matrix: { finance: ['view'], cases: [] }, manageAccess: true });
+    expect(r.isVisible(item('accessCenter'), 'ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('invoices'), 'ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('cases'), 'STAFF', {})).toBe(false);
+    expect(r.isVisible(item('cases'), 'SUPER_ADMIN', {})).toBe(true);
+    expect(r.isVisible(item('today'), 'STAFF', {})).toBe(true); // personal pages stay
+    expect(r.hubTabs('cases', 'STAFF', {}).map((i) => i.id)).not.toContain('cases');
+    r.setStaffPermissions(null);
+    const admin = ((await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'i18n/admin.ts')).href)) as { adminCopy: Record<string, { admin: { nav: Record<string, string> } }> }).adminCopy;
+    for (const l of ['az', 'de', 'en', 'ru']) expect(admin[l].admin.nav.accessCenter, `${l} nav accessCenter`).toBeTruthy();
   });
 
   it('labels hubs, desks, modules and the new pages in all four languages', () => {

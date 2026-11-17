@@ -1,5 +1,6 @@
-import type { CaseStatus } from '@prisma/client';
+import type { CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
+import { isFullScope, scoped, viaCase } from './accessAudit/scope.js';
 
 /**
  * Conversion funnel computed from existing tables (no event tracking): only visits come from the
@@ -100,9 +101,12 @@ export interface AnalyticsQuery {
   from: Date; // inclusive, 00:00 UTC
   to: Date; // inclusive day; the range ends at the end of this UTC day
   groupBy: GroupBy;
+  /** Staff case scope of the viewer (lib/access); missing / {} = every case. Case and client figures follow it. */
+  scope?: Prisma.CaseWhereInput;
 }
 
-export const computeAnalytics = async ({ from, to, groupBy }: AnalyticsQuery) => {
+export const computeAnalytics = async ({ from, to, groupBy, scope }: AnalyticsQuery) => {
+  const clientIn: Prisma.UserWhereInput = isFullScope(scope) ? {} : { cases: { some: scope } };
   const end = new Date(to.getTime() + DAY); // exclusive
   const range = { gte: from, lt: end };
   const buckets = bucketRange(from, to, groupBy);
@@ -110,18 +114,18 @@ export const computeAnalytics = async ({ from, to, groupBy }: AnalyticsQuery) =>
 
   const [visitRows, regs, verified, casesCreated, stepEvents, approved, inquiries, bookings, applications, categories] = await Promise.all([
     prisma.analyticsDaily.findMany({ where: { metric: 'visit', day: range }, select: { day: true, source: true, count: true } }),
-    prisma.user.findMany({ where: { role: 'CLIENT', createdAt: range }, select: { createdAt: true } }),
-    prisma.user.findMany({ where: { role: 'CLIENT', emailVerifiedAt: range }, select: { emailVerifiedAt: true } }),
+    prisma.user.findMany({ where: { role: 'CLIENT', createdAt: range, ...clientIn }, select: { createdAt: true } }),
+    prisma.user.findMany({ where: { role: 'CLIENT', emailVerifiedAt: range, ...clientIn }, select: { emailVerifiedAt: true } }),
     prisma.case.findMany({
-      where: { createdAt: range },
+      where: scoped({ createdAt: range }, scope),
       select: { id: true, createdAt: true, status: true, visaCategoryId: true, client: { select: { createdAt: true } } },
     }),
     prisma.caseEvent.findMany({
-      where: { createdAt: range, toStatus: { in: Object.values(STAGE_STATUS) as CaseStatus[] } },
+      where: { createdAt: range, toStatus: { in: Object.values(STAGE_STATUS) as CaseStatus[] }, ...viaCase(scope) },
       select: { caseId: true, toStatus: true, createdAt: true },
       orderBy: { createdAt: 'asc' },
     }),
-    prisma.case.findMany({ where: { status: 'APPROVED', decisionAt: range }, select: { createdAt: true, decisionAt: true } }),
+    prisma.case.findMany({ where: scoped({ status: 'APPROVED', decisionAt: range }, scope), select: { createdAt: true, decisionAt: true } }),
     prisma.inquiry.findMany({ where: { createdAt: range }, select: { createdAt: true } }),
     prisma.booking.findMany({ where: { createdAt: range }, select: { createdAt: true } }),
     prisma.vacancyApplication.findMany({ where: { createdAt: range }, select: { createdAt: true } }),

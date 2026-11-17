@@ -47,6 +47,7 @@ registerCopy(adminCopy);
 import { adminNavCopy } from '@/i18n/adminNav'; // hub names for the breadcrumb
 registerCopy(adminNavCopy);
 import { getBrand } from '@/lib/brand';
+import { BreakGlassHost } from '@/components/access/BreakGlassHost'; // 403 OUT_OF_SCOPE → "request emergency access" (lib/access)
 registerCopy(pagesCalls);
 
 /**
@@ -664,6 +665,7 @@ export default function AdminLayout() {
         </footer>
       </div>
       <CommandPaletteHotkey />
+      <BreakGlassHost />
       <ShortcutLayer />
       <StaffBottomNav onMore={() => setMobileOpen(true)} moreOpen={mobileOpen} />
       {/* first-login staff tour (new accounts only; Help → "Start the tour" replays it); the feature tours are

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireMinRole } from '../../middleware/auth.js';
 import { documentUpload } from '../../middleware/upload.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { badRequest, parse } from '../../lib/http.js';
 import {
   addProcessEvent,
@@ -69,12 +70,12 @@ export const adminRecognitionRouter = Router();
 const id = (v: unknown) => String(v);
 
 adminRecognitionRouter.get('/', async (req, res) => {
-  res.json(await listProcesses(parse(listQuery, req.query)));
+  res.json(await listProcesses(parse(listQuery, req.query), undefined, await caseScopeWhere(req.user))); // staff case scope ({} = all)
 });
 
 adminRecognitionRouter.get('/deadlines', async (req, res) => {
   const q = parse(z.object({ days: z.coerce.number().int().refine((d) => [30, 60, 90, 180].includes(d), 'days must be 30, 60, 90 or 180').default(30), staffId: z.string().trim().min(1).max(40).optional() }), req.query);
-  res.json({ days: q.days, items: await upcomingDeadlines(q.days, { staffId: q.staffId }) });
+  res.json({ days: q.days, items: await upcomingDeadlines(q.days, { staffId: q.staffId, scope: await caseScopeWhere(req.user) }) });
 });
 
 adminRecognitionRouter.get('/settings', async (_req, res) => {
@@ -174,7 +175,7 @@ adminRecognitionRouter.delete('/:id', requireMinRole('ADMIN'), async (req, res) 
 export const adminAcceleratedRouter = Router();
 
 adminAcceleratedRouter.get('/', async (req, res) => {
-  res.json(await listProcedures(parse(accelListQuery, req.query)));
+  res.json(await listProcedures(parse(accelListQuery, req.query), undefined, await caseScopeWhere(req.user))); // staff case scope
 });
 
 adminAcceleratedRouter.get('/cases/:caseId', async (req, res) => {

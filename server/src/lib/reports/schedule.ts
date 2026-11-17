@@ -9,6 +9,7 @@ import { datasetFor, runReport, type ReportResult } from './engine.js';
 import { buildXlsx, MIME, reportFilename, summaryLines } from './export.js';
 import { maskerFor } from './mask.js';
 import { getReportSettings, isAllowedExternal } from './settings.js';
+import { caseScopeWhere } from '../access/api.js';
 import { L, pickLang, type Lang } from './types.js';
 
 /**
@@ -99,7 +100,7 @@ export const deliverSchedule = async (s: ReportSchedule & { report: SavedReport 
   if (!owner || !owner.isActive || !hasMinRole(owner.role, 'ADMIN')) throw new DeliveryError('OWNER_NOT_ALLOWED');
   const def = datasetFor(s.report.dataset, owner.role);
   const { eurAzn } = await getProfitSettings();
-  const ctx = { eurAzn, userId: owner.id, role: owner.role, now };
+  const ctx = { eurAzn, userId: owner.id, role: owner.role, now, caseScope: await caseScopeWhere(owner) }; // owner's case scope
 
   const staffIds = asIdList(s.recipientUserIds);
   const staff = staffIds.length

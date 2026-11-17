@@ -295,6 +295,7 @@ const AdminAiSettings = lazyRoute('AdminAiSettings', () => import('./pages/admin
 const AdminWeeklyReports = lazyRoute('AdminWeeklyReports', () => import('./pages/admin/WeeklyReports'));
 const AdminSecurityAlerts = lazyRoute('AdminSecurityAlerts', () => import('./pages/admin/SecurityAlerts'));
 const AdminSensitiveAccess = lazyRoute('AdminSensitiveAccess', () => import('./pages/admin/SensitiveAccess'));
+const AdminAccessCenter = lazyRoute('AdminAccessCenter', () => import('./pages/admin/access/AccessCenter')); // Access Center (SUPER_ADMIN + "manage access")
 const AdminAiMailTriage = lazyRoute('AdminAiMailTriage', () => import('./pages/admin/AiMailTriage'));
 const AdminSurveys = lazyRoute('AdminSurveys', () => import('./pages/admin/Surveys'));
 const AdminCampaigns = lazyRoute('AdminCampaigns', () => import('./pages/admin/Campaigns'));
@@ -877,6 +878,14 @@ export default function App() {
               element={
                 <RequireAuth roles={['SUPER_ADMIN']}>
                   <AdminSensitiveAccess />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="access"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminAccessCenter />
                 </RequireAuth>
               }
             />

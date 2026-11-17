@@ -10,6 +10,7 @@ import { notifyUser } from '../notifications.js';
 import { createNumbered } from '../tasks/core.js';
 import { checkInTexts, LEFT_REASONS, TOPICS, topicLabels } from './texts.js';
 import { RISK_LEVELS, recomputeRisk, type RiskReason } from './risk.js';
+import { viaCase } from '../accessAudit/scope.js'; // staff case scope
 
 /**
  * Post-arrival check-ins (Gəlişdən sonra yoxlama).
@@ -305,8 +306,10 @@ export const overviewQuery = z.object({
 });
 
 /** Retention dashboard: answers, issues by topic, still employed after 3 / 6 / 12 months, worker list. */
-export const overview = async (q: z.infer<typeof overviewQuery>, now = new Date()) => {
+/** `scope` = the viewer's staff case scope (lib/access; {} = every case): rows and figures over in-scope cases only. */
+export const overview = async (q: z.infer<typeof overviewQuery>, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
   const where: Prisma.ArrivalFollowUpWhereInput = {
+    ...viaCase(scope),
     ...(q.companyId ? { companyId: q.companyId } : {}),
     ...(q.from || q.to ? { arrivedAt: { ...(q.from ? { gte: new Date(`${q.from}T00:00:00Z`) } : {}), ...(q.to ? { lte: new Date(`${q.to}T23:59:59.999Z`) } : {}) } } : {}),
   };

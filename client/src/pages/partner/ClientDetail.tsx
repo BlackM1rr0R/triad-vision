@@ -4,14 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertCircle, ArrowLeft, CheckCircle2, CircleDashed, Clock3, FileText, History, Info, Upload, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, CircleDashed, Clock3, Download, FileText, History, Info, Upload, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Documents } from '@/components/illustrations';
 import { useL10n } from '@/lib/l10n';
 import { Spinner } from '@/components/ui/Spinner';
 import { day } from '@/components/agents/format';
-import { portalError, type DocState, type PartnerCaseDetail, type PartnerRequirement } from '@/components/partnerPortal/api';
+import { accessOf, downloadFile, portalError, usePartnerMe, type DocState, type PartnerCaseDetail, type PartnerRequirement } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
 import { optimizeImage } from '@/lib/imageCompress';
 
@@ -69,12 +69,30 @@ const RequirementRow = ({ caseId, r }: { caseId: string; r: PartnerRequirement }
                 <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden /> {t('partnerPortal.detail.reason', { reason: r.rejectionReason })}
               </p>
             )}
-            {r.myUploads.length > 0 && (
+            {r.myUploads.length > 0 && !r.files && (
               <ul className="mt-1.5 space-y-0.5">
                 {r.myUploads.map((u) => (
                   <li key={u.id} className="flex items-center gap-1.5 text-xs text-muted">
                     <FileText className="size-3.5 shrink-0" aria-hidden />
                     <span className="truncate">{u.name}</span> · {day(u.createdAt)}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* Download level (lib/partnerAccess): every file of the requirement, with download. */}
+            {!!r.files?.length && (
+              <ul className="mt-1.5 space-y-0.5" aria-label={t('partnerAccess.docs.files')}>
+                {r.files.map((f) => (
+                  <li key={f.id} className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    <FileText className="size-3.5 shrink-0" aria-hidden />
+                    <span className="min-w-0 truncate">{f.name}</span> · {day(f.createdAt)}
+                    <button
+                      type="button"
+                      className="btn-ghost btn-sm"
+                      onClick={() => downloadFile(`/partner/cases/${caseId}/documents/${f.id}/file`, f.name).catch((err) => toast.error(portalError(err)))}
+                    >
+                      <Download className="size-3.5" aria-hidden /> {t('partnerAccess.docs.download')}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -99,6 +117,7 @@ export default function PartnerClientDetailPage() {
   const { tr, dateTime } = useL10n();
   const { id = '' } = useParams();
   const [showAll, setShowAll] = useState(false);
+  const perms = accessOf(usePartnerMe().data).permissions;
   const q = useQuery({
     queryKey: ['partner-portal', 'case', id],
     queryFn: async () => (await api.get<{ case: PartnerCaseDetail }>(`/partner/cases/${id}`)).data.case,
@@ -119,6 +138,8 @@ export default function PartnerClientDetailPage() {
       </>
     );
   const c = q.data;
+  // What the permission set leaves out comes back empty (lib/partnerAccess); the matching blocks are not shown.
+  const docLevel = perms.documents;
   const stages = (['INITIAL', 'EMBASSY'] as const).filter((s) => c.requirements.some((r) => r.stage === s));
   const timeline = showAll ? c.timeline : c.timeline.slice(0, 12);
 
@@ -127,7 +148,7 @@ export default function PartnerClientDetailPage() {
       {back}
       <Section
         title={`${c.client.firstName} ${c.client.lastName}`}
-        actions={<StatusPill status={c.status} />}
+        actions={c.status ? <StatusPill status={c.status} /> : undefined}
       >
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Fact label={t('partnerPortal.detail.number')} value={c.number} />
@@ -142,15 +163,19 @@ export default function PartnerClientDetailPage() {
           {c.decisionAt && <Fact label={t('partnerPortal.detail.decision')} value={day(c.decisionAt)} />}
           {c.visaValidFrom && c.visaValidTo && <Fact label={t('partnerPortal.detail.visaValid')} value={`${day(c.visaValidFrom)} – ${day(c.visaValidTo)}`} />}
         </dl>
-        <div className="mt-5 max-w-md">
-          <StepBar step={c.step} status={c.status} />
-        </div>
-        {c.nextAction !== 'NONE' && (
+        {c.step ? (
+          <div className="mt-5 max-w-md">
+            <StepBar step={c.step} status={c.status} />
+          </div>
+        ) : (
+          <p className="mt-4 text-xs text-muted">{t('partnerAccess.noStage')}</p>
+        )}
+        {c.nextAction && c.nextAction !== 'NONE' && (
           <p className={clsx('mt-4 flex items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-ink')}>
             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               {t('partnerPortal.clients.next')}: {t(`partnerPortal.nextAction.${c.nextAction}`)}
-              {c.missingDocuments > 0 && ` · ${t('partnerPortal.clients.missing', { count: c.missingDocuments })}`}
+              {(c.missingDocuments ?? 0) > 0 && ` · ${t('partnerPortal.clients.missing', { count: c.missingDocuments })}`}
             </span>
           </p>
         )}
@@ -158,13 +183,19 @@ export default function PartnerClientDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Section title={t('partnerPortal.detail.documents')} icon={FileText}>
-          {stages.length === 0 ? (
+          {docLevel === 'none' ? (
+            <p className="text-sm text-muted">{t('partnerAccess.docs.none')}</p>
+          ) : stages.length === 0 ? (
             <EmptyState compact illustration={<Documents className="w-28" />} title={t('partnerPortal.detail.documentsEmpty')} />
           ) : (
             <div className="space-y-5">
               <p className="flex items-start gap-2 rounded-xl bg-sunken px-3 py-2.5 text-xs text-muted">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-                {c.uploadStage ? t('partnerPortal.detail.uploadHint') : t('partnerPortal.detail.uploadClosed')}
+                {docLevel === 'status'
+                  ? t('partnerAccess.docs.statusOnly')
+                  : c.uploadStage
+                    ? t('partnerPortal.detail.uploadHint')
+                    : t('partnerPortal.detail.uploadClosed')}
               </p>
               {stages.map((s) => (
                 <div key={s}>

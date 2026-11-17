@@ -5,7 +5,7 @@ import { Activity, ArrowRight, BadgeCheck, Ban, Briefcase, CalendarDays, CheckCi
 import { useL10n } from '@/lib/l10n';
 import { api } from '@/lib/api';
 import { money, day } from '@/components/agents/format';
-import type { PartnerDashboard, PartnerMe } from '@/components/partnerPortal/api';
+import { accessOf, type PartnerDashboard, type PartnerMe } from '@/components/partnerPortal/api';
 import { ErrorRetry, Kpi, Loading, Section, StatusPill } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui';
 import { EmptyInbox } from '@/components/illustrations';
@@ -18,6 +18,10 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
   if (q.isError || !q.data) return <ErrorRetry onRetry={() => q.refetch()} />;
   const d = q.data;
   const cur = d.currency;
+  // Figures the permission set does not include come back empty from the server; their blocks are left out.
+  const perms = accessOf(me).permissions;
+  const stage = perms.caseStage && d.counts.activeCases != null;
+  const commissions = perms.payments ? d.commissions : null;
 
   const eventLabel = (e: PartnerDashboard['recent'][number]) =>
     e.toStatus ? t(`partnerPortal.status.${e.toStatus}`) : t(`partnerPortal.event.${e.type}`, { defaultValue: t('partnerPortal.event.other') });
@@ -26,9 +30,15 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Kpi label={t('partnerPortal.dashboard.clients')} value={d.counts.clients} icon={Users} />
-        <Kpi label={t('partnerPortal.dashboard.activeCases')} value={d.counts.activeCases} icon={Briefcase} tone="bg-warning-bg text-warning-fg" />
-        <Kpi label={t('partnerPortal.dashboard.approvedVisas')} value={d.counts.approvedVisas} icon={BadgeCheck} tone="bg-success-bg text-success-fg" />
-        <Kpi label={t('partnerPortal.dashboard.rejected')} value={d.counts.rejected ?? 0} icon={Ban} tone="bg-danger-bg text-danger-fg" />
+        {stage ? (
+          <>
+            <Kpi label={t('partnerPortal.dashboard.activeCases')} value={d.counts.activeCases ?? 0} icon={Briefcase} tone="bg-warning-bg text-warning-fg" />
+            <Kpi label={t('partnerPortal.dashboard.approvedVisas')} value={d.counts.approvedVisas ?? 0} icon={BadgeCheck} tone="bg-success-bg text-success-fg" />
+            <Kpi label={t('partnerPortal.dashboard.rejected')} value={d.counts.rejected ?? 0} icon={Ban} tone="bg-danger-bg text-danger-fg" />
+          </>
+        ) : (
+          <p className="col-span-2 self-center text-sm text-muted lg:col-span-3">{t('partnerAccess.noStage')}</p>
+        )}
       </div>
 
       {!!d.byVisa?.length && (
@@ -44,15 +54,19 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
                   <span>
                     {t('partnerPortal.dashboard.clients')}: <b className="text-ink">{f.count}</b>
                   </span>
-                  <span>
-                    {t('partnerPortal.dashboard.activeCases')}: <b className="text-warning-fg">{f.active}</b>
-                  </span>
-                  <span>
-                    {t('partnerPortal.dashboard.approvedVisas')}: <b className="text-success-fg">{f.approved}</b>
-                  </span>
-                  <span>
-                    {t('partnerPortal.clients.refused')}: <b className="text-danger-fg">{f.refused}</b>
-                  </span>
+                  {stage && (
+                    <>
+                      <span>
+                        {t('partnerPortal.dashboard.activeCases')}: <b className="text-warning-fg">{f.active}</b>
+                      </span>
+                      <span>
+                        {t('partnerPortal.dashboard.approvedVisas')}: <b className="text-success-fg">{f.approved}</b>
+                      </span>
+                      <span>
+                        {t('partnerPortal.clients.refused')}: <b className="text-danger-fg">{f.refused}</b>
+                      </span>
+                    </>
+                  )}
                 </span>
               </li>
             ))}
@@ -60,55 +74,59 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
         </Section>
       )}
 
-      <Section
-        title={t('partnerPortal.dashboard.commissions')}
-        icon={HandCoins}
-        actions={
-          <Link to="/partner/commissions" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
-            {t('partnerPortal.dashboard.viewCommissions')} <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        }
-      >
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <Kpi label={t('partnerPortal.dashboard.pending')} value={money(d.commissions.pendingCents, cur)} icon={Clock3} tone="bg-warning-bg text-warning-fg" />
-          <Kpi label={t('partnerPortal.dashboard.approved')} value={money(d.commissions.approvedCents, cur)} icon={CheckCircle2} />
-          <Kpi label={t('partnerPortal.dashboard.paid')} value={money(d.commissions.paidCents, cur)} icon={Wallet} tone="bg-success-bg text-success-fg" />
-          <Kpi label={t('partnerPortal.dashboard.thisMonth')} value={money(d.commissions.thisMonthCents, cur)} icon={CalendarDays} tone="bg-accent-bg text-accent-fg" />
-        </div>
-        {me.partner.commissionCents != null && me.partner.commissionCents > 0 && (
-          <p className="mt-4 text-sm text-muted">{t('partnerPortal.dashboard.defaultCommission', { amount: money(me.partner.commissionCents, me.partner.currency) })}</p>
-        )}
-      </Section>
+      {commissions && (
+        <Section
+          title={t('partnerPortal.dashboard.commissions')}
+          icon={HandCoins}
+          actions={
+            <Link to="/partner/commissions" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
+              {t('partnerPortal.dashboard.viewCommissions')} <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          }
+        >
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <Kpi label={t('partnerPortal.dashboard.pending')} value={money(commissions.pendingCents, cur)} icon={Clock3} tone="bg-warning-bg text-warning-fg" />
+            <Kpi label={t('partnerPortal.dashboard.approved')} value={money(commissions.approvedCents, cur)} icon={CheckCircle2} />
+            <Kpi label={t('partnerPortal.dashboard.paid')} value={money(commissions.paidCents, cur)} icon={Wallet} tone="bg-success-bg text-success-fg" />
+            <Kpi label={t('partnerPortal.dashboard.thisMonth')} value={money(commissions.thisMonthCents, cur)} icon={CalendarDays} tone="bg-accent-bg text-accent-fg" />
+          </div>
+          {me.partner.commissionCents != null && me.partner.commissionCents > 0 && (
+            <p className="mt-4 text-sm text-muted">{t('partnerPortal.dashboard.defaultCommission', { amount: money(me.partner.commissionCents, me.partner.currency) })}</p>
+          )}
+        </Section>
+      )}
 
-      <Section
-        title={t('partnerPortal.dashboard.recent')}
-        icon={Activity}
-        actions={
-          <Link to="/partner/clients" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
-            {t('partnerPortal.dashboard.viewClients')} <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        }
-      >
-        {d.recent.length === 0 ? (
-          <EmptyState compact illustration={<EmptyInbox className="w-28" />} title={t('partnerPortal.dashboard.recentEmpty')} />
-        ) : (
-          <ul className="divide-y divide-line">
-            {d.recent.map((e) => (
-              <li key={e.id}>
-                <Link to={`/partner/clients/${e.caseId}`} className="-mx-2 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl px-2 py-3 transition-colors hover:bg-sunken">
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-ink">{e.client}</span>
-                    <span className="block text-xs text-muted">
-                      <span className="font-mono">{e.caseNumber}</span> · {day(e.createdAt)}
+      {perms.clientList !== 'none' && stage && (
+        <Section
+          title={t('partnerPortal.dashboard.recent')}
+          icon={Activity}
+          actions={
+            <Link to="/partner/clients" className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
+              {t('partnerPortal.dashboard.viewClients')} <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          }
+        >
+          {d.recent.length === 0 ? (
+            <EmptyState compact illustration={<EmptyInbox className="w-28" />} title={t('partnerPortal.dashboard.recentEmpty')} />
+          ) : (
+            <ul className="divide-y divide-line">
+              {d.recent.map((e) => (
+                <li key={e.id}>
+                  <Link to={`/partner/clients/${e.caseId}`} className="-mx-2 flex min-h-14 flex-wrap items-center justify-between gap-2 rounded-xl px-2 py-3 transition-colors hover:bg-sunken">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-ink">{e.client}</span>
+                      <span className="block text-xs text-muted">
+                        <span className="font-mono">{e.caseNumber}</span> · {day(e.createdAt)}
+                      </span>
                     </span>
-                  </span>
-                  {e.toStatus ? <StatusPill status={e.toStatus} /> : <span className="text-sm text-muted">{eventLabel(e)}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+                    {e.toStatus ? <StatusPill status={e.toStatus} /> : <span className="text-sm text-muted">{eventLabel(e)}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
     </>
   );
 }

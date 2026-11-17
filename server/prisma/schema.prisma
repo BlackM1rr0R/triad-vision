@@ -7344,3 +7344,217 @@ model OwnerSetupMark {
   markedByName String   @db.VarChar(200)
   markedAt     DateTime @default(now())
 }
+
+/// Sensitive field policy overrides (lib/privacy/sensitivePolicy.ts, Access Center → Sensitive fields).
+/// scope = role:STAFF | role:ADMIN (role rows only store HIDDEN; MASKED per role stays in Setting 'privacy.masking'),
+/// template:<staff role template id> (core access engine) or user:<user id>. No row = today's behaviour.
+model SensitiveFieldPolicy {
+  id          String   @id @default(cuid())
+  /// Mask group (lib/privacy/mask.ts MASK_GROUPS)
+  maskGroup   String   @db.VarChar(20)
+  scope       String   @db.VarChar(80)
+  /// VISIBLE | MASKED | HIDDEN
+  mode        String   @db.VarChar(10)
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([maskGroup, scope])
+  @@index([scope])
+}
+
+// ─── Access Center: partner permissions + login security (lib/partnerAccess, lib/loginSecurity) ───
+
+/// Permission set of a referral partner's portal (lib/partnerAccess/permissions.ts). No row = LEGACY (today's
+/// behaviour); the migration wrote a LEGACY row for every existing partner, partners created in the admin panel get DEFAULT.
+model PartnerAccess {
+  id          String   @id @default(cuid())
+  partnerId   String   @unique @db.VarChar(40)
+  /// LEGACY | DEFAULT | REFERRER | DOCUMENTS | FULL | CUSTOM
+  template    String   @default("DEFAULT") @db.VarChar(12)
+  /// CUSTOM only: { clientList, caseStage, documents, payments, addClients, messaging, vacancies, drive }
+  perms       Json?
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Team member of a referral partner: an AGENT login that works in the partner's portal with its own permission
+/// subset (always intersected with the partner's, lib/partnerAccess/context.ts).
+model PartnerMember {
+  id            String    @id @default(cuid())
+  partnerId     String    @db.VarChar(40)
+  userId        String    @unique
+  perms         Json
+  active        Boolean   @default(true)
+  invitedById   String?   @db.VarChar(40)
+  deactivatedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([partnerId])
+}
+
+/// Login security per role (lib/loginSecurity). Null fields = today's behaviour (config / built-in rules).
+model LoginSecurityRole {
+  /// STAFF | ADMIN | SUPER_ADMIN | AGENT | COMPANY | CLIENT
+  role                  String   @id @db.VarChar(12)
+  /// null = today's rule (staff: required, others: optional)
+  require2fa            Boolean?
+  webIdleMinutes        Int?
+  webMaxHours           Int?
+  mobileIdleDays        Int?
+  mobileMaxDays         Int?
+  /// AGENT only: partner logins only while the partner is active and its contract (contractEnd) has not ended.
+  requireActiveContract Boolean  @default(false)
+  updatedById           String?  @db.VarChar(40)
+  updatedAt             DateTime @updatedAt
+}
+
+/// Login security override of one user (wins over the role). Null fields = the role's value.
+model LoginSecurityUser {
+  userId         String   @id
+  /// true = 2FA required for this user; false = not required (never for staff roles)
+  require2fa     Boolean?
+  webIdleMinutes Int?
+  webMaxHours    Int?
+  mobileIdleDays Int?
+  mobileMaxDays  Int?
+  note           String?  @db.VarChar(300)
+  updatedById    String?  @db.VarChar(40)
+  updatedAt      DateTime @updatedAt
+}
+
+/// Employer portal roles (lib/companyAccess): role and Access-Center overrides of one COMPANY login. No row = STANDARD
+/// (today's access: everything, team management for the company owner only). companyId is the login's company when
+/// written; a row of another company is ignored.
+model CompanyMemberAccess {
+  userId      String   @id @db.VarChar(40)
+  companyId   String   @db.VarChar(40)
+  /// OWNER | ADMIN | HR | MANAGER | VIEWER (null = STANDARD)
+  role        String?  @db.VarChar(12)
+  /// SUPER_ADMIN per-user overrides { permission: boolean } on top of the role template
+  overrides   Json?
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+// ─── Staff access control (lib/access): role templates, per-user permissions, case scope, teams, break-glass ───
+
+/// Staff role template: allowed actions per area ({ cases: ['view', 'edit'], … }). Built-in rows (key set) are
+/// seeded and editable; no row for a built-in key = the code definition (lib/access/templates.ts).
+model StaffRoleTemplate {
+  id          String   @id @default(cuid())
+  /// legacy_staff | legacy_admin | manager | sales | documents | accountant | content (null = custom template)
+  key         String?  @unique @db.VarChar(40)
+  /// { az, de, en, ru }
+  name        Json
+  description Json?
+  matrix      Json
+  builtIn     Boolean  @default(false)
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Access settings of one STAFF / ADMIN user. No row = today's access (legacy template of the role, scope ALL).
+model StaffAccess {
+  userId       String   @id @db.VarChar(40)
+  /// StaffRoleTemplate.id (null = legacy template of the role)
+  templateId   String?  @db.VarChar(40)
+  /// [{ area, action, effect: 'grant' | 'deny' }] on top of the template
+  overrides    Json?
+  /// ALL | ASSIGNED | TEAM
+  caseScope    String   @default("ALL") @db.VarChar(12)
+  /// May open the Access Center (granted by a SUPER_ADMIN to ADMIN users)
+  manageAccess Boolean  @default(false)
+  updatedById  String?  @db.VarChar(40)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([templateId])
+}
+
+/// Team for the TEAM case scope: a member sees the cases assigned to any member of their teams.
+model StaffTeam {
+  id          String            @id @default(cuid())
+  name        String            @db.VarChar(120)
+  description String?           @db.VarChar(300)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  members     StaffTeamMember[]
+}
+
+model StaffTeamMember {
+  teamId    String
+  team      StaffTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String    @db.VarChar(40)
+  createdAt DateTime  @default(now())
+
+  @@id([teamId, userId])
+  @@index([userId])
+}
+
+/// Emergency access to one case outside the user's scope (reason required, time-limited, audited).
+model BreakGlassGrant {
+  id          String    @id @default(cuid())
+  userId      String    @db.VarChar(40)
+  caseId      String    @db.VarChar(40)
+  reason      String    @db.Text
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  revokedById String?   @db.VarChar(40)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([caseId])
+  @@index([createdAt])
+}
+
+// ─── Access Center › Audit (lib/accessAudit): quarterly access reviews + record-access counter ───
+
+/// One access review campaign per quarter ("2026-Q4"), created on day 1 of the quarter for the super admins.
+model AccessReview {
+  id            String             @id @default(cuid())
+  quarter       String             @unique @db.VarChar(10)
+  /// Break-glass usage of the previous quarter and other campaign figures (JSON)
+  summary       Json?
+  createdAt     DateTime           @default(now())
+  completedAt   DateTime?
+  completedById String?            @db.VarChar(40)
+  items         AccessReviewItem[]
+}
+
+/// One account to confirm in a review: elevated access or inactive > 90 days.
+model AccessReviewItem {
+  id          String       @id @default(cuid())
+  reviewId    String
+  review      AccessReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId      String       @db.VarChar(40)
+  /// STAFF | PARTNER | COMPANY
+  kind        String       @db.VarChar(12)
+  /// Reason codes (MANAGE_ACCESS, ADMIN_TEMPLATE, SCOPE_ALL, SENSITIVE_VISIBLE, PARTNER_FULL, COMPANY_OWNER, INACTIVE …)
+  reasons     Json
+  /// PENDING | CONFIRMED | CHANGED
+  status      String       @default("PENDING") @db.VarChar(12)
+  note        String?      @db.VarChar(500)
+  decidedById String?      @db.VarChar(40)
+  decidedAt   DateTime?
+
+  @@index([reviewId])
+  @@index([userId])
+}
+
+/// Distinct case / client records a staff member opened per hour (anomaly rule "many records"); pruned after 14 days.
+model StaffRecordAccess {
+  userId String   @db.VarChar(40)
+  record String   @db.VarChar(80)
+  hour   DateTime
+  count  Int      @default(1)
+
+  @@id([userId, record, hour])
+  @@index([hour])
+}

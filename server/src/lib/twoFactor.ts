@@ -7,15 +7,27 @@ import { hasMinRole } from '../middleware/auth.js';
 import { emailOtpActive } from './emailOtp.js';
 import { open } from './secretBox.js';
 import { hashRecoveryCode, normalizeRecoveryCode, verifyTotp } from './totp.js';
+import { twoFactorRequiredNow, twoFactorSetupNeededNow, webIdleOverrideNow } from './loginSecurity/index.js'; // Access Center → Login security
 
 /** Staff accounts can open sensitive client data, so two-factor authentication is mandatory for them. */
 export const isTwoFactorRequired = (role: Role) => hasMinRole(role, 'STAFF');
 
+/**
+ * The same, plus what a super admin switched on for AGENT / COMPANY / CLIENT (per role or per user, lib/loginSecurity).
+ * Staff stay required whatever the settings say.
+ */
+export const isTwoFactorRequiredFor = (u: { id?: string; role: Role }) => isTwoFactorRequired(u.role) || twoFactorRequiredNow(u);
+
 /** The fields every "who am I" response carries so clients can drive the verify / 2FA flows. */
-export const securityFlags = (u: Pick<User, 'role' | 'emailVerifiedAt' | 'totpEnabledAt' | 'emailOtpEnabledAt'>) => ({
+export const securityFlags = (u: Pick<User, 'role' | 'emailVerifiedAt' | 'totpEnabledAt' | 'emailOtpEnabledAt'> & { id?: string }) => ({
   emailVerified: !!u.emailVerifiedAt,
   twoFactorEnabled: !!u.totpEnabledAt,
-  twoFactorRequired: isTwoFactorRequired(u.role),
+  twoFactorRequired: isTwoFactorRequiredFor(u),
+  /** AGENT / COMPANY / CLIENT who must set up a second factor first (Access Center → Login security): the portal shows the
+   * set-up. Only present when true, so every other response stays exactly as before. */
+  ...(twoFactorSetupNeededNow(u) ? { twoFactorSetupNeeded: true as const } : {}),
+  /** Web idle timeout (minutes) when the Access Center set one for this role / user; absent = the default. */
+  ...(webIdleOverrideNow(u) !== null ? { sessionIdleMinutes: webIdleOverrideNow(u)! } : {}),
   /** Two-step login with a code sent by email (candidates / employers only). */
   emailOtpEnabled: emailOtpActive(u),
 });

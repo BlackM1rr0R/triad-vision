@@ -4,6 +4,7 @@ import type { Prisma, VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { parse } from '../../lib/http.js';
 import { staffView } from '../../lib/uploadAi/index.js';
+import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js';
 
 /**
  * Fast document review (mounted on /api/admin/review, STAFF+): the queue of client uploads waiting for a decision
@@ -34,7 +35,7 @@ const pendingWhere = (extra: Prisma.DocumentWhereInput = {}): Prisma.DocumentWhe
   ...extra,
 });
 
-export const queueWhere = (q: z.infer<typeof queueQuery>, viewerId: string): Prisma.DocumentWhereInput => {
+export const queueWhere = (q: z.infer<typeof queueQuery>, viewerId: string, scope: Prisma.CaseWhereInput = {}): Prisma.DocumentWhereInput => {
   const caseWhere: Prisma.CaseWhereInput = {
     status: { notIn: ['APPROVED', 'REJECTED', 'CANCELLED'] },
     ...(q.scope === 'mine' ? { assignedStaffId: viewerId } : {}),
@@ -42,13 +43,14 @@ export const queueWhere = (q: z.infer<typeof queueQuery>, viewerId: string): Pri
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.caseId ? { id: q.caseId } : {}),
   };
-  return { ...pendingWhere(), case: caseWhere };
+  return { ...pendingWhere(), case: withCaseScope(caseWhere, scope) }; // scope: the viewer's case scope (lib/access)
 };
 
 adminReviewRouter.get('/queue', async (req, res) => {
   const q = parse(queueQuery, req.query);
   const me = req.user!.id;
-  const where = queueWhere(q, me);
+  const scope = await caseScopeWhere(req.user);
+  const where = queueWhere(q, me, scope);
   const [docs, total, all, mine, partners] = await Promise.all([
     prisma.document.findMany({
       where,
@@ -70,8 +72,8 @@ adminReviewRouter.get('/queue', async (req, res) => {
       },
     }),
     prisma.document.count({ where }),
-    prisma.document.count({ where: queueWhere({ scope: 'all' }, me) }),
-    prisma.document.count({ where: queueWhere({ scope: 'mine' }, me) }),
+    prisma.document.count({ where: queueWhere({ scope: 'all' }, me, scope) }),
+    prisma.document.count({ where: queueWhere({ scope: 'mine' }, me, scope) }),
     prisma.referralPartner.findMany({ where: { cases: { some: { documents: { some: pendingWhere() } } } }, select: { id: true, name: true }, orderBy: { name: 'asc' }, take: 100 }),
   ]);
   const caseIds = [...new Set(docs.map((d) => d.caseId))];

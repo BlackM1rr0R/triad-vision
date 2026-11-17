@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import type { AgentInfo, CaseRow, CommissionRow, FinanceData, InvoiceRow, PartnerCommissionRow, PartnerInfo, StaffInfo, TranslationRow } from './aggregate.js';
 import type { Period } from './period.js';
+import { filterByCaseIds, isFullScope, scopeCaseIds } from '../accessAudit/scope.js';
 
 const FINAL = ['APPROVED', 'REJECTED', 'CANCELLED'] as const;
 const STAFF_ROLES = ['STAFF', 'ADMIN', 'SUPER_ADMIN'] as const;
@@ -79,12 +80,33 @@ export const loadCases = async (p: Period, extra: { companyIds: string[]; caseId
   return prisma.case.findMany({ where: { OR: or }, select: CASE_SELECT });
 };
 
-export const loadFinanceData = async (p: Period): Promise<FinanceData> => {
+/**
+ * `scope` = the viewer's staff case scope (lib/access caseScopeWhere). {} (ALL, the default) = everything, as
+ * before. A restricted scope keeps only in-scope cases, their commissions / orders, and the invoices of the
+ * employers of in-scope cases, so every sum is computed over in-scope cases only.
+ */
+export const loadFinanceData = async (p: Period, scope: Prisma.CaseWhereInput = {}): Promise<FinanceData> => {
+  if (!isFullScope(scope)) return scopeFinanceData(await loadFinanceData(p), await scopeCaseIds(scope));
   const [invoices, commissions, translations, partnerCommissions] = await Promise.all([loadInvoices(p), loadCommissions(p), loadTranslations(p), loadPartnerCommissions(p)]);
   const companyIds = [...new Set(invoices.filter((i) => i.status === 'PAID' && i.paidAt && i.paidAt >= p.start && i.paidAt < p.end).map((i) => i.companyId))];
   const caseIds = [...new Set([...commissions.map((c) => c.caseId), ...translations.map((t) => t.caseId)].filter((x): x is string => !!x))];
   const cases = await loadCases(p, { companyIds, caseIds });
   return { invoices, commissions, translations, cases, partnerCommissions };
+};
+
+/** Pure: finance data reduced to the given in-scope case ids (null = unchanged). */
+export const scopeFinanceData = (d: FinanceData, ids: string[] | null): FinanceData => {
+  if (!ids) return d;
+  const set = new Set(ids);
+  const cases = d.cases.filter((c) => set.has(c.id));
+  const companies = new Set(cases.map((c) => c.companyId).filter((x): x is string => !!x));
+  return {
+    invoices: d.invoices.filter((i) => companies.has(i.companyId)),
+    commissions: filterByCaseIds(d.commissions, ids),
+    translations: filterByCaseIds(d.translations, ids),
+    cases,
+    partnerCommissions: d.partnerCommissions ? filterByCaseIds(d.partnerCommissions, ids) : d.partnerCommissions,
+  };
 };
 
 export const loadAgents = async (p: Period): Promise<AgentInfo[]> => {

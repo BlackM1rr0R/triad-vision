@@ -147,6 +147,7 @@ export const VacancyForm = ({
   staff = false,
   anyDate = false,
   ai,
+  hideSalary = false,
 }: {
   initial: VacancyFormState;
   /** `aiFeatures`: which AI tools filled text in this form (for the audit entry after saving). */
@@ -161,6 +162,8 @@ export const VacancyForm = ({
   anyDate?: boolean;
   /** Shows the "Write with AI" panel (staff or employer portal). */
   ai?: 'staff' | 'company';
+  /** Employer role without "see salaries": the salary fields are not shown (the server ignores them anyway). */
+  hideSalary?: boolean;
 }) => {
   const { t, i18n } = useTranslation();
   const L = useJobLabels();
@@ -273,9 +276,12 @@ export const VacancyForm = ({
         <Field id="vf-lic" label={t('jobsArea.form.drivingLicence')} hint={t('jobsArea.form.licenceHint')}>
           <input id="vf-lic" className="input" maxLength={40} value={f.drivingLicence} onChange={(e) => set('drivingLicence', e.target.value)} placeholder="CE" />
         </Field>
+        {!hideSalary && (
         <Field id="vf-smin" label={t('jobsArea.form.salaryMin')}>
           <input id="vf-smin" type="number" min={0} max={100000} step={1} inputMode="numeric" className="input" value={f.salaryMin} onChange={(e) => set('salaryMin', e.target.value)} />
         </Field>
+        )}
+        {!hideSalary && (
         <Field id="vf-smax" label={t('jobsArea.form.salaryMax')}>
           <input
             id="vf-smax"
@@ -290,6 +296,7 @@ export const VacancyForm = ({
           />
           {salaryBad && <p className="mt-1 text-[11px] text-danger">{t('jobsArea.errors.SALARY_RANGE')}</p>}
         </Field>
+        )}
         <Field id="vf-pos" label={t('jobsArea.form.positions')}>
           <input id="vf-pos" type="number" min={1} max={500} inputMode="numeric" className="input" value={f.positions} onChange={(e) => set('positions', e.target.value)} />
         </Field>

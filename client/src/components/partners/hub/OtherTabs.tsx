@@ -12,6 +12,7 @@ import { money } from '@/components/agents/format';
 import { CommissionsPanel } from '../Commissions';
 import { RefusalReport } from '../RefusalReport';
 import { PortalLoginPanel } from '../PortalLogin';
+import { PartnerAccessPanel } from '../PartnerAccessPanel'; // portal permissions (Access Center) + partner team members
 import { OwnershipPanel, type OwnedClient, type PartnerOwnershipFields } from '../Ownership';
 import { invalidatePartnerViews } from '../DeletePartnerDialog';
 import { PARTNERS_KEY, partnerError, type Partner, type PartnerCase } from '../api';
@@ -278,6 +279,7 @@ export const PortalTab = ({ partner, ownedClients, isAdmin, stats }: { partner: 
         </section>
         <PortalLoginPanel partner={partner} isAdmin={isAdmin} />
       </div>
+      <PartnerAccessPanel partnerId={partner.id} />
       <OwnershipPanel partner={partner} ownedClients={ownedClients} isAdmin={isAdmin} />
     </div>
   );

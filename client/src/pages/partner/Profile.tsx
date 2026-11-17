@@ -54,7 +54,8 @@ export default function PartnerProfilePage({ me }: { me: PartnerMe }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <PortalLegalProfile />
+      {/* The partner's legal data and contracts: the partner's own login only (team members: their own account below). */}
+      {me.access?.role !== 'MEMBER' && <PortalLegalProfile />}
       <Section title={t('partnerPortal.profile.title')} icon={CircleUser}>
         <dl className="mb-5 grid gap-4 sm:grid-cols-2">
           <div className="min-w-0">

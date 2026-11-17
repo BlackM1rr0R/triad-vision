@@ -160,6 +160,7 @@ const intl = (locale: Exclude<Locale, 'az'>, kind: 'date' | 'dateTime' | 'daySho
 
 export const fmtDate = (iso: string | Date | null | undefined) => {
   if (!iso) return '—';
+  if (typeof iso === 'string' && iso.includes('•')) return iso; // masked by the server (sensitive fields)
   const d = new Date(iso);
   const l = currentLocale();
   if (l === 'az') return `${azDayMonth(d)} ${d.getFullYear()}`;

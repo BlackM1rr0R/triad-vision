@@ -9,6 +9,7 @@ import { notifyStaff } from '../notifications.js';
 import { maskValue } from '../privacy/mask.js';
 import { contractView, sendContractFile } from '../partnerRecords/contracts.js'; // shared contract view + file sending (lib/partnerRecords)
 import { contractReadiness, extraFieldsOf, legalCrossError, partnerProfileShape, profileChanges } from './profile.js';
+import { partnerContextOf, requireOwner } from '../partnerAccess/context.js'; // owner vs. team member
 
 /**
  * Partner portal: the partner's own profile and contracts — mounted into /api/partner (role AGENT, linked
@@ -22,8 +23,12 @@ import { contractReadiness, extraFieldsOf, legalCrossError, partnerProfileShape,
  */
 export const partnerPortalProfileRouter = Router();
 
+/** The partner's own login only: team members (lib/partnerAccess) get 403 PARTNER_OWNER_ONLY here. */
 const partnerOf = async (req: Request): Promise<ReferralPartner> => {
-  const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id } });
+  const ctx = await partnerContextOf(req);
+  requireOwner(ctx);
+  // The stored row (visibility as saved), not the permission-adjusted copy.
+  const partner = await prisma.referralPartner.findUnique({ where: { id: ctx.partner.id } });
   if (!partner) throw forbidden('NO_PARTNER_PROFILE');
   return partner;
 };

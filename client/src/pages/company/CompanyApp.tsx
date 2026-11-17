@@ -34,6 +34,7 @@ import { CompanyConfigurator } from '@/components/configurator/CompanyConfigurat
 import { pagesEmployerPipeline } from '@/i18n/pagesEmployerPipeline';
 import { pagesConfigurator } from '@/i18n/pagesConfigurator';
 import { CompanyNovruzCard } from '@/components/novruz/CompanyNovruzCard'; // Novruz greeting cards for the own workers
+import { CompanyGate, useCompanyAccess, type CompanyPerm } from '@/components/company/access'; // employer roles (menu + page gates; the server enforces)
 
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
@@ -52,24 +53,27 @@ export default function CompanyApp() {
   const L = useJobLabels();
   const { data: company, isLoading, isError, refetch } = useCompany();
   const avv = useCompanyAvv(); // 404 until the AVV template is approved → no tab
+  const access = useCompanyAccess();
   usePageTitle(t('jobsArea.portal.title'));
 
-  const tabs = [
+  type Tab = { to: string; label: string; icon: typeof Briefcase; match: (p: string) => boolean; all?: CompanyPerm[]; any?: CompanyPerm[] };
+  const allTabs: Tab[] = [
     { to: '/company', label: t('jobsArea.portal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/company' || p === '/company/' },
     { to: '/company/vacancies', label: t('jobsArea.portal.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/company/vacancies') },
-    { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates') },
-    { to: '/company/requests', label: t('requests.nav'), icon: ClipboardList, match: (p: string) => p.startsWith('/company/requests') },
-    { to: '/company/pipeline', label: t('employerPipeline.nav'), icon: Workflow, match: (p: string) => p.startsWith('/company/pipeline') },
-    { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') || p.startsWith('/company/novruz-card') },
+    { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates'), all: ['viewCandidatePool'] },
+    { to: '/company/requests', label: t('requests.nav'), icon: ClipboardList, match: (p: string) => p.startsWith('/company/requests'), any: ['viewPipeline', 'createRequests'] },
+    { to: '/company/pipeline', label: t('employerPipeline.nav'), icon: Workflow, match: (p: string) => p.startsWith('/company/pipeline'), all: ['viewPipeline'] },
+    { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') || p.startsWith('/company/novruz-card'), all: ['viewWorkers'] },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
-    { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
-    { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms') },
-    ...(avv.isSuccess ? [{ to: '/company/avv', label: t('avv.nav'), icon: ShieldCheck, match: (p: string) => p.startsWith('/company/avv') }] : []),
-    { to: '/company/configurator', label: t('packageConfigurator.nav'), icon: Package, match: (p: string) => p.startsWith('/company/configurator') },
-    { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes') },
-    { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices') },
+    { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts'), any: ['viewContracts', 'signEzb', 'signAvv'] },
+    { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms'), all: ['fillEzb', 'viewSalaries'] },
+    ...(avv.isSuccess ? [{ to: '/company/avv', label: t('avv.nav'), icon: ShieldCheck, match: (p: string) => p.startsWith('/company/avv'), any: ['signAvv', 'viewContracts'] as CompanyPerm[] }] : []),
+    { to: '/company/configurator', label: t('packageConfigurator.nav'), icon: Package, match: (p: string) => p.startsWith('/company/configurator'), all: ['manageBilling'] },
+    { to: '/company/quotes', label: t('companyQuotes.nav'), icon: FileSignature, match: (p: string) => p.startsWith('/company/quotes'), all: ['viewInvoices'] },
+    { to: '/company/invoices', label: t('jobsArea.portal.nav.invoices'), icon: FileText, match: (p: string) => p.startsWith('/company/invoices'), all: ['viewInvoices'] },
     { to: '/company/profile', label: t('jobsArea.portal.nav.profile'), icon: Building2, match: (p: string) => p.startsWith('/company/profile') },
   ];
+  const tabs = allTabs.filter((tab) => access.can(...(tab.all ?? [])) && (!tab.any || access.canAny(...tab.any)));
 
   const suspended = company?.status === 'SUSPENDED';
 
@@ -174,23 +178,23 @@ export default function CompanyApp() {
               <Routes>
                 <Route index element={<CompanyDashboard />} />
                 <Route path="vacancies" element={<CompanyVacancies company={company} />} />
-                <Route path="vacancies/new" element={<CompanyVacancyEditor company={company} />} />
+                <Route path="vacancies/new" element={<CompanyGate all={['manageVacancies']}><CompanyVacancyEditor company={company} /></CompanyGate>} />
                 <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
-                <Route path="candidates/*" element={<CompanyCandidatesArea />} />
-                <Route path="requests/*" element={<CompanyRequests />} />
-                <Route path="pipeline" element={<CompanyPipeline />} />
-                <Route path="workers" element={<CompanyWorkers />} />
-                <Route path="novruz-card" element={<CompanyNovruzCard />} />
+                <Route path="candidates/*" element={<CompanyGate all={['viewCandidatePool']}><CompanyCandidatesArea /></CompanyGate>} />
+                <Route path="requests/*" element={<CompanyGate any={['viewPipeline', 'createRequests']}><CompanyRequests /></CompanyGate>} />
+                <Route path="pipeline" element={<CompanyGate all={['viewPipeline']}><CompanyPipeline /></CompanyGate>} />
+                <Route path="workers" element={<CompanyGate all={['viewWorkers']}><CompanyWorkers /></CompanyGate>} />
+                <Route path="novruz-card" element={<CompanyGate all={['viewWorkers']}><CompanyNovruzCard /></CompanyGate>} />
                 <Route path="interviews" element={<CompanyInterviews />} />
-                <Route path="contracts" element={<CompanyContracts />} />
-                <Route path="contracts/:signerId" element={<CompanyContracts />} />
-                <Route path="forms" element={<CompanyForms />} />
-                <Route path="forms/:id" element={<CompanyForms />} />
-                <Route path="avv" element={<CompanyAvv />} />
-                <Route path="configurator" element={<CompanyConfigurator />} />
-                <Route path="quotes" element={<CompanyQuotes />} />
-                <Route path="quotes/:id" element={<CompanyQuotes />} />
-                <Route path="invoices" element={<CompanyInvoices />} />
+                <Route path="contracts" element={<CompanyGate any={['viewContracts', 'signEzb', 'signAvv']}><CompanyContracts /></CompanyGate>} />
+                <Route path="contracts/:signerId" element={<CompanyGate any={['viewContracts', 'signEzb', 'signAvv']}><CompanyContracts /></CompanyGate>} />
+                <Route path="forms" element={<CompanyGate all={['fillEzb', 'viewSalaries']}><CompanyForms /></CompanyGate>} />
+                <Route path="forms/:id" element={<CompanyGate all={['fillEzb', 'viewSalaries']}><CompanyForms /></CompanyGate>} />
+                <Route path="avv" element={<CompanyGate any={['signAvv', 'viewContracts']}><CompanyAvv /></CompanyGate>} />
+                <Route path="configurator" element={<CompanyGate all={['manageBilling']}><CompanyConfigurator /></CompanyGate>} />
+                <Route path="quotes" element={<CompanyGate all={['viewInvoices']}><CompanyQuotes /></CompanyGate>} />
+                <Route path="quotes/:id" element={<CompanyGate all={['viewInvoices']}><CompanyQuotes /></CompanyGate>} />
+                <Route path="invoices" element={<CompanyGate all={['viewInvoices']}><CompanyInvoices /></CompanyGate>} />
                 <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<CompanyProfile company={company} />} />
                 <Route path="*" element={<Navigate to="/company" replace />} />

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { badRequest, parse } from '../../lib/http.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
+import { optionalCase, scoped, viaCase } from '../../lib/accessAudit/scope.js';
 
 /**
  * Embassy / operations layer of the workspace calendar — mounted at /api/admin/ops-calendar (STAFF+ via the admin
@@ -64,11 +66,12 @@ adminOpsCalendarRouter.get('/', async (req, res) => {
   const want = new Set(q.types);
   const now = Date.now();
   const caseStaff = (field: 'assignedStaffId'): Prisma.CaseWhereInput => (staffId ? { [field]: staffId === 'none' ? null : staffId } : {});
+  const scope = await caseScopeWhere(req.user); // staff case scope ({} = every case, the default: queries unchanged)
 
   const [cases, interviews, arrivals, bookings] = await Promise.all([
     want.has('embassy')
       ? prisma.case.findMany({
-          where: { appointmentAt: { gte: q.from, lt: q.to }, status: { not: 'CANCELLED' }, ...caseStaff('assignedStaffId') },
+          where: scoped({ appointmentAt: { gte: q.from, lt: q.to }, status: { not: 'CANCELLED' }, ...caseStaff('assignedStaffId') }, scope),
           select: { id: true, number: true, status: true, appointmentAt: true, appointmentPlace: true, client: staffSel, assignedStaff: staffSel },
           take: 500,
         })
@@ -86,6 +89,7 @@ adminOpsCalendarRouter.get('/', async (req, res) => {
             arrivalTime: { gte: q.from, lt: q.to },
             status: { in: ['SUBMITTED', 'CONFIRMED', 'COMPLETED'] },
             ...(staffId ? (staffId === 'none' ? { handledById: null, case: { assignedStaffId: null } } : { OR: [{ handledById: staffId }, { handledById: null, case: { assignedStaffId: staffId } }] }) : {}),
+            ...(Object.keys(scope).length ? { AND: [viaCase(scope)] } : {}),
           },
           select: { id: true, caseId: true, status: true, arrivalTime: true, flightNumber: true, arrivalAirport: true, client: staffSel, handledBy: staffSel, case: { select: { number: true, assignedStaff: staffSel } } },
           take: 500,
@@ -93,7 +97,7 @@ adminOpsCalendarRouter.get('/', async (req, res) => {
       : [],
     want.has('consultation')
       ? prisma.booking.findMany({
-          where: { status: { in: ['BOOKED', 'DONE'] }, slot: { startsAt: { gte: q.from, lt: q.to }, ...(staffId && staffId !== 'none' ? { staffId } : {}) } },
+          where: { status: { in: ['BOOKED', 'DONE'] }, slot: { startsAt: { gte: q.from, lt: q.to }, ...(staffId && staffId !== 'none' ? { staffId } : {}) }, ...optionalCase(scope) },
           select: { id: true, name: true, topic: true, status: true, meetingUrl: true, userId: true, caseId: true, case: { select: { number: true } }, slot: { select: { startsAt: true, endsAt: true, kind: true, staff: staffSel } } },
           take: 500,
         })

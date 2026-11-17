@@ -338,6 +338,15 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await prisma.ruleChangeRecipient.deleteMany({ where: { userId } });
   await prisma.caseUploadLink.deleteMany({ where: { caseId: { in: ownCaseIds } } });
   await prisma.originalReceipt.deleteMany({ where: { caseId: { in: ownCaseIds } } });
+  // Access control rows of the account (plain ids): staff permissions, teams, break-glass grants, per-user mask
+  // policy, employer role.
+  await prisma.staffAccess.deleteMany({ where: { userId } });
+  await prisma.staffTeamMember.deleteMany({ where: { userId } });
+  await prisma.breakGlassGrant.deleteMany({ where: { userId } });
+  await prisma.sensitiveFieldPolicy.deleteMany({ where: { scope: `user:${userId}` } });
+  await prisma.companyMemberAccess.deleteMany({ where: { userId } });
+  await prisma.accessReviewItem.deleteMany({ where: { userId } }); // access review entries about the account
+  await prisma.staffRecordAccess.deleteMany({ where: { userId } }); // record-access counter (anomaly alerts)
 
   return { user: target, counts: { ...counts, files, bytes, mailAttachmentsRemoved: mailFiles.length } satisfies UserDeletionCounts };
 };

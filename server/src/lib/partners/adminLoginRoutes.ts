@@ -83,6 +83,8 @@ partnerLoginRouter.post('/:id/login', requireMinRole('ADMIN'), async (req, res) 
     // Only an AGENT account can be linked (staff, clients and employers keep their own areas).
     if (existing.role !== 'AGENT') throw conflict('EMAIL_TAKEN');
     if (existing.referralPartner) throw conflict('USER_LINKED_TO_OTHER_PARTNER');
+    // A team member of a partner (lib/partnerAccess) cannot also be a partner's own login.
+    if (await prisma.partnerMember.findUnique({ where: { userId: existing.id }, select: { id: true } })) throw conflict('USER_LINKED_TO_OTHER_PARTNER');
     userId = existing.id;
     await prisma.$transaction([
       prisma.user.update({ where: { id: existing.id }, data: { isActive: true, ...(body.phone !== undefined && !existing.phone ? { phone: body.phone } : {}) } }),

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { parse } from '../../lib/http.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { dataQualityList } from '../../lib/dataQuality/service.js';
 
 /**
@@ -22,7 +23,7 @@ adminDataQualityRouter.get('/', async (req, res) => {
   );
   const staffId = q.staff === 'me' ? req.user!.id : q.staff || undefined;
   const [list, staff] = await Promise.all([
-    dataQualityList({ staffId, visaType: q.visaType, maxScore: q.maxScore }),
+    dataQualityList({ staffId, visaType: q.visaType, maxScore: q.maxScore, scope: await caseScopeWhere(req.user) }), // staff case scope ({} = all)
     prisma.user.findMany({ where: { role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] }, isActive: true }, select: { id: true, firstName: true, lastName: true }, orderBy: { firstName: 'asc' } }),
   ]);
   res.json({ ...list, staffOptions: staff.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`.trim() })) });

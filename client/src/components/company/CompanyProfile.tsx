@@ -12,6 +12,7 @@ import { Section } from './shared';
 import { CompanyLogoUploader } from '@/components/jobs/CompanyLogoUploader';
 import { EmployerReportPrefs } from './CompanyReports';
 import { CompanyTeam } from './CompanyTeam';
+import { useCompanyAccess } from './access'; // employer roles: editCompanyProfile (read-only without)
 import { ChangeEmailCard, ChangePasswordCard } from '@/components/account/AccountSecurity';
 import { LegalDataForm, betriebsnummerInvalid, legalFormOf, legalPayload, type LegalKey } from '@/components/partnerRecords/LegalDataForm'; // Betriebsnummer, register, signatory (no bank)
 import { recordsError } from '@/components/partnerRecords/api';
@@ -23,6 +24,7 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
   const { t } = useTranslation();
   const L = useJobLabels();
   const qc = useQueryClient();
+  const canEdit = useCompanyAccess().can('editCompanyProfile');
   const [f, setF] = useState(() => ({
     ...Object.fromEntries(FIELDS.map((k) => [k, company[k] ?? ''])),
     sector: company.sector ?? 'other',
@@ -72,6 +74,7 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
   return (
     <div className="space-y-6">
       <Section title={t('jobsArea.portal.profile.title')} icon={Building2}>
+        <fieldset disabled={!canEdit} className="min-w-0">
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
           {input('name', { required: true, span: true })}
           {input('legalForm', { max: 40 })}
@@ -99,10 +102,14 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
             </button>
           </div>
         </form>
+        </fieldset>
       </Section>
       {/* Legal data used for contracts and official forms (no bank data, no internal note); staff are notified. */}
-      <CompanyLegalSection company={company} />
+      <fieldset disabled={!canEdit} className="min-w-0">
+        <CompanyLegalSection company={company} />
+      </fieldset>
       {/* Logo on the public job ads (no review step: live at once, staff notified — server routes/company.ts). */}
+      {canEdit && (
       <Section title={t('publicImages.companyLogo.title')} icon={ImageIcon}>
         <CompanyLogoUploader
           endpoint="/company/me/logo"
@@ -112,6 +119,7 @@ export const CompanyProfile = ({ company }: { company: Company }) => {
           onChange={(logo) => qc.setQueryData(['company-me'], (old: Company | undefined) => (old ? { ...old, logo } : old))}
         />
       </Section>
+      )}
       {/* Colleagues with their own logins (owner invites / deactivates). */}
       <CompanyTeam />
       {/* Account security of the employer login: password, e-mail change, optional two-step login by email. */}

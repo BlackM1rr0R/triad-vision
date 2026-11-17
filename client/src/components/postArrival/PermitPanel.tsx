@@ -11,6 +11,7 @@ import { pagesPermits } from '@/i18n/pagesPermits';
 import { Panel } from '@/components/admin/ui';
 import { fmtDate, toastError } from '@/components/admin/labels';
 import { TONE_CLASS, type ExpiryTone } from '@/components/expiry/Expiry';
+import { SensitiveValue, isMaskedValue } from '@/components/privacyTools/SensitiveValue';
 
 registerCopy(pagesPermits);
 
@@ -109,7 +110,12 @@ export const PermitPanel = ({ caseId, status }: { caseId: string; status: CaseSt
         </label>
         <label className="block min-w-0">
           <span className="label">{t('permits.admin.insurance')}</span>
-          <input type="date" className="input" value={insurance} onChange={(e) => setInsurance(e.target.value)} />
+          {isMaskedValue(insurance) ? (
+            // HEALTH masked (Access Center): shown masked, revealable with a reason; sent back unchanged (the server drops it).
+            <SensitiveValue value={insurance} entity="casePermit" id={caseId} field="healthInsuranceExpiresAt" className="input flex items-center" />
+          ) : (
+            <input type="date" className="input" value={insurance} onChange={(e) => setInsurance(e.target.value)} />
+          )}
         </label>
         <label className="block min-w-0">
           <span className="label">{t('permits.admin.passport')}</span>

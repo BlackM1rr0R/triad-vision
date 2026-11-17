@@ -1,4 +1,4 @@
-import type { Role } from '@prisma/client';
+import type { Prisma, Role } from '@prisma/client';
 
 /**
  * Report builder (Hesabat qurucusu): curated, server-side dataset definitions. A dataset never exposes a raw
@@ -26,6 +26,8 @@ export interface RunCtx {
   userId: string | null;
   role: Role;
   now: Date;
+  /** Staff case scope of the viewer (lib/access caseScopeWhere); missing / {} = every case. */
+  caseScope?: Prisma.CaseWhereInput;
 }
 
 /** Any record as returned by Prisma (or a flat row of a memory dataset). */

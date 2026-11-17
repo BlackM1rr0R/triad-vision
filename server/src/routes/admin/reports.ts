@@ -5,6 +5,7 @@ import { prisma } from '../../db.js';
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { badRequest, forbidden, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { DATASETS } from '../../lib/reports/datasets.js';
 import { AGG_LABEL, datasetFor, describeDataset, planReport, reportConfigSchema, runReport, type ReportResult } from '../../lib/reports/engine.js';
 import { EXPORT_FORMATS, MIME, buildExport, reportFilename, type ExportFormat } from '../../lib/reports/export.js';
@@ -36,7 +37,13 @@ adminReportsRouter.use(requireMinRole('ADMIN'));
 
 const langOf = (req: Request) => pickLang(req.get('x-locale') ?? req.user?.locale);
 
-const ctxOf = async (req: Request): Promise<RunCtx> => ({ eurAzn: (await getProfitSettings()).eurAzn, userId: req.user!.id, role: req.user!.role, now: new Date() });
+const ctxOf = async (req: Request): Promise<RunCtx> => ({
+  eurAzn: (await getProfitSettings()).eurAzn,
+  userId: req.user!.id,
+  role: req.user!.role,
+  now: new Date(),
+  caseScope: await caseScopeWhere(req.user), // staff case scope ({} = every case, the default)
+});
 
 const runBody = z.object({ dataset: z.string().min(1).max(40), config: z.unknown().optional() });
 

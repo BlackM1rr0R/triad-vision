@@ -14,6 +14,7 @@ import { notifyApplicationStatus, notifyCandidateProposed } from '../../lib/jobs
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { BULK_MAX, CASE_BULK_ACTION_KEYS, commonCaseActions, renderTemplate, runBatched, summarize, toCsv, type BulkItemResult } from '../../lib/bulk/index.js';
 import { caseListQuery, resolveCaseListWhere } from './cases.js';
+import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js';
 import { toXlsx, XLSX_MIME } from '../../lib/bulk/xlsx.js';
 import { inquiryListQuery, inquiryListWhere, inquiryOrderBy, notifyInquiryAssigneeBulk } from '../../lib/inquiries/index.js';
 import { candidateListQuery, candidateListWhere, candidateSelect, loadRankVacancy, RANK_LIMIT } from './candidates.js';
@@ -61,12 +62,13 @@ const caseSelection = selection(caseListQuery.omit({ page: true }).partial());
 
 /** Explicit ids (existing ones, order kept) or every case matching the list filters, at most BULK_MAX. */
 const resolveCases = async (req: Request, sel: z.infer<typeof caseSelection>) => {
+  const scope = await caseScopeWhere(req.user); // ids outside the viewer's case scope are dropped (lib/access)
   if (sel.ids) {
-    const rows = await prisma.case.findMany({ where: { id: { in: sel.ids } }, select: { id: true, status: true } });
+    const rows = await prisma.case.findMany({ where: withCaseScope({ id: { in: sel.ids } }, scope), select: { id: true, status: true } });
     const byId = new Map(rows.map((r) => [r.id, r]));
     return { rows: sel.ids.map((x) => byId.get(x)).filter((r): r is { id: string; status: CaseStatus } => !!r), total: rows.length };
   }
-  const where = await resolveCaseListWhere({ page: 1, ...sel.all! }, req.user!.id);
+  const where = await resolveCaseListWhere({ page: 1, ...sel.all! }, req.user!.id, scope);
   const [rows, total] = await Promise.all([
     prisma.case.findMany({ where, orderBy: { updatedAt: 'desc' }, take: BULK_MAX, select: { id: true, status: true } }),
     prisma.case.count({ where }),
@@ -345,15 +347,18 @@ adminBulkRouter.post('/inquiries/export', async (req, res) => {
 
 const candidateSelection = selection(candidateListQuery.omit({ page: true }).partial());
 
-const resolveCandidates = async (sel: z.infer<typeof candidateSelection>) => {
+const resolveCandidates = async (sel: z.infer<typeof candidateSelection>, user?: Request['user']) => {
+  // Restricted case scope (lib/access): only clients with a visible case ({} = every client, the default).
+  const scope = await caseScopeWhere(user);
+  const inScope: Prisma.UserWhereInput = Object.keys(scope).length ? { cases: { some: scope } } : {};
   if (sel.ids) {
-    const rows = await prisma.user.findMany({ where: { id: { in: sel.ids }, role: 'CLIENT' }, select: { id: true } });
+    const rows = await prisma.user.findMany({ where: { id: { in: sel.ids }, role: 'CLIENT', ...inScope }, select: { id: true } });
     const ok = new Set(rows.map((r) => r.id));
     const list = sel.ids.filter((x) => ok.has(x));
     return { ids: list, total: list.length };
   }
   const q = { page: 1, ...sel.all! };
-  const where = candidateListWhere(q);
+  const where: Prisma.UserWhereInput = Object.keys(inScope).length ? { AND: [candidateListWhere(q), inScope] } : candidateListWhere(q);
   // With a vacancy the list is ranked by match score (routes/admin/candidates.ts): "all matching" takes the
   // same order before capping at BULK_MAX, so the first N are the ones the user sees on top.
   if (q.vacancyId) {
@@ -378,7 +383,7 @@ const resolveCandidates = async (sel: z.infer<typeof candidateSelection>) => {
 
 adminBulkRouter.post('/candidates/resolve', async (req, res) => {
   const sel = parse(candidateSelection, req.body ?? {});
-  const r = await resolveCandidates(sel);
+  const r = await resolveCandidates(sel, req.user);
   res.json({ ...r, capped: r.total > r.ids.length, max: BULK_MAX });
 });
 
@@ -386,7 +391,7 @@ adminBulkRouter.post('/candidates/resolve', async (req, res) => {
 adminBulkRouter.post('/candidates/assign', async (req, res) => {
   const body = parse(z.object({ selection: candidateSelection, staffId: id.nullable() }), req.body ?? {});
   await assertStaff(body.staffId);
-  const { ids: userIds } = await resolveCandidates(body.selection);
+  const { ids: userIds } = await resolveCandidates(body.selection, req.user);
   const cases = await prisma.case.findMany({
     where: { clientId: { in: userIds }, status: { notIn: FINAL_STATUSES } },
     orderBy: { createdAt: 'desc' },
@@ -416,7 +421,7 @@ adminBulkRouter.post('/candidates/status', async (req, res) => {
   });
   if (!vacancy) throw badRequest('INVALID_VACANCY');
   if (body.status === 'PROPOSED' && vacancy.companyId && vacancy.company?.status !== 'ACTIVE') throw conflict('COMPANY_NOT_ACTIVE');
-  const { ids: userIds } = await resolveCandidates(body.selection);
+  const { ids: userIds } = await resolveCandidates(body.selection, req.user);
   const apps = await prisma.vacancyApplication.findMany({ where: { vacancyId: vacancy.id, userId: { in: userIds } }, include: { user: true } });
   const appOf = new Map(apps.map((a) => [a.userId, a]));
   let proposed = 0;
@@ -441,7 +446,7 @@ adminBulkRouter.post('/candidates/status', async (req, res) => {
 adminBulkRouter.post('/candidates/message', async (req, res) => {
   const body = parse(z.object({ selection: candidateSelection, title: z.string().trim().min(1).max(160), body: messageBody }), req.body ?? {});
   const actor = await actorOf(req);
-  const { ids: userIds } = await resolveCandidates(body.selection);
+  const { ids: userIds } = await resolveCandidates(body.selection, req.user);
   const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true, profession: true } });
   const byId = new Map(users.map((u) => [u.id, u]));
   const staffName = `${actor.firstName} ${actor.lastName}`.trim();
@@ -458,7 +463,7 @@ adminBulkRouter.post('/candidates/message', async (req, res) => {
 
 adminBulkRouter.post('/candidates/export', async (req, res) => {
   const body = parse(z.object({ selection: candidateSelection, format: exportFormat }), req.body ?? {});
-  const { ids: userIds } = await resolveCandidates(body.selection);
+  const { ids: userIds } = await resolveCandidates(body.selection, req.user);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
     orderBy: { createdAt: 'desc' },

@@ -1,4 +1,5 @@
-import type { Locale } from '@prisma/client';
+import type { Locale, Prisma } from '@prisma/client';
+import { scoped } from '../accessAudit/scope.js';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { formatDay } from '../growthTexts.js';
@@ -117,7 +118,7 @@ export const runRecognitionDeadlines = async (now = new Date()) => {
 };
 
 /** Expiring page: recognition and § 81a deadlines within `days` (overdue ones included). */
-export const upcomingDeadlines = async (days: number, opts: { staffId?: string; now?: Date } = {}) => {
+export const upcomingDeadlines = async (days: number, opts: { staffId?: string; now?: Date; scope?: Prisma.CaseWhereInput } = {}) => {
   const now = opts.now ?? new Date();
   const until = new Date(now.getTime() + days * DAY);
   const [processes, procedures] = await Promise.all([
@@ -132,7 +133,7 @@ export const upcomingDeadlines = async (days: number, opts: { staffId?: string; 
   for (const p of procedures) for (const d of accelDeadlines(p, await openReplyDue(p.id))) if (d.at <= until) rows.push({ source: 'ACCELERATED', id: p.id, caseId: p.caseId, kind: d.kind, at: d.at, note: p.authority });
   const staffWhere = opts.staffId === 'none' ? { assignedStaffId: null } : opts.staffId ? { assignedStaffId: opts.staffId } : {};
   const cases = rows.length
-    ? await prisma.case.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.caseId))] }, ...staffWhere }, select: { id: true, number: true, status: true, client: { select: { id: true, firstName: true, lastName: true } }, assignedStaff: { select: { id: true, firstName: true, lastName: true } } } })
+    ? await prisma.case.findMany({ where: scoped({ id: { in: [...new Set(rows.map((r) => r.caseId))] }, ...staffWhere }, opts.scope), select: { id: true, number: true, status: true, client: { select: { id: true, firstName: true, lastName: true } }, assignedStaff: { select: { id: true, firstName: true, lastName: true } } } })
     : [];
   const caseOf = new Map(cases.map((c) => [c.id, c]));
   return rows

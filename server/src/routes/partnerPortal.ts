@@ -2,9 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import bcrypt from 'bcryptjs';
 import path from 'node:path';
-import { Router, type Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
-import type { ReferralPartner } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
@@ -22,34 +21,42 @@ import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 import { intlPhone, passportNo } from './auth.js';
 import { partnerPortalProfileRouter } from '../lib/partners/portalProfileRoutes.js'; // own legal data, change requests, own contracts
 import { partnerSchoolRouter } from '../lib/partners/schoolPortalRoutes.js'; // colleges / language schools: students, attendance + exam records
+import { partnerAccessPortalRouter } from '../lib/partnerAccess/portalRoutes.js'; // team, own drive folder, messages, vacancies, document download
+import { partnerContextOf, partnerTeamUserIds, requireClientList, requireDocuments, requireFlag } from '../lib/partnerAccess/context.js';
+import { portalAreas, shapeCaseDetail, shapeCaseRow, shapeClientRow, type PartnerPerms } from '../lib/partnerAccess/permissions.js';
+import type { VisaFacet } from '../lib/partnerPortal/cases.js';
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
- * linked as `ReferralPartner.userId`; anyone else gets 403 (an AGENT without the link: NO_PARTNER_PROFILE).
- * Partners see only cases with their partnerId, in minimised form (lib/partnerPortal/cases.ts).
+ * linked as `ReferralPartner.userId` (owner) or an active partner team member (PartnerMember); anyone else
+ * gets 403 (an AGENT without the link: NO_PARTNER_PROFILE). Partners see only cases with their partnerId, in
+ * minimised form (lib/partnerPortal/cases.ts), further limited by the partner's permission set
+ * (lib/partnerAccess: checked on every endpoint, 403 PARTNER_PERMISSION_DENIED).
  */
 export const partnerPortalRouter = Router();
 partnerPortalRouter.use(requireRole('AGENT'));
 partnerPortalRouter.use('/', partnerPortalProfileRouter); // GET/PATCH /profile, POST /profile/change-request, GET /contracts[/:id/file]
 partnerPortalRouter.use('/', partnerSchoolRouter); // schools: GET /students[/:clientId], POST /students/:clientId/records, /student-records/:id[/certificate]
+partnerPortalRouter.use('/', partnerAccessPortalRouter); // /team, /drive, /messages, /vacancies, /cases/:id/documents/:docId/file
 
-const partnerOf = async (req: Request): Promise<ReferralPartner> => {
-  const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id } });
-  if (!partner) throw forbidden('NO_PARTNER_PROFILE');
-  return partner;
-};
+/** Visa chips: the status breakdown only with the case-stage permission. */
+const facetsFor = (facets: VisaFacet[], perms: PartnerPerms) =>
+  perms.caseStage ? facets : facets.map(({ key, visaType, visaCategory, count }) => ({ key, visaType, visaCategory, count }));
 
 partnerPortalRouter.get('/me', async (req, res) => {
-  let partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  let partner = ctx.partner;
   // Partners created before sign-up codes existed (or by the settlement import) get one on first visit.
-  if (!partner.code) {
+  if (!partner.code && ctx.role === 'OWNER') {
     const code = await suggestPartnerCode(partner.name, partner.id);
-    partner = await prisma.referralPartner.update({ where: { id: partner.id }, data: { code } }).catch(() => partner);
+    const saved = await prisma.referralPartner.update({ where: { id: partner.id }, data: { code } }).catch(() => null);
+    if (saved) partner = { ...partner, code: saved.code };
   }
   const [user, agent] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { firstName: true, lastName: true, email: true, phone: true, locale: true } }),
     prisma.agent.findUnique({ where: { userId: req.user!.id }, select: { id: true } }),
   ]);
+  const { perms } = ctx;
   res.json({
     partner: {
       id: partner.id,
@@ -57,11 +64,11 @@ partnerPortalRouter.get('/me', async (req, res) => {
       phone: partner.phone,
       email: partner.email,
       active: partner.active,
-      commissionCents: partner.commissionCents,
+      commissionCents: perms.payments ? partner.commissionCents : null,
       currency: partner.currency,
       // Personal sign-up code and links: clients who use them belong to the partner (lib/partners/owned.ts).
-      code: partner.code,
-      ...(partner.code ? partnerLinks(partner.code) : { shareLink: null, shortLink: null }),
+      code: perms.addClients ? partner.code : null,
+      ...(partner.code && perms.addClients ? partnerLinks(partner.code) : { shareLink: null, shortLink: null }),
       commissionTrigger: partner.commissionTrigger,
       visibility: partner.visibility,
       // AGENCY | SCHOOL | LANGUAGE_SCHOOL: schools get the Students view (lib/partners/schools.ts).
@@ -70,11 +77,14 @@ partnerPortalRouter.get('/me', async (req, res) => {
     user,
     // The same login may also take part in the agent programme: the portal then links to /agent.
     alsoAgent: !!agent,
+    // What this login may do (lib/partnerAccess); the server checks every request anyway.
+    access: { role: ctx.role, template: ctx.template, permissions: perms, areas: portalAreas(perms, { owner: ctx.role === 'OWNER' }) },
   });
 });
 
 partnerPortalRouter.get('/dashboard', async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  const { partner, perms } = ctx;
   const [cases, commissions, events] = await Promise.all([
     prisma.case.findMany({ where: { partnerId: partner.id }, select: { clientId: true, status: true, processingStage: true } }),
     prisma.partnerCommission.findMany({ where: { partnerId: partner.id }, select: { amountCents: true, status: true, createdAt: true, paidAt: true } }),
@@ -92,41 +102,64 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
     counts: {
       clients: new Set(cases.map((c) => c.clientId)).size,
       cases: cases.length,
-      activeCases: cases.filter((c) => !FINAL_STATUSES.includes(c.status) && !isRefused(c)).length,
-      approvedVisas: cases.filter((c) => c.status === 'APPROVED').length,
+      // Stage figures only with the case-stage permission.
+      activeCases: perms.caseStage ? cases.filter((c) => !FINAL_STATUSES.includes(c.status) && !isRefused(c)).length : null,
+      approvedVisas: perms.caseStage ? cases.filter((c) => c.status === 'APPROVED').length : null,
       // Visa refused ("rədd"): REJECTED, or marked "Ablehnung" by the team.
-      rejected: cases.filter((c) => isRefused(c)).length,
+      rejected: perms.caseStage ? cases.filter((c) => isRefused(c)).length : null,
     },
-    byVisa: await visaFacets({ partnerId: partner.id }),
-    commissions: { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents },
-    recent: events.map((e) => ({
-      id: e.id,
-      type: e.type,
-      toStatus: e.toStatus,
-      createdAt: e.createdAt,
-      caseId: e.case.id,
-      caseNumber: e.case.number,
-      client: `${e.case.client.firstName} ${e.case.client.lastName}`.trim(),
-    })),
+    byVisa: facetsFor(await visaFacets({ partnerId: partner.id }), perms),
+    commissions: perms.payments ? { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents } : null,
+    // Client names and stage changes: only with the client list and the case stage.
+    recent:
+      perms.clientList !== 'none' && perms.caseStage
+        ? events.map((e) => ({
+            id: e.id,
+            type: e.type,
+            toStatus: e.toStatus,
+            createdAt: e.createdAt,
+            caseId: e.case.id,
+            caseNumber: e.case.number,
+            client: `${e.case.client.firstName} ${e.case.client.lastName}`.trim(),
+          }))
+        : [],
   });
 });
 
 partnerPortalRouter.get('/cases', async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireClientList(ctx);
   const q = parse(
     z.object({ search: z.string().trim().max(120).optional(), filter: z.enum(ACTIVE_FILTER).default('all'), visa: z.string().trim().max(60).optional() }),
     req.query,
   );
+  // Without the case stage the active / closed filter would reveal it: everything is listed.
+  const query = ctx.perms.caseStage ? q : { ...q, filter: 'all' as const };
   // visaFacets: counts per visa kind over all of the partner's cases (the filter chips).
-  const [items, facets] = await Promise.all([listPartnerCases(partner.id, q), visaFacets({ partnerId: partner.id })]);
-  res.json({ items, visaFacets: facets });
+  const [items, facets] = await Promise.all([listPartnerCases(ctx.partner.id, query), visaFacets({ partnerId: ctx.partner.id })]);
+  res.json({ items: items.map((r) => shapeCaseRow(r, ctx.perms)), visaFacets: facetsFor(facets, ctx.perms) });
 });
 
 partnerPortalRouter.get('/cases/:id', async (req, res) => {
-  const partner = await partnerOf(req);
-  const detail = await partnerCaseDetail(partner.id, String(req.params.id), req.user!.id);
+  const ctx = await partnerContextOf(req);
+  requireClientList(ctx);
+  const { partner, perms } = ctx;
+  // "Uploaded by us": the partner's own login and its team (a member sees what the team uploaded).
+  const detail = shapeCaseDetail(await partnerCaseDetail(partner.id, String(req.params.id), await partnerTeamUserIds(partner)), perms);
+  // Download level: every file of the requirement (names + ids for GET /cases/:id/documents/:docId/file).
+  const requirements =
+    perms.documents === 'download' && detail.requirements.length
+      ? await (async () => {
+          const docs = await prisma.document.findMany({
+            where: { caseId: detail.id, requirementId: { in: detail.requirements.map((r) => r.id) } },
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, requirementId: true, originalName: true, status: true, createdAt: true },
+          });
+          return detail.requirements.map((r) => ({ ...r, files: docs.filter((d) => d.requirementId === r.id).map(({ requirementId: _r, originalName, ...d }) => ({ ...d, name: originalName })) }));
+        })()
+      : detail.requirements;
   // Contacts only with extended visibility and the client's consent (lib/partners/owned.ts).
-  res.json({ case: { ...detail, contact: await extendedContact(partner, detail.id) } });
+  res.json({ case: { ...detail, requirements, contact: await extendedContact(partner, detail.id) } });
 });
 
 /** Upload on behalf of the client (multipart: file + requirementId); goes to the normal staff review. */
@@ -134,7 +167,10 @@ partnerPortalRouter.post('/cases/:id/documents', documentUpload.single('file'), 
   const file = req.file;
   if (!file) throw badRequest('FILE_REQUIRED');
   try {
-    const partner = await partnerOf(req);
+    const ctx = await partnerContextOf(req);
+    requireClientList(ctx);
+    requireDocuments(ctx, 'upload');
+    const { partner } = ctx;
     await verifyUploadedFile(file);
     const { requirementId } = parse(z.object({ requirementId: z.string().min(1).max(40) }), req.body);
     const out = await storePartnerUpload({
@@ -158,7 +194,11 @@ const commissionQuery = z.object({
 });
 
 partnerPortalRouter.get('/commissions', async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireFlag(ctx, 'payments');
+  const { partner } = ctx;
+  // Client names next to the amounts only with the client list.
+  const names = ctx.perms.clientList !== 'none';
   const q = parse(commissionQuery, req.query);
   const range = q.month ? monthRange(q.month) : null;
   const rows = await prisma.partnerCommission.findMany({
@@ -186,16 +226,19 @@ partnerPortalRouter.get('/commissions', async (req, res) => {
         paidAt: r.paidAt,
         // Only the payout note of paid rows; other notes are internal.
         note: r.status === 'PAID' ? r.note : null,
-        case: c ? { id: c.id, number: c.number, client: `${c.client.firstName} ${c.client.lastName}`.trim() } : null,
+        case: c ? { id: c.id, number: c.number, client: names ? `${c.client.firstName} ${c.client.lastName}`.trim() : null } : null,
         // Settlement-ledger rows of clients not in the system yet: the name from the settlement sheet.
-        clientName: c ? `${c.client.firstName} ${c.client.lastName}`.trim() : r.settlementEntryId ? (settlementNames.get(r.settlementEntryId) ?? null) : null,
+        clientName: !names ? null : c ? `${c.client.firstName} ${c.client.lastName}`.trim() : r.settlementEntryId ? (settlementNames.get(r.settlementEntryId) ?? null) : null,
       };
     }),
   });
 });
 
 partnerPortalRouter.get('/commissions/export.xlsx', async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireFlag(ctx, 'payments');
+  requireClientList(ctx); // the workbook lists client names
+  const { partner } = ctx;
   const q = parse(commissionQuery.omit({ status: true }), req.query);
   const { buffer, rows } = await buildCommissionWorkbook({ partnerId: partner.id, month: q.month, forPartner: true });
   await audit(req, 'PARTNER_COMMISSIONS_EXPORTED', partner.id, { month: q.month ?? null, rows });
@@ -208,9 +251,11 @@ partnerPortalRouter.get('/commissions/export.xlsx', async (req, res) => {
 // ─── Own clients (partner-owned clients, lib/partners/owned.ts) ─────────
 
 partnerPortalRouter.get('/clients', async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireClientList(ctx);
+  const { partner } = ctx;
   const q = parse(z.object({ search: z.string().trim().max(120).optional() }), req.query);
-  res.json({ items: await listPartnerClients(partner, q), visibility: partner.visibility });
+  res.json({ items: (await listPartnerClients(partner, q)).map((r) => shapeClientRow(r, ctx.perms)), visibility: partner.visibility });
 });
 
 const registerLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30, keyGenerator: (req) => `partner-clients:${req.user?.id ?? 'anon'}` });
@@ -221,7 +266,9 @@ const registerLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30, keyGenera
  * client's own consent to share data with the partner (PARTNER_SHARING) is asked in the client's account.
  */
 partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireFlag(ctx, 'addClients');
+  const { partner } = ctx;
   const body = parse(
     z.object({
       firstName: z.string().trim().min(1).max(80),
@@ -261,12 +308,15 @@ partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
   await audit(req, 'PARTNER_CLIENT_REGISTERED', `user:${user.id}`, { partnerId: partner.id, clientAgreed: true });
   markClientsExcelDirty();
   void scanUserDuplicates(user.id);
-  res.status(201).json({ client: (await listPartnerClients(partner)).find((c) => c.id === user.id) ?? { id: user.id } });
+  const row = ctx.perms.clientList !== 'none' ? (await listPartnerClients(partner)).find((c) => c.id === user.id) : undefined;
+  res.status(201).json({ client: row ? shapeClientRow(row, ctx.perms) : { id: user.id } });
 });
 
 /** POST /clients/:id/invite — a fresh set-password e-mail for an own client who has not signed in yet. */
 partnerPortalRouter.post('/clients/:id/invite', registerLimiter, async (req, res) => {
-  const partner = await partnerOf(req);
+  const ctx = await partnerContextOf(req);
+  requireFlag(ctx, 'addClients');
+  const { partner } = ctx;
   const user = await prisma.user.findFirst({
     where: { id: String(req.params.id), ownerPartnerId: partner.id, role: 'CLIENT' },
     select: { id: true, email: true, locale: true, firstName: true, emailVerifiedAt: true, isActive: true, _count: { select: { sessions: true } } },

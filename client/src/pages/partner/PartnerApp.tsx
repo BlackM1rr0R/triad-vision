@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { ArrowUpRight, CircleUser, Coins, FolderOpen, GraduationCap, LayoutDashboard, LogOut, PauseCircle, Users } from 'lucide-react';
+import { ArrowUpRight, Briefcase, CircleUser, Coins, FolderOpen, GraduationCap, HardDrive, LayoutDashboard, LogOut, MessagesSquare, PauseCircle, UserCog, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { errorCode } from '@/lib/api';
@@ -10,7 +10,8 @@ import { registerCopy } from '@/i18n';
 import { pagesPartnerPortal } from '@/i18n/pagesPartnerPortal';
 import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing'; // visa kind filter + "rədd" KPI
 import { pagesPartnerClients } from '@/i18n/pagesPartnerClients'; // own clients, sign-up link
-import { usePartnerMe } from '@/components/partnerPortal/api';
+import { accessOf, usePartnerMe } from '@/components/partnerPortal/api';
+import { pagesPartnerAccess } from '@/i18n/pagesPartnerAccess'; // team, own folder, messages, vacancies, permission levels
 import { ErrorRetry, Loading } from '@/components/partnerPortal/ui';
 import PartnerDashboardPage from './Dashboard';
 import PartnerClientsPage from './Clients';
@@ -19,11 +20,16 @@ import PartnerCommissionsPage from './Commissions';
 import PartnerProfilePage from './Profile';
 import PartnerPeoplePage from './People';
 import PartnerStudentsPage from './Students'; // colleges / language schools (registers pagesPartnerSchools)
+import PartnerTeamPage from './Team';
+import PartnerDrivePage from './Drive';
+import PartnerMessagesPage from './Messages';
+import PartnerVacanciesPage from './Vacancies';
 import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 
 registerCopy(pagesPartnerPortal);
 registerCopy(pagesCaseProcessing);
 registerCopy(pagesPartnerClients);
+registerCopy(pagesPartnerAccess);
 
 /**
  * Referral-partner portal, mounted at /partner/* behind RequireAuth roles=['AGENT']. Only logins linked to a
@@ -39,15 +45,21 @@ export default function PartnerApp() {
 
   if (isError && errorCode(error) === 'NO_PARTNER_PROFILE') return <Navigate to="/agent" replace />;
 
+  // What this login may use (lib/partnerAccess on the server checks every request; this only hides the rest).
+  const areas = accessOf(me).areas;
   const tabs = [
     { to: '/partner', label: t('partnerPortal.nav.dashboard'), icon: LayoutDashboard, match: (p: string) => p === '/partner' || p === '/partner/' },
-    { to: '/partner/people', label: t('partnerClients.nav'), icon: Users, match: (p: string) => p.startsWith('/partner/people') },
+    ...(!areas.clients ? [] : [{ to: '/partner/people', label: t('partnerClients.nav'), icon: Users, match: (p: string) => p.startsWith('/partner/people') }]),
     // Colleges and language schools: referred students (stage with consent, attendance / exam records).
-    ...(me?.partner.category === 'SCHOOL' || me?.partner.category === 'LANGUAGE_SCHOOL'
+    ...(areas.clients && (me?.partner.category === 'SCHOOL' || me?.partner.category === 'LANGUAGE_SCHOOL')
       ? [{ to: '/partner/students', label: t('partnerSchools.nav'), icon: GraduationCap, match: (p: string) => p.startsWith('/partner/students') }]
       : []),
-    { to: '/partner/clients', label: t('partnerPortal.nav.clients'), icon: FolderOpen, match: (p: string) => p.startsWith('/partner/clients') },
-    { to: '/partner/commissions', label: t('partnerPortal.nav.commissions'), icon: Coins, match: (p: string) => p.startsWith('/partner/commissions') },
+    ...(areas.cases ? [{ to: '/partner/clients', label: t('partnerPortal.nav.clients'), icon: FolderOpen, match: (p: string) => p.startsWith('/partner/clients') }] : []),
+    ...(areas.commissions ? [{ to: '/partner/commissions', label: t('partnerPortal.nav.commissions'), icon: Coins, match: (p: string) => p.startsWith('/partner/commissions') }] : []),
+    ...(areas.messages ? [{ to: '/partner/messages', label: t('partnerAccess.nav.messages'), icon: MessagesSquare, match: (p: string) => p.startsWith('/partner/messages') }] : []),
+    ...(areas.vacancies ? [{ to: '/partner/vacancies', label: t('partnerAccess.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/partner/vacancies') }] : []),
+    ...(areas.drive ? [{ to: '/partner/drive', label: t('partnerAccess.nav.drive'), icon: HardDrive, match: (p: string) => p.startsWith('/partner/drive') }] : []),
+    ...(areas.team ? [{ to: '/partner/team', label: t('partnerAccess.nav.team'), icon: UserCog, match: (p: string) => p.startsWith('/partner/team') }] : []),
     { to: '/partner/profile', label: t('partnerPortal.nav.profile'), icon: CircleUser, match: (p: string) => p.startsWith('/partner/profile') },
   ];
 
@@ -129,11 +141,15 @@ export default function PartnerApp() {
               )}
               <Routes>
                 <Route index element={<PartnerDashboardPage me={me} />} />
-                <Route path="people" element={<PartnerPeoplePage me={me} />} />
-                {(me.partner.category === 'SCHOOL' || me.partner.category === 'LANGUAGE_SCHOOL') && <Route path="students" element={<PartnerStudentsPage me={me} />} />}
-                <Route path="clients" element={<PartnerClientsPage />} />
-                <Route path="clients/:id" element={<PartnerClientDetailPage />} />
-                <Route path="commissions" element={<PartnerCommissionsPage />} />
+                {areas.clients && <Route path="people" element={<PartnerPeoplePage me={me} />} />}
+                {areas.clients && (me.partner.category === 'SCHOOL' || me.partner.category === 'LANGUAGE_SCHOOL') && <Route path="students" element={<PartnerStudentsPage me={me} />} />}
+                {areas.cases && <Route path="clients" element={<PartnerClientsPage />} />}
+                {areas.cases && <Route path="clients/:id" element={<PartnerClientDetailPage />} />}
+                {areas.commissions && <Route path="commissions" element={<PartnerCommissionsPage />} />}
+                {areas.messages && <Route path="messages" element={<PartnerMessagesPage />} />}
+                {areas.vacancies && <Route path="vacancies" element={<PartnerVacanciesPage />} />}
+                {areas.drive && <Route path="drive" element={<PartnerDrivePage />} />}
+                {areas.team && <Route path="team" element={<PartnerTeamPage />} />}
                 <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<PartnerProfilePage me={me} />} />
                 <Route path="*" element={<Navigate to="/partner" replace />} />

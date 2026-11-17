@@ -4,6 +4,7 @@ import { prisma } from '../../db.js';
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { kanbanBoard, staffWorkload } from '../../lib/ops/kanban.js';
 import { articleSelect, normaliseTags, searchArticles } from '../../lib/ops/kb.js';
 import { API_SCOPES, generateApiKey } from '../../lib/ops/apiKeys.js';
@@ -35,6 +36,7 @@ adminOpsRouter.get('/kanban', async (req, res) => {
     staffId: q.mine === 'true' ? req.user!.id : q.staff || undefined,
     visaCategoryId: q.visa || undefined,
     includeFinal: q.final === 'true',
+    scope: await caseScopeWhere(req.user), // staff case scope ({} = every case, the default)
   });
   const [staff, visas] = await Promise.all([
     prisma.user.findMany({
@@ -67,8 +69,8 @@ adminOpsRouter.post('/kanban/assign', async (req, res) => {
   res.json({ ok: true, changed: true });
 });
 
-adminOpsRouter.get('/workload', async (_req, res) => {
-  res.json(await staffWorkload());
+adminOpsRouter.get('/workload', async (req, res) => {
+  res.json(await staffWorkload(await caseScopeWhere(req.user)));
 });
 
 // ─── Knowledge base ─────────────────────────────────────────────────────

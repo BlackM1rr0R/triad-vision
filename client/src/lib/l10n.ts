@@ -17,8 +17,9 @@ export const useL10n = () => {
 
   const tr = (v: L10n | null | undefined) => (v ? v[locale] || v.az || v.en || '' : '');
   const trList = (v: L10nList | null | undefined) => (v ? v[locale] ?? v.az ?? [] : []);
+  // A value the server masked ("••••", Access Center › sensitive fields) is shown as it is instead of throwing.
   const date = (iso: string | Date, opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }) =>
-    new Intl.DateTimeFormat(dateLocale, opts).format(new Date(iso));
+    typeof iso === 'string' && iso.includes('•') ? iso : new Intl.DateTimeFormat(dateLocale, opts).format(new Date(iso));
   const dateTime = (iso: string | Date) =>
     new Intl.DateTimeFormat(dateLocale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 

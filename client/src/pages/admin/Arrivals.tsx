@@ -10,6 +10,7 @@ import { registerCopy } from '@/i18n';
 import { StaffEmployerChecklistCard } from '@/components/employerExtras/ArrivalChecklist';
 import { StaffArrivalCertificate } from '@/components/arrival/StaffArrivalCertificate'; // arrival certificate: revoke / restore
 import { pagesArrival } from '@/i18n/pagesArrival';
+import { SensitiveValue, isMaskedValue } from '@/components/privacyTools/SensitiveValue';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useRealtime } from '@/lib/realtime';
 import { Spinner } from '@/components/ui/Spinner';
@@ -235,7 +236,12 @@ const Drawer = ({ caseId, onClose }: { caseId: string; onClose: () => void }) =>
                   </label>
                   <label className="block">
                     <span className="label">{t('arrival.admin.detail.housingDetails')}</span>
-                    <textarea className="input min-h-16" maxLength={4000} placeholder={t('arrival.admin.detail.housingDetailsPh')} value={form.housingDetails} onChange={(e) => set('housingDetails', e.target.value)} />
+                    {isMaskedValue(form.housingDetails) ? (
+                      // ADDRESS masked (Access Center): reveal with a reason; saved unchanged (the server drops the masked value).
+                      <SensitiveValue value={form.housingDetails} entity="arrivalPlan" id={caseId} field="housingDetails" className="input flex items-center" />
+                    ) : (
+                      <textarea className="input min-h-16" maxLength={4000} placeholder={t('arrival.admin.detail.housingDetailsPh')} value={form.housingDetails} onChange={(e) => set('housingDetails', e.target.value)} />
+                    )}
                   </label>
                   <label className="block">
                     <span className="label">{t('arrival.admin.detail.handler')}</span>

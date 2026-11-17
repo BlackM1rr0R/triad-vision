@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { caseScopeWhere } from '../../lib/access/index.js';
 import { z } from 'zod';
 import type { ApplicationStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
@@ -104,6 +105,9 @@ export const candidateListWhere = (q: z.infer<typeof candidateListQuery>): Prism
 adminCandidatesRouter.get('/', async (req, res) => {
   const q = parse(candidateListQuery, req.query);
   const and: Prisma.UserWhereInput[] = [{ role: 'CLIENT' }];
+  // Restricted case scope (lib/access): only clients with a visible case ({} = every client, the default).
+  const scope = await caseScopeWhere(req.user);
+  if (Object.keys(scope).length) and.push({ cases: { some: scope } });
   if (q.search) {
     and.push({
       OR: [

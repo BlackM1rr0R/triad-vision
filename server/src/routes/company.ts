@@ -163,8 +163,8 @@ companyRouter.post('/register', registerLimiter, async (req, res) => {
   await audit(req, 'COMPANY_REGISTERED', `company:${company.id}`, { userId: user.id, ...(refCode ? { referralCode: refCode, referredByAgentId } : {}) });
 
   const client = wantsBearerToken(req) ? 'mobile' : 'web';
-  const { token, session } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
-  if (client === 'web') setSessionCookie(res, token, client);
+  const { token, session, maxMs } = await issueSession(user.id, { client, ip: req.ip, userAgent: req.get('user-agent') });
+  if (client === 'web') setSessionCookie(res, token, client, maxMs);
   res.status(201).json({
     user: publicUser(user),
     company: companyView(company),

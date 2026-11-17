@@ -38,6 +38,7 @@ import { ballInCourtMany } from '../../lib/clientProcess/ballInCourt.js';
 import { marksForStatus, reviewMarksSchema } from '../../lib/review/marks.js'; // marks on a rejected scan
 import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from '../../lib/caseProcessing/index.js'; // Schon geschrieben → Fertig
 import { FINAL_PROCESS_STATUSES } from '../../lib/recognition/rules.js';
+import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js'; // case scope (ALL = every case, the default)
 
 export const adminCasesRouter = Router();
 
@@ -151,9 +152,12 @@ export const recognitionCaseIds = async (kind: 'overdue' | 'open', now = new Dat
   return rows.map((r) => r.caseId);
 };
 
-/** caseListWhere with the lookups it needs (list, summary, bulk "all matching"). */
-export const resolveCaseListWhere = async (q: CaseListQuery, viewerId: string) =>
-  caseListWhere(q, viewerId, q.recognition ? await recognitionCaseIds(q.recognition) : undefined);
+/**
+ * caseListWhere with the lookups it needs (list, summary, bulk "all matching"). `scope` = the viewer's case
+ * scope (lib/access caseScopeWhere; {} = every case, the default).
+ */
+export const resolveCaseListWhere = async (q: CaseListQuery, viewerId: string, scope: Prisma.CaseWhereInput = {}) =>
+  withCaseScope(caseListWhere(q, viewerId, q.recognition ? await recognitionCaseIds(q.recognition) : undefined), scope);
 
 /** One OR over the searchable fields per word: "Ali Aliyev" finds the client whose first and last name match. */
 const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
@@ -172,7 +176,7 @@ const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
 
 adminCasesRouter.get('/', async (req, res) => {
   const q = parse(caseListQuery, req.query);
-  const where: Prisma.CaseWhereInput = await resolveCaseListWhere(q, req.user!.id);
+  const where: Prisma.CaseWhereInput = await resolveCaseListWhere(q, req.user!.id, await caseScopeWhere(req.user));
   const pageSize = 25;
   const [items, total, byStatus, processingCounts] = await Promise.all([
     prisma.case.findMany({
@@ -247,9 +251,10 @@ export const CASE_SUMMARY_TILES = {
 
 adminCasesRouter.get('/summary', async (req, res) => {
   const viewer = req.user!.id;
+  const scope = await caseScopeWhere(req.user);
   const entries = await Promise.all(
     Object.entries(CASE_SUMMARY_TILES).map(async ([key, params]) => {
-      const where = await resolveCaseListWhere(parse(caseListQuery, params), viewer);
+      const where = await resolveCaseListWhere(parse(caseListQuery, params), viewer, scope);
       return [key, { count: await prisma.case.count({ where }), params }] as const;
     }),
   );

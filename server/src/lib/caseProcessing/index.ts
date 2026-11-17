@@ -5,6 +5,7 @@ import { badRequest, conflict, notFound } from '../http.js';
 import { invalidateMyWork } from '../myWork.js';
 import { notifyUser } from '../notifications.js';
 import { processingTexts, stageLabel } from './texts.js';
+import { scoped } from '../accessAudit/scope.js';
 
 /**
  * Team document workflow of a case — a lightweight hand-over between two staff members, independent of the
@@ -359,14 +360,15 @@ export const boardQuery = z.object({
 const BOARD_LIMIT = 40;
 
 /** GET /admin/case-processing/board — the cases per stage (newest move first), with totals. */
-export const processingBoard = async (q: z.infer<typeof boardQuery>, viewerId: string) => {
-  const base: Prisma.CaseWhereInput = {
+export const processingBoard = async (q: z.infer<typeof boardQuery>, viewerId: string, scope: Prisma.CaseWhereInput = {}) => {
+  // `scope` = the viewer's staff case scope (lib/access; {} = every case): cards and totals over in-scope cases only.
+  const base: Prisma.CaseWhereInput = scoped({
     ...(q.partnerId ? { partnerId: q.partnerId === 'none' ? null : q.partnerId } : {}),
     ...(q.assignee ? { processingAssigneeId: q.assignee === 'me' ? viewerId : q.assignee } : {}),
     ...(q.search
       ? { OR: [{ number: { contains: q.search } }, { client: { firstName: { contains: q.search } } }, { client: { lastName: { contains: q.search } } }] }
       : {}),
-  };
+  }, scope);
   const counts = await stageCounts(base);
   const columns = await Promise.all(
     PROCESSING_STAGES.map(async (stage) => {

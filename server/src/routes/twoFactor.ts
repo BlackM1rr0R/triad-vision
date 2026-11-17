@@ -28,10 +28,12 @@ import {
   checkTotp,
   consumeRecoveryCode,
   isTwoFactorRequired,
+  isTwoFactorRequiredFor,
   readLoginChallenge,
   recoveryCodesLeft,
 } from '../lib/twoFactor.js';
 import { startSession } from './auth.js';
+import { partnerContractAllowsLogin } from '../lib/loginSecurity/index.js'; // contract-bound partner logins
 
 /**
  * Two-factor authentication (TOTP, RFC 6238) — mounted at /api/auth/2fa.
@@ -76,7 +78,7 @@ twoFactorRouter.get('/status', requireAuth, async (req, res) => {
   const u = await loadUser(req.user!.id);
   res.json({
     enabled: !!u.totpEnabledAt,
-    required: isTwoFactorRequired(u.role),
+    required: isTwoFactorRequiredFor(u),
     pending: !u.totpEnabledAt && !!u.totpSecret,
     enabledAt: u.totpEnabledAt,
     recoveryCodesLeft: u.totpEnabledAt ? recoveryCodesLeft(u) : 0,
@@ -190,6 +192,11 @@ twoFactorRouter.post('/verify', verifyLimiter, async (req, res) => {
     });
     res.status(401).json({ error: failure, attemptsLeft });
     return;
+  }
+  // The contract may have ended between the password and the code (Access Center → Login security).
+  if (!(await partnerContractAllowsLogin(user))) {
+    await audit({ user: undefined, ip: req.ip }, 'LOGIN_REFUSED_CONTRACT', `user:`);
+    throw new HttpError(403, 'PARTNER_CONTRACT_INACTIVE');
   }
   challengeSucceeded(challenge.jti);
   await recordLoginSuccess(user.email);

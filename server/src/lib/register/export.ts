@@ -2,9 +2,12 @@ import ExcelJS from 'exceljs';
 import { prisma } from '../../db.js';
 import { FIXED_KEYS, HEADERS, STATUS_LABELS, VISA_TYPE_LABELS, type FixedKey, type Lang } from './labels.js';
 import { listColumns, loadRows, type RegisterRow } from './rows.js';
-import { maskWith, type MaskGroup } from '../privacy/mask.js';
+import { maskAnyWith, maskWith, type MaskGroup } from '../privacy/mask.js';
 
 const SHEET_NAME: Record<Lang, string> = { az: 'Müştəri reyestri', de: 'Kundenregister', en: 'Client register', ru: 'Реестр клиентов' };
+
+/** Columns of a family member row that are personal data (FAMILY mask group). */
+const FAMILY_COLUMNS = new Set<string>(['firstName', 'lastName', 'passportNumber', 'birthDate', 'phone', 'email']);
 
 /** The client register as a styled Excel workbook (bold header, frozen first row, autofilter, widths). */
 /** `mask`: groups masked for the viewer (STAFF exports show "•••• 3456" instead of passport numbers). */
@@ -48,6 +51,8 @@ export const buildRegisterXlsx = async (lang: Lang, mask: Set<MaskGroup> = new S
 
   const date = (s: string | null) => (s ? new Date(`${s.slice(0, 10)}T00:00:00.000Z`) : null);
   const valueOf = (r: RegisterRow, k: FixedKey): ExcelJS.CellValue => {
+    // Family member rows: personal data masked when the viewer's policy masks FAMILY (Access Center).
+    if (r.kind === 'member' && mask.has('FAMILY') && FAMILY_COLUMNS.has(k)) return (maskAnyWith(mask, k, r[k], 'FAMILY') as string | null) ?? '';
     switch (k) {
       case 'birthDate':
       case 'createdAt':

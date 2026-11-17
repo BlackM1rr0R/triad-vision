@@ -1,6 +1,7 @@
 import { prisma } from '../../src/db.js';
 import { clearCache } from '../../src/lib/cache.js';
 import { invalidateModules } from '../../src/lib/navModules.js';
+import { invalidateAccess } from '../../src/lib/access/store.js';
 
 export { prisma };
 
@@ -30,6 +31,20 @@ export const resetDb = async () => {
     prisma.whatsNewSeen,
     prisma.staffTrainingEvent,
     prisma.ownerSetupMark,
+    prisma.partnerAccess, // Access Center: partner permissions, team members, login security (plain ids)
+    prisma.partnerMember,
+    prisma.loginSecurityRole,
+    prisma.staffAccess, // staff access control (lib/access): per-user settings, teams, break-glass, templates (plain ids)
+    prisma.staffTeamMember,
+    prisma.staffTeam,
+    prisma.breakGlassGrant,
+    prisma.staffRoleTemplate,
+    prisma.loginSecurityUser,
+    prisma.sensitiveFieldPolicy, // Access Center › Sensitive fields: policy overrides (plain ids)
+    prisma.companyMemberAccess, // Access Center › Employers: employer role per company member (plain ids)
+    prisma.accessReviewItem, // Access Center › Audit: quarterly access reviews (plain ids)
+    prisma.accessReview,
+    prisma.staffRecordAccess, // anomaly rule "many records": opened case / client records per hour
   ] as { deleteMany: () => Promise<unknown> }[])
     await m.deleteMany();
   await prisma.saasLead.deleteMany(); // SaaS demo-request pipeline (plain ids)
@@ -257,6 +272,7 @@ export const resetDb = async () => {
   // The public content cache lives in this module graph; drop it with the data.
   clearCache();
   invalidateModules(); // module toggles are cached in-process for 30 s
+  invalidateAccess(); // staff permissions are cached in-process for 30 s (lib/access)
 };
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

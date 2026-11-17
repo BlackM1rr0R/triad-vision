@@ -39,7 +39,42 @@ export interface PartnerMe {
   };
   user: { firstName: string; lastName: string; email: string; phone: string | null; locale: string };
   alsoAgent: boolean;
+  /** What this login may do (server: lib/partnerAccess; every request is checked there). Missing on old servers = everything. */
+  access?: PartnerAccess;
 }
+
+export type ClientListLevel = 'none' | 'masked' | 'full';
+export type DocumentLevel = 'none' | 'status' | 'list' | 'upload' | 'download';
+export type DriveLevel = 'none' | 'view' | 'upload';
+export interface PartnerPerms {
+  clientList: ClientListLevel;
+  caseStage: boolean;
+  documents: DocumentLevel;
+  payments: boolean;
+  addClients: boolean;
+  messaging: boolean;
+  vacancies: boolean;
+  drive: DriveLevel;
+}
+export type PartnerTemplate = 'LEGACY' | 'DEFAULT' | 'REFERRER' | 'DOCUMENTS' | 'FULL' | 'CUSTOM';
+export interface PartnerAccess {
+  role: 'OWNER' | 'MEMBER';
+  template: PartnerTemplate;
+  permissions: PartnerPerms;
+  areas: { clients: boolean; cases: boolean; commissions: boolean; addClients: boolean; messages: boolean; vacancies: boolean; drive: boolean; team: boolean; profile: boolean };
+}
+
+/** Today's portal (a server without per-partner permissions). */
+export const LEGACY_ACCESS: PartnerAccess = {
+  role: 'OWNER',
+  template: 'LEGACY',
+  permissions: { clientList: 'masked', caseStage: true, documents: 'upload', payments: true, addClients: true, messaging: false, vacancies: false, drive: 'none' },
+  areas: { clients: true, cases: true, commissions: true, addClients: true, messages: false, vacancies: false, drive: false, team: true, profile: true },
+};
+export const accessOf = (me: PartnerMe | undefined | null): PartnerAccess => me?.access ?? LEGACY_ACCESS;
+
+const DOC_ORDER: DocumentLevel[] = ['none', 'status', 'list', 'upload', 'download'];
+export const docsAtLeast = (have: DocumentLevel, want: DocumentLevel) => DOC_ORDER.indexOf(have) >= DOC_ORDER.indexOf(want);
 
 export interface Totals {
   pendingCents: number;
@@ -55,8 +90,10 @@ export interface Totals {
 
 export interface PartnerDashboard {
   currency: string;
-  counts: { clients: number; cases: number; activeCases: number; approvedVisas: number; rejected?: number };
-  commissions: Totals & { thisMonthCents: number };
+  /** Stage figures are null without the case-stage permission. */
+  counts: { clients: number; cases: number; activeCases: number | null; approvedVisas: number | null; rejected?: number | null };
+  /** null without the payments permission. */
+  commissions: (Totals & { thisMonthCents: number }) | null;
   /** Counts per visa kind (category, else type). */
   byVisa?: VisaFacet[];
   recent: { id: string; type: string; toStatus: CaseStatus | null; createdAt: string; caseId: string; caseNumber: string; client: string }[];
@@ -68,9 +105,10 @@ export interface VisaFacet {
   visaType: string;
   visaCategory: { title: L10n; visaLabel: string } | null;
   count: number;
-  active: number;
-  approved: number;
-  refused: number;
+  /** Missing without the case-stage permission. */
+  active?: number;
+  approved?: number;
+  refused?: number;
 }
 
 export interface PartnerCaseRow {
@@ -106,7 +144,8 @@ export interface PartnerClientRow {
   consent: boolean | null;
   extended: boolean;
   contact: { email: string; phone: string | null } | null;
-  payment: { state: PaymentState; totalCents?: number; paidCents?: number; currency?: string };
+  /** null without the payments permission. */
+  payment: { state: PaymentState; totalCents?: number; paidCents?: number; currency?: string } | null;
   cases: number;
   latestCase: { id: string; number: string; status: CaseStatus; step: PortalStep; nextAction: NextAction; missingDocuments: number; refused: boolean; updatedAt: string } | null;
 }
@@ -120,7 +159,10 @@ export interface PartnerRequirement {
   state: DocState;
   rejectionReason: string | null;
   canUpload: boolean;
-  documentCount: number;
+  /** null at the "status only" document level. */
+  documentCount: number | null;
+  /** Download level only: every file of the requirement (GET /partner/cases/:id/documents/:docId/file). */
+  files?: { id: string; name: string; status: 'PENDING' | 'ACCEPTED' | 'REJECTED'; createdAt: string }[];
   myUploads: { id: string; name: string; status: 'PENDING' | 'ACCEPTED' | 'REJECTED'; createdAt: string }[];
 }
 

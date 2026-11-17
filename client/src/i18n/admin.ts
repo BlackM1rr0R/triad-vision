@@ -114,6 +114,7 @@ const az = {
       securityAlerts: 'Təhlükəsizlik xəbərdarlıqları',
 
       sensitiveAccess: 'Həssas məlumat girişləri',
+      accessCenter: 'Giriş Mərkəzi',
       cases: 'Müraciətlər',
       review: 'Sürətli yoxlama',
       docs: 'Sənədlər',
@@ -1451,6 +1452,7 @@ const de: typeof az = {
       securityAlerts: 'Sicherheitswarnungen',
 
       sensitiveAccess: 'Zugriffe auf sensible Daten',
+      accessCenter: 'Access Center (Zugriffsrechte)',
       cases: 'Anträge',
       review: 'Schnellprüfung',
       docs: 'Dokumente',
@@ -2788,6 +2790,7 @@ const en: typeof az = {
       securityAlerts: 'Security alerts',
 
       sensitiveAccess: 'Sensitive data access',
+      accessCenter: 'Access Center',
       cases: 'Cases',
       review: 'Fast review',
       docs: 'Documents',
@@ -4127,6 +4130,7 @@ const ru = {
       securityAlerts: 'Предупреждения безопасности',
 
       sensitiveAccess: 'Доступ к конфиденциальным данным',
+      accessCenter: 'Центр доступа',
       cases: 'Заявки',
       review: 'Быстрая проверка',
       docs: 'Документы',

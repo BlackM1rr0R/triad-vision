@@ -35,6 +35,7 @@ import { driveUpload } from '../lib/drive/upload.js';
 import { adoptUpload, removeStored } from '../lib/drive/storage.js';
 import { freeNameIn, safeUploadName } from '../lib/drive/names.js';
 import { completeFindingTaskIfDone } from '../lib/ai/features/caseAi/findingTasks.js';
+import { caseScopeWhere } from '../lib/access/index.js'; // case scope of case-linked tasks (lib/access)
 
 /** Team tasks (/api/tasks): create, assign, deadlines, board, comments, checklist. */
 export const tasksRouter = Router();
@@ -144,7 +145,7 @@ const setAssignees = async (req: Request, taskId: string, number: number, before
 /** GET /api/tasks/summary → { open, overdue } for my assigned, unfinished tasks. */
 tasksRouter.get('/summary', async (req, res) => {
   const where: Prisma.TaskWhereInput = {
-    AND: [{ status: { in: OPEN_STATUSES }, assignees: { some: { userId: req.user!.id } } }, caseVisibilityWhere(actorOf(req))],
+    AND: [{ status: { in: OPEN_STATUSES }, assignees: { some: { userId: req.user!.id } } }, caseVisibilityWhere(actorOf(req), await caseScopeWhere(req.user))],
   };
   const [open, overdue] = await Promise.all([
     prisma.task.count({ where }),
@@ -211,8 +212,8 @@ const localDayStart = (now: Date, tzOffset: number) => {
   return new Date(Math.floor(local / DAY) * DAY + tzOffset * 60_000);
 };
 
-export const buildListWhere = (q: z.infer<typeof listQuery>, actor: Actor, now = new Date()): Prisma.TaskWhereInput => {
-  const and: Prisma.TaskWhereInput[] = [caseVisibilityWhere(actor)];
+export const buildListWhere = (q: z.infer<typeof listQuery>, actor: Actor, now = new Date(), scope: Prisma.CaseWhereInput = {}): Prisma.TaskWhereInput => {
+  const and: Prisma.TaskWhereInput[] = [caseVisibilityWhere(actor, scope)];
   // Cancelled tasks only appear when asked for.
   and.push({ status: { in: q.status?.length ? q.status : TASK_STATUSES.filter((s) => s !== 'CANCELLED') } });
   if (q.priority?.length) and.push({ priority: { in: q.priority } });
@@ -268,7 +269,7 @@ const orderFor = (sort: (typeof SORTS)[number], dir: 'asc' | 'desc' | undefined)
  */
 tasksRouter.get('/', async (req, res) => {
   const q = parse(listQuery, req.query);
-  const where = buildListWhere(q, actorOf(req));
+  const where = buildListWhere(q, actorOf(req), new Date(), await caseScopeWhere(req.user));
   const [items, total] = await Promise.all([
     prisma.task.findMany({
       where,

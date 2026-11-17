@@ -17,6 +17,7 @@ import { VacancyForm, formFromVacancy, payloadFromForm } from './VacancyForm';
 import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { Employer } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
+import { useCompanyAccess } from './access'; // employer roles: create / edit vacancies, see salaries
 
 type Row = VacancyRow & { candidates: Partial<Record<string, number>> };
 
@@ -50,6 +51,7 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
   const { tr } = useL10n();
   const L = useJobLabels();
   const action = useVacancyActions();
+  const { can } = useCompanyAccess();
   const [confirm, setConfirm] = useState<{ id: string; kind: 'close' | 'delete' } | null>(null);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-vacancies'],
@@ -66,16 +68,20 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
       title={t('jobsArea.portal.vacancies.title')}
       icon={Briefcase}
       actions={
-        <Link to="/company/vacancies/new" className="btn-primary">
-          <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
-        </Link>
+        can('manageVacancies') && (
+          <Link to="/company/vacancies/new" className="btn-primary">
+            <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
+          </Link>
+        )
       }
     >
       {items.length === 0 ? (
         <Empty icon={Briefcase} illustration={<Employer className="w-36" />} title={t('jobsArea.portal.vacancies.empty')} text={t('jobsArea.portal.vacancies.emptyText')}>
-          <Link to="/company/vacancies/new" className="btn-primary">
-            <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
-          </Link>
+          {can('manageVacancies') && (
+            <Link to="/company/vacancies/new" className="btn-primary">
+              <Plus className="size-4" aria-hidden /> {t('jobsArea.portal.vacancies.new')}
+            </Link>
+          )}
         </Empty>
       ) : (
         <ul className="divide-y divide-line">
@@ -109,12 +115,12 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                       <ExternalLink className="size-3.5" /> {t('jobsArea.portal.vacancies.viewPublic')}
                     </a>
                   )}
-                  {v.status !== 'CLOSED' && (
+                  {v.status !== 'CLOSED' && can('manageVacancies') && (
                     <Link to={`/company/vacancies/${v.id}`} className="btn-secondary btn-sm">
                       <Pencil className="size-3.5" /> {t('jobsArea.common.edit')}
                     </Link>
                   )}
-                  {v.status === 'DRAFT' && (
+                  {v.status === 'DRAFT' && can('manageVacancies') && (
                     <button
                       type="button"
                       className="btn-primary btn-sm"
@@ -125,12 +131,12 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                       {canSubmit ? <Send className="size-3.5" /> : <Lock className="size-3.5" />} {t('jobsArea.portal.vacancies.submit')}
                     </button>
                   )}
-                  {v.status === 'DRAFT' && (
+                  {v.status === 'DRAFT' && can('manageVacancies') && (
                     <button type="button" className="btn-secondary btn-sm text-danger" onClick={() => setConfirm({ id: v.id, kind: 'delete' })} aria-label={t('jobsArea.common.delete')}>
                       <Trash2 className="size-3.5" />
                     </button>
                   )}
-                  {(v.status === 'OPEN' || v.status === 'PENDING') && (
+                  {(v.status === 'OPEN' || v.status === 'PENDING') && can('manageVacancies') && (
                     <button type="button" className="btn-secondary btn-sm" onClick={() => setConfirm({ id: v.id, kind: 'close' })}>
                       <XCircle className="size-3.5" /> {t('jobsArea.portal.vacancies.close')}
                     </button>
@@ -169,6 +175,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
   const navigate = useNavigate();
   const invalidate = useInvalidate();
   const action = useVacancyActions();
+  const { can } = useCompanyAccess();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-vacancy', id],
     queryFn: async () => (await api.get<{ vacancy: VacancyRow }>(`/company/vacancies/${id}`)).data.vacancy,
@@ -191,7 +198,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
   if (!isNew && isError) return <ErrorState onRetry={() => void refetch()} />;
   if (!isNew && (isLoading || !data)) return <Loading />;
   const v = data ?? null;
-  const locked = v?.status === 'CLOSED';
+  const locked = v?.status === 'CLOSED' || !can('manageVacancies');
 
   return (
     <div className="space-y-4">
@@ -205,7 +212,7 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
           v && (
             <>
               <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
-              {v.status === 'DRAFT' && (
+              {v.status === 'DRAFT' && can('manageVacancies') && (
                 <button
                   type="button"
                   className="btn-primary btn-sm"
@@ -231,12 +238,13 @@ export const CompanyVacancyEditor = ({ company }: { company: Company }) => {
           </p>
         )}
         {locked ? (
-          <p className="text-sm text-muted">{t('jobsArea.portal.vacancies.statusHint.CLOSED')}</p>
+          <p className="text-sm text-muted">{v?.status === 'CLOSED' ? t('jobsArea.portal.vacancies.statusHint.CLOSED') : t('companyRoles.noAccess.title')}</p>
         ) : (
           <VacancyForm
             key={v?.updatedAt ?? 'new'}
             initial={formFromVacancy(v)}
             ai="company"
+            hideSalary={!can('viewSalaries')}
             busy={save.isPending}
             submitLabel={isNew ? t('jobsArea.portal.vacancies.saveDraft') : t('jobsArea.common.save')}
             onSubmit={(f, ai) => save.mutate({ body: payloadFromForm(f, false), ai })}

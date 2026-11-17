@@ -6,6 +6,7 @@ import { limiter, parse } from '../../lib/http.js';
 import { DriveAccessCtx, nodeLiteSelect, type NodeLite } from '../../lib/drive/access.js';
 import { allows } from '../../lib/drive/levels.js';
 import { caseVisibilityWhere, parseTaskRef, taskKey, type Actor } from '../../lib/tasks/core.js';
+import { canWith, loadAccess, scopeWhere, withCaseScope } from '../../lib/access/index.js';
 
 /**
  * Staff command palette (Ctrl+K): one small query per entity type, run in parallel, top 5 each
@@ -13,7 +14,9 @@ import { caseVisibilityWhere, parseTaskRef, taskKey, type Actor } from '../../li
  *
  *   GET /api/admin/command-search?q=…   (STAFF+, the admin router already requires it)
  *
- * Access follows the existing rules: every staff role sees every case and task (as in the admin lists),
+ * Access follows the existing rules plus the staff permissions (lib/access): an entity type the user may not
+ * view in its area is left out, and cases, case messages, clients and case tasks follow the user's case scope
+ * (every case by default, as in the admin lists),
  * drive files only when the drive engine grants at least VIEW, and the JSON goes through the global
  * masking middleware (a company's VAT id is "•••• 6789" for STAFF by default). Messages: client ↔ team case
  * messages (every staff role sees every case) and team chat messages only in channels the user may read
@@ -43,7 +46,7 @@ const personWhere = (q: string): Prisma.UserWhereInput => ({
   AND: words(q).map((w) => ({ OR: [{ firstName: { contains: w } }, { lastName: { contains: w } }, { email: { contains: w } }] })),
 });
 
-const searchCases = async (q: string) => {
+const searchCases = async (q: string, scope: Prisma.CaseWhereInput) => {
   const exactNo = CASE_NO.test(q) ? q.toUpperCase() : null;
   const select = {
     id: true,
@@ -53,9 +56,9 @@ const searchCases = async (q: string) => {
     client: { select: { firstName: true, lastName: true } },
   } satisfies Prisma.CaseSelect;
   const [exact, rows] = await Promise.all([
-    exactNo ? prisma.case.findUnique({ where: { number: exactNo }, select }) : Promise.resolve(null),
+    exactNo ? prisma.case.findFirst({ where: withCaseScope({ number: exactNo }, scope), select }) : Promise.resolve(null),
     prisma.case.findMany({
-      where: { OR: [{ number: { contains: q } }, { client: personWhere(q) }] },
+      where: withCaseScope({ OR: [{ number: { contains: q } }, { client: personWhere(q) }] }, scope),
       select,
       orderBy: { updatedAt: 'desc' },
       take: PER_TYPE + 1,
@@ -74,7 +77,8 @@ const searchCases = async (q: string) => {
   }));
 };
 
-const searchUsers = async (q: string) => {
+/** `clients`: false = no client accounts at all; a case scope = only clients with a visible case. */
+const searchUsers = async (q: string, clients: false | Prisma.CaseWhereInput) => {
   // Phone numbers are stored as typed ("+994 50 777 66 55"): compare digits only.
   const digits = q.replace(/\D/g, '');
   const byPhone =
@@ -87,7 +91,11 @@ const searchUsers = async (q: string) => {
         ).map((r) => r.id)
       : [];
   const rows = await prisma.user.findMany({
-    where: { mergedIntoId: null, OR: [personWhere(q), ...(byPhone.length ? [{ id: { in: byPhone } }] : [])] },
+    where: {
+      mergedIntoId: null,
+      OR: [personWhere(q), ...(byPhone.length ? [{ id: { in: byPhone } }] : [])],
+      ...(clients === false ? { role: { not: 'CLIENT' as const } } : Object.keys(clients).length ? { AND: [{ OR: [{ role: { not: 'CLIENT' as const } }, { cases: { some: clients } }] }] } : {}),
+    },
     select: { id: true, firstName: true, lastName: true, email: true, phone: true, role: true, isActive: true },
     orderBy: { updatedAt: 'desc' },
     take: PER_TYPE,
@@ -140,12 +148,12 @@ const searchDrive = async (ctx: DriveAccessCtx, q: string) => {
     }));
 };
 
-const searchTasks = async (actor: Actor, q: string) => {
+const searchTasks = async (actor: Actor, q: string, scope: Prisma.CaseWhereInput) => {
   // "T-0012" / "t12" also finds the task by its number (shown first).
   const ref = /^t-?\d{1,6}$/i.test(q) ? parseTaskRef(q) : null;
   const no = ref && 'number' in ref ? ref.number : null;
   const rows = await prisma.task.findMany({
-    where: { AND: [caseVisibilityWhere(actor), { OR: [{ title: { contains: q } }, ...(no !== null ? [{ number: no }] : [])] }] },
+    where: { AND: [caseVisibilityWhere(actor, scope), { OR: [{ title: { contains: q } }, ...(no !== null ? [{ number: no }] : [])] }] },
     select: { id: true, number: true, title: true, status: true, priority: true, dueAt: true },
     orderBy: { updatedAt: 'desc' },
     take: PER_TYPE + 1,
@@ -183,11 +191,13 @@ export const snippetAround = (body: string, q: string, width = 110) => {
 
 const MESSAGE_CANDIDATES = PER_TYPE;
 
-const searchMessages = async (actorId: string, q: string) => {
+const searchMessages = async (actorId: string, q: string, caseMessages: false | Prisma.CaseWhereInput) => {
   const terms = words(q);
   const [caseRows, readable] = await Promise.all([
-    prisma.caseMessage.findMany({
-      where: { AND: terms.map((w) => ({ body: { contains: w } })) },
+    caseMessages === false
+      ? Promise.resolve([])
+      : prisma.caseMessage.findMany({
+      where: { AND: [...terms.map((w) => ({ body: { contains: w } })), ...(Object.keys(caseMessages).length ? [{ case: caseMessages }] : [])] },
       select: {
         id: true,
         body: true,
@@ -251,15 +261,19 @@ adminCommandSearchRouter.get('/', searchLimiter, async (req, res) => {
   const actor: Actor = { id: req.user!.id, role: req.user!.role };
   const ctx = new DriveAccessCtx(actor);
   try {
+    const access = await loadAccess(actor);
+    const see = (area: Parameters<typeof canWith>[1]) => canWith(access, area, 'view');
+    const scope = scopeWhere(access);
+    const none = <T>() => Promise.resolve([] as T[]);
     const [cases, users, companies, vacancies, files, tasks, partners, messages] = await Promise.all([
-      searchCases(q),
-      searchUsers(q),
-      searchCompanies(q),
-      searchVacancies(q),
-      searchDrive(ctx, q),
-      searchTasks(actor, q),
-      searchPartners(q),
-      searchMessages(actor.id, q),
+      see('cases') ? searchCases(q, scope) : none<Awaited<ReturnType<typeof searchCases>>[number]>(),
+      searchUsers(q, see('clients') ? scope : false),
+      see('employers') ? searchCompanies(q) : none<Awaited<ReturnType<typeof searchCompanies>>[number]>(),
+      see('employers') ? searchVacancies(q) : none<Awaited<ReturnType<typeof searchVacancies>>[number]>(),
+      see('drive') ? searchDrive(ctx, q) : none<Awaited<ReturnType<typeof searchDrive>>[number]>(),
+      searchTasks(actor, q, scope),
+      see('partners') ? searchPartners(q) : none<Awaited<ReturnType<typeof searchPartners>>[number]>(),
+      searchMessages(actor.id, q, see('communications') ? scope : false),
     ]);
     res.json({ q, cases, users, companies, vacancies, files, tasks, partners, messages });
   } catch (err) {

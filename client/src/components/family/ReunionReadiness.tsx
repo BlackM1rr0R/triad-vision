@@ -107,7 +107,8 @@ const InfoFields = ({ caseId, r, onDone, onCancel }: { caseId: string; r: Family
         titleIssuedAt: f.titleIssuedAt || null,
         livingSpaceM2: int(f.livingSpaceM2),
         warmRent: int(f.warmRent),
-        netMonthly: int(f.netMonthly),
+        // SALARY masked for staff (Access Center): the masked value goes back unchanged and the server drops it.
+        netMonthly: f.netMonthly.includes('•') ? f.netMonthly : int(f.netMonthly),
         notes: f.notes.trim() || null,
       });
       toast.success(t('familyReunion.form.saved'));
@@ -123,7 +124,11 @@ const InfoFields = ({ caseId, r, onDone, onCancel }: { caseId: string; r: Family
       <label htmlFor={id(k)} className="label">
         {t(`familyReunion.form.${k}`)}
       </label>
-      <input id={id(k)} type="number" inputMode="numeric" min={0} step={1} className="input" value={f[k]} onChange={set(k)} />
+      {f[k].includes('•') ? (
+        <input id={id(k)} type="text" className="input" value={f[k]} readOnly aria-readonly />
+      ) : (
+        <input id={id(k)} type="number" inputMode="numeric" min={0} step={1} className="input" value={f[k]} onChange={set(k)} />
+      )}
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
     </div>
   );

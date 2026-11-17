@@ -3,6 +3,8 @@ import type { ArrivalStatus, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
+import { viaCase } from '../../lib/accessAudit/scope.js';
 import { audit } from '../../lib/audit.js';
 import { STAFF_ROLES, STAFF_TRANSITIONS, loadPlan, notifyPlanClient, notifyPlanStaff, planInclude, staffView } from '../../lib/arrival/core.js';
 import { progressByCase, staffChecklist } from '../../lib/employerArrival.js';
@@ -55,6 +57,8 @@ adminArrivalsRouter.get('/', async (req, res) => {
       ],
     });
   }
+  const cs = viaCase(await caseScopeWhere(req.user)); // staff case scope ({} = every case, the default)
+  if (cs.case) and.push(cs);
   const where: Prisma.ArrivalPlanWhereInput = { AND: and };
   const in14 = new Date(now.getTime() + 14 * DAY);
   const [items, total, submitted, confirmed, upcoming, pickupOpen, housingOpen] = await Promise.all([
@@ -67,11 +71,11 @@ adminArrivalsRouter.get('/', async (req, res) => {
       take: q.pageSize,
     }),
     prisma.arrivalPlan.count({ where }),
-    prisma.arrivalPlan.count({ where: { status: 'SUBMITTED' } }),
-    prisma.arrivalPlan.count({ where: { status: 'CONFIRMED' } }),
-    prisma.arrivalPlan.count({ where: { status: { in: ['SUBMITTED', 'CONFIRMED'] }, arrivalTime: { gt: now, lte: in14 } } }),
-    prisma.arrivalPlan.count({ where: { status: { in: ['SUBMITTED', 'CONFIRMED'] }, pickupRequested: true, pickupConfirmed: false } }),
-    prisma.arrivalPlan.count({ where: { status: { in: ['SUBMITTED', 'CONFIRMED'] }, housingStatus: { in: ['REQUESTED', 'SEARCHING'] } } }),
+    prisma.arrivalPlan.count({ where: { ...cs, status: 'SUBMITTED' } }),
+    prisma.arrivalPlan.count({ where: { ...cs, status: 'CONFIRMED' } }),
+    prisma.arrivalPlan.count({ where: { ...cs, status: { in: ['SUBMITTED', 'CONFIRMED'] }, arrivalTime: { gt: now, lte: in14 } } }),
+    prisma.arrivalPlan.count({ where: { ...cs, status: { in: ['SUBMITTED', 'CONFIRMED'] }, pickupRequested: true, pickupConfirmed: false } }),
+    prisma.arrivalPlan.count({ where: { ...cs, status: { in: ['SUBMITTED', 'CONFIRMED'] }, housingStatus: { in: ['REQUESTED', 'SEARCHING'] } } }),
   ]);
   const checklists = await progressByCase(items.map((p) => p.caseId)); // employer arrival checklist progress
   res.json({

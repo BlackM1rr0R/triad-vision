@@ -1,9 +1,10 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { badRequest, parse } from '../../lib/http.js';
 import { computeAnalytics } from '../../lib/funnel.js';
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere, hasFullCaseScope } from '../../lib/access/api.js';
 import { OVERVIEW_PERIODS } from '../../lib/analyticsOverview/compute.js';
 import { cachedOverview, goalSchema, overviewActivity, overviewCsv, writeGoal } from '../../lib/analyticsOverview/service.js';
 import { BIZ_SECTIONS, bizAnalytics, bizCsv, bizQuery } from '../../lib/bizAnalytics/service.js';
@@ -30,18 +31,18 @@ adminAnalyticsRouter.get('/', async (req, res) => {
   const days = Math.round((to.getTime() - from.getTime()) / DAY) + 1;
   if (days > MAX_RANGE_DAYS) throw badRequest('RANGE_TOO_LONG');
   const groupBy = q.groupBy ?? (days > 120 ? 'month' : days > 45 ? 'week' : 'day');
-  res.json(await computeAnalytics({ from, to, groupBy }));
+  res.json(await computeAnalytics({ from, to, groupBy, scope: await caseScopeWhere(req.user) })); // staff case scope ({} = all)
 });
 
 // Management analytics (ADMIN+): stage times, partner / agent / staff performance, client funnel — lib/bizAnalytics.
 adminAnalyticsRouter.get('/business', requireMinRole('ADMIN'), async (req, res) => {
-  res.json(await bizAnalytics(parse(bizQuery, req.query)));
+  res.json(await bizAnalytics(parse(bizQuery, req.query), undefined, await caseScopeWhere(req.user)));
 });
 
 adminAnalyticsRouter.get('/business.csv', requireMinRole('ADMIN'), async (req, res) => {
   const { section, ...rest } = parse(z.object({ section: z.enum(BIZ_SECTIONS).default('partners') }).passthrough(), req.query);
   const q = parse(bizQuery, rest);
-  const report = await bizAnalytics(q);
+  const report = await bizAnalytics(q, undefined, await caseScopeWhere(req.user));
   await audit(req, 'BIZ_ANALYTICS_EXPORTED', section, { from: report.range.from, to: report.range.to, visaCategoryId: q.visaCategoryId ?? null });
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="biznes-analitika-${section}-${report.range.from}_${report.range.to}.csv"`);
@@ -50,11 +51,22 @@ adminAnalyticsRouter.get('/business.csv', requireMinRole('ADMIN'), async (req, r
 
 // Revenue & sales (ADMIN+): paid revenue, expected / overdue payments, services, leads by source, funnel,
 // partners by revenue — lib/salesAnalytics (the "Gəlir və satış" tab of Biznes analitikası).
-adminAnalyticsRouter.get('/sales', requireMinRole('ADMIN'), async (req, res) => {
+// Company-wide revenue cannot be split by case: a restricted staff case scope (lib/access) gets 403 here;
+// the default scope ALL passes as before.
+const fullScopeOnly = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (await hasFullCaseScope(req.user)) return next();
+    res.status(403).json({ error: 'OUT_OF_SCOPE', message: 'FULL_CASE_SCOPE_REQUIRED' });
+  } catch (e) {
+    next(e);
+  }
+};
+
+adminAnalyticsRouter.get('/sales', requireMinRole('ADMIN'), fullScopeOnly, async (req, res) => {
   res.json(await salesAnalytics(parse(salesQuery, req.query)));
 });
 
-adminAnalyticsRouter.get('/sales.csv', requireMinRole('ADMIN'), async (req, res) => {
+adminAnalyticsRouter.get('/sales.csv', requireMinRole('ADMIN'), fullScopeOnly, async (req, res) => {
   const { section, ...rest } = parse(z.object({ section: z.enum(SALES_SECTIONS).default('revenue') }).passthrough(), req.query);
   const report = await salesAnalytics(parse(salesQuery, rest));
   await audit(req, 'SALES_ANALYTICS_EXPORTED', section, { from: report.range.from, to: report.range.to });
@@ -70,18 +82,18 @@ const overviewQuery = z.object({ period: z.enum(OVERVIEW_PERIODS).default('month
 
 adminAnalyticsRouter.get('/overview', async (req, res) => {
   const q = parse(overviewQuery, req.query);
-  res.json(await cachedOverview({ period: q.period, finance: hasMinRole(req.user!.role, 'ADMIN'), fresh: !!q.fresh }));
+  res.json(await cachedOverview({ period: q.period, finance: hasMinRole(req.user!.role, 'ADMIN'), fresh: !!q.fresh, scope: await caseScopeWhere(req.user) }));
 });
 
 adminAnalyticsRouter.get('/overview/activity', async (req, res) => {
   const q = parse(z.object({ limit: z.coerce.number().int().min(1).max(30).default(12) }), req.query);
-  res.json(await overviewActivity({ finance: hasMinRole(req.user!.role, 'ADMIN'), limit: q.limit }));
+  res.json(await overviewActivity({ finance: hasMinRole(req.user!.role, 'ADMIN'), limit: q.limit, scope: await caseScopeWhere(req.user) }));
 });
 
 adminAnalyticsRouter.get('/overview.csv', async (req, res) => {
   const q = parse(overviewQuery, req.query);
   const finance = hasMinRole(req.user!.role, 'ADMIN');
-  const o = await cachedOverview({ period: q.period, finance, fresh: !!q.fresh });
+  const o = await cachedOverview({ period: q.period, finance, fresh: !!q.fresh, scope: await caseScopeWhere(req.user) });
   await audit(req, 'ANALYTICS_OVERVIEW_EXPORTED', q.period, { from: o.period.from, to: o.period.to, finance });
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="icmal-${o.period.from}_${o.period.to}.csv"`);

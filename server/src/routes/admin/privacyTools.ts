@@ -14,7 +14,8 @@ import {
   hashToken,
   startImpersonation,
 } from '../../lib/privacy/impersonation.js';
-import { DEFAULT_MASKING, loadMaskingSettings, MASK_GROUPS, maskedGroupsFor, maskingSettingsSchema, saveMaskingSettings, groupOfField } from '../../lib/privacy/mask.js';
+import { DEFAULT_MASKING, loadMaskingSettings, MASK_GROUPS, maskingSettingsSchema, saveMaskingSettings, groupOfField, policyForViewer } from '../../lib/privacy/mask.js';
+import { EXTRA_REASON_MIN, EXTRA_REVEALERS, extraRevealGroup, inCaseScope, type ExtraRevealEntity } from '../../lib/privacy/sensitiveReveal.js';
 import { loadInvoiceSettings } from './invoices.js';
 
 /**
@@ -118,8 +119,10 @@ impersonationRouter.post('/:userId', requireMinRole('ADMIN'), startLimiter, asyn
 
 export const adminSensitiveRouter = Router();
 
-const REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'familyMember', 'partner'] as const;
-type RevealEntity = (typeof REVEAL_ENTITIES)[number];
+const LEGACY_REVEAL_ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'familyMember', 'partner'] as const;
+type RevealEntity = (typeof LEGACY_REVEAL_ENTITIES)[number];
+/** Original entities + the Access Center ones (lib/privacy/sensitiveReveal.ts: SALARY, HEALTH, ADDRESS, FAMILY). */
+const REVEAL_ENTITIES = [...LEGACY_REVEAL_ENTITIES, ...(Object.keys(EXTRA_REVEALERS) as ExtraRevealEntity[])] as [RevealEntity | ExtraRevealEntity, ...(RevealEntity | ExtraRevealEntity)[]];
 
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
 const jsonField = (j: Prisma.JsonValue | null | undefined, field: string): string | null => {
@@ -213,9 +216,26 @@ const revealSchema = z.object({
 
 adminSensitiveRouter.post('/reveal', revealLimiter, async (req, res) => {
   const body = parse(revealSchema, req.body ?? {});
-  const spec = REVEALERS[body.entity];
+  // Access Center groups: reason ≥ 10 characters, HIDDEN groups cannot be revealed, case scope of the access engine.
+  const extraGroup = extraRevealGroup(body.entity, body.field);
+  if (extraGroup || body.entity in EXTRA_REVEALERS) {
+    if (!extraGroup) throw badRequest('FIELD_NOT_REVEALABLE');
+    if (body.reason.length < EXTRA_REASON_MIN) throw badRequest('REASON_TOO_SHORT');
+    const xspec = EXTRA_REVEALERS[body.entity as ExtraRevealEntity];
+    if (!hasMinRole(req.user!.role, xspec.minRole)) throw forbidden();
+    if ((await policyForViewer(req.user)).hidden.has(extraGroup)) throw forbidden('FIELD_HIDDEN');
+    const loaded = await xspec.load(body.id, body.field);
+    if (!loaded.found) throw notFound();
+    if (!(await inCaseScope(req.user!, loaded.caseId))) throw notFound();
+    await audit(req, 'SENSITIVE_REVEALED', `${body.entity}:${body.id}`, { entity: body.entity, id: body.id, field: body.field, group: extraGroup, reason: body.reason });
+    res.json({ entity: body.entity, id: body.id, field: body.field, value: loaded.value, visibleForSec: 60 });
+    return;
+  }
+  const spec = REVEALERS[body.entity as RevealEntity];
   if (!spec.fields.includes(body.field)) throw badRequest('FIELD_NOT_REVEALABLE');
   if (!hasMinRole(req.user!.role, spec.fieldMinRole?.[body.field] ?? spec.minRole)) throw forbidden();
+  const hiddenGroup = groupOfField(body.field);
+  if (hiddenGroup && (await policyForViewer(req.user)).hidden.has(hiddenGroup)) throw forbidden('FIELD_HIDDEN');
   const { found, value } = await spec.load(body.id, body.field);
   if (!found) throw notFound();
   const group = groupOfField(body.field);
@@ -230,8 +250,8 @@ adminSensitiveRouter.post('/reveal', revealLimiter, async (req, res) => {
 });
 
 adminSensitiveRouter.get('/sensitive/policy', async (req, res) => {
-  const settings = await loadMaskingSettings();
-  res.json({ groups: MASK_GROUPS, masked: [...maskedGroupsFor(req.user, settings)] });
+  const policy = await policyForViewer(req.user);
+  res.json({ groups: MASK_GROUPS, masked: [...policy.masked], hidden: [...policy.hidden] });
 });
 
 adminSensitiveRouter.get('/sensitive/settings', requireMinRole('SUPER_ADMIN'), async (_req, res) => {
@@ -252,13 +272,14 @@ const logQuery = z.object({
   actorId: z.string().max(64).optional(),
   entity: z.enum(REVEAL_ENTITIES).optional(),
   field: z.string().max(40).optional(),
+  group: z.enum(MASK_GROUPS).optional(),
   q: z.string().trim().max(100).optional(),
   from: day.optional(),
   to: day.optional(),
   page: z.coerce.number().int().min(1).max(1000).default(1),
 });
 
-type RevealRow = { id: string; at: Date; actor: { id: string; name: string; role: Role } | null; entity: string; entityId: string; field: string; reason: string; ip: string | null };
+type RevealRow = { id: string; at: Date; actor: { id: string; name: string; role: Role } | null; entity: string; entityId: string; field: string; group: string | null; reason: string; ip: string | null };
 
 const loadReveals = async (req: Request, opts: { all?: boolean } = {}) => {
   const q = parse(logQuery, req.query);
@@ -287,11 +308,13 @@ const loadReveals = async (req: Request, opts: { all?: boolean } = {}) => {
       entity: String(d.entity ?? entity ?? ''),
       entityId: String(d.id ?? rest.join(':')),
       field: String(d.field ?? ''),
+      group: typeof d.group === 'string' ? d.group : (groupOfField(String(d.field ?? '')) ?? null),
       reason: String(d.reason ?? ''),
       ip: r.ip,
     };
   });
   if (q.field) items = items.filter((i) => i.field === q.field);
+  if (q.group) items = items.filter((i) => i.group === q.group);
   if (q.q) {
     const needle = q.q.toLowerCase();
     items = items.filter((i) => [i.reason, i.actor?.name ?? '', i.entityId].some((s) => s.toLowerCase().includes(needle)));

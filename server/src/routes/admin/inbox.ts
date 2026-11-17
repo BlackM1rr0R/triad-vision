@@ -6,6 +6,7 @@ import { FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { forbidden, parse } from '../../lib/http.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { unansweredThreads } from '../../lib/myWork.js';
+import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js';
 
 /**
  * Staff message inbox (mounted at /api/admin/inbox, STAFF+): the case conversations of the last INBOX_WINDOW_DAYS,
@@ -40,7 +41,8 @@ adminInboxRouter.get('/', async (req, res) => {
   const mine: Prisma.CaseWhereInput = q.scope === 'all' ? {} : isAdmin ? { OR: [{ assignedStaffId: me.id }, { assignedStaffId: null }] } : { assignedStaffId: me.id };
 
   const rows = await prisma.caseMessage.findMany({
-    where: { createdAt: { gte: new Date(Date.now() - INBOX_WINDOW_DAYS * DAY) }, case: { status: { notIn: FINAL_STATUSES }, ...mine } },
+    // + the viewer's case scope (lib/access; every case by default)
+    where: { createdAt: { gte: new Date(Date.now() - INBOX_WINDOW_DAYS * DAY) }, case: withCaseScope({ status: { notIn: FINAL_STATUSES }, ...mine }, await caseScopeWhere(me)) },
     select: { caseId: true, createdAt: true, authorId: true, body: true, readAt: true, voiceId: true, case: { select: { clientId: true } } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: SCAN,

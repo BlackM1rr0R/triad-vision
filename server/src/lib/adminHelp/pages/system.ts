@@ -341,6 +341,51 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     },
   },
   {
+    route: 'access',
+    text: {
+      az: {
+        title: 'Giriş Mərkəzi',
+        purpose: 'Kimin nəyi görə və dəyişə biləcəyini bir yerdə idarə edin: əməkdaş rolları, görünən müraciətlər, partnyorlar, işəgötürənlər və həssas sahələr. Hər dəyişiklik jurnala yazılır.',
+        steps: [
+          '«Əməkdaş rolları» bölməsində əməkdaşa şablon seçin (məsələn Mühasib) və lazım olsa ayrıca icazə açın və ya bağlayın.',
+          '«Müraciətlərin görünməsi» bölməsində əməkdaşın hamısını, yalnız öz müraciətlərini və ya komandasının müraciətlərini görməsini seçin.',
+          '«Nə edə bilər?» basıb nəticəni yoxlayın; təcili girişləri aşağıdakı siyahıda izləyin və lazım olsa ləğv edin.',
+        ],
+        tips: ['Standart şablon bugünkü girişdir: heç nə dəyişməsəniz, heç kimin girişi dəyişmir. Super admin həmişə hər şeyi görür.'],
+      },
+      ru: {
+        title: 'Центр доступа',
+        purpose: 'Кто что может видеть и менять — в одном месте: роли сотрудников, видимость дел, партнёры, работодатели и чувствительные поля. Каждое изменение записывается в журнал.',
+        steps: [
+          'В «Ролях сотрудников» назначьте шаблон (например, Бухгалтер) и при необходимости откройте или закройте отдельные права.',
+          'В «Видимости дел» выберите: все дела, только свои или дела команды.',
+          'Нажмите «Что может?», чтобы проверить итог; экстренный доступ смотрите и отзывайте в списке ниже.',
+        ],
+        tips: ['Стандартный шаблон — это текущий доступ: если ничего не менять, ни у кого ничего не изменится. Супер-админ всегда видит всё.'],
+      },
+      en: {
+        title: 'Access Center',
+        purpose: 'Manage in one place who may see and change what: staff roles, case visibility, partners, employers and sensitive fields. Every change is logged.',
+        steps: [
+          'In «Staff roles» pick a template for a staff member (e.g. Accountant) and open or close single permissions if needed.',
+          'In «Case visibility» choose whether they see all cases, only their own or their team’s cases.',
+          'Click «What can they do?» to check the result; review and revoke emergency access in the list below.',
+        ],
+        tips: ['The default template is today’s access: if you change nothing, nobody’s access changes. Super admins always see everything.'],
+      },
+      de: {
+        title: 'Access Center',
+        purpose: 'An einem Ort festlegen, wer was sehen und ändern darf: Mitarbeiterrollen, Sichtbarkeit der Fälle, Partner, Arbeitgeber und sensible Felder. Jede Änderung wird protokolliert.',
+        steps: [
+          'Unter «Mitarbeiterrollen» eine Vorlage wählen (z. B. Buchhaltung) und bei Bedarf einzelne Rechte öffnen oder sperren.',
+          'Unter «Sichtbarkeit der Fälle» festlegen: alle Fälle, nur eigene oder die des Teams.',
+          'Mit «Was darf die Person?» das Ergebnis prüfen; Notfallzugriffe in der Liste unten einsehen und widerrufen.',
+        ],
+        tips: ['Die Standardvorlage ist der bisherige Zugriff: Ohne Änderung ändert sich für niemanden etwas. Super-Admins sehen immer alles.'],
+      },
+    },
+  },
+  {
     route: 'storage',
     text: {
       az: {

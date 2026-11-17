@@ -7,6 +7,7 @@ import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { DriveAccessCtx, requireNode } from '../../lib/drive/access.js';
 import { storagePath } from '../../lib/drive/storage.js';
 import {
@@ -96,6 +97,9 @@ adminSignaturesRouter.get('/', async (req, res) => {
         }
       : {}),
   };
+  // Staff case scope (lib/access): case-linked requests follow it, employer-only requests stay ({} = no change).
+  const scope = await caseScopeWhere(req.user);
+  if (Object.keys(scope).length) where.AND = [{ OR: [{ caseId: null }, { case: scope }] }];
   const baseWhere: Prisma.SignatureRequestWhereInput = { ...where, status: undefined };
   const [rows, total, byStatus] = await Promise.all([
     prisma.signatureRequest.findMany({

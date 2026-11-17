@@ -12,7 +12,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Handshake, SearchEmpty } from '@/components/illustrations';
 import { day, money } from '@/components/agents/format';
-import { portalError, type PartnerClientRow, type PartnerMe, type PaymentState } from '@/components/partnerPortal/api';
+import { accessOf, portalError, type PartnerClientRow, type PartnerMe, type PaymentState } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill } from '@/components/partnerPortal/ui';
 
 /** Error text of this page first (partnerClients.errors), then the portal's generic ones. */
@@ -195,7 +195,7 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
         title={t('partnerClients.list.title')}
         icon={Users}
         actions={
-          !adding && me.partner.active ? (
+          !adding && me.partner.active && accessOf(me).areas.addClients ? (
             <button type="button" className="btn-primary btn-sm" onClick={() => setAdding(true)}>
               <UserPlus className="size-4" aria-hidden /> {t('partnerClients.register.open')}
             </button>
@@ -241,11 +241,13 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {c.payment && (
                     <span className={clsx('badge whitespace-nowrap', PAYMENT_TONE[c.payment.state])}>
                       {t(`partnerClients.list.payment.${c.payment.state}`)}
                       {c.payment.totalCents ? ` · ${t('partnerClients.list.paid', { paid: money(c.payment.paidCents ?? 0, c.payment.currency), total: money(c.payment.totalCents, c.payment.currency) })}` : ''}
                     </span>
-                    {c.latestCase && <StatusPill status={c.latestCase.status} />}
+                    )}
+                    {c.latestCase?.status && <StatusPill status={c.latestCase.status} />}
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
@@ -268,8 +270,9 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
                     <span className="flex items-start gap-1.5">
                       <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
                       <span>
-                        <span className="font-mono">{c.latestCase.number}</span> · {t('partnerPortal.clients.next')}: {t(`partnerPortal.nextAction.${c.latestCase.nextAction}`)}
-                        {c.latestCase.missingDocuments > 0 && ` · ${t('partnerClients.list.missing', { count: c.latestCase.missingDocuments })}`}
+                        <span className="font-mono">{c.latestCase.number}</span>
+                        {c.latestCase.nextAction && ` · ${t('partnerPortal.clients.next')}: ${t(`partnerPortal.nextAction.${c.latestCase.nextAction}`)}`}
+                        {(c.latestCase.missingDocuments ?? 0) > 0 &&` · ${t('partnerClients.list.missing', { count: c.latestCase.missingDocuments })}`}
                       </span>
                     </span>
                     <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />

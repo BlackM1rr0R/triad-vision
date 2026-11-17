@@ -4,6 +4,7 @@ import type { Role } from '@prisma/client';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { HttpError } from '../lib/http.js';
+import { loginPolicy, needsTwoFactorSetup, partnerContractAllowsLogin, sessionLifetimeFor } from '../lib/loginSecurity/index.js'; // Access Center → Login security
 
 export const AUTH_COOKIE = 'tv_session';
 
@@ -16,6 +17,8 @@ export interface AuthUser {
   locale: string;
   /** True once the user has completed TOTP enrollment (see the 2FA gate below). */
   twoFactorEnabled?: boolean;
+  /** Login security (lib/loginSecurity): a non-staff user who must set up a second factor first. */
+  twoFactorSetupRequired?: boolean;
 }
 
 export interface AuthSession {
@@ -38,6 +41,8 @@ declare global {
       cookieAuth?: boolean;
       /** Exact request bytes (set by the JSON parser) for webhook signature checks. */
       rawBody?: Buffer;
+      /** A signed-in user who must set up 2FA first (lib/loginSecurity): outside /api/auth they count as anonymous. */
+      twoFactorPending?: boolean;
     }
   }
 }
@@ -65,7 +70,14 @@ export const issueSession = async (
   userId: string,
   meta: { client: 'web' | 'mobile'; ip?: string; userAgent?: string },
 ) => {
-  const { maxMs } = sessionLifetime(meta.client);
+  // Lifetime per role / user (Access Center → Login security); without settings the server configuration.
+  let { maxMs } = sessionLifetime(meta.client);
+  try {
+    const owner = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (owner) maxMs = sessionLifetimeFor(owner.role, userId, meta.client, await loginPolicy()).maxMs;
+  } catch {
+    // Settings unreadable: the server configuration (today's lifetime).
+  }
   const expiresAt = new Date(Date.now() + maxMs);
   const session = await prisma.session.create({
     data: { userId, client: meta.client, ip: meta.ip ?? null, userAgent: meta.userAgent?.slice(0, 500) ?? null, expiresAt },
@@ -74,16 +86,17 @@ export const issueSession = async (
     algorithm: 'HS256',
     expiresIn: Math.floor(maxMs / 1000),
   });
-  return { token, session };
+  return { token, session, maxMs };
 };
 
-export const setSessionCookie = (res: Response, token: string, client: 'web' | 'mobile' = 'web') => {
+/** `maxMs`: the session's own lifetime (per role / user); default the server configuration. */
+export const setSessionCookie = (res: Response, token: string, client: 'web' | 'mobile' = 'web', maxMs?: number) => {
   res.cookie(AUTH_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.isProd,
     path: '/',
-    maxAge: sessionLifetime(client).maxMs,
+    maxAge: maxMs && maxMs > 0 ? maxMs : sessionLifetime(client).maxMs,
   });
 };
 
@@ -114,6 +127,12 @@ const tokenFrom = (req: Request): { token: string; fromCookie: boolean } | undef
   if (header?.startsWith('Bearer ')) return { token: header.slice(7).trim(), fromCookie: false };
   const cookie = req.cookies?.[AUTH_COOKIE];
   return typeof cookie === 'string' && cookie ? { token: cookie, fromCookie: true } : undefined;
+};
+
+/** /api/auth/* (and /api/auth itself): reachable while a required 2FA set-up is pending. */
+const isAuthPath = (url: string) => {
+  const p = url.split('?')[0] ?? '';
+  return p === '/api/auth' || p.startsWith('/api/auth/');
 };
 
 /** How often `lastSeenAt` is written back (every request would be a needless write per call). */
@@ -154,14 +173,29 @@ export const loadUser = async (req: Request, _res: Response, next: NextFunction)
       req.authFailure = 'SESSION_EXPIRED';
       return next();
     }
-    const { idleMs } = sessionLifetime(session.client === 'mobile' ? 'mobile' : 'web');
+    // Idle timeout and maximum age per role / user (lib/loginSecurity; without settings the server configuration).
+    const policy = await loginPolicy();
+    const client = session.client === 'mobile' ? 'mobile' : 'web';
+    const { idleMs, maxMs } = sessionLifetimeFor(session.user.role, session.user.id, client, policy);
     if (idleMs > 0 && now - session.lastSeenAt.getTime() > idleMs) {
+      req.authFailure = 'SESSION_EXPIRED';
+      await revokeSession(session.id);
+      return next();
+    }
+    // A maximum age shortened after the session began applies to it as well.
+    if (maxMs > 0 && session.createdAt instanceof Date && now - session.createdAt.getTime() > maxMs) {
       req.authFailure = 'SESSION_EXPIRED';
       await revokeSession(session.id);
       return next();
     }
     if (!session.user.isActive) {
       req.authFailure = 'SESSION_REVOKED';
+      return next();
+    }
+    // Partner logins only while the partner's contract is active (when switched on).
+    if (!(await partnerContractAllowsLogin(session.user, policy))) {
+      req.authFailure = 'SESSION_REVOKED';
+      await revokeSession(session.id);
       return next();
     }
 
@@ -173,9 +207,21 @@ export const loadUser = async (req: Request, _res: Response, next: NextFunction)
       lastName: session.user.lastName,
       locale: session.user.locale,
       twoFactorEnabled: !!session.user.totpEnabledAt,
+      ...(needsTwoFactorSetup(session.user, policy) ? { twoFactorSetupRequired: true } : {}),
     };
     req.session = { id: session.id, client: session.client === 'mobile' ? 'mobile' : 'web', expiresAt: session.expiresAt };
     req.cookieAuth = presented.fromCookie;
+
+    // 2FA required by the Access Center but not set up yet (AGENT / COMPANY / CLIENT): only /api/auth (me, logout, 2FA set-up,
+    // e-mail verification) sees the user; everywhere else the request is anonymous and protected routes answer 403
+    // TWO_FACTOR_ENROLLMENT_REQUIRED (never 401, so the client does not log out). Staff keep their own gate below.
+    if (req.user.twoFactorSetupRequired && !isAuthPath(req.originalUrl)) {
+      req.user = undefined;
+      req.session = undefined;
+      req.cookieAuth = undefined;
+      req.twoFactorPending = true;
+      return next();
+    }
 
     if (now - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
       // Best effort: a lost write only means the idle clock is slightly behind.
@@ -190,8 +236,11 @@ export const loadUser = async (req: Request, _res: Response, next: NextFunction)
   next();
 };
 
+/** No user on a protected route: 403 while a required 2FA set-up is pending (see loadUser), else 401. */
+const noUser = (req: Request) => (req.twoFactorPending ? new HttpError(403, 'TWO_FACTOR_ENROLLMENT_REQUIRED') : new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
+
 export const requireAuth = (req: Request, _res: Response, next: NextFunction) => {
-  if (!req.user) return next(new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
+  if (!req.user) return next(noUser(req));
   next();
 };
 
@@ -209,7 +258,7 @@ const twoFactorGate = (req: Request) =>
 export const requireRole =
   (...roles: Role[]) =>
   (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.user) return next(new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
+    if (!req.user) return next(noUser(req));
     if (!roles.includes(req.user.role)) return next(new HttpError(403, 'FORBIDDEN'));
     // 2FA gate: only when the check grants staff powers.
     if (roles.every((r) => hasMinRole(r, 'STAFF'))) {
@@ -221,7 +270,7 @@ export const requireRole =
 
 /** Allows the given role and every role above it (STAFF < ADMIN < SUPER_ADMIN). */
 export const requireMinRole = (min: Role) => (req: Request, _res: Response, next: NextFunction) => {
-  if (!req.user) return next(new HttpError(401, req.authFailure ?? 'UNAUTHENTICATED'));
+  if (!req.user) return next(noUser(req));
   if (!hasMinRole(req.user.role, min)) return next(new HttpError(403, 'FORBIDDEN'));
   // 2FA gate: only when the check grants staff powers.
   if (hasMinRole(min, 'STAFF')) {

@@ -9,6 +9,7 @@ import { computeProfitability } from '../profitability/compute.js';
 import { getProfitSettings } from '../profitability/settings.js';
 import { bakuDay, bakuMidnight, bakuParts, dayRange } from '../reports/dates.js';
 import { bottleneck, funnelCohorts, monthsIn, perfRows, stageStats, STAGE_STATUSES, type FunnelClient, type PerfCase, type StageCase } from './compute.js';
+import { isFullScope, scoped } from '../accessAudit/scope.js';
 
 /**
  * Management analytics "Biznes analitikası" — /api/admin/analytics/business (ADMIN+). Three sections over one
@@ -188,14 +189,15 @@ const funnelSection = async (start: Date, end: Date, cat: Prisma.CaseWhereInput,
 
 // ─── Report ─────────────────────────────────────────────────────────────
 
-export const bizAnalytics = async (q: BizQuery, now = new Date()) => {
+/** `scope` = the viewer's staff case scope (lib/access; {} = every case): every section over in-scope cases only. */
+export const bizAnalytics = async (q: BizQuery, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
   const { from, to, start, end } = bizPeriod(q, now);
-  const cat = caseCategory(q.visaCategoryId);
+  const cat = scoped(caseCategory(q.visaCategoryId), scope);
   const months = monthsIn(start, end);
   const [stages, partners, funnel, categories] = await Promise.all([
     stagesSection(start, end, cat, now),
     partnersSection(start, end, cat),
-    funnelSection(start, end, cat, !!q.visaCategoryId, months),
+    funnelSection(start, end, cat, !!q.visaCategoryId || !isFullScope(scope), months),
     prisma.visaCategory.findMany({ select: { id: true, slug: true, visaLabel: true, title: true }, orderBy: { slug: 'asc' } }),
   ]);
   return {

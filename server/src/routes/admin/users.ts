@@ -7,6 +7,8 @@ import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
 import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
+import { clientUsersInScope } from '../../lib/accessAudit/scope.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
 import { password } from '../auth.js';
 import { phoneInput } from '../../lib/phoneField.js';
@@ -50,7 +52,9 @@ adminUsersRouter.get('/', async (req, res) => {
   const ONLINE_MS = 5 * 60 * 1000;
   const now = new Date();
   const onlineWhere: Prisma.UserWhereInput = { sessions: { some: { revokedAt: null, expiresAt: { gt: now }, lastSeenAt: { gte: new Date(now.getTime() - ONLINE_MS) } } } };
-  const base: Prisma.UserWhereInput = {
+  // Staff case scope (lib/access): a restricted scope lists only clients with an in-scope case ({} = everyone, as before).
+  const clientScope = clientUsersInScope(await caseScopeWhere(req.user));
+  const base0: Prisma.UserWhereInput = {
     ...(q.role ? { role: q.role } : {}),
     ...(q.ownerPartnerId ? { ownerPartnerId: q.ownerPartnerId === 'none' ? null : q.ownerPartnerId === 'any' ? { not: null } : q.ownerPartnerId } : {}),
     ...(q.search
@@ -64,6 +68,7 @@ adminUsersRouter.get('/', async (req, res) => {
         }
       : {}),
   };
+  const base: Prisma.UserWhereInput = Object.keys(clientScope).length ? { AND: [base0, clientScope] } : base0;
   const where: Prisma.UserWhereInput = q.online ? { AND: [base, onlineWhere] } : base;
   const [users, total, onlineCount] = await Promise.all([
     prisma.user.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (q.page - 1) * q.pageSize, take: q.pageSize, select: userSelect }),

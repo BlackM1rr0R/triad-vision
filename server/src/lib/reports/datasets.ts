@@ -536,9 +536,9 @@ const profitability: DatasetDef = {
   minRole: 'ADMIN',
   dateColumn: 'createdAt',
   defaultSort: { column: 'margin', dir: 'desc' },
-  load: async ({ limit }) => {
+  load: async ({ limit, ...ctx }) => {
     const s = await getProfitSettings();
-    const rows = await computeProfitability({}, s, { take: limit });
+    const rows = await computeProfitability(ctx.caseScope ?? {}, s, { take: limit }); // staff case scope ({} = all)
     return rows.map((p) => ({
       number: p.number,
       clientName: p.clientName,

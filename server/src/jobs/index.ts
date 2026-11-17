@@ -65,3 +65,4 @@ import './realSalaries.js'; // real salary database: new public snapshot once pe
 import './dataFreshness.js'; // daily: data freshness registry — admin reminder 30 days before and on each review due date
 import './futureLetters.js'; // letter to my future self: delivered once on arrival or the client's fallback date (every 3 h)
 import './rateAlerts.js'; // EUR → AZN rate alerts: after the daily CBAR fetch, one e-mail per met alert (then paused), 6-month expiry, purge
+import './accessAudit.js'; // Access Center › Audit: quarterly access review (days 1–7 of a quarter, once) + access anomaly alerts every 10 min

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { notFound, parse } from '../../lib/http.js';
 import { boardQuery, claimCase, claimSchema, moveSchema, moveStage, processingBoard, processingView } from '../../lib/caseProcessing/index.js';
 import { foldersQuery, processingFolders } from '../../lib/caseProcessing/folders.js';
@@ -44,10 +45,10 @@ adminCaseProcessingRouter.post('/cases/:id/processing/claim', async (req, res) =
 
 adminCaseProcessingRouter.get('/case-processing/board', async (req, res) => {
   const q = parse(boardQuery, req.query);
-  res.json(await processingBoard(q, req.user!.id));
+  res.json(await processingBoard(q, req.user!.id, await caseScopeWhere(req.user))); // staff case scope ({} = all)
 });
 
 adminCaseProcessingRouter.get('/case-processing/folders', async (req, res) => {
   const q = parse(foldersQuery, req.query);
-  res.json(await processingFolders(q, { id: req.user!.id, role: req.user!.role }));
+  res.json(await processingFolders(q, { id: req.user!.id, role: req.user!.role }, await caseScopeWhere(req.user)));
 });

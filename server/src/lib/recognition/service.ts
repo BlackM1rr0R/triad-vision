@@ -27,6 +27,7 @@ import {
 } from './rules.js';
 import { DAY, fullName, linkableDocuments, storeCaseDocument } from './common.js';
 import { recognitionTexts } from './texts.js';
+import { caseIdIn, scopeCaseIds, scoped } from '../accessAudit/scope.js';
 
 /**
  * Recognition tracker (Anerkennung) per case: one or more RecognitionProcess rows (e.g. a ZAB statement
@@ -344,21 +345,23 @@ export const listQuery = z.object({
 });
 
 /** /admin/recognition: every process with filters + counts. */
-export const listProcesses = async (q: z.infer<typeof listQuery>, now = new Date()) => {
-  const where: Prisma.RecognitionProcessWhereInput = {};
+export const listProcesses = async (q: z.infer<typeof listQuery>, now = new Date(), scope: Prisma.CaseWhereInput = {}) => {
+  // `scope` = the viewer's staff case scope (lib/access; {} = every case): rows and counts over in-scope cases only.
+  const inScope = caseIdIn(await scopeCaseIds(scope));
+  const where: Prisma.RecognitionProcessWhereInput = { ...inScope };
   if (q.status === 'open') where.status = { notIn: [...FINAL_PROCESS_STATUSES] };
   else if (q.status !== 'all') where.status = q.status;
   if (q.authority) where.authority = { contains: q.authority };
   if (q.type) where.procedureType = q.type;
   if (q.soon) where.OR = [{ nextDeadline: { lte: new Date(now.getTime() + q.soon * DAY) } }, { status: 'ADAPTATION', adaptationUntil: { lte: new Date(now.getTime() + q.soon * DAY) } }];
   if (q.staffId) {
-    const cases = await prisma.case.findMany({ where: { assignedStaffId: q.staffId === 'none' ? null : q.staffId }, select: { id: true }, take: 5000 });
+    const cases = await prisma.case.findMany({ where: scoped({ assignedStaffId: q.staffId === 'none' ? null : q.staffId }, scope), select: { id: true }, take: 5000 });
     where.caseId = { in: cases.map((c) => c.id) };
   }
   const [rows, byStatus, authorities] = await Promise.all([
     prisma.recognitionProcess.findMany({ where, orderBy: [{ nextDeadline: 'asc' }, { updatedAt: 'desc' }], take: 500 }),
-    prisma.recognitionProcess.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.recognitionProcess.groupBy({ by: ['authority'], _count: { _all: true }, where: { authority: { not: null } } }),
+    prisma.recognitionProcess.groupBy({ by: ['status'], _count: { _all: true }, ...(inScope.caseId ? { where: inScope } : {}) }),
+    prisma.recognitionProcess.groupBy({ by: ['authority'], _count: { _all: true }, where: { authority: { not: null }, ...inScope } }),
   ]);
   const cases = rows.length
     ? await prisma.case.findMany({
@@ -368,7 +371,7 @@ export const listProcesses = async (q: z.infer<typeof listQuery>, now = new Date
     : [];
   const caseOf = new Map(cases.map((c) => [c.id, c]));
   const soon = new Date(now.getTime() + 14 * DAY);
-  const open = await prisma.recognitionProcess.findMany({ where: { status: { notIn: [...FINAL_PROCESS_STATUSES] } }, select: { status: true, nextDeadline: true, adaptationUntil: true } });
+  const open = await prisma.recognitionProcess.findMany({ where: { status: { notIn: [...FINAL_PROCESS_STATUSES] }, ...inScope }, select: { status: true, nextDeadline: true, adaptationUntil: true } });
   const deadlines = open.map((p) => effectiveDeadline(p)).filter((d): d is NonNullable<typeof d> => !!d);
   return {
     items: rows

@@ -14,6 +14,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
 import { useJobLabels } from '@/components/jobs/labels';
 import { contentUrl } from '@/components/drive/api';
+import { SensitiveValue, isMaskedValue } from '@/components/privacyTools/SensitiveValue';
 import { BLUE_CARD_TONE, CONTRACT_TYPES, contractWarningText, dateInput, toastPlacementError, type BlueCardCheck, type ContractType, type ContractWarning, type EmploymentContract } from './api';
 
 registerCopy(pagesPlacement);
@@ -97,9 +98,10 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
           employerName: f.employerName.trim() || null,
           jobTitle: f.jobTitle.trim() || null,
           contractType: f.contractType,
-          grossMonthly: numOrNull(f.grossMonthly),
+          // A masked salary (Access Center › SALARY) goes back as it came: the server drops it (= unchanged).
+          grossMonthly: isMaskedValue(f.grossMonthly) ? f.grossMonthly : numOrNull(f.grossMonthly),
           // Empty yearly gross is derived from the monthly one on the server.
-          ...(f.grossYearly.trim() ? { grossYearly: numOrNull(f.grossYearly) } : {}),
+          ...(f.grossYearly.trim() ? { grossYearly: isMaskedValue(f.grossYearly) ? f.grossYearly : numOrNull(f.grossYearly) } : {}),
           weeklyHours: numOrNull(f.weeklyHours),
           vacationDays: numOrNull(f.vacationDays),
           startDate: f.startDate || null,
@@ -146,25 +148,32 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
   });
 
   const c = data?.contract ?? null;
-  const field = (k: keyof Form, type: 'text' | 'number' | 'date' = 'text', extra: { step?: string; hint?: string; max?: number } = {}) => (
-    <div className="min-w-0">
-      <label className="label" htmlFor={`ec-${k}`}>
-        {t(`placement.contract.fields.${k}`)}
-      </label>
-      <input
-        id={`ec-${k}`}
-        type={type}
-        inputMode={type === 'number' ? 'decimal' : undefined}
-        step={extra.step}
-        min={type === 'number' ? 0 : undefined}
-        max={extra.max}
-        className="input"
-        value={form![k] as string}
-        onChange={(e) => set(k, e.target.value as never)}
-      />
-      {extra.hint && <p className="mt-1 text-[11px] text-muted">{extra.hint}</p>}
-    </div>
-  );
+  const field = (k: keyof Form, type: 'text' | 'number' | 'date' = 'text', extra: { step?: string; hint?: string; max?: number } = {}) =>
+    isMaskedValue(form![k]) ? (
+      <div className="min-w-0">
+        <span className="label">{t(`placement.contract.fields.${k}`)}</span>
+        <SensitiveValue value={form![k] as string} entity="employmentContract" id={caseId} field={k} className="input flex items-center" />
+        <p className="mt-1 text-[11px] text-muted">{t('privacyTools.sensitive.maskedEdit')}</p>
+      </div>
+    ) : (
+      <div className="min-w-0">
+        <label className="label" htmlFor={`ec-${k}`}>
+          {t(`placement.contract.fields.${k}`)}
+        </label>
+        <input
+          id={`ec-${k}`}
+          type={type}
+          inputMode={type === 'number' ? 'decimal' : undefined}
+          step={extra.step}
+          min={type === 'number' ? 0 : undefined}
+          max={extra.max}
+          className="input"
+          value={form![k] as string}
+          onChange={(e) => set(k, e.target.value as never)}
+        />
+        {extra.hint && <p className="mt-1 text-[11px] text-muted">{extra.hint}</p>}
+      </div>
+    );
 
   return (
     <Panel
@@ -253,8 +262,8 @@ export const EmploymentContractPanel = ({ caseId }: { caseId: string }) => {
                 ['employerName', c.employerName],
                 ['jobTitle', c.jobTitle],
                 ['contractType', t(`placement.contract.types.${c.contractType}`)],
-                ['grossMonthly', c.grossMonthly != null ? L.euro(c.grossMonthly) : null],
-                ['grossYearly', c.grossYearly != null ? L.euro(c.grossYearly) : null],
+                ['grossMonthly', isMaskedValue(c.grossMonthly) ? <SensitiveValue value={c.grossMonthly} entity="employmentContract" id={caseId} field="grossMonthly" /> : c.grossMonthly != null ? L.euro(c.grossMonthly) : null],
+                ['grossYearly', isMaskedValue(c.grossYearly) ? <SensitiveValue value={c.grossYearly} entity="employmentContract" id={caseId} field="grossYearly" /> : c.grossYearly != null ? L.euro(c.grossYearly) : null],
                 ['weeklyHours', c.weeklyHours],
                 ['vacationDays', c.vacationDays],
                 ['startDate', c.startDate ? fmtDate(c.startDate) : null],

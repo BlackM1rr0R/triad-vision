@@ -5,6 +5,7 @@ import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
 import { dayRange } from '../../lib/reports/dates.js';
 import { caseProfit, profitOverview } from '../../lib/profitability/service.js';
 import { CURRENCIES, getProfitSettings, profitSettingsSchema, saveProfitSettings } from '../../lib/profitability/settings.js';
@@ -45,7 +46,7 @@ const overviewQuery = z.object({
 
 adminProfitabilityRouter.get('/', async (req, res) => {
   const q = parse(overviewQuery, req.query);
-  res.json(await profitOverview(q));
+  res.json(await profitOverview(q, await caseScopeWhere(req.user))); // in-scope cases only ({} = all)
 });
 
 adminProfitabilityRouter.get('/settings', async (_req, res) => {

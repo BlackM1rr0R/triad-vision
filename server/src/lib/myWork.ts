@@ -9,6 +9,8 @@ import { presentAlert } from './aiMgmt/security/alerts.js';
 import { taskKey } from './tasks/core.js';
 import { acceleratedWork, recognitionWork } from './recognition/work.js'; // recognition + § 81a deadlines
 import { stageLabel } from './caseProcessing/texts.js'; // team document workflow (Schon geschrieben → Fertig)
+import { caseScopeWhere } from './access/api.js'; // staff case scope
+import { withCaseScope } from './access/resolve.js';
 import { partnerContractWork } from './partnerRecords/work.js'; // employer / partner contracts ending or at their notice deadline
 
 /**
@@ -260,6 +262,8 @@ interface Ctx {
   isAdmin: boolean;
   isSuper: boolean;
   c: Clock;
+  /** The viewer's case scope (lib/access caseScopeWhere; {} = every case, the default). */
+  scope: Prisma.CaseWhereInput;
 }
 
 interface Source {
@@ -271,7 +275,7 @@ interface Source {
 
 /** Cases the viewer looks after: own cases (+ unassigned ones for ADMIN+), every case for the team view. */
 const myCases = (ctx: Ctx): Prisma.CaseWhereInput =>
-  ctx.team ? {} : ctx.isAdmin ? { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] } : { assignedStaffId: ctx.viewer.id };
+  withCaseScope(ctx.team ? {} : ctx.isAdmin ? { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] } : { assignedStaffId: ctx.viewer.id }, ctx.scope);
 
 const staffSelect = { select: { id: true, firstName: true, lastName: true } } as const;
 
@@ -1306,6 +1310,7 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     isAdmin: hasMinRole(viewer.role, 'ADMIN'),
     isSuper: viewer.role === 'SUPER_ADMIN',
     c: clockFor(opts.tz, opts.now),
+    scope: await caseScopeWhere(viewer),
   };
   const groups = await Promise.all([
     docReviews(ctx),

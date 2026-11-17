@@ -1,5 +1,6 @@
 import type { Locale } from '@prisma/client';
 import type { RuleKey } from '../settings.js';
+import { anomalySummary, anomalyTitle } from '../../accessAudit/texts.js';
 
 /** Titles and one-line fact summaries of the security alerts (notifications, e-mail, alert page). */
 
@@ -130,8 +131,9 @@ const ru: SecurityCopy = {
 
 export const SECURITY_TEXTS: Record<Locale, SecurityCopy> = { az, de, en, ru };
 
-export const alertTitle = (rule: string, locale: Locale) => SECURITY_TEXTS[locale].titles[rule as RuleKey] ?? rule;
+// Access anomaly rules (lib/accessAudit/anomalies.ts) raise alerts here too; their texts live in that module.
+export const alertTitle = (rule: string, locale: Locale) => SECURITY_TEXTS[locale].titles[rule as RuleKey] ?? anomalyTitle(rule, locale) ?? rule;
 export const alertSummary = (rule: string, facts: Facts, locale: Locale) => {
   const fn = SECURITY_TEXTS[locale].describe[rule as RuleKey];
-  return fn ? fn(facts) : '';
+  return fn ? fn(facts) : (anomalySummary(rule, facts, locale) ?? '');
 };

@@ -9,6 +9,7 @@ import { outstandingAt } from '../finance/aggregate.js';
 import { csvSafe } from '../csvSafe.js';
 import { bakuMidnight, bakuParts } from '../reports/dates.js';
 import { STATUS_RANK } from '../funnel.js';
+import { isFullScope, scoped, viaCase } from '../accessAudit/scope.js';
 import {
   FUNNEL_STEPS,
   GOAL_METRICS,
@@ -87,7 +88,14 @@ const loadRevenue = async (start: Date, end: Date) => {
   return { invoices: invoices.map((i) => ({ at: i.paidAt!, cents: i.grossCents })), payments: payments.map((p) => ({ at: p.paidAt, cents: p.amountCents, caseId: p.caseId })) };
 };
 
-export const buildOverview = async (opts: { period: OverviewPeriod; finance: boolean; now?: Date }) => {
+/**
+ * `scope` = the viewer's staff case scope (lib/access; missing / {} = every case, the default). A restricted scope
+ * computes every case figure over in-scope cases only and leaves out the money section (company-level revenue
+ * cannot be split by case scope).
+ */
+export const buildOverview = async (opts: { period: OverviewPeriod; finance: boolean; now?: Date; scope?: Prisma.CaseWhereInput }) => {
+  const scope = opts.scope;
+  if (!isFullScope(scope)) opts = { ...opts, finance: false };
   const now = opts.now ?? new Date();
   const { cur, prev } = periodWindows(opts.period, now);
   const months = lastMonths(12, now);
@@ -99,18 +107,18 @@ export const buildOverview = async (opts: { period: OverviewPeriod; finance: boo
 
   const [inquiries, createdCases, decided, cancelled, openTrendCases, openNow, goal] = await Promise.all([
     prisma.inquiry.findMany({ where: { createdAt: both }, select: { createdAt: true, partnerId: true, agentId: true, source: true, landingPageId: true, utm: true, convertedUserId: true } }),
-    prisma.case.findMany({ where: { createdAt: { gte: scanStart, lt: cur.end } }, select: { id: true, createdAt: true, visaType: true, status: true, clientId: true, ...sourceSelect } }),
+    prisma.case.findMany({ where: scoped({ createdAt: { gte: scanStart, lt: cur.end } }, scope), select: { id: true, createdAt: true, visaType: true, status: true, clientId: true, ...sourceSelect } }),
     prisma.case.findMany({
-      where: { status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { gte: new Date(Math.min(scanStart.getTime(), yearStart.getTime())), lt: cur.end } },
+      where: scoped({ status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { gte: new Date(Math.min(scanStart.getTime(), yearStart.getTime())), lt: cur.end } }, scope),
       select: { createdAt: true, decisionAt: true, status: true, visaType: true, ...sourceSelect },
     }),
-    prisma.case.count({ where: { status: 'CANCELLED', closedAt: { gte: cur.start, lt: cur.end } } }),
+    prisma.case.count({ where: scoped({ status: 'CANCELLED', closedAt: { gte: cur.start, lt: cur.end } }, scope) }),
     // Open at some point of the last 12 months: still open, or closed after the series start.
     prisma.case.findMany({
-      where: { createdAt: { lt: cur.end }, OR: [{ status: { notIn: FINAL_STATUSES } }, { closedAt: { gte: seriesStart } }, { closedAt: null, decisionAt: { gte: seriesStart } }] },
+      where: scoped({ createdAt: { lt: cur.end }, OR: [{ status: { notIn: FINAL_STATUSES } }, { closedAt: { gte: seriesStart } }, { closedAt: null, decisionAt: { gte: seriesStart } }] }, scope),
       select: { createdAt: true, closedAt: true, decisionAt: true, status: true },
     }),
-    prisma.case.count({ where: { status: { notIn: FINAL_STATUSES } } }),
+    prisma.case.count({ where: scoped({ status: { notIn: FINAL_STATUSES } }, scope) }),
     readGoal(),
   ]);
 
@@ -240,7 +248,7 @@ export const buildOverview = async (opts: { period: OverviewPeriod; finance: boo
     .map((s) => ({ ...s, share: ratio(s.count, curCreated.length), delta: pctChange(s.count, s.prev) }));
 
   // ── Needs a look ──
-  const attention = await attentionCases(now);
+  const attention = await attentionCases(now, scope);
 
   // ── Channels ──
   const channels = channelRows(inquiriesIn(cur).map(inquiryChannel), inquiriesIn(prev).map(inquiryChannel));
@@ -295,21 +303,24 @@ export const buildOverview = async (opts: { period: OverviewPeriod; finance: boo
 export type Overview = Awaited<ReturnType<typeof buildOverview>>;
 
 /** Cases that need a look (team-wide my-work rules), the least healthy first. */
-const attentionCases = async (now: Date) => {
+const attentionCases = async (now: Date, scope?: Prisma.CaseWhereInput) => {
   const stuckCutoff = new Date(now.getTime() - STUCK_DAYS * DAY);
   const waitCutoff = new Date(now.getTime() - WAIT_SLA_HOURS * HOUR);
   const [stuck, waiting, docs] = await Promise.all([
     prisma.case.findMany({
-      where: {
-        status: { notIn: [...FINAL_STATUSES, ...WAITING_STATUSES] },
-        updatedAt: { lt: stuckCutoff },
-        events: { none: { createdAt: { gte: stuckCutoff } } },
-        messages: { none: { createdAt: { gte: stuckCutoff } } },
-      },
+      where: scoped(
+        {
+          status: { notIn: [...FINAL_STATUSES, ...WAITING_STATUSES] },
+          updatedAt: { lt: stuckCutoff },
+          events: { none: { createdAt: { gte: stuckCutoff } } },
+          messages: { none: { createdAt: { gte: stuckCutoff } } },
+        },
+        scope,
+      ),
       select: { id: true },
     }),
-    prisma.case.findMany({ where: { status: { in: WAITING_STATUSES }, updatedAt: { lt: waitCutoff } }, select: { id: true } }),
-    trackedDocuments({ until: new Date(now.getTime() + EXPIRY_WINDOW_DAYS * DAY), caseWhere: {} }),
+    prisma.case.findMany({ where: scoped({ status: { in: WAITING_STATUSES }, updatedAt: { lt: waitCutoff } }, scope), select: { id: true } }),
+    trackedDocuments({ until: new Date(now.getTime() + EXPIRY_WINDOW_DAYS * DAY), caseWhere: scope ?? {} }),
   ]);
   const reasons = new Map<string, { reasons: Set<AttentionReason>; expiryDays: number | null }>();
   const add = (id: string, r: AttentionReason, expiryDays: number | null = null) => {
@@ -373,13 +384,17 @@ const attentionCases = async (now: Date) => {
 
 // ─── Live activity (privacy-safe: event types, case numbers, channels; no names, notes or texts) ──────
 
-export const overviewActivity = async (opts: { finance: boolean; limit?: number; now?: Date }) => {
+export const overviewActivity = async (opts: { finance: boolean; limit?: number; now?: Date; scope?: Prisma.CaseWhereInput }) => {
+  // Restricted staff case scope: in-scope case events only, no payments (lib/access; {} = everything).
+  if (!isFullScope(opts.scope)) opts = { ...opts, finance: false };
+  const caseRel = viaCase(opts.scope);
   const now = opts.now ?? new Date();
   const limit = opts.limit ?? 12;
   const p = bakuParts(now);
   const todayStart = bakuMidnight(p.y, p.m, p.d);
   const [events, inquiries, payments, eventsToday, inquiriesToday] = await Promise.all([
     prisma.caseEvent.findMany({
+      ...(caseRel.case ? { where: caseRel } : {}),
       orderBy: { createdAt: 'desc' },
       take: limit,
       select: { id: true, type: true, toStatus: true, createdAt: true, case: { select: { id: true, number: true, visaType: true } } },
@@ -388,7 +403,7 @@ export const overviewActivity = async (opts: { finance: boolean; limit?: number;
     opts.finance
       ? prisma.clientPayment.findMany({ orderBy: { paidAt: 'desc' }, take: limit, where: { paidAt: { lte: now } }, select: { id: true, paidAt: true, amountCents: true, currency: true, caseId: true } })
       : Promise.resolve([]),
-    prisma.caseEvent.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.caseEvent.count({ where: { createdAt: { gte: todayStart }, ...caseRel } }),
     prisma.inquiry.count({ where: { createdAt: { gte: todayStart } } }),
   ]);
   const payCases = new Map(
@@ -416,7 +431,8 @@ const CACHE_TTL_MS = 60 * 1000;
 const cache = new Map<string, { at: number; value: Overview }>();
 const inflight = new Map<string, Promise<Overview>>();
 
-export const cachedOverview = async (opts: { period: OverviewPeriod; finance: boolean; fresh?: boolean }) => {
+export const cachedOverview = async (opts: { period: OverviewPeriod; finance: boolean; fresh?: boolean; scope?: Prisma.CaseWhereInput }) => {
+  if (!isFullScope(opts.scope)) return buildOverview(opts); // per-user case scope: never from / into the shared cache
   const key = `${opts.period}|${opts.finance ? 'f' : '-'}`;
   const hit = cache.get(key);
   if (!opts.fresh && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;

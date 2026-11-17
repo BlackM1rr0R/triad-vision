@@ -5,15 +5,22 @@ import clsx from 'clsx';
 import { Copy, Eye, EyeOff } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesPrivacyTools } from '@/i18n/pagesPrivacyTools';
+import { pagesAccessSensitive } from '@/i18n/pagesAccessSensitive';
 import { api, errorCode } from '@/lib/api';
 import { Modal } from '@/components/admin/Modal';
 
 registerCopy(pagesPrivacyTools);
+registerCopy(pagesAccessSensitive);
 
 /** The server masks values as "•••• 3456" (lib/privacy/mask.ts on the server). */
 export const isMaskedValue = (v: unknown): v is string => typeof v === 'string' && v.includes('•');
 
-export type RevealEntity = 'user' | 'company' | 'agent' | 'invoiceSettings' | 'document' | 'insight' | 'familyMember' | 'partner';
+/** Access Center groups (SALARY, HEALTH, ADDRESS, FAMILY): the server asks for a longer reason (≥ 10 characters). */
+export const EXTRA_REVEAL_ENTITIES = ['employmentContract', 'familyReunion', 'casePermit', 'clientAddress', 'arrivalPlan', 'partnerHousing', 'familyPerson'] as const;
+export type RevealEntity = 'user' | 'company' | 'agent' | 'invoiceSettings' | 'document' | 'insight' | 'familyMember' | 'partner' | (typeof EXTRA_REVEAL_ENTITIES)[number];
+
+/** Minimum reason length the server accepts for a reveal of this entity. */
+export const revealReasonMin = (entity: RevealEntity) => ((EXTRA_REVEAL_ENTITIES as readonly string[]).includes(entity) ? 10 : 5);
 
 const VISIBLE_SEC = 60;
 
@@ -44,6 +51,7 @@ export const SensitiveValue = ({
   const [plain, setPlain] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
   const reasonId = useId();
+  const minReason = revealReasonMin(entity);
 
   useEffect(() => {
     if (plain === null) return;
@@ -64,7 +72,7 @@ export const SensitiveValue = ({
   if (!isMaskedValue(value)) return <span className={className}>{value}</span>;
 
   const reveal = async () => {
-    if (reason.trim().length < 5) return;
+    if (reason.trim().length < minReason) return;
     setBusy(true);
     try {
       const { data } = await api.post<{ value: string | null }>('/admin/reveal', { entity, id, field, reason: reason.trim() });
@@ -129,7 +137,7 @@ export const SensitiveValue = ({
             <button type="button" className="btn-secondary btn-sm" onClick={() => setOpen(false)} disabled={busy}>
               {t('privacyTools.sensitive.cancel')}
             </button>
-            <button type="button" className="btn-primary btn-sm" disabled={busy || reason.trim().length < 5} onClick={() => void reveal()}>
+            <button type="button" className="btn-primary btn-sm" disabled={busy || reason.trim().length < minReason} onClick={() => void reveal()}>
               <Eye className="size-4" aria-hidden /> {t('privacyTools.sensitive.confirm')}
             </button>
           </>
@@ -153,7 +161,7 @@ export const SensitiveValue = ({
             }
           }}
         />
-        <p className="mt-1 text-xs text-muted">{t('privacyTools.sensitive.reasonHint')}</p>
+        <p className="mt-1 text-xs text-muted">{minReason > 5 ? t('privacyTools.sensitive.reasonHint10') : t('privacyTools.sensitive.reasonHint')}</p>
       </Modal>
     </span>
   );

@@ -7,7 +7,7 @@ import { AlertCircle, CalendarClock, ChevronRight, Gavel, Search, Users } from '
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { day } from '@/components/agents/format';
-import type { PartnerCaseRow, VisaFacet } from '@/components/partnerPortal/api';
+import { accessOf, usePartnerMe, type PartnerCaseRow, type VisaFacet } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Handshake, SearchEmpty } from '@/components/illustrations';
@@ -35,6 +35,8 @@ export default function PartnerClientsPage() {
   const chip = (on: boolean) =>
     clsx('min-h-11 rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-10', on ? 'border-primary bg-primary text-primary-contrast' : 'border-line bg-card text-muted hover:border-line-strong hover:text-ink');
   const items = q.data?.items;
+  // Without the case-stage permission the server sends no status: no active / closed filter, no stage blocks.
+  const stage = accessOf(usePartnerMe().data).permissions.caseStage;
 
   return (
     <Section title={t('partnerPortal.clients.title')} icon={Users}>
@@ -44,7 +46,7 @@ export default function PartnerClientsPage() {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input type="search" className="input pl-9" placeholder={t('partnerPortal.clients.searchPh')} value={input} onChange={(e) => setInput(e.target.value)} />
         </label>
-        <div className="flex gap-1.5" role="group">
+        <div className={clsx('flex gap-1.5', !stage && 'hidden')} role="group">
           {(['all', 'active', 'closed'] as const).map((f) => (
             <button
               key={f}
@@ -105,12 +107,12 @@ export default function PartnerClientsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <StatusPill status={c.status} />
+                    {c.status && <StatusPill status={c.status} />}
                     <ChevronRight className="size-4 text-muted" aria-hidden />
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-end">
-                  <StepBar step={c.step} status={c.status} />
+                  {c.step ? <StepBar step={c.step} status={c.status} /> : <span />}
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted sm:justify-end">
                     {c.appointmentAt && (
                       <span className="inline-flex items-center gap-1">
@@ -124,12 +126,12 @@ export default function PartnerClientsPage() {
                     )}
                   </div>
                 </div>
-                {c.nextAction !== 'NONE' && (
+                {c.nextAction && c.nextAction !== 'NONE' && (
                   <p className={clsx('mt-3 flex items-start gap-1.5 rounded-xl px-3 py-2 text-xs font-medium', c.nextAction === 'UPLOAD_DOCUMENTS' ? 'bg-warning-bg text-warning-fg' : 'bg-sunken text-ink')}>
                     <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
                     <span>
                       {t('partnerPortal.clients.next')}: {t(`partnerPortal.nextAction.${c.nextAction}`)}
-                      {c.missingDocuments > 0 && ` · ${t('partnerPortal.clients.missing', { count: c.missingDocuments })}`}
+                      {(c.missingDocuments ?? 0) > 0 && ` · ${t('partnerPortal.clients.missing', { count: c.missingDocuments })}`}
                     </span>
                   </p>
                 )}

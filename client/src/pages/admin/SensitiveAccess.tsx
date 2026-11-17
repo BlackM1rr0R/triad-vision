@@ -19,6 +19,10 @@ type MaskRole = (typeof ROLES)[number];
 type Settings = Record<MaskRole, Group[]>;
 const ENTITIES = ['user', 'company', 'agent', 'invoiceSettings', 'document', 'insight', 'partner'] as const;
 const FIELDS = ['passportNumber', 'documentNumber', 'iban', 'bic', 'vatId', 'taxNumber'] as const;
+/** Access Center › Sensitive fields: entities / fields / groups of the new groups (SALARY, HEALTH, ADDRESS, FAMILY). */
+const EXTRA_ENTITIES = ['employmentContract', 'familyReunion', 'casePermit', 'clientAddress', 'arrivalPlan', 'partnerHousing', 'familyPerson', 'familyMember'] as const;
+const EXTRA_FIELDS = ['grossMonthly', 'grossYearly', 'netMonthly', 'healthInsuranceExpiresAt', 'address', 'housingDetails', 'contactName', 'contactPhone', 'firstName', 'lastName', 'birthDate', 'birthPlace'] as const;
+const ALL_GROUPS = [...GROUPS, 'SALARY', 'HEALTH', 'ADDRESS', 'FAMILY'] as const;
 
 interface RevealRow {
   id: string;
@@ -113,8 +117,10 @@ const MaskingSettings = () => {
   );
 };
 
-const RevealLog = () => {
+/** Reveal log with filters (also used by Access Center › Sensitive fields with `extended`: new entities, fields, group filter). */
+export const RevealLog = ({ extended = false }: { extended?: boolean }) => {
   const { t } = useTranslation();
+  const [group, setGroup] = useState('');
   const [actorId, setActorId] = useState('');
   const [entity, setEntity] = useState('');
   const [field, setField] = useState('');
@@ -127,12 +133,14 @@ const RevealLog = () => {
     const timer = window.setTimeout(() => setQ(qInput.trim()), 350);
     return () => window.clearTimeout(timer);
   }, [qInput]);
-  useEffect(() => setPage(1), [actorId, entity, field, from, to, q]);
+  useEffect(() => setPage(1), [actorId, entity, field, from, to, q, group]);
 
   const params = useMemo(
-    () => Object.fromEntries(Object.entries({ actorId, entity, field, from, to, q }).filter(([, v]) => v)),
-    [actorId, entity, field, from, to, q],
+    () => Object.fromEntries(Object.entries({ actorId, entity, field, from, to, q, group }).filter(([, v]) => v)),
+    [actorId, entity, field, from, to, q, group],
   );
+  const entities: readonly string[] = extended ? [...ENTITIES, ...EXTRA_ENTITIES] : ENTITIES;
+  const fields: readonly string[] = extended ? [...FIELDS, ...EXTRA_FIELDS] : FIELDS;
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-sensitive-reveals', params, page],
     queryFn: async () =>
@@ -167,7 +175,7 @@ const RevealLog = () => {
           <span className="label">{t('privacyTools.access.filters.entity')}</span>
           <select className="input" value={entity} onChange={(e) => setEntity(e.target.value)}>
             <option value="">{t('privacyTools.access.filters.all')}</option>
-            {ENTITIES.map((e) => (
+            {entities.map((e) => (
               <option key={e} value={e}>
                 {t(`privacyTools.access.entities.${e}`)}
               </option>
@@ -178,13 +186,26 @@ const RevealLog = () => {
           <span className="label">{t('privacyTools.access.filters.field')}</span>
           <select className="input" value={field} onChange={(e) => setField(e.target.value)}>
             <option value="">{t('privacyTools.access.filters.all')}</option>
-            {FIELDS.map((f) => (
+            {fields.map((f) => (
               <option key={f} value={f}>
                 {t(`privacyTools.sensitive.fields.${f}`)}
               </option>
             ))}
           </select>
         </label>
+        {extended && (
+          <label className="block">
+            <span className="label">{t('accessSensitive.filters.group')}</span>
+            <select className="input" value={group} onChange={(e) => setGroup(e.target.value)}>
+              <option value="">{t('accessSensitive.filters.all')}</option>
+              {ALL_GROUPS.map((g) => (
+                <option key={g} value={g}>
+                  {t(`privacyTools.access.groups.${g}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="block">
           <span className="label">{t('privacyTools.access.filters.from')}</span>
           <input type="date" className="input" value={from} onChange={(e) => setFrom(e.target.value)} />

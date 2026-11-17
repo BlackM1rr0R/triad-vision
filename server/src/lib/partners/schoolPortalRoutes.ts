@@ -6,6 +6,7 @@ import { prisma } from '../../db.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../http.js';
 import { audit } from '../audit.js';
+import { partnerContextOf, requireClientList, requireDocuments } from '../partnerAccess/context.js'; // per-partner permissions
 import {
   ownStudent,
   listStudents,
@@ -31,23 +32,32 @@ import {
  */
 export const partnerSchoolRouter = Router();
 
-const partnerOf = async (req: Request): Promise<ReferralPartner> => {
-  const partner = await prisma.referralPartner.findUnique({ where: { userId: req.user!.id } });
-  if (!partner) throw forbidden('NO_PARTNER_PROFILE');
-  return partner;
+/**
+ * The partner (owner or team member, lib/partnerAccess) with the permission the action needs: students are clients
+ * (client list), records are documents the school adds (upload level), certificates are files (list level).
+ */
+const partnerOf = async (req: Request, need: 'view' | 'write' | 'file' = 'view'): Promise<ReferralPartner> => {
+  const ctx = await partnerContextOf(req);
+  requireClientList(ctx);
+  if (need === 'write') requireDocuments(ctx, 'upload');
+  if (need === 'file') requireDocuments(ctx, 'list');
+  return ctx.partner;
 };
+
+/** The student's stage only with the case-stage permission. */
+const withStage = async <T extends { stage: unknown }>(req: Request, row: T): Promise<T> => ((await partnerContextOf(req)).perms.caseStage ? row : { ...row, stage: null });
 
 partnerSchoolRouter.get('/students', async (req, res) => {
   const partner = await partnerOf(req);
   requireSchool(partner);
   const q = parse(z.object({ search: z.string().trim().max(120).optional() }), req.query);
-  res.json({ category: partner.category, items: await listStudents(partner, q) });
+  res.json({ category: partner.category, items: await Promise.all((await listStudents(partner, q)).map((s) => withStage(req, s))) });
 });
 
 partnerSchoolRouter.get('/students/:clientId', async (req, res) => {
   const partner = await partnerOf(req);
   requireSchool(partner);
-  res.json({ student: await studentDetail(partner, String(req.params.clientId)) });
+  res.json({ student: await withStage(req, await studentDetail(partner, String(req.params.clientId))) });
 });
 
 const recordLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 120, keyGenerator: (req) => `partner-records:${req.user?.id ?? 'anon'}` });
@@ -55,7 +65,7 @@ const recordLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 120, keyGenerat
 partnerSchoolRouter.post('/students/:clientId/records', recordLimiter, documentUpload.single('certificate'), async (req, res) => {
   const file = req.file;
   try {
-    const partner = await partnerOf(req);
+    const partner = await partnerOf(req, 'write');
     requireLanguageSchool(partner);
     if (!partner.active) throw forbidden('PARTNER_INACTIVE');
     const { user, consent } = await ownStudent(partner.id, String(req.params.clientId));
@@ -83,8 +93,8 @@ partnerSchoolRouter.post('/students/:clientId/records', recordLimiter, documentU
 });
 
 /** An own record (404 for another partner's one, like a missing record). */
-const ownRecord = async (req: Request) => {
-  const partner = await partnerOf(req);
+const ownRecord = async (req: Request, need: 'write' | 'file') => {
+  const partner = await partnerOf(req, need);
   requireSchool(partner);
   const r = await prisma.partnerStudentRecord.findFirst({ where: { id: String(req.params.id).slice(0, 40), partnerId: partner.id } });
   if (!r) throw notFound('RECORD_NOT_FOUND');
@@ -92,12 +102,12 @@ const ownRecord = async (req: Request) => {
 };
 
 partnerSchoolRouter.get('/student-records/:id/certificate', async (req, res) => {
-  const { r } = await ownRecord(req);
+  const { r } = await ownRecord(req, 'file');
   sendCertificate(res, r);
 });
 
 partnerSchoolRouter.delete('/student-records/:id', async (req, res) => {
-  const { partner, r } = await ownRecord(req);
+  const { partner, r } = await ownRecord(req, 'write');
   if (r.status !== 'PENDING') throw conflict('RECORD_ALREADY_REVIEWED');
   await prisma.partnerStudentRecord.delete({ where: { id: r.id } });
   await removeCertificate(r.certificateKey);

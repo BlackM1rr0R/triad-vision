@@ -2,6 +2,7 @@ import type { Prisma, Role, TaskStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { forbidden, notFound } from '../http.js';
+import { caseScopeWhere } from '../access/api.js';
 
 /** Shared rules, numbering and response shapes for team tasks (/api/tasks). */
 
@@ -68,13 +69,16 @@ export const taskPermissions = (
  * Tasks linked to a case follow case visibility. Every staff role may open every case in the admin
  * panel today (see routes/admin/cases.ts), so this is a single place to tighten if that ever changes.
  */
-export const caseVisibilityWhere = (_actor: Actor): Prisma.TaskWhereInput => ({});
+export const caseVisibilityWhere = (_actor: Actor, scope: Prisma.CaseWhereInput = {}): Prisma.TaskWhereInput =>
+  // `scope` = the actor's case scope (lib/access caseScopeWhere; {} = every case, the default): tasks without
+  // a case stay visible, case tasks follow the case.
+  Object.keys(scope).length ? { OR: [{ caseId: null }, { case: scope }] } : {};
 
 /** Loads a task by id or number (T-0001) with what permission checks need; 404 when invisible. */
 export const loadTaskForActor = async (ref: string, actor: Actor) => {
   const key = parseTaskRef(ref);
   const task = await prisma.task.findFirst({
-    where: { AND: ['number' in key ? { number: key.number } : { id: key.id }, caseVisibilityWhere(actor)] },
+    where: { AND: ['number' in key ? { number: key.number } : { id: key.id }, caseVisibilityWhere(actor, await caseScopeWhere(actor))] },
     include: { assignees: { select: { userId: true } } },
   });
   if (!task) throw notFound('TASK_NOT_FOUND');
