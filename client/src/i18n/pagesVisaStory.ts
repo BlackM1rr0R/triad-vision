@@ -40,7 +40,7 @@ const az = {
       language: 'Kartın dili',
       privacy: 'Kartda yalnız seçdiyin ad və ümumi rəqəmlər olur — soyad, sənəd adları və ya müraciət nömrəsi heç vaxt.',
       generate: 'Kartı yarat',
-      download: 'Yüklə',
+      download: 'Endir',
       share: 'Paylaş',
       shareText: 'Mənim viza hekayəm ✈',
       loading: 'Kart hazırlanır…',

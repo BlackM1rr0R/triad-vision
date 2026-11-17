@@ -10,7 +10,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         purpose: 'Müştərilərin bütün viza müraciətlərinin siyahısı: status, məsul, sənədlər və növbəti addım. Bütün əməkdaşlar gündəlik iş üçün buradan başlayır.',
         steps: [
           'Yuxarıdakı kartlardan birini seçin («Aktiv», «Mənim», «Təyinatsız», «Ləngiyən», «Bu həftə səfirlik») və ya axtarış, status, məsul, tarix və «Digər» filtrlərindən istifadə edin.',
-          'Sətirə klikləyin — sağda ön baxış açılır; tam səhifə üçün müraciət nömrəsinə basın. «Lövhə» düyməsi müraciətləri sənəd mərhələləri üzrə sütunlarda göstərir.',
+          'Sətirə basın — sağda ön baxış açılır; tam səhifə üçün müraciət nömrəsinə basın. «Lövhə» düyməsi müraciətləri sənəd mərhələləri üzrə sütunlarda göstərir.',
           'Bir neçə sətri işarələyin və aşağıdakı paneldə toplu əməliyyat seçin (təyin et, status, mesaj, CSV). Tez-tez işlətdiyiniz filtrləri «Filtri saxla» ilə tab kimi saxlayın.',
         ],
         tips: [
@@ -235,7 +235,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Sənəd audit jurnalı',
-        purpose: 'Giriş, parol, istifadəçi və sənəd əməliyyatlarının tarixçəsi: kim, nə vaxt, hansı IP-dən nə edib. Yalnız Super admin üçündür.',
+        purpose: 'Giriş, şifrə, istifadəçi və sənəd əməliyyatlarının tarixçəsi: kim, nə vaxt, hansı IP-dən nə edib. Yalnız Super admin üçündür.',
         steps: [
           'Yuxarıdakı «Əməliyyat» seçicisində hadisə növünü seçin, məsələn «Bütün sənəd əməliyyatları».',
           'Cədvəldə vaxt, əməliyyat, icraçı, hədəf, təfərrüat və IP-ni oxuyun.',
@@ -455,7 +455,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         steps: [
           'Yuxarıda «Açıq», «7 gün ərzində» və ya «Hamısı» seçin, lazım olsa statusa görə süzün.',
           '«Müddəti keçib», «7 gün ərzində» və «Rüsum ödənilməyib» saylarına baxın.',
-          'Müraciət nömrəsinə klikləyin — müraciət səhifəsinin § 81a bölməsi açılır, addımları orada yeniləyin.',
+          'Müraciət nömrəsinə basın — müraciət səhifəsinin § 81a bölməsi açılır, addımları orada yeniləyin.',
         ],
         tips: [
           'İlkin razılıqdan sonra səfirlik adətən təxminən 3 həftə ərzində görüş verir — bu son tarixi izləyin.',
@@ -507,7 +507,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         purpose: 'Səfirliklər, Ausländerbehörde, Agentur für Arbeit və tanınma orqanlarının kataloqu: ünvan, əlaqə, tələblər, gözləmə müddəti və bağlı müraciətlər.',
         steps: [
           'Siyahını ad, şəhər, ünvan üzrə axtarın, növ, şəhər və status filtrlərindən istifadə edin.',
-          'Quruma klikləyin: əlaqə, tələb olunan sənədlər, orta gözləmə müddəti və «Bağlı işlər» görünür.',
+          'Quruma basın: əlaqə, tələb olunan sənədlər, orta gözləmə müddəti və «Bağlı işlər» görünür.',
           'Admin «Qurum əlavə et» və ya «Redaktə et» ilə məlumatı dəyişir, aşağıda isə sərbəst mətnli müraciətləri «Seçilənləri bağla» ilə quruma bağlayır.',
         ],
         tips: [
@@ -621,7 +621,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         purpose: 'PDF sənədləri bir və ya bir neçə tərəfə (namizəd, işəgötürən, Triad Vision və s.) onlayn imzaya göndərmək və gedişini izləmək üçün.',
         steps: [
           '«Yeni imza tələbi» basın, PDF seçin, tərəfləri və ardıcıllığı əlavə edib göndərin.',
-          'Siyahını status düymələri, «Mənim» filtri və axtarışla süzün; sətirə klikləyib tərəflərin vəziyyətini və audit izini görün.',
+          'Siyahını status düymələri, «Mənim» filtri və axtarışla süzün; sətirə basıb tərəflərin vəziyyətini və audit izini görün.',
           'Gecikən tərəfə xatırlatma göndərin; tamamlananda imzalanmış PDF-i yükləyin. Sizin imzanızı gözləyənlər yuxarıda görünür.',
         ],
         tips: [
@@ -902,7 +902,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         purpose: 'Əmək, Ausbildung, xidmət, işəgötürən və tərəfdaş müqavilələri üçün şablonlar. Yer tutucular müraciətin məlumatları ilə avtomatik doldurulur.',
         steps: [
           'Yuxarıdakı növ düymələri ilə siyahını süzün və şablonu açın.',
-          '«Yeni şablon» ilə ad, növ, dil və mətni yazın; yer tutucuları «Yer tutucular» siyahısından klikləyərək əlavə edin.',
+          '«Yeni şablon» ilə ad, növ, dil və mətni yazın; yer tutucuları «Yer tutucular» siyahısından basaraq əlavə edin.',
           'Lazım olsa «Bu növ və dil üçün standart» işarələyin və «Yadda saxla» basın.',
         ],
         tips: [

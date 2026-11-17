@@ -45,7 +45,7 @@ const az = {
       removed: 'Silinib',
       changed: 'Dəyişib',
       showUnchanged: 'Dəyişməyən səhifələri göstər',
-      download: 'Yüklə',
+      download: 'Endir',
       legendDel: 'silinib',
       legendIns: 'əlavə',
     },

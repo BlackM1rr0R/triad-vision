@@ -4,7 +4,7 @@
 
 const az = {
   pnav: {
-    label: 'Portal bölmələri',
+    label: 'Kabinet bölmələri',
     subLabel: '{{section}}: səhifələr',
     sections: { home: 'Əsas', documents: 'Sənədlər', messages: 'Mesajlar', learn: 'Öyrən', profile: 'Profil' },
     subs: {
@@ -58,8 +58,8 @@ const az = {
       moreLabel: 'Digər açıq işlər ({{count}})',
       lessLabel: 'Gizlət',
       kind: {
-        ACCEPT_LEGAL: { title: 'Yenilənmiş şərtləri qəbul edin', text: 'Şərtlərimizi və ya məxfilik siyasətimizi yenilədik. Portaldan istifadəyə davam etmək üçün yeni versiyanı oxuyub qəbul edin.', action: 'Oxu və qəbul et' },
-        PAY_INVOICE: { title: 'Hesab-faktura ödənilməlidir ({{count}})', titleDetail: 'Hesabı ödəyin: {{detail}}', text: 'Bank köçürməsi ilə ödəyin və təyinatda hesab nömrəsini göstərin.', action: 'Ödəniş məlumatları' },
+        ACCEPT_LEGAL: { title: 'Yenilənmiş şərtləri qəbul edin', text: 'Şərtlərimizi və ya məxfilik siyasətimizi yenilədik. Kabinetdən istifadəyə davam etmək üçün yeni versiyanı oxuyub qəbul edin.', action: 'Oxu və qəbul et' },
+        PAY_INVOICE: { title: 'Hesab-faktura ödənilməlidir ({{count}})', titleDetail: 'Hesab-fakturanı ödəyin: {{detail}}', text: 'Bank köçürməsi ilə ödəyin. Ödənişin təyinatına hesab-faktura nömrəsini yazın.', action: 'Ödəniş məlumatları' },
         FIX_DOCS: { title: 'Rədd edilmiş sənədi yenidən yükləyin', titleDetail: 'Sənədi yenidən yükləyin: {{detail}}', text: 'Yenidən yüklənməli sənəd sayı: {{count}}. Komandanın qeydinə baxın.', action: 'Sənədləri düzəlt' },
         UPLOAD_DOCS: { title: 'Sənədlərinizi yükləyin', titleDetail: 'Yükləyin: {{detail}}', text: 'Çatışmayan vacib sənəd sayı: {{count}}.', action: 'İndi yüklə' },
         SUBMIT_DOCS: { title: 'Sənədləri yoxlamaya göndərin', text: 'Bütün vacib sənədlər yüklənib. Onları yoxlama üçün komandamıza göndərin.', action: 'Yoxlamaya göndər' },

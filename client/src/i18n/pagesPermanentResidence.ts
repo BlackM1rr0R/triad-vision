@@ -5,7 +5,7 @@
 const az = {
   pr: {
     heroTitle: 'Daimi yaşayış və vətəndaşlıq: nə vaxt?',
-    heroSubtitle: 'İcazə növünüzə, alman dilinizə və pensiya haqlarınıza görə Almaniyada daimi yaşayış icazəsi (Niederlassungserlaubnis) və vətəndaşlıq üçün ən tez tarixlər — zaman xətti və tələblərlə.',
+    heroSubtitle: 'Almaniyada daimi yaşayış icazəsi (Niederlassungserlaubnis) və vətəndaşlıq üçün ən tez tarixləri görün. Hesablama icazə növünüzə, alman dilinizə və pensiya haqlarınıza görədir.',
     months: ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avqust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'],
     form: {
       title: 'Məlumatlarınız',
@@ -59,7 +59,7 @@ const az = {
     timeline: { title: 'Zaman xətti', arrival: 'Gəliş', switch: 'İş icazəsi', settlement: 'Daimi icazə', citizenship: 'Vətəndaşlıq', today: 'Bu gün' },
     dual: {
       title: 'İkili vətəndaşlıq',
-      text: 'Almaniya 27.06.2024-dən ikili vətəndaşlığa icazə verir: alman pasportu üçün əvvəlki vətəndaşlıqdan imtina tələb olunmur. Lakin Azərbaycan qanunvericiliyi ikili vətəndaşlığı tanımır: başqa dövlətin vətəndaşlığını könüllü qəbul etmək Azərbaycan vətəndaşlığının itirilməsi üçün əsasdır (“Vətəndaşlıq haqqında” Qanun, maddə 18) və xarici vətəndaşlıq barədə bir ay ərzində məlumat verilməlidir. Qərar verməzdən əvvəl Azərbaycan konsulluğu ilə dəqiqləşdirin.',
+      text: 'Almaniya 27.06.2024-dən ikili vətəndaşlığa icazə verir: alman pasportu üçün əvvəlki vətəndaşlıqdan imtina tələb olunmur. Lakin Azərbaycan qanunvericiliyi ikili vətəndaşlığı tanımır. Başqa dövlətin vətəndaşlığını könüllü qəbul etmək Azərbaycan vətəndaşlığının itirilməsi üçün əsasdır (“Vətəndaşlıq haqqında” Qanun, maddə 18). Xarici vətəndaşlıq barədə bir ay ərzində məlumat verilməlidir. Qərar verməzdən əvvəl Azərbaycan konsulluğu ilə dəqiqləşdirin.',
     },
     news: {
       title: 'Nə dəyişib?',

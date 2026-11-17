@@ -5,7 +5,7 @@
 const az = {
   recognition: {
     title: 'Diplomun tanınması (Anerkennung)',
-    hint: 'Ali təhsil üçün adətən ZAB rəyi (təxminən 200 €, ~3 ay), tənzimlənən peşələr üçün torpaq orqanında tam tanınma, peşə ixtisası üçün IHK FOSA və ya HWK.',
+    hint: 'Ali təhsil üçün adətən ZAB rəyi lazımdır (təxminən 200 €, ~3 ay). Tənzimlənən peşələr üçün ştat orqanında tam tanınma lazımdır. Peşə ixtisası üçün IHK FOSA və ya HWK-ya müraciət olunur.',
     empty: 'Bu müraciət üçün hələ tanınma prosesi yoxdur.',
     add: 'Tanınma prosesi əlavə et',
     addTitle: 'Yeni tanınma prosesi',
@@ -138,7 +138,7 @@ const az = {
       settings: 'Xatırlatmalar',
       leadDays: 'Neçə gün əvvəl',
       enabled: 'Aktivdir',
-      settingsSaved: 'Ayarlar yadda saxlanıldı',
+      settingsSaved: 'Parametrlər yadda saxlanıldı',
     },
     portal: {
       title: 'Diplomunuzun tanınması',

@@ -43,7 +43,7 @@ const az = {
       FINANCE: 'Hesab-fakturalar, ödənişlər, paketlər, mühasibat və gəlirlilik.',
       EMPLOYERS: 'Şirkətlər, vakansiyalar, namizəd sorğuları, müsahibələr və müqavilələr.',
       CONTENT: 'Sayt məzmunu, bələdçilər, landing səhifələr, axtarış göstəriciləri və tərcümələr.',
-      OWNER: 'Panel, analitika, komanda yükü, KPI, maliyyə və ayarlar.',
+      OWNER: 'Panel, analitika, komanda yükü, KPI, maliyyə və parametrlər.',
     },
   },
 };

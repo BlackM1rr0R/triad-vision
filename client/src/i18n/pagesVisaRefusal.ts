@@ -55,7 +55,7 @@ const az = {
     disclaimer: 'Biz vəkil deyilik; bu səhifə hüquqi məsləhət deyil. Məhkəmə üçün miqrasiya hüququ üzrə vəkilə müraciət edin. Müddətləri həmişə öz qərarınızdakı hüquqi izahdan yoxlayın.',
     ctaRegister: 'Qeydiyyat — sənədləri birlikdə hazırlayaq',
     checklistLink: 'Sənəd siyahısı yaradıcısı',
-    ctaBooking: 'Konsultasiya',
+    ctaBooking: 'Məsləhət',
     faq: [
       { q: 'Alman vizasından imtinaya remonstrasiya vermək olarmı?', a: 'Xeyr. Remonstrasiya 1 iyul 2025-dən bütün dünyada ləğv edilib. Bakıdakı səfirlik 01.07.2025-dən çap olunmuş qərarlara qarşı remonstrasiyaları cavablandırmır. Yeni müraciət və ya Berlin İnzibati Məhkəməsinə iddia qalır.' },
       { q: 'İmtinadan sonra nə qədər gözləməliyəm?', a: 'Gözləmə müddəti yoxdur — yeni müraciəti istənilən vaxt verə bilərsiniz. Amma imtina səbəbi aradan qaldırılmayıbsa, yeni müraciət də rədd edilə bilər.' },

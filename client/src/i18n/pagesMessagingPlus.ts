@@ -22,7 +22,7 @@ const az = {
       cancel: 'Ləğv et',
       recording: 'Yazılır… {{time}} / 3:00',
       sending: 'Səsli mesaj göndərilir…',
-      micDenied: 'Mikrofona icazə verilmədi. Brauzer ayarlarından icazə verin.',
+      micDenied: 'Mikrofona icazə verilmədi. Brauzer parametrlərindən icazə verin.',
       unsupported: 'Bu brauzer səs yazmağı dəstəkləmir.',
       tooShort: 'Səsli mesaj çox qısadır.',
       failed: 'Səsli mesaj göndərilmədi.',

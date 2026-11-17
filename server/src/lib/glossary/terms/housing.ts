@@ -141,7 +141,7 @@ export const HOUSING_TERMS: GlossaryTerm[] = [
       uk: "Договір між орендарем та орендодавцем про квартиру, оренду, витрати й розірвання.",
     },
     long: {
-      az: "Mietvertrag-da kirayə məbləği, Nebenkosten avansı, Kaution, müqavilənin başlanğıcı və xüsusi qaydalar yazılır. Adətən müddətsiz bağlanır; kirayəçi onu üç ay əvvəldən yazılı şəkildə ləğv edə bilər. Imzalamazdan əvvəl Staffelmiete, Indexmiete və təmir öhdəliklərinə diqqət edin.",
+      az: "Mietvertrag-da kirayə məbləği, Nebenkosten avansı, Kaution, müqavilənin başlanğıcı və xüsusi qaydalar yazılır. Adətən müddətsiz bağlanır; kirayəçi onu üç ay əvvəldən yazılı şəkildə ləğv edə bilər. İmzalamazdan əvvəl Staffelmiete, Indexmiete və təmir öhdəliklərinə diqqət edin.",
       de: "Im Mietvertrag stehen Miete, Nebenkostenvorauszahlung, Kaution, Mietbeginn und besondere Regeln. Meist ist er unbefristet; Mieter können ihn mit drei Monaten Frist schriftlich kündigen. Vor der Unterschrift lohnt ein Blick auf Staffel- oder Indexmiete und Renovierungsklauseln.",
       en: "The lease sets out the rent, service-charge advance, deposit, start date and special rules. It is usually open-ended; tenants can terminate it in writing with three months' notice. Before signing, check for graduated or index-linked rent and renovation clauses.",
       ru: "В Mietvertrag указаны аренда, аванс за Nebenkosten, залог, дата начала и особые правила. Обычно он бессрочный; арендатор может расторгнуть его письменно с уведомлением за три месяца. Перед подписанием проверьте условия о Staffelmiete, Indexmiete и ремонте.",

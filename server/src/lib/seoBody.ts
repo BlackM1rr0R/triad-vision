@@ -55,7 +55,7 @@ const L: Record<SeoLocale, Labels> = {
     nav: 'Əsas menyu', breadcrumb: 'Naviqasiya yolu', visas: 'Viza növləri', services: 'Xidmətlər', guides: 'Bələdçilər', news: 'Son xəbərlər',
     jobs: 'Açıq vakansiyalar', events: 'Yaxın tədbirlər', faq: 'Tez-tez verilən suallar', requirements: 'Tələblər', documents: 'Sənədlər',
     features: 'Nələr daxildir', steps: 'Necə işləyir', related: 'Digər bələdçilər', contents: 'Mündəricat', updated: 'Son yenilənmə',
-    cta: 'Pulsuz konsultasiya təyin edin', eligibility: 'Viza testindən keçin', languages: 'Dillər', phone: 'Telefon', email: 'E-poçt', hours: 'İş saatları', more: 'Ətraflı',
+    cta: 'Pulsuz məsləhətə yazılın', eligibility: 'Viza testindən keçin', languages: 'Dillər', phone: 'Telefon', email: 'E-poçt', hours: 'İş saatları', more: 'Ətraflı',
   },
   de: {
     nav: 'Hauptnavigation', breadcrumb: 'Brotkrümelnavigation', visas: 'Visumarten', services: 'Leistungen', guides: 'Ratgeber', news: 'Aktuelle News',

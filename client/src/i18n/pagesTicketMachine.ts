@@ -7,7 +7,7 @@
 const az = {
   ticket: {
     heroTitle: 'Bilet avtomatı simulyatoru',
-    heroSubtitle: 'Alman nəqliyyat avtomatında bilet almağı məşq edin: təyinat, tarif zonası, bilet növü, ödəniş və kompostlama — avtomat almanca, izah sizin dilinizdə.',
+    heroSubtitle: 'Alman nəqliyyat avtomatında bilet almağı məşq edin: hara getmək, tarif zonası, bilet növü, ödəniş və kompostlama. Avtomat almancadır, izahlar sizin dilinizdədir.',
     disclaimer: 'Təlim simulyasiyası: uydurma nəqliyyat birliyi (“Musterverbund”) və nümunə qiymətlər. Real avtomatlar, zonalar və qiymətlər hər operatorda fərqlidir; heç bir real ödəniş və ya kart məlumatı istifadə olunmur.',
     modeLabel: 'Rejim',
     modes: { free: 'Sərbəst məşq', tasks: 'Tapşırıqlar (xal)' },

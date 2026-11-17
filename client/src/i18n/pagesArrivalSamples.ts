@@ -18,7 +18,7 @@ const az = {
       anmeldung: 'Yaşayış yerinə köçdükdən sonra 2 həftə ərzində Bürgeramt-da (vətəndaş xidməti) qeydiyyatdan keçməlisiniz. Ev sahibi sizə «Wohnungsgeberbestätigung» (köçməni təsdiq edən forma) verməlidir. Qeydiyyatdan sonra «Meldebescheinigung» alırsınız və vergi nömrəsi poçtla gəlir.',
       bankkonto: 'Maaş üçün alman IBAN-ı lazımdır. Banklar adətən vizalı pasport və «Meldebescheinigung» istəyir; bəzi banklar hesabı onlayn video-identifikasiya ilə açır. AB-də qanuni yaşayan hər kəsin əsas hesab (Basiskonto) açmaq hüququ var.',
       krankenversicherung: 'Dövlət tibbi sığorta kassasını özünüz seçib işəgötürənə bildirin. İşə başladıqdan sonra 2 həftə ərzində seçməsəniz, işəgötürən sizi özü bir kassada qeydiyyata salır.',
-      'steuer-id': 'Ərizə lazım deyil: qeydiyyatdan (Anmeldung) sonra Federal Vergi İdarəsi (BZSt) 11 rəqəmli vergi nömrənizi məktubla göndərir — adətən bir neçə həftəyə (təxmini). Nömrəni işəgötürənə verin; onsuz işəgötürən vergini ən yüksək VI vergi sinfi ilə tutmalıdır.',
+      'steuer-id': 'Ərizə lazım deyil. Qeydiyyatdan (Anmeldung) sonra Federal Vergi İdarəsi (BZSt) 11 rəqəmli vergi nömrənizi məktubla göndərir. Bu adətən bir neçə həftə çəkir (təxmini). Nömrəni işəgötürənə verin; onsuz işəgötürən vergini ən yüksək VI vergi sinfi ilə tutmalıdır.',
     },
     common: {
       lastName: 'Soyadınız pasportdakı latın yazılışı ilə (məsələn MAMMADOV — «Məmmədov» deyil). Şübhə varsa, pasportun aşağıdakı maşınla oxunan sətirlərinə baxın.',

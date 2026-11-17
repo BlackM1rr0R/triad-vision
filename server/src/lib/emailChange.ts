@@ -24,7 +24,7 @@ const hashToken = (token: string) => crypto.createHash('sha256').update(token).d
 const TEXT: Record<Locale, { title: string; body: (to: string) => string; cta: string; infoTitle: string; info: (to: string) => string }> = {
   az: {
     title: 'Yeni e-poçt ünvanınızı təsdiqləyin',
-    body: (to) => `Triad Vision hesabınızın e-poçt ünvanını ${to} ilə əvəz etmək istədiniz. Dəyişikliyi tamamlamaq üçün aşağıdakı düyməyə klikləyin. Link 24 saat etibarlıdır.\n\nBu sorğunu siz göndərməmisinizsə, bu məktubu nəzərə almayın — ünvanınız dəyişməyəcək.`,
+    body: (to) => `Triad Vision hesabınızın e-poçt ünvanını ${to} ilə əvəz etmək istədiniz. Dəyişikliyi tamamlamaq üçün aşağıdakı düyməyə basın. Link 24 saat etibarlıdır.\n\nBu sorğunu siz göndərməmisinizsə, bu məktubu nəzərə almayın — ünvanınız dəyişməyəcək.`,
     cta: 'Yeni ünvanı təsdiqlə',
     infoTitle: 'E-poçt ünvanının dəyişdirilməsi tələb olundu',
     info: (to) => `Hesabınızın e-poçt ünvanını ${to} ilə əvəz etmək üçün sorğu göndərildi. Dəyişiklik yalnız yeni ünvana göndərilən link təsdiqləndikdən sonra qüvvəyə minir.\n\nBu siz deyilsinizsə, dərhal şifrənizi dəyişin və bizimlə əlaqə saxlayın.`,

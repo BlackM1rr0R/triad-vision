@@ -490,7 +490,7 @@ authRouter.delete('/sessions/:id', requireAuth, async (req, res) => {
 // ─── Password reset ────────────────────────────────────────────────────
 
 const RESET_TEXT = {
-  az: { title: 'Şifrənin bərpası', body: 'Şifrənizi yeniləmək üçün aşağıdakı düyməyə klikləyin. Link 1 saat etibarlıdır. Bu sorğunu siz göndərməmisinizsə, bu məktubu nəzərə almayın.', cta: 'Yeni şifrə təyin et' },
+  az: { title: 'Şifrənin bərpası', body: 'Şifrənizi yeniləmək üçün aşağıdakı düyməyə basın. Link 1 saat etibarlıdır. Bu sorğunu siz göndərməmisinizsə, bu məktubu nəzərə almayın.', cta: 'Yeni şifrə təyin et' },
   de: { title: 'Passwort zurücksetzen', body: 'Klicken Sie auf die Schaltfläche, um Ihr Passwort zurückzusetzen. Der Link ist 1 Stunde gültig. Falls Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.', cta: 'Neues Passwort festlegen' },
   en: { title: 'Reset your password', body: 'Click the button below to reset your password. The link is valid for 1 hour. If you did not request this, ignore this email.', cta: 'Set a new password' },
   ru: { title: 'Восстановление пароля', body: 'Нажмите кнопку ниже, чтобы сменить пароль. Ссылка действительна 1 час. Если вы не запрашивали восстановление, проигнорируйте это письмо.', cta: 'Задать новый пароль' },

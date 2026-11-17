@@ -38,7 +38,7 @@ const az = {
       regenerate: 'Yenidən yarat',
       save: 'Yadda saxla',
       saved: 'Profil yadda saxlanıldı.',
-      pdf: 'PDF yüklə',
+      pdf: 'PDF endir',
       propose: 'İşəgötürənə təqdim et',
       proposed: 'Profil paylaşıldı və namizəd işəgötürənə təqdim edildi.',
       proposeNeedsApp: 'Təqdim etmək üçün vakansiyaya müraciət lazımdır.',
@@ -113,7 +113,7 @@ const az = {
     },
     settings: {
       companyToggle: 'İşəgötürənlər AI vakansiya yazıcısından istifadə edə bilər',
-      saved: 'Ayar yadda saxlanıldı.',
+      saved: 'Parametr yadda saxlanıldı.',
     },
   },
 };

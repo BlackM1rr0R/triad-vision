@@ -42,7 +42,7 @@ const az = {
     detail: {
       remove: 'Sil',
       fromCaseBadge: 'Müraciətdən',
-      download: 'Yüklə',
+      download: 'Endir',
       address: 'Ünvan',
     },
     errors: {

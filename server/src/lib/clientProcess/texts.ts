@@ -89,7 +89,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     key: 'BRING_ORIGINALS',
     title: { az: 'Orijinal sənədləri ofisə gətirin', de: 'Bringen Sie die Originaldokumente ins Büro', en: 'Bring the original documents to the office', ru: 'Принесите оригиналы документов в офис' },
     description: {
-      az: 'Portalda "Ofisə gəliş təyin et" ilə özünüzə uyğun vaxt seçin.',
+      az: 'Kabinetdə "Ofisə gəliş təyin et" ilə özünüzə uyğun vaxt seçin.',
       de: 'Wählen Sie im Portal unter „Bürotermin buchen" einen passenden Termin.',
       en: 'Pick a time that suits you in the portal under "Book an office visit".',
       ru: 'Выберите удобное время в портале: «Записаться в офис».',
@@ -99,7 +99,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   // After the Anmeldung (lib/housing creates these automatically once the Meldebescheinigung is on file).
   {
     key: 'STEUER_ID',
-    title: { az: 'Steuer-ID məktubunu gözləyin və işəgötürənə verin', de: 'Steuer-ID abwarten und dem Arbeitgeber geben', en: 'Wait for your Steuer-ID and give it to your employer', ru: 'Дождитесь Steuer-ID и передайте его работодателю' },
+    title: { az: 'Steuer-ID (vergi nömrəsi) məktubunu gözləyin və işəgötürənə verin', de: 'Steuer-ID abwarten und dem Arbeitgeber geben', en: 'Wait for your Steuer-ID and give it to your employer', ru: 'Дождитесь Steuer-ID и передайте его работодателю' },
     description: {
       az: 'Anmeldung-dan sonra Bundeszentralamt für Steuern vergi identifikasiya nömrənizi (11 rəqəm) adətən bir neçə həftə ərzində poçtla göndərir. Nömrəni işəgötürənə verin. Məktub gəlməyibsə, Finanzamt-dan soruşun.',
       de: 'Nach der Anmeldung schickt das Bundeszentralamt für Steuern Ihre steuerliche Identifikationsnummer (11 Ziffern) in der Regel innerhalb einiger Wochen per Post. Geben Sie die Nummer Ihrem Arbeitgeber. Kommt kein Brief, fragen Sie beim Finanzamt nach.',
@@ -112,7 +112,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     key: 'BANK_ACCOUNT',
     title: { az: 'Almaniyada bank hesabı açın', de: 'Eröffnen Sie ein Girokonto in Deutschland', en: 'Open a German bank account', ru: 'Откройте банковский счёт в Германии' },
     description: {
-      az: 'Pasport və Meldebescheinigung ilə Girokonto açın. IBAN-ı işəgötürənə və tibbi sığorta kassasına bildirin.',
+      az: 'Pasport və Meldebescheinigung (qeydiyyat arayışı) ilə Girokonto (adi bank hesabı) açın. IBAN-ı işəgötürənə və tibbi sığorta kassasına bildirin.',
       de: 'Eröffnen Sie mit Reisepass und Meldebescheinigung ein Girokonto. Teilen Sie die IBAN Ihrem Arbeitgeber und Ihrer Krankenkasse mit.',
       en: 'Open a current account (Girokonto) with your passport and Meldebescheinigung. Give the IBAN to your employer and your health insurer.',
       ru: 'Откройте Girokonto с паспортом и Meldebescheinigung. Сообщите IBAN работодателю и больничной кассе.',

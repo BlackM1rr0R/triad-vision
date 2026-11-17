@@ -51,7 +51,7 @@ const az = {
     disclaimer: 'Sadələşdirilmiş aylıq təxmin (vergi və sığorta saytın maaş kalkulyatorunun alqoritmi ilə, BMF 2026). Əlavələr real görülən iş üçün, əsas maaşın üstündən ödənilməlidir. Vergi məsləhəti deyil.',
     faq: [
       { q: 'Gecə əlavəsi Almaniyada vergisizdirmi?', a: 'Bəli, əsas saatlıq maaşın 25%-inə qədər (20:00–6:00). İş gecəyarısından əvvəl başlayıbsa, 0:00–4:00 arası 40%-ə qədər. Əsas maaş vergi üçün ən çox 50 €/saat götürülür.' },
-      { q: 'Bazar və bayram işinə nə qədər vergisiz əlavə olur?', a: 'Bazar günü 50%, bayramlar və 31 dekabr saat 14:00-dan 125%, 24 dekabr saat 14:00-dan, 25–26 dekabr və 1 May 150% — əsas maaşa görə.' },
+      { q: 'Bazar və bayram işinə nə qədər vergisiz əlavə olur?', a: 'Əsas maaşa görə: bazar günü 50%; bayramlar və 31 dekabr saat 14:00-dan 125%; 24 dekabr saat 14:00-dan, 25–26 dekabr və 1 May 150%.' },
       { q: 'Əlavələrdən sosial sığorta tutulurmu?', a: 'Vergisiz əlavələr əsas saatlıq maaş 25 €-ya qədər olduqda sığorta haqqından da azaddır. Yuxarı hissə üçün sığorta haqqı ödənilir.' },
     ],
   },

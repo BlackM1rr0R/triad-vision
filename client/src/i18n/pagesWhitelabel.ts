@@ -19,7 +19,7 @@ const az = {
       shortName: 'Qısa ad (ikon altında, maks. 30 simvol)',
       tagline: 'Şüar (loqonun altında)',
       legalName: 'Hüquqi şəxs',
-      legalNameHint: 'İmpressum və müqavilələr Admin → Hüquqi məlumatlar bölməsindəki şirkət məlumatlarından gəlir.',
+      legalNameHint: 'Impressum və müqavilələr Admin → Hüquqi məlumatlar bölməsindəki şirkət məlumatlarından gəlir.',
       description: 'Qısa təsvir (quraşdırılan tətbiq, axtarış)',
       footerText: 'E-poçt altlığı (boş: ad · domen · telefon)',
       contact: 'Əlaqə',

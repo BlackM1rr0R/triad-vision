@@ -353,7 +353,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
         ],
         tips: [
           'Final qovluqlar və «legal hold» olanlar heç vaxt arxivə və ya zibilə atılmır; qovluğu «Saxla (legal hold)» ilə qoruyun.',
-          'Drive silinmə müddəti Ayarlardakı sənəd saxlama müddətindən qısa olmamalıdır.',
+          'Drive silinmə müddəti Parametrlərdəki sənəd saxlama müddətindən qısa olmamalıdır.',
         ],
       },
       ru: {
@@ -409,7 +409,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
           'Köhnə söhbətlərə «Söhbətlər» siyahısından qayıdın, yenisi üçün «Yeni söhbət» basın.',
         ],
         tips: [
-          'Model və xərc limitləri «Ayarlar» düyməsi ilə açılan AI ayarlarındadır; e-poçt təhlili qaydaları ayrıca düymədədir.',
+          'Model və xərc limitləri «Parametrlər» düyməsi ilə açılan AI parametrlərindədir; e-poçt təhlili qaydaları ayrıca düymədədir.',
           'AI səhv edə bilər — nəticələri yoxlayın. Bölmə «AI köməkçi» modulu söndürüləndə gizlənir.',
         ],
       },
@@ -458,7 +458,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     route: 'ai/settings',
     text: {
       az: {
-        title: 'AI ayarları',
+        title: 'AI parametrləri',
         purpose: 'AI köməkçinin modelləri, OpenRouter açarı, xərc limitləri və istifadə statistikası. Yalnız Super admin üçündür.',
         steps: [
           'Yuxarıda «Bu ay xərclənib» və «Açarda qalan kredit» göstəricilərini yoxlayın.',
@@ -572,7 +572,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     route: 'settings',
     text: {
       az: {
-        title: 'Ayarlar',
+        title: 'Parametrlər',
         purpose: 'Saytın və panelin əsas parametrləri: əlaqə məlumatları və ofislər, sosial şəbəkələr, avtomatik təyinat, «Almaniyada həyat» rəqəmləri, Impressum, məxfilik siyasəti və DSGVO saxlama müddətləri. Administrator və Super admin üçündür.',
         steps: [
           '«Əlaqə məlumatları» və «Sosial şəbəkələr» bölmələrində telefon, e-poçt, ofisləri və linkləri yeniləyin.',
@@ -691,7 +691,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     text: {
       az: {
         title: 'TV rejimi',
-        purpose: 'Ofisdəki divar televizoru üçün ekran: bu günün görüşləri, yeni müraciətlər, gözləyən işlər, təsdiqlənən vizalar və gəlişlər. Burada TV keçidləri və ekran ayarları idarə olunur. Administrator və Super admin üçündür.',
+        purpose: 'Ofisdəki divar televizoru üçün ekran: bu günün görüşləri, yeni müraciətlər, gözləyən işlər, təsdiqlənən vizalar və gəlişlər. Burada TV keçidləri və ekran parametrləri idarə olunur. Administrator və Super admin üçündür.',
         steps: [
           '«TV ekranları» bölməsində TV-yə ad verib «Keçid yarat» basın; keçidi TV brauzerində açın və ya QR kodu skan edin.',
           'Göstəriləcək panelləri seçin və sıralayın, səhifə dəyişmə müddətini, «Viza gəldi!» bayramını və səsi təyin edib «Yadda saxla» basın.',
@@ -862,7 +862,7 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Problem bildirişləri',
-        purpose: 'Saytdan, kabinetlərdən və admin paneldən gələn problem bildirişləri; hər biri üçün komanda tapşırığı yaradılır. Administratorlar və ayarlarda seçilmiş əməkdaş görür.',
+        purpose: 'Saytdan, kabinetlərdən və admin paneldən gələn problem bildirişləri; hər biri üçün komanda tapşırığı yaradılır. Administratorlar və parametrlərdə seçilmiş əməkdaş görür.',
         steps: [
           'Siyahını status (Yeni, İcrada, Həll olunub, Düzəldilməyəcək) üzrə süzün və ya mətn və səhifə üzrə axtarın.',
           'Bildirişi açın: səhifəni, brauzeri, ekran görüntüsünü və konsol xətalarını yoxlayın, əlaqəli tapşırığa keçin.',

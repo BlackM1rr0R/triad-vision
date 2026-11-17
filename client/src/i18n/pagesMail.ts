@@ -65,7 +65,7 @@ const az = {
       notSpam: 'Spam deyil',
       showImages: 'Şəkilləri göstər',
       imagesBlocked: 'Kənar şəkillər gizlədilib',
-      download: 'Yüklə',
+      download: 'Endir',
       more: 'Daha çox',
       close: 'Bağla',
       cancel: 'Ləğv et',

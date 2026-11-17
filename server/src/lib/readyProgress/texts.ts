@@ -35,7 +35,7 @@ export const READY_TEXTS: Record<ReadyLocale, ReadyCertTexts> = {
     team: 'Triad Vision komandası',
     note: 'Təcrübə nailiyyətləri — rəsmi imtahan və ya dil sertifikatı deyil. Nəticələri iştirakçı özü onlayn məşqlərdə əldə edib.',
     notifyTitle: '«Germany Ready» sertifikatınız hazırdır',
-    notifyBody: (l) => `Təbrik edirik! Təcrübə nailiyyətləriniz «${l}» səviyyəsinə çatdı. Sertifikatı portalda yükləyə bilərsiniz.`,
+    notifyBody: (l) => `Təbrik edirik! Təcrübə nailiyyətləriniz «${l}» səviyyəsinə çatdı. Sertifikatı kabinetdə endirə bilərsiniz.`,
   },
   de: {
     kicker: 'Praxis-Erfolge',

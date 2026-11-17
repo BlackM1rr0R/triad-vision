@@ -21,7 +21,7 @@ const az = {
       rotatedOk: 'Yeni link yaradıldı — köhnəsi artıq işləmir',
       offOk: 'Təqvim söndürüldü',
       howTitle: 'Necə qoşulmaq olar?',
-      iphone: 'iPhone / iPad: «Təqvim tətbiqində aç» düyməsinə toxunun və «Abunə ol» seçin.',
+      iphone: 'iPhone / iPad: «Təqvim tətbiqində aç» düyməsinə basın və «Abunə ol» seçin.',
       android: 'Android / Google Təqvim: linki kopyalayın, kompüterdə calendar.google.com açın → «Digər təqvimlər» yanında «+» → «URL ilə» → linki yapışdırın. Bir neçə dəqiqəyə telefonda da görünəcək.',
       outlook: 'Outlook: «Təqvim əlavə et» → «İnternetdən abunə ol» → linki yapışdırın.',
       privacy: 'Bu link sizin şəxsi açarınızdır — başqası ilə paylaşmayın. Təsadüfən paylaşsanız, «Yeni link yarat» düyməsini basın.',

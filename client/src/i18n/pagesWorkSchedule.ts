@@ -6,7 +6,7 @@
 const az = {
   workSchedule: {
     heroTitle: 'İş qrafikim qanunidirmi? (ArbZG yoxlaması)',
-    heroSubtitle: 'Tibb bacıları, baxıcılar, aşpazlar və növbəli işçilər üçün: həftəlik növbə planınızı daxil edin — alman iş vaxtı qanunu üzrə gündəlik iş vaxtı, fasilələr, istirahət, gecə və bazar işi yoxlanılır.',
+    heroSubtitle: 'Tibb bacıları, baxıcılar, aşpazlar və növbəli işçilər üçün. Həftəlik növbə planınızı yazın. Alman iş vaxtı qanunu üzrə iş vaxtı, fasilələr, istirahət, gecə və bazar işi yoxlanılır.',
     presets: { title: 'Nümunələr', nurse: 'Tibb bacısı (növbəli)', cook: 'Aşpaz (restoran)', quickReturn: 'Axşamdan səhərə növbə' },
     weekdays: ['Bazar ertəsi', 'Çərşənbə axşamı', 'Çərşənbə', 'Cümə axşamı', 'Cümə', 'Şənbə', 'Bazar'],
     dayWeek: '{{day}}, {{week}}-ci həftə',
@@ -45,7 +45,7 @@ const az = {
       night8: 'Gecə növbəsi 8 saatdan {{m}} saat çox: yalnız bir ay / 4 həftə ərzində orta 8 saat olarsa.',
       break: 'Fasilə {{m}} saat qısadır (6 saatdan çox işdə 30 dəq, 9 saatdan çox işdə 45 dəq).',
       rest: 'Növbələr arasında istirahət {{m}} saat qısadır (ən azı 11 saat lazımdır).',
-      restReduced: 'İstirahət 11 saatdan {{m}} saat azdır: xəstəxana, qulluq və restoranlarda 10 saata qədər icazəlidir, əgər bir ay / 4 həftə ərzində başqa istirahət ən azı 12 saata uzadılarsa.',
+      restReduced: 'İstirahət 11 saatdan {{m}} saat azdır. Xəstəxana, qulluq və restoranlarda 10 saata qədər icazəlidir. Şərt: bir ay / 4 həftə ərzində başqa bir istirahət ən azı 12 saata uzadılmalıdır.',
       restCompensation: 'Planda ən azı 12 saatlıq kompensasiya istirahəti görünmür — qısaldılmış istirahət üçün lazımdır.',
       weekly60: 'Həftəlik iş vaxtı 60 saatı {{m}} saat aşır — gündə 10 saat limiti ilə mümkün deyil.',
       weekly48: 'Həftəlik iş vaxtı 48 saatı {{m}} saat aşır: 24 həftə ərzində orta 48 saata (gündə 8 saat) endirilməlidir.',

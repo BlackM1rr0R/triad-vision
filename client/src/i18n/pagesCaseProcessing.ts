@@ -22,7 +22,7 @@ const az = {
     allStages: 'Bütün mərhələlər',
     movedBy: '{{name}} · {{date}}',
     assignedTo: 'Növbəti addım: {{name}}',
-    waitingYou: '{{name}} bunu sənə göndərib',
+    waitingYou: '{{name}} bunu sizə göndərib',
     move: 'Mərhələni dəyiş',
     moveTo: '«{{stage}}»-ə keçir',
     moveTitle: 'Sənəd işi: mərhələni dəyiş',
@@ -88,7 +88,7 @@ const az = {
       basisCreated: 'Açılma tarixi',
       basisDecision: 'Qərar tarixi',
       allCases: 'Partnyorsuz müraciətlər də',
-      csv: 'CSV yüklə',
+      csv: 'CSV endir',
       th: { partner: 'Partnyor', company: 'Şirkət', cases: 'Müraciət', active: 'Aktiv', visas: 'Viza', refusals: 'Rədd', cancelled: 'Ləğv', rate: 'Rədd faizi' },
       noPartner: 'Partnyorsuz',
       noCompany: 'Şirkətsiz',
@@ -105,7 +105,7 @@ const az = {
   },
   today: {
     kind: { processing: 'Sənəd işi' },
-    note: { processing: '{{by}} sənə «{{stage}}» göndərdi' },
+    note: { processing: '{{by}} sizə «{{stage}}» göndərdi' },
   },
   admin: {
     labels: { event: { PROCESSING_STAGE: 'Sənəd işi: mərhələ dəyişdi' } },

@@ -177,7 +177,7 @@ const az: typeof de = {
       waitingYou: 'Müqavilə hazırdır və imzanızı gözləyir.',
       completed: 'AVV hər iki tərəf tərəfindən imzalanıb.',
       completedAt: '{{date}} tarixində tamamlanıb',
-      download: 'İmzalanmış müqaviləni yüklə',
+      download: 'İmzalı müqaviləni endir',
       history: 'Əvvəlki versiyalar',
       status: { DRAFT: 'Qaralama', SENT: 'İmzada', COMPLETED: 'Tamamlanıb', CANCELLED: 'Əvəz olunub / ləğv' },
       unavailable: 'Məlumatların emalı müqaviləsi tezliklə portalda olacaq.',

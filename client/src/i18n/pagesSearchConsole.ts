@@ -26,7 +26,7 @@ const az = {
       steps: [
         'Google Cloud Console-da layihə yaradın (və ya mövcud olanı seçin), "Google Search Console API"-ni aktiv edin.',
         'IAM → Service Accounts → xidmət hesabı yaradın və JSON açarı yükləyin.',
-        'Search Console → Ayarlar → İstifadəçilər və icazələr → İstifadəçi əlavə edin: xidmət hesabının e-poçtu, icazə "Məhdud" kifayətdir.',
+        'Search Console → Parametrlər → İstifadəçilər və icazələr → İstifadəçi əlavə edin: xidmət hesabının e-poçtu, icazə "Məhdud" kifayətdir.',
         'Serverin .env faylına GSC_SERVICE_ACCOUNT_JSON (JSON açarın məzmunu, olduğu kimi və ya base64) və GSC_SITE_URL (məs. sc-domain:triad-vision.de) əlavə edin və API-ni yenidən başladın.',
       ],
       reason: {

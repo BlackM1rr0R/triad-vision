@@ -166,7 +166,7 @@ const inviteInput = z.object({
 });
 
 const INVITE_TEXT: Record<Locale, { title: string; body: (company: string) => string; cta: string }> = {
-  az: { title: 'Triad Vision işəgötürən kabinetinə dəvət', body: (c) => `${c} üçün Triad Vision işəgötürən kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`, cta: 'Şifrəni təyin et' },
+  az: { title: 'Triad Vision işəgötürən kabinetinə dəvət', body: (c) => `${c} üçün Triad Vision işəgötürən kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`, cta: 'Şifrəni təyin et' },
   de: { title: 'Einladung zum Triad-Vision-Arbeitgeberportal', body: (c) => `Für ${c} wurde ein Zugang zum Triad-Vision-Arbeitgeberportal angelegt. Klicken Sie auf die Schaltfläche, um Ihr Passwort festzulegen. Der Link ist 7 Tage gültig.`, cta: 'Passwort festlegen' },
   en: { title: 'Invitation to the Triad Vision employer portal', body: (c) => `An employer portal account was created for ${c}. Click the button below to set your password. The link is valid for 7 days.`, cta: 'Set your password' },
   ru: { title: 'Приглашение в кабинет работодателя Triad Vision', body: (c) => `Для ${c} создан доступ в кабинет работодателя Triad Vision. Нажмите кнопку ниже, чтобы задать пароль. Ссылка действительна 7 дней.`, cta: 'Задать пароль' },

@@ -80,7 +80,7 @@ const az = {
       kpi: { title: 'KPI', desc: 'Əməkdaş göstəriciləri və reytinq.' },
       examDates: { title: 'İmtahan tarixləri', desc: 'Alman dili imtahan tarixləri.' },
       journey: { title: 'Müştəri yolu', desc: 'Müştərinin mərhələlər üzrə yolu.' },
-      bookings: { title: 'Görüş sifarişləri', desc: 'Onlayn konsultasiya qeydiyyatı.' },
+      bookings: { title: 'Görüş sifarişləri', desc: 'Onlayn məsləhət qeydiyyatı.' },
       knowledgeBase: { title: 'Bilik bazası', desc: 'Daxili məqalələr və təlimatlar.' },
       quotes: { title: 'Təkliflər', desc: 'İşəgötürənlərə qiymət təklifləri (Angebot).' },
       checkIns: { title: 'Gəlişdən sonrakı yoxlamalar', desc: 'Gəlişdən sonra sorğular və işdən çıxma riski.' },

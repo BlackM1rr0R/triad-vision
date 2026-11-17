@@ -71,8 +71,8 @@ export const eventTexts: Record<
     }),
     cancelled: (c) => ({
       title: `Tədbir ləğv edildi: ${c.title}`,
-      body: join(`Salam, ${c.name}!`, `Təəssüf ki, "${c.title}" tədbiri (${c.when.split('\n')[0]}) ləğv edildi.`, 'Növbəti tədbirlərə saytımızda baxa və ya pulsuz konsultasiya təyin edə bilərsiniz.'),
-      cta: 'Pulsuz konsultasiya',
+      body: join(`Salam, ${c.name}!`, `Təəssüf ki, "${c.title}" tədbiri (${c.when.split('\n')[0]}) ləğv edildi.`, 'Növbəti tədbirlərə saytımızda baxa və ya pulsuz məsləhətə yazıla bilərsiniz.'),
+      cta: 'Pulsuz məsləhət',
     }),
     followUp: (c) => ({
       title: `İştirakınız üçün təşəkkürlər — ${c.title}`,
@@ -81,9 +81,9 @@ export const eventTexts: Record<
         `"${c.title}" tədbirində iştirak etdiyiniz üçün təşəkkür edirik.`,
         c.note,
         line('Tədbirin video yazısı', c.recordingUrl),
-        'Növbəti addım: şəxsi vəziyyətinizi müzakirə etmək üçün pulsuz konsultasiya təyin edin — sizə uyğun viza yolunu və müddətləri birlikdə dəqiqləşdirək.',
+        'Növbəti addım: şəxsi vəziyyətinizi müzakirə etmək üçün pulsuz məsləhətə yazılın — sizə uyğun viza yolunu və müddətləri birlikdə dəqiqləşdirək.',
       ),
-      cta: 'Pulsuz konsultasiya təyin et',
+      cta: 'Pulsuz məsləhətə yazıl',
     }),
     whereLabel: (online) => (online ? 'Onlayn (Jitsi)' : 'Ofis'),
     icsDescription: (c) => join(c.title, c.online ? `Link: ${c.where}` : `Ünvan: ${c.where}`, c.eventUrl),

@@ -54,7 +54,7 @@ const az = {
     ph: {
       title: 'Nə edilməlidir?',
       description: 'Ətraflı yazın: kontekst, linklər, gözlənilən nəticə…',
-      noDescription: 'Təsvir yoxdur. Əlavə etmək üçün klikləyin.',
+      noDescription: 'Təsvir yoxdur. Əlavə etmək üçün basın.',
       checklist: 'Addım əlavə edin və Enter basın',
       comment: 'Şərh yazın… Kimisə qeyd etmək üçün @ yazın',
       searchPeople: 'Ad ilə axtarın…',

@@ -109,7 +109,7 @@ export const POCKET_TEXT = (f: PocketFacts): Record<PocketLocale, PocketText> =>
         'Bank hesabı (Girokonto): maaş üçün lazımdır; IBAN-ı işəgötürənə bildirin.',
         'Steuer-ID: qeydiyyatdan bir neçə həftə sonra poçtla gəlir — işəgötürənə verin. Gəlməyibsə, BZSt-dən soruşun.',
         'Sosial sığorta nömrəsi: adətən Krankenkasse/işəgötürən vasitəsilə, Deutsche Rentenversicherung poçtla göndərir.',
-        'Vizanın bitmə tarixini yoxlayın və Ausländerbehörde-də yaşayış icazəsi üçün vaxtında termin alın.',
+        'Vizanın bitmə tarixini yoxlayın və Ausländerbehörde-də yaşayış icazəsi üçün vaxtında görüş vaxtı (Termin) alın.',
         `Rundfunkbeitrag: mənzil üçün ayda ${f.rundfunk} — mənzildə heç kim ödəmirsə, qeydiyyatdan keçin.`,
         'SIM kart (şəxsiyyət yoxlaması ilə), şəxsi məsuliyyət sığortası (Haftpflicht) tövsiyə olunur.',
       ],
@@ -157,7 +157,7 @@ export const POCKET_TEXT = (f: PocketFacts): Record<PocketLocale, PocketText> =>
       title: 'Həkim və aptek',
       items: [
         'Əvvəlcə ailə həkimi (Hausarzt) seçin; sığorta kartını (eGK) həmişə özünüzlə götürün.',
-        'Həkim termini: telefonla, onlayn və ya 116 117 xidməti ilə.',
+        'Həkimə görüş vaxtı (Termin): telefonla, onlayn və ya 116 117 xidməti ilə.',
         'Resept: aptekdə dərman üçün adətən 10 % ödəyirsiniz — ən azı 5 €, ən çox 10 €.',
         'Növbətçi aptek: hər aptekin qapısında göstərilir.',
         'Ağır hallarda — 112 və ya xəstəxananın Notaufnahme şöbəsi.',

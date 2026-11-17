@@ -1459,7 +1459,7 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
   '/booking': {
     name: { az: 'Görüş təyin et', de: 'Termin buchen', en: 'Book a call', ru: 'Запись', tr: 'Görüşme planla', uk: 'Запис' },
     title: {
-      az: 'Konsultasiya üçün görüş təyin et',
+      az: 'Məsləhət üçün görüş təyin et',
       de: 'Beratungstermin buchen',
       en: 'Book a consultation',
       ru: 'Записаться на консультацию',
@@ -1467,7 +1467,7 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Записатися на консультацію',
     },
     description: {
-      az: 'Komandamızla pulsuz onlayn konsultasiya üçün sizə uyğun vaxtı seçin — Almaniyada iş, viza, sənədlər və növbəti addımlar barədə danışaq.',
+      az: 'Komandamızla pulsuz onlayn məsləhət üçün sizə uyğun vaxtı seçin — Almaniyada iş, viza, sənədlər və növbəti addımlar barədə danışaq.',
       de: 'Wählen Sie einen passenden Termin für ein kostenloses Online-Gespräch mit unserem Team zu Job, Visum, Anerkennung und Dokumenten.',
       en: 'Pick a time for a free online consultation with our team about jobs in Germany, visas, documents and your next steps — in your language.',
       ru: 'Выберите удобное время для бесплатной онлайн-консультации с нашей командой о работе в Германии, визе, документах и следующих шагах.',

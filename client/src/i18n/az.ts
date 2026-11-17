@@ -54,7 +54,7 @@ const az = {
     close: 'Bağla',
     required: 'Mütləqdir',
     optional: 'İstəyə bağlı',
-    download: 'Yüklə',
+    download: 'Endir',
     open: 'Aç',
     delete: 'Sil',
     readMore: 'Davamını oxu',
@@ -65,7 +65,7 @@ const az = {
     title1: 'Güvənilir işçi təminatı',
     title2: 'və viza həlləri',
     subtitle:
-      '{{brand}} — Almaniyada fəaliyyət göstərən şirkətlər üçün Azərbaycandan ixtisaslı və motivasiyalı işçi qüvvəsinin seçimi, viza prosesi və inteqrasiya üzrə tam dəstək göstərir.',
+      '{{brand}} Almaniyadakı şirkətlər üçün Azərbaycandan ixtisaslı və motivasiyalı işçilər seçir. Viza prosesində və uyğunlaşmada da tam dəstək veririk.',
     ctaPrimary: 'Əməkdaşlıq təklifi göndərin',
     ctaSecondary: 'Viza üçün müraciət',
     bullets: [
@@ -366,7 +366,7 @@ const az = {
       otherFiles: 'Sizin üçün fayllar',
       tooLarge: 'Fayl çox böyükdür (maks. 5 MB).',
       badType: 'Bu fayl növü qəbul edilmir.',
-      drop: 'Faylı bura sürükləyin və ya seçmək üçün klikləyin',
+      drop: 'Faylı bura sürükləyin və ya seçmək üçün basın',
       uploaded: 'Fayl yükləndi',
       deleteConfirm: 'Bu faylı silmək istəyirsiniz?',
       missingList: 'Hələ yüklənməyib:',

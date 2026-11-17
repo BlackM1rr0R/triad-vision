@@ -75,7 +75,7 @@ const T: Record<Locale, Texts> = {
     overdueTitle: (p) => `Son tarix keçib: ${p.worker} (${p.number})`,
     overdueBody: (p) => `${p.what} — son tarix ${p.date} idi. Zəhmət olmasa vəziyyəti yoxlayın və tarixi yeniləyin.`,
     clientStatusTitle: 'Diplomunuzun tanınması: yeni status',
-    clientStatusBody: (p) => `Salam, ${p.firstName}! ${p.procedure}: status indi “${p.status}”. Ətraflı məlumat portalda.`,
+    clientStatusBody: (p) => `Salam, ${p.firstName}! ${p.procedure}: status indi “${p.status}”. Ətraflı məlumat kabinetdə.`,
     clientCta: 'Müraciətə bax',
     employerAgreementTitle: (p) => `Sürətləndirilmiş prosedur (§ 81a): ${p.worker}`,
     employerAgreementBody: (p) => `${p.worker} (${p.number}) üçün sürətləndirilmiş prosedura başladıq. Növbəti addım: Ausländerbehörde ilə razılaşmanın (Vereinbarung) imzalanması — sənədi sizə hazırlayırıq.`,

@@ -177,8 +177,8 @@ export const TERMS_DEFAULTS: ReferralTerms = {
   updatedAt: '',
   body: {
     az: [
-      '1. Kim iştirak edə bilər. Triad Vision portalında qeydiyyatdan keçmiş hər müştəri öz şəxsi linki ilə dostlarını dəvət edə bilər.',
-      '2. Mükafat. Mükafatın məbləği, növü (endirim və ya ödəniş) və nə vaxt qazanıldığı portalda göstərilən aktual qaydalara görədir. Qaydalar dəvət olunanın qeydiyyat anında qüvvədə olan qaydalardır.',
+      '1. Kim iştirak edə bilər. Triad Vision kabinetində qeydiyyatdan keçmiş hər müştəri öz şəxsi linki ilə dostlarını dəvət edə bilər.',
+      '2. Mükafat. Mükafatın məbləği, növü (endirim və ya ödəniş) və nə vaxt qazanıldığı kabinetdə göstərilən aktual qaydalara görədir. Qaydalar dəvət olunanın qeydiyyat anında qüvvədə olan qaydalardır.',
       '3. Müddət. Dəvət olunan şəxs linklə qeydiyyatdan keçdikdən sonra 12 ay ərzində müvafiq mərhələyə çatmalıdır; əks halda mükafat ləğv edilə bilər.',
       '4. Limitlər. Hər dəvət olunan şəxs üçün yalnız bir mükafat verilir. Endirim yalnız Triad Vision xidmət haqqına tətbiq olunur və nağd pula çevrilmir.',
       '5. Ləğv. Triad Vision proqramı istənilən vaxt dəyişə və ya dayandıra bilər; artıq qazanılmış mükafatlar qorunur.',

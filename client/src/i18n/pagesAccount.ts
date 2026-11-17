@@ -127,11 +127,11 @@ const az = {
         contract: [
           'Müqaviləni diqqətlə oxuyun; sualınız varsa, imzadan əvvəl menecerə yazın.',
           'Adınızı pasportdakı kimi latın hərfləri ilə yazın.',
-          'İmzalanmış PDF-i yükləyib saxlayın — səfirlik üçün lazım olacaq.',
+          'İmzalanmış PDF-i endirib saxlayın — səfirlik üçün lazım olacaq.',
         ],
         embassy: [
           'Səfirliyin tələb etdiyi sənəd paketini hazırlayıb sizə veririk; müraciəti səfirliyə özünüz edirsiniz, görüş vaxtını və qərarı səfirlik özü bildirir.',
-          'VIDEX viza ərizəsini onlayn doldurub çap edin.',
+          'VIDEX-də (səfirliyin onlayn viza anketi) ərizəni doldurub çap edin.',
           'Viza müddətini əhatə edən tibbi sığorta alın.',
           'Tərcümə tələb olunan sənədlər üçün andlı tərcüməçiyə əvvəlcədən müraciət edin.',
           'Bütün orijinalları bir qovluqda toplayın.',
@@ -251,14 +251,14 @@ const az = {
         fix: 'Zəhmət olmasa qeyd olunan sahələri düzəldin.',
       },
       notif: {
-        title: 'Bildiriş ayarları',
+        title: 'Bildiriş parametrləri',
         text: 'Kabinetdəki bildirişlər həmişə saxlanılır. E-poçt və push bildirişlərini burada idarə edin.',
         email: 'E-poçt bildirişləri',
         emailHint: 'Müraciətinizdəki vacib dəyişikliklər barədə məktublar',
         push: 'Push bildirişləri',
         pushHint: 'Mobil tətbiqdə telefonunuza bildirişlər',
         languageHint: 'Məktublar və bildirişlər bu dildə göndəriləcək.',
-        saved: 'Ayarlar yadda saxlanıldı.',
+        saved: 'Parametrlər yadda saxlanıldı.',
         warning: 'E-poçt bildirişlərini söndürsəniz, vacib addımları qaçırmamaq üçün kabinetə müntəzəm baxın.',
       },
       security: {
@@ -285,7 +285,7 @@ const az = {
       privacy: {
         exportTitle: 'Məlumatlarımı yüklə',
         exportText: 'Profiliniz, müraciətləriniz, yazışmalar və sənədlərin siyahısı JSON faylında. Faylların özü daxil deyil — onları müraciət səhifəsindən yükləyə bilərsiniz.',
-        export: 'Faylı yüklə',
+        export: 'Faylı endir',
         deleteTitle: 'Hesabın silinməsi',
         deleteText: 'Sorğu göndərdikdən sonra əməkdaşımız sizinlə əlaqə saxlayacaq. Hesab avtomatik silinmir: aktiv müraciət varsa, əvvəlcə onun taleyi razılaşdırılır. Qanunla saxlanmalı olan məlumatlar (məs. imzalı müqavilə) müəyyən müddət saxlanıla bilər.',
         deleteBtn: 'Silinmə sorğusu göndər',

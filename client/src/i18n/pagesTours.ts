@@ -12,7 +12,7 @@ const az = {
       admin: {
         myday: { title: 'Bu günüm', text: 'Gününüz buradan başlayır: bu gün nə vacibdir, kim cavab gözləyir və hansı müddətlər yaxınlaşır.' },
         cmdk: { title: 'Hər şeyi tapın: Ctrl+K', text: 'Ctrl+K (Mac-da ⌘K) və ya / ilə axtarışı açın: müştəri, iş, səhifə və ya əmr — adın bir hissəsini yazmaq kifayətdir.' },
-        cases: { title: 'Müraciətlər', text: 'Sətrə klikləyin — iş səhifəni tərk etmədən yan paneldə açılır. Paneldəki oxlarla növbəti işə keçin, Esc ilə bağlayın.' },
+        cases: { title: 'Müraciətlər', text: 'Sətrə basın — iş səhifəni tərk etmədən yan paneldə açılır. Paneldəki oxlarla növbəti işə keçin, Esc ilə bağlayın.' },
         review: { title: 'Yoxlama rejimi', text: 'Yüklənmiş sənədlər bir növbədə: baxın, qəbul edin və ya səbəb yazıb geri qaytarın. J / K — növbəti / əvvəlki, A — qəbul, R — geri qaytar.' },
         drive: { title: 'Disk', text: 'Komanda sənədləri, müştəri qovluqları və şablonlar Diskdədir. İş sahəsinin öz qısa turu da var.' },
         help: { title: 'Kömək', text: 'Hər səhifənin təlimatı buradadır. Bu turu da istənilən vaxt buradan yenidən başlada bilərsiniz.' },

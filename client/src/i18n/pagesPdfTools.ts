@@ -127,7 +127,7 @@ const az = {
       next: 'Növbəti səhifə',
     },
     redact: {
-      hint: 'Gizlədiləcək sahələri siçanla çəkin. Sahəni silmək üçün üzərinə iki dəfə klikləyin.',
+      hint: 'Gizlədiləcək sahələri siçanla çəkin. Sahəni silmək üçün üzərinə iki dəfə basın.',
       warn: 'Gizlədilmiş səhifələr şəkilə çevrilir və onlarda mətn seçilə/axtarıla bilməz. Gizlədilən məlumat fayldan tamamilə silinir. Digər səhifələr dəyişmir.',
       boxes: '{{count}} sahə, {{pages}} səhifədə',
       clear: 'Bu səhifədəki sahələri sil',
@@ -137,7 +137,7 @@ const az = {
     },
     stamp: {
       library: 'Möhürlər və imzalar',
-      hint: 'Möhürü seçin və səhifəyə klikləyin; sonra sürükləyib küncündən ölçüsünü dəyişin.',
+      hint: 'Möhürü seçin və səhifəyə basın; sonra sürükləyib küncündən ölçüsünü dəyişin.',
       upload: 'PNG yüklə',
       draw: 'İmza çək',
       drawHint: 'Siçan və ya barmaqla imza atın',

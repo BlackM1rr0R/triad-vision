@@ -59,7 +59,7 @@ const az = {
       attemptsLeft: '{{count}} cəhd qalıb',
       document: 'Sənəd',
       open: 'PDF-i aç',
-      download: 'Yüklə',
+      download: 'Endir',
       readFirst: 'İmzalamazdan əvvəl sənədi açın və tam oxuyun.',
       parties: 'Tərəflər',
       you: 'siz',

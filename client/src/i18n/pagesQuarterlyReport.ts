@@ -24,7 +24,7 @@ const az = {
     langs: { az: 'Azərbaycanca', en: 'İngiliscə', de: 'Almanca' },
     saveIntro: 'Girişi yadda saxla',
     saved: 'Yadda saxlanıldı',
-    download: 'PDF yüklə',
+    download: 'PDF endir',
     published: 'Dərc olunub',
     draft: 'Dərc olunmayıb',
     publish: 'Dərc et (/reports)',

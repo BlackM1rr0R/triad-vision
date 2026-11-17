@@ -62,7 +62,7 @@ const az = {
     },
     how: {
       title: 'Bal necə hesablanır?',
-      text: 'Bal beş hissədən ibarətdir: dil 30%, sənədlər 25%, peşə və CV 20%, mənzil 15%, pul 10%. Məlumatlar portaldakı öz göstəricilərinizdən götürülür (dil səviyyəsi və imtahanlar, müraciətin sənədləri, CV, tanınma, mənzil və Anmeldung). Bu, istiqamət üçündür — vizaya zəmanət deyil.',
+      text: 'Bal beş hissədən ibarətdir: dil 30%, sənədlər 25%, peşə və CV 20%, mənzil 15%, pul 10%. Məlumatlar kabinetdəki öz göstəricilərinizdən götürülür (dil səviyyəsi və imtahanlar, müraciətin sənədləri, CV, tanınma, mənzil və Anmeldung). Bu, istiqamət üçündür — vizaya zəmanət deyil.',
     },
     wallpaper: 'Təcili yardım ekran şəkli yaradın',
     error: 'Balı yükləmək alınmadı.',

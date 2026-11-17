@@ -83,7 +83,7 @@ const az = {
         license: 'Lisenziya etibarlıdır',
         brand: 'Brend adı təyin edilib',
         logo: 'Loqo yüklənib',
-        legal: 'Hüquqi məlumatlar (İmpressum) doldurulub',
+        legal: 'Hüquqi məlumatlar (Impressum) doldurulub',
         contact: 'Əlaqə məlumatları doldurulub',
         https: 'Sayt HTTPS ilə açılır',
         smtp: 'E-poçt göndərişi qurulub',

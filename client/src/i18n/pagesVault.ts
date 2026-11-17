@@ -98,7 +98,7 @@ const az = {
         TOO_LARGE: 'Fayl çox böyükdür (maks. {{max}} MB). Şəkli kiçildin və ya PDF-i sıxışdırın.',
         EMPTY: 'Fayl boşdur.',
         PDF_INVALID: 'Bu fayl düzgün PDF deyil. Faylı yenidən yadda saxlayın və ya skan edin.',
-        PDF_ENCRYPTED: 'PDF parol ilə qorunur — onu açmaq mümkün olmaya bilər. Parolsuz nüsxə yükləyin.',
+        PDF_ENCRYPTED: 'PDF şifrə ilə qorunur — onu açmaq mümkün olmaya bilər. Şifrəsiz nüsxə yükləyin.',
         PDF_NO_PAGES: 'PDF-də səhifə tapılmadı. Fayl zədələnmiş ola bilər.',
         PDF_TINY: 'PDF çox kiçikdir — skan edilmiş sənəd olmaya bilər. Yoxlayın ki, düzgün fayldır.',
         LOW_RESOLUTION: 'Şəklin ölçüsü kiçikdir ({{width}}×{{height}} px). Ən azı {{min}} px olan şəkil daha yaxşı oxunur.',
@@ -110,7 +110,7 @@ const az = {
       },
       server: {
         EMPTY_FILE: 'Fayl boşdur — yenidən yükləyin.',
-        PDF_UNREADABLE: 'PDF açılmır (zədələnib və ya parolla qorunur). Parolsuz, açılan nüsxə yükləyin.',
+        PDF_UNREADABLE: 'PDF açılmır (zədələnib və ya şifrə ilə qorunur). Şifrəsiz, açılan nüsxə yükləyin.',
         PHOTO_NOT_IMAGE: 'Biometrik foto şəkil (JPG/PNG) olmalıdır, PDF və ya Word deyil.',
         LOW_RESOLUTION: 'Şəklin ölçüsü çox kiçikdir ({{width}}×{{height}} px). Daha keyfiyyətli şəkil yükləyin.',
         WRONG_TYPE_SUSPECTED: 'Pasportun aşağısındakı iki sətir (MRZ) oxunmadı. Zəhmət olmasa pasportun foto səhifəsinin daha aydın, tam şəklini yükləyin.',

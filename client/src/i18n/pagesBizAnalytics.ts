@@ -69,7 +69,7 @@ const az = {
     },
     funnel: {
       title: 'Müştəri hunisi',
-      note: 'Dövrdə qeydiyyatdan keçən müştərilər. Sonrakı addıma çatan müştəri əvvəlki addımlardan da keçmiş sayılır (məs. konsultasiyasız müraciət).',
+      note: 'Dövrdə qeydiyyatdan keçən müştərilər. Sonrakı addıma çatan müştəri əvvəlki addımlardan da keçmiş sayılır (məs. məsləhətsiz müraciət).',
       filtered: 'Kateqoriya seçildikdə huni yalnız bu kateqoriyada müraciəti olan müştəriləri göstərir.',
       fromPrev: 'əvvəlkindən',
       ofFirst: 'qeydiyyatdan',
@@ -80,7 +80,7 @@ const az = {
       aria: 'Huni: {{summary}}',
       steps: {
         registered: 'Qeydiyyat',
-        consultation: 'Konsultasiya',
+        consultation: 'Məsləhət',
         caseOpened: 'Müraciət açılıb',
         documentsComplete: 'Sənədlər tamam',
         approved: 'Viza verilib',

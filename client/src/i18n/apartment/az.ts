@@ -64,13 +64,13 @@ export const az: ApartmentCopy = {
       },
       router: {
         title: 'İnternet və router',
-        what: 'İnternet nadir hallarda kirayəyə daxildir; öz müqavilənizi bağlayırsınız. Qanuna görə ilk müddət ən çox 24 aydır, sonra istənilən vaxt bir ay əvvəlcədən xəbər verməklə ləğv etmək olar (§ 56 TKG).',
+        what: 'İnternet nadir hallarda kirayəyə daxildir; öz müqavilənizi bağlayırsınız. Qanuna görə ilk müqavilə müddəti ən çox 24 aydır. Sonra istənilən vaxt bir ay əvvəl xəbər verib ləğv etmək olar (§ 56 TKG).',
         tip: 'Tez sifariş edin — xəttin çəkilməsi həftələrlə çəkə bilər. Binada hansı texnologiyanın olduğunu yoxlayın (optik, kabel, DSL).',
         mistake: 'Qapıda qiymətləri müqayisə etmədən 24 aylıq müqavilə imzalamaq.',
       },
       kuehlschrank: {
         title: 'Soyuducu və Pfand şüşələri',
-        what: 'Pfand loqosu olan şüşə və bankalar üçün depozit ödənilir: birdəfəlik şüşə və bankalarda ən azı 25 sent; çoxdəfəlik şüşə butulkalarda adətən 8 və ya 15 sent.',
+        what: 'Pfand loqosu olan butulka və bankalar üçün depozit ödənilir. Birdəfəlik qablarda ən azı 25 sent, çoxdəfəlik şüşə butulkalarda adətən 8 və ya 15 sentdir.',
         tip: 'Bu növü satan istənilən mağazaya qaytarın: avtomat çek verir, onu kassada nağdlaşdırırsınız.',
         mistake: 'Pfand şüşələrini sarı qutuya atmaq — bu, pulu atmaq deməkdir.',
       },
@@ -136,7 +136,7 @@ export const az: ApartmentCopy = {
       },
       ordner: {
         title: 'Nebenkosten və illik hesab',
-        what: 'Kirayə = soyuq kirayə (Kaltmiete) + kommunal xərclər üçün avans (Nebenkosten) = isti kirayə (Warmmiete). İldə bir dəfə ev sahibi real xərcləri hesablayır — hesab dövrü bitdikdən sonra 12 ay ərzində, əks halda adətən əlavə ödəniş tələb edə bilməz (§ 556 BGB).',
+        what: 'Kirayə = soyuq kirayə (Kaltmiete) + kommunal xərclər üçün avans (Nebenkosten) = isti kirayə (Warmmiete). Ev sahibi ildə bir dəfə real xərcləri hesablayır. Bunu hesab dövrü bitəndən sonra 12 ay ərzində etməlidir. Gecikərsə, adətən əlavə ödəniş istəyə bilməz (§ 556 BGB).',
         tip: 'Qəbzlərə baxmaq hüququnuz var. Mümkün əlavə ödəniş üçün hər ay bir az pul ayırın.',
         mistake: 'Hesabı yoxlamadan əlavə ödəniş etmək və ya etiraz üçün 12 aylıq müddəti buraxmaq.',
       },
@@ -172,7 +172,7 @@ export const az: ApartmentCopy = {
       },
       waschmaschine: {
         title: 'Zirzəmidə paltaryuyan maşın',
-        what: 'Bir çox binada paltaryuyanlar zirzəmidəki ümumi yuma otağındadır — hər biri kirayəçinin öz rozetkasına və ya sayğacına qoşulur, ya da sikkəli maşınlardır.',
+        what: 'Bir çox binada paltaryuyanlar zirzəmidəki ümumi yuma otağındadır. Hər maşın kirayəçinin öz rozetkasına və ya sayğacına qoşulur, ya da sikkə ilə işləyir.',
         tip: 'Hausordnung-dakı saatlara əməl edin və paltarı vaxtında çıxarın.',
         mistake: 'Gecə gec və ya bazar günü yumaq, ya da paltarı qurutma otağında günlərlə saxlamaq.',
       },

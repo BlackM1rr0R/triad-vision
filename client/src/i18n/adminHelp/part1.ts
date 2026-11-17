@@ -15,10 +15,10 @@ const az: Bundle = {
       steps: [
         'Sol menyudan lazım olan bölməni seçin. Menyunu daraltmaq üçün aşağıdakı «Menyunu yığ» düyməsini basın; telefonda menyu yuxarı soldakı düymə ilə açılır.',
         'Yuxarı paneldə səhifənin adı, «Kömək» düyməsi, dil seçimi, açıq/tünd rejim düyməsi və bildiriş zəngi var. «Kömək» həmişə açıq olan səhifənin bələdçisini göstərir.',
-        'Zəngin üstündəki rəqəm oxunmamış bildirişlərin sayıdır. Bildirişə klikləyin — əlaqəli səhifə açılacaq; hamısını birdən təmizləmək üçün «Hamısını oxunmuş et» basın.',
+        'Zəngin üstündəki rəqəm oxunmamış bildirişlərin sayıdır. Bildirişə basın — əlaqəli səhifə açılacaq; hamısını birdən təmizləmək üçün «Hamısını oxunmuş et» basın.',
         'Gündəlik işə «Panel» səhifəsindən başlayın: orada sizi gözləyən müraciətlər, cavabsız mesajlar və yaxın səfirlik görüşləri toplanıb.',
         'Komanda işləri (poçt, çat, təqvim, sənədlər, tapşırıqlar) üçün menyudan «Workspace» bölməsini açın. Admin panelə oradakı «Admin panel» linki ilə qayıdırsınız.',
-        'Rolları bilin: Əməkdaş gündəlik işi görür (müraciətlər, sorğular, namizədlər və s.). Administrator əlavə olaraq Poçt qutuları, Hesab-fakturalar, Agentlər, Məxfilik sorğuları, İnteqrasiyalar, Məzmun və Ayarlar bölmələrini idarə edir və şablonları dəyişir. Super admin hər şeyi, o cümlədən «Nəzarət» bölməsini və istifadəçi hesablarını idarə edir.',
+        'Rolları bilin: Əməkdaş gündəlik işi görür (müraciətlər, sorğular, namizədlər və s.). Administrator əlavə olaraq Poçt qutuları, Hesab-fakturalar, Agentlər, Məxfilik sorğuları, İnteqrasiyalar, Məzmun və Parametrlər bölmələrini idarə edir və şablonları dəyişir. Super admin hər şeyi, o cümlədən «Nəzarət» bölməsini və istifadəçi hesablarını idarə edir.',
         'Bütün bələdçilərin siyahısı menyudakı «Kömək mərkəzi» səhifəsindədir.',
         'İşi bitirəndə sağ yuxarıdakı «Çıxış» düyməsi ilə hesabdan çıxın. «Sayta keç» linki ictimai saytı açır.',
       ],
@@ -36,12 +36,12 @@ const az: Bundle = {
       who: 'Bütün əməkdaşlar. Rəqəmlər bütün müraciətlər üzrədir, «Mənə təyin olunan açıq müraciətlər» isə yalnız sizinkiləri sayır.',
       steps: [
         'Səhər paneli açın və yuxarıdakı göstəricilərə baxın: «Aktiv müraciətlər», «Hərəkətinizi gözləyir», «Yeni sorğular» və «Yeni müştərilər (30 gün)».',
-        'Kartların çoxu klikləndikdə uyğun siyahını açır. Məsələn, «Yoxlanılmamış sənədlər» sizi «Sənədlər yoxlanılır» statusundakı müraciətlərə, «3 gündən çox gözləyən» isə gecikən müraciətlərə aparır.',
+        'Kartların çoxu basıldıqda uyğun siyahını açır. Məsələn, «Yoxlanılmamış sənədlər» sizi «Sənədlər yoxlanılır» statusundakı müraciətlərə, «3 gündən çox gözləyən» isə gecikən müraciətlərə aparır.',
         '«Mənə təyin olunan açıq müraciətlər» kartı ilə yalnız sizə verilmiş müraciətləri açın.',
         '«Cavabsız müştəri mesajları» sıfır deyilsə, müraciətlərə keçib müştərilərə cavab verin — son mesaj müştəridəndirsə, növbə bizdədir.',
-        '«Sizin hərəkətinizi gözləyən müraciətlər» siyahısında ən köhnədən başlayaraq yoxlama, imza təsdiqi və ya səfirlik sənədlərinin yoxlanmasını gözləyən müraciətlər var. Sətirə klikləyib müraciəti açın.',
+        '«Sizin hərəkətinizi gözləyən müraciətlər» siyahısında ən köhnədən başlayaraq yoxlama, imza təsdiqi və ya səfirlik sənədlərinin yoxlanmasını gözləyən müraciətlər var. Sətirə basıb müraciəti açın.',
         '«Yaxın səfirlik görüşləri» blokunda növbəti 14 gündəki görüşləri yoxlayın və müştərinin hazır olduğuna əmin olun.',
-        '«Statuslar üzrə bölgü» və «Sorğular status üzrə» bloklarında statusun adına klikləyərək həmin statusdakı siyahını açın.',
+        '«Statuslar üzrə bölgü» və «Sorğular status üzrə» bloklarında statusun adına basaraq həmin statusdakı siyahını açın.',
         '«Son fəaliyyət» lentində komandanın son hərəkətlərini izləyin; «Daxili» işarəsi olan qeydləri müştəri görmür.',
       ],
       tips: [
@@ -59,10 +59,10 @@ const az: Bundle = {
       steps: [
         'Yuxarıdakı «İstifadəçilər», «Müraciətlər» və «Sənədlər və sistem» bloklarında ümumi rəqəmlərə baxın: hazırda onlayn olanlar, təsdiq nisbəti, yoxlanılan sənədlər, göndərilən və xətalı e-poçtlar, uğursuz girişlər.',
         'Dövrü seçin (7, 14, 30 və ya 90 gün) — qrafiklər həmin dövr üzrə yenilənir.',
-        '«Gündəlik fəaliyyət» qrafikində girişlər, müraciət hadisələri, mesajlar və digər seriyalar göstərilir. Seriyanın adına klikləyib onu gizlədə və ya göstərə bilərsiniz.',
+        '«Gündəlik fəaliyyət» qrafikində girişlər, müraciət hadisələri, mesajlar və digər seriyalar göstərilir. Seriyanın adına basıb onu gizlədə və ya göstərə bilərsiniz.',
         '«Əməkdaşların aktiv vaxtı» və «Uğursuz giriş cəhdləri / gün» qrafiklərində qeyri-adi artımları izləyin — çoxlu uğursuz giriş hücum əlaməti ola bilər.',
-        '«Əməkdaşlar» cədvəlində axtarış sahəsi ilə əməkdaşı tapın; sütun başlığına klikləyərək aktiv günlərə, sənəd yoxlamalarına və ya mesajlara görə sıralayın.',
-        'Əməkdaşın sətirinə klikləyin — ayrıca səhifədə onun aktiv vaxtı, saat üzrə fəaliyyəti, sessiyaları, müraciət hərəkətləri, təyin olunan müraciətləri, iş qovluğu və audit qeydləri açılır.',
+        '«Əməkdaşlar» cədvəlində axtarış sahəsi ilə əməkdaşı tapın; sütun başlığına basaraq aktiv günlərə, sənəd yoxlamalarına və ya mesajlara görə sıralayın.',
+        'Əməkdaşın sətirinə basın — ayrıca səhifədə onun aktiv vaxtı, saat üzrə fəaliyyəti, sessiyaları, müraciət hərəkətləri, təyin olunan müraciətləri, iş qovluğu və audit qeydləri açılır.',
         'Əməkdaş səhifəsindəki düymələrlə onun müraciətlərinə və ya iş qovluğuna keçin; geri qayıtmaq üçün «Nəzarətə qayıt» linkini basın.',
       ],
       tips: [
@@ -81,7 +81,7 @@ const az: Bundle = {
         '«Əsas» səhifəsində günün xülasəsi var: oxunmamış məktublar və çat mesajları, bugünkü tədbirlər, kim onlayndır, elanlar, səsvermələr və şəxsi qeydləriniz. «Sürətli keçidlər» ilə yeni məktub, tədbir, tapşırıq və ya kontakt yaradın.',
         '«Poçt»: «Parametrlər» → «Hesab əlavə et» ilə şirkət poçt qutunuzu (IMAP/SMTP məlumatlarını administrator verir) və ya başqa hesabınızı qoşun. Sonra «Yeni məktub» ilə yazın; məktubu «Müraciətə bağla» ilə müştəri müraciətinə bağlaya bilərsiniz.',
         '«Çat»: kanallarda komanda ilə, «Yeni mesaj» ilə həmkarla birbaşa yazışın. @ ilə həmkarı qeyd edin, fayl əlavə edin; «Yeni kanal» ilə mövzu üzrə kanal açın.',
-        '«Təqvim»: «Yeni tədbir» ilə görüş yaradın, iştirakçı əlavə edin və «Vaxt tap» ilə hamının boş olduğu vaxtı seçin. Səfirlik görüşləri, konsultasiyalar, müsahibələr və tapşırıq son tarixləri təqvimdə avtomatik görünür.',
+        '«Təqvim»: «Yeni tədbir» ilə görüş yaradın, iştirakçı əlavə edin və «Vaxt tap» ilə hamının boş olduğu vaxtı seçin. Səfirlik görüşləri, məsləhət görüşləri, müsahibələr və tapşırıq son tarixləri təqvimdə avtomatik görünür.',
         '«Sənədlər»: «Şirkət diski», «Mənim fayllarım» və «Müraciətlər» buradadır. «Yeni» düyməsi ilə qovluq yaradın və ya fayl yükləyin; elementin menyusunda «Giriş hüquqları» ilə kimin nə edə biləcəyini seçin: «Yalnız baxa bilər», «Faylları endirə bilər», «Baxa və endirə bilər», «Redaktə edə bilər» və ya «Tam idarə edə bilər».',
         '«Tapşırıqlar»: «Yeni tapşırıq» ilə iş yaradın, icraçı, son tarix, prioritet və lazım olsa müraciət seçin. Faylları «Kompüterdən yüklə» və ya «Sənədlərdən seç» ilə əlavə edin; lövhədə kartı sütunlar arasında sürüşdürərək statusunu dəyişin.',
         '«Kontaktlar»: komandanın ümumi ünvan kitabçasıdır. «Yeni kontakt» ilə əlavə edin, kontaktı «Ümumi» və ya «Şəxsi» saxlayın, CSV ilə idxal və ixrac edin.',
@@ -93,7 +93,7 @@ const az: Bundle = {
         '«Müraciətlər» qovluğundakı sənədlər müraciət prosesində idarə olunur — burada yalnız baxmaq və endirmək olar.',
         'Silinən fayllar «Səbət»ə düşür və müəyyən müddətdən sonra həmişəlik silinir; lazım olsa vaxtında «Bərpa et» basın.',
         'Tapşırığa yüklənən fayllar komanda üçün «Şirkət diski → Tapşırıq faylları» qovluğunda da görünür — məxfi sənədləri diqqətlə əlavə edin.',
-        'Məxfi qovluq üçün «Giriş hüquqları» pəncərəsində «Ətraflı ayarlar» bölməsində üst qovluqdan gələn icazələri söndürün; onda yalnız adı çəkilən şəxslər girə bilər.',
+        'Məxfi qovluq üçün «Giriş hüquqları» pəncərəsində «Ətraflı parametrlər» bölməsində üst qovluqdan gələn icazələri söndürün; onda yalnız adı çəkilən şəxslər girə bilər.',
       ],
     },
     cases: {
@@ -130,7 +130,7 @@ const az: Bundle = {
         '«İştirakçı əlavə et» ilə hər tərəfin adını, e-poçtunu, rolunu və e-poçt dilini yazın; özünüz də imzalayacaqsınızsa, «Məni əlavə et ({{brand}})» basın.',
         'Qaydanı seçin: «Ardıcıl» — növbə ilə (namizəd → işəgötürən → {{brand}}), «Paralel» — hamı eyni anda. Lazım olsa, iştirakçılara mesaj və son tarix (gün) əlavə edin.',
         'Sənəd müraciətin əmək müqaviləsidirsə, «Bu, müraciətin əmək müqaviləsidir» qutusunu işarələyin. Sonra «İmzaya göndər» və ya hələ hazır deyilsə «Qaralama kimi saxla» basın.',
-        'Siyahıda status düymələri («Qaralama», «İmzada», «Tamamlandı», «İmtina edildi», «Ləğv edildi», «Vaxtı bitdi»), «Mənim» filtri və axtarışla tələbi tapın, sətirə klikləyib təfərrüatı açın.',
+        'Siyahıda status düymələri («Qaralama», «İmzada», «Tamamlandı», «İmtina edildi», «Ləğv edildi», «Vaxtı bitdi»), «Mənim» filtri və axtarışla tələbi tapın, sətirə basıb təfərrüatı açın.',
         'Təfərrüatda hər iştirakçının vəziyyətinə və «Audit izi»nə baxın. Gecikən tərəfə «Xatırlat», e-poçtu səhv olana «Yeni link» göndərin, lazım deyilsə «Ləğv et» basın. Proses bitəndə «İmzalanmış PDF»-i endirin.',
         'Sizin imzanızı gözləyən sənədlər yuxarıdakı «İmzanızı gözləyən sənədlər» blokunda görünür — «İndi imzala» ilə imzalayın.',
       ],
@@ -146,7 +146,7 @@ const az: Bundle = {
       title: 'Kanban',
       summary:
         'Kanban lövhəsi bütün açıq müraciətləri status üzrə sütunlarda göstərir. Müraciətləri əməkdaşlar arasında tez paylamaq və gecikənləri görmək üçün istifadə edin.',
-      who: 'Bütün əməkdaşlar lövhəni görür və müraciət təyin edə bilər. Avtomatik təyinat ayarları yalnız Administrator üçün «Ayarlar» bölməsindədir.',
+      who: 'Bütün əməkdaşlar lövhəni görür və müraciət təyin edə bilər. Avtomatik təyinat parametrləri yalnız Administrator üçün «Parametrlər» bölməsindədir.',
       steps: [
         'Lövhəni açın: hər sütun bir statusdur, kartda müştərinin adı, müraciət nömrəsi və məsul əməkdaşın baş hərfləri var.',
         'Yuxarıdakı filtrlərlə «Mənim», «Bütün əməkdaşlar» və ya konkret əməkdaşı, «Bütün viza növləri» və ya konkret viza növünü seçin. Bağlanmış müraciətləri görmək üçün «Bağlananları göstər» işarələyin.',
@@ -154,12 +154,12 @@ const az: Bundle = {
         'Təyinatı götürmək üçün kartı «Təyinatı sil» sahəsinə buraxın.',
         'Kartdakı işarələrə baxın: «Müştəri» — növbə müştəridədir, «Biz» — növbə bizdədir. Yoxlanmamış sənədlərin sayı, «Cavabsız mesaj» və «Görüş» də kartda görünür.',
         'Sarı «Gecikir» işarəsi 3 gün və daha çox, qırmızı «Kritik» işarəsi 7 gün və daha çox eyni statusda qalan müraciəti bildirir — onları birinci həll edin.',
-        'Kartdakı ada klikləyərək müraciət səhifəsini açın və işi orada davam etdirin.',
+        'Kartdakı ada basaraq müraciət səhifəsini açın və işi orada davam etdirin.',
       ],
       tips: [
         'Lövhədə sürüşdürmə yalnız məsul əməkdaşı dəyişir, statusu dəyişmir — status müraciət səhifəsində dəyişdirilir.',
         'Lövhə hər 60 saniyədən bir avtomatik yenilənir; dərhal yeniləmək üçün «Yenilə» basın.',
-        'Administrator «Ayarlar» → «Avtomatik təyinat» bölməsində yeni müraciətlərin növbə ilə və ya ən az yüklü əməkdaşa avtomatik verilməsini aça bilər. Ailə üzvlərinin müraciətləri əsas müraciətin əməkdaşına gedir.',
+        'Administrator «Parametrlər» → «Avtomatik təyinat» bölməsində yeni müraciətlərin növbə ilə və ya ən az yüklü əməkdaşa avtomatik verilməsini aça bilər. Ailə üzvlərinin müraciətləri əsas müraciətin əməkdaşına gedir.',
         'Əməkdaş sətirindəki rəqəm onun açıq müraciətlərinin sayıdır — yükü bərabər paylamağa çalışın.',
       ],
     },
@@ -229,7 +229,7 @@ const az: Bundle = {
       steps: [
         'Yuxarıdakı kartlarda son 7 gündə gələn yeni sorğuları, ən köhnə açıq sorğunun neçə gün gözlədiyini, şirkət və əlaqə sorğularının sayını və tələb olunan işçi sayını görün.',
         'Siyahını status düymələri («Yeni», «İcrada», «Tamamlandı», «Arxivdə»), növ («Şirkət təklifi», «Əlaqə formu») və axtarış sahəsi ilə süzün.',
-        'Sorğunun sətirinə klikləyin — tam mətn, əlaqə şəxsi, şirkət, sahə, lazım olan işçi sayı, dil və tarix açılır.',
+        'Sorğunun sətirinə basın — tam mətn, əlaqə şəxsi, şirkət, sahə, lazım olan işçi sayı, dil və tarix açılır.',
         'Cavab vermək üçün e-poçt, telefon və ya WhatsApp düyməsindən istifadə edin.',
         'İşə başlayanda statusu «İcrada», iş bitəndə «Tamamlandı» edin; artıq lazım olmayan sorğuları «Arxivdə» statusuna keçirin.',
         'Şirkət təklifi gələndə və əməkdaşlıq razılaşdırılanda «Şirkətlər» bölməsində işəgötürən hesabı yaradın.',
@@ -244,13 +244,13 @@ const az: Bundle = {
     bookings: {
       title: 'Görüşlər',
       summary:
-        'Saytda konsultasiya üçün təklif olunan boş vaxtlarınızı burada yaradır və müştərilərin tutduğu görüşləri izləyirsiniz.',
+        'Saytda məsləhət üçün təklif olunan boş vaxtlarınızı burada yaradır və müştərilərin tutduğu görüşləri izləyirsiniz.',
       who: 'Bütün əməkdaşlar öz vaxtlarını və görüşlərini idarə edir. Administrator «Əməkdaş» seçimi ilə istənilən əməkdaşın vaxtlarını görə və idarə edə bilər.',
       steps: [
         'Görünüşü seçin: «Gün», «Həftə» və ya «Siyahı»; «Bu gün», «Əvvəlki» və «Növbəti» ilə tarixlər arasında keçin.',
         'Tək vaxt üçün «Vaxt əlavə et» basın: tarixi, başlama vaxtını, müddəti və saat qurşağını seçib yadda saxlayın.',
         'Bir neçə həftəni birdən doldurmaq üçün «Həftəlik şablon» açın: günləri və saat aralıqlarını, neçə həftə, başlama tarixini və fasiləni seçib «Vaxtları yarat» basın. Mövcud vaxtlarla üst-üstə düşənlər ötürülür.',
-        'Tutulmuş vaxta klikləyin — əlaqə məlumatları, mövzu, mesaj və görüş linki açılır. Vaxtı çatanda «Görüşü aç» ilə qoşulun.',
+        'Tutulmuş vaxta basın — əlaqə məlumatları, mövzu, mesaj və görüş linki açılır. Vaxtı çatanda «Görüşü aç» ilə qoşulun.',
         'Görüşdən sonra nəticəni qeyd edin: «Keçirildi» və ya «Gəlmədi». Səhv qeyd etmisinizsə, «Təyin olunmuş kimi qaytar» basın.',
         'Görüşü ləğv etmək üçün «Ləğv et» basın və istəsəniz məktuba əlavə olunacaq mesaj yazın. Şəxsə e-poçt gedir, vaxt yenidən boşalır.',
         'Lazımsız boş vaxtları tək-tək «Vaxtı sil» ilə və ya hamısını birdən «Görünən boş vaxtları sil» ilə silin.',
@@ -259,7 +259,7 @@ const az: Bundle = {
         'Tutulmuş vaxtı silmək olmaz — əvvəlcə görüşü ləğv edin.',
         'Görüşün statusunu yalnız görüş başlayandan sonra dəyişmək olar.',
         '«Görünən boş vaxtları sil» yalnız hazırkı görünüşdəki boş vaxtları silir; tutulmuş görüşlər saxlanılır.',
-        'Konsultasiyalar Workspace təqvimində də avtomatik görünür.',
+        'Məsləhət görüşləri Workspace təqvimində də avtomatik görünür.',
       ],
     },
     reviews: {
@@ -291,7 +291,7 @@ const az: Bundle = {
       steps: [
         'Axtarış sahəsinə ad, e-poçt, telefon və ya peşə yazın; alman dili, sürücülük vəsiqəsi, təcrübə və müraciət faylı («Aktiv faylı var» / «Aktiv fayl yoxdur») filtrlərindən istifadə edin.',
         'Konkret vakansiya üçün namizəd axtarırsınızsa, «Vakansiyaya görə sırala…» seçimində vakansiyanı seçin — siyahı uyğunluq faizinə görə sıralanır.',
-        'Namizədə klikləyin: «Profil»də peşə, təhsil, alman dili, təcrübə və digər məlumatlar, altında isə vakansiya və viza müraciətləri görünür.',
+        'Namizədə basın: «Profil»də peşə, təhsil, alman dili, təcrübə və digər məlumatlar, altında isə vakansiya və viza müraciətləri görünür.',
         'Namizədi vakansiyaya əlavə etmək üçün «Vakansiyaya əlavə et» bölməsində vakansiyanı seçin; müraciət «Seçilmişlərdə» statusu ilə yaranır və namizəd bildiriş alır.',
         'Müraciətin statusunu irəli aparın: «Seçilmişlərdə» → «İşəgötürənə təqdim edildi» → «Müsahibə» → «Qəbul edildi» və ya «Rədd edildi». Lazım olsa, namizədə mesaj yazın — o, status bildirişinə əlavə olunur.',
         '«İşəgötürənə təqdim edildi» statusu namizədi işəgötürənin kabinetində göstərir və işəgötürənə bildiriş göndərir. İşəgötürənin cavabı müraciətdə «İşəgötürənin qeydi» kimi görünür.',

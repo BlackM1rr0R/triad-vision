@@ -10,7 +10,7 @@ export const PAGES_SITE: PageHelpEntry[] = [
         purpose: 'Saytın ictimai məzmununu kod olmadan dəyişmək üçün: xidmətlər, viza kateqoriyaları, tərəfdaşlar, viza nümunələri, rəylər, statistika, tez-tez verilən suallar və xəbərlər. Yalnız Administrator və Super admin istifadə edir.',
         steps: [
           'Sol menyunun «Sayt» qrupundan bölməni seçin (məs. «Xidmətlər» və ya «Xəbərlər»).',
-          'Yuxarıdakı «Yeni …» düyməsi ilə element yaradın və ya sətrə klikləyib redaktə panelini açın; mətnləri dörd dildə doldurub «Yadda saxla» basın.',
+          'Yuxarıdakı «Yeni …» düyməsi ilə element yaradın və ya sətrə basıb redaktə panelini açın; mətnləri dörd dildə doldurub «Yadda saxla» basın.',
           'Sətirdəki açarla elementi saytda dərc edin və ya gizlədin, «Yuxarı»/«Aşağı» oxları ilə sırasını dəyişin.',
         ],
         tips: [
@@ -491,7 +491,7 @@ export const PAGES_SITE: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Sayt alətləri',
-        purpose: 'Saytdakı interaktiv alətlərin ayarları: başlama tarixi kalkulyatoru, xərc kalkulyatoru, yerləşdirmə xəritəsi, ziyarətçilərin haradan gəldiyi və «Dostunu gətir» proqramı.',
+        purpose: 'Saytdakı interaktiv alətlərin parametrləri: başlama tarixi kalkulyatoru, xərc kalkulyatoru, yerləşdirmə xəritəsi, ziyarətçilərin haradan gəldiyi və «Dostunu gətir» proqramı.',
         steps: [
           'Yuxarıdan tab seçin: «Kalkulyator», «Xərclər», «Xəritə», «Haradan» və ya «Dostunu gətir».',
           '«Kalkulyator»da müddətləri həftə ilə (min–maks) yeniləyin və yoxlama tarixini qeyd edin; «Xəritə»də göstərmə rejimini və şəhər qeydlərini idarə edin.',

@@ -3,7 +3,7 @@
 const az = {
   nameCheck: {
     title: 'Adın yazılışını yoxla',
-    intro: 'Adınızı Azərbaycan hərfləri ilə yazın — pasportun maşınla oxunan zolağında (MRZ) necə yazıldığını və Almaniyada rast gələ biləcəyiniz digər yazılışları görəcəksiniz. Bütün formalarda adınız pasportdakı kimi yazılmalıdır.',
+    intro: 'Adınızı Azərbaycan hərfləri ilə yazın. Pasportun aşağısındakı zolaqda (MRZ) necə yazıldığını və Almaniyada rast gələ biləcəyiniz digər yazılışları görəcəksiniz. Bütün formalarda adınız pasportdakı kimi yazılmalıdır.',
     staffIntro: 'Müştərinin adı → pasport MRZ forması və Almaniyadakı yazılışlar; fayldakı pasport MRZ ilə müqayisə.',
     firstName: 'Ad',
     lastName: 'Soyad',

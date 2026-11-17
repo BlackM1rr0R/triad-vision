@@ -150,7 +150,7 @@ const az = {
         subtitle: 'Xəbərdarlığı olan müqavilələr və sınaq müddəti 30 gün ərzində bitənlər.',
         filters: { warnings: 'Xəbərdarlıqlar', probation: 'Sınaq müddəti bitir', all: 'Hamısı' },
         empty: 'Bu filtrə uyğun müqavilə yoxdur.',
-        case: 'İş',
+        case: 'Müraciət',
         client: 'Namizəd',
         employer: 'İşəgötürən',
         salary: 'Maaş',

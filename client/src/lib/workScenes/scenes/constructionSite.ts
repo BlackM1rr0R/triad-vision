@@ -44,7 +44,7 @@ export const CONSTRUCTION_SITE: WorkScene = {
         uk: 'Промислова каска за DIN EN 397 — від предметів, що падають, і ударів головою. Внутрішнє оснащення підганяють під розмір голови.',
       },
       safety: {
-        az: 'Tikintidə dəbilqə taxmaq adətən hər yerdə məcburidir — iş verənin təlimatı (Unterweisung) qərar verir. Güclü zərbədən və ya çatdan sonra dəbilqəni dəyişin; üzərindəki istehsal tarixinə və istehsalçının istifadə müddətinə baxın.',
+        az: 'Tikintidə dəbilqə taxmaq adətən hər yerdə məcburidir — işəgötürənin təlimatı (Unterweisung) qərar verir. Güclü zərbədən və ya çatdan sonra dəbilqəni dəyişin; üzərindəki istehsal tarixinə və istehsalçının istifadə müddətinə baxın.',
         de: 'Auf Baustellen gilt meist überall Helmpflicht — es entscheidet die Unterweisung Ihres Betriebs. Nach einem harten Schlag oder bei Rissen austauschen; Herstelldatum und Gebrauchsdauer des Herstellers beachten.',
         en: 'On construction sites helmets are usually required everywhere — your employer\'s instruction (Unterweisung) decides. Replace it after a hard hit or if it is cracked; check the date of manufacture and the maker\'s service life.',
         ru: 'На стройке каску обычно носят везде — решает инструктаж («Unterweisung») вашей фирмы. После сильного удара или при трещинах — замена; следите за датой изготовления и сроком службы от производителя.',
@@ -77,7 +77,7 @@ export const CONSTRUCTION_SITE: WorkScene = {
         uk: 'Навушники («Kapselgehörschutz») або беруші («Gehörschutzstöpsel») від шуму. Відрізна машина, перфоратор і відбійний молоток дуже гучні.',
       },
       safety: {
-        az: 'Səs-küy 80 dB(A)-ya çatanda iş verən qulaqlıq verməlidir; 85 dB(A)-dan etibarən taxmaq məcburidir və həmin sahə işarələnir (LärmVibrationsArbSchV).',
+        az: 'Səs-küy 80 dB(A)-ya çatanda işəgötürən qulaqlıq verməlidir; 85 dB(A)-dan etibarən taxmaq məcburidir və həmin sahə işarələnir (LärmVibrationsArbSchV).',
         de: 'Ab 80 dB(A) muss der Arbeitgeber Gehörschutz zur Verfügung stellen, ab 85 dB(A) muss er getragen werden und der Lärmbereich wird gekennzeichnet (LärmVibrationsArbSchV).',
         en: 'From 80 dB(A) the employer must provide hearing protection; from 85 dB(A) it must be worn and the noise area is marked (LärmVibrationsArbSchV).',
         ru: 'С 80 дБ(A) работодатель обязан выдать средства защиты слуха, с 85 дБ(A) их обязательно носить, а зона шума обозначается (LärmVibrationsArbSchV).',
@@ -111,7 +111,7 @@ export const CONSTRUCTION_SITE: WorkScene = {
         uk: 'Під час різання, шліфування й свердління бетону, цегли та каменю утворюється дрібний кварцовий пил («Quarzstaub»). Маска FFP2 або FFP3 його фільтрує.',
       },
       safety: {
-        az: 'Əvvəlcə tozu mənbədə azaldın: sorma (tozsoran) və ya yaş kəsmə (TRGS 559). Maska yalnız əlavə qorumadır; FFP2 yoxsa FFP3 — iş verənin risk qiymətləndirməsi və təlimatı qərar verir. Maska üzə sıx oturmalıdır.',
+        az: 'Əvvəlcə tozu mənbədə azaldın: sorma (tozsoran) və ya yaş kəsmə (TRGS 559). Maska yalnız əlavə qorumadır; FFP2 yoxsa FFP3 — işəgötürənin risk qiymətləndirməsi və təlimatı qərar verir. Maska üzə sıx oturmalıdır.',
         de: 'Zuerst Staub an der Quelle vermeiden: Absaugung oder Nassschneiden (TRGS 559). Die Maske ist nur die Ergänzung; ob FFP2 oder FFP3, entscheiden Gefährdungsbeurteilung und Unterweisung. Sie muss dicht am Gesicht sitzen.',
         en: 'First stop dust at the source: extraction or wet cutting (TRGS 559). The mask is only the addition; whether FFP2 or FFP3 is decided by the risk assessment and your instruction. It must seal tightly on the face.',
         ru: 'Сначала убирайте пыль у источника: отсос или мокрая резка (TRGS 559). Маска — лишь дополнение; FFP2 или FFP3 — решают оценка рисков и инструктаж. Она должна плотно прилегать к лицу.',
@@ -144,7 +144,7 @@ export const CONSTRUCTION_SITE: WorkScene = {
         uk: 'Яскраво-помаранчевий або жовтий жилет зі світловідбивними смугами (EN ISO 20471), щоб водії екскаватора, вантажівки й навантажувача бачили вас заздалегідь.',
       },
       safety: {
-        az: 'Maşınların hərəkət etdiyi və yol yaxınlığındakı yerlərdə taxın — harada məcburi olduğunu iş verənin təlimatı (Unterweisung) deyir. Jilet bağlı, təmiz olmalı və zolaqlar örtülməməlidir.',
+        az: 'Maşınların hərəkət etdiyi və yol yaxınlığındakı yerlərdə taxın — harada məcburi olduğunu işəgötürənin təlimatı (Unterweisung) deyir. Jilet bağlı, təmiz olmalı və zolaqlar örtülməməlidir.',
         de: 'Dort tragen, wo Fahrzeuge und Maschinen fahren und an Straßen — wo genau sie Pflicht ist, legt die Unterweisung fest. Geschlossen, sauber und Reflexstreifen nicht verdeckt.',
         en: 'Wear it wherever vehicles and machines move and next to roads — exactly where it is required is set by your instruction (Unterweisung). Keep it closed, clean and the stripes uncovered.',
         ru: 'Носите там, где ездят машины и техника, и у дорог — где именно это обязательно, определяет инструктаж. Жилет застёгнут, чистый, полосы не закрыты.',

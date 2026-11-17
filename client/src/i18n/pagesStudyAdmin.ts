@@ -192,7 +192,7 @@ const az: Copy = {
       account: 'Hesabdan göndərilib',
       cv: 'CV',
       diploma: 'Diplom',
-      download: 'Yüklə',
+      download: 'Endir',
       none: 'əlavə edilməyib',
       removed: 'Proqram kataloqdan silinib',
     },

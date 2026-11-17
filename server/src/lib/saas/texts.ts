@@ -44,7 +44,7 @@ export const DEMO_MAIL: Record<SeoLocale, { subject: string; hello: (n: string) 
 export const INVITE_MAIL: Record<'az' | 'de' | 'en' | 'ru', { subject: (brand: string) => string; body: (inviter: string, brand: string) => string; cta: string }> = {
   az: {
     subject: (b) => `${b}: əməkdaş hesabına dəvət`,
-    body: (i, b) => `${i} sizi ${b} əməkdaş panelinə dəvət etdi. Şifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`,
+    body: (i, b) => `${i} sizi ${b} əməkdaş panelinə dəvət etdi. Şifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`,
     cta: 'Şifrəni təyin et',
   },
   de: {

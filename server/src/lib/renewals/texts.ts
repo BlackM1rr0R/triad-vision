@@ -34,7 +34,7 @@ const T: Record<
 > = {
   az: {
     clientTitle: 'Yaşayış icazənizin uzadılması vaxtıdır',
-    clientBody: (p) => `Salam, ${p.firstName}! Almaniyada yaşayış icazənizin müddəti ${p.date} tarixində (${p.days} gün sonra) bitir. Uzatma üçün sizə yeni müraciət açdıq: ${p.newNumber}. Lazım olan sənədlər portalda göstərilir — menecerniz sizinlə əlaqə saxlayacaq.`,
+    clientBody: (p) => `Salam, ${p.firstName}! Almaniyada yaşayış icazənizin müddəti ${p.date} tarixində (${p.days} gün sonra) bitir. Uzatma üçün sizə yeni müraciət açdıq: ${p.newNumber}. Lazım olan sənədlər kabinetdə göstərilir — menecerniz sizinlə əlaqə saxlayacaq.`,
     clientCta: 'Müraciətə bax',
     staffTitle: (p) => `Uzatma müraciəti açıldı: ${p.worker} (${p.newNumber})`,
     staffBody: (p) => `${p.worker} üçün yaşayış icazəsi ${p.date} tarixində bitir (${p.days} gün). ${p.number} müraciətinin uzadılması üçün ${p.newNumber} avtomatik açıldı.`,

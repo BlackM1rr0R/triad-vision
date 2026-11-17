@@ -45,7 +45,7 @@ export const PARTNER_CLIENT_TEXT: Record<Locale, PartnerClientText> = {
     clientsCta: 'Müştərilərə bax',
     inviteTitle: 'Triad Vision şəxsi kabinetiniz yaradıldı',
     inviteBody: (n, p) =>
-      `Hörmətli ${n}, partnyorumuz ${p} sizin üçün Triad Vision şəxsi kabineti yaratdı. Kabinetdə Almaniya vizası müraciətinizi izləyə və sənədlərinizi yükləyə bilərsiniz.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin (link 7 gün etibarlıdır). Daxil olduqdan sonra məlumatlarınızın ${p} ilə paylaşılmasına razılıq verib-verməməyinizi seçə bilərsiniz.`,
+      `Hörmətli ${n}, partnyorumuz ${p} sizin üçün Triad Vision şəxsi kabineti yaratdı. Kabinetdə Almaniya vizası müraciətinizi izləyə və sənədlərinizi yükləyə bilərsiniz.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə basın (link 7 gün etibarlıdır). Daxil olduqdan sonra məlumatlarınızın ${p} ilə paylaşılmasına razılıq verib-verməməyinizi seçə bilərsiniz.`,
     inviteCta: 'Şifrəni təyin et',
   },
   de: {

@@ -18,13 +18,13 @@ const az = {
       when: 'NƏ VAXT (tətik)', if: 'ŞƏRTLƏR (hamısı ödənməlidir)', then: 'NƏ ETMƏLİ (ardıcıllıqla)', addCondition: 'Şərt əlavə et', addAction: 'Əməliyyat əlavə et',
       noConditions: 'Şərt yoxdur — tətik hər dəfə işləyir.', delay: 'Gecikmə', noDelay: 'Dərhal', after: 'sonra', hours: 'saat', days: 'gün',
       onlyIfStillTrue: 'Yalnız hələ də doğrudursa', onlyIfStillTrueHint: 'İcradan əvvəl tətik və şərtlər yenidən yoxlanılır; dəyişibsə, addım buraxılır.',
-      placeholders: 'Yer tutucular', placeholdersHint: 'Mətnə daxil etmək üçün klikləyin (son seçilmiş sahəyə).', step: 'Addım {{n}}',
+      placeholders: 'Yer tutucular', placeholdersHint: 'Mətnə daxil etmək üçün basın (son seçilmiş sahəyə).', step: 'Addım {{n}}',
       saveFirst: 'Sınaq üçün qaydanı yadda saxlamaq lazım deyil — hazırkı forma yoxlanılır.',
     },
     triggers: {
       CASE_STATUS_CHANGED: 'Müraciətin statusu dəyişir', CASE_CREATED: 'Yeni müraciət yaradılır', DOCUMENT_UPLOADED: 'Sənəd yüklənir', DOCUMENT_ACCEPTED: 'Sənəd qəbul edilir',
       DOCUMENT_REJECTED: 'Sənəd rədd edilir', CONTRACT_SIGNED: 'Müqavilə imzalanır', APPOINTMENT_SET: 'Səfirlik görüşü təyin edilir', CLIENT_INACTIVE: 'Müştəri N gün aktiv deyil',
-      STATUS_DURATION: 'Müraciət N gündür eyni statusdadır', APPLICATION_STATUS_CHANGED: 'Vakansiya müraciətinin statusu dəyişir', BOOKING_CREATED: 'Konsultasiya sifariş edilir', INQUIRY_CREATED: 'Yeni sorğu (lead) daxil olur',
+      STATUS_DURATION: 'Müraciət N gündür eyni statusdadır', APPLICATION_STATUS_CHANGED: 'Vakansiya müraciətinin statusu dəyişir', BOOKING_CREATED: 'Məsləhətə yazılır', INQUIRY_CREATED: 'Yeni sorğu (lead) daxil olur',
     },
     triggerFields: {
       from: 'Hansı statusdan', to: 'Hansı statusa', stages: 'Mərhələ', byClientOnly: 'Yalnız müştərinin yüklədikləri', includeReschedule: 'Vaxtın dəyişdirilməsi də daxil',
@@ -65,7 +65,7 @@ const az = {
       client_firstName: 'Müştərinin adı', client_lastName: 'Soyadı', client_fullName: 'Tam adı', client_email: 'E-poçt', client_phone: 'Telefon', case_number: 'Müraciət nömrəsi', case_status: 'Status',
       case_profession: 'Peşə', case_visaType: 'Viza növü', case_visaCategory: 'Viza kateqoriyası', case_link: 'Admin keçidi', staff_fullName: 'Məsul əməkdaş', staff_firstName: 'Əməkdaşın adı',
       appointment_date: 'Görüş tarixi', appointment_place: 'Görüş yeri', document_name: 'Fayl adı', document_title: 'Sənəd', document_note: 'Rədd səbəbi', contract_signedAt: 'İmza tarixi',
-      application_status: 'Müraciət statusu', application_vacancy: 'Vakansiya', booking_date: 'Konsultasiya vaxtı', inquiry_name: 'Sorğu: ad', inquiry_company: 'Sorğu: şirkət', inquiry_email: 'Sorğu: e-poçt',
+      application_status: 'Müraciət statusu', application_vacancy: 'Vakansiya', booking_date: 'Məsləhət vaxtı', inquiry_name: 'Sorğu: ad', inquiry_company: 'Sorğu: şirkət', inquiry_email: 'Sorğu: e-poçt',
       inquiry_message: 'Sorğu: mesaj', trigger_days: 'Gün sayı (tətik)', today: 'Bu gün',
     },
     test: {

@@ -162,7 +162,7 @@ adminInquiriesRouter.put('/:id/notes', async (req, res) => {
 // ─── Conversion ────────────────────────────────────────────────────────
 
 const CLIENT_INVITE: Record<Locale, { title: string; body: (name: string) => string; cta: string }> = {
-  az: { title: 'Triad Vision şəxsi kabinetiniz hazırdır', body: (n) => `Salam ${n}! Müraciətiniz əsasında sizin üçün Triad Vision şəxsi kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`, cta: 'Şifrəni təyin et' },
+  az: { title: 'Triad Vision şəxsi kabinetiniz hazırdır', body: (n) => `Salam ${n}! Müraciətiniz əsasında sizin üçün Triad Vision şəxsi kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`, cta: 'Şifrəni təyin et' },
   de: { title: 'Ihr Triad-Vision-Kundenkonto ist bereit', body: (n) => `Hallo ${n}, auf Grundlage Ihrer Anfrage wurde für Sie ein Triad-Vision-Kundenkonto angelegt. Klicken Sie auf die Schaltfläche, um Ihr Passwort festzulegen. Der Link ist 7 Tage gültig.`, cta: 'Passwort festlegen' },
   en: { title: 'Your Triad Vision account is ready', body: (n) => `Hello ${n}, based on your inquiry we created a Triad Vision client account for you. Click the button below to set your password. The link is valid for 7 days.`, cta: 'Set your password' },
   ru: { title: 'Ваш личный кабинет Triad Vision готов', body: (n) => `Здравствуйте, ${n}! На основании вашего запроса для вас создан личный кабинет Triad Vision. Нажмите кнопку ниже, чтобы задать пароль. Ссылка действительна 7 дней.`, cta: 'Задать пароль' },

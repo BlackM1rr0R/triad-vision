@@ -68,7 +68,7 @@ const az = {
       removeMember: 'Çıxar',
       rename: 'Adı və mövzunu dəyiş',
       markRead: 'Oxunmuş kimi qeyd et',
-      download: 'Yüklə',
+      download: 'Endir',
       open: 'Aç',
       more: 'Daha çox',
       loadMore: 'Əvvəlki mesajlar',

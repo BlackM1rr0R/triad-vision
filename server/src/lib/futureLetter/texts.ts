@@ -8,9 +8,9 @@ export const LETTER_TEXTS: Record<LetterLocale, { subject: string; intro: (writt
     subject: 'Keçmişdən sizə məktub var',
     intro: (d) => `${d} tarixində özünüzə bu məktubu yazmışdınız — Almaniyaya gəldiyiniz gün oxumaq üçün:`,
     outro: 'Bu məktubu yalnız siz görə bilərsiniz. Triad Vision komandası onun mətnini oxuya bilmir.',
-    cta: 'Portalda aç',
+    cta: 'Kabinetdə aç',
     notifyTitle: 'Gələcəyə məktubunuz çatdı',
-    notifyBody: 'Özünüzə yazdığınız məktub artıq açıqdır. Portalda oxuya bilərsiniz.',
+    notifyBody: 'Özünüzə yazdığınız məktub artıq açıqdır. Kabinetdə oxuya bilərsiniz.',
   },
   de: {
     subject: 'Ein Brief aus der Vergangenheit für Sie',

@@ -12,7 +12,7 @@ const az = {
     year: 'İl',
     maxVacation: 'Ən çox məzuniyyət günü',
     listTitle: '{{state}}: bayramlar {{year}}',
-    downloadIcs: '.ics yüklə',
+    downloadIcs: '.ics endir',
     weekend: 'həftəsonu',
     partialShort: 'yalnız ştatın bəzi yerlərində',
     partial: {

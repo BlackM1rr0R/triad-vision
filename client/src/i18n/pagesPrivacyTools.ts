@@ -74,7 +74,7 @@ const az = {
       filters: { actor: 'Kim', entity: 'Obyekt', field: 'Sahə', from: 'Başlanğıc', to: 'Son', search: 'Səbəbdə axtar…', all: 'Hamısı' },
       exportCsv: 'CSV ixrac',
       th: { when: 'Vaxt', who: 'Kim', what: 'Nə', reason: 'Səbəb', ip: 'IP' },
-      entities: { user: 'İstifadəçi', company: 'Şirkət', agent: 'Agent', invoiceSettings: 'Faktura ayarları', document: 'Sənəd (OCR)', insight: 'Sənəd tanınması', partner: 'Partnyor' },
+      entities: { user: 'İstifadəçi', company: 'Şirkət', agent: 'Agent', invoiceSettings: 'Hesab-faktura parametrləri', document: 'Sənəd (OCR)', insight: 'Sənəd tanınması', partner: 'Partnyor' },
       empty: 'Hələ heç bir məlumat açılmayıb.',
       prev: 'Əvvəlki',
       next: 'Növbəti',

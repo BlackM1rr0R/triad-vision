@@ -171,7 +171,7 @@ const FOOTER: Record<Locale, { marketing: string; service: string; unsubscribe: 
     marketing: 'Bu məktubu Triad Vision-dan xəbər və təkliflər almağa razılıq verdiyiniz üçün alırsınız.',
     service: 'Bu, Triad Vision hesabınızla bağlı xidmət məlumatıdır.',
     unsubscribe: 'Abunəlikdən çıxın',
-    prefs: 'Bildiriş ayarları',
+    prefs: 'Bildiriş parametrləri',
     stop: 'İmtina (STOP)',
     test: 'TEST',
   },

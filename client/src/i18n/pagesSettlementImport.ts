@@ -37,7 +37,7 @@ const az = {
       cancelled: 'Ləğv (rawot)',
       refused: 'İmtina (atkaz)',
     },
-    skippedCredentials: '{{count}} xana giriş məlumatına (e-poçt / parol) bənzədiyi üçün oxunmadı.',
+    skippedCredentials: '{{count}} xana giriş məlumatına (e-poçt / şifrə) bənzədiyi üçün oxunmadı.',
     beneficiaries: 'Pay sütunları',
     partners: 'Vasitəçilər',
     map: 'Mövcud',

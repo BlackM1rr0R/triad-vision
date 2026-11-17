@@ -41,7 +41,7 @@ const az = {
       homeOff: 'Ana səhifədə xəritə söndürülüb.',
       casesOff: 'Sistemdəki işlər sayılmır (yalnız əl ilə daxil edilənlər).',
       openMap: 'İctimai xəritəni aç',
-      settings: 'Xəritə ayarları',
+      settings: 'Xəritə parametrləri',
     },
     saved: 'Yadda saxlanıldı',
     deleted: 'Silindi',

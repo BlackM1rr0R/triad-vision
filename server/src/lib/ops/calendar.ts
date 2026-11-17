@@ -77,7 +77,7 @@ export const buildCalendar = (name: string, events: FeedEvent[]) => {
 };
 
 const LABEL: Record<Locale, { appointment: string; consultation: string; interview: string; deadline: string; calendar: string }> = {
-  az: { appointment: 'Səfirlik görüşü', consultation: 'Konsultasiya', interview: 'Müsahibə', deadline: 'Son tarix', calendar: 'Triad Vision' },
+  az: { appointment: 'Səfirlik görüşü', consultation: 'Məsləhət', interview: 'Müsahibə', deadline: 'Son tarix', calendar: 'Triad Vision' },
   de: { appointment: 'Botschaftstermin', consultation: 'Beratung', interview: 'Vorstellungsgespräch', deadline: 'Frist', calendar: 'Triad Vision' },
   en: { appointment: 'Embassy appointment', consultation: 'Consultation', interview: 'Interview', deadline: 'Deadline', calendar: 'Triad Vision' },
   ru: { appointment: 'Встреча в посольстве', consultation: 'Консультация', interview: 'Собеседование', deadline: 'Срок', calendar: 'Triad Vision' },

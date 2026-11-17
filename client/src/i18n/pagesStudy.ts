@@ -218,7 +218,7 @@ const az: Copy = {
     empty: {
       title: 'Kataloq hazırlanır',
       text: 'Komandamız hər proqramı əlavə etməzdən əvvəl universitetin öz səhifəsində yoxlayır. Nə oxumaq istədiyinizi bizə yazın — uyğun proqramları sizin üçün tapaq.',
-      cta: 'Pulsuz konsultasiya',
+      cta: 'Pulsuz məsləhət',
       staff: 'Proqram əlavə et',
     },
     noResults: 'Bu filtrlərə uyğun proqram tapılmadı.',

@@ -32,7 +32,7 @@ export const companyOwnerId = async (companyId: string): Promise<string | null> 
 const INVITE_TEXT: Record<Locale, { title: string; body: (inviter: string, company: string) => string; cta: string }> = {
   az: {
     title: 'Triad Vision işəgötürən kabinetinə dəvət',
-    body: (i, c) => `${i} sizi Triad Vision işəgötürən kabinetində ${c} komandasına əlavə etdi. Şifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`,
+    body: (i, c) => `${i} sizi Triad Vision işəgötürən kabinetində ${c} komandasına əlavə etdi. Şifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`,
     cta: 'Şifrəni təyin et',
   },
   de: {

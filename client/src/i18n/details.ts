@@ -4,7 +4,7 @@ export const details = {
     svc: {
       eyebrow: 'Xidmətlərimiz',
       title: 'İşçi axtarışından gəlişə qədər bütün proses',
-      subtitle: 'Hər xidmətin üzərinə klikləyin: nələrin daxil olduğunu və necə işlədiyini görün.',
+      subtitle: 'Hər xidmətin üzərinə basın: nələrin daxil olduğunu və necə işlədiyini görün.',
       included: 'Nələr daxildir',
       forCompany: 'Şirkətlər üçün',
       forCandidate: 'Namizədlər üçün',
@@ -39,7 +39,7 @@ export const details = {
     authAside: {
       title: 'Bütün müraciətiniz bir kabinetdə',
       text: 'Sənədlərdən viza qərarına qədər hər addımı buradan idarə edin — ofisə gəlmədən, növbə gözləmədən.',
-      features: ['Sənədləri telefonla çəkib yükləyin', 'Müqaviləni ekranda elektron imzalayın', 'Hər addımda email və bildiriş alın', 'Məlumatlarınız DSGVO ilə qorunur'],
+      features: ['Sənədləri telefonla çəkib yükləyin', 'Müqaviləni ekranda elektron imzalayın', 'Hər addımda e-poçt və bildiriş alın', 'Məlumatlarınız DSGVO ilə qorunur'],
       help: 'Kömək lazımdır?',
       helpText: 'Komandamız B.e–Cümə 09:00–18:00 cavab verir.',
       secure: 'Təhlükəsiz bağlantı · DSGVO',

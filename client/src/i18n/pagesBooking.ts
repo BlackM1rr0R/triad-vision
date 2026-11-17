@@ -1341,7 +1341,7 @@ const ciAz = {
     amount: 'Məbləğ',
     status: { SENT: 'Ödənilməyib', OVERDUE: 'Gecikir', PAID: 'Ödənilib', CANCELLED: 'Ləğv edilib' },
     paidOn: '{{date}} ödənilib',
-    download: 'PDF yüklə',
+    download: 'PDF endir',
     loadFailed: 'Hesab-fakturaları yükləmək mümkün olmadı',
     retry: 'Yenidən cəhd et',
   },

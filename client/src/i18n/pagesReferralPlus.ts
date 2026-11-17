@@ -40,7 +40,7 @@ const az = {
       multiplier: 'Əmsal',
       startsAt: 'Başlanğıc',
       endsAt: 'Son',
-      campaignLabel: 'Kampaniya adı (portalda göstərilir)',
+      campaignLabel: 'Kampaniya adı (kabinetdə göstərilir)',
       campaignHint: 'Tarixlər Bakı vaxtı ilə, hər iki gün daxil. Əmsal bu dövrdə qeydiyyatdan keçən dostlara görə mükafatlara (pillə bonusunda — pillə çatılanda) tətbiq olunur; dost endiriminə yox.',
       leaderboard: 'Reytinq',
       from: 'Başlanğıc',

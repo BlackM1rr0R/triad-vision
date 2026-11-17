@@ -7,7 +7,7 @@ const az = {
   moneyHome: {
     heroTitle: 'Ailəyə pul: hər ay nə qədər göndərə bilərəm?',
     fromSalary: 'Bundan ailəyə ayda nə qədər göndərə bilərəm?',
-    heroSubtitle: 'Xalis maaş, şəhər və həyat tərzi — Almaniyada xərclərdən və öz yığımınızdan sonra evə nə qədər qalır, manatla və Bakıdakı real qiymətlərlə.',
+    heroSubtitle: 'Xalis maaşı, şəhəri və həyat tərzini seçin. Almaniyada xərclərdən və yığımdan sonra evə nə qədər pul qaldığını görün — manatla və Bakıdakı real qiymətlərlə.',
     form: {
       title: 'Sizin rəqəmləriniz',
       net: 'Aylıq xalis maaş',

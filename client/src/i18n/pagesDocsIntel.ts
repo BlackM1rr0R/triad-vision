@@ -52,7 +52,7 @@ const az = {
     packet: {
       title: 'Səfirlik paketi (PDF)',
       desc: 'Qəbul edilmiş bütün sənədlər bir PDF-də: üz səhifə, mündəricat və hər sənəd.',
-      download: 'PDF yüklə',
+      download: 'PDF endir',
       save: 'Müraciət sənədlərinə yadda saxla',
       saved: 'Paket müraciət sənədlərinə əlavə edildi.',
       notYet: 'Paket səfirlik mərhələsində əlçatan olacaq.',
@@ -74,8 +74,8 @@ const az = {
       },
       missing: 'Çatışmayan profil sahələri: {{fields}}',
       complete: 'Bütün məlumatlar mövcuddur.',
-      downloaded: 'PDF yükləndi. Çatışmayan sahələr: {{count}}',
-      downloadedOk: 'PDF yükləndi.',
+      downloaded: 'PDF endirildi. Çatışmayan sahələr: {{count}}',
+      downloadedOk: 'PDF endirildi.',
       openProfile: 'Profili doldur',
       fields: {
         phone: 'telefon',

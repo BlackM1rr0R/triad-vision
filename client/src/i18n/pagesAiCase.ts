@@ -116,7 +116,7 @@ const az = {
       edit: 'Düzəlt',
       save: 'Saxla',
       saved: 'Saxlandı.',
-      pdf: 'PDF yüklə',
+      pdf: 'PDF endir',
       onlyMissing: 'Yalnız boşlar',
       checklist: 'Səfirlik siyahısı',
       requestDoc: 'Müştəridən istə',

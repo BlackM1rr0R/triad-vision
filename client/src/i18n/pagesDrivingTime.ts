@@ -6,7 +6,7 @@
 const az = {
   drivingTime: {
     heroTitle: 'Sürücülər üçün sürmə və istirahət vaxtı yoxlaması',
-    heroSubtitle: 'Yük maşını və avtobus sürücüləri üçün: həftənizi gün-gün daxil edin — AB 561/2006 qaydaları və alman iş vaxtı qanunu (§21a ArbZG) üzrə pozuntular və təxmini cərimələr.',
+    heroSubtitle: 'Yük maşını və avtobus sürücüləri üçün. Həftənizi gün-gün yazın. AB 561/2006 qaydaları və alman iş vaxtı qanunu (§21a ArbZG) üzrə pozuntuları və təxmini cərimələri görün.',
     presets: { title: 'Nümunələr', legal: 'Qanuni həftə', violations: 'Pozuntularla həftə' },
     weeks: { label: 'Müddət', one: '1 həftə', two: '2 həftə' },
     weekdays: ['Bazar ertəsi', 'Çərşənbə axşamı', 'Çərşənbə', 'Cümə axşamı', 'Cümə', 'Şənbə', 'Bazar'],
@@ -54,7 +54,7 @@ const az = {
       weeklyRestReduced: 'Qısaldılmış həftəlik istirahət (45 saatdan {{m}} saat az): fərqi 3-cü həftənin sonunadək bir blokda kompensasiya edin.',
       twoReducedWeekly: 'Ardıcıl iki qısaldılmış həftəlik istirahət (45 saata {{m}} saat çatmır).',
       arbzgWeek60: 'İş vaxtı (sürmə + digər iş) həftədə 60 saatı {{m}} saat aşır.',
-      arbzgWeek48: 'İş vaxtı bu həftə 48 saatdan {{m}} saat çoxdur — yalnız 4 ay / 16 həftə ərzində orta ≤ 48 saat olarsa icazəlidir.',
+      arbzgWeek48: 'İş vaxtı bu həftə 48 saatdan {{m}} saat çoxdur. Bu, yalnız 4 ay / 16 həftə ərzində orta ≤ 48 saat olarsa icazəlidir.',
       arbzgDay: 'Bu növbədə iş vaxtı 10 saatı {{m}} saat aşır.',
       arbzgBreak: 'İş fasilələri {{m}} saat qısadır (6 saatdan sonra 30 dəq, 9 saatdan sonra 45 dəq).',
       arbzgSixHours: '15 dəqiqəlik fasilə olmadan 6 saatdan çox ardıcıl iş.',
@@ -77,7 +77,7 @@ const az = {
       { q: 'Sürücü gündə neçə saat sürə bilər?', a: 'AB 561/2006 Reqlamentinə görə gündə 9 saat, həftədə iki dəfə 10 saat. Həftədə 56 saat, ardıcıl iki həftədə isə cəmi 90 saatdan çox olmamalıdır.' },
       { q: 'Fasilə necə bölünə bilər?', a: '4,5 saat sürmədən sonra 45 dəqiqə fasilə lazımdır. Onu iki hissəyə bölmək olar: əvvəl ən azı 15 dəqiqə, sonra ən azı 30 dəqiqə. Əksinə (30 + 15) sayılmır.' },
       { q: 'Gündəlik istirahət nə qədər olmalıdır?', a: 'Adi halda 11 saat, iki həftəlik istirahət arasında ən çox üç dəfə 9 saata qədər qısaldıla bilər. Bölünmüş variant: əvvəl 3 saat, sonra 9 saat. İstirahət əvvəlki istirahətin bitməsindən 24 saat ərzində götürülməlidir.' },
-      { q: 'Yükləmə və boşaltma iş vaxtına daxildirmi?', a: 'Bəli. Almaniyada §21a ArbZG üzrə sürmə ilə yanaşı yükləmə, təmizlik və sənədlər də iş vaxtıdır: həftədə maksimum 60 saat, 4 ay ərzində orta 48 saat. Əvvəlcədən məlum olan gözləmə vaxtı iş vaxtı sayılmır.' },
+      { q: 'Yükləmə və boşaltma iş vaxtına daxildirmi?', a: 'Bəli. Almaniyada §21a ArbZG üzrə təkcə sürmə yox, yükləmə, təmizlik və sənədlər də iş vaxtıdır. Həftədə maksimum 60 saat, 4 ay ərzində orta 48 saat olmalıdır. Əvvəlcədən məlum olan gözləmə vaxtı iş vaxtı sayılmır.' },
       { q: 'Pozuntuya görə nə qədər cərimə var?', a: 'Ştatların kataloquna görə məsələn 2 saata qədər sürmə vaxtı aşımı üçün sürücüyə hər yarım saat üçün 30 €, şirkətə 90 €; böyük aşımlarda daha çox. Maksimum: sürücü 5 000 €, şirkət 30 000 €. Burada göstərilən məbləğlər təxminidir.' },
     ],
   },

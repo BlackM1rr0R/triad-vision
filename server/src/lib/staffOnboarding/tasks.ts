@@ -50,7 +50,7 @@ export const TRAINING_TASKS: TrainingTask[] = [
     link: '/admin/cases',
     title: { az: 'Bir müraciəti açın', ru: 'Откройте заявку', en: 'Open a case', de: 'Einen Fall öffnen' },
     how: {
-      az: '"Müraciətlər" siyahısından istənilən müraciətə klikləyin və səhifəni nəzərdən keçirin.',
+      az: '"Müraciətlər" siyahısından istənilən müraciətə basın və səhifəni nəzərdən keçirin.',
       ru: 'Нажмите на любую заявку в списке «Заявки» и просмотрите страницу.',
       en: 'Click any case in the Cases list and look through the page.',
       de: 'In der Fallliste einen beliebigen Fall anklicken und die Seite durchsehen.',

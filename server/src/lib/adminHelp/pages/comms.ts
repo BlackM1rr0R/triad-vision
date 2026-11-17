@@ -14,7 +14,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
           '«Bildiriş şablonları» tabında bildiriş növünü seçin, hər dil üçün başlıq və mətni dəyişin, dəyişənləri əlavə edin, önizləməyə baxıb «Yadda saxla» basın.',
         ],
         tips: [
-          'Yenidən göndərmək, xatırlatma ayarları və şablonlar yalnız Administrator və Super admin üçündür; test mesajını yalnız Super admin göndərir.',
+          'Yenidən göndərmək, xatırlatma parametrləri və şablonlar yalnız Administrator və Super admin üçündür; test mesajını yalnız Super admin göndərir.',
           '«Konsol (test)» statusu provayderin qoşulmadığını göstərir — mesaj həqiqətən göndərilməyib.',
           '«Standarta qaytar» həmin dil üçün standart mətni bərpa edir.',
         ],
@@ -129,11 +129,11 @@ export const PAGES_COMMS: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Zənglər',
-        purpose: 'Müştərilərlə zənglərin jurnalı, saytdan gələn geri zəng sifarişləri və telefon provayderinin ayarları.',
+        purpose: 'Müştərilərlə zənglərin jurnalı, saytdan gələn geri zəng sifarişləri və telefon provayderinin parametrləri.',
         steps: [
           '«Zəng jurnalı» tabında bütün zənglərə və onların nəticəsinə baxın; yalnız özünüzünkülər üçün «Yalnız mənim» işarələyin.',
           '«Geri zəng sifarişləri» tabında «Gözləyən» sorğuları açın: müştərinin istədiyi vaxta (Bakı vaxtı) baxıb «Zəng et» basın və nəticəni qeyd edin; lazım olmayanı «Ləğv et» ilə bağlayın.',
-          'Administrator «Ayarlar» tabında provayderi (Twilio və ya sipgate), zəng edən nömrəni, iş saatlarını və zəng yazısını qurur.',
+          'Administrator «Parametrlər» tabında provayderi (Twilio və ya sipgate), zəng edən nömrəni, iş saatlarını və zəng yazısını qurur.',
         ],
         tips: [
           'Vaxtı keçmiş sifarişlər «gecikir» nişanı ilə göstərilir.',
@@ -198,7 +198,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
         ],
         tips: [
           'Yalnız Administrator və Super admin üçündür; modul söndürülə bilər.',
-          '«Xidmət məlumatı» bildiriş ayarlarına hörmət edir, «Reklam» yalnız razılıq verənlərə gedir; hər məktubda imtina linki olur.',
+          '«Xidmət məlumatı» bildiriş parametrlərinə hörmət edir, «Reklam» yalnız razılıq verənlərə gedir; hər məktubda imtina linki olur.',
           'Açılma sayı təxminidir (Apple Mail və şəkil proksiləri onu artırır).',
         ],
       },
@@ -437,7 +437,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
         purpose: 'Saytdakı əlaqə formu və şirkət əməkdaşlıq formasından gələn müraciətlər (lidlər). Hər sorğuya cavab verilməli və statusu yenilənməlidir.',
         steps: [
           'Status çipləri («Yeni», «İcrada», «Tamamlandı», «Arxivdə»), «Mənim» / «Təyin olunmayıb», «Filtrlər» və axtarışla siyahını süzün; «Qaynar lidlər» kartı ən perspektivliləri göstərir.',
-          'Sorğuya klikləyin: yan paneldə mətn, əlaqə şəxsi, şirkət, işçi sayı və dil görünür; e-poçt, zəng və ya WhatsApp ilə cavab verin.',
+          'Sorğuya basın: yan paneldə mətn, əlaqə şəxsi, şirkət, işçi sayı və dil görünür; e-poçt, zəng və ya WhatsApp ilə cavab verin.',
           'Statusu sətirdə dəyişin; bir neçə sorğunu seçib aşağıdakı paneldən birdən təyin edin, statusunu dəyişin və ya ixrac edin.',
         ],
         tips: [
@@ -495,16 +495,16 @@ export const PAGES_COMMS: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Görüşlər',
-        purpose: 'Saytda konsultasiya üçün təklif olunan boş vaxtlar və müştərilərin təyin etdiyi görüşlər; ayrıca tabda ofisə gəlişlər.',
+        purpose: 'Saytda məsləhət üçün təklif olunan boş vaxtlar və müştərilərin təyin etdiyi görüşlər; ayrıca tabda ofisə gəlişlər.',
         steps: [
-          '«Konsultasiyalar» tabında «Gün», «Həftə» və ya «Siyahı» görünüşünü seçin; «Vaxt əlavə et» ilə tək vaxt, «Həftəlik şablon» ilə bir neçə həftəni birdən doldurun.',
-          'Tutulmuş vaxta klikləyin: əlaqə, mövzu və mesajı görün, vaxtı gələndə «Görüşü aç» basın, sonra «Keçirildi» və ya «Gəlmədi» qeyd edin.',
+          '«Məsləhət görüşləri» tabında «Gün», «Həftə» və ya «Siyahı» görünüşünü seçin; «Vaxt əlavə et» ilə tək vaxt, «Həftəlik şablon» ilə bir neçə həftəni birdən doldurun.',
+          'Tutulmuş vaxta basın: əlaqə, mövzu və mesajı görün, vaxtı gələndə «Görüşü aç» basın, sonra «Keçirildi» və ya «Gəlmədi» qeyd edin.',
           'Görüşü «Ləğv et» ilə ləğv edin (müştəriyə məktub gedir); müştərilərin ofis vizitlərini «Ofisə gəlişlər» tabında idarə edin.',
         ],
         tips: [
           'Tutulmuş vaxtı silmək olmur — əvvəlcə görüşü ləğv edin.',
           'Administrator «Əməkdaş» seçimi ilə istənilən əməkdaşın vaxtlarını idarə edə bilər.',
-          'Konsultasiyalar Workspace təqviminə avtomatik düşür.',
+          'Məsləhət görüşləri Workspace təqviminə avtomatik düşür.',
         ],
       },
       ru: {
@@ -729,7 +729,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
         title: 'Partnyorlar',
         purpose: 'Bizə müştəri gətirən vasitəçilər (şəxslər və şirkətlər): müqavilələr, gətirdikləri müştərilər, komissiyalar və kvotalar.',
         steps: [
-          'Siyahını axtarış, növ, ölkə, teq, müqavilə və kvota filtrləri ilə süzün, sütun başlığına klikləyib sıralayın.',
+          'Siyahını axtarış, növ, ölkə, teq, müqavilə və kvota filtrləri ilə süzün, sütun başlığına basıb sıralayın.',
           'Partnyorun profilini açın: «Məlumat», «Müqavilələr», «Müştərilər / müraciətlər», «Komissiyalar», «Sənədlər», «Tarixçə» və s. tabları var.',
           'Yuxarıdakı düymələrlə «Bütün komissiyalar», «Ablehnung hesabatı» və «Məktəblər və dil kursları» səhifələrini açın və ya CSV yükləyin.',
         ],
@@ -852,7 +852,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
         purpose: 'Partnyor proqramı: agentlər öz referal kodu və linki ilə müştəri gətirir, siz onların komissiyalarını təsdiqləyir və ödənildi kimi qeyd edirsiniz.',
         steps: [
           '«Agentlər» tabında «Yeni agent» basın, məlumatları və «Komissiya şərtləri»ni doldurub «Yarat və dəvət göndər» basın.',
-          'Agentin sətrinə klikləyib profili açın: referal linkini kopyalayın, şərtləri və IBAN-ı dəyişin, müştərini agentə bağlayın və ya ayırın.',
+          'Agentin sətrinə basıb profili açın: referal linkini kopyalayın, şərtləri və IBAN-ı dəyişin, müştərini agentə bağlayın və ya ayırın.',
           '«Komissiyalar» tabında gözləyən komissiyaları «Təsdiqlə», bank köçürməsindən sonra «Ödənildi kimi qeyd et» basın; «CSV ixrac» mühasibat üçündür.',
         ],
         tips: [
@@ -913,7 +913,7 @@ export const PAGES_COMMS: PageHelpEntry[] = [
         purpose: 'Vebinarlar və məlumat sessiyaları: qeydiyyat, xatırlatmalar, iştirak və tədbirdən sonrakı məktub. Dərc olunmuş tədbirin saytda öz səhifəsi olur.',
         steps: [
           '«Yeni tədbir» basın: başlıq, təsvir, tarix, vaxt, müddət, onlayn/oflayn, link və ya ünvan, tutum və dili doldurub yadda saxlayın.',
-          '«Qarşıdakı» və ya «Keçmiş» seçib tədbirə klikləyin; «Qeydiyyatlar» siyahısında hər iştirakçını «İştirak etdi» və ya «Gəlmədi» kimi qeyd edin.',
+          '«Qarşıdakı» və ya «Keçmiş» seçib tədbirə basın; «Qeydiyyatlar» siyahısında hər iştirakçını «İştirak etdi» və ya «Gəlmədi» kimi qeyd edin.',
           'Tədbirdən sonra «Sonrakı məktub» bölməsində auditoriyanı seçib «Göndər» basın; video yazının linkini də əlavə edə bilərsiniz.',
         ],
         tips: [

@@ -70,7 +70,7 @@ const az = {
       profession: 'Bu peşə üçün komandamızın təxmini. Mənbə: {{source}}',
       disclaimer: 'Qiymətlər və vergilər Almaniyada daha yüksəkdir — ona görə qalan pulu müqayisə edin, brutto maaşı yox.',
     },
-    actions: { share: 'Linki kopyala', copied: 'Link kopyalandı', copyFailed: 'Kopyalamaq alınmadı', budget: 'İlk ayın büdcəsi', salary: 'Xalis maaş kalkulyatoru', booking: 'Konsultasiya təyin et' },
+    actions: { share: 'Linki kopyala', copied: 'Link kopyalandı', copyFailed: 'Kopyalamaq alınmadı', budget: 'İlk ayın büdcəsi', salary: 'Xalis maaş kalkulyatoru', booking: 'Məsləhətə yazıl' },
     teaser: { title: 'Almaniyada həyatınız necə olacaq?', text: 'Peşə və şəhərə görə maaş, xərclər və qənaət — avro və manatla.', cta: 'Simulyatoru aç' },
     admin: {
       title: 'Almaniyada həyat',

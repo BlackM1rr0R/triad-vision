@@ -11,8 +11,8 @@ const az = {
     close: 'Bağla',
     notConfigured: 'Telefon provayderi qoşulmayıb',
     notConfiguredHint: 'Klik-zəng üçün Twilio və ya sipgate hesabı lazımdır. Hələlik öz telefonunuzdan zəng edib nəticəni burada qeyd edə bilərsiniz.',
-    setupLink: 'Ayarlara keçin',
-    setupSteps: 'Quraşdırma: 1) Twilio və ya sipgate hesabı açın və nömrə alın. 2) Admin → Zənglər → Ayarlar bölməsində provayderi və məlumatları daxil edin. 3) Göstərilən webhook ünvanlarını provayderin panelinə yazın. 4) Profilinizdə öz telefon nömrənizi qeyd edin.',
+    setupLink: 'Parametrlərə keçin',
+    setupSteps: 'Quraşdırma: 1) Twilio və ya sipgate hesabı açın və nömrə alın. 2) Admin → Zənglər → Parametrlər bölməsində provayderi və məlumatları daxil edin. 3) Göstərilən webhook ünvanlarını provayderin panelinə yazın. 4) Profilinizdə öz telefon nömrənizi qeyd edin.',
     dialOwn: 'Öz telefonumla zəng et',
     staffPhoneMissing: 'Profilinizdə telefon nömrəsi yoxdur: provayder əvvəlcə sizin telefona zəng edir.',
     howItWorks: 'Əvvəlcə sizin telefonunuz ({{phone}}) zəng çalacaq, cavab verən kimi müştəri ilə birləşdiriləcək.',
@@ -71,7 +71,7 @@ const az = {
     page: {
       title: 'Zənglər',
       subtitle: 'Zəng jurnalı, geri zəng sifarişləri və telefon provayderi',
-      tabs: { calls: 'Zəng jurnalı', callbacks: 'Geri zəng sifarişləri', settings: 'Ayarlar' },
+      tabs: { calls: 'Zəng jurnalı', callbacks: 'Geri zəng sifarişləri', settings: 'Parametrlər' },
       mine: 'Yalnız mənim',
     },
     callbacks: {
@@ -118,7 +118,7 @@ const az = {
       from: 'Başlanğıc',
       to: 'Son',
       save: 'Yadda saxla',
-      saved: 'Ayarlar saxlanıldı',
+      saved: 'Parametrlər saxlanıldı',
     },
   },
   callback: {

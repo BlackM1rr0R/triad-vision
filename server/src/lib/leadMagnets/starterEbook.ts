@@ -29,7 +29,7 @@ const T: Record<SeoLocale, { title: string; subtitle: string; description: strin
     contents: 'Mündəricat',
     faq: 'Tez-tez verilən suallar',
     closingTitle: 'Növbəti addım',
-    closing: 'Hansı yolun sizə uyğun olduğunu bilmək istəyirsiniz? Pulsuz konsultasiya təyin edin və ya onlayn viza testindən keçin:',
+    closing: 'Hansı yolun sizə uyğun olduğunu bilmək istəyirsiniz? Pulsuz məsləhətə yazılın və ya onlayn viza testindən keçin:',
     page: 'Səhifə',
     disclaimer: 'Bu bələdçi ümumi məlumat xarakteri daşıyır və hüquqi məsləhət deyil. Qaydalar və məbləğlər dəyişə bilər.',
   },

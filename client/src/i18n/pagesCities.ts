@@ -6,7 +6,7 @@ const az = {
     subtitle: 'Müştərilərimizin ən çox köçdüyü şəhərlər: kirayə, kommunal xərclər, nəqliyyat, ərzaq və aylıq büdcə kalkulyatoru.',
     approx: 'Təxmini dəyərlər, {{year}}',
     disclaimer:
-      'Bütün rəqəmlər açıq mənbələrə (kirayə indeksləri, elan portalları) əsaslanan təxmini orta göstəricilərdir və rayondan, mənzilin vəziyyətindən və şəxsi vərdişlərdən asılı olaraq xeyli fərqlənə bilər. Bu, rəsmi təklif və ya zəmanət deyil.',
+      'Bütün rəqəmlər açıq mənbələrə (kirayə indeksləri, elan portalları) əsaslanan təxmini orta göstəricilərdir. Rayondan, mənzilin vəziyyətindən və şəxsi vərdişlərdən asılı olaraq xeyli fərqlənə bilər. Bu, rəsmi təklif və ya zəmanət deyil.',
     jump: { cities: 'Şəhərlər', compare: 'Müqayisə', calc: 'Kalkulyator' },
     pop: '{{n}} sakin',
     card: {

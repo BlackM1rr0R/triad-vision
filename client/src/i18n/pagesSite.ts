@@ -13,7 +13,7 @@ const az = {
       later: 'Sonra',
       iosHow: 'Necə?',
       iosTitle: 'iPhone / iPad-də ana ekrana əlavə etmək',
-      iosSteps: ['Safari-nin aşağı panelində «Paylaş» düyməsinə toxunun (kvadrat və ox).', '«Ana ekrana» (Add to Home Screen) seçin.', 'Sağ yuxarıda «Əlavə et» düyməsinə toxunun.'],
+      iosSteps: ['Safari-nin aşağı panelində «Paylaş» düyməsinə basın (kvadrat və ox).', '«Ana ekrana» (Add to Home Screen) seçin.', 'Sağ yuxarıda «Əlavə et» düyməsinə basın.'],
       close: 'Bağla',
     },
     push: {
@@ -22,7 +22,7 @@ const az = {
       enable: 'Bildirişləri aç',
       later: 'İndi yox',
       enabled: 'Bildirişlər açıldı',
-      denied: 'Brauzer bildirişlərə icazə vermədi. Bunu brauzerin sayt ayarlarından dəyişə bilərsiniz.',
+      denied: 'Brauzer bildirişlərə icazə vermədi. Bunu brauzerin sayt parametrlərindən dəyişə bilərsiniz.',
       unavailable: 'Bu brauzer bildirişləri dəstəkləmir.',
     },
     problem: {
@@ -74,7 +74,7 @@ const az = {
     },
     statusSettings: {
       title: 'Açıq status yoxlaması',
-      intro: 'Aktiv etsəniz, müraciət nömrəsini və doğum tarixinizi bilən hər kəs {{brandSlug}} saytında yalnız mərhələni və son yenilənmə tarixini görə bilər — ad, sənəd və ya işəgötürən göstərilmir. Defolt olaraq söndürülüb.',
+      intro: 'Aktiv etsəniz, müraciət nömrənizi və doğum tarixinizi bilən hər kəs {{brandSlug}} saytında mərhələni və son yenilənmə tarixini görə bilər. Ad, sənədlər və işəgötürən göstərilmir. Defolt olaraq söndürülüb.',
       enable: 'Status yoxlamasına icazə ver',
       family: 'Ailə üçün link',
       familyText: 'Doğum tarixi əvəzinə xüsusi link: ailənizlə paylaşın. Yeni link köhnəsini etibarsız edir.',

@@ -36,7 +36,7 @@ const az = {
       mail_triage: 'Poçt (AI)',
       mail_unread: 'Cavabsız məktub',
       inquiry: 'Yeni müraciət',
-      booking: 'Konsultasiya',
+      booking: 'Məsləhət',
       application: 'Namizəd qərarı',
       employer_decision: 'İşəgötürənin qərarı',
       candidate_request: 'İşəgötürən sorğusu',

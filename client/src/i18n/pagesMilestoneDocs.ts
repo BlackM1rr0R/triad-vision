@@ -7,7 +7,7 @@ const az = {
     insta: {
       cta: 'Instagram kartımı yarat',
       title: 'Instagram kartı',
-      intro: 'Story və ya post üçün şəkil. Yalnız sizə göstərilir — siz yükləyib paylaşana qədər heç yerdə dərc olunmur.',
+      intro: 'Story və ya post üçün şəkil. Yalnız sizə göstərilir — siz endirib paylaşana qədər heç yerdə dərc olunmur.',
       nameLabel: 'Kartda adınız',
       nameFirst: 'Yalnız adım ({{name}})',
       nameInitials: 'Baş hərflər ({{name}})',
@@ -17,7 +17,7 @@ const az = {
       square: 'Kvadrat (1:1)',
       language: 'Kartın dili',
       generate: 'Kartı yarat',
-      download: 'PNG yüklə',
+      download: 'PNG endir',
       share: 'Paylaş',
       previewAlt: 'Instagram kartının önizləməsi',
       privacy: 'Soyadınız, pasport və ya müraciət məlumatlarınız kartda heç vaxt görünmür. QR kod sayta aparır.',
@@ -27,8 +27,8 @@ const az = {
     },
     cert: {
       title: 'Almaniyaya xoş gəlmisiniz!',
-      text: 'Gəlişiniz təsdiqləndi. Bu gözəl anın xatirəsi üçün sertifikatınızı yükləyin.',
-      download: 'Sertifikatı yüklə (PDF)',
+      text: 'Gəlişiniz təsdiqləndi. Bu gözəl anın xatirəsi üçün sertifikatınızı endirin.',
+      download: 'Sertifikatı endir (PDF)',
       language: 'Sertifikatın dili',
       includeEmployer: 'İşəgötürənin adını göstər',
       number: 'Sertifikat № {{number}}',
@@ -36,7 +36,7 @@ const az = {
       verify: 'Yoxlama səhifəsi',
       revoked: 'Bu sertifikat ləğv edilib',
       revokedText: 'Sualınız varsa, menecerinizlə əlaqə saxlayın.',
-      error: 'Sertifikatı yükləmək alınmadı.',
+      error: 'Sertifikatı endirmək alınmadı.',
     },
     verify: {
       kicker: 'Triad Vision',
@@ -65,7 +65,7 @@ const az = {
       error: 'Alınmadı',
       open: 'Yoxlama səhifəsi',
     },
-    onePager: { download: 'PDF profil', title: 'Bir səhifəlik PDF profil yüklə', error: 'PDF yüklənmədi' },
+    onePager: { download: 'PDF profil', title: 'Bir səhifəlik PDF profil endir', error: 'PDF endirilmədi' },
   },
 };
 

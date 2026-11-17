@@ -251,7 +251,7 @@ const az = {
         result: 'Yaradıldı: {{created}} · Yeniləndi: {{updated}} · Ötürüldü: {{skipped}}',
         unmapped: 'Tanınmayan sütunlar: {{cols}}',
       },
-      export: { hint: 'Gördüyünüz bütün kontaktlar CSV faylı kimi yüklənir.' },
+      export: { hint: 'Gördüyünüz bütün kontaktlar CSV faylı kimi endirilir.' },
       merge: {
         title: 'Kontaktları birləşdir',
         hint: 'Saxlanılacaq kontaktı seçin. Digərlərinin boş sahələri, e-poçtları və etiketləri ona köçürülür, sonra silinir.',

@@ -13,7 +13,7 @@ export const formatMoney = (cents: number, currency: string, locale: Locale) => 
 };
 
 export const EVENT_LABEL: Record<Locale, Record<string, string>> = {
-  az: { CASE_CREATED: 'müraciət yaradıldı', CONTRACT_SIGNED: 'müqavilə imzalandı', VISA_APPROVED: 'viza təsdiqləndi', INVOICE_PAID: 'faktura ödənildi', EMPLOYER_APPROVED: 'işəgötürən təsdiqləndi', MANUAL: 'əl ilə əlavə' },
+  az: { CASE_CREATED: 'müraciət yaradıldı', CONTRACT_SIGNED: 'müqavilə imzalandı', VISA_APPROVED: 'viza təsdiqləndi', INVOICE_PAID: 'hesab-faktura ödənildi', EMPLOYER_APPROVED: 'işəgötürən təsdiqləndi', MANUAL: 'əl ilə əlavə' },
   de: { CASE_CREATED: 'Antrag erstellt', CONTRACT_SIGNED: 'Vertrag unterschrieben', VISA_APPROVED: 'Visum erteilt', INVOICE_PAID: 'Rechnung bezahlt', EMPLOYER_APPROVED: 'Arbeitgeber freigeschaltet', MANUAL: 'manuell' },
   en: { CASE_CREATED: 'application created', CONTRACT_SIGNED: 'contract signed', VISA_APPROVED: 'visa approved', INVOICE_PAID: 'invoice paid', EMPLOYER_APPROVED: 'employer approved', MANUAL: 'manual' },
   ru: { CASE_CREATED: 'заявка создана', CONTRACT_SIGNED: 'договор подписан', VISA_APPROVED: 'виза одобрена', INVOICE_PAID: 'счёт оплачен', EMPLOYER_APPROVED: 'работодатель одобрен', MANUAL: 'вручную' },
@@ -38,7 +38,7 @@ export const AGENT_TEXT: Record<
     paidTitle: (a) => `Komissiya ödənildi: ${a}`,
     paidBody: (n, r) => `${n} komissiya ödənildi.${r ? ` Ödəniş arayışı: ${r}` : ''}`,
     inviteTitle: 'Triad Vision tərəfdaş kabinetinə dəvət',
-    inviteBody: (code) => `Sizin üçün Triad Vision tərəfdaş (agent) kabineti yaradıldı. Referal kodunuz: ${code}.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`,
+    inviteBody: (code) => `Sizin üçün Triad Vision tərəfdaş (agent) kabineti yaradıldı. Referal kodunuz: ${code}.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`,
     inviteCta: 'Şifrəni təyin et',
     cta: 'Qazanclara bax',
   },

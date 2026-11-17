@@ -29,8 +29,8 @@ const az = {
     certificate: {
       title: 'Sertifikat',
       ready: 'Sertifikatınız hazırdır',
-      text: 'Sertifikatı istədiyiniz dildə yükləyin. Üzərindəki QR kod yoxlama səhifəsinə aparır.',
-      download: 'PDF yüklə',
+      text: 'Sertifikatı istədiyiniz dildə endirin. Üzərindəki QR kod yoxlama səhifəsinə aparır.',
+      download: 'PDF endir',
       number: 'Nömrə',
       issued: 'Tarix',
       verify: 'Yoxlama səhifəsi',

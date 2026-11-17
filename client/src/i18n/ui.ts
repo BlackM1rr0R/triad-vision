@@ -26,8 +26,8 @@ const az = {
     next: 'Növbəti',
     page: 'Səhifə {{page}}',
     range: '{{from}}–{{to}} / {{total}}',
-    showPassword: 'Parolu göstər',
-    hidePassword: 'Parolu gizlət',
+    showPassword: 'Şifrəni göstər',
+    hidePassword: 'Şifrəni gizlət',
     empty: {
       filteredTitle: 'Filtrlərə uyğun heç nə tapılmadı',
       filteredText: 'Axtarışı və ya filtrləri dəyişin.',

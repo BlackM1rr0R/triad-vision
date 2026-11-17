@@ -46,7 +46,7 @@ const az = {
       stop: 'Dayandırın',
       pron: 'Oxunuşu',
       archive: 'Əvvəlki günlərin ifadələri',
-      practice: 'Portalda alman dilini öyrənin',
+      practice: 'Kabinetdə alman dilini öyrənin',
       today: 'Bu gün',
       pageTitle: 'Günün alman ifadəsi',
       pageSubtitle: 'Hər gün Almaniyada iş və gündəlik həyat üçün bir sadə alman ifadəsi — tərcüməsi və oxunuşu ilə. İfadə hər gün Almaniya vaxtı ilə gecə saat 00:00-da yenilənir.',

@@ -6,7 +6,7 @@
 const az = {
   fc: {
     heroTitle: 'Ailəmi Almaniyaya gətirə bilərəmmi?',
-    heroSubtitle: 'Ailə birləşməsi (Familiennachzug) üçün özünüzü yoxlayın: icazə növü, gəlir, mənzil, həyat yoldaşının alman dili və uşaqların yaşı — kimin indi, kimin sonra gələ biləcəyini və hansı sənədlərin lazım olduğunu görün.',
+    heroSubtitle: 'Ailə birləşməsi (Familiennachzug) üçün özünüzü yoxlayın: icazə növü, gəlir, mənzil, həyat yoldaşının alman dili və uşaqların yaşı. Kimin indi, kimin sonra gələ biləcəyini və lazım olan sənədləri görün.',
     form: {
       title: 'Əsas müraciətçi (Almaniyada olan)',
       titleLabel: 'Almaniyada icazə növü',

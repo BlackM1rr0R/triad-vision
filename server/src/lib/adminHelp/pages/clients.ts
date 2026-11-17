@@ -10,8 +10,8 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         purpose: 'Platformadakı bütün hesablar — müştərilər, əməkdaşlar və adminlər. Burada əməkdaş hesabı yaradılır, rol dəyişdirilir, hesab söndürülür və ya silinir.',
         steps: [
           'Ad, soyad və ya e-poçtla axtarın; «Onlayn», rol düymələri və tərəfdaş filtri ilə siyahını daraldın.',
-          'Yeni iş yoldaşı üçün «Yeni əməkdaş» basın: ad, soyad, e-poçt, rol və parol yazın, istəsəniz korporativ poçt qutusu da yaradın.',
-          'Sətirdə rolu seçin, aktivlik açarı ilə hesabı söndürün və ya «Parol», «Çıxar», «Sil» düymələrindən istifadə edin; müştəri adına klikləyib onun kartını açın.',
+          'Yeni iş yoldaşı üçün «Yeni əməkdaş» basın: ad, soyad, e-poçt, rol və şifrə yazın, istəsəniz korporativ poçt qutusu da yaradın.',
+          'Sətirdə rolu seçin, aktivlik açarı ilə hesabı söndürün və ya «Şifrə», «Çıxar», «Sil» düymələrindən istifadə edin; müştəri adına basıb onun kartını açın.',
         ],
         tips: [
           'Dəyişiklikləri və «Bütün müştərilər (Excel)» ixracını yalnız super admin edir; digər əməkdaşlar siyahını görür.',
@@ -72,10 +72,10 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         steps: [
           'Yuxarıda əlaqə məlumatlarına, məsul əməkdaşa, razılıqlara və göstəricilərə baxın; zəng və ya WhatsApp düyməsi ilə müştəri ilə əlaqə saxlayın.',
           'Tablardan birini açın: Xronologiya, Müraciətlər, Ödənişlər, Mesajlar, Zənglər, Sənədlər, Tapşırıqlar, Ailə. Xronologiyanı növ və müraciətə görə filtr edin.',
-          '«Etiket» ilə etiket əlavə edin və ya silin; müraciət nömrəsinə klikləyib müraciət səhifəsinə keçin.',
+          '«Etiket» ilə etiket əlavə edin və ya silin; müraciət nömrəsinə basıb müraciət səhifəsinə keçin.',
         ],
         tips: [
-          'Səhifə «İstifadəçilər» siyahısında müştərinin adına klikləyəndə açılır.',
+          'Səhifə «İstifadəçilər» siyahısında müştərinin adına basanda açılır.',
           'Ödənişlər tabındakı bütün hesab-fakturalara keçid yalnız adminlər üçündür.',
         ],
       },
@@ -128,7 +128,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         purpose: 'Almaniyada iş axtaran qeydiyyatlı müştərilər. Burada onları vakansiyalara uyğunlaşdırır və müraciətlərini qısa siyahıdan işəgötürənə təqdimata və qəbula qədər aparırsınız.',
         steps: [
           'Ad, e-poçt, telefon və ya peşə ilə axtarın; alman dili, sürücülük vəsiqəsi, təcrübə və «Aktiv faylı var» / «Aktiv fayl yoxdur» filtrlərindən istifadə edin.',
-          '«Vakansiyaya görə sırala…» ilə vakansiyanı seçin — siyahı uyğunluq faizinə görə düzülür; namizədə klikləyib profilini açın.',
+          '«Vakansiyaya görə sırala…» ilə vakansiyanı seçin — siyahı uyğunluq faizinə görə düzülür; namizədə basıb profilini açın.',
           '«Vakansiyaya əlavə et» ilə müraciət yaradın, statusu irəli aparın, qəbuldan sonra «Viza faylını yarat / bağla» basın.',
         ],
         tips: [
@@ -243,7 +243,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         steps: [
           'Ad, nömrə, pasport və ya telefonla axtarın; ailə üzvləri əsas müraciətin altında göstərilir.',
           'Xanaları birbaşa redaktə edin — dəyişikliklər «Yadda saxla» basılana qədər rənglənir, qırmızı xanalar xətanı göstərir.',
-          'Cədvəli «Excel-ə çıxar» ilə endirin; nömrəyə klikləyib «Müraciəti aç».',
+          'Cədvəli «Excel-ə çıxar» ilə endirin; nömrəyə basıb «Müraciəti aç».',
         ],
         tips: [
           '«Sütunlar» ilə əlavə sütun yaratmaq, sıralamaq və silmək yalnız admin üçündür.',
@@ -308,7 +308,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         ],
         tips: [
           'Birləşdirməni geri qaytarmaq olmur — əvvəl hər iki hesabı diqqətlə yoxlayın.',
-          '«Kim birləşdirə bilər» ayarını yalnız super admin dəyişir.',
+          '«Kim birləşdirə bilər» parametrini yalnız super admin dəyişir.',
         ],
       },
       ru: {
@@ -365,7 +365,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         ],
         tips: [
           'Yoxlamalar gəliş planı «Gəldi» statusuna keçəndə avtomatik başlayır.',
-          '«Vaxtı çatanları indi göndər» və «Ayarlar» (göndərmə günləri, işəgötürən sorğusu) yalnız adminlər üçündür.',
+          '«Vaxtı çatanları indi göndər» və «Parametrlər» (göndərmə günləri, işəgötürən sorğusu) yalnız adminlər üçündür.',
           'Bu modulu super admin söndürə bilər.',
         ],
       },
@@ -421,7 +421,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         purpose: 'Müştərilərin Almaniyaya gəlişi: reys, hava limanında qarşılanma və ilk yaşayış yeri. Müştəri planı öz kabinetində doldurur, komanda burada cavablandırır.',
         steps: [
           'Yuxarıdakı kartlara baxın (Yeni, Təsdiqlənib, Növbəti 14 gün, Qarşılanma gözləyir, Yaşayış axtarılır); axtarış və status filtrindən istifadə edin.',
-          'Sətrə klikləyib planı açın: reys, sərnişinlər, müştərinin istəkləri; məsul əməkdaşı, qarşılanma və yaşayış məlumatlarını doldurub «Yadda saxla» basın.',
+          'Sətrə basıb planı açın: reys, sərnişinlər, müştərinin istəkləri; məsul əməkdaşı, qarşılanma və yaşayış məlumatlarını doldurub «Yadda saxla» basın.',
           'Plan hazırdırsa «Təsdiqlə», müştəri gələndə isə «Gəldi (tamamla)» basın.',
         ],
         tips: [
@@ -479,7 +479,7 @@ export const PAGES_CLIENTS: PageHelpEntry[] = [
         steps: [
           'Kartlara və filtrlərə baxın: «İşçi gözlənilir», «Başlamağa hazır», «Davam edir».',
           'Hər sətirdə əsas müraciəti, sonra gələcək üzvləri, çatışmayan şərtləri, növbəti addımı və açıq sənədlərin sayını görün.',
-          'Müraciət nömrəsinə klikləyib müraciətin ailə blokunu açın və ailənin sənədləri ilə işə başlayın.',
+          'Müraciət nömrəsinə basıb müraciətin ailə blokunu açın və ailənin sənədləri ilə işə başlayın.',
         ],
         tips: [
           '«Başlamağa hazır» ailələr diqqət tələb edir — sənədlərin hazırlanmasına başlamaq vaxtıdır.',

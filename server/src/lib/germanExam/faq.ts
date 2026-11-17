@@ -10,11 +10,11 @@ export const MOCK_EXAM_FAQ: Record<Lang, FaqItem[]> = {
   az: [
     {
       q: 'Bu, rəsmi Goethe imtahanıdır?',
-      a: 'Xeyr. Bu, Triad Vision-un pulsuz və müstəqil sınaq testidir: Goethe-Zertifikat A1 (Start Deutsch 1) və B1 imtahanlarının açıq təsvir olunmuş quruluşuna uyğun hazırlanıb, bütün mətnlər və tapşırıqlar bizimdir. Goethe-İnstitut ilə əlaqəmiz yoxdur. Rəsmi imtahanı yalnız Goethe-İnstitut və ya lisenziyalı imtahan mərkəzində vermək olar.',
+      a: 'Xeyr. Bu, Triad Vision-un pulsuz və müstəqil sınaq testidir: Goethe-Zertifikat A1 (Start Deutsch 1) və B1 imtahanlarının açıq təsvir olunmuş quruluşuna uyğun hazırlanıb, bütün mətnlər və tapşırıqlar bizimdir. Goethe-Institut ilə əlaqəmiz yoxdur. Rəsmi imtahanı yalnız Goethe-Institut və ya lisenziyalı imtahan mərkəzində vermək olar.',
     },
     {
       q: 'Nəticə necə hesablanır?',
-      a: 'Dinləmə və oxu avtomatik yoxlanılır. Yazı və danışıq üçün nümunə cavabla müqayisə edib meyar siyahısını özünüz işarələyirsiniz. A1: cəmi 100 baldan 60 bal keçid. B1: hər modul 100 baldan, hər modulda 60 bal keçid — Goethe-İnstitutun dərc etdiyi qaydalara uyğun (sentyabr 2023).',
+      a: 'Dinləmə və oxu avtomatik yoxlanılır. Yazı və danışıq üçün nümunə cavabla müqayisə edib meyar siyahısını özünüz işarələyirsiniz. A1: cəmi 100 baldan 60 bal keçid. B1: hər modul 100 baldan, hər modulda 60 bal keçid — Goethe-Institut-un dərc etdiyi qaydalara uyğun (sentyabr 2023).',
     },
     {
       q: 'Səs yazım və cavablarım haradasa saxlanılır?',
@@ -101,7 +101,7 @@ export const LEVEL_SELF_FAQ: Record<Lang, FaqItem[]> = {
     },
     {
       q: 'B1 səviyyəsinə çatmaq nə qədər çəkir?',
-      a: 'Goethe-İnstitutun təxmininə görə sıfırdan B1-ə təxminən 350–650 dərs vahidi (45 dəqiqəlik), yəni təxminən 260–490 saat lazımdır; müstəqil məşğələ buna əlavədir. Plan gündəlik saatlarınıza görə həftələri hesablayır.',
+      a: 'Goethe-Institut-un təxmininə görə sıfırdan B1-ə təxminən 350–650 dərs vahidi (45 dəqiqəlik), yəni təxminən 260–490 saat lazımdır; müstəqil məşğələ buna əlavədir. Plan gündəlik saatlarınıza görə həftələri hesablayır.',
     },
     {
       q: 'Test pulsuzdur? Qeydiyyat lazımdır?',

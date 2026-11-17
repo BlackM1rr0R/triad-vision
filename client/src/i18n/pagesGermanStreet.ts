@@ -3,7 +3,7 @@ const az = {
   street: {
     heroTitle: 'Virtual alman küçəsi',
     heroSubtitle: 'Çörəkxana, aptek, Bürgeramt, bank, vağzal, supermarket və həkim: binaya daxil olun və Almaniyadakı ilk həftələrinizi məşq edin.',
-    howTo: 'Binaya klikləyin və ya Tab ilə seçin: qısa izah, alman adı artikl və səslə, və “daxil ol” — uyğun oyun və ya səhnə.',
+    howTo: 'Binaya basın və ya Tab ilə seçin: qısa izah, alman adı artikl və səslə, və “daxil ol” — uyğun oyun və ya səhnə.',
     progress: '{{trackable}} yerdən {{done}}-i tamamlanıb · {{total}} yerdən {{seen}}-nə baxılıb',
     mapLabel: 'Alman küçəsi: {{count}} yer',
     panLeft: 'Küçədə sola',

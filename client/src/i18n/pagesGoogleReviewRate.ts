@@ -8,7 +8,7 @@ const az = {
   labels: ['Heç razı deyiləm', 'Razı deyiləm', 'Orta', 'Razıyam', 'Çox razıyam'],
   saving: 'Yadda saxlanılır…',
   thanks: 'Qiymətləndirdiyiniz üçün təşəkkür edirik!',
-  change: 'Qiyməti dəyişmək üçün başqa rəqəmə klikləyin.',
+  change: 'Qiyməti dəyişmək üçün başqa rəqəmə basın.',
   highTitle: 'Bunu Google-da da paylaşarsınız?',
   highText: 'Bir neçə cümlə Almaniyaya yol axtaran başqa insanlara çox kömək edir. Cəmi bir dəqiqə çəkir.',
   lowTitle: 'Təəssüf ki, hər şey istədiyiniz kimi olmayıb',

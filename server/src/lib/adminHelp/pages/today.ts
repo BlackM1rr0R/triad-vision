@@ -350,13 +350,13 @@ export const PAGES_TODAY: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Bildirişlər',
-        purpose: 'Bütün bildirişlərinizin tarixçəsi və bildiriş ayarları. Başlıqdakı zəngdə «Bütün bildirişlər» bu səhifəni açır.',
+        purpose: 'Bütün bildirişlərinizin tarixçəsi və bildiriş parametrləri. Başlıqdakı zəngdə «Bütün bildirişlər» bu səhifəni açır.',
         steps: [
           'Hamısı / Oxunmamış və növ filtri (Müraciətlər, Sənədlər, Mesajlar, Tapşırıqlar, Ödənişlər, Sistem) ilə siyahını süzün.',
           'Bildirişə basıb əlaqəli səhifəni açın; «Hamısını oxunmuş et» ilə siyahını təmizləyin.',
-          'Aşağıdakı «Bildiriş ayarları» blokunda e-poçt və push bildirişlərini yandırın və ya söndürün.',
+          'Aşağıdakı «Bildiriş parametrləri» blokunda e-poçt və push bildirişlərini yandırın və ya söndürün.',
         ],
-        tips: ['Paneldəki bildirişlər həmişə saxlanılır; ayarlar yalnız e-poçt və push-a aiddir.', 'Yeni bildirişlər səhifəni yeniləmədən görünür.'],
+        tips: ['Paneldəki bildirişlər həmişə saxlanılır; parametrlər yalnız e-poçt və push-a aiddir.', 'Yeni bildirişlər səhifəni yeniləmədən görünür.'],
       },
       ru: {
         title: 'Уведомления',
@@ -818,7 +818,7 @@ export const PAGES_TODAY: PageHelpEntry[] = [
           '«Mövzu»nu Açıq və Tünd arasında dəyişib rəngləri yoxlayın.',
           'Bölmələrə (Rənglər, Düymələr, Forma elementləri, Cədvəl və s.) baxın və nümunə pəncərələri sınayın.',
         ],
-        tips: ['Bu səhifə yalnız göstərir — burada heç nə dəyişmir.', 'Brend rəngləri «Brend» və ya mövzu ayarlarında dəyişdirilir.'],
+        tips: ['Bu səhifə yalnız göstərir — burada heç nə dəyişmir.', 'Brend rəngləri «Brend» və ya mövzu parametrlərində dəyişdirilir.'],
       },
       ru: {
         title: 'Дизайн-система',

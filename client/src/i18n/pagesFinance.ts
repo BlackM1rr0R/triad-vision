@@ -4,7 +4,7 @@ const az = {
     title: 'Maliyyə hesabatları',
     subtitle: 'Gəlir, debitor borcları, komissiyalar və əməkdaşların nəticələri seçilmiş dövr üzrə.',
     download: 'Excel yüklə',
-    downloadFailed: 'Excel faylı yüklənmədi',
+    downloadFailed: 'Excel faylı endirilmədi',
     period: 'Dövr',
     presets: { thisMonth: 'Bu ay', lastMonth: 'Keçən ay', thisQuarter: 'Bu rüb', thisYear: 'Bu il', lastYear: 'Keçən il', custom: 'Seçilmiş' },
     from: 'Başlanğıc',
@@ -94,7 +94,7 @@ const az = {
     },
     staff: {
       title: 'Əməkdaşların reytinqi',
-      note: 'Yalnız admin görür. Sütun başlığına klikləyərək sıralayın.',
+      note: 'Yalnız admin görür. Sütun başlığına basaraq sıralayın.',
       name: 'Əməkdaş',
       active: 'Aktiv',
       newCases: 'Yeni',

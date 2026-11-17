@@ -245,12 +245,12 @@ export const HELP_AZ: FullHelpTexts = {
   '/emergency-wallpaper': {
     what: 'Bu səhifə telefon üçün təcili yardım ekran şəkli yaradır.',
     why: 'Vacib nömrələr və ünvanınız həmişə ekranda olur.',
-    todo: 'Məlumatları yazın və şəkli yükləyin.',
+    todo: 'Məlumatları yazın və şəkli endirin.',
   },
   '/pocket-guide': {
     what: 'Bu səhifə çap üçün Almaniya cib bələdçisidir.',
     why: 'Vacib nömrələr və ifadələr həmişə yanınızda olur.',
-    todo: 'PDF-i yükləyin və çap edin.',
+    todo: 'PDF-i endirin və çap edin.',
   },
   // explore
   '/map': {
@@ -264,7 +264,7 @@ export const HELP_AZ: FullHelpTexts = {
     todo: 'Şəhəri seçin və yerlərə baxın.',
   },
   '/guides': {
-    what: 'Bu səhifədə viza, Anerkennung və köç haqqında bələdçilər var.',
+    what: 'Bu səhifədə viza, Anerkennung (diplomun tanınması) və köç haqqında bələdçilər var.',
     why: 'Suallarınıza ətraflı cavab tapırsınız.',
     todo: 'Mövzu seçin və yazını oxuyun.',
   },
@@ -565,12 +565,12 @@ export const HELP_AZ: FullHelpTexts = {
   '/account/pocket-guide': {
     what: 'Bu səhifə sizin şəxsi Almaniya cib bələdçinizdir.',
     why: 'Adınız, işəgötürəniniz və şəhəriniz artıq içindədir.',
-    todo: 'PDF-i yükləyin və çap edin.',
+    todo: 'PDF-i endirin və çap edin.',
   },
   '/account/emergency-wallpaper': {
     what: 'Bu səhifə telefon üçün təcili yardım ekran şəkli yaradır.',
     why: 'Vacib nömrələr və ünvanınız həmişə ekranda olur.',
-    todo: 'Məlumatları yoxlayın və şəkli yükləyin.',
+    todo: 'Məlumatları yoxlayın və şəkli endirin.',
   },
   '/account/badges': {
     what: 'Bu səhifə nailiyyət nişanlarınızı göstərir.',
@@ -615,10 +615,10 @@ export const HELP_AZ: FullHelpTexts = {
   '/account/payments': {
     what: 'Bu səhifə hesab-fakturalarınızı və ödənişlərinizi göstərir.',
     why: 'Nəyin ödənildiyini və nəyin gözlədiyini görürsünüz.',
-    todo: 'Açıq hesabı açın və ödəniş məlumatlarına baxın.',
+    todo: 'Ödənilməmiş hesab-fakturanı açın və ödəniş məlumatlarına baxın.',
   },
   '/account/all': {
-    what: 'Bu səhifədə portalın bütün bölmələri var.',
+    what: 'Bu səhifədə kabinetin bütün bölmələri var.',
     why: 'Menyuda görmədiyiniz bölməni burada tapa bilərsiniz.',
     todo: 'Lazım olan bölməni seçin və açın.',
   },

@@ -41,10 +41,10 @@ const noteLine = (label: string, note: string | null) => (note ? `\n${label}: ${
 
 const T: Record<Locale, Texts> = {
   az: {
-    assignedTitle: (p) => `${p.by} sənə «${p.stage}» göndərdi: ${p.worker} (${p.number})`,
-    assignedBody: (p) => `${p.by} ${p.worker} üçün sənədləri «${p.stage}» mərhələsinə keçirdi və növbəti addımı sənə verdi. Sənəd siyahısına müraciətdə baxın.${noteLine('Qeyd', p.note)}`,
+    assignedTitle: (p) => `${p.by} sizə «${p.stage}» göndərdi: ${p.worker} (${p.number})`,
+    assignedBody: (p) => `${p.by} ${p.worker} üçün sənədləri «${p.stage}» mərhələsinə keçirdi və növbəti addımı sizə verdi. Sənəd siyahısına müraciətdə baxın.${noteLine('Qeyd', p.note)}`,
     movedTitle: (p) => `«${p.stage}»: ${p.worker} (${p.number})`,
-    movedBody: (p) => `${p.by} sənin hazırladığın sənədləri «${p.stage}» mərhələsinə keçirdi.${noteLine('Qeyd', p.note)}`,
+    movedBody: (p) => `${p.by} sizin hazırladığınız sənədləri «${p.stage}» mərhələsinə keçirdi.${noteLine('Qeyd', p.note)}`,
     claimedTitle: (p) => `${p.by} götürdü: ${p.worker} (${p.number})`,
     claimedBody: (p) => `${p.by} «${p.stage}» mərhələsindəki sənədləri götürdü və üzərində işləyir.`,
     claimHint: 'Sənədlər bölməsində qovluğu açın və «Götür» düyməsini basın.',

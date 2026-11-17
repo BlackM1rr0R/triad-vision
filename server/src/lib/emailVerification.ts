@@ -11,7 +11,7 @@ const hashToken = (token: string) => crypto.createHash('sha256').update(token).d
 const VERIFY_TEXT = {
   az: {
     title: 'E-poçt ünvanınızı təsdiqləyin',
-    body: 'Triad Vision-da qeydiyyatdan keçdiyiniz üçün təşəkkür edirik. Hesabınızı aktivləşdirmək üçün aşağıdakı düyməyə klikləyin. Link 24 saat etibarlıdır.\n\nQeydiyyatdan siz keçməmisinizsə, bu məktubu nəzərə almayın.',
+    body: 'Triad Vision-da qeydiyyatdan keçdiyiniz üçün təşəkkür edirik. Hesabınızı aktivləşdirmək üçün aşağıdakı düyməyə basın. Link 24 saat etibarlıdır.\n\nQeydiyyatdan siz keçməmisinizsə, bu məktubu nəzərə almayın.',
     cta: 'E-poçtu təsdiqlə',
   },
   de: {

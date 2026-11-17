@@ -62,7 +62,7 @@ const az = {
       title: 'Bu, təxmini hesablamadır',
       text: 'Kalkulyator vergi məsləhəti deyil. Real maaş vərəqəsi fərdi güzəştlərə, sığorta kassasına, birdəfəlik ödənişlərə və işəgötürənin hesablamasına görə fərqlənə bilər.',
     },
-    midijob: '603 €-ya qədər minijob (yalnız 3,6 % pensiya payı, vergini işəgötürən ödəyir), 603–2 000 € arası Übergangsbereich (midijob): işçinin sosial sığorta payı azaldılmış bazadan hesablanır. Ausbildung maaşlarına bu qaydalar tətbiq olunmur.',
+    midijob: '603 €-ya qədər minijob-dur: yalnız 3,6 % pensiya payı tutulur, vergini işəgötürən ödəyir. 603–2 000 € arası Übergangsbereich-dir (midijob): işçinin sosial sığorta payı azaldılmış bazadan hesablanır. Ausbildung maaşlarına bu qaydalar tətbiq olunmur.',
     notes: {
       eyebrow: 'Necə hesablayırıq',
       title: 'Sadələşdirmələr və istifadə olunan göstəricilər',
@@ -203,7 +203,7 @@ const az = {
       s5: {
         licence: 'Tam bərabərlik olarsa, icazə verilir. "Əhəmiyyətli fərqlər" tapılarsa, qərarda (Defizitbescheid) onlar sadalanır və siz seçirsiniz: uyğunlaşdırma kursu və ya bilik imtahanı. Uğurla bitirdikdən sonra icazə verilir.',
         approbation: 'Bərabərlik çox vaxt sənədlər əsasında təsdiqlənmir — onda Kenntnisprüfung (alman buraxılış imtahanının əsas mövzuları üzrə şifahi-praktik imtahan) verirsiniz. Bundan əlavə tibbi dil imtahanı lazımdır. Bu müddətdə müvəqqəti iş icazəsi mümkündür.',
-        equivalence: 'Nəticə üç cür ola bilər: tam bərabərlik; qismən bərabərlik (çatışmayan biliklər sadalanır və onları Almaniyada uyğunlaşdırma təlimi ilə tamamlamaq olar — bunun üçün ayrıca viza var); və ya bərabərlik yoxdur.',
+        equivalence: 'Nəticə üç cür ola bilər: tam bərabərlik, qismən bərabərlik və ya bərabərlik yoxdur. Qismən bərabərlikdə çatışmayan biliklər yazılır. Onları Almaniyada uyğunlaşdırma təlimi ilə tamamlamaq olar — bunun üçün ayrıca viza var.',
         zab: 'Siz müqayisə sənədi (Zeugnisbewertung) alırsınız. Bu, lisenziya deyil, amma işəgötürənə və viza orqanına diplomunuzun səviyyəsini göstərir. Əlavə tədbirlər tələb olunmur.',
         driving: 'Vəsiqə dəyişdirildikdən və Code 95 vəsiqəyə yazıldıqdan sonra peşəkar sürücü kimi işləyə bilərsiniz. Taxoqraf üçün sürücü kartı (Fahrerkarte) da lazımdır.',
       },
@@ -259,7 +259,7 @@ const az = {
         },
         {
           q: 'Peşəm siyahıda yoxdursa nə edim?',
-          a: 'Anerkennung in Deutschland portalındakı Anerkennungs-Finder-dən istifadə edin və ya bizimlə məsləhət təyin edin — sizin üçün doğru prosedur və qurumu müəyyən edərik.',
+          a: '“Anerkennung in Deutschland” portalındakı Anerkennungs-Finder-dən istifadə edin. Və ya bizimlə məsləhətə yazılın — doğru proseduru və qurumu birlikdə tapaq.',
         },
       ],
     },

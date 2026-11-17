@@ -7,7 +7,7 @@
 const az = {
   aptView: {
     heroTitle: 'Mənzilə baxış və kirayəçi anketi',
-    heroSubtitle: 'Baxışı alman dilində məşq edin, ev sahibinin nəyi soruşa biləcəyini və nəyi soruşa bilməyəcəyini öyrənin, fırıldaqları tanıyın və hüquqi cəhətdən düzgün Mieterselbstauskunft PDF-ni yaradın.',
+    heroSubtitle: 'Mənzil baxışını alman dilində məşq edin. Ev sahibinin nəyi soruşa bilib, nəyi soruşa bilmədiyini öyrənin və fırıldaqları tanıyın. Sonda düzgün Mieterselbstauskunft (kirayəçi anketi) PDF-ni yaradın.',
     sim: { title: 'Baxışı məşq edin', text: 'Dialoq simulyatoru: ev sahibi alman dilində danışır, siz üç cavabdan birini seçirsiniz. Səhv cavablar real nəticələrə aparır.', play: 'Başla' },
     costs: {
       title: 'Kirayədə hansı rəqəmlər var?',
@@ -107,7 +107,7 @@ const az = {
     links: { rentCheck: 'Kirayə normaldır?', apartment: 'Alman mənzili: nə haradadır', simulator: 'Bütün dialoq səhnələri' },
     disclaimer: 'Bu, ümumi məlumatdır, hüquqi məsləhət deyil (2026-cı ilin noyabrına). Mübahisədə kirayəçilər birliyinə (Mieterverein) və ya hüquqşünasa müraciət edin. Biz mənzil vasitəçisi deyilik.',
     faq: [
-      { q: 'Ev sahibi vətəndaşlığımı soruşa bilərmi?', a: 'Xeyr. Almaniya məlumat müdafiəsi orqanlarına (DSK, 2026) görə vətəndaşlıq, din və etnik mənşə barədə suallar yolverilməzdir; AGG mənzil kirayəsində etnik mənşəyə görə ayrı-seçkiliyi qadağan edir. Nəzakətlə imtina edə bilərsiniz.' },
+      { q: 'Ev sahibi vətəndaşlığımı soruşa bilərmi?', a: 'Xeyr. Almaniya məlumat müdafiəsi orqanlarına (DSK, 2026) görə vətəndaşlıq, din və etnik mənşə barədə soruşmaq olmaz. AGG qanunu mənzil kirayəsində etnik mənşəyə görə ayrı-seçkiliyi qadağan edir. Nəzakətlə imtina edə bilərsiniz.' },
       { q: 'Pasportumun surətini verməliyəmmi?', a: 'Xeyr. Ev sahibi baxışda sənədinizə baxa və bunu qeyd edə bilər, amma surət tələb olunmur. Pasport surətlərini e-poçtla göndərmək fırıldaq riskidir.' },
       { q: 'Ev sahibinə hansı SCHUFA sənədini verim?', a: 'Ev sahibləri üçün nəzərdə tutulmuş BonitätsCheck-i (ödənişli). Pulsuz məlumat surəti (Art. 15 DSGVO) sizin üçündür — ev sahibi onu tələb edə bilməz. Yeni gələnlərdə SCHUFA olmur; əmək müqaviləsi təklif edin.' },
       { q: 'Depozit nə qədər ola bilər?', a: 'Ən çox üç soyuq kirayə (Nettokaltmiete). Onu üç aylıq hissə ilə ödəmək hüququnuz var, birincisi kirayənin başlanğıcında (§ 551 BGB).' },

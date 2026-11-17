@@ -21,10 +21,10 @@ const az = {
     docLang: { label: 'Sənədin dili', de: 'Almanca', en: 'İngiliscə' },
     photo: 'Fotonu əlavə et',
     photoHint: 'Sənəd seyfinizdəki və ya müraciətinizdəki son biometrik foto (JPEG/PNG) istifadə olunur.',
-    download: 'PDF yüklə',
+    download: 'PDF endir',
     share: {
       label: 'İşəgötürənlərlə paylaş',
-      hint: 'Sizi işəgötürənə təqdim etdiyimiz zaman o, CV-nizin anonim versiyasını yükləyə bilər: yalnız adınız və soyadınızın baş hərfi, yaşınız — ünvan, telefon, e-poçt, foto və pasport məlumatları göstərilmir.',
+      hint: 'Sizi işəgötürənə təqdim edəndə o, CV-nizin anonim versiyasını endirə bilər. Orada yalnız adınız, soyadınızın baş hərfi və yaşınız olur. Ünvan, telefon, e-poçt, foto və pasport məlumatları göstərilmir.',
     },
     profile: {
       title: 'Şəxsi məlumatlar',
@@ -138,7 +138,7 @@ const az = {
     regenerate: 'Yenidən yarat',
     regenerateTitle: 'Məktub yenidən yaradılsın?',
     regenerateText: 'Mətndəki əl ilə etdiyiniz dəyişikliklər cavablarınız əsasında yeni mətnlə əvəz olunacaq.',
-    download: 'PDF yüklə',
+    download: 'PDF endir',
     copy: 'Kopyala',
     copied: 'Mətn kopyalandı',
     delete: 'Sil',

@@ -8,7 +8,7 @@ const bandRangeEn = { veryGood: '1.0 – 1.5', good: '1.6 – 2.5', satisfactory
 const az = {
   gradeConverter: {
     heroTitle: 'Qiymət çevirici: Azərbaycan qiyməti → alman qiyməti',
-    heroSubtitle: 'Məktəb attestatınızı (5 ballıq) və ya universitet qiymətinizi (100 ballıq) “modifikasiya olunmuş Bavariya formulu” ilə alman 1,0–4,0 şkalasına çevirin — Almaniyada təhsil müraciəti üçün.',
+    heroSubtitle: 'Məktəb attestatınızı (5 ballıq) və ya universitet qiymətinizi (100 ballıq) alman 1,0–4,0 şkalasına çevirin. Hesablama “modifikasiya olunmuş Bavariya formulu” ilədir və Almaniyada təhsil müraciəti üçündür.',
     form: {
       title: 'Qiymətiniz',
       system: 'Qiymət sistemi',

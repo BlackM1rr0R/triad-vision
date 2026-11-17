@@ -70,7 +70,7 @@ const az = {
       message: 'Mesaj göndər',
       messageTitle: '{{count}} alıcıya mesaj',
       messageHintCases: 'Hər müraciətin söhbətinə ayrıca mesaj yazılır; müştəri adi bildiriş alır.',
-      messageHintCandidates: 'Hər namizəd portalda bildiriş alır (e-poçt / push — öz ayarlarına görə).',
+      messageHintCandidates: 'Hər namizəd kabinetdə bildiriş alır (e-poçt / push — öz parametrlərinə görə).',
       email: 'E-poçt göndər',
       emailTitle: '{{count}} əlaqəyə e-poçt',
       subject: 'Mövzu',
@@ -122,7 +122,7 @@ const az = {
       sharedHint: 'Bütün əməkdaşlar görür; yalnız siz (və adminlər) dəyişə bilər.',
       pinned: 'Yan menyuya bərkit',
       pinnedHint: 'Səhifənin menyu bəndinin altında görünür.',
-      withColumns: 'Sütun ayarlarını da saxla',
+      withColumns: 'Sütun parametrlərini da saxla',
       by: '{{name}} paylaşıb',
       pin: '“{{name}}” — menyuya bərkit',
       unpin: '“{{name}}” — menyudan götür',
@@ -164,8 +164,8 @@ const az = {
           body: 'Filtr + sıralama + sütunları ad altında saxlayın, komanda ilə paylaşın və yan menyuya bərkidin.',
         },
         '2026-10-tables': {
-          title: 'Cədvəl ayarları',
-          body: '“Sütunlar” ilə sütunları gizlədin, sürüşdürərək yerini dəyişin, başlığın kənarından enini tənzimləyin — ayarlar sizinlə qalır.',
+          title: 'Cədvəl parametrləri',
+          body: '“Sütunlar” ilə sütunları gizlədin, sürüşdürərək yerini dəyişin, başlığın kənarından enini tənzimləyin — parametrlər sizinlə qalır.',
         },
         '2026-10-undo': {
           title: '“Geri al” — 10 saniyə',
@@ -193,7 +193,7 @@ const az = {
       views: {
         menu: { title: 'Görünüşlər', text: 'Hazırkı filtrləri ad altında saxlayın və bir kliklə qayıdın; komanda ilə paylaşa bilərsiniz.' },
         pinned: { title: 'Menyuda', text: 'Bərkidilmiş görünüşlər səhifənin menyu bəndinin altında görünür.' },
-        columns: { title: 'Sütunlar da', text: 'Görünüş sütun ayarlarını da yadda saxlaya bilər.' },
+        columns: { title: 'Sütunlar da', text: 'Görünüş sütun parametrlərini da yadda saxlaya bilər.' },
       },
       docflow: {
         filter: { title: 'Sənəd mərhələsi', text: 'Müraciətləri “Schon geschrieben”, “Fertig” və s. mərhələyə görə süzün, “Mənə göndərilənlər” — sizdən gözlənilənlər.' },
@@ -272,8 +272,8 @@ const az = {
       fit: 'Sığdır',
       rotateLeft: 'Sola çevir',
       rotateRight: 'Sağa çevir',
-      download: 'Yüklə',
-      pdfFailed: 'PDF açılmadı — yükləyib baxın.',
+      download: 'Endir',
+      pdfFailed: 'PDF açılmadı — endirib baxın.',
       noPreview: 'Bu fayl növü üçün önbaxış yoxdur.',
       rejectTitle: 'Sənədi rədd et',
       rejectHint: 'Səbəb müştəriyə göndərilir. 1–9 düymələri ümumi səbəbləri seçir.',

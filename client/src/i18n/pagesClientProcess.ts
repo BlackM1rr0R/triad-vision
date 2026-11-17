@@ -158,7 +158,7 @@ const az = {
       close: 'Bağla',
       // staff (Admin → Bookings)
       tab: 'Ofisə gəlişlər',
-      tabOnline: 'Konsultasiyalar',
+      tabOnline: 'Məsləhət görüşləri',
       create: 'Ofis vaxtı yarat',
       single: 'Tək vaxt',
       template: 'Həftəlik şablon',
@@ -185,7 +185,7 @@ const az = {
       noShow: 'Gəlmədi',
       cancelVisit: 'Ləğv et',
       cancelMessage: 'Müştəriyə qeyd (istəyə bağlı)',
-      noOffices: 'Ayarlarda (Əlaqə → ofislər) ofis ünvanı yoxdur.',
+      noOffices: 'Parametrlərdə (Əlaqə → ofislər) ofis ünvanı yoxdur.',
       openCase: 'Müraciətə keç',
       allStaff: 'Bütün əməkdaşlar',
       weekdayShort: ['B', 'Be', 'Ça', 'Ç', 'Ca', 'C', 'Ş'],

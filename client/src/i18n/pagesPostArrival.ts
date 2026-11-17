@@ -65,7 +65,7 @@ const az = {
     reunion: {
       title: 'Ailənin birləşməsi (Familiennachzug)',
       start: 'Familiennachzug-u başlat',
-      startHint: 'Sonra gələcək {{count}} ailə üzvünün müraciəti açılır, sənəd siyahısı yaradılır və təkrar istifadə olunan sənədlər (nikah / doğum şəhadətnaməsi, pasport, viza, müqavilə, maaş, mənzil) əsas müraciətdən köçürülür.',
+      startHint: 'Sonra gələcək {{count}} ailə üzvü üçün müraciət açılır və sənəd siyahısı yaradılır. Təkrar lazım olan sənədlər (nikah / doğum şəhadətnaməsi, pasport, viza, müqavilə, maaş, mənzil) əsas müraciətdən köçürülür.',
       notReady: 'Əsas müraciət təsdiqləndikdən və ya müraciətçi Almaniyaya gəldikdən sonra başlamaq olar.',
       noLater: '“Sonra gələcək” ailə üzvü yoxdur.',
       startedAt: 'Başladı: {{date}}',
@@ -89,7 +89,7 @@ const az = {
       title: '4 göz yoxlaması',
       subtitle: 'Səfirliyə təqdim etməzdən əvvəl paketi ikinci əməkdaş yoxlayır.',
       states: { NONE: 'İstənilməyib', PENDING: 'Yoxlama gözlənilir', APPROVED: 'Təsdiqlənib', REJECTED: 'Geri qaytarılıb', OVERRIDDEN: 'Ötürülüb (rəhbər)', STALE: 'Paket dəyişib — yenidən yoxlama lazımdır' },
-      off: 'Yoxlama ayarlarda söndürülüb — paket birbaşa təqdim oluna bilər.',
+      off: 'Yoxlama parametrlərdə söndürülüb — paket birbaşa təqdim oluna bilər.',
       gateOk: 'Səfirliyə təqdim etmək olar.',
       gateBlocked: 'Səfirliyə təqdim etmək (“Səfirliyə təqdim edildi”) üçün başqa əməkdaşın təsdiqi lazımdır.',
       packageMissing: 'Əvvəlcə səfirlik paketini hazırlayın — yoxlayan məhz həmin faylı görür.',

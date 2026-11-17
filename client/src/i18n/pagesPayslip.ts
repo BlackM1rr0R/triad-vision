@@ -7,7 +7,7 @@
 const az = {
   payslip: {
     heroTitle: 'Alman maaş vərəqəsi (Lohnabrechnung) izahlı',
-    heroSubtitle: 'Brutto maaşınızı seçin və Almaniyada aylıq maaş vərəqəsinin hər sətrinin nə demək olduğunu görün: vergilər, sığortalar, xalis məbləğ və işəgötürənin xərci.',
+    heroSubtitle: 'Brutto maaşınızı seçin. Alman maaş vərəqəsinin hər sətrinin nə demək olduğunu görün: vergilər, sığortalar, xalis məbləğ və işəgötürənin xərci.',
     form: {
       title: 'Seçimlər',
       gross: 'Aylıq brutto maaş (€)',

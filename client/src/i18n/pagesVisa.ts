@@ -66,7 +66,7 @@ const az = {
     fit: {
       eyebrow: 'Hansı viza mənə uyğundur?',
       title: 'Əmin deyilsiniz? 2 dəqiqəlik testdən keçin',
-      text: 'Peşəniz, təcrübəniz, dil səviyyəniz və təhsiliniz barədə bir neçə suala cavab verin — sizə ən uyğun viza yolunu və hazırlıq səviyyənizi göstərək.',
+      text: 'Peşəniz, təcrübəniz, dil səviyyəniz və təhsiliniz barədə bir neçə suala cavab verin. Sizə ən uyğun viza yolunu və hazırlığınızı göstərək.',
       points: ['Pulsuz və qeydiyyatsız', 'Peşəyə uyğun viza tövsiyəsi', 'Növbəti addımların siyahısı'],
       button: 'Testə başla',
     },
@@ -174,7 +174,7 @@ const az = {
     grid: {
       eyebrow: 'Kataloq',
       title: 'Bütün xidmətlər',
-      subtitle: 'Kim üçün olduğuna görə süzün və ətraflı məlumat üçün xidmətə klikləyin.',
+      subtitle: 'Kim üçün olduğuna görə süzün və ətraflı məlumat üçün xidmətə basın.',
     },
     matrix: {
       eyebrow: 'Kimə nə daxildir',

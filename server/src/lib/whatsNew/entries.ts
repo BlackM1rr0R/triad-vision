@@ -286,7 +286,7 @@ export const WHATS_NEW_ENTRIES: WhatsNewCodeEntry[] = [
     link: '/admin/rule-changes',
     title: { az: 'Qayda dəyişiklikləri', ru: 'Изменения правил', en: 'Rule changes', de: 'Regeländerungen' },
     body: {
-      az: 'Qanun və ya səfirlik qaydası dəyişəndə qısa bildiriş yazın və viza növlərini seçin. Yalnız həmin müştərilər portalda və e-poçtla xəbər alır. Rəsmi mənbə linkini əlavə edin.',
+      az: 'Qanun və ya səfirlik qaydası dəyişəndə qısa bildiriş yazın və viza növlərini seçin. Yalnız həmin müştərilər kabinetdə və e-poçtla xəbər alır. Rəsmi mənbə linkini əlavə edin.',
       ru: 'Когда меняется закон или правило посольства, напишите короткое уведомление и выберите типы виз. Сообщение получат только эти клиенты — в портале и по почте. Добавьте ссылку на официальный источник.',
       en: 'When a law or embassy rule changes, write a short notice and pick the visa types. Only those clients are told, in the portal and by e-mail. Add the official source link.',
       de: 'Ändert sich ein Gesetz oder eine Botschaftsregel, kurze Mitteilung schreiben und Visumarten wählen. Nur diese Kunden werden informiert, im Portal und per E-Mail. Offizielle Quelle verlinken.',

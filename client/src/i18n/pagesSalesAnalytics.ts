@@ -70,7 +70,7 @@ const az = {
     },
     funnel: {
       title: 'Satış hunisi',
-      note: 'Dövrdə gələn müraciət edənlər bu günə qədər izlənilir: müştəri hesabı → müraciət (case) → viza.',
+      note: 'Dövrdə gələn müraciət edənlər bu günə qədər izlənilir: müştəri hesabı → müraciət → viza.',
       aria: 'Satış hunisi',
       steps: { leads: 'Müraciət edənlər', clients: 'Müştərilər', cases: 'Müraciət açılıb', approved: 'Viza verilib' },
     },

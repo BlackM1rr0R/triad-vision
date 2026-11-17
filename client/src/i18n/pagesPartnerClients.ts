@@ -31,7 +31,7 @@ const az = {
       consentNone: 'Razılıq hələ verilməyib',
       viaCase: 'Komanda tərəfindən bağlanıb',
       payment: {
-        NONE: 'Hesab yoxdur',
+        NONE: 'Hesab-faktura yoxdur',
         OPEN: 'Ödəniş gözlənilir',
         PARTIAL: 'Qismən ödənilib',
         PAID: 'Ödənilib',

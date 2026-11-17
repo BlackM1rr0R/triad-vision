@@ -58,7 +58,7 @@ const az = {
       cta: 'Viktorinaya keç',
     },
     faq: [
-      { q: 'Xəstələnəndə işəgötürənə nə vaxt xəbər verməliyəm?', a: '«Dərhal» (§ 5 EntgFG) — praktikada növbədən əvvəl. Xəstəlik 3 təqvim günündən çox çəkirsə, ən gec növbəti iş günü həkim arayışı lazımdır; işəgötürən onu daha tez də tələb edə bilər.' },
+      { q: 'Xəstələnəndə işəgötürənə nə vaxt xəbər verməliyəm?', a: '«Dərhal» (§ 5 EntgFG) — praktikada növbədən əvvəl. Xəstəlik 3 təqvim günündən çox çəkirsə, ən gec növbəti iş günü həkim arayışı lazımdır. İşəgötürən onu daha tez də istəyə bilər.' },
       { q: '8 saatlıq iş günündə nə qədər fasilə var?', a: 'Ən azı 30 dəqiqə, 15 dəqiqəlik hissələrə bölmək olar; 9 saatdan çox işdə 45 dəqiqə (§ 4 ArbZG).' },
       { q: 'İşdə «Sie» deməliyəm, yoxsa «du»?', a: 'Standart «Sie»dir; «du»nu adətən yaşca böyük və ya rəhbər təklif edir. Bir çox tikinti meydançasında və mətbəxdə həmkarlar ilk gündən «du» deyir.' },
     ],

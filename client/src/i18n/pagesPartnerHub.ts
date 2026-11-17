@@ -196,7 +196,7 @@ const az = {
       create: 'Qovluğu yarat / bərpa et',
       excel: 'Müştəri siyahısı (Excel)',
       excelHint: 'Hesablaşma üçün müraciətlər və profil — bir faylda.',
-      download: 'Yüklə',
+      download: 'Endir',
       contractsHint: 'Müqavilə faylları «Müqavilələr» bölməsindədir.',
     },
     portal: {
@@ -232,7 +232,7 @@ const az = {
     readinessMissing: 'Çatışmır: {{fields}}',
     contracts: 'Müqavilələrim',
     contractsEmpty: 'Hələ müqavilə yoxdur.',
-    download: 'Yüklə',
+    download: 'Endir',
     downloadSigned: 'İmzalanmış',
     period: 'Müddət',
     statuses: { SENT: 'Göndərilib', ACTIVE: 'Aktiv', EXPIRED: 'Bitib', TERMINATED: 'Ləğv edilib' },

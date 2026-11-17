@@ -10,7 +10,7 @@ export const REMINDER: Record<CourseLocale, (p: { course: string }) => { title: 
 };
 
 export const CERTIFICATE_READY: Record<CourseLocale, (p: { course: string }) => { title: string; body: string }> = {
-  az: (p) => ({ title: 'Sertifikatınız hazırdır', body: `Təbriklər! "${p.course}" kursunu tamamladınız. Sertifikatı kabinetinizdən yükləyə bilərsiniz.` }),
+  az: (p) => ({ title: 'Sertifikatınız hazırdır', body: `Təbriklər! "${p.course}" kursunu tamamladınız. Sertifikatı kabinetinizdən endirə bilərsiniz.` }),
   de: (p) => ({ title: 'Ihr Zertifikat ist fertig', body: `Glückwunsch! Sie haben den Kurs „${p.course}“ abgeschlossen. Das Zertifikat können Sie in Ihrem Konto herunterladen.` }),
   en: (p) => ({ title: 'Your certificate is ready', body: `Congratulations! You completed "${p.course}". You can download the certificate in your account.` }),
   ru: (p) => ({ title: 'Ваш сертификат готов', body: `Поздравляем! Вы прошли курс «${p.course}». Сертификат можно скачать в личном кабинете.` }),

@@ -122,8 +122,8 @@ const MAIL: Record<SeoLocale, { subject: (t: string) => string; hello: (n: strin
   az: {
     subject: (t) => `E-kitabınız: ${t}`,
     hello: (n) => `Salam, ${n}!`,
-    body: 'Sorğunuz üçün təşəkkür edirik. E-kitabı aşağıdakı düymə ilə PDF kimi yükləyə bilərsiniz. Link 7 gün etibarlıdır.\n\nSuallarınız olarsa, bu məktuba cavab yazın və ya pulsuz konsultasiya təyin edin: triad-vision.de/booking',
-    cta: 'PDF-i yüklə',
+    body: 'Sorğunuz üçün təşəkkür edirik. E-kitabı aşağıdakı düymə ilə PDF kimi endirə bilərsiniz. Link 7 gün etibarlıdır.\n\nSuallarınız olarsa, bu məktuba cavab yazın və ya pulsuz məsləhətə yazılın: triad-vision.de/booking',
+    cta: 'PDF-i endir',
     footer: 'Bu məktubu triad-vision.de saytında e-kitab istədiyiniz üçün alırsınız.',
   },
   de: {

@@ -20,7 +20,7 @@ export interface PartnerText {
 export const PARTNER_TEXT: Record<Locale, PartnerText> = {
   az: {
     inviteTitle: 'Triad Vision partnyor kabinetinə dəvət',
-    inviteBody: (n) => `Hörmətli ${n}, sizin üçün Triad Vision partnyor kabineti yaradıldı. Orada gətirdiyiniz müştərilərin müraciətlərini, sənədlərini və komissiyalarınızı izləyə bilərsiniz.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.`,
+    inviteBody: (n) => `Hörmətli ${n}, sizin üçün Triad Vision partnyor kabineti yaradıldı. Orada gətirdiyiniz müştərilərin müraciətlərini, sənədlərini və komissiyalarınızı izləyə bilərsiniz.\n\nŞifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.`,
     inviteCta: 'Şifrəni təyin et',
     approvedTitle: (c) => `Viza təsdiqləndi: ${c}`,
     approvedBody: (c, n) => `Müştəriniz ${c} (müraciət ${n}) üçün viza verildi.`,

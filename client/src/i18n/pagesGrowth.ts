@@ -105,7 +105,7 @@ const az = {
         lodged: 'Səfirliyə təqdim',
         approved: 'Viza təsdiqi',
         inquiries: 'Sorğular',
-        bookings: 'Konsultasiyalar',
+        bookings: 'Məsləhət görüşləri',
         applications: 'Vakansiya müraciətləri',
       },
       funnel: 'Konversiya qıfı',
@@ -125,7 +125,7 @@ const az = {
       samples: 'Müraciət sayı: {{count}}',
       visitToApproved: 'Ziyarət → viza',
       regToCase: 'Qeydiyyat → müraciət',
-      leads: 'Sorğu / konsultasiya / vakansiya',
+      leads: 'Sorğu / məsləhət / vakansiya',
       dropoff: 'Viza addımları üzrə itki',
       dropoffNote: 'Dövrdə yaradılmış müraciətlər: hansı addıma qədər çatıblar.',
       steps: {

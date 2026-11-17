@@ -5,7 +5,7 @@
 const az = {
   dl: {
     heroTitle: 'Azərbaycan sürücülük vəsiqəsi Almaniyada',
-    heroSubtitle: 'Azərbaycan vəsiqəsi ilə Almaniyada nə qədər sürmək olar, alman vəsiqəsini necə almaq olar, hansı sənədlər lazımdır, nə qədər başa gəlir — və yük maşını sürücüləri (C/CE) üçün nə vacibdir.',
+    heroSubtitle: 'Azərbaycan vəsiqəsi ilə Almaniyada nə qədər sürmək olar? Alman vəsiqəsini necə almaq olar, hansı sənədlər lazımdır və nə qədər başa gəlir? Yük maşını sürücüləri (C/CE) üçün vacib olanlar da buradadır.',
     summary: {
       title: 'Qısaca',
       items: [
@@ -23,7 +23,7 @@ const az = {
     },
     exam: {
       title: 'Niyə imtahan lazımdır?',
-      text: 'Anlage 11-dəki ölkələrin (məsələn, Ukrayna, Serbiya, Yaponiya) vəsiqələri imtahansız və ya qismən imtahanla dəyişdirilir. Azərbaycan bu siyahıda yoxdur, buna görə dəyişdirmək istədiyiniz hər kateqoriya üçün nəzəri və praktiki imtahan lazımdır (§ 31 FeV). Məcburi dərs saatları yoxdur, amma imtahana sürücülük məktəbi (Fahrschule) vasitəsilə yazılırsınız və onun maşınından istifadə edirsiniz — praktikada bir neçə dərs götürmək məsləhətdir.',
+      text: 'Anlage 11-dəki ölkələrin (məsələn, Ukrayna, Serbiya, Yaponiya) vəsiqələri imtahansız və ya qismən imtahanla dəyişdirilir. Azərbaycan bu siyahıda yoxdur, buna görə dəyişdirmək istədiyiniz hər kateqoriya üçün nəzəri və praktiki imtahan lazımdır (§ 31 FeV). Məcburi dərs saatları yoxdur. Amma imtahana sürücülük məktəbi (Fahrschule) vasitəsilə yazılırsınız və onun maşınından istifadə edirsiniz. Ona görə bir neçə praktik dərs götürmək məsləhətdir.',
     },
     steps: {
       title: 'Addım-addım',
@@ -64,7 +64,7 @@ const az = {
     },
     truck: {
       title: 'Yük maşını sürücüləri (C / CE)',
-      text: 'Azərbaycan C/CE vəsiqəsi də imtahansız dəyişdirilmir: hər kateqoriya üçün nəzəri və praktiki imtahan, həkim və göz müayinəsi lazımdır (C üçün əvvəlcə B lazımdır). Peşəkar sürücülük üçün əlavə olaraq:',
+      text: 'Azərbaycan C/CE vəsiqəsi də imtahansız dəyişdirilmir. Hər kateqoriya üçün nəzəri və praktiki imtahan, həkim və göz müayinəsi lazımdır. C üçün əvvəlcə B lazımdır. Peşəkar sürücülük üçün əlavə olaraq:',
       items: [
         'Berufskraftfahrer ixtisası: sürətləndirilmiş əsas ixtisas — tanınmış təlim mərkəzində 140 saat və IHK-da 90 dəqiqəlik nəzəri imtahan.',
         'Sonra Almaniyada sübut kimi Fahrerqualifizierungsnachweis (FQN) verilir (§ 7 BKrFQG); AB sürücülük vəsiqəsindəki 95 kodu da qəbul olunur. Hər 5 ildən bir 35 saat təkmilləşdirmə.',

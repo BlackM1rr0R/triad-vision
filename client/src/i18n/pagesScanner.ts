@@ -11,7 +11,7 @@ const az = {
       capture: 'Şəkil çək',
       gallery: 'Qalereyadan seç',
       tip: 'Sənədi tünd fonda, yaxşı işıqda saxlayın və telefonu sabit tutun.',
-      denied: 'Kameraya icazə verilmədi. Brauzer ayarlarında icazə verin və ya telefonun kamerası ilə şəkil çəkin.',
+      denied: 'Kameraya icazə verilmədi. Brauzer parametrlərində icazə verin və ya telefonun kamerası ilə şəkil çəkin.',
       unavailable: 'Kamera əlçatan deyil. Telefonun kamerası ilə şəkil çəkin və ya qalereyadan seçin.',
       useSystem: 'Telefonun kamerasını aç',
       found: 'Sənəd tapıldı',

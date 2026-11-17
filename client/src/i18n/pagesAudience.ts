@@ -76,7 +76,7 @@ const az = {
       levelSelf: { title: 'Alman dili səviyyəm', text: 'CEFR özünüqiymətləndirməsi və növbəti səviyyə üçün həftəlik plan.' },
     },
     ctaTitle: 'Hansı alətdən başlayacağınızı bilmirsiniz?',
-    ctaText: 'Pulsuz konsultasiyada vəziyyətinizi birlikdə qiymətləndirək və sizə uyğun yolu seçək.',
+    ctaText: 'Pulsuz məsləhətdə vəziyyətinizi birlikdə qiymətləndirək və sizə uyğun yolu seçək.',
   },
   workersPage: {
     eyebrow: 'İşçilər və namizədlər üçün',
@@ -93,14 +93,14 @@ const az = {
     storiesTitle: 'Almaniyada işə başlayanların hekayələri',
     faqTitle: 'İşçilərin ən çox verdiyi suallar',
     ctaTitle: 'Almaniyaya yolunuza bu gün başlayın',
-    ctaText: 'Pulsuz qeydiyyatdan keçin və ya konsultasiya təyin edin — sizə uyğun yolu birlikdə seçək.',
+    ctaText: 'Pulsuz qeydiyyatdan keçin və ya məsləhətə yazılın — sizə uyğun yolu birlikdə seçək.',
   },
   employersPage: {
     eyebrow: 'İşəgötürənlər üçün',
     title: 'Xaricdən etibarlı işçilər — seçimdən ilk iş gününə qədər',
     subtitle: 'Namizəd seçimi, müsahibələr, viza prosesi, Anerkennung və inteqrasiya: hamısını bir komanda idarə edir.',
     ctaPrimary: 'Namizəd sorğusu göndər',
-    ctaSecondary: 'Konsultasiya təyin et',
+    ctaSecondary: 'Məsləhətə yazıl',
     benefitsTitle: 'Niyə {{brand}}',
     benefits: [
       { title: 'Hüquqi təhlükəsizlik', text: 'Viza, Anerkennung və əmək müqaviləsi Almaniya qanunlarına uyğun hazırlanır.' },

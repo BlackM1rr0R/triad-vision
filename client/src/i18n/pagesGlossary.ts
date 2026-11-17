@@ -27,7 +27,7 @@ const az = {
     prev: 'Əvvəlki termin',
     next: 'Növbəti termin',
     ctaTitle: 'Sənədləriniz barədə sualınız var?',
-    ctaText: 'Hansı sənədlərin lazım olduğunu birlikdə yoxlayaq — pulsuz konsultasiya.',
+    ctaText: 'Hansı sənədlərin lazım olduğunu birlikdə yoxlayaq — pulsuz məsləhət.',
     guides: 'Bələdçilər',
     lookup: 'Lüğət',
     lookupHint: 'Alman terminlərini lüğətdə tapın',

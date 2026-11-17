@@ -84,7 +84,7 @@ const az = {
       fill: 'Doldur',
       refill: 'Yenidən yarat',
       fillTitle: '{{title}} — doldurma',
-      download: 'Yüklə',
+      download: 'Endir',
       open: 'Aç',
       datasheet: 'Məlumat vərəqi',
       datasheetHint: 'Elektron doldurula bilməyən forma üçün dəyərlər bir vərəqdə',

@@ -36,7 +36,7 @@ const az = {
       label: 'Kim birləşdirə bilər',
       SUPER_ADMIN: 'Yalnız super admin',
       ADMIN: 'Adminlər və super admin',
-      saved: 'Ayar yadda saxlanıldı',
+      saved: 'Parametr yadda saxlanıldı',
     },
     cmp: {
       account: 'Hesab {{side}}',
@@ -56,7 +56,7 @@ const az = {
       family: 'ailə üzvü',
       docs_one: '{{count}} sənəd',
       docs_other: '{{count}} sənəd',
-      counts: { cases: 'Müraciətlər', activeCases: 'Aktiv müraciətlər', documents: 'Sənədlər', messages: 'Mesajlar', applications: 'Vakansiya müraciətləri', bookings: 'Konsultasiyalar' },
+      counts: { cases: 'Müraciətlər', activeCases: 'Aktiv müraciətlər', documents: 'Sənədlər', messages: 'Mesajlar', applications: 'Vakansiya müraciətləri', bookings: 'Məsləhət görüşləri' },
       lastLogin: 'Son giriş',
       never: 'heç vaxt',
       createdAt: 'Yaradılıb',
@@ -103,7 +103,7 @@ const az = {
       ALREADY_MERGED: 'Hesablardan biri artıq birləşdirilib.',
       NOT_MERGEABLE: 'Bu hesablar birləşdirilə bilməz.',
     },
-    noPermission: 'Birləşdirmə hüququnuz yoxdur (ayarlara baxın).',
+    noPermission: 'Birləşdirmə hüququnuz yoxdur (parametrlərə baxın).',
     merge: 'Birləşdir',
     confirm: {
       title: 'Hesabları birləşdir',

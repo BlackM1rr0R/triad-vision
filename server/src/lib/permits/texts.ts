@@ -20,8 +20,8 @@ interface Catalog {
 /** What the worker has to do, per item. */
 const ACTION: Record<Locale, Record<PermitItem, string>> = {
   az: {
-    residence: 'Uzatma üçün Ausländerbehörde-dən (miqrasiya idarəsi) vaxtında termin alın — müddət bitənə qədər müraciət edilməlidir. Menecerniz sənədlərin hazırlanmasında kömək edəcək.',
-    blueCard: 'Mavi Kartın uzadılması üçün Ausländerbehörde-dən vaxtında termin alın; iş müqaviləsi və maaş haqqında arayışları hazırlayın. Menecerniz kömək edəcək.',
+    residence: 'Uzatma üçün Ausländerbehörde-dən (miqrasiya idarəsi) vaxtında görüş vaxtı (Termin) alın — müddət bitənə qədər müraciət edilməlidir. Meneceriniz sənədlərin hazırlanmasında kömək edəcək.',
+    blueCard: 'Mavi Kartın uzadılması üçün Ausländerbehörde-dən vaxtında görüş vaxtı (Termin) alın; iş müqaviləsi və maaş haqqında arayışları hazırlayın. Meneceriniz kömək edəcək.',
     passport: 'Yeni pasport üçün Azərbaycan Respublikasının Almaniyadakı səfirliyinə vaxtında müraciət edin — bu bir neçə ay çəkə bilər. Yeni pasportu aldıqdan sonra Ausländerbehörde-yə bildirin və nüsxəsini kabinetinizdə yükləyin.',
     insurance: 'Tibbi sığortanızın davam etdiyini yoxlayın və yeni sığorta təsdiqini (Versicherungsbescheinigung) kabinetinizdə yükləyin — Almaniyada sığortasız qalmaq olmaz.',
   },

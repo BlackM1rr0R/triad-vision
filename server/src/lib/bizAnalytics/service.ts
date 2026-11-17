@@ -224,7 +224,7 @@ const STAGE_AZ: Record<string, string> = {
 };
 const STEP_AZ: Record<string, string> = {
   registered: 'Qeydiyyat',
-  consultation: 'Konsultasiya',
+  consultation: 'Məsləhət',
   caseOpened: 'Müraciət açılıb',
   documentsComplete: 'Sənədlər tamam',
   approved: 'Viza verilib',

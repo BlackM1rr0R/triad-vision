@@ -212,8 +212,8 @@ const inquiries: DatasetDef = {
 
 const bookings: DatasetDef = {
   key: 'bookings',
-  label: L('Konsultasiyalar', 'Beratungstermine', 'Bookings', 'Консультации'),
-  description: L('Onlayn konsultasiya bronları', 'Gebuchte Online-Beratungen', 'Booked online consultations', 'Забронированные онлайн-консультации'),
+  label: L('Məsləhət görüşləri', 'Beratungstermine', 'Bookings', 'Консультации'),
+  description: L('Onlayn məsləhət görüşü bronları', 'Gebuchte Online-Beratungen', 'Booked online consultations', 'Забронированные онлайн-консультации'),
   category: 'operations',
   minRole: 'ADMIN',
   model: 'booking',

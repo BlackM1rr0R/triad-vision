@@ -258,7 +258,7 @@ export const BANKING_TERMS: GlossaryTerm[] = [
       uk: 'Виписка з рахунку з усіма надходженнями та списаннями за період.',
     },
     long: {
-      az: 'Çıxarışlar adətən onlayn bankda PDF kimi yüklənir. Onlar gəlir sübutu kimi (məsələn, mənzil, ailə birləşməsi və ya Sperrkonto üçün) və vergi bəyannaməsində istənə bilər. Vacib çıxarışları bir neçə il saxlayın.',
+      az: 'Çıxarışlar adətən onlayn bankda PDF kimi endirilir. Onlar gəlir sübutu kimi (məsələn, mənzil, ailə birləşməsi və ya Sperrkonto üçün) və vergi bəyannaməsində istənə bilər. Vacib çıxarışları bir neçə il saxlayın.',
       de: 'Kontoauszüge stehen meist als PDF im Onlinebanking bereit. Sie dienen oft als Nachweis, etwa für Wohnungssuche, Familiennachzug oder Behörden, und für die Steuererklärung. Wichtige Auszüge sollte man einige Jahre aufbewahren.',
       en: 'Statements are usually available as PDFs in online banking. They are often used as proof, for example for flat hunting, family reunification or authorities, and for your tax return. Keep important statements for a few years.',
       ru: 'Выписки обычно доступны в онлайн-банке в формате PDF. Их часто используют как подтверждение — для поиска жилья, воссоединения семьи, ведомств — и для налоговой декларации. Важные выписки стоит хранить несколько лет.',

@@ -88,7 +88,7 @@ const az = {
       noDocuments: 'Bu işçi üzrə sizin üçün sənəd yoxdur.',
       noCheckIns: 'Hələ yoxlama göndərilməyib.',
       sign: 'İmzala',
-      download: 'Yüklə',
+      download: 'Endir',
       answer: 'Cavab ver',
       openForm: 'Formu aç',
       manager: 'Məsul {{brandWord}} meneceri',

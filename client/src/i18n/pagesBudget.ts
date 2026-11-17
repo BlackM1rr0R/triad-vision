@@ -6,7 +6,7 @@
 const az = {
   budget: {
     heroTitle: 'Almaniyada ilk ayın büdcəsi',
-    heroSubtitle: 'Xalis maaşınız, ilk maaşa qədər xərclər, aylıq büdcə və özünüzlə nə qədər pul gətirməli olduğunuz — şəhərə, maaşa və ailəyə görə.',
+    heroSubtitle: 'Xalis maaşınızı, ilk maaşa qədər xərcləri və aylıq büdcəni görün. Özünüzlə nə qədər pul gətirməli olduğunuzu da öyrənin — şəhərə, maaşa və ailəyə görə.',
     portalTitle: 'Mənim ilk ay büdcəm',
     portalSubtitle: 'Müraciətinizdəki məlumatlarla əvvəlcədən dolduruldu. Dəyərləri dəyişə bilərsiniz.',
     prefilled: 'Müraciətinizdən götürüldü: {{list}}',
@@ -118,14 +118,14 @@ const az = {
       },
     },
     actions: {
-      pdf: 'PDF yüklə',
+      pdf: 'PDF endir',
       share: 'Linki kopyala',
       copied: 'Link kopyalandı',
       copyFailed: 'Linki kopyalamaq alınmadı',
       consultant: 'Məsləhətçidən soruş',
       consultantTitle: 'Büdcə barədə məsləhətçi ilə danışın',
       consultantText: 'Zəng vaxtını seçin — hesablamanız mesaja əlavə olunur.',
-      booking: 'Pulsuz konsultasiya',
+      booking: 'Pulsuz məsləhət',
       message: 'İlk ay büdcəsi: {{city}}, brutto {{gross}}, tövsiyə {{bring}}. Link: {{link}}',
     },
     disclaimer:

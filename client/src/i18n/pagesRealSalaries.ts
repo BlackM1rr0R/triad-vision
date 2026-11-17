@@ -470,7 +470,7 @@ const adminAz = {
     published: 'dərc olunur',
     suppressed: { TOO_FEW: '3 işçidən az', DOMINANT_VALUE: 'bir məbləğ üstünlük təşkil edir', NO_SPREAD: 'aralıq yoxdur' },
     skip: { EXCLUDED: 'çıxarılıb', NO_AMOUNT: 'məbləğ yoxdur', IMPLAUSIBLE: 'inandırıcı deyil', PART_TIME: 'part-time', AUSBILDUNG: 'Ausbildung', NO_PROFESSION: 'peşə tanınmadı' },
-    cols: { case: 'İş', profession: 'Peşə', city: 'Şəhər', employer: 'İşəgötürən', gross: 'Brutto/ay', status: 'Status', workers: 'İşçi', result: 'Nəticə' },
+    cols: { case: 'Müraciət', profession: 'Peşə', city: 'Şəhər', employer: 'İşəgötürən', gross: 'Brutto/ay', status: 'Status', workers: 'İşçi', result: 'Nəticə' },
     germany: 'Bütün Almaniya',
     used: 'istifadə olunur',
     exclude: 'Çıxar',

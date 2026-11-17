@@ -27,7 +27,7 @@ const az = {
     status: { NOT_STARTED: 'Başlanmayıb', APPOINTMENT_SET: 'Görüş təyin edilib', DONE: 'Tamamlandı' },
     state: { none: 'Tarix yoxdur', ok: 'Vaxt var', soon: 'Müddət yaxındır', overdue: 'Müddət keçib', done: 'Tamamlandı' },
     check: { mark: 'Tamamlandı kimi qeyd et', undo: 'Geri al', doneAt: '{{date}} tamamlandı' },
-    budget: { label: 'Aylıq maksimum (isti kirayə, €)', hint: 'Isti kirayə = xalis kirayə + kommunal xərclər.', save: 'Saxla', saved: 'Saxlanıldı' },
+    budget: { label: 'Aylıq maksimum (isti kirayə, €)', hint: 'İsti kirayə = xalis kirayə + kommunal xərclər.', save: 'Saxla', saved: 'Saxlanıldı' },
     city: { label: 'Mənzil axtardığınız şəhər', hint: 'Tərəfdaş təklifləri bu şəhərə görə seçilir.', current: 'İndiki: {{city}}' },
     steps: {
       budget: {
@@ -126,15 +126,15 @@ const az = {
       print: 'İzahı çap et',
       formLink: 'Qanun mətni (§ 19 BMG)',
       formTemplate: 'Forma nümunəsi (şəhərinizin formasından istifadə edin)',
-      certificateTitle: 'Görüşdən sonra: Meldebescheinigung',
+      certificateTitle: 'Görüşdən sonra: Meldebescheinigung (qeydiyyat arayışı)',
       certificateBody: 'Qeydiyyatdan sonra Meldebescheinigung (qeydiyyat arayışı) alırsınız. Onu yükləyin – Anmeldung tamamlanmış kimi qeyd olunacaq və növbəti addımlar açılacaq.',
       uploadCertificate: 'Meldebescheinigung yüklə',
       certificateUploaded: 'Yükləndi: {{name}}',
       doneTitle: 'Anmeldung tamamlandı',
-      doneBody: '{{date}} qeyd edildi. Arayışı seyfinizdə saxlayın – bank, işəgötürən və Ausländerbehörde onu tələb edə bilər.',
+      doneBody: '{{date}} qeyd edildi. Arayışı seyfinizdə saxlayın – bank, işəgötürən və Ausländerbehörde (miqrasiya idarəsi) onu tələb edə bilər.',
       nextTitle: 'Növbəti addımlar',
       next: {
-        STEUER_ID: 'Steuer-ID poçtla gəlir (adətən bir neçə həftə ərzində) – işəgötürənə verin',
+        STEUER_ID: 'Steuer-ID (vergi nömrəsi) poçtla gəlir (adətən bir neçə həftə ərzində) – işəgötürənə verin',
         BANK_ACCOUNT: 'Bank hesabı (Girokonto) açın',
         HEALTH_CARD: 'Tibbi sığorta kartı (eGK)',
       },
@@ -170,7 +170,7 @@ const az = {
       translation: [
         'Hörmətli ev sahibi, kirayəçiniz yaşayış yerini Bürgeramt-da qeydiyyata salmalıdır (Bundesmeldegesetz § 17).',
         'Bunun üçün mənzil verənin təsdiqi (Wohnungsgeberbestätigung, § 19 BMG) lazımdır. Mənzil verən köçdükdən sonra 2 həftə ərzində onu verməyə borcludur.',
-        'Təsdiqdə olmalıdır: mənzil verənin adı və ünvanı (mülkiyyətçi başqadırsa, onun adı və ünvanı da), köçmə tarixi, mənzilin ünvanı və qeydiyyatdan keçən şəxslərin adları.',
+        'Təsdiqdə bunlar olmalıdır: mənzil verənin adı və ünvanı, köçmə tarixi, mənzilin ünvanı və qeydiyyatdan keçən şəxslərin adları. Mülkiyyətçi başqa şəxsdirsə, onun da adı və ünvanı yazılır.',
         'Şəhərin rəsmi formasından istifadə etmək olar; imzalanmış sərbəst yazılı təsdiq də kifayətdir.',
       ],
       tenant: 'Kirayəçi',

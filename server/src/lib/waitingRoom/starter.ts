@@ -396,7 +396,7 @@ If your residence permit is tied to the job and you are dismissed, contact the i
     },
     body: {
       az: `- [ ] Alman SIM kartı alın (çox yerdə pasportla onlayn aktivləşdirmə)
-- [ ] Anmeldung üçün termin götürün və Wohnungsgeberbestätigung alın
+- [ ] Anmeldung üçün görüş vaxtı (Termin) götürün və Wohnungsgeberbestätigung alın
 - [ ] Bürgeramt-da Anmeldung edin → Meldebescheinigung
 - [ ] Bank hesabı açın və IBAN-ı işəgötürənə göndərin
 - [ ] Krankenkasse seçin və işəgötürənə bildirin

@@ -86,7 +86,7 @@ const az = {
       ALREADY_PDF: 'Fayl artıq PDF-dir.',
       UNSUPPORTED_CONVERSION: 'Bu fayl növü belə çevrilə bilmir.',
       UNSUPPORTED_IMAGE: 'Şəkil oxunmadı (yalnız JPG və PNG).',
-      PDF_ENCRYPTED: 'PDF parolla qorunur.',
+      PDF_ENCRYPTED: 'PDF şifrə ilə qorunur.',
       INVALID_PDF: 'PDF faylı oxunmadı.',
       INVALID_SPREADSHEET: 'Cədvəl faylı oxunmadı.',
       NO_TABLE_DATA: 'Cədvəldə məlumat yoxdur.',

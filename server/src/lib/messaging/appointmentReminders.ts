@@ -90,7 +90,7 @@ const tail = (p?: string | null) => (p ? `, ${p}` : '');
 
 export const REMINDER_TEXTS: Record<Locale, Record<ReminderKind, (p: Params) => string>> = {
   az: {
-    EMBASSY: (p) => `Xatırlatma: Botschaft (səfirlik) termininiz — ${p.date}${tail(p.place)}. Pasportunuzu və bütün sənədlərinizi götürün. — Triad Vision`,
+    EMBASSY: (p) => `Xatırlatma: səfirlik görüşünüz — ${p.date}${tail(p.place)}. Pasportunuzu və bütün sənədlərinizi götürün. — Triad Vision`,
     GERMAN_EXAM: (p) => `Xatırlatma: ${p.what ?? 'alman dili'} imtahanınız — ${p.date}${tail(p.place)}. Pasportunuzu və qeydiyyat təsdiqini götürün. Uğurlar! — Triad Vision`,
     BOOKING: (p) => `Xatırlatma: Triad Vision ilə görüşünüz — ${p.date}${tail(p.place)}.`,
     INTERVIEW: (p) => `Xatırlatma: iş müsahibəniz${p.what ? ` (${p.what})` : ''} — ${p.date}${tail(p.place)}. Uğurlar! — Triad Vision`,

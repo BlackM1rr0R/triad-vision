@@ -24,7 +24,7 @@ const az = {
       match: '{{pct}}% uyğunluq',
       why: 'Niyə məhz bu şəhər?',
       runnersUp: 'Digər uyğun şəhərlər',
-      download: 'Şəkil kimi yüklə (PNG)',
+      download: 'Şəkil kimi endir (PNG)',
       share: 'Linki kopyala',
       copied: 'Link kopyalandı',
       copyFailed: 'Kopyalamaq alınmadı',

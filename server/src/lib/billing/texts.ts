@@ -65,7 +65,7 @@ const az: Catalogue = {
   orderCta: 'Sifarişin statusu',
   orderActive: (c) => ({ title: `Müqavilə imzalandı — müraciətiniz açıldı`, body: `Hörmətli ${c.name},\n\n"${c.pkg}" paketi üzrə müqavilə imzalandı. Müraciətiniz ${c.caseNumber ?? ''} açıldı, ilk hesab-faktura kabinetinizdə "Ödənişlər" bölməsindədir. Komandamız tezliklə sizinlə əlaqə saxlayacaq.` }),
   portalCta: 'Kabinetə keç',
-  invite: (c) => ({ title: 'Triad Vision kabinetiniz hazırdır', body: `Hörmətli ${c.name},\n\nSizin üçün Triad Vision kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə klikləyin. Link 7 gün etibarlıdır.` }),
+  invite: (c) => ({ title: 'Triad Vision kabinetiniz hazırdır', body: `Hörmətli ${c.name},\n\nSizin üçün Triad Vision kabineti yaradıldı. Şifrənizi təyin etmək üçün aşağıdakı düyməyə basın. Link 7 gün etibarlıdır.` }),
   inviteCta: 'Şifrəni təyin et',
 };
 

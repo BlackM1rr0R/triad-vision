@@ -13,7 +13,7 @@ const az = {
       CLOSED: { title: 'Müraciət bağlanıb', text: 'Yeni imkanlar axtarın — biz buradayıq.' },
     },
     nav: {
-      label: 'Portal menyusu',
+      label: 'Kabinet menyusu',
       home: 'Əsas',
       all: 'Bütün imkanlar',
       allBadge: 'Digər bölmələrdə yenilik: {{count}}',
@@ -63,15 +63,15 @@ const az = {
       rateAlerts: { t: 'Məzənnə bildirişi', d: 'EUR → AZN kursu istədiyiniz səviyyəyə çatanda' },
       vault: { t: 'Sənəd seyfi', d: 'Vacib sənədlərin surətləri bir yerdə' },
       ruleChanges: { t: 'Qayda dəyişiklikləri', d: 'Sizə aid olan yeni qaydalar' },
-      residenceCard: { t: 'Yaşayış icazəsi kartı', d: 'eAT kartı izahı və müddətlər' },
-      profile: { t: 'Profil', d: 'Şəxsi məlumatlar və bildiriş ayarları' },
+      residenceCard: { t: 'Yaşayış icazəsi kartı', d: 'Yaşayış kartı (eAT): izah və müddətlər' },
+      profile: { t: 'Profil', d: 'Şəxsi məlumatlar və bildiriş parametrləri' },
       notifications: { t: 'Bildirişlər', d: 'Bütün yeniliklər' },
       privacy: { t: 'Məxfilik və hüquqi', d: 'Məlumatlarınız və razılıqlar' },
       referral: { t: 'Dostunu dəvət et', d: 'Tanışlarınızı tövsiyə edin' },
     },
     all: {
       title: 'Bütün imkanlar',
-      intro: 'Portalın bütün bölmələri bir yerdə. Mərhələniz üçün ən vaciblər işarələnib.',
+      intro: 'Kabinetin bütün bölmələri bir yerdə. Mərhələniz üçün ən vaciblər işarələnib.',
       search: 'Axtar: məs. CV, Anmeldung, maaş…',
       searchLabel: 'Bölmələrdə axtar',
       clear: 'Təmizlə',
@@ -101,7 +101,7 @@ const az = {
     tour: {
       client: {
         stageNav: { title: 'Mərhələniz üçün menyu', text: 'Burada yalnız indi lazım olan bölmələr var. Mərhələ dəyişdikcə menyu da dəyişir.' },
-        all: { title: 'Bütün imkanlar', text: 'Qalan hər şey — alman dili oyunları, CV, bələdçilər, ayarlar — buradadır, axtarışla birlikdə.' },
+        all: { title: 'Bütün imkanlar', text: 'Qalan hər şey — alman dili oyunları, CV, bələdçilər, parametrlər — buradadır, axtarışla birlikdə.' },
         more: { title: 'Daha çox', text: 'Gedişat, səyahət xəritəsi və digər kartlar buradadır — lazım olanda açın.' },
       },
     },

@@ -9,7 +9,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         title: 'Maliyyə hesabatları',
         purpose: 'Seçilmiş dövr üzrə gəlir, debitor borcları, komissiyalar və əməkdaşların nəticələri — rəhbərlik və mühasib üçün. Yalnız Administrator və Baş administrator.',
         steps: [
-          'Yuxarıdakı düymələrlə dövrü seçin (“Bu ay” … “Keçən il”) və ya “Seçilmiş”i basıb başlanğıc/son tarixi yazın və “Tətbiq et”ə klikləyin.',
+          'Yuxarıdakı düymələrlə dövrü seçin (“Bu ay” … “Keçən il”) və ya “Seçilmiş”i basıb başlanğıc/son tarixi yazın və “Tətbiq et”ə basın.',
           '“İcmal”, “Debitor borcları”, “Komissiyalar”, “Əməkdaşlar” və “Növlər üzrə” tabları arasında keçin — dövr bütün tablarda eyni qalır.',
           'Seçilmiş dövrün tam hesabatını bir faylda almaq üçün “Excel yüklə”ni basın.',
         ],
@@ -125,7 +125,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         steps: [
           'Hesabları “Açıq”, “Gecikən”, “Ödənilib”, “Qaralamalar” plitələri, status, tarix, “Yalnız gecikənlər” və axtarışla tapın.',
           '“Yeni hesab-faktura” ilə hesab yaradın; sətir menyusunda “Göndər”, “Ödəniş qeyd et”, “Qəbz”, “PDF” və ya “Ləğv et (Storno)”nu seçin.',
-          '“Ayarlar” tabında ƏDV rejimini, ödəniş müddətini, xatırlatma günlərini və PDF altlığını yazıb yadda saxlayın.',
+          '“Parametrlər” tabında ƏDV rejimini, ödəniş müddətini, xatırlatma günlərini və PDF altlığını yazıb yadda saxlayın.',
         ],
         tips: [
           'İkinci xatırlatmadan bir gün sonra müraciətin menecerinə tapşırıq yaradılır.',
@@ -580,7 +580,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         purpose: 'Rüb üzrə ictimai “Azərbaycan → Almaniya əmək mobilliyi” PDF hesabatı; yalnız ən azı 3 müraciətdən ibarət anonim qruplar göstərilir.',
         steps: [
           '“Rüb” və “İl”i seçin: təsdiqlənən vizalar, peşələr, viza növləri, federal ştatlar, alman dili səviyyəsi və mərhələ müddətləri görünür.',
-          'İstəsəniz hər dil üçün “Giriş mətni”ni yazıb “Girişi yadda saxla”nı basın; “PDF yüklə” faylı verir.',
+          'İstəsəniz hər dil üçün “Giriş mətni”ni yazıb “Girişi yadda saxla”nı basın; “PDF endir” faylı verir.',
           '“Dərc et (/reports)” hesabatı ictimai səhifəyə çıxarır; “Dərcdən çıxar” onu geri götürür.',
         ],
         tips: [
@@ -634,14 +634,14 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
     text: {
       az: {
         title: 'Poçt qutuları',
-        purpose: 'Öz domenimizdəki e-poçt qutuları: əməkdaşlar üçün ünvan yaratmaq, parol, aliaslar, kvota və avtomatik cavab. Yalnız Administrator və Baş administrator.',
+        purpose: 'Öz domenimizdəki e-poçt qutuları: əməkdaşlar üçün ünvan yaratmaq, şifrə, aliaslar, kvota və avtomatik cavab. Yalnız Administrator və Baş administrator.',
         steps: [
-          '“Yeni poçt qutusu”nu basın, @ işarəsindən əvvəlki hissəni, adı, istəyə görə kvota və aliasları yazıb “Yarat”ı basın; göstərilən parolu dərhal kopyalayın.',
-          'Sətirdə “Redaktə et” (ad, kvota, aliaslar, bağlı işçi), “Parolu sıfırla” və ya “Avtomatik cavab”ı seçin.',
+          '“Yeni poçt qutusu”nu basın, @ işarəsindən əvvəlki hissəni, adı, istəyə görə kvota və aliasları yazıb “Yarat”ı basın; göstərilən şifrəni dərhal kopyalayın.',
+          'Sətirdə “Redaktə et” (ad, kvota, aliaslar, bağlı işçi), “Şifrəni sıfırla” və ya “Avtomatik cavab”ı seçin.',
           'Lazım olmayan qutunu “Deaktiv et” və ya tam ünvanı yazaraq təsdiqləyib “Sil”.',
         ],
         tips: [
-          'Parol yalnız bir dəfə göstərilir; sonra ancaq sıfırlamaq olar.',
+          'Şifrə yalnız bir dəfə göstərilir; sonra ancaq sıfırlamaq olar.',
           'Silmək geri qaytarılmır — bütün məktublar da silinir. Xidməti ünvanlar (postmaster, no-reply …) qorunur.',
         ],
       },
@@ -693,8 +693,8 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         title: 'KPI',
         purpose: 'Hər əməkdaş üzrə aylıq göstəricilər: bağlanan müraciətlər, sənədlər, cavab vaxtı, müştəri qiyməti, gəlir, saatlar və tapşırıqlar. Administrator və Baş administrator üçün.',
         steps: [
-          '“Aylıq KPI” tabında oxlarla ayı seçin və sütun başlığına klikləyib cədvəli sıralayın.',
-          '“Trend:” yanında göstəricini seçin; adın üzərinə klikləyib həmin əməkdaşın KPI kartını açın.',
+          '“Aylıq KPI” tabında oxlarla ayı seçin və sütun başlığına basıb cədvəli sıralayın.',
+          '“Trend:” yanında göstəricini seçin; adın üzərinə basıb həmin əməkdaşın KPI kartını açın.',
           '“Performans hesabatı” tabında daha uzun dövr üçün tarixləri seçin; “CSV” məlumatı endirir.',
         ],
         tips: [
@@ -752,7 +752,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         steps: [
           'Yuxarıdakı yekunlara baxın: aktiv müraciətlər, təyinatsız, gecikmiş, cavabsız mesajlar və “Limitdən çox”.',
           '“Bütün rollar” ilə rola görə süzün və “Sırala” ilə yük faizi, gecikmələr, cavabsız mesajlar və ya ada görə düzün.',
-          'Kartdakı rəqəmə klikləyib uyğun siyahını açın və işi yenidən bölüşdürün.',
+          'Kartdakı rəqəmə basıb uyğun siyahını açın və işi yenidən bölüşdürün.',
         ],
         tips: [
           'Zolaq “boş / normal / yüklü / həddən çox” göstərir; məzuniyyətdə olanlar “… -dək məzuniyyətdə” kimi görünür.',
@@ -808,7 +808,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         purpose: 'Komanda təqvimi: növbələr (ofis, uzaqdan, növbətçi), məzuniyyətlər, işin ötürülməsi və hər gün üçün əhatə yoxlaması. Hamı görür, administratorlar planlaşdırır.',
         steps: [
           '“Həftə” / “Ay” görünüşünü seçin, oxlarla və ya “Bu gün” ilə keçin, “Yalnız mən” və ya “Bütün komanda”nı seçin.',
-          'Administrator gün xanasına və ya “Növbə əlavə et”ə klikləyib növü, başlanğıc və son vaxtı (Bakı vaxtı) yazır.',
+          'Administrator gün xanasına və ya “Növbə əlavə et”ə basıb növü, başlanğıc və son vaxtı (Bakı vaxtı) yazır.',
           'Qabağa planlamaq üçün “Əvvəlki həftəni köçür” və ya “Həftəni təkrarla”; ofisdə və ya növbətçi kimsə olmayan günlər üçün xəbərdarlıq çıxır.',
         ],
         tips: [
@@ -979,8 +979,8 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         purpose: 'Bütün sistem bir baxışda: istifadəçilər, müraciətlər, sənədlər, e-poçt, təhlükəsizlik və hər əməkdaşın fəaliyyəti. Yalnız Baş administrator; səhifə yalnız baxış üçündür.',
         steps: [
           '“İstifadəçilər”, “Müraciətlər” və “Sənədlər və sistem” bloklarındakı yekunlara baxın: hazırda onlayn olanlar, təsdiq faizi, uğursuz məktub və girişlər.',
-          '7, 14, 30 və ya 90 gün seçin; “Gündəlik fəaliyyət” qrafikində seriyanın adına klikləyib onu gizlədin və ya göstərin.',
-          '“Əməkdaş axtar” ilə adamı tapın, “Əməkdaşlar” cədvəlini sütuna görə sıralayın və sətrə klikləyib onun səhifəsini açın.',
+          '7, 14, 30 və ya 90 gün seçin; “Gündəlik fəaliyyət” qrafikində seriyanın adına basıb onu gizlədin və ya göstərin.',
+          '“Əməkdaş axtar” ilə adamı tapın, “Əməkdaşlar” cədvəlini sütuna görə sıralayın və sətrə basıb onun səhifəsini açın.',
         ],
         tips: [
           'Hesabı dəyişmək və ya sessiyaları bitirmək “İstifadəçilər” səhifəsində edilir.',
@@ -1094,7 +1094,7 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
         steps: [
           'Son hesabatı və ya “Arxiv”dən köhnəsini açın; “Əsas rəqəmlər”, ilişib qalan müraciətlər və “Komanda” bölməsini oxuyun.',
           '“İndi yarat” keçən həftənin hesabatını yeniləyir; “Mənə e-poçtla göndər” və “Xülasəni mənim dilimdə yaz” düymələrindən istifadə edin.',
-          '“Hesabat ayarları”nda “Bazar ertəsi e-poçtu”nu açın/bağlayın, “Adminlərə də göndər”i və ilişib qalma həddini (gün) seçin.',
+          '“Hesabat parametrləri”nda “Bazar ertəsi e-poçtu”nu açın/bağlayın, “Adminlərə də göndər”i və ilişib qalma həddini (gün) seçin.',
         ],
         tips: [
           'AI xülasəsi yazılmasa da rəqəmlər tamdır.',

@@ -179,7 +179,7 @@ export const GROUP_LABELS: Record<DataGroup, L10n> = {
   client: { az: 'Müştəri', de: 'Antragsteller/in', en: 'Applicant', ru: 'Заявитель' },
   passport: { az: 'Pasport', de: 'Reisepass', en: 'Passport', ru: 'Паспорт' },
   address: { az: 'Ünvan', de: 'Anschrift', en: 'Address', ru: 'Адрес' },
-  case: { az: 'İş (case)', de: 'Akte / Aufenthalt', en: 'Case / stay', ru: 'Дело / пребывание' },
+  case: { az: 'Müraciət', de: 'Akte / Aufenthalt', en: 'Case / stay', ru: 'Дело / пребывание' },
   spouse: { az: 'Həyat yoldaşı', de: 'Ehegatte', en: 'Spouse', ru: 'Супруг(а)' },
   children: { az: 'Uşaqlar', de: 'Kinder', en: 'Children', ru: 'Дети' },
   company: { az: 'İşəgötürən', de: 'Arbeitgeber', en: 'Employer', ru: 'Работодатель' },

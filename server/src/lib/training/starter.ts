@@ -65,7 +65,7 @@ Gününüzə **Admin → Bu gün** səhifəsindən başlayın. Orada sizi gözl�
 
 - yoxlanılmalı sənədlər,
 - cavab gözləyən müraciətlər və məktublar,
-- tapşırıqlar, imzalar, konsultasiyalar,
+- tapşırıqlar, imzalar, məsləhət görüşləri,
 - məzuniyyətdə olan həmkarın sizə ötürdüyü müraciətlər (ötürmə qeydi ilə).
 
 Hər sətirdə birbaşa düymə var: **Qəbul et**, **Rədd et**, **Xatırlat**, **Aç**.

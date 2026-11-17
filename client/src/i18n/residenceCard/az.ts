@@ -4,7 +4,7 @@ import type { ResidenceCardCopy } from './en';
 export const az: ResidenceCardCopy = {
   eat: {
     heroTitle: 'Alman yaşayış kartı (eAT) izahlı',
-    heroSubtitle: 'Elektron yaşayış icazəsinin ön və arxa tərəfi, sahə-sahə: kart nömrəsi, icazənin növü, etibarlılıq, qeydlər, CAN, MRZ, PIN məktubu — və müddət bitməzdən əvvəl nə etməli.',
+    heroSubtitle: 'Yaşayış kartının (elektron yaşayış icazəsi) ön və arxa tərəfi, sahə-sahə: kart nömrəsi, icazənin növü, müddət, qeydlər, CAN, MRZ, PIN məktubu. Müddət bitməzdən əvvəl nə etməli olduğunuzu da öyrənin.',
     specimenBanner: 'NÜMUNƏ — uydurma şəxs, real sənəd deyil',
     specimenNote: 'Uydurma kart sahibinin (“Elvin Məmmədov”) özümüzün çəkdiyi təsviri. Quruluş BAMF broşürünə əsasən sadələşdirilib; heç bir təhlükəsizlik elementi, dövlət rəmzi və ya real məlumat təkrarlanmayıb. Real kartlarda yerlər və yazılar fərqli ola bilər.',
     front: 'Ön tərəf',
@@ -36,7 +36,7 @@ export const az: ResidenceCardCopy = {
       zusatzTitle: 'Əlavə vərəq (Zusatzblatt)',
       zusatzText: 'Şərtlər və məhdudiyyətlər (Nebenbestimmungen) çipdə saxlanılır və karta sığmadıqda kartla birlikdə aldığınız əlavə vərəqdə çap olunur. Onu kartla birlikdə gəzdirin və hər ikisini işəgötürənlərə və orqanlara göstərin.',
       pinTitle: 'PIN məktubu',
-      pin1: 'Kart hazırlandıqdan sonra (16 yaşdan) 5 rəqəmli Transport-PIN, 10 rəqəmli PUK və bloklama parolu (Sperrkennwort) olan PIN məktubu alırsınız.',
+      pin1: 'Kart hazırlandıqdan sonra (16 yaşdan) 5 rəqəmli Transport-PIN, 10 rəqəmli PUK və bloklama şifrəsi (Sperrkennwort) olan PIN məktubu alırsınız.',
       pin2: 'Transport-PIN-i öz 6 rəqəmli PIN-inizlə əvəz edin — evdə AusweisApp ilə (kart oxuyucu və ya NFC-li telefon) və ya Ausländerbehörde-də.',
       pin3: 'İki səhv PIN-dən sonra əlavə olaraq CAN lazımdır; üç dəfədən sonra PIN bloklanır və PUK lazım olur.',
       pin4: 'Məktubu kartdan ayrı, təhlükəsiz yerdə saxlayın. Onlayn funksiya pulsuzdur.',

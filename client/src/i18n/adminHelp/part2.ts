@@ -14,7 +14,7 @@ const az: Bundle = {
       who: 'Bütün əməkdaşlar (Əməkdaş, Administrator, Super admin) görür və dəyişə bilər.',
       steps: [
         'Yuxarıdakı axtarış sahəsində şirkəti ad, şəhər, e-poçt və ya ƏDV nömrəsi ilə tapın; "Təsdiq gözləyir", "Aktiv" və "Dayandırılıb" düymələri ilə siyahını statusa görə süzün.',
-        'Şirkət kartına klikləyin — sağda şirkətin bütün məlumatları açılır.',
+        'Şirkət kartına basın — sağda şirkətin bütün məlumatları açılır.',
         'Yeni işəgötürəni yoxlayın və "Status" blokunda "Təsdiqlə" düyməsini basın. Lazım olsa, əvvəlcə "Səbəb / qeyd" sahəsinə işəgötürən üçün qısa izah yazın.',
         'Problem olduqda "Dayandır", yenidən yoxlamaq üçün isə "Gözləməyə qaytar" düyməsindən istifadə edin.',
         '"Şirkət məlumatları" blokunda ad, sektor, şəhər, əlaqə və ƏDV məlumatlarını düzəldin və "Yadda saxla" basın. "Daxili qeyd" yalnız əməkdaşlara görünür.',
@@ -39,7 +39,7 @@ const az: Bundle = {
         'Status düymələri (Təklif edilib, Təsdiqlənib, Ləğv edilib, Keçirilib, Gəlmədi) və şirkət seçimi ilə siyahını süzün.',
         '"Yeni müsahibə" basın və namizədi ad, e-poçt və ya peşə ilə axtarıb seçin.',
         'Lazım olsa "Müraciət / vakansiya" və "Şirkət" seçin, sonra başlama vaxtını, müddəti, məsul əməkdaşı və qeydləri doldurub "Yarat" basın.',
-        'Müsahibəyə klikləyin: açılan pəncərədə görüş linki, namizəd, şirkət və vakansiya görünür.',
+        'Müsahibəyə basın: açılan pəncərədə görüş linki, namizəd, şirkət və vakansiya görünür.',
         'Namizədin əvəzinə təsdiqləmək üçün "Təsdiqlə", vaxt dəyişəndə "Vaxtı dəyiş", görüş olmayacaqsa səbəb yazıb "Ləğv et" düyməsindən istifadə edin.',
         'Görüş bitdikdən sonra nəticəni qeyd edin: "Keçirildi" və ya "Gəlmədi".',
         'Lazım olsa "Məsul əməkdaş"ı dəyişin, qeydləri yazıb "Qeydləri yadda saxla" basın.',
@@ -60,8 +60,8 @@ const az: Bundle = {
       steps: [
         '"Agentlər" tabında agentləri ad, e-poçt, kod və ya region üzrə axtarın; cədvəldə tövsiyələr, aktiv müraciətlər, vizalar və komissiya məbləğləri görünür.',
         '"Yeni agent" basın, ad, soyad, e-poçt, region və e-poçt dilini doldurun. "Referal kod" üçün "Təklif et" düyməsindən istifadə edin və ya kodu özünüz yazın.',
-        '"Komissiya şərtləri"ni seçin: "Sabit məbləğ" (hər hadisə üçün eyni məbləğ) və ya "Faiz" (ödənilmiş fakturanın faizi). "Nə vaxt ödənilir?" bölməsində hadisələri işarələyin və "Yarat və dəvət göndər" basın.',
-        'Agentin sətrinə klikləyib profilini açın: referal linki kopyalayın, şərtləri, IBAN-ı və daxili qeydləri dəyişib "Yadda saxla" basın.',
+        '"Komissiya şərtləri"ni seçin: "Sabit məbləğ" (hər hadisə üçün eyni məbləğ) və ya "Faiz" (ödənilmiş hesab-fakturanın faizi). "Nə vaxt ödənilir?" bölməsində hadisələri işarələyin və "Yarat və dəvət göndər" basın.',
+        'Agentin sətrinə basıb profilini açın: referal linki kopyalayın, şərtləri, IBAN-ı və daxili qeydləri dəyişib "Yadda saxla" basın.',
         'Lazım olduqda "Dəvəti yenidən göndər", "Dayandır" və ya "Aktivləşdir" düymələrindən istifadə edin.',
         'Müştəri səhv agentə yazılıbsa və ya heç yazılmayıbsa, "Müştərini bu agentə yaz" bölməsində onu tapıb əlavə edin; "Tövsiyə olunan müştərilər" siyahısında "Agentdən ayır" ilə ayırın.',
         '"Komissiyalar" tabında agent, status və tarix üzrə süzün; "Gözləyir" statuslu komissiyanı yoxlayıb "Təsdiqlə" və ya "Ləğv et" basın.',
@@ -69,7 +69,7 @@ const az: Bundle = {
       ],
       tips: [
         'Seçilmiş hadisə baş verəndə komissiya avtomatik "Gözləyir" statusu ilə yaranır və agentə bildiriş gedir. Heç bir hadisə seçilməyibsə, komissiya avtomatik yazılmır.',
-        '"Faiz" yalnız "Faktura ödənildi" hadisəsində işləyir — faiz seçmisinizsə, bu hadisəni mütləq işarələyin.',
+        '"Faiz" yalnız "Hesab-faktura ödənildi" hadisəsində işləyir — faiz seçmisinizsə, bu hadisəni mütləq işarələyin.',
         'Dayandırılmış agentin kodu ilə yeni qeydiyyatlar ona yazılmır, köhnə tarixçə isə qalır.',
         'Yalnız təsdiqlənmiş komissiyalar ödənildi kimi qeyd olunur. Təsdiqdən 14 gün sonra hələ ödənilməyən komissiyalar barədə adminlərə gündəlik xatırlatma gəlir.',
         'Əl ilə komissiya dərhal təsdiqlənmiş olur; mənfi məbləğ çıxılma kimi yazılır.',
@@ -82,7 +82,7 @@ const az: Bundle = {
       who: 'Yalnız Administrator və Super admin.',
       steps: [
         'İlk dəfə "Parametrlər" tabına keçin: bank rekvizitlərini (hesab sahibi, IBAN, BIC, bank), standart ƏDV faizini, ödəniş müddətini və PDF altlığı mətnini doldurub "Yadda saxla" basın.',
-        '"Satıcı məlumatları natamamdır" xəbərdarlığı görünürsə, "Parametrlərə keç" ilə Ayarlar səhifəsinə keçin və Impressum bölməsində şirkət adı, ünvan və vergi nömrəsini doldurun.',
+        '"Satıcı məlumatları natamamdır" xəbərdarlığı görünürsə, "Parametrlərə keç" ilə Parametrlər səhifəsinə keçin və Impressum bölməsində şirkət adı, ünvan və vergi nömrəsini doldurun.',
         '"Hesab-fakturalar" tabında "Yeni hesab-faktura" basın, şirkəti seçin, tarixləri və istəyə bağlı xidmət dövrünü yazın.',
         '"Mövqe əlavə et" ilə hər xidmət üçün təsvir, say və vahid qiyməti daxil edin; Netto, ƏDV və Brutto avtomatik hesablanır. "Qaralamanı saxla" basın.',
         'Qaralamanı yoxlayın və "Göndər" basın: nömrə verilir və PDF şirkətin e-poçtuna göndərilir.',
@@ -110,7 +110,7 @@ const az: Bundle = {
         '"Provayderlər" tabında WhatsApp Business və SMS-in "Konfiqurasiya edilib" olub-olmadığını, göndərən nömrəni və webhook URL-ni yoxlayın.',
         'Super admin "Test mesajı göndər" bölməsində telefon nömrəsi və mətn yazıb "Göndər" ilə provayderi yoxlaya bilər.',
         '"Bildiriş şablonları" tabında bildiriş növünü seçin (məs. "Müraciət yaradıldı", "Səfirlik görüşü"); hər dil (AZ, DE, EN, RU) üçün ayrıca blok açılır.',
-        'Başlığı və mətni dəyişin, "Dəyişənlər" siyahısından müraciət nömrəsi, müştərinin adı kimi dəyişənləri klikləyərək mətnə əlavə edin və "Önizləmə"də nəticəni yoxlayın.',
+        'Başlığı və mətni dəyişin, "Dəyişənlər" siyahısından müraciət nömrəsi, müştərinin adı kimi dəyişənləri basaraq mətnə əlavə edin və "Önizləmə"də nəticəni yoxlayın.',
         'Həmin dilin blokunda "Yadda saxla" basın. Standart mətnə qayıtmaq üçün "Standarta qaytar" düyməsindən istifadə edin.',
       ],
       tips: [
@@ -124,23 +124,23 @@ const az: Bundle = {
     mailboxes: {
       title: 'Poçt qutuları',
       summary:
-        'Öz poçt serverimizdəki (domenimizdəki) e-poçt qutularını idarə edin: əməkdaşlar üçün yeni ünvan yaradın, parolu sıfırlayın, alias, kvota və avtomatik cavab təyin edin.',
+        'Öz poçt serverimizdəki (domenimizdəki) e-poçt qutularını idarə edin: əməkdaşlar üçün yeni ünvan yaradın, şifrəni sıfırlayın, alias, kvota və avtomatik cavab təyin edin.',
       who: 'Yalnız Administrator və Super admin.',
       steps: [
         'Siyahıda bütün poçt qutularını görün: ünvan, istifadə olunan yer, aliaslar və yaradılma tarixi. Ünvan və ya ad üzrə axtarın, "Yenilə" ilə siyahını təzələyin.',
         '"Yeni poçt qutusu" basın, ünvanın @ işarəsindən əvvəlki hissəsini və göstərilən adı yazın.',
-        'Parolu boş saxlayın (güclü parol avtomatik yaradılır) və ya özünüz yazın; lazım olsa "Kvota (MB)" və vergüllə ayrılmış "Aliaslar" daxil edib "Yarat" basın.',
-        'Göstərilən parolu dərhal kopyalayın, sahibinə təhlükəsiz yolla verin və "Hazırdır" basın.',
+        'Şifrəni boş saxlayın (güclü şifrə avtomatik yaradılır) və ya özünüz yazın; lazım olsa "Kvota (MB)" və vergüllə ayrılmış "Aliaslar" daxil edib "Yarat" basın.',
+        'Göstərilən şifrəni dərhal kopyalayın, sahibinə təhlükəsiz yolla verin və "Hazırdır" basın.',
         'Göstərilən adı, kvotanı və ya aliasları dəyişmək üçün qutunun "Redaktə et" düyməsini basın.',
-        'Əməkdaş parolunu unudubsa, "Parolu sıfırla" seçin: yeni parol avtomatik yaradılır və ya özünüz daxil edirsiniz.',
+        'Əməkdaş şifrəsini unudubsa, "Şifrəni sıfırla" seçin: yeni şifrə avtomatik yaradılır və ya özünüz daxil edirsiniz.',
         'Məzuniyyət və ya ayrılma zamanı "Avtomatik cavab" açın: mövzunu, mətni və istəyə bağlı başlanğıc və son tarixləri yazıb "Yadda saxla" basın.',
         'Lazımsız qutunu "Sil" ilə silin; təsdiq üçün ünvanı tam yazıb "Həmişəlik sil" basmalısınız.',
       ],
       tips: [
-        'Parol yalnız bir dəfə göstərilir; sonra onu görmək mümkün deyil, yalnız sıfırlamaq olar.',
-        'Parol sıfırlananda bu serverdəki workspace poçt hesabları avtomatik yenilənir, amma telefon və ya Outlook kimi proqramlarda yeni parol əl ilə yazılmalıdır.',
+        'Şifrə yalnız bir dəfə göstərilir; sonra onu görmək mümkün deyil, yalnız sıfırlamaq olar.',
+        'Şifrə sıfırlananda bu serverdəki workspace poçt hesabları avtomatik yenilənir, amma telefon və ya Outlook kimi proqramlarda yeni şifrə əl ilə yazılmalıdır.',
         'Silmə geri qaytarılmır: qutu və içindəki bütün məktublar həmişəlik silinir, əlaqəli işçi daha məktub ala bilmir.',
-        '"Saytın göndərən ünvanı" və "Poçt administratoru" nişanlı qutular qorunur — onları silmək və parolunu dəyişmək olmaz.',
+        '"Saytın göndərən ünvanı" və "Poçt administratoru" nişanlı qutular qorunur — onları silmək və şifrəsini dəyişmək olmaz.',
         '"Poçt serveri qoşulmayıb" xəbərdarlığı görünürsə, qutular siyahılanmır; bu halda texniki administratora müraciət edin.',
       ],
     },
@@ -151,7 +151,7 @@ const az: Bundle = {
       who: 'Bütün əməkdaşlar oxuyur və məqalə yazır; əməkdaş yalnız öz məqaləsini redaktə edir. Kateqoriyaları idarə etmək, məqaləni sancmaq və silmək Administrator və Super admin üçündür.',
       steps: [
         'Yuxarıdakı axtarış sahəsinə açar söz yazın (məs. Anmeldung, müqavilə) — uyğun məqalələr dərhal görünür.',
-        'Soldakı "Kateqoriyalar" siyahısından "Bütün məqalələr", "Sancılmış", konkret kateqoriya və ya "Kateqoriyasız" seçin; etiketlərə klikləyib siyahını daha da daraldın.',
+        'Soldakı "Kateqoriyalar" siyahısından "Bütün məqalələr", "Sancılmış", konkret kateqoriya və ya "Kateqoriyasız" seçin; etiketlərə basıb siyahını daha da daraldın.',
         'Məqaləni açın və "Cavabı kopyala" ilə mətni formatsız kopyalayın, sonra müştəriyə cavabda yapışdırın.',
         'Yeni məlumat əlavə etmək üçün "Yeni məqalə" basın: başlıq, mətn, kateqoriya və vergüllə ayrılmış etiketləri yazın.',
         'Mətni "Yaz" tabında Markdown ilə yazın (qalın, siyahı, link) və "Önizləmə" tabında nəticəni yoxlayın.',
@@ -170,14 +170,14 @@ const az: Bundle = {
       title: 'İstifadəçilər',
       summary:
         'Saytın bütün hesabları — müştərilər, əməkdaşlar, administratorlar — burada siyahılanır. Yeni əməkdaş yaratmaq, rolu dəyişmək, hesabı deaktiv etmək və ya silmək üçün istifadə edin.',
-      who: 'Bütün əməkdaşlar siyahını görür. Dəyişiklikləri (yaratmaq, rol, aktivlik, parol, cihazlardan çıxarmaq, silmək) yalnız Super admin edir.',
+      who: 'Bütün əməkdaşlar siyahını görür. Dəyişiklikləri (yaratmaq, rol, aktivlik, şifrə, cihazlardan çıxarmaq, silmək) yalnız Super admin edir.',
       steps: [
         'İstifadəçini ad, soyad və ya e-poçt ilə axtarın; "Onlayn" və rol düymələri (Müştəri, Əməkdaş, Administrator, Super admin) ilə siyahını süzün.',
         'Cədvəldə son girişi, canlı sessiyaları, təyin olunmuş müraciətləri və qeydiyyat tarixini izləyin.',
-        'Yeni işçi üçün "Yeni əməkdaş" basın: ad, soyad, e-poçt, rol (Əməkdaş və ya Administrator) və parol yazıb "Yarat" basın.',
+        'Yeni işçi üçün "Yeni əməkdaş" basın: ad, soyad, e-poçt, rol (Əməkdaş və ya Administrator) və şifrə yazıb "Yarat" basın.',
         'Rolu dəyişmək üçün istifadəçinin sətrindəki rol seçimindən yeni rolu seçin.',
         'İşdən ayrılan əməkdaşı aktivlik açarı ilə deaktiv edin — o daha daxil ola bilməz, məlumatları isə qalır.',
-        'Parolunu unudan istifadəçi üçün "Parol" düyməsi ilə yeni parol təyin edin və onu təhlükəsiz kanalla çatdırın.',
+        'Şifrəsini unudan istifadəçi üçün "Şifrə" düyməsi ilə yeni şifrə təyin edin və onu təhlükəsiz kanalla çatdırın.',
         'Hesabın oğurlanmasından şübhə varsa, "Çıxar" düyməsi ilə istifadəçini bütün cihazlardan çıxarın.',
         'Hesabı birdəfəlik silmək üçün "Sil" basın, silinəcək və saxlanılacaq məlumatların siyahısını oxuyun, istifadəçinin e-poçtunu yazıb "Birdəfəlik sil" basın.',
       ],
@@ -185,8 +185,8 @@ const az: Bundle = {
         'Silmə geri qaytarılmır. Çox vaxt deaktiv etmək kifayətdir — silməni yalnız həqiqətən lazım olduqda (məs. məxfilik sorğusu) edin.',
         'Öz hesabınızı və Super admin hesabını silmək, deaktiv etmək və ya rolunu dəyişmək olmaz.',
         'Silinən əməkdaşın təyin olunmuş müraciətləri təyinatsız qalır, "Mənim fayllarım" şirkət diskində ayrıca qovluğa köçürülür, audit jurnalı saxlanılır.',
-        'Parol dəyişəndə və ya hesab deaktiv ediləndə istifadəçi bütün cihazlardan avtomatik çıxarılır.',
-        'Parolda ən azı bir hərf və bir rəqəm olmalıdır; e-poçt artıq başqa hesabda istifadə olunursa, yeni hesab yaradılmır.',
+        'Şifrə dəyişəndə və ya hesab deaktiv ediləndə istifadəçi bütün cihazlardan avtomatik çıxarılır.',
+        'Şifrədə ən azı bir hərf və bir rəqəm olmalıdır; e-poçt artıq başqa hesabda istifadə olunursa, yeni hesab yaradılmır.',
       ],
     },
     security: {
@@ -236,7 +236,7 @@ const az: Bundle = {
     docsAudit: {
       title: 'Audit jurnalı',
       summary:
-        'Girişlər, parol dəyişiklikləri, istifadəçi və 2FA əməliyyatları, sənəd və disk əməliyyatları, ayar dəyişiklikləri kimi vacib hadisələrin tarixçəsi. Kimin, nə vaxt, nəyi və hansı IP ünvanından etdiyini yoxlamaq üçün istifadə edin.',
+        'Girişlər, şifrə dəyişiklikləri, istifadəçi və 2FA əməliyyatları, sənəd və disk əməliyyatları, parametr dəyişiklikləri kimi vacib hadisələrin tarixçəsi. Kimin, nə vaxt, nəyi və hansı IP ünvanından etdiyini yoxlamaq üçün istifadə edin.',
       who: 'Yalnız Super admin. Səhifəyə "Nəzarət" bölməsindən və ya əməkdaşın profilindən keçilir (ünvan: /admin/docs/audit).',
       steps: [
         '"Nəzarət" səhifəsində "Audit jurnalı" düyməsini basın və ya birbaşa /admin/docs/audit ünvanını açın.',
@@ -250,7 +250,7 @@ const az: Bundle = {
         'Jurnal yalnız oxumaq üçündür: qeydləri dəyişmək və ya silmək mümkün deyil.',
         'Rənglər əməliyyat növünü göstərir: qırmızı — uğursuz giriş, bənövşəyi — icazə və istifadəçi dəyişiklikləri.',
         'İstifadəçi silinəndə də audit qeydləri saxlanılır, silinmənin özü ayrıca qeyd olunur.',
-        'Uğursuz giriş cəhdlərini müntəzəm yoxlayın — bu, parol təxmin etmə cəhdlərini erkən görməyə kömək edir.',
+        'Uğursuz giriş cəhdlərini müntəzəm yoxlayın — bu, şifrə təxmin etmə cəhdlərini erkən görməyə kömək edir.',
       ],
     },
     analytics: {
@@ -282,7 +282,7 @@ const az: Bundle = {
       who: 'Menyuda yalnız Administrator və Super admin görür; API açarlarını və webhook-ları yalnız onlar idarə edir. Təqvim axını və API sənədləri hər əməkdaş üçün işləyir.',
       steps: [
         '"Təqvim axını" bölməsində "Axını yarat" basın və "Abunə linki"ni kopyalayın.',
-        'Linki Google Calendar, Outlook və ya Apple Calendar-a URL ilə abunəlik kimi əlavə edin — səfirlik görüşləri, konsultasiyalar, müsahibələr və tapşırıq son tarixləri orada görünəcək.',
+        'Linki Google Calendar, Outlook və ya Apple Calendar-a URL ilə abunəlik kimi əlavə edin — səfirlik görüşləri, məsləhət görüşləri, müsahibələr və tapşırıq son tarixləri orada görünəcək.',
         '"API açarları" bölməsində "Yeni açar" basın, ad yazın, lazımi "İcazələr"i seçin və açarı konkret şirkətə bağlayın və ya bütün platforma üçün saxlayın.',
         'Yaradılan açarı dərhal kopyalayıb tərəfdaşa təhlükəsiz yolla verin; lazımsız açarı "Ləğv et" ilə bağlayın.',
         '"Webhook-lar" bölməsində "Yeni webhook" basın, tərəfdaşın URL-ni yazın, hadisələri (məs. "Müraciət yaradıldı", "Müsahibə planlaşdırıldı") və şirkəti seçin.',
@@ -322,7 +322,7 @@ const az: Bundle = {
       ],
     },
     settings: {
-      title: 'Ayarlar',
+      title: 'Parametrlər',
       summary:
         'Saytın və panelin əsas parametrləri: əlaqə məlumatları və ofislər, sosial şəbəkələr, yeni müraciətlərin avtomatik təyinatı, Impressum, məxfilik siyasəti və sənədlərin saxlanma müddəti.',
       who: 'Yalnız Administrator və Super admin.',

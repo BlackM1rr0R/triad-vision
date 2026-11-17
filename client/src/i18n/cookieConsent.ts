@@ -2,16 +2,16 @@
 // site layout, so the full legal copy (pagesLegalDocs) is not part of every page.
 const az = {
   legalDocs: {
-    footer: { terms: 'AGB (şərtlər)', cookies: 'Cookie ayarları' },
+    footer: { terms: 'AGB (şərtlər)', cookies: 'Cookie parametrləri' },
     cookie: {
       title: 'Cookie-lər və məxfilik',
       text: 'Sayt üçün zəruri cookie-lərdən (giriş, dil) həmişə istifadə edirik. Razılıq versəniz, saytı yaxşılaşdırmaq üçün statistika və reklamın effektivliyini ölçmək üçün marketinq cookie-lərindən də istifadə edəcəyik. Seçiminizi istənilən vaxt dəyişə bilərsiniz.',
       acceptAll: 'Hamısını qəbul et',
       necessaryOnly: 'Yalnız zəruri',
-      settings: 'Ayarlar',
+      settings: 'Parametrlər',
       save: 'Seçimi yadda saxla',
       back: 'Geri',
-      settingsTitle: 'Cookie ayarları',
+      settingsTitle: 'Cookie parametrləri',
       policy: 'Cookie siyasəti',
       privacy: 'Məxfilik siyasəti',
       always: 'Həmişə aktiv',

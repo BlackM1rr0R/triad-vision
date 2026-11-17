@@ -248,7 +248,7 @@ const az = {
       subtitle: 'Tərəfdaş API açarları, webhook-lar, şəxsi təqvim axını və API sənədləri.',
       calendar: {
         title: 'Təqvim axını',
-        hint: 'Səfirlik görüşləriniz, konsultasiyalarınız, müsahibələriniz və tapşırıq son tarixləri Google, Outlook və ya Apple təqviminizdə. Link şəxsidir — paylaşmayın.',
+        hint: 'Səfirlik görüşləriniz, məsləhət görüşləriniz, müsahibələriniz və tapşırıq son tarixləri Google, Outlook və ya Apple təqviminizdə. Link şəxsidir — paylaşmayın.',
         enable: 'Axını yarat',
         rotate: 'Linki yenilə',
         rotateHint: 'Köhnə link dərhal işləməyi dayandırır.',

@@ -78,9 +78,9 @@ const az = {
     actions: { salary: 'Maaş kalkulyatoru', payslip: 'Maaş vərəqəsi izahlı' },
     disclaimer: 'Sadələşdirilmiş təxmin: uşaqlar, digər gəlirlər, işsizlik/xəstəlik müavinətləri, xüsusi xərclər nəzərə alınmır. Rəqəmlər saytın maaş kalkulyatorunun alqoritmi (BMF 2026) ilə hesablanır. Vergi məsləhəti deyil.',
     faq: [
-      { q: 'Almaniyada vergi qaytarılması nə qədər olur?', a: 'Orta hesabla işçilər bir neçə yüz avro geri alır. İl ortasında Almaniyaya gələnlər çox vaxt daha çox alır, çünki işəgötürən vergini bütün il üçün hesablayır, illik vergisiz minimum isə tam tətbiq olunur.' },
+      { q: 'Almaniyada vergi qaytarılması nə qədər olur?', a: 'Orta hesabla işçilər bir neçə yüz avro geri alır. İl ortasında Almaniyaya gələnlər çox vaxt daha çox geri alır. Səbəb: işəgötürən vergini bütün il üçün hesablayır, illik vergisiz minimum isə tam tətbiq olunur.' },
       { q: 'Yol pulu 2026-cı ildə necə hesablanır?', a: '2026-cı ildən evlə iş arasındakı hər tam kilometr üçün birinci kilometrdən 0,38 € çıxılır — iş günü başına bir dəfə. Avtomobil olmadan ildə ən çox 4 500 €.' },
-      { q: 'Ailəm Azərbaycandadır — ikinci mənzili çıxa bilərəmmi?', a: 'Bəli, ailənizin orada öz təsərrüfatı varsa və siz ona maddi töhfə verirsinizsə, ikiqat təsərrüfat qəbul edilə bilər: Almaniyadakı mənzil ayda 1 000 €-yə qədər və həftədə bir ailə səfəri.' },
+      { q: 'Ailəm Azərbaycandadır — ikinci mənzili çıxa bilərəmmi?', a: 'Bəli, ailənizin orada öz təsərrüfatı varsa və siz ona pul göndərirsinizsə, ikiqat təsərrüfat qəbul edilə bilər. Onda Almaniyadakı mənzil (ayda 1 000 €-yə qədər) və həftədə bir ailə səfəri nəzərə alınır.' },
       { q: 'Bəyannamə vermək məcburidirmi?', a: 'Tək işçi üçün (sinif I) adətən yox, amma faydalıdır. III/V sinif birləşməsi, xaricdəki gəlir (Progressionsvorbehalt) və ya 410 €-dan çox müavinət olduqda məcburidir.' },
     ],
   },

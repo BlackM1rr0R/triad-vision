@@ -10,7 +10,7 @@ export const PAGES_EMPLOYERS: PageHelpEntry[] = [
         purpose: 'İşəgötürən şirkətlərin siyahısı: yeni qeydiyyatları təsdiqləyin, məlumatları yeniləyin və şirkət istifadəçilərini dəvət edin. Bütün əməkdaşlar istifadə edir.',
         steps: [
           'Şirkəti ad, şəhər, e-poçt və ya ƏDV nömrəsi ilə axtarın; «Təsdiq gözləyir», «Aktiv», «Dayandırılıb» ilə süzün.',
-          'Şirkətə klikləyin: sağ paneldə «Təsdiqlə», «Dayandır» və ya «Gözləməyə qaytar» basın, məlumatları düzəldib «Yadda saxla» edin.',
+          'Şirkətə basın: sağ paneldə «Təsdiqlə», «Dayandır» və ya «Gözləməyə qaytar» basın, məlumatları düzəldib «Yadda saxla» edin.',
           '«İstifadəçi dəvət et» ilə işəgötürən əməkdaşını dəvət edin; «Yeni şirkət» ilə şirkəti özünüz əlavə edin, «Tam profil» ilə ətraflı səhifəni açın.',
         ],
         tips: [
@@ -75,7 +75,7 @@ export const PAGES_EMPLOYERS: PageHelpEntry[] = [
           '«Sənədlər»də e-imza sorğularına, «Tarixçə»də dəyişikliklərə baxın; «Qeydlər»ə daxili qeyd yazıb saxlayın.',
         ],
         tips: [
-          '«Fakturalar / təkliflər» sekməsindəki fakturaları yalnız Administrator görür.',
+          '«Hesab-fakturalar / təkliflər» sekməsindəki hesab-fakturaları yalnız Administrator görür.',
           '«Qeydlər» yalnız əməkdaşlara görünür, işəgötürən görmür.',
           '«Şirkətlər» linki ilə siyahıya qayıdın.',
         ],
@@ -194,7 +194,7 @@ export const PAGES_EMPLOYERS: PageHelpEntry[] = [
         steps: [
           '«Feed ünvanları»ndan lazımi kanalın ünvanını «Kopyala» ilə götürüb portala (məs. Indeed menecerinə) göndərin.',
           '«Xətalı elanlar» siyahısında çatışmayan sahələri (şəhər, PLZ, BA peşə kodu) görün və vakansiyada düzəldin; sonra «İndi yenilə» basın.',
-          'BA bölməsində Supplier ID, Partner ID, sertifikat və parolu daxil edib «Yadda saxla»; «XML faylını yüklə» və ya «İndi göndər» istifadə edin.',
+          'BA bölməsində Supplier ID, Partner ID, sertifikat və şifrəni daxil edib «Yadda saxla»; «XML faylını yüklə» və ya «İndi göndər» istifadə edin.',
         ],
         tips: [
           '«Açarı yenilə»dən sonra köhnə ünvanlar dərhal işləmir — portallara yenisini göndərin.',
@@ -430,7 +430,7 @@ export const PAGES_EMPLOYERS: PageHelpEntry[] = [
         steps: [
           'Yuxarıda «Xəbərdarlıqlar», «Sınaq müddəti bitir» və ya «Hamısı» filtrini seçin.',
           'Sətirdə işəgötürəni, vəzifəni, maaşı, xəbərdarlıqları və sınaq sonunu yoxlayın.',
-          'İş nömrəsinə klikləyin — müraciətin müqavilə bölməsi açılır, orada məlumatları düzəldin.',
+          'İş nömrəsinə basın — müraciətin müqavilə bölməsi açılır, orada məlumatları düzəldin.',
         ],
         tips: [
           'Müqavilə məlumatları müraciət səhifəsində daxil edilir; bu səhifə yalnız icmaldır.',
