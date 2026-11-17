@@ -16,6 +16,7 @@ import { useBrand } from '@/lib/brand';
 import { localePath } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, mmss, pickTx, saveProgress } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { BINS, WASTE_AS_OF, WASTE_BINS, WASTE_ITEMS, WASTE_SOURCES, binInfo, wasteItem, type BinInfo, type WasteBin, type WasteItem } from '@/lib/games/waste/items';
 import { ROUND_SECONDS, ROUND_SIZE, multiplierFor, newSeed, parseSeed, pickRound, scoreAnswer, summarize, timeBonus, type Answer, type RoundSummary } from '@/lib/games/waste/game';
 
@@ -89,6 +90,7 @@ export default function WasteSortingPage() {
   useEffect(() => {
     setBest(loadProgress<number | null>(BEST_KEY, null));
   }, []);
+  const report = useReadyReport();
 
   const current = phase === 'play' ? items[index] : undefined;
 
@@ -103,10 +105,11 @@ export default function WasteSortingPage() {
         setBest(s.points);
       }
       setSummary({ ...s, total: items.length || ROUND_SIZE, bonus, timeUp: !finished, newBest });
+      report({ activityId: 'waste-sorting', score: s.correct, max: items.length || ROUND_SIZE }); // Germany Ready sync (signed-in clients)
       setFeedback(null);
       setPhase('end');
     },
-    [items.length],
+    [items.length, report],
   );
 
   const start = (useSeed?: number) => {

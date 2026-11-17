@@ -15,6 +15,7 @@ import { Empty, Loading, Section } from '@/components/company/shared';
 import { CompanyCandidates } from '@/components/company/CompanyCandidates';
 import { PoolCardView } from './PoolCardView';
 import { OnePagerButton } from '@/components/company/OnePagerButton'; // one-page PDF of the anonymous card (counts as a view)
+import { PoolReadinessBands } from '@/components/ready/ReadinessProfileCard'; // consent-gated readiness bands
 import { fmtDay, INTEREST_TONE, poolError, POOL_GERMAN_LEVELS, POOL_RECOGNITION, POOL_REGIONS, type PoolCard, type PoolInterestStatus } from './types';
 
 registerCopy(pagesPool);
@@ -338,6 +339,10 @@ const PoolDetail = () => {
               </>
             }
           />
+          {/* Readiness bands: only with the candidate's consent (renders nothing otherwise). */}
+          <div className="mt-4">
+            <PoolReadinessBands code={q.data.candidate.code} />
+          </div>
           {asking && (
             <InterestForm
               code={q.data.candidate.code}

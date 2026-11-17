@@ -13,6 +13,7 @@ import { useMoney } from '@/components/tools/format';
 import { AznEquivalent } from '@/components/tools/AznEquivalent';
 import { registerCopy } from '@/i18n';
 import { pagesTools } from '@/i18n/pagesTools';
+import { pagesMoneyHome } from '@/i18n/pagesMoneyHome';
 import { usePageTitle } from '@/lib/usePageTitle';
 import {
   calculateSalary,
@@ -30,6 +31,7 @@ import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { EmailResult } from '@/components/tools/EmailResult';
 
 registerCopy(pagesTools);
+registerCopy(pagesMoneyHome);
 
 const HERO = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=2000&q=70';
 
@@ -296,6 +298,9 @@ export default function SalaryCalculator() {
                 </div>
               </div>
               <AznEquivalent netMonth={result.monthly.net} netYear={result.yearly.net} className="mt-3" />
+              <Link to={`/send-money-home?net=${Math.round(result.monthly.net)}`} className="mt-2 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
+                {t('moneyHome.fromSalary')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="size-3.5" aria-hidden /> {t('salaryPage.result.hourly', { value: euroCents(result.hourlyNet) })}

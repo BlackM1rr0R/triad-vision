@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowLeft, ArrowRight, BookA, Banknote, Briefcase, CheckCircle2, CircleAlert, Download, Flame, HeartPulse, Info, Landmark, Languages, Link2, Phone, Play, RotateCcw, Square, Trophy, Volume2, XCircle, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookA, Banknote, Briefcase, CheckCircle2, CircleAlert, Download, Flame, HeartPulse, House, Info, Landmark, Languages, Link2, Phone, Play, RotateCcw, ShieldAlert, Square, Trophy, Volume2, XCircle, type LucideIcon } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
@@ -17,6 +17,7 @@ import { useBrand } from '@/lib/brand';
 import { localePath } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, pickTx, saveProgress, seededRandom, shuffle } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { SCENES, sceneById } from '@/lib/games/simulator/scenes';
 import { scorePath, type Outcome, type Scene, type Step } from '@/lib/games/simulator/types';
 
@@ -25,7 +26,7 @@ registerCopy(pagesGermanSimulator);
 
 const PATH = '/german-simulator';
 const BEST_KEY = 'simulator.best';
-const ICONS: Record<string, LucideIcon> = { anmeldung: Landmark, bank: Banknote, doctor: HeartPulse, work: Briefcase, heating: Flame };
+const ICONS: Record<string, LucideIcon> = { anmeldung: Landmark, bank: Banknote, doctor: HeartPulse, work: Briefcase, heating: Flame, viewing: House, flatScam: ShieldAlert };
 const OUTCOME_TONE: Record<Outcome, string> = {
   success: 'border-success-border bg-success-bg text-success-fg',
   partial: 'border-warning-border bg-warning-bg text-warning-fg',
@@ -75,7 +76,8 @@ const SceneList = ({ best, onPick }: { best: Record<string, number>; onPick: (id
   );
 };
 
-const Player = ({ scene, onExit, onFinish }: { scene: Scene; onExit: () => void; onFinish: (pct: number) => void }) => {
+/** One scene, played in place; also used by /apartment-viewing (`path`: page of the share link and card footer). */
+export const Player = ({ scene, onExit, onFinish, path = PATH }: { scene: Scene; onExit: () => void; onFinish: (pct: number) => void; path?: string }) => {
   const { t, i18n } = useTranslation();
   const lng = i18n.resolvedLanguage ?? 'az';
   const isDe = lng.startsWith('de');
@@ -120,7 +122,7 @@ const Player = ({ scene, onExit, onFinish }: { scene: Scene; onExit: () => void;
     setPicked(null);
   };
 
-  const shareUrl = () => `${window.location.origin}${localePath(PATH)}?scene=${scene.id}`;
+  const shareUrl = () => `${window.location.origin}${localePath(path)}?scene=${scene.id}`;
   const share = async () => ((await copyLink(shareUrl())) ? toast.success(t('games.common.copied')) : toast.error(t('games.common.copyFailed')));
   const card = async () => {
     try {
@@ -129,7 +131,7 @@ const Player = ({ scene, onExit, onFinish }: { scene: Scene; onExit: () => void;
         big: `${score.percent} %`,
         sub: t('simulator.cardSub', { scene: pickTx(scene.title, lng), outcome: t(`simulator.outcome.${node.end?.outcome ?? 'partial'}`) }),
         lines: scene.phrases.slice(0, 4).map((p) => p.de),
-        footer: t('games.common.playAt', { domain: brand.domain, path: PATH }),
+        footer: t('games.common.playAt', { domain: brand.domain, path }),
         filename: `german-simulator-${scene.id}-${score.percent}`,
       });
     } catch {
@@ -319,11 +321,13 @@ export default function GermanSimulatorPage() {
   const scene = sceneById(params.get('scene'));
   const [best, setBest] = useState<Record<string, number>>({});
   useEffect(() => setBest(loadProgress<Record<string, number>>(BEST_KEY, {})), []);
+  const report = useReadyReport();
 
   const open = (id: string | null) => {
     setParams(id ? new URLSearchParams({ scene: id }) : new URLSearchParams(), { replace: false, preventScrollReset: true });
   };
   const finish = (id: string, pct: number) => {
+    report({ activityId: 'german-simulator', item: id, score: pct, max: 100 }); // Germany Ready sync (signed-in clients)
     if (pct > (best[id] ?? -1)) {
       const next = { ...best, [id]: pct };
       setBest(next);

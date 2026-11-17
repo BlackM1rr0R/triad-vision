@@ -10,6 +10,10 @@ export const resetDb = async () => {
   for (const m of [
     prisma.germanyJobAlertSent,
     prisma.arrivalCertificate,
+    prisma.readyActivityResult, // Germany Ready (plain ids)
+    prisma.readyCertificate,
+    prisma.readyChallengeCompletion,
+    prisma.futureLetter, // letter to my future self (plain id)
     prisma.readinessSnapshot,
     prisma.readinessSelfCheck,
     prisma.employerChecklistTemplate,
@@ -191,6 +195,7 @@ export const resetDb = async () => {
   await prisma.task.deleteMany();
   await prisma.infoEvent.deleteMany(); // info sessions (registrations cascade); client referrals cascade with the users
   await prisma.placementMapEntry.deleteMany();
+  await prisma.pastPlacement.deleteMany(); // past placements of the public map (no foreign keys)
   await prisma.leadVisitor.deleteMany(); // lead scoring visitors + landing pages (plain ids, no dependants)
   await prisma.landingPage.deleteMany();
   await prisma.guidePage.deleteMany(); // SEO topic guides (no foreign keys)

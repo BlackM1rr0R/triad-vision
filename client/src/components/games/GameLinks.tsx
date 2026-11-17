@@ -1,18 +1,21 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Coins, Landmark, Mic, Recycle, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Coins, Landmark, Mic, Recycle, ShoppingCart, Store, Ticket, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesGames } from '@/i18n/pagesGames';
 
 registerCopy(pagesGames);
 
 /** The five learning games, in the order of the tools hub (keys: games.items.<key>). */
-export const GAMES: { key: 'simulator' | 'pronunciation' | 'price' | 'signs' | 'waste'; to: string; icon: LucideIcon }[] = [
+export const GAMES: { key: 'street' | 'simulator' | 'pronunciation' | 'price' | 'signs' | 'waste' | 'ticket' | 'supermarket'; to: string; icon: LucideIcon }[] = [
+  { key: 'street', to: '/german-street', icon: Store }, // hub of the games: a virtual street (pages/games/GermanStreet)
   { key: 'simulator', to: '/german-simulator', icon: Landmark },
   { key: 'pronunciation', to: '/pronunciation', icon: Mic },
   { key: 'price', to: '/price-game', icon: Coins },
   { key: 'signs', to: '/traffic-signs', icon: TriangleAlert },
   { key: 'waste', to: '/waste-sorting', icon: Recycle },
+  { key: 'ticket', to: '/ticket-machine', icon: Ticket },
+  { key: 'supermarket', to: '/supermarket-game', icon: ShoppingCart },
 ];
 
 /** Cards linking the games (all but `current`), under each game and on the portal German page. */

@@ -136,6 +136,7 @@ import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google r
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
 import { whenInGermanyRouter } from './routes/whenInGermany.js'; // "When could I be in Germany?" estimator (case-history percentiles, daily cache)
+import { rentalDisclosureRouter } from './routes/rentalDisclosure.js'; // Mieterselbstauskunft PDF (DSK-permissible fields, nothing stored) + client prefill
 import { realSalariesRouter } from './routes/realSalaries.js'; // real salary database (public ranges, groups with >= 3 workers, monthly snapshot)
 import { platformRouter } from './routes/platform.js'; // /platform: product page of the platform for other agencies (status, demo request)
 import { familyCheckRouter } from './routes/familyCheck.js'; // public family reunification self-check (rules of lib/family/legal.ts, nothing stored)
@@ -145,6 +146,8 @@ import './lib/brand/pdfPatch.js'; // white-label brand in every generated PDF
 import { licenseGuard } from './middleware/license.js'; // white-label licence: read-only mode for staff
 import { tvRouter } from './routes/tv.js'; // office TV mode: dashboard data + stream behind a read-only display token
 import { accountArrivalCertificateRouter, publicArrivalCertificateRouter } from './routes/arrivalCertificate.js'; // "Welcome to Germany" arrival certificate + public check
+import { accountReadyRouter, companyReadinessRouter, publicReadyCertificateRouter } from './routes/readyProgress.js'; // Germany Ready: synced practice results, certificate, weekly challenge, employer readiness card
+import { futureLetterRouter } from './routes/futureLetter.js'; // letter to my future self (sealed, owner-only)
 import { certificatePublicRouter, courseRouter } from './routes/course.js'; // pre-departure course (client) + public certificate verification
 import { uploadLinksRouter } from './routes/uploadLinks.js'; // login-free case upload links (/upload/:token), staff side on the admin router
 import { accountRuleChangesRouter } from './routes/accountRuleChanges.js'; // client portal: "Qayda dəyişiklikləri" (published rule changes)
@@ -262,6 +265,8 @@ export const createApp = () => {
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
   app.use('/api/account/arrival-certificate', accountArrivalCertificateRouter); // arrival certificate PDF (own arrived cases)
+  app.use('/api/account/ready', accountReadyRouter); // Germany Ready: practice results sync, points, weekly challenge, certificate PDF
+  app.use('/api/account/future-letter', futureLetterRouter); // letter to my future self (sealed; no staff endpoint)
   app.use('/api/account/success-share', accountSuccessShareRouter); // visa approved: share card (consent, revoke)
   app.use('/api/account/visa-story', accountVisaStoryRouter); // visa approved: 'Your visa story' slides + share card (own case only)
   app.use('/api/account/candidate-pool', accountPoolRouter); // anonymous candidate pool: opt-in + pool details
@@ -278,6 +283,7 @@ export const createApp = () => {
   app.use('/api/company/forms', companyFormsRouter); // Erklärung zum Beschäftigungsverhältnis: complete + sign
   app.use('/api/company/avv', companyAvvRouter); // AVV: hidden until the owner approved the template
   app.use('/api/company/workers', companyWorkersRouter); // "my workers" panel, worker drawer, CSV / Excel export
+  app.use('/api/company/readiness-profile', companyReadinessRouter); // consent-gated readiness card (own workers) + pool bands
   app.use('/api/company/team', companyTeamRouter); // employer team: invite / list / deactivate colleagues (owner)
   app.use('/api/company/reports', companyReportsRouter); // monthly employer reports (list, PDF, e-mail opt-out)
   app.use('/api/company/pipeline', companyPipelineRouter); // candidate pipeline + weekly digest preference
@@ -302,6 +308,7 @@ export const createApp = () => {
   app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
   app.use('/api/platform', platformRouter); // platform for other agencies: demo request → SaaS lead (owner instance only)
   app.use('/api/when-in-germany', whenInGermanyRouter); // arrival-month estimator (public, aggregates only)
+  app.use('/api/rental-disclosure', rentalDisclosureRouter); // Mieterselbstauskunft generator (public PDF, client prefill)
   app.use('/api/real-salaries', realSalariesRouter); // real salaries of placed workers (public, k-anonymous ranges only)
   app.use('/api/family-check', familyCheckRouter); // family reunification self-check (public, no case)
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
@@ -355,6 +362,7 @@ export const createApp = () => {
   app.use('/api/originals', originalsRouter); // physical originals, QR labels, drive retention + storage report
   app.use('/api/site', siteRouter); // web push (PWA), public status check, "Problem bildir" reports
   app.use('/api/success', publicSuccessShareRouter); // public success share page data, card PNGs, lead form
+  app.use('/api/ready-certificates', publicReadyCertificateRouter); // public Germany Ready check (initials, date, level, activity count)
   app.use('/api/r/review', googleReviewPublicRouter); // Google review link (click counter) + opt-out
   app.use('/api/course', courseRouter); // pre-departure course: lessons, video, quizzes, certificate PDF (CLIENT)
   app.use('/api/arrival-certificates', publicArrivalCertificateRouter); // public arrival certificate check (number, first name + initial, date)

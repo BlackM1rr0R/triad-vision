@@ -17,6 +17,7 @@ import { registerCopy } from '@/i18n';
 import { pagesMockExam } from '@/i18n/pagesMockExam';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { mmss } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { MOCK_EXAM_FAQ } from '@/lib/germanExam/faq';
 import { clearModule, emptySaved, expireDeadlines, loadSaved, storeSaved, type SavedExam } from '@/lib/germanExam/progress';
 import { examOutcome, grade, moduleResult, secondsLeft, type ModuleResult } from '@/lib/germanExam/scoring';
@@ -360,6 +361,17 @@ const LevelExam = ({ level }: { level: ExamLevel }) => {
   useEffect(() => {
     if (loaded) storeSaved(set.id, saved);
   }, [saved, loaded, set.id]);
+  // Germany Ready sync (signed-in clients): every finished module once per completion (de-duplicated per browser).
+  const report = useReadyReport();
+  useEffect(() => {
+    if (!loaded) return;
+    for (const [key, doneAt] of Object.entries(saved.done) as [ModuleKey, string][]) {
+      const m = set.modules.find((x) => x.key === key);
+      if (!m || !doneAt) continue;
+      const r = moduleResult(level, m, saved.answers);
+      report({ activityId: level === 'a1' ? 'mock-a1' : 'mock-b1', item: key, score: r.points, max: r.pointsMax, completedAt: doneAt, dedupeKey: `mock:${set.id}:${key}:${doneAt}` });
+    }
+  }, [saved.done, saved.answers, loaded, set, level, report]);
   useEffect(() => () => Object.values(recRef.current).forEach((u) => URL.revokeObjectURL(u)), []);
 
   const update = useCallback((fn: (s: SavedExam) => SavedExam) => setSaved((s) => fn(s)), []);

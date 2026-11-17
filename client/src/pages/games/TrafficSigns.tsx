@@ -16,6 +16,7 @@ import { useBrand } from '@/lib/brand';
 import { localePath } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, mmss, pickTx, saveProgress } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import {
   EXAM_SECONDS,
   EXAM_SIZE,
@@ -189,6 +190,7 @@ const Exam = ({ onLearn }: { onLearn: () => void }) => {
   const [best, setBest] = useState<number | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => setBest(loadProgress<number | null>(BEST_KEY, null)), []);
+  const report = useReadyReport();
 
   const start = (pool?: Sign[]) => {
     const qs = buildExam(Math.random, EXAM_SIZE, pool ?? SIGNS);
@@ -209,13 +211,14 @@ const Exam = ({ onLearn }: { onLearn: () => void }) => {
       setResult(r);
       setTimedOut(byTimeout);
       setPhase('result');
+      if (r.total === EXAM_SIZE) report({ activityId: 'traffic-signs', score: r.correct, max: r.total }); // Germany Ready sync (full exams only)
       if (r.total === EXAM_SIZE && (best === null || r.percent > best)) {
         setBest(r.percent);
         saveProgress(BEST_KEY, r.percent);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    [questions, answers, best],
+    [questions, answers, best, report],
   );
 
   useEffect(() => {

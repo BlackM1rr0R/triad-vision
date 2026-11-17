@@ -13,6 +13,7 @@ import { POOL_LIMITS, POOL_PAGE_SIZE, POOL_REGIONS, POOL_SCAN_LIMIT } from '../l
 import { matchesFilters, normaliseCode, poolCard, poolUserSelect, visibleProfileWhere, type PoolFilters } from '../lib/pool/anonymous.js';
 import { logPoolView } from '../lib/pool/service.js';
 import { onePagerPdf, poolOnePagerInput } from '../lib/onePager/pdf.js';
+import { poolReadinessRows } from '../lib/readyProgress/onePager.js'; // consent-gated readiness bands on the one-pager
 import { pickLoc } from '../lib/employerWorkers/texts.js';
 
 /**
@@ -157,7 +158,9 @@ companyPoolRouter.get('/:code/one-pager.pdf', async (req, res) => {
   // A PDF download is a profile view: same log and daily cap as GET /:code.
   await logPoolView({ companyId: company.id, companyName: company.name, userId: req.user!.id, kind: 'DETAIL', profileId: p.id });
   const locale = pickLoc(q.lang) ?? pickLoc(req.user!.locale) ?? 'de';
-  const pdf = await onePagerPdf(poolOnePagerInput(poolCard(p, p.user), locale, q.branding === '1' ? company.name : null));
+  const input = poolOnePagerInput(poolCard(p, p.user), locale, q.branding === '1' ? company.name : null);
+  input.rows.push(...(await poolReadinessRows(p.userId, locale))); // anonymous readiness bands, only with the client's consent
+  const pdf = await onePagerPdf(input);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${p.code}.pdf"`);
   res.send(pdf);

@@ -197,6 +197,9 @@ const EmployerGuideAzerbaijanPage = lazyRoute('EmployerGuideAzerbaijanPage', () 
 const AzerbaijanInGermanyPage = lazyRoute('AzerbaijanInGermanyPage', () => import('./pages/AzerbaijanInGermany')); // embassy, culture, associations map (/azerbaijan-in-germany)
 const WhichCityPage = lazyRoute('WhichCityPage', () => import('./pages/tools/WhichCity')); // "Which German city suits you?" quiz (/which-city)
 const PermanentResidencePage = lazyRoute('PermanentResidencePage', () => import('./pages/tools/PermanentResidence')); // settlement permit + citizenship timeline (/permanent-residence)
+const ApartmentViewingPage = lazyRoute('ApartmentViewingPage', () => import('./pages/tools/ApartmentViewing')); // viewing simulator + Mieterselbstauskunft (/apartment-viewing)
+const SendMoneyHomePage = lazyRoute('SendMoneyHomePage', () => import('./pages/tools/SendMoneyHome')); // money for family / remittance calculator (/send-money-home)
+const FiveYearsInGermanyPage = lazyRoute('FiveYearsInGermanyPage', () => import('./pages/tools/FiveYearsInGermany')); // 5-year time machine (/five-years-in-germany)
 const CountryComparePage = lazyRoute('CountryComparePage', () => import('./pages/tools/CountryCompare')); // Germany vs PL / CZ / UK / AT (/germany-vs-other-countries)
 const VisaRefusalPage = lazyRoute('VisaRefusalPage', () => import('./pages/tools/VisaRefusal')); // refusal reasons + new-application cover letter (/visa-refusal)
 const VisaChecklistPage = lazyRoute('VisaChecklistPage', () => import('./pages/tools/VisaChecklist')); // public document checklist (/visa-document-checklist)
@@ -207,6 +210,9 @@ const PronunciationPage = lazyRoute('PronunciationPage', () => import('./pages/g
 const PriceGamePage = lazyRoute('PriceGamePage', () => import('./pages/games/PriceGame')); // "guess the price" (/price-game)
 const TrafficSignsPage = lazyRoute('TrafficSignsPage', () => import('./pages/games/TrafficSigns')); // StVO signs learn + exam (/traffic-signs)
 const WasteSortingPage = lazyRoute('WasteSortingPage', () => import('./pages/games/WasteSorting')); // Mülltrennung game (/waste-sorting)
+const GermanStreetPage = lazyRoute('GermanStreetPage', () => import('./pages/games/GermanStreet')); // virtual German street hub (/german-street)
+const TicketMachinePage = lazyRoute('TicketMachinePage', () => import('./pages/games/TicketMachine')); // ticket machine simulator (/ticket-machine)
+const SupermarketGamePage = lazyRoute('SupermarketGamePage', () => import('./pages/games/SupermarketGame')); // supermarket game (/supermarket-game)
 const GermanMockExamPage = lazyRoute('GermanMockExamPage', () => import('./pages/tools/GermanMockExam')); // German mock exams (/german-mock-exam, /a1, /b1)
 const GermanLevelSelfPage = lazyRoute('GermanLevelSelfPage', () => import('./pages/tools/GermanLevelSelf')); // CEFR self-assessment + study plan (/german-level-test-self)
 const AccountBudget = lazyRoute('AccountBudget', () => import('./pages/account/Budget')); // personalised first-month budget
@@ -219,6 +225,7 @@ const AdminYearReview = lazyRoute('AdminYearReview', () => import('./pages/admin
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
 const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
 const AdminDataFreshness = lazyRoute('AdminDataFreshness', () => import('./pages/admin/DataFreshness')); // Sayt → Məlumatların aktuallığı (yearly figures, review dates; ADMIN+)
+const AdminPastPlacements = lazyRoute('AdminPastPlacements', () => import('./pages/admin/PastPlacements')); // Sayt → Keçmiş yerləşdirmələr (real historical numbers for the public map; STAFF read, ADMIN+ edit)
 const LandingPageView = lazyRoute('LandingPageView', () => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
 const AccountReferral = lazyRoute('AccountReferral', () => import('./pages/account/Referral'));
 const AdminGrowthEvents = lazyRoute('AdminGrowthEvents', () => import('./pages/admin/GrowthEvents'));
@@ -303,6 +310,10 @@ const AdminCourse = lazyRoute('AdminCourse', () => import('./pages/admin/Course'
 const AccountCourse = lazyRoute('AccountCourse', () => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
 const CertificateVerify = lazyRoute('CertificateVerify', () => import('./pages/CertificateVerify')); // public course certificate check
 const ArrivalCertificateVerify = lazyRoute('ArrivalCertificateVerify', () => import('./pages/ArrivalCertificateVerify')); // public arrival certificate check
+const ReadyCertificateVerify = lazyRoute('ReadyCertificateVerify', () => import('./pages/ReadyCertificateVerify')); // public Germany Ready practice certificate check
+const AccountGermanyReady = lazyRoute('AccountGermanyReady', () => import('./pages/account/GermanyReady')); // Germany Ready: practice points, weekly challenge, certificate (/account/germany-ready)
+const AccountFutureLetter = lazyRoute('AccountFutureLetter', () => import('./pages/account/FutureLetter')); // letter to my future self (/account/future-letter)
+const AdminGermanyReady = lazyRoute('AdminGermanyReady', () => import('./pages/admin/GermanyReady')); // Germany Ready: challenge order + certificate revoke
 const OriginalsVerify = lazyRoute('OriginalsVerify', () => import('./pages/OriginalsVerify')); // public hand-over receipt check (QR on the act)
 const UploadByLink = lazyRoute('UploadByLink', () => import('./pages/UploadByLink')); // login-free case upload link
 const AccountRuleChanges = lazyRoute('AccountRuleChanges', () => import('./pages/account/RuleChanges')); // Qayda dəyişiklikləri (portal)
@@ -543,6 +554,9 @@ export default function App() {
             <Route path="azerbaijan-in-germany" element={<AzerbaijanInGermanyPage />} />
             <Route path="which-city" element={<WhichCityPage />} />
             <Route path="permanent-residence" element={<PermanentResidencePage />} />
+            <Route path="apartment-viewing" element={<ApartmentViewingPage />} />
+            <Route path="send-money-home" element={<SendMoneyHomePage />} />
+            <Route path="five-years-in-germany" element={<FiveYearsInGermanyPage />} />
             <Route path="germany-vs-other-countries" element={<CountryComparePage />} />
             <Route path="visa-refusal" element={<VisaRefusalPage />} />
             <Route path="visa-document-checklist" element={<VisaChecklistPage />} />
@@ -553,6 +567,9 @@ export default function App() {
             <Route path="price-game" element={<PriceGamePage />} />
             <Route path="traffic-signs" element={<TrafficSignsPage />} />
             <Route path="waste-sorting" element={<WasteSortingPage />} />
+            <Route path="german-street" element={<GermanStreetPage />} />
+            <Route path="ticket-machine" element={<TicketMachinePage />} />
+            <Route path="supermarket-game" element={<SupermarketGamePage />} />
             <Route path="german-mock-exam" element={<GermanMockExamPage />} />
             <Route path="german-mock-exam/a1" element={<GermanMockExamPage level="a1" />} />
             <Route path="german-mock-exam/b1" element={<GermanMockExamPage level="b1" />} />
@@ -562,6 +579,7 @@ export default function App() {
             <Route path="success/:token" element={<SuccessSharePage />} />
             <Route path="certificate/:code" element={<CertificateVerify />} />
             <Route path="arrival-certificate/:code" element={<ArrivalCertificateVerify />} />
+            <Route path="ready-certificate/:code" element={<ReadyCertificateVerify />} />
             <Route path="originals/verify/:code" element={<OriginalsVerify />} />
             <Route path="upload/:token" element={<UploadByLink />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
@@ -677,6 +695,8 @@ export default function App() {
               <Route path="arrival-prep" element={<AccountArrivalPrep />} />
               <Route path="arrival-card" element={<AccountArrivalCard />} />
               <Route path="readiness" element={<AccountReadiness />} />
+              <Route path="germany-ready" element={<AccountGermanyReady />} />
+              <Route path="future-letter" element={<AccountFutureLetter />} />
               <Route path="emergency-wallpaper" element={<AccountEmergencyWallpaper />} />
               <Route path="badges" element={<AccountBadges />} />
               <Route path="visa-story/:caseId" element={<AccountVisaStory />} />
@@ -1056,6 +1076,8 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route path="past-placements" element={<AdminPastPlacements />} />
+            <Route path="germany-ready" element={<AdminGermanyReady />} />
             <Route
               path="data-freshness"
               element={

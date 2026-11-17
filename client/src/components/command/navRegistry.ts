@@ -62,6 +62,7 @@ import {
   PenLine,
   PhoneCall,
   PlaneLanding,
+  Medal,
   Plug,
   Receipt,
   Rocket,
@@ -209,6 +210,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('authorities', '/admin/authorities', Landmark, 'work'), // authorities catalogue: Botschaft / Ausländerbehörde / … (STAFF read, ADMIN+ edit)
   a('originals', '/admin/originals', Vault, 'work', { module: 'originals' }),
   a('arrivals', '/admin/arrivals', PlaneLanding, 'work'),
+  a('germanyReady', '/admin/germany-ready', Medal, 'work'), // Germany Ready practice certificates (revoke) + weekly challenge order (ADMIN+ edit)
   a('partnerHousing', '/admin/partner-housing', KeyRound, 'work'), // partner landlords (ADMIN+ edit, STAFF+ propose) + Anmeldung deadlines
   a('checkIns', '/admin/check-ins', HeartHandshake, 'work', { module: 'checkIns' }),
   a('familyReunion', '/admin/family-reunion', UsersRound, 'work'), // Familiennachzug: families with members joining later
@@ -289,6 +291,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
   a('cityCosts', '/admin/city-costs', Banknote, 'site', { adminOnly: true }), // first-month budget: city cost table (ADMIN+)
   a('dataFreshness', '/admin/data-freshness', CalendarClock, 'site', { adminOnly: true }), // data freshness registry: yearly figures, review dates (ADMIN+)
+  a('pastPlacements', '/admin/past-placements', History, 'site'), // past placements: real historical numbers added to the public map (STAFF read, ADMIN+ edit)
   a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
   a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
   a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
@@ -372,7 +375,7 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
-  { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse'] },
+  { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse', 'germanyReady'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist', 'realSalaries'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports', 'quarterlyReport'] },
@@ -380,7 +383,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts', 'dataFreshness'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts', 'dataFreshness', 'pastPlacements'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },

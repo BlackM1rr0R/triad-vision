@@ -2,13 +2,17 @@ import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { cached } from '../cache.js';
 import { GROWTH_SETTING_KEYS, readSetting } from './settings.js';
+import { activeCityCosts, matchCity } from '../budget/cities.js';
+import { PROFESSION_LABELS } from '../jobAlerts/texts.js';
+import { applyThreshold, mergePast } from '../pastPlacements/aggregate.js';
 
 /**
  * Germany placement map: how many of our workers are in which German city.
  *
  * Computed from main-applicant cases (no family members) whose visa was APPROVED or whose arrival
  * plan is COMPLETED, with the city of the linked employer (Company.city) or, failing that, of the
- * vacancy. Admin "map entries" then override (OVERRIDE), add to (ADD) or hide (HIDE) single cities.
+ * vacancy. Past placements (real historical numbers entered by admins, lib/pastPlacements) are added next, then
+ * admin "map entries" override (OVERRIDE), add to (ADD) or hide (HIDE) single cities.
  * Privacy: a city is only published with at least MIN_PER_CITY (3) workers — never fewer, whatever
  * the setting says — and only counts and job titles leave the server, never names or case data.
  */
@@ -42,6 +46,8 @@ export interface CityAggregate {
   /** computed | manual | mixed (admin view only) */
   source: 'computed' | 'manual' | 'mixed';
   computed: number;
+  /** of which past placements (admin-entered historical numbers) */
+  past: number;
 }
 
 const topProfessions = (counts: Map<string, number>, n = 3) =>
@@ -80,9 +86,10 @@ export const computeCityCounts = async () => {
 
 /** Computed counts merged with the admin entries; `threshold` false keeps small cities (admin preview). */
 export const buildMap = async (settings: MapSettings, opts: { threshold: boolean }) => {
-  const [computed, entries] = await Promise.all([
+  const [computed, entries, past] = await Promise.all([
     settings.useCases ? computeCityCounts() : Promise.resolve(new Map<string, never>()),
     prisma.placementMapEntry.findMany(),
+    prisma.pastPlacement.findMany({ select: { city: true, cityKey: true, citySlug: true, profession: true, count: true } }),
   ]);
   const out = new Map<string, CityAggregate>();
   for (const [key, row] of computed) {
@@ -95,7 +102,12 @@ export const buildMap = async (settings: MapSettings, opts: { threshold: boolean
       lng: null,
       source: 'computed',
       computed: row.workers,
+      past: 0,
     });
+  }
+  if (past.length) {
+    const cityRows = await activeCityCosts();
+    mergePast(out, past, (city) => matchCity(cityRows, city)?.slug ?? null, (key) => PROFESSION_LABELS[key]?.de ?? key);
   }
   for (const e of entries) {
     const base = out.get(e.cityKey);
@@ -114,12 +126,11 @@ export const buildMap = async (settings: MapSettings, opts: { threshold: boolean
       lng: e.lng,
       source: base ? 'mixed' : 'manual',
       computed: base?.computed ?? 0,
+      past: base?.past ?? 0,
     });
   }
   const min = Math.max(MIN_PER_CITY, settings.minPerCity);
-  const cities = [...out.values()]
-    .filter((c) => !opts.threshold || c.workers >= min)
-    .sort((a, b) => b.workers - a.workers || a.city.localeCompare(b.city));
+  const cities = applyThreshold(out.values(), min, opts.threshold);
   return { cities, minPerCity: min };
 };
 

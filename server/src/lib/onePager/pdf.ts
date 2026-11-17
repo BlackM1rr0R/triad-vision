@@ -82,9 +82,11 @@ export const onePagerPdf = async (input: OnePagerInput) => {
   // Facts table.
   const labelW = 190;
   const valueW = W - 96 - labelW - 24;
+  // Many rows (worker + consented readiness rows): tighter rows so the table stays above the QR code.
+  const dense = input.rows.length > 12;
   input.rows.forEach((r, i) => {
-    const lines = wrap(clean(r.value), fonts.bold, 11, valueW).slice(0, 3);
-    const h = Math.max(30, 14 + lines.length * 15);
+    const lines = wrap(clean(r.value), fonts.bold, 11, valueW).slice(0, dense ? 2 : 3);
+    const h = dense ? Math.max(22, 8 + lines.length * 14) : Math.max(30, 14 + lines.length * 15);
     if (i % 2 === 0) page.drawRectangle({ x: 40, y: y - h + 10, width: W - 80, height: h, color: BAND });
     text(r.label, 52, y - 8, 9.5, fonts.regular, MUTED);
     lines.forEach((l, j) => text(l, 52 + labelW, y - 8 - j * 15, 11, fonts.bold, INK));

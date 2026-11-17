@@ -7,6 +7,9 @@ const az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'İşəgötürən bələdçisi: Azərbaycan', text: 'Azərbaycandan işçi qəbulu: təhsil sistemi, diplomların tanınması, bayramlar və § 81a sürətləndirilmiş prosedur.' },
+      germanStreet: { title: 'Virtual alman küçəsi', text: 'Bürgeramt, bank, vağzal, supermarket, həkim: binaya daxil olun və uyğun oyun və ya səhnəni açın.' },
+      ticketMachine: { title: 'Bilet avtomatı simulyatoru', text: 'Zona AB/ABC, bilet növü, ödəniş və kompostlama — tapşırıqlarla və 60 € cərimənin izahı ilə.' },
+      supermarketGame: { title: 'Supermarket oyunu', text: 'Quark, Sahne, Mehl Type 405: siyahı ilə rəflərdə alış-veriş, Pfand avtomatı və çek.' },
       candidateCatalogue: { title: 'Namizəd kataloqu', text: 'Almaniyada işləməyə hazır namizədlər peşə, alman dili və təcrübəyə görə — anonim.' },
     },
   },
@@ -77,6 +80,9 @@ const de: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Arbeitgeber-Leitfaden Aserbaidschan', text: 'Fachkräfte aus Aserbaidschan: Bildungssystem, Anerkennung, Feiertage und beschleunigtes Verfahren nach § 81a.' },
+      germanStreet: { title: 'Virtuelle deutsche Straße', text: 'Bürgeramt, Bank, Bahnhof, Supermarkt, Arzt: hineingehen und das passende Spiel oder die Szene öffnen.' },
+      ticketMachine: { title: 'Fahrkartenautomat-Simulator', text: 'Zone AB/ABC, Fahrkartenart, Bezahlen und Entwerten — mit Aufgaben und dem 60-€-Bußgeld erklärt.' },
+      supermarketGame: { title: 'Supermarkt-Spiel', text: 'Quark, Sahne, Mehl Type 405: mit Einkaufszettel durch die Regale, Pfandautomat und Kassenbon.' },
       candidateCatalogue: { title: 'Kandidatenkatalog', text: 'Anonyme Kandidaten nach Beruf, Deutschniveau und Erfahrung — bereit für Deutschland.' },
     },
   },
@@ -147,6 +153,9 @@ const en: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Employer guide: Azerbaijan', text: 'Hiring from Azerbaijan: education system, recognition, public holidays and the § 81a fast-track procedure.' },
+      germanStreet: { title: 'Virtual German street', text: 'Bürgeramt, bank, station, supermarket, doctor: step inside and open the matching game or scene.' },
+      ticketMachine: { title: 'Ticket machine simulator', text: 'Zones AB/ABC, ticket types, payment and validation — with tasks and the €60 penalty fare explained.' },
+      supermarketGame: { title: 'Supermarket game', text: 'Quark, Sahne, Mehl Type 405: shop the shelves from a list, the Pfand machine and the receipt.' },
       candidateCatalogue: { title: 'Candidate catalogue', text: 'Anonymous candidates by profession, German level and experience — ready for Germany.' },
     },
   },
@@ -217,6 +226,9 @@ const ru: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Гид для работодателя: Азербайджан', text: 'Найм из Азербайджана: система образования, признание дипломов, праздники и ускоренная процедура § 81a.' },
+      germanStreet: { title: 'Виртуальная немецкая улица', text: 'Bürgeramt, банк, вокзал, супермаркет, врач: заходите и открывайте нужную игру или сцену.' },
+      ticketMachine: { title: 'Симулятор билетного автомата', text: 'Зоны AB/ABC, виды билетов, оплата и компостирование — с заданиями и разбором штрафа 60 €.' },
+      supermarketGame: { title: 'Игра «Супермаркет»', text: 'Quark, Sahne, Mehl Type 405: покупки по списку, автомат Pfand и чек.' },
       candidateCatalogue: { title: 'Каталог кандидатов', text: 'Анонимные кандидаты по профессии, уровню немецкого и опыту — готовы к работе в Германии.' },
     },
   },
@@ -289,6 +301,9 @@ const tr: PublicCopy = {
   toolsPage: {
     items: {
       employerGuide: { title: 'İşveren rehberi: Azerbaycan', text: "Azerbaycan'dan işe alım: eğitim sistemi, denklik, resmî tatiller ve § 81a hızlandırılmış prosedür." },
+      germanStreet: { title: 'Sanal Alman sokağı', text: 'Bürgeramt, banka, istasyon, süpermarket, doktor: içeri girin ve ilgili oyunu ya da sahneyi açın.' },
+      ticketMachine: { title: 'Bilet otomatı simülatörü', text: 'AB/ABC bölgeleri, bilet türleri, ödeme ve damgalama — görevler ve 60 € ceza açıklamasıyla.' },
+      supermarketGame: { title: 'Süpermarket oyunu', text: 'Quark, Sahne, Mehl Type 405: listeyle raflarda alışveriş, Pfand otomatı ve fiş.' },
       candidateCatalogue: { title: 'Aday kataloğu', text: 'Meslek, Almanca seviyesi ve deneyime göre anonim adaylar — Almanya için hazır.' },
     },
   },
@@ -341,6 +356,9 @@ const uk: PublicCopy = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Гід для роботодавця: Азербайджан', text: 'Найм з Азербайджану: система освіти, визнання дипломів, свята та прискорена процедура § 81a.' },
+      germanStreet: { title: 'Віртуальна німецька вулиця', text: 'Bürgeramt, банк, вокзал, супермаркет, лікар: заходьте й відкривайте потрібну гру чи сцену.' },
+      ticketMachine: { title: 'Симулятор квиткового автомата', text: 'Зони AB/ABC, види квитків, оплата й компостування — із завданнями та поясненням штрафу 60 €.' },
+      supermarketGame: { title: 'Гра «Супермаркет»', text: 'Quark, Sahne, Mehl Type 405: покупки за списком, автомат Pfand і чек.' },
       candidateCatalogue: { title: 'Каталог кандидатів', text: 'Анонімні кандидати за професією, рівнем німецької та досвідом — готові до Німеччини.' },
     },
   },

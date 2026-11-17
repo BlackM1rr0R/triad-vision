@@ -7154,3 +7154,98 @@ model DataFreshnessReview {
 
   @@index([itemId, reviewedAt])
 }
+
+/// Past placements (lib/pastPlacements, /admin/past-placements): REAL aggregated placements made before the system
+/// existed (e.g. from the Excel archive), entered by admins. Added to the case-derived counts of the public placement
+/// map (globe on the home page, /map, stories) — the ≥ 3 per city threshold applies to the combined total.
+model PastPlacement {
+  id          String   @id @default(cuid())
+  /// Display name ("Frankfurt am Main"), the city table's name when it matched (lib/budget/cities matchCity)
+  city        String   @db.VarChar(80)
+  /// cityKeyOf(city) — the key of the placement map
+  cityKey     String   @db.VarChar(80)
+  /// CityCost slug when the city matched the city table (merges "Frankfurt" cases with "Frankfurt am Main")
+  citySlug    String?  @db.VarChar(60)
+  /// Bundesland code (BW, BY …)
+  state       String?  @db.VarChar(2)
+  /// Canonical profession key (lib/matching PROFESSION_KEYS), optional
+  profession  String?  @db.VarChar(40)
+  count       Int
+  year        Int?
+  /// Source / note ("Excel archive 2019–2024"), internal
+  note        String?  @db.VarChar(300)
+  createdById String?  @db.VarChar(40)
+  updatedById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cityKey])
+}
+
+// ─── Germany Ready: practice results, certificate, weekly challenge; letter to my future self ─
+
+/// One synced learning-game result of a client (lib/readyProgress): self-reported by the browser, validated against
+/// the activity registry and clamped. Idempotent: the same completion (activity, item, completedAt) is stored once.
+model ReadyActivityResult {
+  id          String   @id @default(cuid())
+  userId      String   @db.VarChar(40)
+  activityId  String   @db.VarChar(40)
+  /// Sub-item (scene / module id), '' when the activity has none
+  item        String   @default("") @db.VarChar(40)
+  score       Int
+  max         Int
+  /// 0–100, computed by the server from the clamped score
+  percent     Int
+  completedAt DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, activityId, item, completedAt])
+  @@index([userId, completedAt])
+}
+
+/// "Germany Ready" practice certificate (one per client; level rises with the points). Public check /ready-certificate/:code
+/// shows initials, date, level and activity count only. Plain ids.
+model ReadyCertificate {
+  id           String    @id @default(cuid())
+  userId       String    @unique @db.VarChar(40)
+  number       String    @unique @db.VarChar(40)
+  code         String    @unique @db.VarChar(32)
+  /// BRONZE | SILVER | GOLD
+  level        String    @db.VarChar(10)
+  points       Int
+  activities   Int
+  issuedAt     DateTime  @default(now())
+  /// When the level last rose (the certificate date shown)
+  levelAt      DateTime  @default(now())
+  revokedAt    DateTime?
+  revokedById  String?   @db.VarChar(40)
+  revokeReason String?   @db.VarChar(300)
+}
+
+/// A completed weekly challenge (ISO week "2026-W47"). Plain ids.
+model ReadyChallengeCompletion {
+  id           String   @id @default(cuid())
+  userId       String   @db.VarChar(40)
+  week         String   @db.VarChar(8)
+  challengeKey String   @db.VarChar(40)
+  completedAt  DateTime @default(now())
+
+  @@unique([userId, week])
+}
+
+/// "Letter to my future self" (client portal): AES-GCM sealed with lib/secretBox — no staff endpoint ever opens it.
+/// Delivered (e-mail + portal) when the arrival in Germany is recorded or on the fallback date. Plain ids.
+model FutureLetter {
+  id           String    @id @default(cuid())
+  userId       String    @unique @db.VarChar(40)
+  sealed       String    @db.Text
+  /// Optional fallback delivery day (UTC midnight of the chosen date)
+  deliverOn    DateTime?
+  deliveredAt  DateTime?
+  /// ARRIVAL | DATE
+  deliveredVia String?   @db.VarChar(10)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([deliveredAt, deliverOn])
+}

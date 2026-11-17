@@ -4,15 +4,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { Award, BookOpen, ChevronRight, FileCheck, Flame, GraduationCap, Library, Lock, PenLine, PlaneLanding, Sparkles, Stamp, Upload, UserCheck } from 'lucide-react';
+import { Award, BookOpen, ChevronRight, FileCheck, Flame, GraduationCap, Library, Lock, Medal, PenLine, PlaneLanding, Sparkles, Stamp, Trophy, Upload, UserCheck } from 'lucide-react';
 import { api, getImpersonation } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { celebrate } from '@/components/motion/celebrate';
 import { registerCopy } from '@/i18n';
 import { pagesGermanyDay } from '@/i18n/pagesGermanyDay';
+import { pagesGermanyReady } from '@/i18n/pagesGermanyReady'; // Germany Ready / weekly challenge badge labels
 import { BADGES_KEY, useBadges, type ClientBadge } from '@/lib/germanyDay';
 
 registerCopy(pagesGermanyDay);
+registerCopy(pagesGermanyReady);
 
 const ICON: Record<string, LucideIcon> = {
   PROFILE_COMPLETE: UserCheck,
@@ -29,6 +31,9 @@ const ICON: Record<string, LucideIcon> = {
   LEVEL_A2: GraduationCap,
   LEVEL_B1: GraduationCap,
   LEVEL_B2: GraduationCap,
+  GERMANY_READY: Medal,
+  CHALLENGE_1: Trophy,
+  CHALLENGE_5: Trophy,
 };
 
 /** Fresh badges already celebrated in this tab (several panels may be mounted; one burst per badge). */

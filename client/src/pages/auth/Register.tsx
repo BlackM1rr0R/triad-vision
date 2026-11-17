@@ -39,6 +39,7 @@ import { PassportScan, type PassportScanFields } from '@/components/auth/Passpor
 import { registerCopy } from '@/i18n';
 import { pagesLegal } from '@/i18n/pagesLegal';
 import { pagesPartnerClients } from '@/i18n/pagesPartnerClients';
+import { pagesGermanyReady } from '@/i18n/pagesGermanyReady';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
 import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB checkbox copy
 import { clearRefCookie, readRefCookie, rememberVisa } from '@/lib/referralCookie';
@@ -48,6 +49,7 @@ registerCopy(pagesLegal);
 registerCopy(campaignConsentCopy);
 registerCopy(cookieConsentCopy);
 registerCopy(pagesPartnerClients); // partner sign-up code: partner name + data-sharing checkbox
+registerCopy(pagesGermanyReady); // "letter to my future self" invitation on the success screen
 
 /** Same photo as the home hero (already cached for most visitors). */
 
@@ -133,6 +135,11 @@ const CheckInbox = ({ email, next }: { email: string; next: string }) => {
           </button>
           <ResendVerificationButton className="btn-secondary btn-lg" label={t('registerInbox.resend')} />
         </div>
+        {/* Letter to my future self: an invitation right after sign-up (opened in the portal). */}
+        <Link to="/account/future-letter" className="mt-6 w-full rounded-2xl border border-line bg-highlight-bg px-4 py-3 text-left hover:bg-sunken">
+          <span className="block font-semibold text-ink">{t('futureLetter.cta')}</span>
+          <span className="block text-sm text-muted">{t('futureLetter.ctaText')}</span>
+        </Link>
       </div>
     </AuthShell>
   );

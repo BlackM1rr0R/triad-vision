@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -12,6 +12,7 @@ import { registerCopy } from '@/i18n';
 import { pagesWorkScenes } from '@/i18n/pagesWorkScenes';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { pickTx } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { SCENE_META, WORK_SCENES_PATH, sceneMeta } from '@/lib/workScenes/meta';
 import { WORK_SCENES_AS_OF, type SceneSpot, type WorkScene } from '@/lib/workScenes/types';
 import { answerQuiz, currentTarget, isFinished, nextQuestion, quizOptions, quizPercent, startQuiz, type QuizItem, type QuizState } from '@/lib/workScenes/quiz';
@@ -224,6 +225,14 @@ export function WorkScenePage({ scene, art }: { scene: WorkScene; art: ReactNode
   const numberOf = (id: string) => scene.spots.findIndex((s) => s.id === id) + 1;
   const tx = (v: SceneSpot['name']) => pickTx(v, i18n.language);
   const quizTarget = mode === 'quiz' && quiz ? currentTarget(quiz) : null;
+  // Germany Ready sync: a finished quiz is reported once (signed-in clients only).
+  const report = useReadyReport();
+  const reported = useRef<QuizState | null>(null);
+  useEffect(() => {
+    if (!quiz || !isFinished(quiz) || reported.current === quiz) return;
+    reported.current = quiz;
+    report({ activityId: 'work-scenes', item: scene.id, score: quiz.correct, max: quiz.order.length });
+  }, [quiz, report, scene.id]);
 
   const select = (id: string, focusPanel = false) => {
     const p = new URLSearchParams(params);

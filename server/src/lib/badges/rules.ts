@@ -24,6 +24,10 @@ export interface BadgeFacts {
   wordsLearned: number;
   /** Highest German level reached (profile level, accepted certificate or placement test), or null. */
   level: string | null;
+  /** Germany Ready practice certificate held (lib/readyProgress; not revoked). */
+  germanyReady?: boolean;
+  /** Weekly challenges completed (lib/readyProgress). */
+  weeklyChallenges?: number;
 }
 
 export type BadgeGroup = 'journey' | 'german';
@@ -60,6 +64,10 @@ export const BADGES: readonly BadgeRule[] = [
   { key: 'LEVEL_A2', group: 'german', icon: 'graduation-cap', earned: atLeast('A2') },
   { key: 'LEVEL_B1', group: 'german', icon: 'graduation-cap', earned: atLeast('B1') },
   { key: 'LEVEL_B2', group: 'german', icon: 'graduation-cap', earned: atLeast('B2') },
+  // Germany Ready (practice achievements, lib/readyProgress)
+  { key: 'GERMANY_READY', group: 'german', icon: 'medal', earned: (f) => !!f.germanyReady },
+  { key: 'CHALLENGE_1', group: 'german', icon: 'trophy', earned: (f) => (f.weeklyChallenges ?? 0) >= 1 },
+  { key: 'CHALLENGE_5', group: 'german', icon: 'trophy', earned: (f) => (f.weeklyChallenges ?? 0) >= 5, progress: (f) => ({ value: Math.min(5, f.weeklyChallenges ?? 0), goal: 5 }) },
 ];
 
 export const BADGE_KEYS = BADGES.map((b) => b.key);

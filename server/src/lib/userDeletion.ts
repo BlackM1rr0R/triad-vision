@@ -16,6 +16,8 @@ import { eraseGermanyJobAlerts } from './germanyJobs/alerts.js';
 import { revokeAllShares } from './successShare/service.js';
 import { purgeCaseCards } from './successShare/privateCard.js';
 import { eraseArrivalCertificates } from './arrivalCertificate/service.js';
+import { eraseReady } from './readyProgress/service.js';
+import { eraseFutureLetter } from './futureLetter/service.js';
 import { eraseStudentRecords } from './partners/schools.js';
 
 /**
@@ -327,6 +329,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await revokeAllShares(userId); // public "visa approved" share links (Setting rows keyed by token)
   await purgeCaseCards(ownCaseIds); // cached private Instagram cards of the cases (disk)
   await eraseArrivalCertificates(userId, ownCaseIds); // "Welcome to Germany" certificates (plain ids)
+  await eraseReady(userId); // Germany Ready practice results, certificate, weekly challenges (plain ids)
+  await eraseFutureLetter(userId); // letter to my future self (sealed, plain id)
   // Staff tools (plain ids): rule-change receipts, login-free upload links and hand-over receipt checks of the cases.
   await prisma.ruleChangeRecipient.deleteMany({ where: { userId } });
   await prisma.caseUploadLink.deleteMany({ where: { caseId: { in: ownCaseIds } } });

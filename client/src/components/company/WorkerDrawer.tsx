@@ -17,6 +17,7 @@ import { plannedArrival, type WorkerDetail } from './workerTypes';
 import { EmployerAcceleratedBlock } from '@/components/recognition/EmployerAcceleratedBlock'; // § 81a (registers its copy)
 import { euro } from '@/components/recognition/api';
 import { OnePagerButton } from './OnePagerButton'; // one-page PDF of what this panel shows
+import { WorkerReadinessCard } from '@/components/ready/ReadinessProfileCard'; // consent-gated readiness profile
 
 registerCopy(pagesTimeCare); // check-in topic labels (checkIn.topics.*)
 registerCopy(pagesEmployerWorkers);
@@ -93,6 +94,9 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
               </ul>
             )}
           </Block>
+
+          {/* Readiness profile: only with the worker's consent (renders nothing otherwise). */}
+          <WorkerReadinessCard caseId={w.id} />
 
           {w.openItems.length > 0 && (
             <Block title={t('employerWorkers.drawer.openItems')} icon={ClipboardCheck}>

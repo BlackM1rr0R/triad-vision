@@ -1,9 +1,9 @@
 import type { Role } from '@/lib/types';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
-export const CONSENT_TYPES = ['PRIVACY_POLICY', 'TERMS', 'MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'PASSPORT_OCR'] as const;
+export const CONSENT_TYPES = ['PRIVACY_POLICY', 'TERMS', 'MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'PASSPORT_OCR', 'READINESS_PROFILE'] as const;
 export type ConsentType = (typeof CONSENT_TYPES)[number];
-export const TOGGLE_TYPES = ['MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING'] as const;
+export const TOGGLE_TYPES = ['MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'READINESS_PROFILE'] as const;
 export type ToggleType = (typeof TOGGLE_TYPES)[number];
 
 export const REQUEST_TYPES = ['EXPORT', 'DELETION', 'RECTIFICATION', 'RESTRICTION', 'OBJECTION'] as const;

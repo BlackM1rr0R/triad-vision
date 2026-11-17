@@ -14,6 +14,7 @@ import { registerCopy } from '@/i18n';
 import { pagesLevelSelf } from '@/i18n/pagesLevelSelf';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, saveProgress } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { LEVEL_SELF_FAQ } from '@/lib/germanExam/faq';
 import {
   LEVEL_UE,
@@ -100,8 +101,11 @@ export default function GermanLevelSelfPage() {
   const perWeek = Math.round(st.hoursPerDay * st.daysPerWeek * 10) / 10;
 
   const setAnswer = (id: string, a: Answer) => setSt((s) => ({ ...s, answers: { ...s.answers, [id]: a } }));
+  const report = useReadyReport();
   const show = () => {
     setSt((s) => ({ ...s, shown: true }));
+    // Germany Ready sync (signed-in clients): the estimate as a rank 0 (pre-A1) … 4 (B2), once per answer set.
+    report({ activityId: 'level-self', score: levelIndex(overall), max: 4, dedupeKey: `levelSelf:${overall}:${answered}` });
     window.requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 

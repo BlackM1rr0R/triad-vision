@@ -14,6 +14,7 @@ import { pagesGames } from '@/i18n/pagesGames';
 import { pagesPronunciation } from '@/i18n/pagesPronunciation';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, pickTx, saveProgress } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { alignWords, type AlignResult } from '@/lib/games/pronunciation/align';
 import { SENTENCES, SENTENCE_LEVELS, SENTENCE_TOPICS, type SentenceLevel, type SentenceTopic } from '@/lib/games/pronunciation/sentences';
 
@@ -89,6 +90,7 @@ export default function PronunciationPage() {
   const [result, setResult] = useState<{ id: string; heard: string; r: AlignResult } | null>(null);
   const [best, setBest] = useState<Record<string, number>>({});
   useEffect(() => setBest(loadProgress<Record<string, number>>(BEST_KEY, {})), []);
+  const report = useReadyReport();
   const speech = useSpeak();
   const rec = useGermanRecognition();
 
@@ -122,6 +124,7 @@ export default function PronunciationPage() {
     const heard = await rec.listen();
     const r = alignWords(current.de, heard);
     setResult({ id: current.id, heard, r });
+    if (heard) report({ activityId: 'pronunciation', item: current.id, score: r.percent, max: 100 }); // Germany Ready sync
     if (heard && r.percent > (best[current.id] ?? -1)) {
       const next = { ...best, [current.id]: r.percent };
       setBest(next);

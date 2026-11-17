@@ -12,6 +12,7 @@ import { pickLoc } from '../lib/employerWorkers/texts.js';
 import { sendPdf } from '../lib/esign/http.js';
 import { storedPath } from '../lib/esign/service.js';
 import { onePagerPdf, workerOnePagerInput } from '../lib/onePager/pdf.js';
+import { workerReadinessRows } from '../lib/readyProgress/onePager.js'; // consent-gated readiness rows on the one-pager
 import { addItem, companyChecklist, companyOverview, createInput, deleteItem, patchInput, updateItem } from '../lib/employerArrival.js';
 
 /**
@@ -80,7 +81,9 @@ companyWorkersRouter.get('/:caseId/one-pager.pdf', async (req, res) => {
   const branding = req.query.branding !== '0';
   const row = (await buildPanel(co(res).id, new Date(), req.user!.id)).find((r) => r.id === caseId);
   if (!row) throw notFound('WORKER_NOT_FOUND');
-  const pdf = await onePagerPdf(workerOnePagerInput(row, langOf(req), branding ? co(res).name : null));
+  const input = workerOnePagerInput(row, langOf(req), branding ? co(res).name : null);
+  input.rows.push(...(await workerReadinessRows(caseId, input.locale))); // readiness card, only with the client's consent
+  const pdf = await onePagerPdf(input);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="worker-${caseId.slice(-8)}.pdf"`);
   res.send(pdf);

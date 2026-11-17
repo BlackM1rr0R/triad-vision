@@ -20,6 +20,7 @@ import { useApiError } from '@/components/portal/useApiError';
 import { daysUntil, ONBOARDING_KEY, useOnboarding } from '@/components/journey/api';
 import type { OnboardingProgress, OnboardingResponse, OnboardingRow } from '@/components/journey/types';
 import { Germany } from '@/components/illustrations';
+import { FutureLetterCta } from '@/components/ready/ReadyCards'; // letter to my future self invitation
 
 registerCopy(pagesJourney);
 
@@ -238,6 +239,9 @@ export default function Onboarding() {
           )}
         </div>
       </section>
+      {/* Letter to my future self (hidden once written or after the arrival). */}
+      <FutureLetterCta />
+
 
       {!active && (
         <section className="card border-line-strong bg-sunken p-5 sm:p-6">

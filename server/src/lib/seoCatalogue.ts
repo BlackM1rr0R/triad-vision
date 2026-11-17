@@ -805,6 +805,42 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Найраніші дати ПМП і громадянства Німеччини для Блакитної карти, фахівців, Ausbildung, Chancenkarte та сім’ї — правила 2026 року.',
     },
   },
+  '/apartment-viewing': {
+    name: { az: 'Mənzilə baxış və anket', de: 'Wohnungsbesichtigung & Selbstauskunft', en: 'Apartment viewing & self-disclosure', ru: 'Осмотр квартиры и анкета', tr: 'Daire gezme ve kiracı beyanı', uk: 'Огляд квартири й анкета' },
+    title: { az: 'Mənzilə baxış və kirayəçi anketi', de: 'Wohnungsbesichtigung & Selbstauskunft', en: 'Flat viewing & tenant self-disclosure', ru: 'Осмотр квартиры и анкета арендатора', tr: 'Daire gezme ve kiracı beyan formu', uk: 'Огляд квартири та анкета орендаря' },
+    description: {
+      az: 'Baxışı alman dilində məşq edin: Kaltmiete, Kaution, SCHUFA. Ev sahibi nəyi soruşa bilməz, fırıldaqlar və DSK-ya uyğun Mieterselbstauskunft PDF.',
+      de: 'Besichtigung auf Deutsch üben: Kaltmiete, Kaution, SCHUFA. Was Vermieter nicht fragen dürfen, Betrugsmaschen und DSK-konforme Selbstauskunft als PDF.',
+      en: 'Practise a German flat viewing: cold rent, deposit, SCHUFA. What landlords may not ask, scams to avoid and a DSK-compliant self-disclosure PDF.',
+      ru: 'Тренировка осмотра на немецком: Kaltmiete, залог, SCHUFA. Что нельзя спрашивать арендодателю, мошенники и анкета Mieterselbstauskunft в PDF.',
+      tr: 'Almanca daire görmeyi çalışın: soğuk kira, depozito, SCHUFA. Ev sahibinin soramayacakları, dolandırıcılık ve DSK uyumlu kiracı beyanı PDF.',
+      uk: 'Тренування огляду німецькою: Kaltmiete, застава, SCHUFA. Що не можна питати орендодавцю, шахраї та анкета Mieterselbstauskunft у PDF.',
+    },
+  },
+  '/send-money-home': {
+    name: { az: 'Ailəyə pul kalkulyatoru', de: 'Geld für die Familie', en: 'Money for family calculator', ru: 'Калькулятор «Деньги семье»', tr: 'Aileye para hesaplayıcısı', uk: 'Калькулятор «Гроші родині»' },
+    title: { az: 'Ailəyə nə qədər pul göndərə bilərəm?', de: 'Geld für die Familie: wie viel bleibt?', en: 'Money for family: how much to send home?', ru: 'Сколько денег отправлять семье?', tr: 'Aileye ne kadar para gönderebilirim?', uk: 'Скільки грошей надсилати родині?' },
+    description: {
+      az: 'Xalis maaş, şəhər və həyat tərzi: xərclərdən sonra hər ay evə nə qədər qalır, manatla, köçürmə xərcləri və Bakı qiymətləri ilə müqayisə.',
+      de: 'Nettogehalt, Stadt und Lebensstil: Was monatlich für die Familie bleibt – in Manat, mit Überweisungskosten und Vergleich mit Preisen in Baku.',
+      en: 'Net salary, city and lifestyle: what is left each month for your family — in manat, with transfer costs and a comparison with prices in Baku.',
+      ru: 'Чистая зарплата, город и образ жизни: сколько остаётся семье каждый месяц — в манатах, с комиссиями за перевод и сравнением с ценами Баку.',
+      tr: 'Net maaş, şehir ve yaşam tarzı: her ay ailenize ne kalır — manat olarak, transfer masrafları ve Bakü fiyatlarıyla karşılaştırmalı.',
+      uk: 'Чиста зарплата, місто й спосіб життя: скільки лишається родині щомісяця — у манатах, з комісіями за переказ і порівнянням із цінами Баку.',
+    },
+  },
+  '/five-years-in-germany': {
+    name: { az: 'Almaniyada 5 il', de: '5 Jahre in Deutschland', en: '5 years in Germany', ru: '5 лет в Германии', tr: 'Almanya’da 5 yıl', uk: '5 років у Німеччині' },
+    title: { az: 'Zaman maşını: Almaniyada 5 il', de: 'Zeitmaschine: 5 Jahre in Deutschland', en: 'Time machine: 5 years in Germany', ru: 'Машина времени: 5 лет в Германии', tr: 'Zaman makinesi: Almanya’da 5 yıl', uk: 'Машина часу: 5 років у Німеччині' },
+    description: {
+      az: 'Peşə, şəhər və alman dili: maaş, yığım, daimi yaşayış və vətəndaşlıq il-il, Azərbaycanda eyni sahə ilə müqayisədə. Fərziyyələri özünüz dəyişin.',
+      de: 'Beruf, Stadt und Deutsch: Gehalt, Ersparnisse, Niederlassung und Einbürgerung Jahr für Jahr, verglichen mit Aserbaidschan. Annahmen selbst anpassen.',
+      en: 'Profession, city and German: salary, savings, settlement permit and citizenship year by year, compared with Azerbaijan. Adjust every assumption.',
+      ru: 'Профессия, город и немецкий: зарплата, сбережения, ПМЖ и гражданство по годам в сравнении с Азербайджаном. Все допущения можно менять.',
+      tr: 'Meslek, şehir ve Almanca: maaş, birikim, süresiz oturum ve vatandaşlık yıl yıl, Azerbaycan ile karşılaştırmalı. Varsayımları siz ayarlayın.',
+      uk: 'Професія, місто й німецька: зарплата, заощадження, ПМП і громадянство рік за роком порівняно з Азербайджаном. Усі припущення можна змінити.',
+    },
+  },
   '/germany-vs-other-countries': {
     name: { az: 'Almaniya və digər ölkələr', de: 'Deutschland im Ländervergleich', en: 'Germany vs other countries', ru: 'Германия и другие страны', tr: 'Almanya ve diğer ülkeler', uk: 'Німеччина та інші країни' },
     title: { az: 'Almaniya, Polşa, Çexiya, UK, Avstriya', de: 'Deutschland vs. Polen, Tschechien, Österreich', en: 'Germany vs Poland, Czechia, UK, Austria', ru: 'Германия, Польша, Чехия, UK, Австрия', tr: 'Almanya, Polonya, Çekya, UK, Avusturya', uk: 'Німеччина, Польща, Чехія, UK, Австрія' },
@@ -924,6 +960,43 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Жёлтый мешок, бумага, био, остаточный мусор, стекло, Pfand или пункт приёма? Более 60 предметов с пояснениями: коробка от пиццы, чеки, батарейки.',
       tr: 'Sarı torba, kâğıt, bio, karışık atık, cam, Pfand ya da geri dönüşüm merkezi? 60’tan fazla eşya açıklamalı: pizza kutusu, fiş, pil gibi zor durumlar.',
       uk: 'Жовтий мішок, папір, біо, залишкове сміття, скло, Pfand чи пункт прийому? Понад 60 предметів із поясненнями: коробка з-під піци, чеки, батарейки.',
+    },
+  },
+  // Virtual German street + street games (client pages/games/GermanStreet, TicketMachine, SupermarketGame; lib/games/street|ticket|supermarket): static, no API.
+  '/german-street': {
+    name: { az: 'Virtual alman küçəsi', de: 'Virtuelle deutsche Straße', en: 'Virtual German street', ru: 'Виртуальная немецкая улица', tr: 'Sanal Alman sokağı', uk: 'Віртуальна німецька вулиця' },
+    title: { az: 'Virtual alman küçəsi: gündəlik həyat məşqi', de: 'Virtuelle deutsche Straße: Alltag üben', en: 'Virtual German street: practise daily life', ru: 'Немецкая улица: тренажёр быта', tr: 'Sanal Alman sokağı: günlük hayatı çalış', uk: 'Німецька вулиця: тренажер побуту' },
+    description: {
+      az: 'İnteraktiv alman küçəsi: Bürgeramt, bank, vağzal, supermarket, aptek və həkim. Binaya daxil olun: alman sözü səslə, izah və uyğun oyun və ya dialoq.',
+      de: 'Interaktive deutsche Straße: Bürgeramt, Bank, Bahnhof, Supermarkt, Apotheke und Arzt. Hineingehen: Wort mit Audio, Erklärung und passendes Spiel.',
+      en: 'An interactive German street: Bürgeramt, bank, station, supermarket, pharmacy and doctor. Step inside for the German word with audio and a matching game.',
+      ru: 'Интерактивная немецкая улица: Bürgeramt, банк, вокзал, супермаркет, аптека и врач. Заходите: слово с озвучкой, пояснение и подходящая игра.',
+      tr: 'Etkileşimli Alman sokağı: Bürgeramt, banka, istasyon, süpermarket, eczane ve doktor. İçeri girin: sesli Almanca kelime, açıklama ve ilgili oyun.',
+      uk: 'Інтерактивна німецька вулиця: Bürgeramt, банк, вокзал, супермаркет, аптека й лікар. Заходьте: слово з озвученням, пояснення й відповідна гра.',
+    },
+  },
+  '/ticket-machine': {
+    name: { az: 'Bilet avtomatı simulyatoru', de: 'Fahrkartenautomat-Simulator', en: 'Ticket machine simulator', ru: 'Симулятор билетного автомата', tr: 'Bilet otomatı simülatörü', uk: 'Симулятор квиткового автомата' },
+    title: { az: 'Almaniyada bilet avtomatı: simulyator', de: 'Fahrkartenautomat üben: Simulator', en: 'German ticket machine simulator', ru: 'Билетный автомат в Германии: симулятор', tr: 'Almanya’da bilet otomatı: simülatör', uk: 'Квитковий автомат у Німеччині: симулятор' },
+    description: {
+      az: 'Alman bilet avtomatında məşq: təyinat, AB/ABC zonası, gündəlik və qrup bileti, ödəniş və kompostlama. Tapşırıqlar, xal və 60 € cərimənin izahı.',
+      de: 'Fahrkartenkauf üben: Ziel, Tarifzone AB/ABC, Tages- und Gruppenkarte, Bezahlen und Entwerten. Aufgaben mit Punkten und das 60-€-Bußgeld erklärt.',
+      en: 'Practise a German ticket machine: destination, zones AB/ABC, day and group tickets, payment and validation. Scored tasks and the €60 penalty explained.',
+      ru: 'Тренажёр немецкого билетного автомата: цель, зоны AB/ABC, дневной и групповой билет, оплата и компостирование. Задания и штраф 60 €.',
+      tr: 'Alman bilet otomatında pratik: varış yeri, AB/ABC bölgeleri, günlük ve grup bileti, ödeme ve damgalama. Puanlı görevler ve 60 € ceza.',
+      uk: 'Тренажер німецького квиткового автомата: мета, зони AB/ABC, денний і груповий квиток, оплата й компостування. Завдання та штраф 60 €.',
+    },
+  },
+  '/supermarket-game': {
+    name: { az: 'Supermarket oyunu', de: 'Supermarkt-Spiel', en: 'Supermarket game', ru: 'Игра «Супермаркет»', tr: 'Süpermarket oyunu', uk: 'Гра «Супермаркет»' },
+    title: { az: 'Alman supermarketi: alış-veriş oyunu', de: 'Einkaufen in Deutschland: Supermarkt-Spiel', en: 'German supermarket: the shopping game', ru: 'Немецкий супермаркет: игра', tr: 'Alman süpermarketi: alışveriş oyunu', uk: 'Німецький супермаркет: гра' },
+    description: {
+      az: 'Siyahı ilə alman supermarketində alış-veriş: Quark, Sahne, Mehl Type 405, Sprudel. Pfand avtomatı, “Tüte?” sualı, kart və ya nağd, ƏDV ilə çek.',
+      de: 'Mit Einkaufszettel durch den Supermarkt: Quark, Sahne, Mehl Type 405, Sprudel. Pfandautomat, „Tüte?“, Karte oder bar und der Kassenbon mit MwSt.',
+      en: 'Shop a German supermarket from a list: Quark, Sahne, Mehl Type 405, Sprudel. The Pfand machine, “Tüte?”, card or cash and the receipt with VAT.',
+      ru: 'Покупки в немецком супермаркете по списку: Quark, Sahne, Mehl Type 405, Sprudel. Автомат Pfand, «Tüte?», карта или наличные и чек с НДС.',
+      tr: 'Listeyle Alman süpermarketinde alışveriş: Quark, Sahne, Mehl Type 405, Sprudel. Pfand otomatı, “Tüte?”, kart ya da nakit ve KDV’li fiş.',
+      uk: 'Покупки в німецькому супермаркеті за списком: Quark, Sahne, Mehl Type 405, Sprudel. Автомат Pfand, «Tüte?», картка чи готівка та чек із ПДВ.',
     },
   },
   // German mock exams + level self-assessment (client pages/tools/GermanMockExam, GermanLevelSelf; lib/germanExam): static, no API.
@@ -1630,6 +1703,7 @@ export const SPA_ROUTES = [
   '/success/:token',
   '/certificate/:code',
   '/arrival-certificate/:code',
+  '/ready-certificate/:code', // public Germany Ready practice certificate check (noindex)
   '/referral-terms',
   '/status',
   '/p/:code',
@@ -1648,10 +1722,10 @@ export const SPA_ROUTES = [
 export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'life' | 'learn' | 'employers' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/germany-vs-other-countries', '/visa-document-checklist', '/visa-refusal', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/real-salaries'] },
-  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/residence-card-explained', '/calculator', '/cities', '/events', '/status'] },
-  { key: 'life', paths: ['/life-in-germany', '/german-apartment', '/driving-licence-germany', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/driving-time-calculator', '/work-schedule-check'] },
-  { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/send-money-home', '/health-insurance-comparison', '/tax-class-chooser', '/real-salaries'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/five-years-in-germany', '/which-city', '/residence-card-explained', '/calculator', '/cities', '/events', '/status'] },
+  { key: 'life', paths: ['/life-in-germany', '/german-apartment', '/apartment-viewing', '/german-street', '/driving-licence-germany', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/driving-time-calculator', '/work-schedule-check'] },
+  { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/ticket-machine', '/supermarket-game', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
   { key: 'employers', paths: ['/employer-cost-calculator', '/employer-guide-azerbaijan', '/kandidaten'] },
   { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },
 ];

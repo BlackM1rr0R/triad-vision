@@ -3,6 +3,8 @@ import { publicUser } from '../../routes/auth.js';
 import { buildAccessLog } from './accessLog.js'; // "who viewed my documents"
 import { housingExport } from '../housing/core.js'; // housing checklist, Anmeldung, partner listings
 import { readinessExport } from '../readiness/service.js'; // Germany readiness score history + money self-check
+import { readyExport } from '../readyProgress/service.js'; // Germany Ready practice results, certificate, weekly challenges
+import { futureLetterExport } from '../futureLetter/service.js'; // letter to my future self (decrypted for the owner only)
 import { studentRecordsExport } from '../partners/schools.js'; // language-school attendance / exam records about the client
 import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
 import { listFieldDefs } from '../partners/fieldDefs.js';
@@ -181,6 +183,8 @@ export const buildUserExport = async (userId: string) => {
     // Housing search checklist, Anmeldung (appointment, deadline, contract review) and partner listings.
     housing: await housingExport(userId),
     readiness: await readinessExport(userId),
+    germanyReady: await readyExport(userId),
+    futureLetter: await futureLetterExport(userId),
     // Attendance and exam results a partner language school recorded about the client (with review status).
     partnerSchoolRecords: await studentRecordsExport(userId),
     // Each consent with the legal text version it refers to (AGB / privacy / cookie policy).

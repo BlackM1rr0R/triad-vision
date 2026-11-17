@@ -73,6 +73,7 @@ export const SYNONYMS: Record<string, string> = {
   searchPerformance: 'axtarış, google, search console, seo, klik, sorğu, suchanfragen, klicks, impressionen, queries, clicks, impressions, поиск, запросы, клики, показы',
   cityCosts: 'şəhər xərcləri, kirayə, büdcə, stadtkosten, miete, budget, city costs, rent, расходы, аренда, бюджет',
   dataFreshness: 'aktuallıq, yoxlama, illik rəqəmlər, datenaktualität, prüfen, mindestlohn, kindergeld, data freshness, review, yearly figures, актуальность, проверка',
+  pastPlacements: 'keçmiş yerləşdirmələr, tarixi, arxiv, xəritə, qlobus, frühere vermittlungen, archiv, karte, past placements, history, map, globe, прошлые трудоустройства, архив, карта',
   publicApiKeys: 'api, açar, vakansiya api, tərəfdaş, schlüssel, stellen-api, partner, api key, vacancy api, developers, ключ, api вакансий, партнёр',
   employerChecklist: 'gəliş siyahısı, işəgötürən, şablon, ankunft, checkliste, vorlage, arbeitgeber, arrival checklist, employer, template, чек-лист, работодатель, шаблон',
   realSalaries: 'real maaşlar, maaş bazası, müqavilə maaşı, echte gehälter, gehaltsdatenbank, lohn, real salaries, salary database, pay ranges, реальные зарплаты, база зарплат',

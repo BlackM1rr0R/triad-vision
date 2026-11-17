@@ -124,6 +124,7 @@ const consentsSchema = z
     WHATSAPP: z.boolean().optional(),
     SMS: z.boolean().optional(),
     EMPLOYER_SHARING: z.boolean().optional(),
+    READINESS_PROFILE: z.boolean().optional(), // readiness profile card for employers (lib/readyProgress)
   })
   .strict();
 

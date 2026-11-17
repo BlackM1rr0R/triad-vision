@@ -17,6 +17,7 @@ import { useBrand } from '@/lib/brand';
 import { localePath } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { loadProgress, pickTx, saveProgress } from '@/lib/games/common';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
 import { PRICE_AS_OF, type PriceCategory } from '@/lib/games/price/items';
 import { MAX_POINTS, ROUNDS, buildRounds, newSeed, parseSeed, pointsFor, verdictFor, type Round } from '@/lib/games/price/score';
 
@@ -67,6 +68,7 @@ export default function PriceGamePage() {
   const [guesses, setGuesses] = useState<Guess[]>([]);
   const [best, setBest] = useState(0);
   useEffect(() => setBest(loadProgress<number>(BEST_KEY, 0)), []);
+  const report = useReadyReport();
   const round = rounds[index];
   const total = guesses.reduce((s, g) => s + g.points, 0);
 
@@ -90,6 +92,7 @@ export default function PriceGamePage() {
   const next = () => {
     if (index + 1 >= rounds.length) {
       const score = total;
+      report({ activityId: 'price-game', score, max: rounds.length * MAX_POINTS }); // Germany Ready sync (signed-in clients)
       if (score > best) {
         setBest(score);
         saveProgress(BEST_KEY, score);

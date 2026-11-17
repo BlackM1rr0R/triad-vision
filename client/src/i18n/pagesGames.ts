@@ -15,6 +15,9 @@ const az = {
       price: { title: 'Qiyməti tap', text: 'Almaniyada çörək, Döner, kirayə və bilet nə qədərdir? 10 raund.' },
       signs: { title: 'Alman yol nişanları', text: 'Ən vacib StVO nişanları: öyrənmə rejimi və 30 suallıq imtahan.' },
       waste: { title: 'Zibili çeşidlə', text: 'Gelber Sack, Bio, Papier, Glas və ya Pfand? 60 əşya, taymer və kombo.' },
+      street: { title: 'Virtual alman küçəsi', text: 'Bürgeramt, bank, vağzal, supermarket və həkim: binaya daxil olun, uyğun oyunu açın.' },
+      ticket: { title: 'Bilet avtomatı', text: 'Zona, bilet növü, ödəniş və kompostlama — tapşırıqlar və cərimə izahı ilə.' },
+      supermarket: { title: 'Supermarket oyunu', text: 'Siyahı ilə rəflərdə alış-veriş, Pfand avtomatı və kassada çek.' },
     },
     common: {
       score: 'Xal',
@@ -52,6 +55,9 @@ const de: typeof az = {
       price: { title: 'Preis-Raten', text: 'Was kosten Brot, Döner, Miete und Ticket in Deutschland? 10 Runden.' },
       signs: { title: 'Verkehrszeichen-Test', text: 'Die wichtigsten StVO-Zeichen: Lernmodus und Prüfung mit 30 Fragen.' },
       waste: { title: 'Mülltrennung', text: 'Gelber Sack, Bio, Papier, Glas oder Pfand? 60 Dinge, Timer und Combo.' },
+      street: { title: 'Virtuelle deutsche Straße', text: 'Bürgeramt, Bank, Bahnhof, Supermarkt und Arzt: hineingehen und das passende Spiel öffnen.' },
+      ticket: { title: 'Fahrkartenautomat', text: 'Zone, Fahrkartenart, Bezahlen und Entwerten — mit Aufgaben und Erklärungen zum Bußgeld.' },
+      supermarket: { title: 'Supermarkt-Spiel', text: 'Mit Einkaufszettel durch die Regale, Pfandautomat und Kassenbon.' },
     },
     common: {
       score: 'Punkte',
@@ -89,6 +95,9 @@ const en: typeof az = {
       price: { title: 'Guess the price', text: 'What do bread, a döner, rent and a ticket cost in Germany? 10 rounds.' },
       signs: { title: 'German traffic signs', text: 'The key StVO signs: learn mode and a 30-question exam.' },
       waste: { title: 'Waste sorting', text: 'Yellow bag, bio, paper, glass or Pfand? 60 items, timer and combo.' },
+      street: { title: 'Virtual German street', text: 'Bürgeramt, bank, station, supermarket and doctor: step inside and open the matching game.' },
+      ticket: { title: 'Ticket machine', text: 'Zones, ticket types, payment and validation — with tasks and the penalty fare explained.' },
+      supermarket: { title: 'Supermarket game', text: 'Shop the shelves from a list, use the Pfand machine and read the receipt.' },
     },
     common: {
       score: 'Score',
@@ -126,6 +135,9 @@ const ru: typeof az = {
       price: { title: 'Угадай цену', text: 'Сколько стоят хлеб, дёнер, аренда и билет в Германии? 10 раундов.' },
       signs: { title: 'Дорожные знаки Германии', text: 'Главные знаки StVO: режим обучения и экзамен из 30 вопросов.' },
       waste: { title: 'Сортировка мусора', text: 'Жёлтый мешок, био, бумага, стекло или Pfand? 60 предметов, таймер и комбо.' },
+      street: { title: 'Виртуальная немецкая улица', text: 'Bürgeramt, банк, вокзал, супермаркет и врач: заходите и открывайте нужную игру.' },
+      ticket: { title: 'Билетный автомат', text: 'Зоны, виды билетов, оплата и компостирование — с заданиями и разбором штрафа.' },
+      supermarket: { title: 'Игра «Супермаркет»', text: 'Покупки по списку на полках, автомат Pfand и чек на кассе.' },
     },
     common: {
       score: 'Очки',
@@ -163,6 +175,9 @@ const tr: typeof az = {
       price: { title: 'Fiyatı tahmin et', text: 'Almanya’da ekmek, döner, kira ve bilet ne kadar? 10 tur.' },
       signs: { title: 'Alman trafik işaretleri', text: 'En önemli StVO işaretleri: öğrenme modu ve 30 soruluk sınav.' },
       waste: { title: 'Atık ayrıştırma', text: 'Sarı torba, bio, kâğıt, cam ya da Pfand? 60 eşya, süre ve kombo.' },
+      street: { title: 'Sanal Alman sokağı', text: 'Bürgeramt, banka, istasyon, süpermarket ve doktor: içeri girin, ilgili oyunu açın.' },
+      ticket: { title: 'Bilet otomatı', text: 'Bölge, bilet türü, ödeme ve damgalama — görevler ve ceza açıklamasıyla.' },
+      supermarket: { title: 'Süpermarket oyunu', text: 'Listeyle raflarda alışveriş, Pfand otomatı ve kasada fiş.' },
     },
     common: {
       score: 'Puan',
@@ -200,6 +215,9 @@ const uk: typeof az = {
       price: { title: 'Вгадай ціну', text: 'Скільки коштують хліб, дьонер, оренда й квиток у Німеччині? 10 раундів.' },
       signs: { title: 'Дорожні знаки Німеччини', text: 'Найважливіші знаки StVO: режим навчання та іспит із 30 питань.' },
       waste: { title: 'Сортування сміття', text: 'Жовтий мішок, біо, папір, скло чи Pfand? 60 предметів, таймер і комбо.' },
+      street: { title: 'Віртуальна німецька вулиця', text: 'Bürgeramt, банк, вокзал, супермаркет і лікар: заходьте й відкривайте потрібну гру.' },
+      ticket: { title: 'Квитковий автомат', text: 'Зони, види квитків, оплата й компостування — із завданнями та поясненням штрафу.' },
+      supermarket: { title: 'Гра «Супермаркет»', text: 'Покупки за списком на полицях, автомат Pfand і чек на касі.' },
     },
     common: {
       score: 'Бали',

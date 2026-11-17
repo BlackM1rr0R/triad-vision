@@ -218,7 +218,10 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
     case 'waiting-room':
       return 'waitingRoom';
     case 'german':
+    case 'germany-ready': // Germany Ready practice points + weekly challenge: part of German learning
       return 'german';
+    case 'future-letter': // letter to my future self: part of the arrival preparation
+      return 'arrivalPrep';
     case 'interview-prep':
       return 'interviewPrep';
     case 'interviews':

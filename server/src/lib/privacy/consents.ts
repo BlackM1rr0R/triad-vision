@@ -19,6 +19,7 @@ export const CONSENT_TYPES = [
   'SKILL_VIDEO', // per skill video: may be shown to prospective employers (routes/skillVideos.ts)
   'PARTNER_SHARING', // the owning referral partner may see more of the client's case (lib/partners/owned.ts)
   'CANDIDATE_POOL', // anonymous profile in the employer candidate pool (lib/pool; switched in the profile)
+  'READINESS_PROFILE', // employers may see the readiness profile card (lib/readyProgress; default off, privacy centre)
   // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
   'COOKIES',
   'COOKIES_ANALYTICS',
@@ -80,7 +81,7 @@ export const currentConsents = async (userId: string) => {
 };
 
 /** Consents the user can switch in the privacy centre (the others are given once, at sign-up or upload). */
-export const TOGGLE_TYPES = ['MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING'] as const satisfies readonly ConsentType[];
+export const TOGGLE_TYPES = ['MARKETING_EMAIL', 'WHATSAPP', 'SMS', 'EMPLOYER_SHARING', 'READINESS_PROFILE'] as const satisfies readonly ConsentType[];
 export type ToggleType = (typeof TOGGLE_TYPES)[number];
 
 export interface EffectiveConsent {
@@ -107,5 +108,6 @@ export const effectiveConsents = async (user: { id: string; whatsappOptIn: boole
   out.SMS.granted = user.smsNotifications;
   out.MARKETING_EMAIL.granted ??= false;
   out.EMPLOYER_SHARING.granted ??= false;
+  out.READINESS_PROFILE.granted ??= false;
   return out;
 };

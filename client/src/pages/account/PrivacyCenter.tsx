@@ -22,9 +22,11 @@ import {
   Send,
   ShieldCheck,
   Smartphone,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
+import { pagesGermanyReady } from '@/i18n/pagesGermanyReady';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesPrivacy } from '@/i18n/pagesPrivacy';
@@ -48,6 +50,7 @@ import {
 import { PasswordInput } from '@/components/ui/PasswordInput';
 
 registerCopy(pagesPrivacy);
+registerCopy(pagesGermanyReady); // READINESS_PROFILE toggle label + hint
 
 const KEY = ['privacy-center'] as const;
 
@@ -56,6 +59,7 @@ const TOGGLE_ICON: Record<ToggleType, LucideIcon> = {
   WHATSAPP: MessageCircle,
   SMS: MessageSquareText,
   EMPLOYER_SHARING: BriefcaseBusiness,
+  READINESS_PROFILE: ClipboardCheck, // readiness profile card for employers (default off)
 };
 
 const usePrivacyError = () => {

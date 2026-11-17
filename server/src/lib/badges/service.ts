@@ -12,7 +12,7 @@ import { BADGES, documentFacts, earnedKeys, highestLevel, type BadgeFacts } from
  */
 
 export const badgeFacts = async (userId: string, now = new Date()): Promise<BadgeFacts> => {
-  const [user, cases, days, learned, attempts, exams] = await Promise.all([
+  const [user, cases, days, learned, attempts, exams, readyCert, challenges] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId } }),
     prisma.case.findMany({
       where: { clientId: userId },
@@ -28,6 +28,8 @@ export const badgeFacts = async (userId: string, now = new Date()): Promise<Badg
     prisma.germanWordProgress.findMany({ where: { userId, word: { published: true } }, select: { intervalDays: true } }),
     prisma.germanTestAttempt.findMany({ where: { userId }, select: { estimated: true } }),
     prisma.germanExam.findMany({ where: { userId, passed: true }, select: { level: true } }),
+    prisma.readyCertificate.findUnique({ where: { userId }, select: { revokedAt: true } }), // Germany Ready (lib/readyProgress)
+    prisma.readyChallengeCompletion.count({ where: { userId } }),
   ]);
   const docs = cases.map((c) => documentFacts(c.requirements));
   return {
@@ -43,6 +45,8 @@ export const badgeFacts = async (userId: string, now = new Date()): Promise<Badg
     ).best,
     wordsLearned: learned.filter(isLearned).length,
     level: highestLevel(user.germanLevel, ...attempts.map((a) => a.estimated), ...exams.map((e) => e.level)),
+    germanyReady: !!readyCert && !readyCert.revokedAt,
+    weeklyChallenges: challenges,
   };
 };
 

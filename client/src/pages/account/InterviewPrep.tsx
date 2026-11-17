@@ -15,6 +15,7 @@ import { CalendarSubscribe } from '@/components/prep/CalendarSubscribe';
 import { categoryLabel, PREP_KINDS, type PrepKind, type PrepQuestion, type VisaType } from '@/components/prep/types';
 import { useGermanSpeech } from '@/components/prep/useSpeech';
 import { usePractised } from '@/components/prep/usePractised';
+import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: practised questions of the client
 import { Learning } from '@/components/illustrations';
 import { FlipCards } from '@/components/prep/FlipCards'; // flip-card mode (3D flip, swipe, knew / again marks)
 
@@ -257,6 +258,14 @@ export default function AccountInterviewPrep() {
   const doneCount = ofKind.filter((q) => practised.has(q.id)).length;
   const pct = ofKind.length ? Math.round((doneCount / ofKind.length) * 100) : 0;
   const caseType = query.data?.caseVisaType ?? null;
+
+  // Germany Ready sync: practised questions per kind (count / total), a little after the last change.
+  const report = useReadyReport();
+  useEffect(() => {
+    if (!doneCount || !ofKind.length) return;
+    const t = setTimeout(() => report({ activityId: 'interview-prep', item: kind, score: doneCount, max: ofKind.length, dedupeKey: `interview:${kind}:${doneCount}:${ofKind.length}` }), 2000);
+    return () => clearTimeout(t);
+  }, [doneCount, ofKind.length, kind, report]);
 
   useEffect(() => {
     if (category && !categories.includes(category)) setCategory(null);

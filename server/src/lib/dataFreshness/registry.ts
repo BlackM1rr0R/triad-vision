@@ -324,6 +324,37 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     note: { az: '§ 9, § 18c, § 28 AufenthG və StAG § 10 dəyişikliklərini yoxlayın.', en: 'Check §§ 9, 18c, 28 AufenthG and § 10 StAG for amendments.' },
   },
   {
+    id: 'baku-reference-figures',
+    category: 'wage',
+    label: { az: 'Bakı/Azərbaycan rəqəmləri (ailəyə pul, 5 il)', en: 'Baku / Azerbaijan figures (money for family, 5 years)' },
+    value: 'min. wage 400 AZN, subsistence 317 AZN, pension 595 AZN, avg wage 1,176.7 AZN, sector wages 2025',
+    files: [{ path: 'client/src/lib/moneyHome/data.ts', needle: "export const MONEY_HOME_AS_OF = '2026-11-17';" }],
+    source: { label: 'stat.gov.az – labour market', url: 'https://www.stat.gov.az/source/labour/?lang=en' },
+    reviewBy: '2027-03-01',
+    cadence: 'halfYearly',
+    note: {
+      az: 'Minimum əmək haqqı, 2027 yaşayış minimumu (qanun), DSMF orta pensiyası, stat.gov.az orta maaş və sahələr üzrə maaşlar (azfigures 2027), Bakı kirayəsi təxmini və Dünya Bankı köçürmə xərclərini yeniləyin.',
+      en: 'Update the minimum wage, the 2027 subsistence minimum (law), the DSMF average pension, stat.gov.az average and sector wages (azfigures 2027), the Baku rent estimate and the World Bank remittance costs.',
+    },
+  },
+  {
+    id: 'rental-disclosure-dsk',
+    category: 'household',
+    label: { az: 'Mieterselbstauskunft (DSK Orientierungshilfe)', en: 'Tenant self-disclosure (DSK guidance)' },
+    value: 'DSK Orientierungshilfe V2.0 (January 2026); SCHUFA BonitätsCheck about 29.95 €',
+    files: [
+      { path: 'client/src/lib/rentalDisclosure.ts', needle: "export const DISCLOSURE_AS_OF = '2026-11-17';" },
+      { path: 'server/src/lib/rentalDisclosure/schema.ts', needle: 'Version 2.0, Stand Januar 2026' },
+    ],
+    source: { label: 'Datenschutzkonferenz – Orientierungshilfen', url: 'https://www.datenschutzkonferenz-online.de/orientierungshilfen.html' },
+    reviewBy: '2027-05-17',
+    cadence: 'yearly',
+    note: {
+      az: 'DSK-nın yeni versiyasını, § 551 BGB və SCHUFA qiymətini yoxlayın; sahələri server schema.ts və client rentalDisclosure.ts-də birlikdə dəyişin.',
+      en: 'Check for a new DSK version, § 551 BGB and the SCHUFA price; change fields in server schema.ts and client rentalDisclosure.ts together.',
+    },
+  },
+  {
     id: 'visa-checklists',
     category: 'residence',
     label: { az: 'Viza sənəd siyahıları (Bakı səfirliyi)', en: 'Visa document checklists (Baku embassy)' },
