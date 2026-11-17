@@ -8,7 +8,6 @@ import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '../labels';
 import { Panel } from '../ui';
 import { DocIcon, DocLinks, uploadCaseDocument, useCaseRefresh } from './shared';
-import { SendContractForSignature } from '@/components/esign/CaseSignatures';
 import { ContractCheckButton } from '@/components/aiCase/ContractCheckButton';
 
 /** PDF picker that uploads a contract (stage CONTRACT). The server sends it to the client and moves the status. */
@@ -86,19 +85,14 @@ const Row = ({ icon: IconCmp, label, children }: { icon: typeof User; label: str
 export const ContractBox = ({ c }: { c: CaseDetail }) => {
   const { t } = useTranslation();
   const k = c.contract;
-  const canReupload = c.status === 'CONTRACT_SENT' || c.status === 'CONTRACT_SIGNED';
 
   return (
     <Panel
       title={t('admin.case.contract.title')}
       icon={FileSignature}
       actions={
-        k?.file || canReupload ? (
-          <>
-            {k?.file && <ContractCheckButton caseId={c.id} source={{ documentId: k.file.id }} />}
-            {canReupload && <SendContractForSignature caseId={c.id} label={t('admin.case.contract.newVersion')} variant="ghost" />}
-          </>
-        ) : undefined
+        // New versions are sent from the two-step contracts panel (components/caseContracts): Triad Vision signs first, no employer.
+        k?.file ? <ContractCheckButton caseId={c.id} source={{ documentId: k.file.id }} /> : undefined
       }
     >
       {!k ? (

@@ -22,6 +22,8 @@ import { sectionOf } from './fileIcons';
 import { ReadinessIndicator } from './org/Readiness';
 import type { DriveItem } from './types';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
+import { PartnerPickerDialog, RemovePartnerDialog } from './clientFolders/Dialogs'; // change / remove the partner of an open client folder
+import { targetOf } from './clientFolders/api';
 
 /** German names of the application types (the same names the drive folders carry). */
 const VISA_TYPE_DE: Record<string, string> = {
@@ -283,8 +285,10 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
   const assign = useAssignPartner();
   const { user } = useAuth();
   const [partnerInfo, setPartnerInfo] = useState(false);
+  const [partnerEdit, setPartnerEdit] = useState<'change' | 'remove' | null>(null);
   if (!folder.caseId) return null;
   const info = folder.caseInfo;
+  const target = targetOf(folder);
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line bg-violet-50/60 px-3 py-2 text-xs text-violet-900 sm:px-4 dark:bg-violet-500/10 dark:text-violet-100">
       <Briefcase className="size-4 shrink-0" />
@@ -299,9 +303,21 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
       {folder.caseStatus && <span className={clsx('rounded px-1.5 py-px text-[10px] font-semibold', STATUS_TONE[folder.caseStatus as CaseStatus])}>{statusLabel(folder.caseStatus as CaseStatus)}</span>}
       {info?.partner ? (
         // The partner's name opens the same details panel as the partner cards and the partner list.
-        <button type="button" className="inline-flex items-center gap-1 hover:underline" aria-haspopup="dialog" title={t('drive.partner.info')} onClick={() => setPartnerInfo(true)}>
-          <Handshake className="size-3.5" /> {info.partner.name}
-        </button>
+        <span className="inline-flex items-center gap-1">
+          <button type="button" className="inline-flex items-center gap-1 hover:underline" aria-haspopup="dialog" title={t('drive.partner.info')} onClick={() => setPartnerInfo(true)}>
+            <Handshake className="size-3.5" /> {info.partner.name}
+          </button>
+          {target && (
+            <>
+              <button type="button" className="rounded p-0.5 hover:bg-violet-100 dark:hover:bg-violet-500/20" aria-haspopup="dialog" title={t('clientFolders.partner.change')} aria-label={t('clientFolders.partner.change')} onClick={() => setPartnerEdit('change')}>
+                <Pencil className="size-3" />
+              </button>
+              <button type="button" className="rounded p-0.5 hover:bg-violet-100 dark:hover:bg-violet-500/20" aria-haspopup="dialog" title={t('clientFolders.partner.remove')} aria-label={t('clientFolders.partner.remove')} onClick={() => setPartnerEdit('remove')}>
+                <Trash2 className="size-3" />
+              </button>
+            </>
+          )}
+        </span>
       ) : (
         <label className="inline-flex items-center gap-1.5">
           <Handshake className="size-3.5" />
@@ -340,6 +356,8 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
         <ExternalLink className="size-3.5" /> {t('drive.actions.openCase')} {folder.caseNumber}
       </Link>
       <PartnerInfoDrawer partnerId={partnerInfo && info?.partner ? info.partner.id : null} onClose={() => setPartnerInfo(false)} isAdmin={user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'} />
+      {partnerEdit === 'change' && target && <PartnerPickerDialog targets={[target]} onClose={() => setPartnerEdit(null)} onResult={() => refresh()} />}
+      {partnerEdit === 'remove' && target && <RemovePartnerDialog targets={[target]} onClose={() => setPartnerEdit(null)} onResult={() => refresh()} />}
     </div>
   );
 };

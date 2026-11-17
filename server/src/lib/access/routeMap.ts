@@ -57,6 +57,9 @@ const ADMIN_RULES: Rule[] = [
   r('/admin/reveal', 'clients', { action: 'view' }), // masked field reveal (reason + log in lib/privacy)
   r('/admin/sensitive', 'settings'),
   r('/admin/impersonate', 'clients'),
+  // Drive client folder actions (routes/admin/clientFolders): partner = partners, Fertig → portal = documents, stage = cases (segment)
+  r('/admin/client-folders/partner', 'partners'),
+  r('/admin/client-folders/(?:ready-docs|cases/[^/]+/ready-docs)', 'documents'),
 ];
 
 /** One area per mounted admin router (first path segment). */
@@ -90,6 +93,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   authorities: 'cases',
   'four-eyes': 'cases',
   'case-processing': 'cases',
+  'client-folders': 'cases', // /client-folders/processing (bulk team workflow stage); partner / ready-docs above
   arrivals: 'cases',
   'arrival-certificates': 'cases',
   housing: 'cases',
@@ -115,6 +119,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   requirements: 'documents',
   translations: 'documents',
   'contract-templates': 'documents',
+  'case-contracts': 'documents',
   signatures: 'documents',
   'official-forms': 'documents',
   expiring: 'documents',

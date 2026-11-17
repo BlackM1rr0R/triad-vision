@@ -8,6 +8,7 @@ import { cleanName } from './names.js';
 import { peekSection } from './roots.js';
 import { isStale } from '../driveCollab/lock.js';
 import { decorateUploadAi, type UploadAiChip } from '../uploadAi/chips.js';
+import { lastSentAt } from '../clientFolders/sent.js';
 
 /** Everything a listing row needs (grants come along for the access calculation). */
 export const itemSelect = {
@@ -73,6 +74,8 @@ export interface DriveItem {
     partner: { id: string; name: string } | null;
     /** Team workflow stage of the case (lib/caseProcessing; null once the case is closed without one) and who works on it. */
     processing?: { stage: string | null; assigneeId: string | null };
+    /** Last "Müştəriyə göndər" of the finished documents (lib/clientFolders/readyDocs), if any. */
+    readySentAt?: Date | null;
   };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };
@@ -157,6 +160,7 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
       : Promise.resolve([]),
   ]);
   const byFolder = new Map(cases.map((c) => [c.driveFolderId!, c]));
+  const sentAt = await lastSentAt(cases.map((c) => c.id)); // "Müştəriyə göndərilib" chip of client folders
   const byDoc = new Map(docs.map((d) => [d.id, d]));
   for (const item of items) {
     const c = byFolder.get(item.id);
@@ -171,6 +175,7 @@ export const decorateCaseLinks = async (items: DriveItem[]) => {
         visaType: c.visaType,
         partner: c.partner,
         processing: { stage, assigneeId: c.processingAssigneeId },
+        readySentAt: sentAt.get(c.id) ?? null,
       };
     }
     const d = item.documentId ? byDoc.get(item.documentId) : undefined;

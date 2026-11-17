@@ -23,6 +23,7 @@ import { SuccessShareCard } from '@/components/portal/SuccessShareCard'; // visa
 import { PermitExpiryCard } from '@/components/portal/PermitExpiryCard'; // after the visa: residence permit / Blue Card, insurance, passport validity
 import { PartnerSharingCard } from '@/components/portal/PartnerSharingCard'; // client of a referral partner: who it is + data-sharing consent
 import { NextStepCard } from './portal/NextStepCard';
+import { DocStatusSection } from '@/components/docProgress/DocProgress'; // "Sənədlərimin vəziyyəti": ring, steps, status bars, team stage
 import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
 import { AccountHomeSkeleton } from './portal/HomeSkeleton';
@@ -181,6 +182,9 @@ export default function AccountHome() {
       ) : (
         <NextStepCard data={step} loading={next.isLoading} caseLink={caseId ? caseHref(caseId, 'overview') : null} tour="portal-next" />
       )}
+
+      {/* Right below "Do this now": the documents and the whole process at a glance (own case only). */}
+      {!startHero && caseId && <DocStatusSection caseId={caseId} />}
 
       {/* A referral partner's data-sharing consent: only shown when it applies, and it needs an answer. */}
       <PartnerSharingCard />

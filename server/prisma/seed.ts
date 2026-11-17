@@ -7,6 +7,7 @@ import { seedRequirements } from './seed/requirements';
 import { seedJourney } from './seed/journey';
 import { seedGermanVocabulary } from './seed/germanVocabulary';
 import { seedContractTemplates } from './seed/contractTemplates';
+import { seedLabourContractTemplate } from './seed/labourContractTemplate'; // Əmək müqaviləsi draft (two-step case contracts)
 import { seedInterviewPrep } from './seed/interviewPrep';
 import { seedGuideCalculators, seedGuides } from './seed/guides/index';
 import { seedGuideRevisions } from './seed/guides/revisions';
@@ -576,6 +577,7 @@ async function main() {
   await seedJourney(prisma);
   await seedGermanVocabulary(prisma); // vocabulary trainer starter words (upsert by slug)
   await seedContractTemplates(prisma);
+  await seedLabourContractTemplate(prisma); // only while no LABOUR template exists
   await seedInterviewPrep(prisma);
   await seedGuides(prisma); // topic guides (/guides): each language version written once
   await seedGuideCalculators(prisma); // calculator shortcodes into guides seeded before they existed (once per row)

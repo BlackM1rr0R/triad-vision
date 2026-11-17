@@ -34,6 +34,7 @@ const KIND_TONE: Record<ContractKind, string> = {
   SERVICE: 'bg-success-bg text-success-fg',
   EMPLOYER: 'bg-info-bg text-info-fg',
   PARTNER: 'bg-warning-bg text-warning-fg',
+  LABOUR: 'bg-success-bg text-ink',
 };
 const GROUP_ORDER: PlaceholderGroup[] = ['input', 'client', 'case', 'company', 'partner', 'contract', 'vacancy', 'triad', 'staff', 'date'];
 const TOKEN = /\{\{\s*([A-Za-z][A-Za-z0-9_.]*)\s*\}\}/g;

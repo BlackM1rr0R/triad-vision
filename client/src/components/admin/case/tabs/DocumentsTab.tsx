@@ -10,6 +10,7 @@ import { AcceleratedPanel } from '@/components/recognition/AcceleratedPanel';
 import { CaseSkillVideos } from '@/components/skillVideos/StaffSkillVideos';
 import { ClientFiles } from '../ClientFiles';
 import { ContractBox } from '../Contract';
+import { CaseContractsPanel } from '@/components/caseContracts/AdminCaseContracts'; // Əmək müqaviləsi → İş müqaviləsi (Triad Vision signs first)
 import { RequirementsSection } from '../Requirements';
 import type { CaseTabProps } from './types';
 import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
@@ -53,7 +54,8 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
       {/* Four-eyes check of the package before the embassy step (from the embassy stage on). */}
       {showEmbassy && <FourEyesPanel c={c} />}
       <div id="case-contract">
-        <ContractBox c={c} />
+        {/* Two-step contracts; the old single-contract box only for a contract sent the old way. */}
+        <CaseContractsPanel c={c} legacy={<ContractBox c={c} />} />
       </div>
       {/* Employment contract with the employer (Arbeitsvertrag): terms, checks, probation end. */}
       <EmploymentContractPanel caseId={c.id} />

@@ -17,6 +17,7 @@ import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseDocuments } from '@/components/portal/CaseDocuments';
 import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
 import { CaseContract } from '@/components/portal/CaseContract';
+import { ClientCaseContracts } from '@/components/caseContracts/ClientCaseContracts'; // Əmək müqaviləsi → İş müqaviləsi states
 import { CaseMessages } from '@/components/portal/CaseMessages';
 import { AppointmentCard, CaseTimeline, DecisionCard, OtherFiles } from '@/components/portal/CaseCards';
 import { useErrorMessage } from '@/components/portal/useApiError';
@@ -46,6 +47,7 @@ import { NextUpCard, StickyBelowHeader } from './portal/NextUpCard';
 import { CaseNumbers } from './portal/SecondaryCards';
 import { NextItems } from './portal/NextItems';
 import { tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
+import { CaseDocProgress } from '@/components/docProgress/DocProgress'; // status bars, team stage (Schon geschrieben / Fertig / Ablehnung), embassy collection
 import { OfflineCard } from '@/components/offline/OfflineCard'; // "Oflayn sənədlərim" + "Termin məlumatı" (PWA, own device)
 
 registerCopy(pagesPortalUx);
@@ -161,6 +163,7 @@ export default function CaseView() {
         qc.invalidateQueries({ queryKey: ['cases'] }),
         qc.invalidateQueries({ queryKey: ['notifications'] }),
         qc.invalidateQueries({ queryKey: OVERVIEW_KEY }),
+        qc.invalidateQueries({ queryKey: ['doc-progress', id] }), // "Sənədlərimin vəziyyəti"
       ]),
     [qc, id],
   );
@@ -223,7 +226,8 @@ export default function CaseView() {
 
   const contractFirst = data.status === 'CONTRACT_SENT' || data.status === 'CONTRACT_SIGNED';
   const embassyFirst = data.status === 'EMBASSY_DOCUMENTS' || data.status === 'EMBASSY_REVIEW';
-  const contract = data.contract ? <CaseContract key="contract" data={data} onChanged={refresh} /> : null;
+  // Two-step contracts (Əmək / İş müqaviləsi) when the case has them; otherwise the previous single-contract card.
+  const contract = <ClientCaseContracts key="contract" data={data} fallback={data.contract ? <CaseContract data={data} onChanged={refresh} /> : null} />;
   const initialDocs = <CaseDocuments key="initial" data={data} stage="INITIAL" onChanged={refresh} />;
   const embassyDocs = <CaseDocuments key="embassy" data={data} stage="EMBASSY" onChanged={refresh} />;
   // Document intelligence (OCR / checks) sits right under the documents being worked on.
@@ -325,6 +329,7 @@ export default function CaseView() {
         {current === 'docs' && (
           <>
             <DocumentsPurgedNotice at={data.documentsPurgedAt} audience="client" />
+            <CaseDocProgress caseId={data.id} />
             {mainBlocks}
             <OtherFiles data={data} />
             <div id="originals" className="scroll-mt-40 empty:hidden">

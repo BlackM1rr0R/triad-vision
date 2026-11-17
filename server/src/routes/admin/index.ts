@@ -40,6 +40,7 @@ import { adminInterviewPrepRouter } from './interviewPrep.js';
 import { adminFinanceRouter } from './finance.js';
 import { adminSurveysRouter } from './surveys.js';
 import { adminContractTemplatesRouter } from './contractTemplates.js';
+import { adminCaseContractsRouter } from './caseContracts.js'; // Əmək müqaviləsi → İş müqaviləsi (Triad Vision signs first, staff approve)
 import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminCandidatePoolRouter } from './candidatePool.js'; // anonymous candidate pool: overview, interests, view log
 import { adminPartnersRouter } from './partners.js';
@@ -62,6 +63,7 @@ import { adminTvDisplayRouter } from './tvDisplay.js'; // office TV mode: settin
 import { adminOpsCalendarRouter } from './opsCalendar.js'; // embassy / operations calendar layer
 import { adminCannedRepliesRouter } from './cannedReplies.js'; // canned replies ("/" picker)
 import { adminCaseProcessingRouter } from './caseProcessing.js'; // team document workflow: Schon geschrieben → Fertig, Ablehnung
+import { adminClientFoldersRouter } from './clientFolders.js'; // drive client folders: partner, bulk stage, Fertig → client portal
 import { adminHistoryRouter } from './history.js';
 import { adminAssignmentRouter, adminAutomationRouter } from './automation.js'; // no-code automation rules + automatic assignment
 import { adminReportsRouter } from './reports.js';
@@ -279,6 +281,7 @@ adminRouter.use('/accelerated', adminAcceleratedRouter); // § 81a beschleunigte
 adminRouter.use('/authorities', adminAuthoritiesRouter); // Botschaft / Ausländerbehörde catalogue + case links
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use(adminCaseProcessingRouter); // /cases/:id/processing, /case-processing/board (Schon geschrieben → Fertig, Ablehnung)
+adminRouter.use('/client-folders', adminClientFoldersRouter); // /client-folders/partner, /processing, /ready-docs/send, /cases/:caseId/ready-docs
 adminRouter.use('/access/employers', adminAccessEmployersRouter); // employer roles per company member (SUPER_ADMIN)
 adminRouter.use('/access/sensitive', adminAccessSensitiveRouter); // mask groups × role / template / user, test as user
 adminRouter.use('/access/partners', adminAccessPartnersRouter); // per-partner permissions (manage access), team members + messages (partners:view/edit)
@@ -313,6 +316,7 @@ adminRouter.use('/reports', adminReportsRouter); // report builder (ADMIN+)
 adminRouter.use('/profitability', adminProfitabilityRouter); // profitability per case (ADMIN+)
 adminRouter.use('/surveys', adminSurveysRouter);
 adminRouter.use('/contract-templates', adminContractTemplatesRouter);
+adminRouter.use('/case-contracts', adminCaseContractsRouter);
 adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
 adminRouter.use('/candidate-pool', adminCandidatePoolRouter);
 adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log

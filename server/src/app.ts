@@ -110,6 +110,7 @@ import { aiMailRouter } from './routes/aiMail.js';
 import { uploadAiRouter } from './routes/uploadAi.js';
 import { clientDataRouter } from './routes/clientData.js';
 import { clientProcessRouter } from './routes/clientProcess.js';
+import { docProgressRouter } from './routes/docProgress.js'; // client portal: "Sənədlərimin vəziyyəti" process overview
 import { siteRouter } from './routes/site.js';
 import { growthRouter } from './routes/growth.js';
 import { landingRouter } from './routes/landing.js'; // public landing pages (/l/:slug)
@@ -132,6 +133,7 @@ import { visaChecklistRouter } from './routes/visaChecklist.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
+import { accountCaseContractsRouter } from './routes/accountCaseContracts.js'; // client portal: Əmək / İş müqaviləsi states
 import { accountAuthoritiesRouter } from './routes/accountAuthorities.js'; // client portal: embassy / Ausländerbehörde info (catalogue)
 import { accountPermitsRouter } from './routes/accountPermits.js'; // client portal: own permit / passport / insurance expiry dates
 import { accountSuccessShareRouter, publicSuccessShareRouter } from './routes/successShare.js'; // "visa approved" share cards + /success/:token
@@ -271,6 +273,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
+  app.use('/api/account/case-contracts', accountCaseContractsRouter); // two-step case contracts of the own case (lib/caseContracts)
   app.use('/api/account/rule-changes', accountRuleChangesRouter); // rule changes sent to the client (lib/ruleChanges)
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case
   app.use('/api/account/permits', accountPermitsRouter); // residence permit / Blue Card, insurance, passport: days left
@@ -367,6 +370,7 @@ export const createApp = () => {
   app.use('/api/upload-ai', uploadAiRouter); // smart uploads: recognition proposals + scan quality
   app.use('/api/client-data', clientDataRouter); // questionnaires, data confirmation, document guides (portal)
   app.use('/api/client-process', clientProcessRouter); // ball in court, client tasks, office visits (portal / app)
+  app.use('/api/doc-progress', docProgressRouter); // own cases only: steps, documents per status, team stage (informational)
   app.use('/api/ai', aiRouter);
   app.use('/api/ai-writing', aiWritingRouter);
   app.use('/api/public-ai', publicAiRouter);

@@ -335,6 +335,8 @@ export const staffConfirmContract = async (caseId: string, actorId: string) => {
     },
   });
   await after(caseId, 'EMBASSY_DOCS_REQUESTED');
+  // A signed Əmək müqaviləsi (two-step case contracts) counts as approved by this step (lazy import: no cycle; never throws).
+  await import('./caseContracts/service.js').then((m) => m.onContractConfirmed(caseId, actorId)).catch(() => undefined);
 };
 
 export const staffScheduleAppointment = async (

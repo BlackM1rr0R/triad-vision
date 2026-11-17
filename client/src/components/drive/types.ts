@@ -60,6 +60,8 @@ export interface DriveItem {
     partner: { id: string; name: string } | null;
     /** Team workflow stage of the case (In Bearbeitung · Schon geschrieben · Fertig · Ablehnung) and who works on it. */
     processing?: { stage: string | null; assigneeId: string | null };
+    /** Last "Müştəriyə göndər" of the Fertig documents (components/drive/clientFolders), if any. */
+    readySentAt?: string | null;
   };
   /** Partner folders below "Partner": the referral partner. */
   partner?: { id: string; name: string; phone: string | null; email: string | null; active: boolean };

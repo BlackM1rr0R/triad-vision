@@ -93,6 +93,7 @@ import type { DocEditorTarget } from '@/components/docCreate/DocEditor';
 import { useDriveIntel, useSearchInContent } from '@/components/drive/intel/useDriveIntel';
 import { BoardView, useDriveOrg } from '@/components/drive/org/useDriveOrg';
 import { parseWorkflow, useDriveProcessing } from '@/components/drive/processing/useDriveProcessing';
+import { useClientFolderActions } from '@/components/drive/clientFolders/useClientFolderActions'; // partner / bulk stage / Fertig → client on client folders
 import { usePdfTools } from '@/components/pdfTools/usePdfTools';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -188,6 +189,8 @@ export default function WorkspaceDrive() {
   const org = useDriveOrg({ folder: folderId ? listing.data?.folder : undefined, loc, isAdmin, isSuper, onNavigate: (href) => navigate(href) });
   // Team workflow of client folders ("İş axını": In Bearbeitung → Schon geschrieben → Fertig, Ablehnung): components/drive/processing.
   const proc = useDriveProcessing({ loc, onNavigate: (href) => navigate(href) });
+  // Client folders without opening them: partner, status chips + filter, bulk "Schon geschrieben", "Müştəriyə göndər".
+  const cf = useClientFolderActions();
   const orgSource = org.flatSource(loc);
   const flatKind = loc.kind === 'shared' || loc.kind === 'recent' || loc.kind === 'starred' || loc.kind === 'trash' || loc.kind === 'search' || orgSource ? loc.kind : null;
   const [inContent, setInContent] = useSearchInContent();
@@ -230,8 +233,8 @@ export default function WorkspaceDrive() {
       if (r === 0) r = collator.compare(a.name, b.name);
       return r * dir;
     });
-    return org.filterItems(keyed);
-  }, [rawItems, sortKey, sortDir, loc.kind, org.filterItems, hidePartnerFolders]);
+    return cf.filterItems(org.filterItems(keyed));
+  }, [rawItems, sortKey, sortDir, loc.kind, org.filterItems, cf.filterItems, hidePartnerFolders]);
   const mode: ListMode = loc.kind === 'trash' ? 'trash' : folderId ? 'folder' : 'flat';
 
   // ── selection ──
@@ -597,6 +600,7 @@ export default function WorkspaceDrive() {
       if (loc.kind === 'trash' && items.length && isAdmin) out.push({ id: 'empty', label: t('drive.actions.emptyTrash'), icon: Trash2, danger: true, onSelect: () => setConfirm({ kind: 'empty' }) });
       out.push(...org.menuEntries(null));
       out.push(...proc.menuEntries(folder ? [folder] : null, listing.data?.path.map((c) => c.id)));
+      out.push(...cf.menuEntries(folder?.caseId ? [folder] : null));
       out.push({ id: 'refresh', label: t('drive.toolbar.refresh'), icon: RefreshCw, onSelect: refresh });
       if (items.length) out.push({ id: 'all', label: t('drive.actions.selectAll'), icon: Clipboard, onSelect: () => select(new Set(items.map((i) => i.id)), null, null) });
       if (folder) {
@@ -635,6 +639,7 @@ export default function WorkspaceDrive() {
     out.push(...intel.menuEntries(list), ...pdfTools.menuEntries(list));
     out.push(...org.menuEntries(list));
     out.push(...proc.menuEntries(list, listing.data?.path.map((c) => c.id)));
+    out.push(...cf.menuEntries(list));
     out.push({ kind: 'separator', id: 's1' });
     if (single && writable(single)) {
       out.push(
@@ -681,7 +686,7 @@ export default function WorkspaceDrive() {
       ];
     }
     const single = list.length === 1 ? list[0] : null;
-    const out: ToolAction[] = [...proc.toolActions(list, listing.data?.path.map((c) => c.id))];
+    const out: ToolAction[] = [...proc.toolActions(list, listing.data?.path.map((c) => c.id)), ...cf.toolActions(list)];
     if (single && isSheet(single)) out.push({ id: 'table', icon: FileSpreadsheet, label: t('drive.shared.openAsTable'), onClick: () => go(sheetHref(single.id)), primary: true });
     if (single?.kind === 'FILE' && can(single.myAccess, 'DOWNLOAD')) out.push({ id: 'dl', icon: Download, label: t('drive.actions.download'), onClick: () => startDownload(contentUrl(single.id, true)), primary: true });
     if (zippable(list) && (list.length > 1 || single?.kind === 'FOLDER')) out.push({ id: 'zip', icon: FileArchive, label: t('drive.actions.downloadZip'), onClick: () => zip(list), primary: true });
@@ -1042,6 +1047,7 @@ export default function WorkspaceDrive() {
             />
             {searchBar}
             {view !== 'board' && org.filterBar(rawItems)}
+            {view !== 'board' && cf.filterBar(rawItems)}
             {loc.kind === 'search' && intel.searchPanel(rawItems)}
             <div className="flex min-h-0 flex-1">
               <main className="relative min-w-0 flex-1 bg-card" {...paneDrop.handlers}>
@@ -1415,6 +1421,7 @@ export default function WorkspaceDrive() {
       {pdfTools.dialogs}
       {org.dialogs}
       {proc.dialogs}
+      {cf.dialogs}
       <UploadPanel tasks={uploads.tasks} onCancel={uploads.cancel} onCancelAll={uploads.cancelAll} onClear={uploads.clearFinished} extra={org.uploadExtra} />
     </div>
   );

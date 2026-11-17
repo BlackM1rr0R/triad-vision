@@ -21,7 +21,8 @@ import { metaOf } from '../../lib/esign/http.js';
 export const adminContractTemplatesRouter = Router();
 
 // EMPLOYER / PARTNER: contracts with an employer or a referral partner, generated in lib/partnerRecords (not per case).
-const KINDS = ['WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'] as const;
+// LABOUR: Əmək müqaviləsi (Triad Vision ↔ client), sent only through the two-step case contracts (lib/caseContracts).
+const KINDS = ['WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER', 'LABOUR'] as const;
 const PARTY_KINDS: ContractKind[] = ['EMPLOYER', 'PARTNER'];
 const LANGS = ['de', 'en', 'az', 'ru'] as const;
 const id = z.string().trim().min(1).max(40);
@@ -154,7 +155,7 @@ const fileNameOf = (name: string, number: string) =>
     .slice(0, 80) || 'Vertrag'}-${number}.pdf`;
 
 const partiesOf = (kind: ContractKind, values: Record<string, string>): [string, string] =>
-  kind === 'SERVICE' ? [values['triad.name'], values['client.fullName']] : [values['company.name'], values['client.fullName']];
+  kind === 'SERVICE' || kind === 'LABOUR' ? [values['triad.name'], values['client.fullName']] : [values['company.name'], values['client.fullName']];
 
 adminContractTemplatesRouter.post('/:id/preview', async (req, res) => {
   const body = parse(useSchema, req.body ?? {});
@@ -203,6 +204,8 @@ adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
   const body = parse(sendSchema, req.body ?? {});
   const { t, c, lang, values, rendered } = await renderFor(req, String(req.params.id), body.caseId, body.inputs);
   if (!t.active) throw badRequest('TEMPLATE_INACTIVE');
+  // Əmək müqaviləsi: Triad Vision signs first, staff approve — only through /api/admin/case-contracts.
+  if (t.kind === 'LABOUR') throw badRequest('USE_CASE_CONTRACTS');
   const pdf = await renderContractPdf({ title: t.name, text: rendered.text, kind: t.kind, language: lang, parties: partiesOf(t.kind, values) });
   const signers = body.signers ?? (await defaultSigners(t.kind, c, req));
   const actor = actorOf(req);

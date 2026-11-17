@@ -136,6 +136,50 @@ const nextStep = {
   counts: { actions: 2, unreadMessages: 1, unreadNotifications: 1, pendingSignatures: 0, pendingLegal: 0, openCheckIns: 0, openInvoices: 0, hasBilling: false },
 };
 
+// Portal home "Sənədlərimin vəziyyəti" (server lib/docProgress/build.ts) for the same case.
+const t4 = (az, en) => ({ az, de: en, en, ru: en });
+const docItem = (id, key, az, en, status, required = true) => ({ id, key, title: t4(az, en), required, status, uploadedAt: status === 'MISSING' ? null : '2026-01-10T10:00:00.000Z', uploadable: status !== 'ACCEPTED' });
+const docCounts = (items) => ({
+  total: items.length,
+  missing: items.filter((i) => i.status === 'MISSING').length,
+  pending: items.filter((i) => i.status === 'PENDING').length,
+  accepted: items.filter((i) => i.status === 'ACCEPTED').length,
+  rejected: items.filter((i) => i.status === 'REJECTED').length,
+  required: items.filter((i) => i.required).length,
+  requiredAccepted: items.filter((i) => i.required && i.status === 'ACCEPTED').length,
+});
+const initialDocs = [docItem('r1', 'PASSPORT', 'Pasport', 'Passport', 'ACCEPTED'), docItem('r2', 'PHOTO', 'Biometrik foto', 'Biometric photo', 'ACCEPTED'), docItem('r3', 'CV', 'CV', 'CV', 'ACCEPTED'), docItem('r4', 'DIPLOMA', 'Diplom', 'Diploma', 'ACCEPTED')];
+const embassyDocs = [docItem('r5', 'VIDEX', 'Viza ərizəsi (VIDEX)', 'Visa form (VIDEX)', 'PENDING'), docItem('r6', 'PHOTO_2', '2 biometrik foto', '2 biometric photos', 'REJECTED'), docItem('r7', 'HEALTH_INSURANCE', 'Tibbi sığorta', 'Health insurance', 'MISSING'), docItem('r8', 'SIGNED_CONTRACT', 'İmzalanmış müqavilə', 'Signed contract', 'ACCEPTED')];
+const docProgress = {
+  caseId: clientCase.id,
+  number: clientCase.number,
+  status: clientCase.status,
+  visaType: 'WORK',
+  percent: 42,
+  steps: [
+    { key: 'documents', state: 'done', enteredAt: '2025-10-02T08:30:00.000Z', leftAt: '2025-11-03T10:00:00.000Z', expectedFrom: null, expectedTo: null },
+    { key: 'contract', state: 'done', enteredAt: '2025-11-03T10:00:00.000Z', leftAt: '2025-12-15T10:00:00.000Z', expectedFrom: null, expectedTo: null },
+    { key: 'embassyDocs', state: 'current', enteredAt: '2025-12-15T10:00:00.000Z', leftAt: null, expectedFrom: '2026-01-20T10:00:00.000Z', expectedTo: '2026-02-05T10:00:00.000Z' },
+    { key: 'appointment', state: 'upcoming', enteredAt: null, leftAt: null, expectedFrom: '2026-02-20T10:00:00.000Z', expectedTo: '2026-03-20T10:00:00.000Z' },
+    { key: 'decision', state: 'upcoming', enteredAt: null, leftAt: null, expectedFrom: '2026-03-10T10:00:00.000Z', expectedTo: '2026-05-01T10:00:00.000Z' },
+    { key: 'result', state: 'upcoming', enteredAt: null, leftAt: null, expectedFrom: null, expectedTo: null },
+  ],
+  documents: [
+    { stage: 'INITIAL', preview: false, uploadOpen: false, counts: docCounts(initialDocs), items: initialDocs },
+    { stage: 'EMBASSY', preview: false, uploadOpen: true, counts: docCounts(embassyDocs), items: embassyDocs },
+  ],
+  processing: {
+    stage: 'WRITTEN',
+    word: 'Schon geschrieben',
+    label: { az: 'Schon geschrieben — artıq yazılıb', de: 'Schon geschrieben', en: 'Schon geschrieben — already written', ru: 'Schon geschrieben — уже подготовлено' },
+    meaning: { az: 'artıq yazılıb', de: 'bereits geschrieben', en: 'already written', ru: 'уже подготовлено' },
+    explanation: t4('Komandamız müraciət sənədlərinizi artıq yazıb hazırlayıb. İndi onları yoxlayırıq. Sizdən heç nə tələb olunmur.', 'Our team has already written and prepared your application documents. We are checking them now. You do not need to do anything.'),
+    tone: 'info',
+    at: '2026-01-12T10:00:00.000Z',
+  },
+  embassyCollection: null,
+};
+
 // ── admin: cases ────────────────────────────────────────────────────────────
 const people = [
   ['Leyla', 'Məmmədova', 'Tibb bacısı', 'EMBASSY_DOCUMENTS', 1],
@@ -393,6 +437,7 @@ const ROUTES = [
   // client portal
   ['GET', '/api/account/overview', accountOverview],
   ['GET', '/api/account/next-step', nextStep],
+  ['GET', `/api/doc-progress/cases/${clientCase.id}`, { overview: docProgress }],
   ['GET', '/api/signatures/my', { items: [] }],
 
   // admin / workspace

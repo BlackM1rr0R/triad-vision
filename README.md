@@ -73,7 +73,7 @@ ssh root@SERVER 'bash -s' < deploy/server-setup.sh
 deploy/push.sh root@SERVER
 ```
 
-`push.sh` uploads the working tree (ignored files excluded), builds the images on the server, applies migrations, runs the idempotent seed and prints the container status. Data lives on the host under `/opt/triad-vision/data`: `mysql/`, `uploads/` (case files), `docs/` (staff workspaces, e.g. `docs/tofig/senedleri/...`), `caddy/` (certificates). Back up that directory.
+Normal deploys run through GitHub Actions, which builds the images on the runner and only loads and starts them on the server ([deploy/README-ci.md](deploy/README-ci.md)). `push.sh` uploads the working tree (ignored files excluded), builds the images on the server (with `PREBUILT=1`: builds them locally with Docker and only loads them on the server, which is safer on a 2 GB server), applies migrations, runs the idempotent seed and prints the container status. Data lives on the host under `/opt/triad-vision/data`: `mysql/`, `uploads/` (case files), `docs/` (staff workspaces, e.g. `docs/tofig/senedleri/...`), `caddy/` (certificates). Back up that directory.
 
 Useful on the server (`cd /opt/triad-vision/src`): `docker compose -f docker-compose.prod.yml logs -f api`, `... ps`, `... restart api`, `... exec db mysqldump -uroot -p triad_vision > backup.sql`.
 

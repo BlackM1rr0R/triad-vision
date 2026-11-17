@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
-# Runs ON THE SERVER (uploaded and started by deploy/push.sh): unpack, build, start, migrate, seed.
+# Runs ON THE SERVER (started by deploy/ci-deploy.sh or deploy/push.sh): unpack, build or load, start, migrate, seed.
 #   bash remote-deploy.sh /opt/triad-vision /tmp/triad-vision.tar.gz
+#   PREBUILT_IMAGES=/var/tmp/.../images.tar.gz bash remote-deploy.sh /opt/triad-vision /tmp/triad-vision.tar.gz
+# With PREBUILT_IMAGES (a `docker save` archive from deploy/build-images.sh, built in CI) nothing is compiled here:
+# the images are loaded, re-tagged and started. Without it the images are built on this server as before
+# (fallback; on the 2 GB production server that build can swap-thrash it, see deploy/README-ci.md).
 set -euo pipefail
 APP_DIR=${1:-/opt/triad-vision}
 ARCHIVE=${2:-/tmp/triad-vision.tar.gz}
+PREBUILT_IMAGES=${PREBUILT_IMAGES:-}
+PREBUILT_REPO=${PREBUILT_REPO:-triad-vision-prebuilt}
+# Free space (MB) the image load needs on Docker's disk besides the archive itself (layers are unpacked there).
+MIN_FREE_MB=${MIN_FREE_MB:-2048}
+free_mb() { df -Pm "$1" | awk 'NR==2 {print $4}'; }
 COMPOSE="docker compose -f docker-compose.prod.yml"
 # White-label customer instances (deploy/whitelabel/) keep a compose override next to .env.production, e.g. to
 # leave out the owner's built-in mail server. The owner's server has no such file: the stack stays as it is.
@@ -36,15 +45,47 @@ chown -R 2000:2000 "$APP_DIR/data/mail"
 chmod 400 "$APP_DIR/data/mail/cloudflare-dns-token"
 cd src
 
-echo "== build + start"
-# --pull: always rebuild on top of the newest patched base images (node, caddy) and MySQL 8.4 patch.
-$COMPOSE pull db
-# One image at a time: the server has 2 GB RAM, and the API compile and the site build together run out of memory.
-$COMPOSE build --pull api
-$COMPOSE build --pull web
-# Same Dockerfile as web (stage `ssr`): reuses the cached site build, only adds the small Node image.
-$COMPOSE build --pull ssr
-$COMPOSE up -d --remove-orphans
+if [ -n "$PREBUILT_IMAGES" ]; then
+  echo "== load prebuilt images + start (built in CI: no compile on this server)"
+  [ -s "$PREBUILT_IMAGES" ] || { echo "prebuilt image archive $PREBUILT_IMAGES is missing or empty" >&2; exit 1; }
+  # Room to unpack the layers: compressed archive size x3 (gzip ratio) plus a margin; refuse rather than fill the disk.
+  docker_root=$(docker info -f '{{.DockerRootDir}}' 2>/dev/null || echo /var/lib/docker)
+  need_mb=$(( $(du -m "$PREBUILT_IMAGES" | cut -f1) * 3 + MIN_FREE_MB ))
+  have_mb=$(free_mb "$docker_root")
+  if [ "$have_mb" -lt "$need_mb" ]; then
+    echo "   only ${have_mb} MB free on $docker_root, need ${need_mb} MB: dropping build cache and dangling images"
+    docker builder prune -af >/dev/null 2>&1 || true
+    docker image prune -f >/dev/null 2>&1 || true
+    have_mb=$(free_mb "$docker_root")
+    [ "$have_mb" -ge "$need_mb" ] || { echo "not enough disk on $docker_root: ${have_mb} MB free, need ${need_mb} MB" >&2; exit 1; }
+  fi
+  # Streams the layers to disk; needs little memory (no Node, no compiler).
+  docker load -i "$PREBUILT_IMAGES"
+  rm -f "$PREBUILT_IMAGES"
+  # Compose names built images <project>-<service> (project = this directory, "src": src-api, src-web, src-ssr).
+  images=$($COMPOSE config --images 2>/dev/null || true)
+  for svc in api web ssr; do
+    target="${COMPOSE_PROJECT_NAME:-$(basename "$PWD")}-$svc"
+    if [ -n "$images" ] && ! grep -qx "$target" <<<"$images"; then
+      echo "compose does not expect an image named $target (it lists: $(echo $images))" >&2; exit 1
+    fi
+    docker tag "$PREBUILT_REPO/$svc:incoming" "$target"
+    docker rmi "$PREBUILT_REPO/$svc:incoming" >/dev/null
+  done
+  # MySQL 8.4 patch release, as before. The app images are only ever loaded, never built or pulled, here.
+  $COMPOSE pull db
+  $COMPOSE up -d --no-build --remove-orphans
+else
+  echo "== build + start"
+  # --pull: always rebuild on top of the newest patched base images (node, caddy) and MySQL 8.4 patch.
+  $COMPOSE pull db
+  # One image at a time: the server has 2 GB RAM, and the API compile and the site build together run out of memory.
+  $COMPOSE build --pull api
+  $COMPOSE build --pull web
+  # Same Dockerfile as web (stage `ssr`): reuses the cached site build, only adds the small Node image.
+  $COMPOSE build --pull ssr
+  $COMPOSE up -d --remove-orphans
+fi
 
 echo "== waiting for the API (migrations run on start)"
 api_up=0
@@ -67,8 +108,14 @@ echo "== seed (idempotent: super admin + initial content when the tables are emp
 $COMPOSE exec -T api npm run seed -w server </dev/null
 
 docker image prune -f >/dev/null
-echo "== cleanup (keep at most 4 GB of build cache, drop untagged images; the disk filled up without it)"
-docker builder prune -f --keep-storage 4GB >/dev/null 2>&1 || docker builder prune -f --max-used-space 4GB >/dev/null 2>&1 || true
+if [ -n "$PREBUILT_IMAGES" ]; then
+  # Images now come from CI: build cache here only takes disk (a later fallback build simply starts cold).
+  echo "== cleanup (drop build cache and the previous, now untagged images)"
+  docker builder prune -af >/dev/null 2>&1 || true
+else
+  echo "== cleanup (keep at most 4 GB of build cache, drop untagged images; the disk filled up without it)"
+  docker builder prune -f --keep-storage 4GB >/dev/null 2>&1 || docker builder prune -f --max-used-space 4GB >/dev/null 2>&1 || true
+fi
 docker image prune -f >/dev/null 2>&1 || true
 
 echo "== containers"

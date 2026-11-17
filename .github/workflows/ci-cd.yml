@@ -1,7 +1,7 @@
 # CI/CD for triad-vision.de
 #
 #   every push / pull request:  typecheck + build + unit tests + e2e tests (12 parallel shards)
-#   push to main, all green:    deploy to production (backup first) and check the live site
+#   push to main, all green:    build the images on the runner, ship them to production (backup first), check the live site
 #
 # Secrets (Settings → Secrets and variables → Actions): DEPLOY_HOST, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
 # The deploy key can only run deploy/ci-deploy.sh on the server (forced command), see deploy/README-ci.md.
@@ -182,7 +182,38 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-      - name: Ship the commit and deploy (backup runs on the server first)
+      # The images are built here, on the runner, and the server only loads and starts them: building on the 2 GB
+      # production server swap-thrashed it (site and SSH down for 20+ minutes). Fallback to the old server-side
+      # build: repository variable DEPLOY_SERVER_BUILD=1 (Settings → Secrets and variables → Actions → Variables).
+      - name: Server accepts prebuilt images
+        if: vars.DEPLOY_SERVER_BUILD != '1'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          caps=$(ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+                   "root@$DEPLOY_HOST" capabilities </dev/null 2>&1 || true)
+          if ! grep -qw deploy-prebuilt <<<"$caps"; then
+            echo "::error::The server's /usr/local/sbin/triad-ci-deploy is older than deploy/ci-deploy.sh (answer: $caps)"
+            echo "Install it once on the server (from a checkout of this commit):"
+            echo "  install -m 700 deploy/ci-deploy.sh /usr/local/sbin/triad-ci-deploy"
+            echo "then re-run this job. Or set the repository variable DEPLOY_SERVER_BUILD=1 (old server-side build)."
+            exit 1
+          fi
+      - name: Build the images (api, web, ssr) on the runner
+        if: vars.DEPLOY_SERVER_BUILD != '1'
+        run: |
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/src.tar.gz"
+          bash deploy/build-images.sh "$RUNNER_TEMP/src.tar.gz" "$RUNNER_TEMP/images.tar.gz"
+      - name: Ship the commit and the images, deploy (backup runs on the server first)
+        if: vars.DEPLOY_SERVER_BUILD != '1'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          tar -C "$RUNNER_TEMP" -cf - src.tar.gz images.tar.gz \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+                "root@$DEPLOY_HOST" deploy-prebuilt
+      - name: Ship the commit and deploy, building on the server (fallback)
+        if: vars.DEPLOY_SERVER_BUILD == '1'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |

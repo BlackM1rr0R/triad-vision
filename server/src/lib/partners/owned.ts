@@ -81,8 +81,8 @@ export const partnerIdFromRequest = async (req: { cookies?: Record<string, unkno
   return (await findPartnerByCode(raw.slice(0, 64)))?.id ?? null;
 };
 
-/** Notifies the partner's portal login (fire-and-forget safe). */
-const notifyPartner = async (partnerId: string, msg: (t: (typeof PARTNER_CLIENT_TEXT)['az'], locale: Locale) => { title: string; body: string; link: string; cta?: string; type: string }) => {
+/** Notifies the partner's portal login (fire-and-forget safe). Also used by lib/clientFolders (partner set from a drive client folder). */
+export const notifyPartner = async (partnerId: string, msg: (t: (typeof PARTNER_CLIENT_TEXT)['az'], locale: Locale) => { title: string; body: string; link: string; cta?: string; type: string }) => {
   try {
     const p = await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { userId: true, user: { select: { locale: true, role: true } } } });
     if (!p?.userId || p.user?.role !== 'AGENT') return;

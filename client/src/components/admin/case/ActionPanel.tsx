@@ -24,8 +24,12 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { fmtDateTime, statusLabel, toLocalInput } from '../labels';
 import { Panel } from '../ui';
-import { SendContractForSignature } from '@/components/esign/CaseSignatures';
+import { goToCaseSection } from './sections';
 import { missingAccepted, useCaseAction, type ActionBody } from './shared';
+import { registerCopy } from '@/i18n';
+import { pagesCaseContracts } from '@/i18n/pagesCaseContracts';
+
+registerCopy(pagesCaseContracts);
 
 type ActionKey = 'SEND_CONTRACT' | 'REQUEST_CHANGES' | 'CONFIRM_CONTRACT' | 'REJECT_SIGNATURE' | 'SCHEDULE' | 'MARK_LODGED' | 'DECIDE' | 'REOPEN';
 
@@ -156,7 +160,10 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
           <div className="space-y-3">
             <p className="text-sm text-ink/80">{a('sendContractText', { status: statusLabel('CONTRACT_SENT') })}</p>
             <MissingHint missing={missingInitial} what={a('sendContractWhat')} />
-            <SendContractForSignature caseId={c.id} disabled={missingInitial.length > 0} />
+            {/* Əmək müqaviləsi is sent from the two-step contracts panel (documents tab): Triad Vision signs first, no employer. */}
+            <button type="button" className="btn-primary btn-sm" disabled={missingInitial.length > 0} onClick={() => goToCaseSection('case-contract')}>
+              <FileSignature className="size-3.5" /> {t('caseContracts.send')}: {t('caseContracts.steps.LABOUR.name')}
+            </button>
           </div>
         );
 

@@ -479,6 +479,8 @@ model Case {
   /// Staff member who should take the next step (gets a notification and a "my work" item).
   processingAssigneeId     String?               @db.VarChar(40)
   processingMoves          CaseProcessingMove[]
+  /// "Müştəriyə göndər": finished (Fertig) documents sent to the client's portal (lib/clientFolders/readyDocs).
+  readyDocsSends           CaseReadyDocsSend[]
   /// Authorities catalogue (lib/authorities): the German embassy / consulate and the Ausländerbehörde of the case; further ones in authorityLinks.
   embassyAuthorityId       String?
   embassyAuthority         Authority?            @relation("CaseEmbassyAuthority", fields: [embassyAuthorityId], references: [id], onDelete: SetNull)
@@ -2325,6 +2327,14 @@ model SignatureRequest {
   order           SignatureOrder         @default(SEQUENTIAL)
   /// The case's employment contract: completion marks Case.contract as signed.
   isCaseContract  Boolean                @default(false)
+  /// Two-step case contracts (lib/caseContracts): LABOUR = Əmək müqaviləsi (Triad Vision ↔ client, first),
+  /// WORK / AUSBILDUNG = İş müqaviləsi (second, only after the first is approved). Null = any other request.
+  contractKind    ContractKind?
+  /// Staff approval after both signatures (two-step case contracts only).
+  approvedAt      DateTime?
+  approvedById    String?                @db.VarChar(191)
+  /// Signed copy saved in the client's drive folder ("<client folder>/Əmək müqaviləsi" …).
+  driveNodeId     String?                @db.VarChar(191)
   originalName    String                 @db.VarChar(255)
   originalKey     String                 @unique @db.VarChar(191)
   originalSha256  String                 @db.Char(64)
@@ -2349,6 +2359,7 @@ model SignatureRequest {
   @@index([status, expiresAt])
   @@index([caseId])
   @@index([companyId])
+  @@index([caseId, contractKind])
   @@index([createdAt])
 }
 
@@ -2941,6 +2952,7 @@ enum ContractKind {
   SERVICE // Dienstleistungsvertrag (Triad Vision ↔ client)
   EMPLOYER // Personalvermittlungs- / Kooperationsvertrag (Triad Vision ↔ employer)
   PARTNER // Kooperations- / Provisionsvertrag (Triad Vision ↔ referral partner)
+  LABOUR // Əmək müqaviləsi (Triad Vision ↔ client): first contract of the two-step case flow (lib/caseContracts)
 }
 
 /// Contract template with {{placeholders}} filled from client / case / company data, then sent for e-signature.
@@ -7559,4 +7571,23 @@ model StaffRecordAccess {
 
   @@id([userId, record, hour])
   @@index([hour])
+}
+
+// ─── Client folder actions in the documents section (lib/clientFolders) ─────
+
+/// "Müştəriyə göndər": the finished documents of a case (drive "Arbeitsablauf/Fertig/<client folder>") copied to the
+/// client's portal as case documents (stage OTHER, accepted). One row per send; `files` = [{ nodeId, version, documentId, name }].
+model CaseReadyDocsSend {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actorId   String?  @db.VarChar(40)
+  /// Files in the Fertig folder at the time of the send / of them new to the client (not sent before in this version).
+  fileCount Int      @default(0)
+  newCount  Int      @default(0)
+  resend    Boolean  @default(false)
+  files     Json
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
 }

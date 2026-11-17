@@ -678,6 +678,7 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
     await officialFormSigned(id, built.pdf); // official form (Erklärung zum Beschäftigungsverhältnis) signed by the employer → SIGNED + drive + staff notified
     await import('../avv/service.js').then((m) => m.avvSigned(id)).catch((err) => console.error('[esign] AVV hook failed', id, err)); // AVV (Art. 28 DSGVO) signed by company + countersigned → COMPLETED
     await import('../partnerRecords/signature.js').then((m) => m.partnerContractSigned(id, built.pdf)).catch((err) => console.error('[esign] partner contract hook failed', id, err)); // employer / partner contract → signed copy + ACTIVE
+    await import('../caseContracts/service.js').then((m) => m.caseContractCompleted(id, built.pdf)).catch((err) => console.error('[esign] case contract hook failed', id, err)); // Əmək / İş müqaviləsi → client drive folder + staff asked to approve
 
     // Everyone gets the signed PDF.
     const attachment = { filename: `${safeFileBase(r.title)}-signed.pdf`, content: built.pdf, contentType: 'application/pdf' };

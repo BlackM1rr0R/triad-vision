@@ -9,10 +9,10 @@ import type { ContractLang } from './values.js';
  */
 
 const SIGN_LABELS: Record<ContractLang, Record<ContractKind, [string, string]> & { place: string; page: [string, string] }> = {
-  de: { WORK: ['Arbeitgeber', 'Arbeitnehmer/in'], AUSBILDUNG: ['Ausbildende/r', 'Auszubildende/r'], SERVICE: ['Triad Vision', 'Auftraggeber/in'], EMPLOYER: ['Triad Vision', 'Arbeitgeber'], PARTNER: ['Triad Vision', 'Kooperationspartner/in'], place: 'Ort, Datum', page: ['Seite', 'von'] },
-  en: { WORK: ['Employer', 'Employee'], AUSBILDUNG: ['Training company', 'Trainee'], SERVICE: ['Triad Vision', 'Client'], EMPLOYER: ['Triad Vision', 'Employer'], PARTNER: ['Triad Vision', 'Partner'], place: 'Place, date', page: ['Page', 'of'] },
-  az: { WORK: ['İşəgötürən', 'İşçi'], AUSBILDUNG: ['Təhsil verən', 'Təhsil alan'], SERVICE: ['Triad Vision', 'Sifarişçi'], EMPLOYER: ['Triad Vision', 'İşəgötürən'], PARTNER: ['Triad Vision', 'Tərəfdaş'], place: 'Yer, tarix', page: ['Səhifə', '/'] },
-  ru: { WORK: ['Работодатель', 'Работник'], AUSBILDUNG: ['Обучающая сторона', 'Обучающийся'], SERVICE: ['Triad Vision', 'Заказчик'], EMPLOYER: ['Triad Vision', 'Работодатель'], PARTNER: ['Triad Vision', 'Партнёр'], place: 'Место, дата', page: ['Стр.', 'из'] },
+  de: { WORK: ['Arbeitgeber', 'Arbeitnehmer/in'], AUSBILDUNG: ['Ausbildende/r', 'Auszubildende/r'], SERVICE: ['Triad Vision', 'Auftraggeber/in'], EMPLOYER: ['Triad Vision', 'Arbeitgeber'], PARTNER: ['Triad Vision', 'Kooperationspartner/in'], LABOUR: ['Triad Vision', 'Kunde/Kundin'], place: 'Ort, Datum', page: ['Seite', 'von'] },
+  en: { WORK: ['Employer', 'Employee'], AUSBILDUNG: ['Training company', 'Trainee'], SERVICE: ['Triad Vision', 'Client'], EMPLOYER: ['Triad Vision', 'Employer'], PARTNER: ['Triad Vision', 'Partner'], LABOUR: ['Triad Vision', 'Client'], place: 'Place, date', page: ['Page', 'of'] },
+  az: { WORK: ['İşəgötürən', 'İşçi'], AUSBILDUNG: ['Təhsil verən', 'Təhsil alan'], SERVICE: ['Triad Vision', 'Sifarişçi'], EMPLOYER: ['Triad Vision', 'İşəgötürən'], PARTNER: ['Triad Vision', 'Tərəfdaş'], LABOUR: ['Triad Vision', 'Müştəri'], place: 'Yer, tarix', page: ['Səhifə', '/'] },
+  ru: { WORK: ['Работодатель', 'Работник'], AUSBILDUNG: ['Обучающая сторона', 'Обучающийся'], SERVICE: ['Triad Vision', 'Заказчик'], EMPLOYER: ['Triad Vision', 'Работодатель'], PARTNER: ['Triad Vision', 'Партнёр'], LABOUR: ['Triad Vision', 'Клиент'], place: 'Место, дата', page: ['Стр.', 'из'] },
 };
 
 export interface ContractPdfInput {

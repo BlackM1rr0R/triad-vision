@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 // EMPLOYER / PARTNER: contracts with an employer or a referral partner (components/partnerRecords), not per case.
-export type ContractKind = 'WORK' | 'AUSBILDUNG' | 'SERVICE' | 'EMPLOYER' | 'PARTNER';
-export const CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'];
+// LABOUR: Əmək müqaviləsi (Triad Vision ↔ client), sent only from the case's two-step contracts panel (components/caseContracts).
+export type ContractKind = 'WORK' | 'AUSBILDUNG' | 'SERVICE' | 'EMPLOYER' | 'PARTNER' | 'LABOUR';
+export const CONTRACT_KINDS: ContractKind[] = ['LABOUR', 'WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'];
 /** Kinds used for a case (the case-contract dialog); EMPLOYER / PARTNER are generated in the partner records. */
 export const CASE_CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE'];
 export const CONTRACT_LANGS = ['de', 'en', 'az', 'ru'] as const;

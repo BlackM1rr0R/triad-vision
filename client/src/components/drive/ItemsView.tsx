@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent 
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowDown, ArrowUp, Briefcase, Lock, MessageSquare, PenLine, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, Briefcase, Lock, MessageSquare, MoreHorizontal, PenLine, Star } from 'lucide-react';
 import { formatBytes } from '@/lib/api';
 import { fmtDateTime, fmtRelative, fullName, statusLabel } from '@/components/admin/labels';
 import type { CaseStatus } from '@/lib/types';
@@ -10,7 +10,8 @@ import { STATUS_TONE } from '@/lib/caseStatus';
 import { contentUrl, isSheet } from './api';
 import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dnd';
 import { useHoverPeek } from './QuickPreview'; // hover peek card for images / PDFs (mouse only)
-import { isProcessingStage, stageLabel } from '@/components/caseProcessing/api';
+// Client folders: stage / partner / "sent to client" chips and the "⋯" action button (components/drive/clientFolders).
+import { ClientFolderChips } from './clientFolders/Chips';
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
@@ -48,12 +49,6 @@ export type ViewMode = 'grid' | 'list' | 'board';
 export type SortKey = 'name' | 'modified' | 'size' | 'type' | 'owner';
 export type ListMode = 'folder' | 'flat' | 'trash';
 
-/** Team workflow stage of a client folder worth showing (Schon geschrieben, Fertig, Ablehnung). */
-const folderStage = (item: DriveItem) => {
-  const s = item.kind === 'FOLDER' ? item.caseInfo?.processing?.stage : null;
-  return isProcessingStage(s) && s !== 'IN_PROGRESS' ? s : null;
-};
-
 /** "Müraciət sənədi · TV-…" on copies of case documents, "Müraciət TV-…" on client folders; links to the case. */
 const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<typeof useTranslation>['t']; className?: string }) =>
   item.caseId && item.caseNumber ? (
@@ -72,8 +67,6 @@ const CaseBadge = ({ item, t, className }: { item: DriveItem; t: ReturnType<type
       <Briefcase className="size-2.5 shrink-0" aria-hidden />
       <span className="truncate">
         {item.kind === 'FILE' ? t('drive.shared.caseDoc', { number: item.caseNumber }) : t('drive.shared.clientFolder', { number: item.caseNumber })}
-        {/* team workflow stage of a client folder ("İş axını"), once it left In Bearbeitung */}
-        {folderStage(item) && ` · ${stageLabel(folderStage(item))}`}
       </span>
     </Link>
   ) : null;
@@ -95,6 +88,23 @@ const SelectBox = ({ checked, onToggle, label, className }: { checked: boolean; 
   />
 );
 
+/** Client folders: "⋯" opens the item's menu without opening the folder (visible on hover / focus, always on touch). */
+const isClientFolder = (item: DriveItem) => item.kind === 'FOLDER' && !!item.caseId;
+const MoreButton = ({ item, onMenu, label, className }: { item: DriveItem; onMenu: (e: MouseEvent, item: DriveItem) => void; label: string; className?: string }) =>
+  isClientFolder(item) ? (
+    <button
+      type="button"
+      aria-label={label}
+      aria-haspopup="menu"
+      title={label}
+      onClick={(e) => onMenu(e, item)}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      className={clsx('grid size-7 shrink-0 place-items-center rounded-md text-muted hover:bg-primary/[0.08] hover:text-ink focus-visible:opacity-100 dark:hover:bg-white/10', className)}
+    >
+      <MoreHorizontal className="size-4" aria-hidden />
+    </button>
+  ) : null;
 
 export interface ItemsViewProps {
   items: DriveItem[];
@@ -161,10 +171,47 @@ export const ItemsView = (p: ItemsViewProps) => {
     return Math.max(1, n);
   };
 
+  // Touch: a long press selects the item ("select mode"); while something is selected, taps toggle items.
+  const longPress = useRef<{ timer: number; x: number; y: number; fired: number } | null>(null);
+  const pressStart = (e: React.PointerEvent, item: DriveItem) => {
+    if (e.pointerType !== 'touch' || p.mode === 'trash') return;
+    const state = { timer: 0, x: e.clientX, y: e.clientY, fired: 0 };
+    state.timer = window.setTimeout(() => {
+      state.fired = Date.now();
+      const next = new Set(p.selected);
+      next.add(item.id);
+      p.onSelect(next, item.id, item.id);
+      navigator.vibrate?.(15);
+    }, 480);
+    longPress.current = state;
+  };
+  const pressMove = (e: React.PointerEvent) => {
+    const lp = longPress.current;
+    if (lp && !lp.fired && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) window.clearTimeout(lp.timer);
+  };
+  const pressEnd = () => {
+    const lp = longPress.current;
+    if (lp && !lp.fired) window.clearTimeout(lp.timer);
+  };
+  /** True right after a long press: the click / native context menu that follow it are swallowed. */
+  const justPressed = () => !!longPress.current?.fired && Date.now() - longPress.current.fired < 900;
+
   const click = (e: MouseEvent, item: DriveItem) => {
     e.stopPropagation();
+    if (justPressed()) {
+      longPress.current = null;
+      return;
+    }
     if (coarse.current && !e.ctrlKey && !e.metaKey && !e.shiftKey && p.selected.size === 0) {
       p.onOpen(item);
+      return;
+    }
+    if (coarse.current && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      // select mode on touch: taps add / remove
+      const next = new Set(p.selected);
+      if (next.has(item.id)) next.delete(item.id);
+      else next.add(item.id);
+      p.onSelect(next, item.id, item.id);
       return;
     }
     if (e.shiftKey && p.anchorId) {
@@ -203,6 +250,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   const context = (e: MouseEvent, item: DriveItem) => {
     e.preventDefault();
     e.stopPropagation();
+    if (justPressed()) return; // Android fires contextmenu after our long press
     if (!p.selected.has(item.id)) p.onSelect(new Set([item.id]), item.id, item.id);
     p.onContext(e, item);
   };
@@ -219,7 +267,7 @@ export const ItemsView = (p: ItemsViewProps) => {
   };
 
   const shown = p.items.slice(0, limit);
-  const common = { p, click, toggle, context, dragStart, t, hover: peek.enter, unhover: peek.leave };
+  const common = { p, click, toggle, context, dragStart, t, hover: peek.enter, unhover: peek.leave, press: { start: pressStart, move: pressMove, end: pressEnd } };
 
   return (
     <div
@@ -270,6 +318,8 @@ interface RowProps {
   /** Hover peek (QuickPreview): arm on pointer enter, disarm on leave. */
   hover: (e: React.PointerEvent, item: DriveItem) => void;
   unhover: () => void;
+  /** Touch long press (select mode). */
+  press: { start: (e: React.PointerEvent, item: DriveItem) => void; move: (e: React.PointerEvent) => void; end: () => void };
 }
 
 const useItemDrop = (item: DriveItem, p: ItemsViewProps) =>
@@ -280,7 +330,7 @@ const useItemDrop = (item: DriveItem, p: ItemsViewProps) =>
     onItems: p.onItems,
   });
 
-const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t, hover, unhover }: RowProps) {
+const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t, hover, unhover, press }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -301,7 +351,14 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t,
       onDoubleClick={() => p.onOpen(item)}
       onContextMenu={(e) => context(e, item)}
       onPointerEnter={(e) => hover(e, item)}
-      onPointerLeave={unhover}
+      onPointerLeave={() => {
+        unhover();
+        press.end();
+      }}
+      onPointerDown={(e) => press.start(e, item)}
+      onPointerMove={press.move}
+      onPointerUp={press.end}
+      onPointerCancel={press.end}
       {...drop.handlers}
       className={clsx(
         'group relative flex cursor-default flex-col items-center rounded-xl border px-2 pt-3 pb-2.5 text-center transition-colors select-none',
@@ -316,6 +373,7 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t,
         label={t('drive.shared.selectItem')}
         className={clsx('absolute top-2 left-2 z-10 transition-opacity', selected || p.selected.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
       />
+      <MoreButton item={item} onMenu={context} label={t('clientFolders.more')} className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
       {/* fixed-height icon box: the name below always stays visible (line-clamp-2), whatever the column width */}
       <div className="relative grid h-[68px] w-full shrink-0 place-items-center">
         {thumb ? (
@@ -353,6 +411,7 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t,
           <OrgBadges item={item} compact />
         </span>
       )}
+      {isClientFolder(item) && <ClientFolderChips item={item} compact className="mt-0.5 w-full" />}
       <span className="mt-0.5 w-full truncate text-[11px] text-muted">
         {item.caseId ? (
           <CaseBadge item={item} t={t} />
@@ -425,7 +484,7 @@ const AT_XL_F = 'hidden @xl:flex';
 const AT_3XL_F = 'hidden @3xl:flex';
 const AT_5XL_F = 'hidden @5xl:flex';
 
-const ListTable = ({ shown, p, click, toggle, context, dragStart, t, hover, unhover }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
+const ListTable = ({ shown, p, click, toggle, context, dragStart, t, hover, unhover, press }: Omit<RowProps, 'item'> & { shown: DriveItem[] }) => (
   <div role="table" className="@container min-w-0 text-sm">
     <div role="row" className={clsx('sticky top-0 z-10 grid gap-2 border-b border-line bg-card px-4 py-2 text-xs font-semibold text-muted', COLS[p.mode])}>
       <div className="flex min-w-0 items-center gap-2.5">
@@ -459,13 +518,13 @@ const ListTable = ({ shown, p, click, toggle, context, dragStart, t, hover, unho
     </div>
     <div role="rowgroup" className="px-1.5 py-1">
       {shown.map((item) => (
-        <Row key={item.id} item={item} p={p} click={click} toggle={toggle} context={context} dragStart={dragStart} t={t} hover={hover} unhover={unhover} />
+        <Row key={item.id} item={item} p={p} click={click} toggle={toggle} context={context} dragStart={dragStart} t={t} hover={hover} unhover={unhover} press={press} />
       ))}
     </div>
   </div>
 );
 
-const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, hover, unhover }: RowProps) {
+const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, hover, unhover, press }: RowProps) {
   const selected = p.selected.has(item.id);
   const focused = p.focusId === item.id;
   const drop = useItemDrop(item, p);
@@ -483,10 +542,17 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, h
       onDoubleClick={() => p.onOpen(item)}
       onContextMenu={(e) => context(e, item)}
       onPointerEnter={(e) => hover(e, item)}
-      onPointerLeave={unhover}
+      onPointerLeave={() => {
+        unhover();
+        press.end();
+      }}
+      onPointerDown={(e) => press.start(e, item)}
+      onPointerMove={press.move}
+      onPointerUp={press.end}
+      onPointerCancel={press.end}
       {...drop.handlers}
       className={clsx(
-        'grid cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 select-none',
+        'group grid cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 select-none',
         COLS[p.mode],
         selected ? 'bg-primary/[0.06] dark:bg-brand-500/15' : 'hover:bg-sunken dark:hover:bg-white/5',
         focused && 'ring-1 ring-focus/60',
@@ -510,6 +576,8 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, h
             {statusLabel(item.caseStatus as CaseStatus)}
           </span>
         )}
+        {isClientFolder(item) && <ClientFolderChips item={item} className="min-w-0 flex-nowrap overflow-hidden" />}
+        <MoreButton item={item} onMenu={context} label={t('clientFolders.more')} className="ml-auto opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
       </div>
       {p.mode === 'folder' && (
         <>

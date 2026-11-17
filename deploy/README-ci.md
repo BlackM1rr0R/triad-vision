@@ -12,14 +12,56 @@ A failing check blocks the deploy. A newer push cancels the older run, but a dep
 
 ## How the deploy works
 
-1. The runner streams `git archive HEAD` over SSH: `… | ssh root@server deploy`.
-2. On the server the key is pinned in `/root/.ssh/authorized_keys` as
+The images are built **on the GitHub runner**, never on the server: the production server has 2 GB RAM, and the
+server-side build (`npm ci`, Prisma, Vite) swap-thrashed it so badly that the site and SSH were down for 20+ minutes.
+
+1. The runner asks the server `ssh root@server capabilities` (must answer `deploy-prebuilt`, see "One-time install").
+2. `deploy/build-images.sh` builds `api`, `ssr` and `web` from `git archive HEAD` (the same bytes the server
+   unpacks; same Dockerfiles, targets and contexts as `docker-compose.prod.yml`; `--pull` for patched base images;
+   `ssr` and `web` share the cached site build) and writes one gzip'd `docker save` archive (a few hundred MB).
+   No build args or secrets: the images hold nothing server-specific (Caddy reads `SITE_DOMAIN`/`ACME_EMAIL`, the API
+   its settings, from `.env.production` at runtime), so they are identical to server-built ones.
+3. The runner streams `tar(src.tar.gz, images.tar.gz)` over SSH: `… | ssh root@server deploy-prebuilt`.
+4. On the server the key is pinned in `/root/.ssh/authorized_keys` as
    `restrict,command="/usr/local/sbin/triad-ci-deploy" ssh-ed25519 … github-actions-deploy@triad-vision`.
    That key can **only** run `deploy/ci-deploy.sh`: no shell, no other command, no port forwarding, no PTY.
-3. `triad-ci-deploy` checks the archive, runs the nightly backup script once (`/usr/local/sbin/triad-backup`),
-   then the normal `deploy/remote-deploy.sh` (build, migrations, seed, cleanup).
+5. `triad-ci-deploy` checks free disk (3 GB on `/var/tmp` and Docker's disk, after dropping build cache if
+   needed), receives the bundle into `/var/tmp` (not a RAM-backed `/tmp`), checks it, runs the backup once
+   (`/usr/local/sbin/triad-backup`), then `deploy/remote-deploy.sh` with `PREBUILT_IMAGES`: `docker load`, re-tag
+   to the names compose expects (`src-api`, `src-web`, `src-ssr`), `up -d --no-build`, migrations, seed, cleanup
+   (old images and all build cache are removed). Nothing is compiled on the server.
 
-Manual deploys from a workstation (`bash deploy/push.sh root@172.104.149.241`) keep working.
+Then the job checks `https://triad-vision.de/api/health`.
+
+### One-time install (after this change, and whenever `deploy/ci-deploy.sh` changes)
+
+```bash
+# on the server, from a checkout/unpacked copy of the current main (e.g. /opt/triad-vision/src after a deploy)
+install -m 700 deploy/ci-deploy.sh /usr/local/sbin/triad-ci-deploy
+```
+
+Until then the deploy job stops at "Server accepts prebuilt images" with this hint (nothing is touched on the server).
+
+### Fallback: build on the server (old flow)
+
+Set the repository variable `DEPLOY_SERVER_BUILD` to `1` (Settings → Secrets and variables → Actions → Variables) and
+re-run the job: the runner then streams only the source (`ssh root@server deploy`) and `remote-deploy.sh` builds the
+images on the server as before. Risky on the 2 GB server (swap); delete the variable again afterwards.
+
+### Manual deploys from a workstation
+
+- `PREBUILT=1 bash deploy/push.sh root@172.104.149.241` — builds the images locally (needs Docker; builds for
+  `linux/amd64`), uploads them and only loads/starts them on the server. Preferred.
+- `bash deploy/push.sh root@172.104.149.241` — old flow, builds on the server.
+
+Neither runs the backup first (CI does); run `/usr/local/sbin/triad-backup` on the server before if in doubt.
+
+### Rolling back
+
+Revert the bad commit on `main` (or re-run the deploy job of the last good run made after this change): images are
+rebuilt from that commit and loaded the same way. Careful: re-running a run from *before* this change uses that
+commit's workflow, i.e. the old server-side build. Database migrations are not rolled back.
+To undo this change itself, set `DEPLOY_SERVER_BUILD=1` (above); `ci-deploy.sh` still accepts the old `deploy` command.
 
 ## Secrets (repository → Settings → Secrets and variables → Actions)
 

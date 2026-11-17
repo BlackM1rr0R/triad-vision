@@ -108,7 +108,7 @@ const az = {
     note: { processing: '{{by}} sizə «{{stage}}» göndərdi' },
   },
   admin: {
-    labels: { event: { PROCESSING_STAGE: 'Sənəd işi: mərhələ dəyişdi' } },
+    labels: { event: { PROCESSING_STAGE: 'Sənəd işi: mərhələ dəyişdi', PARTNER_CHANGED: 'Partnyor dəyişdi', READY_DOCS_SENT: 'Hazır sənədlər müştəriyə göndərildi' } },
     errors: {
       PROCESSING_UNCHANGED: 'Heç nə dəyişmədi — başqa mərhələ, əməkdaş və ya qeyd seçin.',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
@@ -220,7 +220,7 @@ const de: typeof az = {
     note: { processing: '{{by}} hat dir „{{stage}}“ geschickt' },
   },
   admin: {
-    labels: { event: { PROCESSING_STAGE: 'Dokumentenarbeit: Stufe geändert' } },
+    labels: { event: { PROCESSING_STAGE: 'Dokumentenarbeit: Stufe geändert', PARTNER_CHANGED: 'Partner geändert', READY_DOCS_SENT: 'Fertige Dokumente an den Kunden gesendet' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nichts geändert — andere Stufe, Person oder Notiz wählen.',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
@@ -332,7 +332,7 @@ const en: typeof az = {
     note: { processing: '{{by}} sent you "{{stage}}"' },
   },
   admin: {
-    labels: { event: { PROCESSING_STAGE: 'Document work: stage changed' } },
+    labels: { event: { PROCESSING_STAGE: 'Document work: stage changed', PARTNER_CHANGED: 'Partner changed', READY_DOCS_SENT: 'Finished documents sent to the client' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nothing changed — pick another stage, colleague or note.',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
@@ -444,7 +444,7 @@ const ru: typeof az = {
     note: { processing: '{{by}} отправил(а) вам «{{stage}}»' },
   },
   admin: {
-    labels: { event: { PROCESSING_STAGE: 'Работа с документами: этап изменён' } },
+    labels: { event: { PROCESSING_STAGE: 'Работа с документами: этап изменён', PARTNER_CHANGED: 'Партнёр изменён', READY_DOCS_SENT: 'Готовые документы отправлены клиенту' } },
     errors: {
       PROCESSING_UNCHANGED: 'Ничего не изменилось — выберите другой этап, сотрудника или заметку.',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
