@@ -89,6 +89,14 @@ describe('portal stage: featured tools', () => {
     // Employer interviews are not pushed after the visa.
     expect(featuredTools('TRAVEL', { ...EMPTY_CONTEXT, interviewsAhead: true })).not.toContain('interviews');
   });
+
+  it('a rejected document waiting for a new upload puts "documents" up front in any phase (also after hand-in)', () => {
+    expect(featuredTools('AT_EMBASSY')[0]).toBe('messages');
+    expect(featuredTools('AT_EMBASSY', { ...EMPTY_CONTEXT, docsToFix: true })[0]).toBe('documents');
+    expect(featuredTools('PREPARING', { ...EMPTY_CONTEXT, pendingSignatures: 1, docsToFix: true }).slice(0, 2)).toEqual(['signatures', 'documents']);
+    expect(featuredTools('IN_GERMANY', { ...EMPTY_CONTEXT, docsToFix: true })[0]).toBe('documents');
+    expect(featuredTools('AT_EMBASSY', { ...EMPTY_CONTEXT, docsToFix: true }).filter((t) => t === 'documents')).toHaveLength(1);
+  });
 });
 
 describe('portal tools: server and client catalogue in sync', () => {

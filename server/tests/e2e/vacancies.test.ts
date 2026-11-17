@@ -137,8 +137,13 @@ describe('applying', () => {
     const closed = await createVacancy({ status: 'CLOSED' });
     const expired = await createVacancy({ closesAt: new Date(Date.now() - DAY) });
     const { agent } = await asCandidate();
-    expect((await agent.post(`/api/vacancies/${closed.slug}/apply`).send({})).status).toBe(404);
-    expect((await agent.post(`/api/vacancies/${expired.slug}/apply`).send({})).status).toBe(404);
+    // 409 VACANCY_CLOSED (lib/vacancyPlaces); an unknown slug stays 404 VACANCY_NOT_FOUND.
+    for (const v of [closed, expired]) {
+      const res = await agent.post(`/api/vacancies/${v.slug}/apply`).send({});
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('VACANCY_CLOSED');
+    }
+    expect((await agent.post('/api/vacancies/no-such-job/apply').send({})).body.error).toBe('VACANCY_NOT_FOUND');
   });
 
   it('lists my applications and lets me withdraw (and re-apply later)', async () => {

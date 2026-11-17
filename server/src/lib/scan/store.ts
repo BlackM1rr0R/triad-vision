@@ -5,6 +5,7 @@ import type { DocStage } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { CLIENT_UPLOAD_STAGE } from '../caseFlow.js';
+import { notifyReplacement, resolveClientUploadTarget } from '../clientUploadTarget.js'; // re-upload in place of a rejected document
 import { badRequest, conflict, forbidden, notFound } from '../http.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
@@ -41,16 +42,16 @@ export const resolveScanTarget = async (actor: ScanActor, target: ScanTarget) =>
   if (target.requirementId && (!requirement || requirement.caseId !== c.id)) throw badRequest('INVALID_REQUIREMENT');
 
   if (own) {
-    const stage = CLIENT_UPLOAD_STAGE[c.status];
-    if (!stage) throw conflict('UPLOAD_NOT_ALLOWED');
-    if (!requirement || requirement.stage !== stage) throw badRequest('INVALID_REQUIREMENT');
-    return { c, stage: stage as DocStage, requirement, asStaff: false };
+    // The open upload step, or a new file in place of a document the team rejected (lib/clientUploadTarget).
+    const upload = await resolveClientUploadTarget(c, requirement?.id);
+    if (!upload) throw CLIENT_UPLOAD_STAGE[c.status] ? badRequest('INVALID_REQUIREMENT') : conflict('UPLOAD_NOT_ALLOWED');
+    return { c, stage: upload.stage, requirement, asStaff: false, replacement: upload.replacement };
   }
   const stage = (target.stage ?? requirement?.stage) as DocStage | undefined;
   if (!stage || !(STAFF_SCAN_STAGES as readonly string[]).includes(stage)) throw badRequest('INVALID_STAGE');
   if (requirement && requirement.stage !== stage) throw badRequest('INVALID_REQUIREMENT');
   if (!requirement && (stage === 'INITIAL' || stage === 'EMBASSY')) throw badRequest('REQUIREMENT_REQUIRED');
-  return { c, stage, requirement, asStaff: true };
+  return { c, stage, requirement, asStaff: true, replacement: false };
 };
 
 export const storeScanDocument = async (
@@ -84,6 +85,7 @@ export const storeScanDocument = async (
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: resolved.c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // a copy in the client's drive folder (client scans right away)
+    if (resolved.replacement && resolved.requirement) await notifyReplacement(resolved.c, resolved.requirement, doc.originalName); // staff: a rejected document was replaced
     if (!resolved.asStaff) void import('../clientProcess/tasks.js').then((m) => m.completeTasksForUpload(doc.id)); // linked client tasks
     // Automatic quality checks (PDF readable, …); never throws.
     const checks = await checkCaseDocument(doc.id);

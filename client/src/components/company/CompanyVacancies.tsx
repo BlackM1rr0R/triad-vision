@@ -18,6 +18,7 @@ import { reportAiSaved } from '@/components/aiEmployer/shared';
 import { Employer } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { useCompanyAccess } from './access'; // employer roles: create / edit vacancies, see salaries
+import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // free places (server lib/vacancyPlaces)
 
 type Row = VacancyRow & { candidates: Partial<Record<string, number>> };
 
@@ -95,6 +96,7 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                       {tr(v.title)}
                     </Link>
                     <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
+                    {v.status === 'OPEN' && <PlacesBadge v={v} withTotal />}
                   </div>
                   <p className="mt-1 text-xs text-muted">
                     {[v.city, L.employmentType(v.employmentType), L.salary(v.salaryMin, v.salaryMax), t('jobsArea.common.positions', { count: v.positions })].filter(Boolean).join(' · ')}

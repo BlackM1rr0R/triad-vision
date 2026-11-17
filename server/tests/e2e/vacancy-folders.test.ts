@@ -157,7 +157,7 @@ describe('vacancy ↔ drive folder', () => {
     expect(opts).not.toContain(closed.id);
 
     const cand = await asCandidate({ profession: 'Sürücü' });
-    expect((await cand.agent.post('/api/cases').send({ visaType: 'WORK', vacancyId: closed.id })).status).toBe(400);
+    expect((await cand.agent.post('/api/cases').send({ visaType: 'WORK', vacancyId: closed.id })).body.error).toBe('VACANCY_CLOSED'); // 409 (lib/vacancyPlaces)
     const res = await cand.agent.post('/api/cases').send({ visaType: 'WORK', vacancyId: v.id, profession: 'free text is ignored' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.case).toMatchObject({ profession: 'Koch', vacancyId: v.id, driveParentId: vf.id });

@@ -1,6 +1,7 @@
 import type { CaseStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { CLIENT_UPLOAD_STAGE } from '../caseFlow.js';
+import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from '../caseFlow.js';
+import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
 import { getClientProcessSettings, type ClientProcessSettings, type Eta, type EtaStatus } from './settings.js';
 
 /**
@@ -98,6 +99,8 @@ export interface BallFacts {
   contract: { signedAt: Date | null; signatureRequestId: string | null } | null;
   /** Required requirements of the open upload stage with their documents' statuses (newest first). */
   uploadReqs: { docs: string[] }[];
+  /** Requirements outside the open upload step whose files were all rejected: the client may upload a new one (lib/clientUploadTarget). */
+  replaceReqs?: number;
   pendingDocs: number;
   tasks: { dueAt: Date | null }[];
   pendingSignatures: number;
@@ -152,9 +155,12 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   if (CLIENT_UPLOAD_STAGE[f.status]) {
     const missing = f.uploadReqs.filter((r) => r.docs.length === 0).length;
     const rejected = f.uploadReqs.filter((r) => r.docs.length > 0 && r.docs.every((d) => d === 'REJECTED')).length;
-    add('CLIENT', 'FIX_DOCS', rejected);
+    add('CLIENT', 'FIX_DOCS', rejected + (f.replaceReqs ?? 0));
     add('CLIENT', 'UPLOAD_DOCS', missing);
     if (!missing && !rejected) add('CLIENT', 'SUBMIT_DOCS', 1);
+  } else if (!FINAL_STATUSES.includes(f.status)) {
+    // After hand-in: documents the team rejected can be uploaded again right away (no "request changes" needed).
+    add('CLIENT', 'FIX_DOCS', f.replaceReqs ?? 0);
   }
   if (f.status === 'CONTRACT_SENT' && f.contract && !f.contract.signedAt) add('CLIENT', 'SIGN_CONTRACT', 1);
   const apptFuture = f.status === 'APPOINTMENT_SCHEDULED' && !!f.appointmentAt && f.appointmentAt > now;
@@ -267,6 +273,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
       processing: { min: c.visaCategory?.processingMin ?? null, max: c.visaCategory?.processingMax ?? null },
       contract: c.contract,
       uploadReqs: stage ? c.requirements.filter((r) => r.stage === stage && r.required).map((r) => ({ docs: r.documents.map((d) => d.status) })) : [],
+      replaceReqs: c.requirements.filter((r) => clientUploadStageFor(c.status, r)?.replacement).length,
       pendingDocs: c.documents.length,
       tasks: tasks.filter((t) => t.caseId === c.id),
       // The case contract is counted by SIGN_CONTRACT while the case waits for it.

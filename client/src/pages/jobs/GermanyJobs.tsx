@@ -38,6 +38,7 @@ import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
 import { useAuth } from '@/lib/auth';
 import { pagesGermanyJobAlerts } from '@/i18n/pagesGermanyJobAlerts';
 import { afterLoad } from '@/lib/idle';
+import { ExternalApplyOff } from '@/components/vacancyPlaces/ExternalApplyOff'; // "apply via Triad Vision" switched off by the admin
 
 // "Apply via Triad Vision" dialog: own chunk (its form, the CV picker and their copy, ~70 KB), fetched once the
 // page has loaded so it still opens at once, and mounted from the first time a listing is chosen.
@@ -128,10 +129,13 @@ export default function GermanyJobs() {
 
   const config = useQuery({
     queryKey: ['germany-jobs-config'],
-    queryFn: async () => (await api.get<{ search: boolean; sources: GermanyJobSourceInfo[] }>('/germany-jobs/config')).data,
-    staleTime: 5 * 60 * 1000,
+    queryFn: async () => (await api.get<{ search: boolean; sources: GermanyJobSourceInfo[]; apply?: boolean }>('/germany-jobs/config')).data,
+    staleTime: 60 * 1000,
   });
   const enabled = config.data?.search === true;
+  // Admin setting "allow applications to external Germany job listings" (default off): these are not our vacancies,
+  // so without it only the listing and its original link are shown (server 403 EXTERNAL_APPLICATIONS_DISABLED).
+  const canApply = config.data?.apply === true;
 
   const results = useQuery({
     queryKey: ['germany-jobs-search', search],
@@ -376,9 +380,11 @@ export default function GermanyJobs() {
                         {j.snippet && <p className="mt-3 line-clamp-4 text-sm text-muted">{j.snippet}</p>}
                         {j.created && <p className="mt-2 text-xs text-subtle">{t('gj.card.posted', { date: fmtDate(j.created) })}</p>}
                         <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                          <Button icon={Send} onClick={() => applyFor(j)}>
-                            {t('gj.card.apply')}
-                          </Button>
+                          {canApply && (
+                            <Button icon={Send} onClick={() => applyFor(j)}>
+                              {t('gj.card.apply')}
+                            </Button>
+                          )}
                           <a href={j.url} target="_blank" rel="nofollow noopener noreferrer" className={buttonClass({ variant: 'secondary' })}>
                             {t('gj.card.original')} <ExternalLink className="size-3.5" aria-hidden />
                             <span className="sr-only">{t('gj.card.newTab')}</span>
@@ -434,6 +440,9 @@ export default function GermanyJobs() {
             </a>
           </div>
 
+          {!canApply ? (
+            <ExternalApplyOff />
+          ) : (
           <form
             className="card rounded-3xl p-6 sm:p-8"
             onSubmit={(e) => {
@@ -470,6 +479,7 @@ export default function GermanyJobs() {
               <Send className="size-4" aria-hidden /> {t('gj.link.button')}
             </button>
           </form>
+          )}
         </div>
       </section>
 
@@ -511,7 +521,7 @@ export default function GermanyJobs() {
         </div>
       </section>
 
-      {(applyMounted || listing) && (
+      {canApply && (applyMounted || listing) && (
         <Suspense fallback={null}>
           <ApplyDialog listing={listing} onClose={() => setListing(null)} />
         </Suspense>

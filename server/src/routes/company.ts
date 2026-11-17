@@ -33,6 +33,7 @@ import { findPartnerByCode } from '../lib/partners/owned.js';
 import { attachCompanyReferral } from '../lib/agents/referral.js';
 import { LEGAL_FIELDS, auditDiff, companyLegalShape, stripMaskedBank } from '../lib/partnerRecords/legal.js'; // legal data (no bank, no internal note)
 import { castVote, voteInput, voteSummary, votesByApplication, withdrawVote } from '../lib/employerVotes.js'; // team votes on candidates
+import { placesFor, takePlace } from '../lib/vacancyPlaces/service.js'; // free places per vacancy
 
 // Employer portal API — mounted at /api/company (COMPANY role)
 export const companyRouter = Router();
@@ -338,9 +339,11 @@ companyRouter.get('/vacancies', async (_req, res) => {
         _count: { _all: true },
       })
     : [];
+  const places = await placesFor(items);
   res.json({
     items: items.map((v) => ({
       ...v,
+      ...places.get(v.id), // positions / filled / free (lib/vacancyPlaces)
       candidates: Object.fromEntries(counts.filter((c) => c.vacancyId === v.id).map((c) => [c.status, c._count._all])),
     })),
   });
@@ -500,11 +503,14 @@ companyRouter.post('/candidates/:id/decision', async (req, res) => {
     throw notFound('APPLICATION_NOT_FOUND');
   }
   const rule = DECISIONS[body.action];
-  const { count } = await prisma.vacancyApplication.updateMany({
-    where: { id: app.id, status: { in: rule.from } },
-    // companyNote marks that the employer decided (keeps a rejected candidate visible to them).
-    data: { status: rule.to, companyNote: body.note ?? app.companyNote ?? '' },
-  });
+  const decide = (db: Pick<typeof prisma, 'vacancyApplication'>) =>
+    db.vacancyApplication.updateMany({
+      where: { id: app.id, status: { in: rule.from } },
+      // companyNote marks that the employer decided (keeps a rejected candidate visible to them).
+      data: { status: rule.to, companyNote: body.note ?? app.companyNote ?? '' },
+    });
+  // Accepting takes a place: under the vacancy's row lock, refused with 409 VACANCY_FULL when none is left (lib/vacancyPlaces).
+  const { count } = rule.to === 'ACCEPTED' ? await takePlace(app.vacancy.id, (tx) => decide(tx)) : await decide(prisma);
   if (!count) throw new HttpError(409, 'INVALID_TRANSITION');
 
   const actionAz = { INTERVIEW: 'müsahibə istəyir', ACCEPT: 'namizədi qəbul etdi', REJECT: 'namizədi rədd etdi' }[body.action];

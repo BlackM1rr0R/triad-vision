@@ -29,4 +29,7 @@ export const testEnv: Record<string, string> = {
   ADMIN_NOTIFY_EMAIL: ADMIN_INBOX,
   // Empty SMTP host: mail is recorded in the EmailLog table instead of being sent.
   SMTP_HOST: '',
+  // Vacancy application policy (lib/vacancyPlaces/policy.ts) starts with the old behaviour in tests: clients may open
+  // cases without a vacancy, external listings accept "apply via Triad Vision". vacancy-places.test.ts switches it on.
+  VACANCY_POLICY_DEFAULTS: 'legacy',
 };

@@ -335,7 +335,8 @@ export const NotificationBell = ({ allTo, prefsTo, variant = 'portal' }: { allTo
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
             className={clsx(
-              'fixed inset-x-3 z-50 flex max-h-[calc(100dvh-5rem)] flex-col overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--tv-shadow-raised)] sm:absolute sm:inset-x-auto sm:right-0 sm:w-[26rem] sm:max-h-[min(80vh,40rem)]',
+              // Phones: clear of the bottom tab bar (--bnav-h, components/nav/BottomNav.css) so "see all" stays tappable.
+              'fixed inset-x-3 z-50 flex max-h-[calc(100dvh-6rem-var(--bnav-h,0px)-env(safe-area-inset-bottom))] flex-col overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--tv-shadow-raised)] sm:absolute sm:inset-x-auto sm:right-0 sm:w-[26rem] sm:max-h-[min(80vh,40rem)]',
               variant === 'admin' ? 'top-14 sm:top-10' : 'top-20 sm:top-12',
             )}
           >

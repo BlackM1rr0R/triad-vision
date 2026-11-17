@@ -22,7 +22,10 @@ import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric ph
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
 import { caseParentFor, vacancyProfession } from '../lib/drive/vacancyFolders.js';
-import { openVacancyWhere } from '../lib/vacancies.js';
+import { assertApplicable } from '../lib/vacancyPlaces/service.js'; // our open vacancies with a free place only
+import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
+import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
+import { notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -63,11 +66,13 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
     }),
     req.body,
   );
-  const vacancy = body.vacancyId
-    ? await prisma.vacancy.findFirst({ where: { AND: [{ id: body.vacancyId }, openVacancyWhere()] }, select: { id: true, profession: true, title: true, visaCategoryId: true } })
-    : null;
-  if (body.vacancyId && !vacancy) throw badRequest('INVALID_VACANCY');
-  if (body.visaCategoryId) {
+  // "Clients can only apply to active vacancies" (admin setting, default ON): a vacancy is required and decides the
+  // visa type, category and profession. The vacancy must exist (404 VACANCY_NOT_FOUND), be open (409 VACANCY_CLOSED)
+  // and have a free place (409 VACANCY_FULL) — lib/vacancyPlaces.
+  const onlyVacancies = (await getApplicationPolicy()).clientsOnlyActiveVacancies;
+  if (onlyVacancies && !body.vacancyId) throw badRequest('VACANCY_REQUIRED');
+  const vacancy = body.vacancyId ? (await assertApplicable({ id: body.vacancyId })).vacancy : null;
+  if (body.visaCategoryId && !onlyVacancies) {
     const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId, published: true } });
     if (!exists) throw badRequest('INVALID_VISA_CATEGORY');
   }
@@ -75,8 +80,8 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   const profession = vacancy ? vacancyProfession(vacancy) : body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
   const created = await createCase(req.user!.id, {
     profession,
-    visaType: body.visaType,
-    visaCategoryId: body.visaCategoryId ?? vacancy?.visaCategoryId ?? null,
+    visaType: onlyVacancies && vacancy ? visaTypeOfVacancy(vacancy) : body.visaType,
+    visaCategoryId: onlyVacancies ? (vacancy?.visaCategoryId ?? null) : (body.visaCategoryId ?? vacancy?.visaCategoryId ?? null),
     // The client folder goes into the vacancy's drive folder (or the client's applicant folder there).
     ...(vacancy ? { vacancyId: vacancy.id, driveParentId: await caseParentFor({ vacancyId: vacancy.id, userId: req.user!.id }) } : {}),
   });
@@ -93,15 +98,16 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
   if (!file) throw badRequest('FILE_REQUIRED');
   try {
     const c = await ownCase(String(req.params.id), req.user!.id);
-    const stage = CLIENT_UPLOAD_STAGE[c.status];
-    if (!stage) throw conflict('UPLOAD_NOT_ALLOWED');
+    // The open upload step, or a new file in place of a document the team rejected (lib/clientUploadTarget).
+    const target = await resolveClientUploadTarget(c, req.body?.requirementId);
+    if (!target && !CLIENT_UPLOAD_STAGE[c.status]) throw conflict('UPLOAD_NOT_ALLOWED');
     await verifyUploadedFile(file);
-
-    const { requirementId } = parse(z.object({ requirementId: z.string() }), req.body);
-    const requirement = await prisma.documentRequirement.findUnique({ where: { id: requirementId } });
-    if (!requirement || requirement.caseId !== c.id || requirement.stage !== stage) {
+    if (!target) {
+      parse(z.object({ requirementId: z.string() }), req.body);
       throw badRequest('INVALID_REQUIREMENT');
     }
+    const { stage, requirement } = target;
+    const requirementId = requirement.id;
 
     const doc = await prisma.document.create({
       data: {
@@ -120,6 +126,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away: "<client>/Reisepass" … (never throws)
+    if (target.replacement) await notifyReplacement(c, requirement, doc.originalName);
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
     const checks = await checkCaseDocument(doc.id);
     // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.

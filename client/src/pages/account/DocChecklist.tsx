@@ -24,6 +24,7 @@ import { DocExample, exampleKindOf } from '@/components/docGuide/DocExamples';
 import { GuideView } from '@/components/clientData/DocGuideButton';
 import type { ClientGuide } from '@/components/clientData/api';
 import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
+import { isClosedCase } from '@/lib/docReplace'; // a rejected file can be uploaded again while the case is open
 
 registerCopy(pagesPortalPlans);
 registerCopy(pagesPortalMoments);
@@ -182,7 +183,7 @@ const Item = ({ item, caseId, open, guide, onUploaded }: { item: ChecklistItem; 
   );
 };
 
-const StageSection = ({ s, caseId, guides, onlyOpen, onUploaded }: { s: ChecklistStage; caseId: string; guides: Record<string, ClientGuide>; onlyOpen: boolean; onUploaded: () => Promise<unknown> }) => {
+const StageSection = ({ s, caseId, caseStatus, guides, onlyOpen, onUploaded }: { s: ChecklistStage; caseId: string; caseStatus: CaseStatus; guides: Record<string, ClientGuide>; onlyOpen: boolean; onUploaded: () => Promise<unknown> }) => {
   const { t } = useTranslation();
   const items = onlyOpen ? s.items.filter((i) => i.state !== 'accepted') : s.items;
   const stateKey = s.open ? 'open' : s.past ? 'past' : s.created ? 'closed' : 'later';
@@ -204,7 +205,7 @@ const StageSection = ({ s, caseId, guides, onlyOpen, onUploaded }: { s: Checklis
       {items.length ? (
         <ul className="mt-4 space-y-3">
           {items.map((i, n) => (
-            <Item key={i.id ?? `${s.stage}-${i.key ?? n}`} item={i} caseId={caseId} open={s.open} guide={i.key ? guides[i.key.toUpperCase()] : undefined} onUploaded={onUploaded} />
+            <Item key={i.id ?? `${s.stage}-${i.key ?? n}`} item={i} caseId={caseId} open={s.open || (i.state === 'rejected' && !isClosedCase(caseStatus))} guide={i.key ? guides[i.key.toUpperCase()] : undefined} onUploaded={onUploaded} />
           ))}
         </ul>
       ) : (
@@ -307,7 +308,7 @@ export default function AccountDocChecklist() {
       </div>
 
       {d.stages.map((s) => (
-        <StageSection key={s.stage} s={s} caseId={caseId} guides={d.guides} onlyOpen={onlyOpen} onUploaded={refresh} />
+        <StageSection key={s.stage} s={s} caseId={caseId} caseStatus={c.status} guides={d.guides} onlyOpen={onlyOpen} onUploaded={refresh} />
       ))}
     </div>
   );

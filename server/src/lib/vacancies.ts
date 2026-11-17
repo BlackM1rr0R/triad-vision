@@ -129,6 +129,8 @@ const staffExtra = {
   closesAt: staffClosesAt,
   companyId: z.string().max(40).nullable().optional(),
   visaCategoryId: z.string().max(40).nullable().optional(),
+  /** Correction of the filled places (lib/vacancyPlaces): + placed outside the system, − a place freed again. */
+  filledAdjustment: z.number().int().min(-500).max(500).optional(),
   slug: z
     .string()
     .trim()
@@ -163,7 +165,7 @@ export const vacancyData = (b: VacancyBody) => {
   if (b.requirements !== undefined) data.requirements = fillL10nList(b.requirements) ?? Prisma.DbNull;
   if (b.benefits !== undefined) data.benefits = fillL10nList(b.benefits) ?? Prisma.DbNull;
   if (b.images !== undefined) data.images = b.images?.length ? b.images : Prisma.DbNull;
-  for (const k of ['sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'employmentType', 'showCompany', 'closesAt'] as const) {
+  for (const k of ['sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'filledAdjustment', 'employmentType', 'showCompany', 'closesAt'] as const) {
     if (b[k] !== undefined) (data as Record<string, unknown>)[k] = b[k];
   }
   return data;

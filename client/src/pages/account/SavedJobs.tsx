@@ -16,6 +16,7 @@ import { buttonClass } from '@/components/ui/Button';
 import { ApplyDialog, type ExternalListing } from '@/components/germanyJobs/ApplyDialog';
 import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
 import { useAlertSummary } from '@/components/germanyJobs/alertSummary';
+import { useApplicationPolicy } from '@/components/vacancyPlaces/api'; // external "apply via Triad Vision" on/off
 import { searchToParams, type AlertFrequency, type GermanyJobAlertView, type SavedGermanyJob } from '@/lib/germanyJobs';
 
 registerCopy(pagesGermanyJobAlerts);
@@ -35,6 +36,8 @@ export default function AccountSavedJobs() {
   const saved = useSavedJobs();
   const summary = useAlertSummary();
   const [listing, setListing] = useState<ExternalListing | null>(null);
+  // "Apply via Triad Vision" only while the admin allows applications to external listings (lib/vacancyPlaces).
+  const canApply = useApplicationPolicy().data?.allowExternalApplications === true;
   const alerts = useQuery({
     queryKey: ['germany-job-alerts-mine'],
     queryFn: async () => (await api.get<{ items: GermanyJobAlertView[]; emailNotifications: boolean }>('/germany-jobs/alerts/mine')).data,
@@ -119,7 +122,7 @@ export default function AccountSavedJobs() {
                     )}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
-                    {!gone && (
+                    {!gone && canApply && (
                       <button
                         type="button"
                         className={buttonClass({ size: 'sm' })}

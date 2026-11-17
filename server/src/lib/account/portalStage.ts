@@ -137,6 +137,8 @@ export interface StageContext {
   openDocActions: boolean;
   /** Employer interviews to book, confirm or attend. */
   interviewsAhead: boolean;
+  /** A document the team rejected waits for a new upload (also after hand-in): "Documents" goes up front in any phase. */
+  docsToFix?: boolean;
 }
 
 export const EMPTY_CONTEXT: StageContext = { pendingSignatures: 0, openInvoices: 0, hasOpenCase: false, openDocActions: false, interviewsAhead: false };
@@ -149,7 +151,7 @@ export const featuredTools = (phase: PortalPhase, ctx: StageContext = EMPTY_CONT
   const urgent: PortalTool[] = [];
   if (ctx.pendingSignatures > 0) urgent.push('signatures');
   if (ctx.openInvoices > 0) urgent.push('payments');
-  if (phase === 'IN_GERMANY' && (ctx.hasOpenCase || ctx.openDocActions)) urgent.push('documents');
+  if (ctx.docsToFix || (phase === 'IN_GERMANY' && (ctx.hasOpenCase || ctx.openDocActions))) urgent.push('documents');
   if (ctx.interviewsAhead && phase !== 'TRAVEL' && phase !== 'IN_GERMANY') urgent.push('interviews');
   const out: PortalTool[] = [];
   for (const t of [...urgent, ...PHASE_TOOLS[phase]]) if (!out.includes(t)) out.push(t);
@@ -183,7 +185,7 @@ export const loadPortalStage = async (userId: string, now = new Date()): Promise
   const cases = await prisma.case.findMany({ where: { clientId: userId }, orderBy: { createdAt: 'desc' }, select: { id: true, status: true, parentCaseId: true } });
   const approved = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId) ?? cases.find((c) => c.status === 'APPROVED') ?? null;
   const openIds = cases.filter((c) => !FINAL_STATUSES.includes(c.status)).map((c) => c.id);
-  const [followUp, plan, signatures, invoices, invites, interviews, openDocs] = await Promise.all([
+  const [followUp, plan, signatures, invoices, invites, interviews, openDocs, docsToFix] = await Promise.all([
     prisma.arrivalFollowUp.findFirst({ where: { clientId: userId }, orderBy: { arrivedAt: 'desc' }, select: { arrivedAt: true } }),
     approved ? prisma.arrivalPlan.findUnique({ where: { caseId: approved.id }, select: { status: true } }) : Promise.resolve(null),
     prisma.signatureSigner.count({ where: { userId, status: { in: ['PENDING', 'VIEWED'] }, request: { status: 'SENT', OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] } } }),
@@ -192,6 +194,12 @@ export const loadPortalStage = async (userId: string, now = new Date()): Promise
     prisma.interview.count({ where: { candidateId: userId, status: { in: ['PROPOSED', 'CONFIRMED'] }, startsAt: { gt: now } } }),
     // Client-side document work on an open case (statuses where the client uploads / signs).
     openIds.length ? prisma.case.count({ where: { id: { in: openIds }, status: { in: ['DOCUMENTS_PENDING', 'CONTRACT_SENT', 'EMBASSY_DOCUMENTS'] } } }) : Promise.resolve(0),
+    // Rejected documents waiting for a new upload (lib/clientUploadTarget: every file of the requirement rejected).
+    openIds.length
+      ? prisma.documentRequirement.count({
+          where: { caseId: { in: openIds }, stage: { in: ['INITIAL', 'EMBASSY'] }, documents: { some: { status: 'REJECTED' }, none: { status: { in: ['PENDING', 'ACCEPTED'] } } } },
+        })
+      : Promise.resolve(0),
   ]);
   const arrived = hasArrived(followUp?.arrivedAt, plan?.status, now);
   const info = portalStageOf(cases, arrived, {
@@ -200,6 +208,7 @@ export const loadPortalStage = async (userId: string, now = new Date()): Promise
     hasOpenCase: openIds.length > 0,
     openDocActions: openDocs > 0,
     interviewsAhead: invites + interviews > 0,
+    docsToFix: docsToFix > 0,
   });
   return { ...info, arrived };
 };

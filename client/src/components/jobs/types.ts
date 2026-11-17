@@ -31,6 +31,9 @@ export interface PublicVacancy {
   salaryMin: number | null;
   salaryMax: number | null;
   positions: number;
+  /** People occupying a place / places left (server lib/vacancyPlaces); optional for older payloads. */
+  filled?: number;
+  free?: number;
   employmentType: EmploymentType;
   datePosted: string | null;
   validThrough: string | null;
@@ -84,6 +87,8 @@ export interface VacancyRow extends Omit<PublicVacancy, 'datePosted' | 'validThr
   companyId: string | null;
   visaCategoryId: string | null;
   showCompany: boolean;
+  /** Staff correction of the filled places (server lib/vacancyPlaces). */
+  filledAdjustment?: number;
   status: VacancyStatus;
   publishedAt: string | null;
   closesAt: string | null;

@@ -18,13 +18,15 @@ import {
   matchFor,
   openVacancyWhere,
   publicVacancy,
-  visaForMatch,
 } from '../lib/vacancies.js';
 import { syncApplicationFolder } from '../lib/drive/vacancyFolders.js';
 import { recordApiAttribution } from '../lib/publicApi/keys.js'; // partner API apply links (tv_src cookie)
 import { getSeoData, jobRegion, liveJobs, parseLocale } from '../lib/seo.js';
 import { SEO_LOCALES } from '../lib/seoCatalogue.js';
 import { jobLandingTexts, jobLandings, landingOfJob, relatedLandings, type JobLanding } from '../lib/jobLandings.js';
+import { assertApplicable, placesFor, withApplicableVacancy } from '../lib/vacancyPlaces/service.js'; // free places + race-safe apply
+import { computePlaces, fullLast, type Places } from '../lib/vacancyPlaces/places.js';
+import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js';
 
 // Public vacancy board + candidate applications — mounted at /api/vacancies
 export const vacanciesRouter = Router();
@@ -36,6 +38,12 @@ const publicInclude = {
   company: { select: { name: true, logo: true } },
   visaCategory: { select: { slug: true, title: true, visaLabel: true, germanLevel: true } },
 } as const;
+
+/** Public shape plus the free places (positions / filled / free, lib/vacancyPlaces). */
+const publicWithPlaces = (v: Parameters<typeof publicVacancy>[0], places: Places | undefined) => ({
+  ...publicVacancy(v),
+  ...(places ?? computePlaces(v, 0)),
+});
 
 /** Only candidates use the board's personal features; employers and staff have their own tools. */
 export const requireCandidate: RequestHandler = (req, _res, next) => {
@@ -136,15 +144,23 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
         ? [{ closesAt: { sort: 'asc', nulls: 'last' } }, { publishedAt: 'desc' }]
         : [{ publishedAt: 'desc' }, { createdAt: 'desc' }];
 
-  const [items, total, sectors, cities] = await Promise.all([
-    prisma.vacancy.findMany({ where, orderBy, skip: (q.page - 1) * q.pageSize, take: q.pageSize, include: publicInclude }),
+  // Full vacancies stay on the board but come after the ones with free places (same order inside each group).
+  const ordered = await prisma.vacancy.findMany({ where, orderBy, take: 2000, select: { id: true, positions: true, filledAdjustment: true } });
+  const places = await placesFor(ordered);
+  const pageIds = fullLast(ordered, (v) => (places.get(v.id)?.free ?? 0) <= 0)
+    .slice((q.page - 1) * q.pageSize, q.page * q.pageSize)
+    .map((v) => v.id);
+  const [rows, total, sectors, cities] = await Promise.all([
+    prisma.vacancy.findMany({ where: { id: { in: pageIds } }, include: publicInclude }),
     prisma.vacancy.count({ where }),
     prisma.vacancy.groupBy({ by: ['sector'], where: openVacancyWhere(), _count: { _all: true } }),
     prisma.vacancy.groupBy({ by: ['city'], where: openVacancyWhere(), _count: { _all: true }, orderBy: { _count: { city: 'desc' } }, take: 30 }),
   ]);
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const items = pageIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
   res.setHeader('Cache-Control', 'public, max-age=30');
   res.json({
-    items: items.map(publicVacancy),
+    items: items.map((v) => publicWithPlaces(v, places.get(v.id))),
     total,
     page: q.page,
     pageSize: q.pageSize,
@@ -155,16 +171,30 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
   });
 });
 
-/** Open vacancies for pickers (the client's "start application": the target job is one of our vacancies). */
+/**
+ * Open vacancies for pickers (the client's "start application": the target job is one of our vacancies), with their
+ * free places; full ones are listed last (shown, but not selectable).
+ */
 vacanciesRouter.get('/options', publicLimiter, async (_req, res) => {
   const rows = await prisma.vacancy.findMany({
     where: openVacancyWhere(),
     orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
     take: 300,
-    select: { id: true, slug: true, title: true, city: true, profession: true, visaCategoryId: true, employmentType: true },
+    select: { id: true, slug: true, title: true, city: true, profession: true, visaCategoryId: true, employmentType: true, positions: true, filledAdjustment: true },
   });
+  const places = await placesFor(rows);
+  const items = rows.map(({ filledAdjustment: _adj, ...v }) => ({ ...v, ...(places.get(v.id) ?? computePlaces(v, 0)) }));
   res.setHeader('Cache-Control', 'public, max-age=30');
-  res.json({ items: rows });
+  res.json({ items: fullLast(items, (v) => v.free <= 0) });
+});
+
+/**
+ * What a client may start by themselves (lib/vacancyPlaces/policy.ts): only our open vacancies with a free place
+ * (`clientsOnlyActiveVacancies`), and whether "apply via Triad Vision" works for other job sites' listings.
+ */
+vacanciesRouter.get('/policy', publicLimiter, async (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=30');
+  res.json({ policy: await getApplicationPolicy() });
 });
 
 // ─── Profession × city landing pages (lib/jobLandings.ts) ──────────────
@@ -181,7 +211,14 @@ vacanciesRouter.get('/landing/:city/:profession', publicLimiter, async (req, res
   if (!landing) throw notFound('JOB_LANDING_NOT_FOUND');
   const rows = await prisma.vacancy.findMany({ where: { AND: [openVacancyWhere(), { slug: { in: landing.jobs.map((j) => j.slug) } }] }, include: publicInclude });
   const bySlug = new Map(rows.map((r) => [r.slug, r]));
-  const items = landing.jobs.flatMap((j) => (bySlug.has(j.slug) ? [publicVacancy(bySlug.get(j.slug)!)] : []));
+  const places = await placesFor(rows);
+  const items = fullLast(
+    landing.jobs.flatMap((j) => {
+      const row = bySlug.get(j.slug);
+      return row ? [publicWithPlaces(row, places.get(row.id))] : [];
+    }),
+    (v) => v.free <= 0,
+  );
   if (!items.length) throw notFound('JOB_LANDING_NOT_FOUND');
   const rel = relatedLandings(all, landing);
   const linkOf = (x: JobLanding) => ({ path: x.path, label: jobLandingTexts(x, lng, null).linkLabel });
@@ -208,7 +245,8 @@ const loadOpen = async (slug: string) => {
 vacanciesRouter.get('/:slug', publicLimiter, async (req, res) => {
   const v = await loadOpen(String(req.params.slug));
   res.setHeader('Cache-Control', 'public, max-age=30');
-  res.json({ vacancy: { ...publicVacancy(v), landing: await landingLinkOf(v) } });
+  const places = await placesFor([v]);
+  res.json({ vacancy: { ...publicWithPlaces(v, places.get(v.id)), landing: await landingLinkOf(v) } });
 });
 
 /** The signed-in candidate's view of a vacancy: match score, gaps and their application (if any). */
@@ -235,11 +273,10 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
   let stored = false;
   try {
     const body = parse(z.object({ message: z.string().trim().max(2000).optional() }).passthrough(), req.body ?? {});
-    const v = await prisma.vacancy.findUnique({
-      where: { slug: String(req.params.slug) },
-      include: { visaCategory: visaForMatch },
-    });
-    if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
+    // Only our vacancies that are open and have a free place: 404 VACANCY_NOT_FOUND, 409 VACANCY_CLOSED / VACANCY_FULL
+    // (checked again under the vacancy's row lock when the application is written; lib/vacancyPlaces).
+    const slug = String(req.params.slug);
+    const { vacancy: v } = await assertApplicable({ slug });
     for (const f of files) await verifyUploadedFile(f); // invalid content: nothing is created
     // Documents picked from the vault instead of re-uploading: own + not expired, checked before anything is created.
     const vaultIds = parseVaultIds(req.body?.vaultIds ?? req.body?.['vaultIds[]']);
@@ -249,23 +286,23 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     const { score } = matchFor(user, v);
     const message = body.message || null;
 
-    const existing = await prisma.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: v.id, userId: user.id } } });
-    let application;
-    if (existing) {
-      // A withdrawn application may be re-submitted; anything else is a duplicate.
-      if (existing.status !== 'WITHDRAWN') throw conflict('ALREADY_APPLIED');
-      application = await prisma.vacancyApplication.update({
-        where: { id: existing.id },
-        data: { status: 'NEW', matchScore: score, message, companyNote: null },
-      });
-    } else {
+    const application = await withApplicableVacancy({ slug }, async (tx) => {
+      const existing = await tx.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: v.id, userId: user.id } } });
+      if (existing) {
+        // A withdrawn application may be re-submitted; anything else is a duplicate.
+        if (existing.status !== 'WITHDRAWN') throw conflict('ALREADY_APPLIED');
+        return tx.vacancyApplication.update({
+          where: { id: existing.id },
+          data: { status: 'NEW', matchScore: score, message, companyNote: null },
+        });
+      }
       try {
-        application = await prisma.vacancyApplication.create({ data: { vacancyId: v.id, userId: user.id, matchScore: score, message } });
+        return await tx.vacancyApplication.create({ data: { vacancyId: v.id, userId: user.id, matchScore: score, message } });
       } catch (err) {
         if ((err as { code?: string }).code === 'P2002') throw conflict('ALREADY_APPLIED');
         throw err;
       }
-    }
+    });
     const uploads = files.length ? await storeApplicationFiles(user.id, files, parseKinds(req.body?.kinds, files.length), { vacancyId: v.id, applicationId: application.id }) : null;
     stored = true;
     const linked = picked.length ? await linkPickedVaultDocs(user.id, picked, { vacancyId: v.id, applicationId: application.id }) : null;

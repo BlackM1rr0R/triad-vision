@@ -13,6 +13,7 @@ import { openInvoicesOf } from '../billing/service.js';
 import { isPastDue } from '../billing/math.js';
 import { recognitionClientAction } from '../recognition/service.js';
 import { portalStageOf } from './portalStage.js';
+import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
 import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
 /**
@@ -115,6 +116,8 @@ export interface NextStepFacts {
   ball: Pick<BallInCourt, 'side' | 'items' | 'eta'> | null;
   firstMissingDoc: L10nLike | null;
   firstRejectedDoc: L10nLike | null;
+  /** Stage of that rejected document (its section on the case page); absent / null = the open upload step. */
+  firstRejectedStage?: DocStage | null;
   confirmation: { fields: number } | null;
   forms: { id: string; caseId: string; title: L10nLike; dueAt: Date | null }[];
   signatures: { signerId: string; title: string; expiresAt: Date | null }[];
@@ -164,7 +167,8 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
       const due = b.dueAt ? new Date(b.dueAt) : null;
       switch (b.reason) {
         case 'FIX_DOCS':
-          add('FIX_DOCS', docsUrl(p.id, p.status), { count: b.count, dueAt: due, overdue: b.overdue, detail: f.firstRejectedDoc });
+          // Also after hand-in (DOCUMENTS_REVIEW / EMBASSY_REVIEW …): the rejected file is replaced right in its section.
+          add('FIX_DOCS', f.firstRejectedStage ? caseUrl(p.id, 'docs', `#docs-${f.firstRejectedStage.toLowerCase()}`) : docsUrl(p.id, p.status), { count: b.count, dueAt: due, overdue: b.overdue, detail: f.firstRejectedDoc });
           break;
         case 'UPLOAD_DOCS':
           add('UPLOAD_DOCS', docsUrl(p.id, p.status), { count: b.count, dueAt: due, overdue: b.overdue, detail: f.firstMissingDoc });
@@ -351,6 +355,9 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
   // Same rule as the workflow: a requirement counts as uploaded while it has a non-rejected file.
   const rejected = reqs.find((r) => r.documents.length > 0 && r.documents.every((d) => d.status === 'REJECTED'));
   const missing = reqs.find((r) => r.documents.length === 0) ?? rejected;
+  // After hand-in (or in another stage): a document the team rejected that the client may replace (lib/clientUploadTarget).
+  const replaceable = open ? [...requirements].sort((a, b) => a.sortOrder - b.sortOrder).find((r) => clientUploadStageFor(open.status, r)?.replacement) : undefined;
+  const fixDoc = rejected ?? replaceable;
 
   const mySignatures = signers.filter((s) => {
     const r = s.request;
@@ -370,7 +377,8 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     primary: open ? { id: open.id, status: open.status, appointmentAt: open.appointmentAt, appointmentPlace: open.appointmentPlace } : null,
     ball: ball ? { side: ball.side, items: ball.items, eta: ball.eta } : null,
     firstMissingDoc: (missing?.title as L10nLike | undefined) ?? null,
-    firstRejectedDoc: (rejected?.title as L10nLike | undefined) ?? null,
+    firstRejectedDoc: (fixDoc?.title as L10nLike | undefined) ?? null,
+    firstRejectedStage: fixDoc && !rejected ? fixDoc.stage : null,
     confirmation: conf?.status === 'PENDING' ? { fields: Array.isArray(conf.fields) ? conf.fields.length : 0 } : null,
     forms: forms.map((x) => ({ id: x.id, caseId: x.caseId, title: x.title as L10nLike, dueAt: x.dueAt })),
     signatures: mySignatures.map((s) => ({ signerId: s.id, title: s.request.title, expiresAt: s.request.expiresAt })),
@@ -399,6 +407,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     hasOpenCase: cases.some((c) => !FINAL_STATUSES.includes(c.status)),
     openDocActions: [picked.primary, ...picked.secondary, ...picked.more].some((x) => !!x && docKinds.includes(x.kind)),
     interviewsAhead: interviewInvites + proposedInterviews.length + confirmedInterviews.length > 0,
+    docsToFix: [picked.primary, ...picked.secondary, ...picked.more].some((x) => x?.kind === 'FIX_DOCS'),
   });
 
   // Progress of the case the portal is about, and the next date to expect.

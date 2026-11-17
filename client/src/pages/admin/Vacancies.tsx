@@ -32,6 +32,8 @@ import { requestInlineEdit } from '@/components/inline/optimistic';
 import { ApplicationFolder, NewVacancyFolder, VacancyFolderPanel, folderPayload, initialFolderChoice } from '@/components/vacancyFolders/VacancyFolder'; // drive folder of the vacancy / applicants
 import type { FolderInfo } from '@/components/vacancyFolders/FolderPicker';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
+import { ApplicationPolicyPanel, VacancyPlacesPanel } from '@/components/vacancyPlaces/AdminPanels'; // free places + application rules
+import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge';
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
 import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
 import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
@@ -394,6 +396,8 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
             )}
           </Panel>
 
+          <VacancyPlacesPanel key={`places-${v.updatedAt}`} vacancyId={v.id} places={v} adjustment={v.filledAdjustment ?? 0} onSaved={refresh} />
+
           <Panel title={t('vacFolders.folder')}>
             <VacancyFolderPanel vacancyId={v.id} folder={v.folder ?? null} onSaved={refresh} />
           </Panel>
@@ -551,6 +555,8 @@ export default function AdminVacancies() {
           </>
         }
       />
+      {/* "Clients can only apply to active vacancies" / external listings (lib/vacancyPlaces). */}
+      <ApplicationPolicyPanel className="mb-6" />
       <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
         <label className="relative flex-1">
           <span className="sr-only">{t('admin.common.search')}</span>
@@ -601,7 +607,12 @@ export default function AdminVacancies() {
           onRowClick={(v) => setParam('id', v.id)}
           rowClassName={(v) => (selected === v.id ? 'bg-primary/[0.04] shadow-[inset_3px_0_0_var(--color-brand-600)]' : undefined)}
           cells={{
-            title: (v) => <span className="font-semibold break-words text-ink">{L.title(v.title)}</span>,
+            title: (v) => (
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span className="font-semibold break-words text-ink">{L.title(v.title)}</span>
+                {v.status === 'OPEN' && <PlacesBadge v={v} />}
+              </span>
+            ),
             status: (v) => (
               <span onClick={(e) => e.stopPropagation()}>
                 <VacancyStatusCell id={v.id} status={v.status} />
@@ -651,6 +662,7 @@ export default function AdminVacancies() {
                       {L.title(v.title)}
                     </button>
                     <VacancyStatusCell id={v.id} status={v.status} />
+                    {v.status === 'OPEN' && <PlacesBadge v={v} withTotal />}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-muted">
                     {[v.company?.name ?? t('jobsArea.admin.vacancies.noCompany'), v.city, L.employmentType(v.employmentType), L.salary(v.salaryMin, v.salaryMax)].filter(Boolean).join(' · ')}

@@ -8,6 +8,7 @@ import type { PublicVacancy } from './types';
 import { useMorphSource } from '@/lib/viewTransition';
 import { vacancyImageSrcSet, vacancyImages } from './images';
 import { CompanyLogo } from './CompanyLogo';
+import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // "3 boş yer" / "Yer qalmayıb"
 
 /** Vacancy card on the public board. */
 export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string }) => {
@@ -50,6 +51,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
           <div className="flex flex-wrap items-center gap-1.5">
             {v.sector && <span className="badge chip-sky">{L.sector(v.sector)}</span>}
             <span className="badge bg-sunken text-muted">{L.employmentType(v.employmentType)}</span>
+            <PlacesBadge v={v} />
           </div>
           <h3 {...morph.part('title')} className="mt-3 w-fit font-display text-lg leading-snug font-semibold break-words text-ink group-hover:text-link">
             {L.title(v.title)}
@@ -83,7 +85,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
             <Clock className="size-4 shrink-0 text-subtle" aria-hidden /> <span className="truncate">{t('jobsArea.common.minExperience', { count: v.minExperience })}</span>
           </li>
         ) : null}
-        {v.positions > 1 && (
+        {v.positions > 1 && v.free === undefined && (
           <li className="flex min-w-0 items-center gap-2">
             <Users className="size-4 shrink-0 text-subtle" aria-hidden /> <span className="truncate">{t('jobsArea.common.positions', { count: v.positions })}</span>
           </li>

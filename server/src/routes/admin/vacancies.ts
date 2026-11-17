@@ -9,7 +9,9 @@ import { onVacancyPublished } from '../../lib/jobAlerts/service.js';
 import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
-import { hasMinRole } from '../../middleware/auth.js';
+import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
+import { placesFor } from '../../lib/vacancyPlaces/service.js'; // free places per vacancy
+import { getApplicationPolicy, policySchema, setApplicationPolicy } from '../../lib/vacancyPlaces/policy.js';
 import { singleVacancyImage, storeVacancyImage, vacancyImagesOf } from '../../lib/vacancyImages.js';
 import { cleanupRemovedImages } from '../../lib/publicImageRefs.js';
 import { checkTargetFolder, createFolder, folderInfo, folderInfos, syncApplicationFolder, syncVacancyApplications, vacancyFolderName } from '../../lib/drive/vacancyFolders.js';
@@ -29,7 +31,7 @@ const checkClosesAt = (req: Request, next: Date | null | undefined, stored: Date
 };
 
 /** Before → after of every changed column, for the audit log (long texts only flagged as changed). */
-const SCALAR_FIELDS = ['slug', 'companyId', 'visaCategoryId', 'sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'employmentType', 'showCompany', 'status', 'publishedAt', 'closesAt'] as const;
+const SCALAR_FIELDS = ['slug', 'companyId', 'visaCategoryId', 'sector', 'city', 'profession', 'germanLevel', 'minExperience', 'drivingLicence', 'salaryMin', 'salaryMax', 'positions', 'filledAdjustment', 'employmentType', 'showCompany', 'status', 'publishedAt', 'closesAt'] as const;
 const JSON_FIELDS = ['title', 'description', 'requirements', 'benefits', 'images'] as const;
 const diffVacancy = (a: Vacancy, b: Vacancy) => {
   const norm = (v: string | number | boolean | Date | null): string | number | boolean | null => (v instanceof Date ? v.toISOString() : v);
@@ -99,9 +101,11 @@ adminVacanciesRouter.get('/', async (req, res) => {
   const appCounts = items.length
     ? await prisma.vacancyApplication.groupBy({ by: ['vacancyId', 'status'], where: { vacancyId: { in: items.map((v) => v.id) } }, _count: { _all: true } })
     : [];
+  const places = await placesFor(items);
   res.json({
     items: items.map((v) => ({
       ...v,
+      ...places.get(v.id), // positions / filled / free (lib/vacancyPlaces)
       applications: Object.fromEntries(appCounts.filter((c) => c.vacancyId === v.id).map((c) => [c.status, c._count._all])),
     })),
     total,
@@ -152,6 +156,19 @@ adminVacanciesRouter.get('/options', async (req, res) => {
   res.json({ items, total: items.length });
 });
 
+/** "Clients can only apply to active vacancies" + "applications to external Germany job listings" (lib/vacancyPlaces/policy.ts). */
+adminVacanciesRouter.get('/policy', async (_req, res) => {
+  res.json({ policy: await getApplicationPolicy() });
+});
+
+adminVacanciesRouter.put('/policy', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(policySchema.partial(), req.body ?? {});
+  const before = await getApplicationPolicy();
+  const policy = await setApplicationPolicy(body);
+  await audit(req, 'VACANCY_APPLICATION_POLICY_UPDATED', 'setting:vacancyApplicationPolicy', { from: before, to: policy });
+  res.json({ policy });
+});
+
 adminVacanciesRouter.get('/:id', async (req, res) => {
   const vacancy = await prisma.vacancy.findUnique({
     where: { id: req.params.id },
@@ -175,9 +192,11 @@ adminVacanciesRouter.get('/:id', async (req, res) => {
   // Drive folders: the vacancy's and each applicant's (with their paths; missing / trashed ones are null).
   const folders = await folderInfos([vacancy.driveFolderId, ...vacancy.applications.flatMap((a) => [a.driveFolderId, a.targetFolderId])]);
   const info = (id: string | null) => (id ? (folders.get(id) ?? null) : null);
+  const places = await placesFor([vacancy]);
   res.json({
     vacancy: {
       ...vacancy,
+      ...places.get(vacancy.id), // positions / filled / free (lib/vacancyPlaces)
       folder: info(vacancy.driveFolderId),
       applications: vacancy.applications.map((a) => ({ ...a, match: matchCandidate(a.user, vacancy), folder: info(a.driveFolderId), targetFolder: info(a.targetFolderId) })),
     },

@@ -970,6 +970,8 @@ model Vacancy {
   salaryMin      Int? // EUR gross per month
   salaryMax      Int?
   positions      Int                   @default(1)
+  /// Staff correction of the filled places (+ placed outside the system, − freed); filled = occupying people + this (lib/vacancyPlaces).
+  filledAdjustment Int                 @default(0)
   employmentType EmploymentType        @default(FULL_TIME)
   showCompany    Boolean               @default(false) // publish the employer's name on the public board
   status         VacancyStatus         @default(DRAFT)

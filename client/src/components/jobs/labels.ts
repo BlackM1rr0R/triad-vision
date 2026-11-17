@@ -2,11 +2,14 @@ import { useMemo } from 'react';
 import { scoreTone as scoreToneOf, TONE_SOLID, TONE_TEXT } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import i18n from '@/i18n';
+import i18n, { registerCopy } from '@/i18n';
+import { pagesVacancyPlaces } from '@/i18n/pagesVacancyPlaces'; // vacPlaces.errors.* (VACANCY_FULL …)
 import { errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import type { MatchGap } from './types';
+
+registerCopy(pagesVacancyPlaces);
 
 const NUM_LOCALE = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' } as const;
 
@@ -14,7 +17,10 @@ const NUM_LOCALE = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' } a
 export const jobsError = (err: unknown) => {
   const code = errorCode(err);
   const key = `jobsArea.errors.${code}`;
-  return i18n.exists(key) ? String(i18n.t(key)) : String(i18n.t('jobsArea.errors.generic'));
+  if (i18n.exists(key)) return String(i18n.t(key));
+  // Free places / application rules (VACANCY_FULL, VACANCY_CLOSED …; server lib/vacancyPlaces).
+  const placesKey = `vacPlaces.errors.${code}`;
+  return i18n.exists(placesKey) ? String(i18n.t(placesKey)) : String(i18n.t('jobsArea.errors.generic'));
 };
 export const toastJobsError = (err: unknown) => toast.error(jobsError(err));
 

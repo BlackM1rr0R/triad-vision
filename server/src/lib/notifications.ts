@@ -185,7 +185,8 @@ export const notifyClient = async (
   const rendered = await renderNotification(type, locale, { number: c.number, firstName: c.client.firstName, ...params });
   const title = brandify(rendered.title);
   const body = brandify(rendered.body);
-  const link = `/account/cases/${c.id}`;
+  // Document reviews open the case's documents tab, where a rejected file can be uploaded again.
+  const link = `/account/cases/${c.id}${type === 'DOCUMENT_REJECTED' || type === 'DOCUMENT_ACCEPTED' ? '?tab=docs' : ''}`;
 
   const n = await prisma.notification.create({
     data: { userId: c.clientId, caseId, type, title, body, link },

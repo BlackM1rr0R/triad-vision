@@ -128,7 +128,9 @@ export default function AccountLayout() {
   return (
     <div className="min-h-screen bg-canvas pt-24 pb-36 sm:pt-28 sm:pb-24 lg:pt-40">
       <div className="container-x">
-        <header className="vt-portal-header relative rounded-3xl border border-line bg-card px-5 pt-6 pb-2 shadow-[var(--tv-shadow-card)] sm:px-8 sm:pt-7 md:pb-0">
+        {/* z-30: the header is its own stacking context (view-transition-name), so the notification panel and
+            other header popovers only stay above the page content below when the header itself is lifted. */}
+        <header className="vt-portal-header relative z-30 rounded-3xl border border-line bg-card px-5 pt-6 pb-2 shadow-[var(--tv-shadow-card)] sm:px-8 sm:pt-7 md:pb-0">
           <div>
             {isClient && (
               <Link

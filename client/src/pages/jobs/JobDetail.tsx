@@ -57,6 +57,8 @@ import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
 import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
 import { sceneForProfession } from '@/lib/workScenes/meta';
+import { FullNotice, PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // free places, "Yer qalmayıb"
+import { isFull, placesErrorText } from '@/components/vacancyPlaces/api';
 
 registerCopy(pagesJobs);
 registerCopy(pagesPortalExtras); // px.apply.*, px.scan.*
@@ -150,6 +152,14 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     onError: (err) => {
       const code = errorCode(err);
       if (code === 'ALREADY_APPLIED') void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
+      // The last place was just taken / the vacancy closed meanwhile: say so and reload the free places.
+      const placesText = placesErrorText(t, err);
+      if (placesText) {
+        toast.error(placesText);
+        setOpen(false);
+        void qc.invalidateQueries({ queryKey: ['job', v.slug] });
+        return;
+      }
       if (code && ['VAULT_DOCUMENT_NOT_FOUND', 'VAULT_DOCUMENT_EXPIRED', 'TOO_MANY_FILES'].includes(code)) {
         toast.error(t(`px.apply.${code}`));
         return;
@@ -159,6 +169,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     },
   });
 
+  // No free place: the vacancy stays visible, but nobody can apply (server: 409 VACANCY_FULL).
+  if (!user && isFull(v)) return <FullNotice alertAnchor="job-alert" />;
   if (!user) {
     const from = currentHref(location);
     return (
@@ -216,6 +228,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
             {t('jobsArea.detail.myApplications')} <ArrowRight className="size-3.5" />
           </Link>
         </div>
+      ) : isFull(v) ? (
+        <FullNotice alertAnchor="job-alert" />
       ) : data && !data.emailVerified ? (
         <div className="rounded-2xl border border-warning-border bg-warning-bg p-4 text-sm text-warning-fg">
           <p className="flex items-center gap-2 font-semibold">
@@ -441,6 +455,7 @@ export default function JobDetail() {
               <Euro className="size-4 text-muted" aria-hidden /> {salary}
             </span>
           )}
+          <PlacesBadge v={v} className="rounded-full px-3 py-1.5 text-sm" />
         </div>
       </PageHero>
 
@@ -527,7 +542,9 @@ export default function JobDetail() {
             )}
 
             {/* Job alert preselected with this vacancy's profession. */}
-            <JobAlertForm profession={v.profession} />
+            <div id="job-alert" className="scroll-mt-28">
+              <JobAlertForm profession={v.profession} />
+            </div>
             <WorkSceneCard scene={sceneForProfession(v.profession)} />
           </div>
 
@@ -548,7 +565,9 @@ export default function JobDetail() {
                 </Fact>
                 {v.minExperience ? <Fact icon={Briefcase} label={t('jobsArea.detail.facts.experience')}>{t('jobsArea.common.minExperience', { count: v.minExperience })}</Fact> : null}
                 {v.drivingLicence && <Fact icon={Car} label={t('jobsArea.detail.facts.licence')}>{v.drivingLicence}</Fact>}
-                <Fact icon={Users} label={t('jobsArea.detail.facts.positions')}>{v.positions}</Fact>
+                <Fact icon={Users} label={t('jobsArea.detail.facts.positions')}>
+                  {v.positions} <PlacesBadge v={v} className="ml-1 align-middle" />
+                </Fact>
                 {v.validThrough && <Fact icon={CalendarClock} label={t('jobsArea.detail.facts.closes')}>{fmtDate(v.validThrough)}</Fact>}
               </dl>
               <div className="mt-5 border-t border-line pt-5">

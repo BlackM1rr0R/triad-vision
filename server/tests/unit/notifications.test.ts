@@ -79,7 +79,9 @@ describe('notification catalog', () => {
         expect(n.body.trim().length).toBeGreaterThan(10);
         expect(n.title).not.toContain('undefined');
         expect(n.body).not.toContain('undefined');
-        expect(n).toMatchObject({ userId: 'u1', type, link: '/account/cases/c1' });
+        // Document reviews open the documents tab (re-upload of a rejected file right there).
+        const link = type === 'DOCUMENT_ACCEPTED' || type === 'DOCUMENT_REJECTED' ? '/account/cases/c1?tab=docs' : '/account/cases/c1';
+        expect(n).toMatchObject({ userId: 'u1', type, link });
         seen.add(n.title);
       }
       expect(seen.size).toBe(4);

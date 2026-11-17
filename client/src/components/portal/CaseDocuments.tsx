@@ -37,6 +37,7 @@ import { marksOf } from '@/components/review/marks';
 import { OfflineToggle } from '@/components/offline/OfflineToggle'; // "Oflayn saxla" (PWA cache, own device)
 import { TONE_CLASS } from '@/components/ui/status';
 import { requirementState, type RequirementState } from './requirementState';
+import { clientUploadMode } from '@/lib/docReplace'; // a new file in place of a rejected one, also after hand-in
 import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments'; // requirement state chips, rejected without a reason
 
@@ -187,12 +188,15 @@ const RequirementCard = ({
   req,
   caseId,
   open,
+  caseStatus,
   onChanged,
   onDelete,
 }: {
   req: Requirement;
   caseId: string;
+  /** The case's upload step for this stage is open (upload, delete own pending files). */
   open: boolean;
+  caseStatus: CaseStatus;
   onChanged: () => Promise<unknown>;
   onDelete: (doc: CaseDocument) => void;
 }) => {
@@ -200,6 +204,12 @@ const RequirementCard = ({
   const { tr } = useL10n();
   const { user } = useAuth();
   const onError = useApiError();
+  // Upload here: the open step, or a new file in place of a rejected one (lib/docReplace; same rule as the server).
+  const mode = clientUploadMode(caseStatus, req);
+  // A replacement just went in: its check notices stay visible although the upload controls close again.
+  const [replaced, setReplaced] = useState(false);
+  const canUpload = open || mode !== null;
+  const showNotices = canUpload || replaced;
   const [progress, setProgress] = useState<number | null>(null);
   // Client-side quality check dialog and the server check result of the last upload.
   const { gate, dialog: checkDialog, checking } = useDocCheckGate();
@@ -227,6 +237,7 @@ const RequirementCard = ({
       setLastQuality(qualityOf(data));
       setLastPhoto(photoCheckOf((data as { photoCheck?: unknown }).photoCheck));
       toast.success(t('portal.docs.uploaded'));
+      if (mode === 'replace') setReplaced(true);
       await onChanged();
     } catch (err) {
       onError(err);
@@ -269,6 +280,7 @@ const RequirementCard = ({
       setLastQuality(qualityOf(data));
       setLastPhoto(photoCheckOf((data as { photoCheck?: unknown }).photoCheck));
       toast.success(t('expiry.scan.done', { count: data.pages }));
+      if (mode === 'replace') setReplaced(true);
       await onChanged();
       return true;
     } catch (err) {
@@ -282,7 +294,7 @@ const RequirementCard = ({
   const missing = req.required && !isSatisfied(req);
 
   return (
-    <li className={clsx('rounded-xl border p-4 transition-colors sm:p-5', missing && open ? 'border-warning-border bg-warning-bg' : 'border-line bg-card')}>
+    <li className={clsx('rounded-xl border p-4 transition-colors sm:p-5', missing && canUpload ? 'border-warning-border bg-warning-bg' : 'border-line bg-card')}>
       <div className="flex items-start gap-3">
         <span className="mt-0.5">
           <RequirementIcon req={req} />
@@ -312,25 +324,25 @@ const RequirementCard = ({
                   canDelete={open && d.uploadedById === user?.id && d.status !== 'ACCEPTED'}
                   onDelete={onDelete}
                   requirementKey={(req as Requirement & { key?: string | null }).key ?? null}
-                  onReupload={open && d.status !== 'ACCEPTED' ? (f) => void upload(f) : undefined}
+                  onReupload={canUpload && d.status !== 'ACCEPTED' ? (f) => void upload(f) : undefined}
                 />
               ))}
             </AnimatePresence>
           </ul>
         ) : (
-          !open && <p className="text-xs text-muted italic">{t('portal.docs.notUploaded')}</p>
+          !canUpload && <p className="text-xs text-muted italic">{t('portal.docs.notUploaded')}</p>
         )}
-        {open && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
-        {open && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
-        {open && <PhotoCheckNotice check={lastPhoto} onRetake={(f) => void upload(f)} onDismiss={() => setLastPhoto(null)} />}
-        {open && checking && (
+        {showNotices && lastChecks != null && <CheckResultNotice checks={lastChecks} onDismiss={() => setLastChecks(null)} />}
+        {canUpload && <QualityNotice quality={lastQuality} onRetake={(f) => void upload(f)} onDismiss={() => setLastQuality(null)} />}
+        {canUpload && <PhotoCheckNotice check={lastPhoto} onRetake={(f) => void upload(f)} onDismiss={() => setLastPhoto(null)} />}
+        {canUpload && checking && (
           <p className="flex items-center gap-2 text-xs text-muted" role="status">
             <Clock className="size-3.5 animate-pulse" aria-hidden />
             {t('vault.check.checking')}
           </p>
         )}
-        {open && <HowToShoot requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />}
-        {open && (
+        {canUpload && <HowToShoot requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />}
+        {canUpload && (
           <FileDrop
             onFile={upload}
             progress={progress}
@@ -338,7 +350,7 @@ const RequirementCard = ({
             label={docs.length > 0 ? t('portal.docs.replace') : t('portal.docs.upload')}
           />
         )}
-        {open && (
+        {canUpload && (
           <div className="flex flex-wrap items-center gap-2">
             <input
               ref={pagesRef}
@@ -373,13 +385,14 @@ const RequirementCard = ({
             )}
           </div>
         )}
-        {open && (
+        {canUpload && (
           <VaultPicker
             caseId={caseId}
             requirementId={req.id}
             compact
             onAdded={async (checks) => {
               setLastChecks(checks);
+              if (mode === 'replace') setReplaced(true);
               await onChanged();
             }}
           />
@@ -412,6 +425,8 @@ export const CaseDocuments = ({
   if (!reqs.length) return null;
 
   const open = UPLOAD_STAGE[data.status] === stage;
+  // Upload step closed, but the team rejected a document here: it can be uploaded again (lib/docReplace).
+  const replaceable = !open && reqs.some((r) => clientUploadMode(data.status, r) === 'replace');
   const required = reqs.filter((r) => r.required);
   const missing = required.filter((r) => !isSatisfied(r));
   const doneCount = required.length - missing.length;
@@ -455,6 +470,12 @@ export const CaseDocuments = ({
           </h3>
           {open ? (
             <p className="mt-1 text-xs text-muted">{t('portal.docs.formats')}</p>
+          ) : replaceable ? (
+            // After hand-in: only the rejected documents can be uploaded again.
+            <p className="mt-1 flex items-start gap-1.5 text-sm font-medium text-danger-fg" data-testid="docs-replace-only">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {t('pmom.replaceOnly')}
+            </p>
           ) : (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
               <Lock className="size-3.5" aria-hidden />
@@ -484,7 +505,7 @@ export const CaseDocuments = ({
 
       <ul className="mt-4 space-y-3">
         {reqs.map((r) => (
-          <RequirementCard key={r.id} req={r} caseId={data.id} open={open} onChanged={onChanged} onDelete={setToDelete} />
+          <RequirementCard key={r.id} req={r} caseId={data.id} open={open} caseStatus={data.status} onChanged={onChanged} onDelete={setToDelete} />
         ))}
       </ul>
 

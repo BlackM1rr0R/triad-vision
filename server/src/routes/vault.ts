@@ -12,6 +12,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { clientDocFilter, decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
 import { audit } from '../lib/audit.js';
 import { CLIENT_UPLOAD_STAGE } from '../lib/caseFlow.js';
+import { notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
 import { CASE_DOC_MIME } from '../lib/fileCheck.js';
 import { badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { buildDocumentsZip, zipFileName } from '../lib/vaultExport.js';
@@ -321,11 +322,10 @@ vaultRouter.post('/:id/use', async (req, res) => {
   const v = await ownVaultDoc(String(req.params.id), req.user!.id);
   const body = parse(z.object({ caseId: z.string().min(1), requirementId: z.string().min(1) }), req.body);
   const c = await ownCase(body.caseId, req.user!.id);
-  // Same stage rules as POST /api/cases/:id/documents.
-  const stage = CLIENT_UPLOAD_STAGE[c.status];
-  if (!stage) throw conflict('UPLOAD_NOT_ALLOWED');
-  const requirement = await prisma.documentRequirement.findUnique({ where: { id: body.requirementId } });
-  if (!requirement || requirement.caseId !== c.id || requirement.stage !== stage) throw badRequest('INVALID_REQUIREMENT');
+  // Same stage rules as POST /api/cases/:id/documents (incl. a new file in place of a rejected document).
+  const target = await resolveClientUploadTarget(c, body.requirementId);
+  if (!target) throw CLIENT_UPLOAD_STAGE[c.status] ? badRequest('INVALID_REQUIREMENT') : conflict('UPLOAD_NOT_ALLOWED');
+  const { stage, requirement } = target;
 
   const storedName = randomName(v.filename);
   try {
@@ -353,6 +353,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away (type folder; never throws)
+    if (target.replacement) await notifyReplacement(c, requirement, doc.originalName); // staff: a rejected document was replaced
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws

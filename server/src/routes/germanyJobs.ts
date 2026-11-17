@@ -1,6 +1,7 @@
 import fsp from 'node:fs/promises';
-import { Router, type Request } from 'express';
-import { limiter, notFound, parse } from '../lib/http.js';
+import { Router, type Request, type RequestHandler } from 'express';
+import { forbidden, limiter, notFound, parse } from '../lib/http.js';
+import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "apply via Triad Vision" on/off
 import { notifyStaff } from '../lib/notifications.js';
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 import { attachLeadContext } from '../lib/marketing/leadScoring.js';
@@ -41,11 +42,18 @@ germanyJobsRouter.use('/saved', savedGermanyJobsRouter);
 const searchLimiter = limiter({ windowMs: 60 * 1000, limit: 30 });
 const applyLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 10 });
 
-germanyJobsRouter.get('/config', (_req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=300');
+germanyJobsRouter.get('/config', async (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60');
   const sources = enabledProviders().map((p) => p.info);
-  res.json({ search: sources.length > 0, sources });
+  // `apply`: "apply via Triad Vision" for these listings (admin setting, default off: they are not our vacancies).
+  res.json({ search: sources.length > 0, sources, apply: (await getApplicationPolicy()).allowExternalApplications });
 });
+
+/** Admin setting "Allow applications to external Germany job listings" (lib/vacancyPlaces/policy.ts), checked before the upload. */
+const requireExternalApply: RequestHandler = async (_req, _res, next) => {
+  if (!(await getApplicationPolicy()).allowExternalApplications) return next(forbidden('EXTERNAL_APPLICATIONS_DISABLED'));
+  next();
+};
 
 germanyJobsRouter.get('/search', searchLimiter, async (req, res) => {
   if (!enabledProviders().length) throw notFound('FEATURE_DISABLED');
@@ -66,7 +74,7 @@ const accountOf = (req: Request) => {
   return u;
 };
 
-germanyJobsRouter.post('/apply', applyLimiter, cvUpload.single('cv'), async (req, res) => {
+germanyJobsRouter.post('/apply', applyLimiter, requireExternalApply, cvUpload.single('cv'), async (req, res) => {
   const file = req.file;
   try {
     const parsed = applyInput.safeParse(req.body ?? {});

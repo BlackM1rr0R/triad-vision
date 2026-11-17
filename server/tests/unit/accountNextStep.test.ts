@@ -91,6 +91,31 @@ describe('account next step: collectActions / pickNextStep', () => {
     expect(r.actionCount).toBe(0);
   });
 
+  it('after hand-in a rejected document is the big card again (above soft nudges, no waiting state)', () => {
+    const review = { id: 'c1', status: 'DOCUMENTS_REVIEW' as const, appointmentAt: null, appointmentPlace: null };
+    const r = pickNextStep(
+      facts({
+        primary: review,
+        profilePercent: 60,
+        passportExpiry: inDays(30),
+        ball: { side: 'TEAM', eta: null, items: [{ side: 'TEAM', reason: 'REVIEW_DOCS' as never, count: 2, dueAt: null, overdue: false }, ballItem('FIX_DOCS')] },
+        firstRejectedDoc: t('Passport'),
+        firstRejectedStage: 'INITIAL',
+      }),
+    );
+    expect(r.primary).toMatchObject({ kind: 'FIX_DOCS', to: '/account/cases/c1?tab=docs#docs-initial', detail: t('Passport'), count: 1 });
+    expect(r.secondary.map((a) => a.kind)).toEqual(['PASSPORT_EXPIRY', 'COMPLETE_PROFILE']);
+    expect(r.waiting).toBeNull();
+    expect(r.actionCount).toBe(1);
+    // An INITIAL document rejected during the embassy step links to its own section.
+    const e = pickNextStep(
+      facts({ primary: { ...review, status: 'EMBASSY_DOCUMENTS' }, ball: { side: 'CLIENT', eta: null, items: [ballItem('FIX_DOCS')] }, firstRejectedDoc: t('Diploma'), firstRejectedStage: 'INITIAL' }),
+    );
+    expect(e.primary?.to).toBe('/account/cases/c1?tab=docs#docs-initial');
+    // Without a stage (open step): the open step's section, as before.
+    expect(pickNextStep(facts({ ball: { side: 'CLIENT', eta: null, items: [ballItem('FIX_DOCS')] } })).primary?.to).toBe('/account/cases/c1?tab=docs#docs-initial');
+  });
+
   it('no case yet: start one (no profile nag before the first case)', () => {
     const r = pickNextStep(facts({ hasCases: false, primary: null, profilePercent: 0 }));
     expect(r.primary).toMatchObject({ kind: 'START_CASE', to: '/account#start' });

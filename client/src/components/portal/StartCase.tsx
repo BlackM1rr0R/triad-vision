@@ -14,7 +14,9 @@ import { forgetVisa, rememberedVisa } from '@/lib/referralCookie';
 import { Traveller } from '@/components/illustrations';
 import { registerCopy } from '@/i18n';
 import { vacancyFolders } from '@/i18n/vacancyFolders';
-import type { L10n } from '@/lib/types';
+import { toast } from 'sonner';
+import { isFull, placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
+import { VacancyOnlyPicker, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
 
 registerCopy(vacancyFolders);
 
@@ -59,13 +61,19 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const [busy, setBusy] = useState(false);
   const [vacancyId, setVacancyId] = useState('');
   const vacancyFieldId = useId();
-  const withJob = !!visaType && JOB_TYPES.includes(visaType);
-  const { data: vacancies } = useQuery({
+  // Admin setting "clients can only apply to active vacancies" (default on): the vacancy is the only choice and
+  // decides the visa type (server lib/vacancyPlaces); off: the old free choice of the application kind.
+  const { data: policy } = useApplicationPolicy();
+  const onlyVacancies = policy?.clientsOnlyActiveVacancies ?? true;
+  const withJob = onlyVacancies || (!!visaType && JOB_TYPES.includes(visaType));
+  const { data: vacancies, isLoading: vacanciesLoading } = useQuery({
     queryKey: ['vacancy-options'],
-    queryFn: async () => (await api.get<{ items: { id: string; title: L10n; city: string | null }[] }>('/vacancies/options')).data.items,
+    queryFn: async () => (await api.get<{ items: VacancyOption[] }>('/vacancies/options')).data.items,
     enabled: withJob,
     staleTime: 60_000,
   });
+  const openVacancies = (vacancies ?? []).filter((v) => !isFull(v));
+  const optionLabel = useVacancyOptionLabel();
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
   const steps = t('accountPage.dash.start.steps', { returnObjects: true }) as unknown as string[];
@@ -82,18 +90,31 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   };
 
   const submit = async () => {
-    if (!visaType) return;
+    if (onlyVacancies ? !vacancyId : !visaType) return;
     setBusy(true);
     try {
-      const res = await api.post<{ case: { id: string } }>('/cases', {
-        visaType,
-        // The target job is one of our vacancies (it sets the profession); else the profile's profession, else the visa type.
-        ...(withJob && vacancyId ? { vacancyId } : defaultProfession ? { profession: defaultProfession } : {}),
-        visaCategoryId: visaCategoryId || null,
-      });
+      const res = await api.post<{ case: { id: string } }>(
+        '/cases',
+        onlyVacancies
+          ? { vacancyId } // visa type, category and profession come from the vacancy
+          : {
+              visaType,
+              // The target job is one of our vacancies (it sets the profession); else the profile's profession, else the visa type.
+              ...(withJob && vacancyId ? { vacancyId } : defaultProfession ? { profession: defaultProfession } : {}),
+              visaCategoryId: visaCategoryId || null,
+            },
+      );
       await refresh();
       navigate(`/account/cases/${res.data.case.id}`);
     } catch (err) {
+      const placesText = placesErrorText(t, err);
+      if (placesText) {
+        // The last place was taken / the vacancy closed meanwhile: reload the list.
+        toast.error(placesText);
+        setVacancyId('');
+        await qc.invalidateQueries({ queryKey: ['vacancy-options'] });
+        return;
+      }
       onError(err);
       if (errorCode(err) === 'ACTIVE_CASE_EXISTS') await refresh();
     } finally {
@@ -143,64 +164,76 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
             void submit();
           }}
         >
-          <fieldset>
-            <legend className="label">{t('portal.applicationType')}</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {VISA_TYPES.map(({ key, icon: Icon }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => pickType(key)}
-                  aria-pressed={visaType === key}
-                  className={`flex min-h-14 items-start gap-3 rounded-2xl border p-3.5 text-left transition-colors ${
-                    visaType === key ? 'border-primary bg-sunken ring-2 ring-focus/30' : 'border-line hover:border-line-strong hover:bg-sunken'
-                  }`}
-                >
-                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${visaType === key ? 'bg-primary text-primary-contrast' : 'chip-soft'}`}>
-                    <Icon className="size-4" aria-hidden />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-ink">{t(`portal.visaTypes.${key}`)}</span>
-                    <span className="block text-xs leading-snug text-muted">{t(`portal.visaTypeHints.${key}`)}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          {visaType === 'WORK' && categories.length > 0 && (
-            <div>
-              <label htmlFor={visaId} className="label">
-                {t('portal.sectorLabel')}
-              </label>
-              <select id={visaId} className="input" value={visaCategoryId} onChange={(e) => setVisaCategoryId(e.target.value)}>
-                <option value="">{t('portal.notSure')}</option>
-                {categories
-                  .filter((v) => v.slug !== 'ausbildung')
-                  .map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {tr(v.title)} ({v.visaLabel})
-                    </option>
+          {onlyVacancies ? (
+            <VacancyOnlyPicker
+              id={vacancyFieldId}
+              vacancies={vacancies ?? []}
+              loading={vacanciesLoading}
+              hasOpen={openVacancies.length > 0}
+              value={vacancyId}
+              onChange={setVacancyId}
+            />
+          ) : (
+            <>
+              <fieldset>
+                <legend className="label">{t('portal.applicationType')}</legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {VISA_TYPES.map(({ key, icon: Icon }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => pickType(key)}
+                      aria-pressed={visaType === key}
+                      className={`flex min-h-14 items-start gap-3 rounded-2xl border p-3.5 text-left transition-colors ${
+                        visaType === key ? 'border-primary bg-sunken ring-2 ring-focus/30' : 'border-line hover:border-line-strong hover:bg-sunken'
+                      }`}
+                    >
+                      <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${visaType === key ? 'bg-primary text-primary-contrast' : 'chip-soft'}`}>
+                        <Icon className="size-4" aria-hidden />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-ink">{t(`portal.visaTypes.${key}`)}</span>
+                        <span className="block text-xs leading-snug text-muted">{t(`portal.visaTypeHints.${key}`)}</span>
+                      </span>
+                    </button>
                   ))}
-              </select>
-            </div>
+                </div>
+              </fieldset>
+              {visaType === 'WORK' && categories.length > 0 && (
+                <div>
+                  <label htmlFor={visaId} className="label">
+                    {t('portal.sectorLabel')}
+                  </label>
+                  <select id={visaId} className="input" value={visaCategoryId} onChange={(e) => setVisaCategoryId(e.target.value)}>
+                    <option value="">{t('portal.notSure')}</option>
+                    {categories
+                      .filter((v) => v.slug !== 'ausbildung')
+                      .map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {tr(v.title)} ({v.visaLabel})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+              {withJob && !!vacancies?.length && (
+                <div>
+                  <label htmlFor={vacancyFieldId} className="label">
+                    {t('vacFolders.position.label')}
+                  </label>
+                  <select id={vacancyFieldId} className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
+                    <option value="">{t('vacFolders.position.notSure')}</option>
+                    {vacancies.map((v) => (
+                      <option key={v.id} value={v.id} disabled={isFull(v)}>
+                        {optionLabel(v)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
           )}
-          {withJob && !!vacancies?.length && (
-            <div>
-              <label htmlFor={vacancyFieldId} className="label">
-                {t('vacFolders.position.label')}
-              </label>
-              <select id={vacancyFieldId} className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
-                <option value="">{t('vacFolders.position.notSure')}</option>
-                {vacancies.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {tr(v.title)}
-                    {v.city ? ` · ${v.city}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <button type="submit" className="btn-primary btn-lg min-h-12 w-full sm:w-auto" disabled={busy || !visaType}>
+          <button type="submit" className="btn-primary btn-lg min-h-12 w-full sm:w-auto" disabled={busy || (onlyVacancies ? !vacancyId : !visaType)}>
             {busy ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
             {t('portal.create')}
           </button>

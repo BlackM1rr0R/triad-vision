@@ -31,6 +31,7 @@ const az = {
     rejectedNoReason: 'Komanda bu faylı qəbul etmədi. Zəhmət olmasa yenisini yükləyin.',
     reasonLabel: 'Səbəb',
     reupload: 'Yenidən yüklə',
+    replaceOnly: 'Qəbul edilməyən sənədi yenidən yükləyin. Digər sənədlər bu mərhələdə dəyişmir.',
   },
 };
 
@@ -65,6 +66,7 @@ const de: Copy = {
     rejectedNoReason: 'Das Team hat diese Datei nicht akzeptiert. Bitte laden Sie eine neue hoch.',
     reasonLabel: 'Grund',
     reupload: 'Erneut hochladen',
+    replaceOnly: 'Laden Sie die abgelehnte Unterlage neu hoch. Die anderen Unterlagen bleiben in dieser Phase unverändert.',
   },
 };
 
@@ -97,6 +99,7 @@ const en: Copy = {
     rejectedNoReason: 'The team did not accept this file. Please upload a new one.',
     reasonLabel: 'Reason',
     reupload: 'Re-upload',
+    replaceOnly: 'Upload the rejected document again. The other documents stay as they are at this stage.',
   },
 };
 
@@ -129,6 +132,7 @@ const ru: Copy = {
     rejectedNoReason: 'Команда не приняла этот файл. Пожалуйста, загрузите новый.',
     reasonLabel: 'Причина',
     reupload: 'Загрузить заново',
+    replaceOnly: 'Загрузите отклонённый документ заново. Остальные документы на этом этапе не меняются.',
   },
 };
 
