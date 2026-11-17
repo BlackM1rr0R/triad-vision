@@ -13,6 +13,7 @@ import { seedGuideRevisions } from './seed/guides/revisions';
 import { seedGuideDrafts } from './seed/guideDrafts/index';
 import { seedStudyProgrammes } from './seed/studyProgrammes';
 import { createStarterCourse } from '../src/lib/course/starter';
+import { syncAdminHelpArticles } from '../src/lib/ops/kbSystemArticles';
 
 /**
  * SEED_PROFILE (white-label, deploy/whitelabel/README.md):
@@ -583,6 +584,10 @@ async function main() {
   if (!WHITELABEL) await seedGuideDrafts(prisma);
   if (!WHITELABEL) await seedStudyProgrammes(prisma); // Study in Germany: verified starter programmes, UNPUBLISHED, once per database
   await createStarterCourse(prisma); // pre-departure course "Almaniyaya hazırlıq" (draft, once by slug)
+  // Knowledge Base "page guides" (one per admin page, lib/adminHelp): created / updated, never over staff edits.
+  // basePrisma + explicit brand: the stored hash must match exactly what is written.
+  const kbHelp = await syncAdminHelpArticles(basePrisma, { brand: (s) => brandDeep(s) as string });
+  console.log(`KB page guides: ${kbHelp.create} new, ${kbHelp.update} updated, ${kbHelp.edited} kept (edited by staff)`);
 
   console.log(`Seed complete (${SEED_PROFILE} profile). Admin login: ${adminEmail}`);
 }

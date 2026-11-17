@@ -315,6 +315,9 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('tvDisplay', '/admin/tv-settings', MonitorPlay, 'system', { adminOnly: true }), // office TV mode: display tokens + settings (the TV itself: /admin/tv)
   a('teamLoad', '/admin/team-load', Scale, 'system'), // workload board: ADMIN+ the team, STAFF their own card
   a('training', '/admin/training', GraduationCap, 'system', { badge: 'training', module: 'training' }), // internal training (badge: unfinished required courses)
+  a('trainingChecklist', '/admin/training-checklist', ListChecks, 'system'), // new staff checklist: 10 real tasks, auto-detected (team progress ADMIN+)
+  a('whatsNew', '/admin/whats-new', Sparkles, 'system'), // Yeniliklər: release notes per role (ADMIN+ manage)
+  a('setupChecklist', '/admin/setup-checklist', Rocket, 'system', { adminOnly: true }), // owner setup checklist (ADMIN+)
   a('help', '/admin/help', LifeBuoy, 'system'),
   // Navigation settings: module toggles, page usage (SUPER_ADMIN), staff desks (ADMIN+)
   a('modules', '/admin/system/modules', ToggleRight, 'system', { superOnly: true }),
@@ -385,10 +388,10 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
     icon: Globe,
     tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts', 'dataFreshness', 'pastPlacements'],
   },
-  { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
+  { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'trainingChecklist', 'whatsNew', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'setupChecklist', 'designSystem', 'kb', 'problemReports', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

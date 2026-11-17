@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { DESKS, PINS_MAX, STAFF_NAV, activeNavItem, defaultDeskFor, isDesk, moduleOn, setOwnerInstance, type Desk, type ModuleFlags, type ModuleKey } from './navRegistry';
+import { defaultWorkProfile, isWorkProfile, resolveNavView, type NavView, type WorkProfile } from './workProfiles';
 import { isStringArray, navPinsKey, navStateKey, readJson, writeJson } from './storage';
 
 /**
@@ -42,6 +43,10 @@ export interface NavState {
   /** Modules of the licence plan (null = all); a module outside the plan is already off in `modules`. */
   licensedModules?: ModuleKey[] | null;
   license?: NavLicense;
+  /** Simple sidebar (workProfiles.ts): chosen profile (null = default), the default, the effective view. */
+  workProfile?: WorkProfile | null;
+  defaultWorkProfile?: WorkProfile;
+  navView?: NavView;
 }
 
 const isNavState = (v: unknown): v is NavState =>
@@ -106,7 +111,7 @@ export const useStaffNav = () => {
   );
 
   const save = useMutation({
-    mutationFn: async (body: { desk?: Desk | null; pins?: string[]; landing?: StaffLanding | null }) => (await api.put<NavState>('/admin/me/nav', body)).data,
+    mutationFn: async (body: { desk?: Desk | null; pins?: string[]; landing?: StaffLanding | null; workProfile?: WorkProfile | null; navView?: NavView | null }) => (await api.put<NavState>('/admin/me/nav', body)).data,
     onSuccess: (server) => {
       qc.setQueryData(key, server);
       writeJson(navStateKey(userId), server);
@@ -162,6 +167,23 @@ export const useStaffNav = () => {
     [patch, save],
   );
 
+  /** Own work profile (null = back to the default); a chosen profile turns the simple view on unless one was picked. */
+  const setWorkProfile = useCallback(
+    (next: WorkProfile | null) => {
+      patch((s) => ({ ...s, workProfile: next, navView: s.navView ?? resolveNavView(undefined, next) }));
+      save.mutate({ workProfile: next });
+    },
+    [patch, save],
+  );
+
+  const setNavView = useCallback(
+    (next: NavView) => {
+      patch((s) => ({ ...s, navView: next }));
+      save.mutate({ navView: next });
+    },
+    [patch, save],
+  );
+
   const isModuleOn = useCallback((k: ModuleKey | undefined) => moduleOn(modules, k), [modules]);
 
   return {
@@ -179,6 +201,13 @@ export const useStaffNav = () => {
     landing: data?.landing ?? null,
     setLanding,
     setDesk,
+    /** Work profile of the simple sidebar (stored or default) and the sidebar view. */
+    workProfile: (isWorkProfile(data?.workProfile) ? data.workProfile : null) ?? data?.defaultWorkProfile ?? defaultWorkProfile(role),
+    workProfileChosen: data?.workProfile ?? null,
+    defaultWorkProfile: data?.defaultWorkProfile ?? defaultWorkProfile(role, data?.desk),
+    navView: data?.navView ?? resolveNavView(undefined, data?.workProfile),
+    setWorkProfile,
+    setNavView,
     togglePin,
     recordVisit,
     isModuleOn,

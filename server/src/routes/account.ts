@@ -10,6 +10,7 @@ import { publicUser } from './auth.js';
 import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
 import { OPEN_STATUSES, dueFrom } from '../lib/privacy/requests.js';
 import { loadNextStep } from '../lib/account/nextStep.js';
+import { loadPortalStage } from '../lib/account/portalStage.js';
 
 export const accountRouter = Router();
 accountRouter.use(requireAuth);
@@ -276,6 +277,16 @@ accountRouter.get('/next-step', async (req, res) => {
   // ?case=<id>: the family switcher's case (own cases only; lib/account/nextStep.ts ignores anything else).
   const pick = typeof req.query.case === 'string' && req.query.case.length <= 40 ? req.query.case : undefined;
   res.json(await loadNextStep(req.user!.id, new Date(), { caseId: pick }));
+});
+
+/**
+ * Stage-based portal: the client's stage (EXPLORING · APPLYING · DEPARTURE · IN_GERMANY · CLOSED), the finer
+ * phase and the 4–7 tools the portal features now (lib/account/portalStage). Read-only, so staff viewing as
+ * the client get the client's stage.
+ */
+accountRouter.get('/stage', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(await loadPortalStage(req.user!.id));
 });
 
 /** GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). */

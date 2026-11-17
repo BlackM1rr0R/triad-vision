@@ -12,6 +12,7 @@ import { getRenewalSettings } from '../renewals/service.js';
 import { openInvoicesOf } from '../billing/service.js';
 import { isPastDue } from '../billing/math.js';
 import { recognitionClientAction } from '../recognition/service.js';
+import { portalStageOf } from './portalStage.js';
 import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
 /**
@@ -33,6 +34,7 @@ export type NextKind =
   | 'SIGN_CONTRACT'
   | 'ATTEND_APPOINTMENT'
   | 'BOOK_INTERVIEW'
+  | 'PREP_INTERVIEW'
   | 'SIGN_DOCUMENTS'
   | 'CONFIRM_DATA'
   | 'ANSWER_MESSAGE'
@@ -41,6 +43,7 @@ export type NextKind =
   | 'RECOGNITION_DOCS'
   | 'ANSWER_CHECKIN'
   | 'ARRIVAL_PLAN'
+  | 'ARRIVAL_PREP'
   | 'RENEW_RESIDENCE'
   | 'ONBOARDING'
   | 'START_CASE'
@@ -72,6 +75,8 @@ export const KIND_RANK: Record<NextKind, number> = {
   ATTEND_APPOINTMENT: 14,
   // An employer interview to book (open invite: pick a slot) or to confirm (proposed time).
   BOOK_INTERVIEW: 14.5,
+  // A booked interview (embassy appointment or employer interview) is near: practise with the interview prep.
+  PREP_INTERVIEW: 14.6,
   SIGN_DOCUMENTS: 15,
   CONFIRM_DATA: 16,
   // The team asked something in the case chat and the client has not answered yet.
@@ -82,6 +87,8 @@ export const KIND_RANK: Record<NextKind, number> = {
   RECOGNITION_DOCS: 19,
   ANSWER_CHECKIN: 20,
   ARRIVAL_PLAN: 21,
+  // Visa approved and the arrival plan sent: the departure checklist (flight → first weeks) is the next thing.
+  ARRIVAL_PREP: 21.5,
   RENEW_RESIDENCE: 22,
   ONBOARDING: 23,
   START_CASE: 30,
@@ -90,11 +97,13 @@ export const KIND_RANK: Record<NextKind, number> = {
 };
 const OVERDUE_RANK = 1;
 /** Nudges, not tasks: never counted in the "open actions" badge. */
-const SOFT: NextKind[] = ['PASSPORT_EXPIRY', 'COMPLETE_PROFILE', 'START_CASE'];
+const SOFT: NextKind[] = ['PASSPORT_EXPIRY', 'COMPLETE_PROFILE', 'START_CASE', 'PREP_INTERVIEW', 'ARRIVAL_PREP'];
 
 const DAY = 24 * 3600 * 1000;
 export const PASSPORT_WARN_DAYS = 180;
 export const ONBOARDING_SOON_DAYS = 14;
+/** The interview prep nudge shows from this many days before an embassy appointment / employer interview. */
+export const INTERVIEW_PREP_DAYS = 21;
 
 export interface NextStepFacts {
   now: Date;
@@ -123,7 +132,7 @@ export interface NextStepFacts {
   /** Running recognition process with checklist items the client provides (lib/recognition): the first one names the card. */
   recognition?: { caseId: string; count: number; key: string; dueAt: Date | null } | null;
   /** Employer interviews: open invites (the client picks the time) and proposed times to confirm. */
-  interviews?: { invites: number; proposed: Date[] } | null;
+  interviews?: { invites: number; proposed: Date[]; confirmed?: Date[] } | null;
   /** The newest message of the open case is a question from the team that the client has not answered. */
   question?: { caseId: string; at: Date; snippet: string } | null;
 }
@@ -180,6 +189,15 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
     const soonest = [...f.interviews.proposed].sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
     add('BOOK_INTERVIEW', '/account/interviews', { count: f.interviews.invites + f.interviews.proposed.length, dueAt: soonest, overdue: false });
   }
+  {
+    // Interview prep: a booked embassy appointment or a confirmed employer interview within the next weeks.
+    const soon = (d: Date | null | undefined) => !!d && d > now && d.getTime() - now.getTime() <= INTERVIEW_PREP_DAYS * DAY;
+    const dates = [
+      ...(p && p.status === 'APPOINTMENT_SCHEDULED' && soon(p.appointmentAt) ? [p.appointmentAt as Date] : []),
+      ...(f.interviews?.confirmed ?? []).filter(soon),
+    ].sort((a, b) => a.getTime() - b.getTime());
+    if (dates.length) add('PREP_INTERVIEW', '/account/interview-prep', { dueAt: dates[0], overdue: false, count: dates.length });
+  }
   if (f.question) add('ANSWER_MESSAGE', caseUrl(f.question.caseId, 'messages'), { overdue: false, detail: f.question.snippet || null });
   for (const form of f.forms) add('FILL_FORM', `/account/cases/${form.caseId}/forms/${form.id}`, { dueAt: form.dueAt, detail: form.title });
   if (f.signatures.length) {
@@ -200,6 +218,7 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
     add('ANSWER_CHECKIN', `/check-in/${first.id}`, { count: f.checkIns.length, overdue: false });
   }
   if (f.arrival && !f.arrived && (f.arrival.planStatus === null || f.arrival.planStatus === 'DRAFT')) add('ARRIVAL_PLAN', '/account/arrival');
+  else if (f.arrival && !f.arrived && f.arrival.planStatus !== 'CANCELLED') add('ARRIVAL_PREP', '/account/arrival-prep', { overdue: false });
   if (f.residence && !f.residence.renewalOpened && f.residence.expiresAt.getTime() - now.getTime() <= f.residence.leadDays * DAY) {
     add('RENEW_RESIDENCE', caseUrl(f.residence.caseId, 'messages'), { dueAt: f.residence.expiresAt });
   }
@@ -280,7 +299,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
   const approved = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId) ?? cases.find((c) => c.status === 'APPROVED') ?? null;
   const caseIds = cases.map((c) => c.id);
 
-  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications, invoices, billedCount, interviewInvites, proposedInterviews, lastMessage, recognitionRow] = await Promise.all([
+  const [ball, requirements, conf, forms, signers, tasks, followUp, plan, checkIns, unreadMessages, unreadNotifications, invoices, billedCount, interviewInvites, proposedInterviews, lastMessage, recognitionRow, confirmedInterviews] = await Promise.all([
     open ? ballInCourtFor(open.id) : Promise.resolve(null),
     open
       ? prisma.documentRequirement.findMany({
@@ -318,6 +337,8 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
           select: { status: true, createdAt: true, submittedAt: true, decisionAt: true },
         })
       : Promise.resolve(null),
+    // Confirmed employer interviews ahead: the interview prep nudge.
+    prisma.interview.findMany({ where: { candidateId: userId, status: 'CONFIRMED', startsAt: { gt: now } }, orderBy: { startsAt: 'asc' }, select: { startsAt: true }, take: 5 }),
   ]);
 
   const arrived = (!!followUp && followUp.arrivedAt <= now) || plan?.status === 'COMPLETED';
@@ -366,10 +387,19 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     profilePercent: profileCompleteness(user).percent,
     invoices: invoices.map((i) => ({ id: i.id, number: i.number, openCents: i.grossCents - i.paidCents, dueAt: i.dueDate, overdue: i.status === 'OVERDUE' || isPastDue(i.dueDate, now) })),
     recognition,
-    interviews: { invites: interviewInvites, proposed: proposedInterviews.map((i) => i.startsAt) },
+    interviews: { invites: interviewInvites, proposed: proposedInterviews.map((i) => i.startsAt), confirmed: confirmedInterviews.map((i) => i.startsAt) },
     question: questionOf(lastMessage, userId, open?.id ?? null),
   };
   const { actionCount, ...picked } = pickNextStep(facts);
+  // Stage-based portal (lib/account/portalStage): the same facts decide which tools the portal features.
+  const docKinds: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT'];
+  const portal = portalStageOf(cases, arrived, {
+    pendingSignatures: facts.signatures.length,
+    openInvoices: invoices.length,
+    hasOpenCase: cases.some((c) => !FINAL_STATUSES.includes(c.status)),
+    openDocActions: [picked.primary, ...picked.secondary, ...picked.more].some((x) => !!x && docKinds.includes(x.kind)),
+    interviewsAhead: interviewInvites + proposedInterviews.length + confirmedInterviews.length > 0,
+  });
 
   // Progress of the case the portal is about, and the next date to expect.
   let progress: number | null = null;
@@ -439,6 +469,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
         })
       : null,
     ...picked,
+    portal,
     counts: {
       actions: actionCount,
       unreadMessages,

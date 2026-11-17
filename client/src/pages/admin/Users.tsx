@@ -28,6 +28,7 @@ import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
 import { Pagination } from '@/components/ui/Pagination';
 import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect'; // sidebar desk of a staff member (ADMIN+)
+import { StaffProfileSelect } from '@/components/admin/StaffProfileSelect'; // work profile of the simple sidebar (ADMIN+)
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
 
 // Field-level change history of the user (ADMIN+, own chunk).
@@ -699,6 +700,7 @@ export default function Users() {
                       <td className="px-4 py-3">
                         <RoleControl u={u} editable={can} />
                         {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-1.5 block" />}
+                        {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffProfileSelect userId={u.id} name={fullName(u)} className="mt-1.5 block" />}
                       </td>
                       <td className="px-4 py-3">
                         <ActiveControl u={u} editable={can} />
@@ -752,6 +754,7 @@ export default function Users() {
                     <RoleControl u={u} editable={can} />
                   </div>
                   {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-2 block" />}
+                  {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffProfileSelect userId={u.id} name={fullName(u)} className="mt-2 block" />}
                   <div className="mt-3 space-y-1.5 border-t border-line pt-3">
                     <ActivityCell u={u} />
                     <CountsCell u={u} />

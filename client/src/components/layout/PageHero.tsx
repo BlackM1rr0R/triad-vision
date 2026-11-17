@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { Reveal, Rise } from '../motion';
 import { sized, srcSet } from '@/lib/img';
 import { useMorphTarget } from '@/lib/viewTransition';
+import { PageHelpButton } from '../pageHelp/PageHelpButton';
 
 /**
  * Warm header band at the top of every inner page (Direction B): sand background, breadcrumb, a serif h1,
@@ -65,7 +66,8 @@ export const PageHero = ({
       <div className={side ? 'container-x grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]' : 'container-x'}>
         <div className="min-w-0">
           <Reveal y={8}>
-            <nav className="mb-4 flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-muted sm:mb-5">
+            <div className="mb-4 flex min-w-0 items-start gap-3 sm:mb-5">
+            <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 self-center text-sm text-muted">
               <Link to="/" className={CRUMB}>
                 {t('nav.home')}
               </Link>
@@ -82,6 +84,9 @@ export const PageHero = ({
                 {title}
               </span>
             </nav>
+            {/* Page help "?" (renders nothing on pages without a help text, lib/pageHelp). */}
+            <PageHelpButton className="-my-2" />
+            </div>
           </Reveal>
           {m.arrived ? (
             // Arrived through a morph: the title is already moving into place, no second entrance animation.

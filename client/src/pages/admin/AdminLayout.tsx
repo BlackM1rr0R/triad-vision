@@ -25,7 +25,10 @@ import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live c
 import { HeaderTimer } from '@/components/timeCare/HeaderTimer'; // running staff timer (registers its copy)
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command/CommandPaletteHost'; // Ctrl+K staff palette
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer'; // ? cheat sheet, g+c/i/t/d, page shortcuts (J/K, E, /)
-import { NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, hubOf, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
+import { HUBS, NAV_GROUPS, STAFF_NAV, activeNavItem, hrefFor, hubOf, isVisible, type NavGroupKey, type StaffNavItem } from '@/components/command/navRegistry';
+import { simpleSidebarGroups } from '@/components/command/workProfiles'; // simple sidebar: work profile pages + favourites
+import { SidebarViewSwitch } from '@/components/adminHelp/SidebarViewSwitch'; // Simple / Full view + own work profile
+import { AdminPageHelp } from '@/components/adminHelp/AdminPageHelp'; // "?" what does this page do (lib/adminHelp)
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // server-side pins (shared with Ctrl+K), modules, page usage
 import { LicenseBanner } from '@/components/admin/LicenseBanner'; // white-label licence: grace / read-only notice
 import { OnboardingBanner } from '@/components/admin/OnboardingBanner'; // setup wizard of a new agency instance (SUPER_ADMIN, until completed)
@@ -189,13 +192,14 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
   const { t } = useTranslation();
   const location = useLocation();
   const { prefs, save } = useNavPrefs(userId);
-  const { pins, modules, togglePin } = useStaffNav();
+  const { pins, modules, togglePin, navView, workProfile } = useStaffNav();
+  const simple = navView === 'simple';
   // Modules switched off in System → Modules disappear from the sidebar.
   const items = SIDEBAR_NAV.filter((i) => isVisible(i, role, modules));
   const active = activeNavItem(location.pathname, items);
   const pinned = pins.map((id) => items.find((i) => i.id === id)).filter((i): i is StaffNavItem => !!i);
 
-  const toggleGroup = (key: GroupKey) => save({ ...prefs, open: prefs.open.includes(key) ? prefs.open.filter((k) => k !== key) : [...prefs.open, key] });
+  const toggleGroup = (key: string) => save({ ...prefs, open: prefs.open.includes(key) ? prefs.open.filter((k) => k !== key) : [...prefs.open, key] });
 
   // The group of the current page opens by itself (and stays open).
   const activeGroup = active?.group;
@@ -204,10 +208,18 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup]);
 
-  const groups: { key: GroupKey; icon: LucideIcon; items: StaffNavItem[] }[] = [
-    ...(pinned.length ? [{ key: 'favourites' as const, icon: Star, items: pinned }] : []),
-    ...NAV_GROUPS.map((g) => ({ key: g.key, icon: g.icon, items: items.filter((i) => i.group === g.key) })).filter((g) => g.items.length > 0),
-  ];
+  // Simple view: the work profile's pages grouped by hub (+ favourites), every group open; Full view: the old groups.
+  const groups: { key: string; icon: LucideIcon; name: string; items: StaffNavItem[] }[] = simple
+    ? simpleSidebarGroups(workProfile, pins, role, modules).map((g) => ({
+        key: g.key,
+        items: g.items,
+        icon: g.key === 'favourites' ? Star : g.hub ? (HUBS.find((h) => h.key === g.hub)?.icon ?? LayoutGrid) : LayoutGrid,
+        name: g.key === 'favourites' ? t('admin.nav.favourites') : g.hub ? t(`anav.hubs.${g.hub}`) : t('admin.nav.workspace'),
+      }))
+    : [
+        ...(pinned.length ? [{ key: 'favourites' as GroupKey, icon: Star as LucideIcon, items: pinned }] : []),
+        ...NAV_GROUPS.map((g) => ({ key: g.key as GroupKey, icon: g.icon, items: items.filter((i) => i.group === g.key) })).filter((g) => g.items.length > 0),
+      ].map((g) => ({ ...g, name: g.key === 'favourites' ? t('admin.nav.favourites') : t(`admin.nav.groups.${g.key}`) }));
 
   return (
     <nav
@@ -220,13 +232,20 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
       aria-label={t('admin.layout.navAria')}
     >
       {groups.map((g, gi) => {
-        const open = prefs.open.includes(g.key);
-        const name = g.key === 'favourites' ? t('admin.nav.favourites') : t(`admin.nav.groups.${g.key}`);
+        const open = simple || prefs.open.includes(g.key);
+        const name = g.name;
         const listId = `admin-nav-${g.key}-${idSuffix}`;
         const holdsActive = !!active && g.items.some((i) => i.id === active.id);
         return (
           <div key={g.key} className={clsx(gi > 0 && (collapsed ? 'mt-1.5 w-10 border-t border-line pt-1.5' : 'mt-3'))}>
-            {collapsed ? (
+            {simple ? (
+              !collapsed && (
+                <p className="type-overline flex min-h-7 items-center gap-2 px-2.5">
+                  {g.key === 'favourites' && <Star className="size-3 fill-current text-highlight-fg" aria-hidden />}
+                  <span className="truncate">{name}</span>
+                </p>
+              )
+            ) : collapsed ? (
               <div className="pointer-events-auto flex w-10 justify-center">
                 <Tooltip content={name} side="right">
                   <button
@@ -276,6 +295,8 @@ const SidebarNav = ({ collapsed, role, userId, idSuffix, onNavigate }: SidebarNa
                   transition={{ duration: 0.18 }}
                   // The rail must not clip the tooltips; the full sidebar clips while animating.
                   className={clsx('space-y-0.5', collapsed ? 'pt-0.5' : 'overflow-hidden')}
+                  role={simple ? 'group' : undefined}
+                  aria-label={simple ? name : undefined}
                 >
                   {g.items.map((item) => (
                     <Fragment key={`${g.key}:${item.id}`}>
@@ -467,6 +488,7 @@ export default function AdminLayout() {
         <div className={clsx('flex flex-col gap-2 pt-3 pb-1', collapsed ? 'items-center px-3.5' : 'px-2.5')}>
           <WorkspaceSwitcher collapsed={collapsed} />
           <CommandPaletteButton variant="rail" compact={collapsed} className={collapsed ? 'w-10' : undefined} />
+          <SidebarViewSwitch collapsed={collapsed} />
         </div>
         <SidebarNav collapsed={collapsed} role={user?.role} userId={user?.id} idSuffix={collapsed ? 'rail' : 'side'} />
         <div className={clsx('px-2.5', collapsed && 'flex flex-col items-center px-3.5')}>
@@ -537,6 +559,9 @@ export default function AdminLayout() {
               </div>
               <div className="px-2.5 pt-2">
                 <CommandPaletteButton variant="rail" />
+                <div className="mt-2">
+                  <SidebarViewSwitch collapsed={false} />
+                </div>
               </div>
               <SidebarNav collapsed={false} role={user?.role} userId={user?.id} idSuffix="drawer" onNavigate={() => setMobileOpen(false)} />
               <div className="px-2.5 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
@@ -588,13 +613,15 @@ export default function AdminLayout() {
                   </span>
                 </li>
               ))}
-              <li className="min-w-0">
+              <li className="flex min-w-0 items-center gap-1">
                 <span aria-current="page" className="block truncate font-medium text-ink">
                   {title}
                 </span>
               </li>
             </ol>
           </nav>
+          {/* "?" what this page does: purpose, 3 steps, tips, KB article (every admin route, lib/adminHelp) */}
+          <AdminPageHelp />
 
           {/* the sidebar holds the search field on desktop; phones / tablets get the icon here */}
           <CommandPaletteButton className="lg:hidden" />

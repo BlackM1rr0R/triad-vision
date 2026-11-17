@@ -373,6 +373,34 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Професія, освіта, німецька, досвід і вік: після 5 запитань відповідні візові шляхи, очікувана зарплата, звичайні терміни та ціна пакета.',
     },
   },
+  // "Start here" wizard (client pages/start/StartHere) and the personal plan (pages/start/StartPlan, state in the query): static, no API of their own.
+  '/start': {
+    name: { az: 'Buradan başlayın', de: 'Hier starten', en: 'Start here', ru: 'Начните здесь', tr: 'Buradan başlayın', uk: 'Почніть тут' },
+    title: { az: 'Haradan başlamalı? 3 sual — şəxsi plan', de: 'Wo anfangen? 3 Fragen – Ihr persönlicher Plan', en: 'Where to start? Your personal plan', ru: 'С чего начать? 3 вопроса — личный план', tr: 'Nereden başlamalı? 3 soru, kişisel plan', uk: 'З чого почати? 3 питання — особистий план' },
+    description: {
+      az: 'Kim olduğunuzu, peşənizi və alman dili səviyyənizi seçin: Almaniyaya addım-addım plan, uyğun alətlər, bələdçi və vakansiyalar.',
+      de: 'Wer sind Sie, welcher Beruf, wie gut ist Ihr Deutsch? Ihr Schritt-für-Schritt-Plan nach Deutschland mit Tools, Ratgeber und offenen Stellen.',
+      en: 'Who are you, what is your job, how good is your German? Get a step-by-step plan for Germany with the right tools, a guide and open jobs.',
+      ru: 'Кто вы, какая профессия, какой уровень немецкого? Пошаговый план переезда в Германию: нужные инструменты, гид и вакансии.',
+      tr: 'Kimsiniz, mesleğiniz ne, Almancanız ne düzeyde? Almanya için adım adım kişisel plan: doğru araçlar, bir rehber ve açık iş ilanları.',
+      uk: 'Хто ви, яка професія, який рівень німецької? Покроковий план переїзду до Німеччини: потрібні інструменти, гід і вакансії.',
+    },
+  },
+  '/start/plan': {
+    sitemap: false,
+    index: false,
+    canonical: '/start',
+    name: { az: 'Sizin planınız', de: 'Ihr Plan', en: 'Your plan', ru: 'Ваш план', tr: 'Planınız', uk: 'Ваш план' },
+    title: { az: 'Almaniyaya şəxsi planınız', de: 'Ihr persönlicher Plan für Deutschland', en: 'Your personal plan for Germany', ru: 'Ваш личный план переезда в Германию', tr: 'Almanya için kişisel planınız', uk: 'Ваш особистий план переїзду до Німеччини' },
+    description: {
+      az: 'Addım-addım plan: uyğunluq, alman dili, sənədlər, maaş və xərclər, qeydiyyat — sizə uyğun alətlər və vakansiyalarla.',
+      de: 'Schritt für Schritt: Eignung, Deutsch, Unterlagen, Gehalt und Kosten, Registrierung – mit passenden Tools und offenen Stellen.',
+      en: 'Step by step: eligibility, German, documents, salary and costs, sign-up – with the right tools and open jobs.',
+      ru: 'Шаг за шагом: проверка, немецкий, документы, зарплата и расходы, регистрация — с нужными инструментами и вакансиями.',
+      tr: 'Adım adım: uygunluk, Almanca, belgeler, maaş ve masraflar, kayıt – uygun araçlar ve açık ilanlarla.',
+      uk: 'Крок за кроком: перевірка, німецька, документи, зарплата й витрати, реєстрація — з потрібними інструментами й вакансіями.',
+    },
+  },
   '/compare-jobs': {
     sitemap: false,
     index: false,

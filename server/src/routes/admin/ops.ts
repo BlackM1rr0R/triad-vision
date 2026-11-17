@@ -137,6 +137,14 @@ const loadArticle = async (req: Request) => {
   return a;
 };
 
+// System "page guide" of an admin page by its key (?key=admin-page:<route>, lib/ops/kbSystemArticles): the "?" panel links here.
+adminOpsRouter.get('/kb/system', async (req, res) => {
+  const { key } = parse(z.object({ key: z.string().min(1).max(120) }), req.query);
+  const a = await prisma.kbArticle.findUnique({ where: { systemKey: key }, select: articleSelect });
+  if (!a || (!a.published && !isAdmin(req))) throw notFound('ARTICLE_NOT_FOUND');
+  res.json({ article: { ...a, tags: normaliseTags(a.tags) } });
+});
+
 adminOpsRouter.get('/kb/articles/:id', async (req, res) => {
   const a = await loadArticle(req);
   res.json({ article: { ...a, tags: normaliseTags(a.tags) } });

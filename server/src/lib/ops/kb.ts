@@ -15,6 +15,7 @@ export const articleSelect = {
   tags: true,
   pinned: true,
   published: true,
+  systemKey: true, // system "page guide" (lib/ops/kbSystemArticles), null for staff articles
   createdAt: true,
   updatedAt: true,
   category: { select: { id: true, name: true } },

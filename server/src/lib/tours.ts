@@ -12,6 +12,9 @@ import { prisma } from '../db.js';
  *   done      finished: never starts on its own again (the help menu can restart it)
  *   never     "don't show again": same as done for the auto-start
  *
+ * Tour ids come from the client (components/onboarding/tours.ts). The client portal tour is 'client-stages' since
+ * the stage-based portal (Nov 2026); old 'client' entries stay harmless (the tour simply runs once more, updated).
+ *
  * The key contains ":" so the generic settings route can never write it; the settings listing leaves the prefix
  * out (lib/staffUi STAFF_UI_PREFIXES).
  */

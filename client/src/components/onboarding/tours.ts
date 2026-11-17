@@ -4,25 +4,27 @@ import { registerTour } from './tour';
  * Built-in first-login tours. Targets are data-tour attributes in the layouts / pages (desktop target first,
  * mobile fallback next) or raw selectors. Copy: i18n/pagesPortalUx.ts + i18n/pagesTours.ts (pux.tour.*).
  *
- *   client  portal home (AccountLayout / AccountHome)
+ *   client  stage-based portal home (AccountLayout / AccountHome): next step, stage menu, all tools, more
  *   staff   team workspace (WorkspaceLayout)
  *   admin   staff area, across pages (AdminLayout): my day, Ctrl+K, cases + quick drawer, review mode, Drive, help
  */
 
-export const CLIENT_TOUR = 'client';
+// The stage-based portal (Nov 2026) changed the structure: a new id shows the updated tour once to everyone.
+export const CLIENT_TOUR = 'client-stages';
 export const STAFF_TOUR = 'staff';
 export const ADMIN_TOUR = 'admin';
 
+// Stage-based portal (pages/account/AccountLayout + AccountHome, lib/portalTools): "Do this now" → the stage menu
+// (desktop header, else the "For this stage" tiles) → "All tools" → "More" on the home → messages → profile.
 registerTour({
   id: CLIENT_TOUR,
   route: '/account',
   steps: [
     { id: 'next', target: 'portal-next', titleKey: 'pux.tour.client.next.title', textKey: 'pux.tour.client.next.text', placement: 'bottom' },
-    { id: 'progress', target: 'portal-progress', titleKey: 'pux.tour.client.progress.title', textKey: 'pux.tour.client.progress.text', placement: 'bottom' },
-    // components/portal/JourneyCard.tsx (the journey map on the portal home)
-    { id: 'journey', target: ['portal-journey', 'section[aria-labelledby="journey-map-title"]'], titleKey: 'pux.tour.client.journey.title', textKey: 'pux.tour.client.journey.text', placement: 'top' },
-    { id: 'docs', target: ['bnav-docs', 'portal-tab-docs'], titleKey: 'pux.tour.client.docs.title', textKey: 'pux.tour.client.docs.text', placement: 'bottom' },
-    { id: 'messages', target: ['bnav-messages', 'portal-messages', 'portal-tab-messages'], titleKey: 'pux.tour.client.messages.title', textKey: 'pux.tour.client.messages.text', placement: 'top' },
+    { id: 'stageNav', target: ['portal-stage-nav', 'portal-stage-tools'], titleKey: 'pux.tour.client.stageNav.title', textKey: 'pux.tour.client.stageNav.text', placement: 'bottom' },
+    { id: 'all', target: ['portal-all', 'bnav-all', 'portal-all-home'], titleKey: 'pux.tour.client.all.title', textKey: 'pux.tour.client.all.text', placement: 'bottom' },
+    { id: 'more', target: 'portal-more', titleKey: 'pux.tour.client.more.title', textKey: 'pux.tour.client.more.text', placement: 'top' },
+    { id: 'messages', target: ['bnav-messages', 'portal-messages', 'portal-tool-messages'], titleKey: 'pux.tour.client.messages.title', textKey: 'pux.tour.client.messages.text', placement: 'top' },
     { id: 'profile', target: ['portal-profile', 'bnav-profile'], titleKey: 'pux.tour.client.profile.title', textKey: 'pux.tour.client.profile.text', placement: 'bottom' },
   ],
 });

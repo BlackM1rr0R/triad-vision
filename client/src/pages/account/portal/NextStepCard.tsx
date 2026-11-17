@@ -41,6 +41,10 @@ import type { L10n } from '@/lib/types';
 import type { NextAction, NextKind, NextStep } from '@/components/portal/usePortalNav';
 import { CalendarDay, Documents, Germany, Handshake, Learning, PassportUpload, Success, Traveller, type IllustrationProps } from '@/components/illustrations';
 import type { ComponentType } from 'react';
+import { registerCopy } from '@/i18n';
+import { pagesPortalStage } from '@/i18n/pagesPortalStage';
+
+registerCopy(pagesPortalStage); // "Do this now" eyebrow + the PREP_INTERVIEW / ARRIVAL_PREP copy
 
 /** The drawing on the right of the next-step card (sm+): what the step is about, at a glance. */
 const KIND_ILLUSTRATION: Record<NextKind, ComponentType<IllustrationProps>> = {
@@ -52,6 +56,7 @@ const KIND_ILLUSTRATION: Record<NextKind, ComponentType<IllustrationProps>> = {
   SIGN_CONTRACT: Documents,
   ATTEND_APPOINTMENT: CalendarDay,
   BOOK_INTERVIEW: CalendarDay,
+  PREP_INTERVIEW: Learning,
   SIGN_DOCUMENTS: Documents,
   CONFIRM_DATA: Documents,
   ANSWER_MESSAGE: Handshake,
@@ -60,6 +65,7 @@ const KIND_ILLUSTRATION: Record<NextKind, ComponentType<IllustrationProps>> = {
   RECOGNITION_DOCS: PassportUpload,
   ANSWER_CHECKIN: Handshake,
   ARRIVAL_PLAN: Germany,
+  ARRIVAL_PREP: Traveller,
   RENEW_RESIDENCE: CalendarDay,
   ONBOARDING: Learning,
   START_CASE: Traveller,
@@ -76,6 +82,7 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
   SIGN_CONTRACT: PenLine,
   ATTEND_APPOINTMENT: CalendarCheck,
   BOOK_INTERVIEW: CalendarPlus,
+  PREP_INTERVIEW: MessageCircleQuestion,
   SIGN_DOCUMENTS: FileSignature,
   CONFIRM_DATA: ShieldCheck,
   ANSWER_MESSAGE: MessageCircleQuestion,
@@ -84,6 +91,7 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
   RECOGNITION_DOCS: GraduationCap,
   ANSWER_CHECKIN: MessageCircleHeart,
   ARRIVAL_PLAN: PlaneTakeoff,
+  ARRIVAL_PREP: ListChecks,
   RENEW_RESIDENCE: CalendarClock,
   ONBOARDING: Compass,
   START_CASE: Rocket,
@@ -95,7 +103,7 @@ export const KIND_ICON: Record<NextKind, LucideIcon> = {
 const morphTarget = (to: string) => /^\/account\/cases\/[^/?#]+([?#]|$)/.test(to) || /^\/account\/payments([?#]|$)/.test(to);
 
 /** Kinds whose sentence already names the date. */
-const DATE_IN_TEXT: NextKind[] = ['ATTEND_APPOINTMENT', 'RENEW_RESIDENCE', 'PASSPORT_EXPIRY'];
+const DATE_IN_TEXT: NextKind[] = ['ATTEND_APPOINTMENT', 'PREP_INTERVIEW', 'RENEW_RESIDENCE', 'PASSPORT_EXPIRY'];
 
 /** Title / text / button label of one action (copy: pnav.next.kind.<KIND>). */
 export const useActionCopy = () => {
@@ -240,7 +248,7 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
           <div className="min-w-0 flex-1">
             <p className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-ink">
               <span className={clsx('size-2 rounded-full', a.overdue ? 'bg-danger' : 'bg-highlight')} aria-hidden />
-              {t('pnav.next.need')}
+              {t('pstage.home.eyebrow')}
               {showDue && !a.overdue && <span className="font-semibold text-muted normal-case">· {t('pnav.next.due', { date: copy.day })}</span>}
             </p>
             <h2 id="next-step-title" className="mt-3 flex items-start gap-3 text-2xl font-semibold break-words text-ink sm:text-[2rem] sm:leading-tight" {...morph.part('title')}>

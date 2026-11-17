@@ -20,6 +20,7 @@ import {
   usageReport,
 } from '../../lib/navModules.js';
 import { getLicense } from '../../lib/license/index.js';
+import { NAV_VIEWS, WORK_PROFILES, defaultWorkProfile, isWorkProfile, resolveNavView } from '../../lib/workProfiles.js';
 
 /**
  * Admin navigation (mounted on /api/admin, STAFF+):
@@ -28,6 +29,8 @@ import { getLicense } from '../../lib/license/index.js';
  *   POST /me/nav/visit              { navId }                                       one page open (usage + recent)
  *   GET  /nav/desks                 staff with their desk                           ADMIN+
  *   PUT  /nav/desks/:userId         { desk: Desk | null }                           ADMIN+
+ *   PUT  /me/nav also takes      { workProfile?: WorkProfile | null, navView?: 'simple' | 'full' | null }  simple sidebar
+ *   PUT  /nav/profiles/:userId   { workProfile: WorkProfile | null }             ADMIN+ (work profile of a staff member)
  *   GET  /nav/usage?days=7|30|90    opens per page, unique users, last opened       SUPER_ADMIN
  *   PUT  /nav/modules               { modules: { key: boolean } }                   SUPER_ADMIN
  */
@@ -57,7 +60,7 @@ const writeLanding = async (userId: string, landing: Landing | null) => {
 const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) => {
   const license = getLicense();
   const [prefs, modules, landing] = await Promise.all([
-    prisma.staffPreferences.findUnique({ where: { userId }, select: { desk: true, navPins: true, navRecent: true } }),
+    prisma.staffPreferences.findUnique({ where: { userId }, select: { desk: true, navPins: true, navRecent: true, workProfile: true, navView: true } }),
     getModules(),
     readLanding(userId),
   ]);
@@ -70,6 +73,10 @@ const navView = async (userId: string, role: Parameters<typeof defaultDesk>[0]) 
     modules,
     /** Own start page of /admin (null = role default). */
     landing,
+    /** Simple sidebar (lib/workProfiles): chosen profile (null = default), the default, and the effective view. */
+    workProfile: isWorkProfile(prefs?.workProfile) ? prefs.workProfile : null,
+    defaultWorkProfile: defaultWorkProfile(role, prefs?.desk),
+    navView: resolveNavView(prefs?.navView, prefs?.workProfile),
     /** White-label licence: plan modules (null = all) and the status for the admin banner (lib/license). */
     licensedModules: licensedModules(license),
     license: {
@@ -89,12 +96,17 @@ adminNavRouter.get('/me/nav', async (req, res) => {
 
 adminNavRouter.put('/me/nav', async (req, res) => {
   const body = parse(
-    z.object({ desk: desk.nullable().optional(), pins: z.array(navId).max(PINS_MAX * 2).optional(), landing: z.enum(LANDINGS).nullable().optional() }),
+    z.object({ desk: desk.nullable().optional(), pins: z.array(navId).max(PINS_MAX * 2).optional(), landing: z.enum(LANDINGS).nullable().optional(),
+      workProfile: z.enum(WORK_PROFILES).nullable().optional(),
+      navView: z.enum(NAV_VIEWS).nullable().optional(),
+    }),
     req.body ?? {},
   );
   const data = {
     ...(body.desk !== undefined ? { desk: body.desk } : {}),
     ...(body.pins ? { navPins: toPins(body.pins) } : {}),
+    ...(body.workProfile !== undefined ? { workProfile: body.workProfile } : {}),
+    ...(body.navView !== undefined ? { navView: body.navView } : {}),
   };
   const userId = req.user!.id;
   await prisma.staffPreferences.upsert({ where: { userId }, create: { userId, ...data }, update: data });
@@ -114,12 +126,20 @@ adminNavRouter.get('/nav/desks', requireMinRole('ADMIN'), async (_req, res) => {
     select: { id: true, firstName: true, lastName: true, email: true, role: true },
     orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
   });
-  const prefs = staff.length ? await prisma.staffPreferences.findMany({ where: { userId: { in: staff.map((s) => s.id) } }, select: { userId: true, desk: true } }) : [];
+  const prefs = staff.length ? await prisma.staffPreferences.findMany({ where: { userId: { in: staff.map((s) => s.id) } }, select: { userId: true, desk: true, workProfile: true } }) : [];
   const by = new Map(prefs.map((p) => [p.userId, p.desk]));
+  const profiles = new Map(prefs.map((p) => [p.userId, p.workProfile]));
   res.json({
     items: staff.map((s) => {
       const own = by.get(s.id);
-      return { ...s, desk: isDesk(own) ? own : null, defaultDesk: defaultDesk(s.role) };
+      const profile = profiles.get(s.id);
+      return {
+        ...s,
+        desk: isDesk(own) ? own : null,
+        defaultDesk: defaultDesk(s.role),
+        workProfile: isWorkProfile(profile) ? profile : null,
+        defaultWorkProfile: defaultWorkProfile(s.role, own),
+      };
     }),
   });
 });
@@ -131,6 +151,23 @@ adminNavRouter.put('/nav/desks/:userId', requireMinRole('ADMIN'), async (req, re
   if (!user) throw notFound('USER_NOT_FOUND');
   await prisma.staffPreferences.upsert({ where: { userId }, create: { userId, desk: body.desk }, update: { desk: body.desk } });
   res.json({ userId, desk: body.desk, defaultDesk: defaultDesk(user.role) });
+});
+
+// Work profile of a staff member (simple sidebar). Assigning one switches their sidebar to the simple view unless
+// they chose a view themselves (lib/workProfiles resolveNavView); null = back to the default from role / desk.
+adminNavRouter.put('/nav/profiles/:userId', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(z.object({ workProfile: z.enum(WORK_PROFILES).nullable() }), req.body ?? {});
+  const userId = String(req.params.userId);
+  const user = await prisma.user.findFirst({ where: { id: userId, role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] } }, select: { id: true, role: true } });
+  if (!user) throw notFound('USER_NOT_FOUND');
+  const prefs = await prisma.staffPreferences.upsert({
+    where: { userId },
+    create: { userId, workProfile: body.workProfile },
+    update: { workProfile: body.workProfile },
+    select: { desk: true },
+  });
+  await audit(req, 'WORK_PROFILE_SET', `user:${userId}`, { workProfile: body.workProfile });
+  res.json({ userId, workProfile: body.workProfile, defaultWorkProfile: defaultWorkProfile(user.role, prefs.desk) });
 });
 
 adminNavRouter.get('/nav/usage', requireMinRole('SUPER_ADMIN'), async (req, res) => {

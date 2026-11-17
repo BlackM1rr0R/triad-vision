@@ -38,6 +38,8 @@ const ServiceDetail = lazyRoute('ServiceDetail', () => import('./pages/ServiceDe
 const Eligibility = lazyRoute('Eligibility', () => import('./pages/Eligibility'));
 const EligibilityQuiz = lazyRoute('EligibilityQuiz', () => import('./pages/EligibilityQuiz'));
 const PathFinder = lazyRoute('PathFinder', () => import('./pages/PathFinder')); // "which path fits me" wizard (shareable result URL)
+const StartHere = lazyRoute('StartHere', () => import('./pages/start/StartHere')); // "Start here" wizard: 3 questions → personal plan
+const StartPlan = lazyRoute('StartPlan', () => import('./pages/start/StartPlan')); // personal plan (/start/plan?w=…&p=…&l=…)
 const Visas = lazyRoute('Visas', () => import('./pages/Visas'));
 const VisaDetail = lazyRoute('VisaDetail', () => import('./pages/VisaDetail'));
 const Partners = lazyRoute('Partners', () => import('./pages/Partners'));
@@ -92,6 +94,7 @@ const QuotePage = lazyRoute('QuotePage', () => import('./pages/QuotePage'));
 const PackagesPage = lazyRoute('PackagesPage', () => import('./pages/Packages')); // service packages + online order
 const PackageOrderStatus = lazyRoute('PackageOrderStatus', () => import('./pages/PackageOrderStatus'));
 const AccountPayments = lazyRoute('AccountPayments', () => import('./pages/account/Payments')); // Documents › Payments
+const AccountAllTools = lazyRoute('AccountAllTools', () => import('./pages/account/AllTools')); // stage-based portal: All tools (/account/all)
 const AdminClientInvoices = lazyRoute('AdminClientInvoices', () => import('./pages/admin/ClientInvoices'));
 const AdminPackages = lazyRoute('AdminPackages', () => import('./pages/admin/Packages'));
 const AdminAccounting = lazyRoute('AdminAccounting', () => import('./pages/admin/Accounting'));
@@ -312,6 +315,9 @@ const CheckInAnswer = lazyRoute('CheckInAnswer', () => import('./pages/CheckInAn
 const AdminTimeTracking = lazyRoute('AdminTimeTracking', () => import('./pages/admin/TimeTracking')); // staff time tracking
 const AdminKpi = lazyRoute('AdminKpi', () => import('./pages/admin/Kpi')); // staff KPI leaderboard (ADMIN+)
 const AdminTraining = lazyRoute('AdminTraining', () => import('./pages/admin/Training')); // internal training: learn / authoring / progress
+const AdminWhatsNew = lazyRoute('AdminWhatsNew', () => import('./pages/admin/WhatsNew')); // Yeniliklər: release notes per role, seen per user, ADMIN+ manage
+const AdminTrainingChecklist = lazyRoute('AdminTrainingChecklist', () => import('./pages/admin/TrainingChecklist')); // new staff checklist (10 real tasks, team progress ADMIN+)
+const AdminSetupChecklist = lazyRoute('AdminSetupChecklist', () => import('./pages/admin/SetupChecklist')); // owner setup checklist (ADMIN+)
 const AdminCourse = lazyRoute('AdminCourse', () => import('./pages/admin/Course')); // pre-departure course: builder + progress report
 const AccountCourse = lazyRoute('AccountCourse', () => import('./pages/account/Course')); // Learn › Course: overview, lesson player, quizzes, certificate
 const CertificateVerify = lazyRoute('CertificateVerify', () => import('./pages/CertificateVerify')); // public course certificate check
@@ -504,6 +510,8 @@ export default function App() {
             <Route path="eligibility" element={<Eligibility />} />
             <Route path="uygunluq-testi" element={<EligibilityQuiz />} />
             <Route path="path-finder" element={<PathFinder />} />
+            <Route path="start" element={<StartHere />} />
+            <Route path="start/plan" element={<StartPlan />} />
             <Route path="visas" element={<Visas />} />
             <Route path="visas/:slug" element={<VisaDetail />} />
             <Route path="partners" element={<Partners />} />
@@ -723,6 +731,7 @@ export default function App() {
               <Route path="signatures" element={<AccountSignatures />} />
               <Route path="signatures/:signerId" element={<AccountSignatures />} />
               <Route path="payments" element={<AccountPayments />} />
+              <Route path="all" element={<AccountAllTools />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>
@@ -1062,6 +1071,16 @@ export default function App() {
               }
             />
             <Route path="training" element={<AdminTraining />} />
+            <Route path="whats-new" element={<AdminWhatsNew />} />
+            <Route path="training-checklist" element={<AdminTrainingChecklist />} />
+            <Route
+              path="setup-checklist"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminSetupChecklist />
+                </RequireAuth>
+              }
+            />
             <Route path="course" element={<AdminCourse />} />
             <Route path="shifts" element={<AdminShifts />} />
             <Route path="check-ins" element={<AdminCheckIns />} />

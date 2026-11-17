@@ -3,14 +3,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { BookUser, Cake } from 'lucide-react';
+import { BookUser, Cake, House } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Avatar } from '@/components/ui/Avatar';
-import { SECTIONS, sectionOfLocation, sectionOfSub, subOfLocation, subPath, type SectionKey, type SubKey } from '@/lib/portalStage';
+import { toolOfLocation, toolPath, type PortalToolKey } from '@/lib/portalTools';
 import { profileCompleteness } from '@/components/portal/profileFields';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { usePortalNav } from '@/components/portal/usePortalNav';
-import { SECTION_ICON, SECTION_TOUR, SUB_ICON, sectionLabel, subLabel } from '@/components/portal/portalNavMeta';
+import { ALL_TOOLS_ICON, TOOL_ICON, stageLabel, toolLabel } from '@/components/portal/portalToolMeta';
 import { registerCopy } from '@/i18n';
 import { pagesAccount } from '@/i18n/pagesAccount';
 import { VerifyBanner } from '@/components/auth/VerifyBanner';
@@ -23,9 +23,11 @@ import { CLIENT_TOUR, TourHost, TourRestartButton } from '@/components/onboardin
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesWaitingRoom } from '@/i18n/pagesWaitingRoom';
+import { pagesPortalStage } from '@/i18n/pagesPortalStage';
 import { FamilySwitcher } from '@/components/portal/FamilySwitcher'; // family member cases: "Mən" / spouse / child chips
 import { OfflineBadge } from '@/components/offline/OfflineBadge'; // "no internet — offline documents" strip
 import { NotificationBell } from '@/components/notifications/center/NotificationCenter'; // header bell: notification center panel
+import { PageHelpButton } from '@/components/pageHelp/PageHelpButton'; // page help "?" (what is this page)
 import { ApprovedCelebration } from './portal/ApprovedCelebration'; // visa approved: one-time celebration screen
 
 registerCopy(pagesAccount);
@@ -35,6 +37,7 @@ registerCopy(pagesJourney);
 registerCopy(pagesPortalUx);
 registerCopy(pagesPortalNav);
 registerCopy(pagesWaitingRoom);
+registerCopy(pagesPortalStage);
 
 const Badge = ({ count, label }: { count: number; label: string }) => (
   <AnimatePresence>
@@ -100,9 +103,10 @@ const NavPill = ({
 );
 
 /**
- * Client portal shell: five sections (Home · Documents · Messages · Learn · Profile) with stage-aware
- * sub-tabs (lib/portalStage). Desktop: section tabs + the sub-tabs of the open section in the header.
- * Phones: the sections live in the bottom bar (BottomNavPortal), the header keeps only the sub-tabs.
+ * Client portal shell, stage-based: the header menu shows Home, the 4–7 tools the server features for the
+ * client's stage (GET /api/account/next-step → portal.featured, lib/account/portalStage.ts) and "All tools"
+ * (/account/all), where everything else lives. A page outside the stage menu (old link, bookmark) still
+ * shows its tab while it is open. Phones: the same menu in the bottom bar (BottomNavPortal), shortened.
  */
 export default function AccountLayout() {
   const { t } = useTranslation();
@@ -113,15 +117,12 @@ export default function AccountLayout() {
   const isClient = user?.role === 'CLIENT';
   const completeness = profileCompleteness(user);
 
-  const currentSub = subOfLocation(pathname, search);
-  const currentSection: SectionKey = sectionOfLocation(pathname, search) ?? 'home';
-  // A page the stage does not list (old link, bookmark) still shows its tab while it is open.
-  const subsOf = (s: SectionKey): SubKey[] => {
-    const list = nav.subs[s];
-    return currentSub && sectionOfSub(currentSub) === s && !list.includes(currentSub) ? [...list, currentSub] : list;
-  };
-  const sectionTo = (s: SectionKey) => subPath(subsOf(s)[0] ?? 'overview', nav.caseId, nav.caseCount);
-  const sectionSubs = subsOf(currentSection);
+  const here = toolOfLocation(pathname, search);
+  const linkCtx = { caseId: nav.caseId, caseCount: nav.caseCount, approvedCaseId: nav.approvedCaseId };
+  const featured = nav.featured.filter((k) => toolPath(k, linkCtx));
+  // A page the stage does not feature (old link, bookmark, "All tools") still shows its tab while it is open.
+  const extra: PortalToolKey | null = here && here !== 'home' && here !== 'all' && !featured.includes(here) ? here : null;
+  const menu = extra ? [...featured, extra] : featured;
   const countLabel = (n: number) => t('pux.nav.badge', { count: n });
 
   return (
@@ -152,10 +153,14 @@ export default function AccountLayout() {
                 <NotificationBell allTo="/account/notifications" prefsTo="/account/profile" />
               </div>
             )}
+            {/* Page help "?" for the open portal page (lib/pageHelp; nothing on pages without a text). */}
+            <div className="float-right ml-1 py-1.5">
+              <PageHelpButton />
+            </div>
             <motion.span className="type-overline inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <span className="size-1.5 rounded-full bg-highlight" aria-hidden />
               <span className="whitespace-nowrap">{t('portal.title')}</span>
-              {isClient && nav.overview && <span className="font-semibold normal-case"> · {t(`pnav.stage.${nav.stage}`)}</span>}
+              {isClient && nav.overview && <span className="font-semibold normal-case"> · {nav.portalStage ? stageLabel(t, nav.portalStage) : t(`pnav.stage.${nav.stage}`)}</span>}
             </motion.span>
             <motion.h1
               className="type-page-title mt-2 break-words text-ink"
@@ -188,46 +193,47 @@ export default function AccountLayout() {
 
             {isClient && <FamilySwitcher className="clear-both mt-4" />}
 
-            {/* Sections: desktop only (phones: bottom bar). */}
-            <nav className="clear-both -mx-2 mt-6 hidden gap-1 border-t border-line pt-1 sm:mt-7 md:flex" aria-label={t('pnav.label')}>
-              {SECTIONS.map((s) => (
+            {/* Stage menu: tablet / desktop (phones: bottom bar). */}
+            <nav
+              className="clear-both -mx-2 mt-6 hidden snap-x gap-1 overflow-x-auto border-t border-line pt-1 [scrollbar-width:none] sm:mt-7 md:flex [&::-webkit-scrollbar]:hidden"
+              aria-label={t('pstage.nav.label')}
+              data-tour="portal-stage-nav"
+            >
+              <NavPill
+                to="/account"
+                label={t('pstage.nav.home')}
+                icon={House}
+                active={here === 'home'}
+                badge={nav.badges.actions}
+                badgeLabel={countLabel(nav.badges.actions)}
+                tour="portal-tab-home"
+                layoutId="portal-section"
+              />
+              {menu.map((k) => (
                 <NavPill
-                  key={s}
-                  to={sectionTo(s)}
-                  label={sectionLabel(t, s)}
-                  icon={SECTION_ICON[s]}
-                  active={s === currentSection}
-                  badge={nav.sectionBadges[s]}
-                  badgeLabel={countLabel(nav.sectionBadges[s])}
-                  tour={SECTION_TOUR[s]}
+                  key={k}
+                  to={toolPath(k, linkCtx) ?? `${pathname}${search}`}
+                  label={toolLabel(t, k)}
+                  icon={TOOL_ICON[k]}
+                  active={k === here}
+                  badge={nav.toolBadges(k)}
+                  badgeLabel={countLabel(nav.toolBadges(k))}
+                  tour={`portal-tool-${k}`}
                   layoutId="portal-section"
                 />
               ))}
+              <NavPill
+                to="/account/all"
+                label={t('pstage.nav.all')}
+                icon={ALL_TOOLS_ICON}
+                active={here === 'all'}
+                badge={nav.allBadge}
+                badgeLabel={t('pstage.nav.allBadge', { count: nav.allBadge })}
+                tour="portal-all"
+                layoutId="portal-section"
+              />
             </nav>
-
-            {/* Pages of the open section (hidden when the section has a single page). */}
-            {sectionSubs.length > 1 ? (
-              <nav
-                className="clear-both -mx-5 mt-5 flex snap-x gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 md:mt-0 md:border-t md:border-line md:py-3 [&::-webkit-scrollbar]:hidden"
-                aria-label={t('pnav.subLabel', { section: sectionLabel(t, currentSection) })}
-              >
-                {sectionSubs.map((sub) => (
-                  <NavPill
-                    key={sub}
-                    to={subPath(sub, nav.caseId, nav.caseCount)}
-                    label={subLabel(t, sub, nav.caseCount)}
-                    icon={SUB_ICON[sub]}
-                    active={sub === currentSub}
-                    badge={nav.subBadges(sub)}
-                    badgeLabel={countLabel(nav.subBadges(sub))}
-                    layoutId="portal-sub"
-                    small
-                  />
-                ))}
-              </nav>
-            ) : (
-              <div className="clear-both h-2 md:hidden" aria-hidden />
-            )}
+            <div className="clear-both h-2 md:hidden" aria-hidden />
           </div>
         </header>
 

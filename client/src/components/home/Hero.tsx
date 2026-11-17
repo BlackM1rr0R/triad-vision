@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Handshake as HandshakeIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { QuizCta } from '../publicAi/QuizCta';
+import { StartHereCta } from '../startHere/StartHereCta';
 import { Employer, Traveller, Worker } from '../illustrations';
 import type { Audience } from '@/lib/audience';
 
@@ -59,11 +60,11 @@ export const Hero = ({ audience, onChoose }: { audience: Audience | null; onChoo
               {t('hero.subtitle')}
             </motion.p>
 
-            {audience !== 'employer' && (
-              <motion.div {...enter(0.28)}>
-                <QuizCta className="mt-5 text-ink" />
-              </motion.div>
-            )}
+            <motion.div {...enter(0.28)} className="mt-5 flex flex-col items-start gap-1 text-ink">
+              {audience !== 'employer' && <QuizCta />}
+              {/* "Start here" wizard (/start): 3 questions → a personal plan. */}
+              <StartHereCta employer={audience === 'employer'} />
+            </motion.div>
 
             <motion.ul {...enter(0.34)} className="mt-6 hidden gap-x-6 gap-y-2.5 sm:grid sm:grid-cols-2">
               {bullets.map((b) => (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { BookOpenText, Copy, Eye, FolderPlus, Pencil, Pin, PinOff, Plus, Save, Search, Tag, Trash2, X } from 'lucide-react';
@@ -166,6 +167,28 @@ export default function KnowledgeBase() {
     queryFn: async () => (await api.get<{ article: Article }>(`/admin/ops/kb/articles/${articleId}`)).data.article,
     enabled: !!articleId,
   });
+
+  // Deep link from the "?" page panel (components/adminHelp): ?system=admin-page:<route> opens that page guide.
+  const [params, setParams] = useSearchParams();
+  const systemKey = params.get('system');
+  useEffect(() => {
+    if (!systemKey) return;
+    let alive = true;
+    api
+      .get<{ article: Article }>(`/admin/ops/kb/system?key=${encodeURIComponent(systemKey)}`)
+      .then((r) => {
+        if (!alive) return;
+        setArticleId(r.data.article.id);
+        setMode('view');
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (alive) setParams((p) => { p.delete('system'); return p; }, { replace: true });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [systemKey, setParams]);
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['kb-articles'] });

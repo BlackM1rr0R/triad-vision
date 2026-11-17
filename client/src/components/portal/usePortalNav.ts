@@ -20,6 +20,7 @@ import { useOverview } from './useOverview';
 import type { JourneyData } from './journey';
 import { useMyCourses } from '@/components/course/api';
 import { useChosenCase } from '@/lib/caseContext';
+import { PORTAL_TOOL_KEYS, hiddenBadge, toolBadge, type PortalStageKey, type PortalToolKey } from '@/lib/portalTools';
 
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
@@ -31,6 +32,7 @@ export type NextKind =
   | 'SIGN_CONTRACT'
   | 'ATTEND_APPOINTMENT'
   | 'BOOK_INTERVIEW'
+  | 'PREP_INTERVIEW'
   | 'SIGN_DOCUMENTS'
   | 'CONFIRM_DATA'
   | 'ANSWER_MESSAGE'
@@ -39,6 +41,7 @@ export type NextKind =
   | 'RECOGNITION_DOCS'
   | 'ANSWER_CHECKIN'
   | 'ARRIVAL_PLAN'
+  | 'ARRIVAL_PREP'
   | 'RENEW_RESIDENCE'
   | 'ONBOARDING'
   | 'START_CASE'
@@ -68,7 +71,16 @@ export interface NextStep {
   /** Every further open action after the first three ("+N more"; older servers: absent). */
   more?: NextAction[];
   waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null } | null;
+  /** Stage-based portal (server: lib/account/portalStage.ts; older servers: absent). */
+  portal?: PortalInfo;
   counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number; openInvoices?: number; hasBilling?: boolean };
+}
+
+/** The client's stage, the finer phase and the 4–7 tools the portal features now (decided on the server). */
+export interface PortalInfo {
+  stage: PortalStageKey;
+  phase: PortalStage;
+  featured: PortalToolKey[];
 }
 
 // Under the overview key: every invalidation of the overview (upload, signature, status change) refreshes it too.
@@ -137,7 +149,11 @@ export function usePortalNav() {
   const caseUnread = caseQ.data ? caseQ.data.messages.filter((m) => m.author.id !== user?.id && !(m as MsgWithRead).readAt).length : null;
 
   const arrived = next.data?.arrived ?? false;
-  const stage: PortalStage = derivePortalStage(cases, arrived);
+  // The server decides the stage (single source); the local derivation only bridges the first load.
+  const portal = next.data?.portal ?? null;
+  const stage: PortalStage = portal?.phase ?? derivePortalStage(cases, arrived);
+  // Featured tools of the stage (unknown keys from a newer server are dropped).
+  const featured: PortalToolKey[] = (portal?.featured ?? []).filter((k) => (PORTAL_TOOL_KEYS as readonly string[]).includes(k));
   const hasSignatures = (signatures?.length ?? 0) > 0;
   const actions = [next.data?.primary, ...(next.data?.secondary ?? [])].filter(Boolean) as NextAction[];
   const subs = visibleSubs(stage, {
@@ -161,8 +177,28 @@ export function usePortalNav() {
   const allSubs = SECTIONS.flatMap((s) => subs[s]);
   const sectionBadges = Object.fromEntries(SECTIONS.map((s) => [s, sectionBadge(s, allSubs, badges)])) as Record<SectionKey, number>;
   const subBadges = (sub: SubKey) => subBadge(sub, badges);
+  const toolBadges = (k: PortalToolKey) => toolBadge(k, badges);
+  const allBadge = hiddenBadge(featured, badges);
+  const approvedCaseId = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId)?.id ?? cases.find((c) => c.status === 'APPROVED')?.id ?? null;
 
   // With a family (several cases) and a chosen case, section links go straight to that case, not to the case list.
   const caseCount = chosenOwn ? 1 : cases.length;
-  return { stage, subs, badges, sectionBadges, subBadges, caseId, caseCount, next, overview, cases, isClient };
+  return {
+    stage,
+    portalStage: portal?.stage ?? null,
+    featured,
+    toolBadges,
+    allBadge,
+    approvedCaseId,
+    subs,
+    badges,
+    sectionBadges,
+    subBadges,
+    caseId,
+    caseCount,
+    next,
+    overview,
+    cases,
+    isClient,
+  };
 }

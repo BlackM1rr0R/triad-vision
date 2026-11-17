@@ -19,6 +19,7 @@ import { CookieConsent } from '../legal/CookieConsent'; // real consent banner (
 import { AccessibilityWidget } from '../a11y/AccessibilityWidget';
 import { useSurface } from '@/lib/theme'; // warm public surface + serif display headings (index.css)
 import { HelpFab } from './HelpFab'; // phones: one "Kömək" button instead of the floating stack
+import { PageHelpFloating } from '../pageHelp/PageHelpButton'; // page help "?" for pages without a PageHero
 
 // Public AI advisor: its own chunk, loaded only on the public pages (not in the portals).
 const AdvisorBubble = lazy(() => import('../publicAi/AdvisorBubble'));
@@ -160,6 +161,7 @@ export const SiteLayout = () => {
       </PageMain>
       <Footer />
       <FloatingActions />
+      <PageHelpFloating />
       <SearchPalette />
       <TrackBeacon />
       <ToolViewTracker />

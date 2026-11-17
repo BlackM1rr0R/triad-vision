@@ -131,6 +131,8 @@ const nextStep = {
   primary: { kind: 'FIX_DOCS', to: '/account/cases/case-1#documents', dueAt: '2026-01-22T00:00:00.000Z', overdue: false, count: 1, detail: null },
   secondary: [{ kind: 'UPLOAD_DOCS', to: '/account/cases/case-1#documents', dueAt: null, overdue: false, count: 1, detail: null }],
   waiting: null,
+  // Stage-based portal (server lib/account/portalStage.ts): EMBASSY_DOCUMENTS → APPLYING / PREPARING.
+  portal: { stage: 'APPLYING', phase: 'PREPARING', featured: ['documents', 'checklist', 'messages', 'german', 'interviewPrep', 'cv', 'readiness'] },
   counts: { actions: 2, unreadMessages: 1, unreadNotifications: 1, pendingSignatures: 0, pendingLegal: 0, openCheckIns: 0, openInvoices: 0, hasBilling: false },
 };
 

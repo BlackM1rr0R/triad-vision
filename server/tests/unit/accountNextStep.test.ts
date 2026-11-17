@@ -108,8 +108,8 @@ describe('account next step: collectActions / pickNextStep', () => {
     );
     expect(r.primary).toMatchObject({ kind: 'ARRIVAL_PLAN', to: '/account/arrival' });
     expect(r.secondary).toEqual([expect.objectContaining({ kind: 'ONBOARDING', count: 1, detail: t('Bank account') })]);
-    // A submitted plan is done; nothing to start any more.
-    expect(collectActions(facts({ primary: null, hasApproved: true, arrival: { caseId: 'c1', planStatus: 'SUBMITTED' } }))).toEqual([]);
+    // A submitted plan is done: the departure checklist (arrival preparation) is next, as a nudge.
+    expect(collectActions(facts({ primary: null, hasApproved: true, arrival: { caseId: 'c1', planStatus: 'SUBMITTED' } })).map((a) => a.kind)).toEqual(['ARRIVAL_PREP']);
   });
 
   it('in Germany: check-in first, then the residence renewal, then every open onboarding item', () => {

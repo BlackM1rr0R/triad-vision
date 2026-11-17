@@ -9,7 +9,7 @@ import { TOOL_GROUPS } from '../seoCatalogue.js';
  * so a tool added there is known here without another list; EXTRA_TOOL_PATHS adds pages that are tools but are
  * not listed on the hub. Anything else is rejected by the beacon and the "e-mail me my result" form.
  */
-export const EXTRA_TOOL_PATHS = ['/german-mock-exam/a1', '/german-mock-exam/b1', '/phrase-of-the-day'];
+export const EXTRA_TOOL_PATHS = ['/german-mock-exam/a1', '/german-mock-exam/b1', '/phrase-of-the-day', '/start/plan'];
 
 /** Tool paths that are no tools (plain listings / content sections of the hub). */
 const NOT_TOOLS = new Set(['/events', '/status', '/guides', '/glossary', '/jobs', '/visas']);

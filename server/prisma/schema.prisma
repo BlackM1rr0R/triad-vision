@@ -1702,6 +1702,10 @@ model KbArticle {
   updatedBy   User?       @relation(fields: [updatedById], references: [id], onDelete: SetNull)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  /// System article written by the deploy seed (lib/ops/kbSystemArticles: "admin-page:<route>"); null = staff article.
+  systemKey   String?     @unique @db.VarChar(120)
+  /// sha256 of title + body as last written by the seed: a different current hash means staff edited it (kept).
+  systemHash  String?     @db.VarChar(64)
 
   @@index([categoryId])
   @@fulltext([title, body])
@@ -4186,6 +4190,10 @@ model StaffPreferences {
   desk            String?  @db.VarChar(20) // MANAGER | FINANCE | MARKETING | ALL
   navPins         Json? // nav item ids
   navRecent       Json? // [{ id, at }]
+  /// Work profile of the simple sidebar (lib/workProfiles: SALES | CASES | FINANCE | EMPLOYERS | CONTENT | OWNER); null = derived from role / desk.
+  workProfile     String?  @db.VarChar(20)
+  /// Sidebar view: simple | full; null = simple when a work profile was chosen, else full.
+  navView         String?  @db.VarChar(10)
   updatedAt       DateTime @updatedAt
   /// Personal admin dashboard: widget ids, order and sizes.
   dashboardLayout Json?
@@ -7284,4 +7292,55 @@ model RateAlert {
   @@index([email])
   @@index([userId])
   @@index([confirmedAt, unsubscribedAt])
+}
+
+/// "Yeniliklər" entries written by an admin in the UI (lib/whatsNew), shown next to the code registry
+/// (lib/whatsNew/entries.ts). Texts per language { az, de, en, ru }; roles: staff roles that see it.
+model WhatsNewEntry {
+  id          String   @id @default(cuid())
+  /// YYYY-MM-DD shown in the list (sort key, newest first)
+  date        String   @db.VarChar(10)
+  title       Json
+  body        Json
+  roles       Json
+  /// Admin page the entry links to (path starting with /admin)
+  link        String?  @db.VarChar(300)
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+}
+
+/// Which "Yeniliklər" entries a staff member has seen (code ids or WhatsNewEntry ids; plain ids).
+model WhatsNewSeen {
+  userId  String   @db.VarChar(40)
+  entryId String   @db.VarChar(60)
+  seenAt  DateTime @default(now())
+
+  @@id([userId, entryId])
+}
+
+/// New staff training checklist (lib/staffOnboarding): a task done in the real system, detected from requests /
+/// the database (ref = article id for "read 3 KB articles", "" otherwise) or ticked by hand (ref = "manual").
+model StaffTrainingEvent {
+  id        String   @id @default(cuid())
+  userId    String   @db.VarChar(40)
+  taskId    String   @db.VarChar(40)
+  ref       String   @default("") @db.VarChar(60)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, taskId, ref])
+  @@index([taskId])
+}
+
+/// Owner setup checklist (lib/ownerSetup): manual "done" / "not needed" marks per item (auto items are computed).
+model OwnerSetupMark {
+  itemId       String   @id @db.VarChar(60)
+  /// done | notNeeded
+  state        String   @db.VarChar(12)
+  note         String?  @db.VarChar(500)
+  markedById   String?  @db.VarChar(40)
+  markedByName String   @db.VarChar(200)
+  markedAt     DateTime @default(now())
 }

@@ -114,4 +114,18 @@ describe('admin navigation registry', () => {
       for (const id of ['modules', 'usage', 'desks']) expect(copy[l].admin.nav[id], `${l} nav ${id}`).toBeTruthy();
     }
   });
+
+  it('work profiles of the simple sidebar: pages sit in a hub (or the workspace), labels in all four languages', async () => {
+    const wp = (await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'components/command/workProfiles.ts')).href)) as {
+      WORK_PROFILES: readonly string[];
+      PROFILE_PAGES: Record<string, string[]>;
+    };
+    const simple = ((await import(/* @vite-ignore */ pathToFileURL(path.join(clientSrc, 'i18n/adminSimple.ts')).href)) as {
+      adminSimpleCopy: Record<string, { wprof: { names: Record<string, string>; descs: Record<string, string> } }>;
+    }).adminSimpleCopy;
+    for (const p of wp.WORK_PROFILES) {
+      for (const id of wp.PROFILE_PAGES[p]) expect(!!r.hubOf(id) || id.startsWith('ws.'), `${p}: ${id} has no hub`).toBe(true);
+      for (const l of ['az', 'de', 'en', 'ru']) expect(simple[l].wprof.names[p] && simple[l].wprof.descs[p], `${l} profile ${p}`).toBeTruthy();
+    }
+  });
 });

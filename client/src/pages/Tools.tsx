@@ -9,6 +9,7 @@ import { TOOL_GROUPS, TOOLS, type ToolGroup } from '@/components/audience/tools'
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ProfessionPicker } from '@/components/tools/ProfessionPicker';
 import { WidgetsLink } from '@/components/embed/WidgetsLink';
+import { StartHereCta } from '@/components/startHere/StartHereCta';
 import { registerCopy } from '@/i18n';
 import { pagesToolsHub } from '@/i18n/pagesToolsHub';
 import { HubToolCard } from '@/components/tools/hub/HubToolCard';
@@ -84,6 +85,8 @@ export default function Tools() {
             ))}
           </ul>
         </nav>
+        {/* "Start here" wizard: not sure which tool? 3 questions → a personal plan. */}
+        <StartHereCta className="mt-4 text-ink" />
       </PageHero>
 
       {/* Most useful (admin order). */}

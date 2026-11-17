@@ -26,6 +26,10 @@ export const resetDb = async () => {
     prisma.realSalarySnapshot,
     prisma.googleReviewInvite,
     prisma.dataFreshnessReview,
+    prisma.whatsNewEntry, // Yeniliklər admin entries + seen marks, training checklist events, owner setup marks (plain ids)
+    prisma.whatsNewSeen,
+    prisma.staffTrainingEvent,
+    prisma.ownerSetupMark,
   ] as { deleteMany: () => Promise<unknown> }[])
     await m.deleteMany();
   await prisma.saasLead.deleteMany(); // SaaS demo-request pipeline (plain ids)

@@ -124,10 +124,13 @@ import { adminInboxRouter } from './inbox.js'; // staff message inbox (phone "Me
 import { adminAuthoritiesRouter } from './authorities.js'; // authorities catalogue: embassies, Ausländerbehörden, … (STAFF read, ADMIN+ edit)
 import { adminUploadLinksRouter } from '../uploadLinks.js'; // "request documents via link": /cases/:id/upload-links*, /upload-links/:id/revoke
 import { adminDataQualityRouter } from './dataQuality.js'; // data-quality panel: active cases with missing data, scored
+import { adminSetupChecklistRouter, adminTrainingChecklistRouter, adminWhatsNewRouter } from './staffOnboarding.js'; // Yeniliklər feed, new staff training checklist, owner setup checklist
+import { trainingTracker } from '../../lib/staffOnboarding/service.js'; // records training-checklist tasks from successful staff GETs
 import { adminRuleChangesRouter } from './ruleChanges.js'; // rule-change notices: drafts STAFF+, publish ADMIN+
 
 export const adminRouter = Router();
 adminRouter.use(requireMinRole('STAFF'));
+adminRouter.use(trainingTracker); // new staff training checklist: detects opened cases, Ctrl+K, KB articles, ... (after the response)
 
 adminRouter.get('/dashboard', async (req, res) => {
   const now = Date.now();
@@ -227,6 +230,9 @@ adminRouter.use('/real-salaries', adminRealSalariesRouter); // real salary datab
 adminRouter.use('/public-api-keys', adminPublicApiKeysRouter); // public vacancy API keys of referral partners + usage (ADMIN+)
 adminRouter.use('/staff-ops', adminStaffOpsRouter); // /digest (own morning e-mail opt-out), /backup-check (ADMIN+)
 adminRouter.use('/training', adminTrainingRouter); // training: learn (STAFF), authoring + progress (ADMIN+)
+adminRouter.use('/whats-new', adminWhatsNewRouter); // Yeniliklər: feed per role, seen per user, admin entries (ADMIN+)
+adminRouter.use('/training-checklist', adminTrainingChecklistRouter); // new staff checklist: own tasks, team progress (ADMIN+)
+adminRouter.use('/setup-checklist', requireMinRole('ADMIN'), adminSetupChecklistRouter); // owner setup checklist (ADMIN+, audited)
 adminRouter.use('/course', adminCourseRouter); // pre-departure course (client LMS): builder ADMIN+, report STAFF+
 adminRouter.use('/shifts', adminShiftsRouter); // team calendar (STAFF read, ADMIN+ edit)
 adminRouter.use('/handover-notes', adminHandoverNotesRouter); // handover notes / checklists

@@ -14,6 +14,7 @@ import { pagesAdminUx } from '@/i18n/pagesAdminUx';
 import { availableWidgets } from '@/components/dashboard/widgets'; // widget registry (ids, sizes, role / module rules)
 import { useDashboardLayout } from '@/components/dashboard/layout'; // personal order / sizes / hidden (server + localStorage)
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid';
+import { OnboardingCards } from '@/components/staffOnboarding/DashboardCards'; // new staff checklist + owner setup cards (until complete)
 
 registerCopy(pagesAdminUx);
 
@@ -114,6 +115,8 @@ export default function Dashboard() {
           </div>
         }
       />
+
+      <OnboardingCards />
 
       <DashboardGrid
         items={layout.items}

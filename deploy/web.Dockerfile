@@ -8,6 +8,8 @@ RUN npm ci --include=dev --no-audit --no-fund
 COPY client ./client
 # The salary calculator bundles the site's single payroll implementation (pure TS, no server dependencies).
 COPY server/src/lib/budget/params.ts server/src/lib/budget/payroll.ts server/src/lib/budget/salary.ts ./server/src/lib/budget/
+# Admin "What does this page do?" texts (pure data, shared with the API's Knowledge Base seed): client/src/lib/adminHelp.
+COPY server/src/lib/adminHelp/ ./server/src/lib/adminHelp/
 # Bundle only: the TypeScript check (`tsc -b`, ~2 GB heap) does not fit the 2 GB production server and runs in
 # CI before every deploy anyway. Larger fixed heap for Vite (builds run one at a time). The second build is the
 # server-side render of the public pages (dist-ssr, one self-contained Node module) for the `ssr` stage below.
