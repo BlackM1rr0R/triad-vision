@@ -218,6 +218,7 @@ const ReportsPage = lazyRoute('ReportsPage', () => import('./pages/Reports')); /
 const AdminYearReview = lazyRoute('AdminYearReview', () => import('./pages/admin/YearReview')); // staff 'Year in review' (per-staff counts ADMIN+, server-side)
 const AdminTvSettings = lazyRoute('AdminTvSettings', () => import('./pages/admin/TvSettings')); // Admin → TV mode: display tokens + settings (ADMIN+)
 const AdminCityCosts = lazyRoute('AdminCityCosts', () => import('./pages/admin/CityCosts')); // Sayt → Şəhər xərcləri (budget calculator data)
+const AdminDataFreshness = lazyRoute('AdminDataFreshness', () => import('./pages/admin/DataFreshness')); // Sayt → Məlumatların aktuallığı (yearly figures, review dates; ADMIN+)
 const LandingPageView = lazyRoute('LandingPageView', () => import('./pages/growth/LandingPage')); // public landing pages /l/:slug
 const AccountReferral = lazyRoute('AccountReferral', () => import('./pages/account/Referral'));
 const AdminGrowthEvents = lazyRoute('AdminGrowthEvents', () => import('./pages/admin/GrowthEvents'));
@@ -290,6 +291,8 @@ const SurveyAnswer = lazyRoute('SurveyAnswer', () => import('./pages/SurveyAnswe
 const SuccessSharePage = lazyRoute('SuccessSharePage', () => import('./pages/SuccessSharePage')); // public "visa approved" share card + lead form
 const GoogleReviewOptOut = lazyRoute('GoogleReviewOptOut', () => import('./pages/GoogleReviewLink')); // Google review request: opt-out
 const GoogleReviewRedirect = lazyRoute('GoogleReviewRedirect', () => import('./pages/GoogleReviewLink').then((m) => ({ default: m.GoogleReviewRedirect }))); // tracked link → Google
+const GoogleReviewRate = lazyRoute('GoogleReviewRate', () => import('./pages/GoogleReviewRate')); // Google review request: one-click 1–5 rating (no gating)
+const GoogleReviewRateRedirect = lazyRoute('GoogleReviewRateRedirect', () => import('./pages/GoogleReviewRate').then((m) => ({ default: m.GoogleReviewRateRedirect }))); // rating page → Google (click counter)
 const ReferralLandingPage = lazyRoute('ReferralLandingPage', () => import('./pages/ReferralLandingPage')); // personal referral page /r/<slug>
 const ReferralTermsPage = lazyRoute('ReferralTermsPage', () => import('./pages/ReferralTermsPage'));
 const CheckInAnswer = lazyRoute('CheckInAnswer', () => import('./pages/CheckInAnswer')); // post-arrival check-in (one tap)
@@ -563,6 +566,8 @@ export default function App() {
             <Route path="upload/:token" element={<UploadByLink />} />
             <Route path="r/review/:token" element={<GoogleReviewRedirect />} />
             <Route path="r/review/:token/optout" element={<GoogleReviewOptOut />} />
+            <Route path="r/rate/:token" element={<GoogleReviewRate />} />
+            <Route path="r/rate/:token/google" element={<GoogleReviewRateRedirect />} />
             <Route path="r/:slug" element={<ReferralLandingPage />} />
             <Route path="referral-terms" element={<ReferralTermsPage />} />
             <Route path="check-in/:key" element={<CheckInAnswer />} />
@@ -1048,6 +1053,14 @@ export default function App() {
               element={
                 <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
                   <AdminCityCosts />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="data-freshness"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminDataFreshness />
                 </RequireAuth>
               }
             />

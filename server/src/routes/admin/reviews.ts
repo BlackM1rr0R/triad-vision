@@ -5,7 +5,19 @@ import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { conflict, notFound, parse } from '../../lib/http.js';
 import { inviteExpired, inviteForCase, resendInvite } from '../../lib/reviewInvites.js';
-import { getGoogleReviewSettings, googleReviewSchema, googleReviewStats, runGoogleReviewRequests, saveGoogleReviewSettings } from '../../lib/googleReview/service.js';
+import {
+  GR_TRIGGERS,
+  getGoogleReviewSettings,
+  googleReviewSchema,
+  googleReviewStats,
+  googleUrlOf,
+  recentInvites,
+  renderInviteEmail,
+  runGoogleReviewRequests,
+  saveGoogleReviewSettings,
+  sendTestInvite,
+  DEMO_TOKEN,
+} from '../../lib/googleReview/service.js';
 
 // Admin: reviews — mounted at /api/admin/reviews (staff may read; admins moderate)
 export const adminReviewsRouter = Router();
@@ -106,17 +118,45 @@ adminReviewsRouter.post('/invite', requireMinRole('ADMIN'), async (req, res) => 
 
 // ─── Google review requests (lib/googleReview) ─────────────────────────
 
-/** Settings + sent / clicked per month. */
+/** Settings + funnel / rating statistics. */
 adminReviewsRouter.get('/google', async (_req, res) => {
   const [settings, stats] = await Promise.all([getGoogleReviewSettings(), googleReviewStats()]);
-  res.json({ settings, stats });
+  res.json({ settings, stats, googleUrl: googleUrlOf(settings) });
 });
 
 adminReviewsRouter.put('/google', requireMinRole('ADMIN'), async (req, res) => {
   const settings = parse(googleReviewSchema, req.body ?? {});
-  if (settings.enabled && !settings.url) throw conflict('URL_REQUIRED');
+  if (settings.enabled && !googleUrlOf(settings)) throw conflict('URL_REQUIRED');
   await saveGoogleReviewSettings(settings);
   res.json({ settings });
+});
+
+/** Recent invites (newest first). */
+adminReviewsRouter.get('/google/invites', async (_req, res) => {
+  res.json({ items: await recentInvites(50) });
+});
+
+const previewQuery = z.object({
+  locale: z.enum(['az', 'de', 'en', 'ru']).default('az'),
+  trigger: z.enum(GR_TRIGGERS).default('APPROVED'),
+  kind: z.enum(['invite', 'reminder']).default('invite'),
+});
+
+/** The e-mail as the client would see it (demo links). */
+adminReviewsRouter.get('/google/preview', async (req, res) => {
+  const q = parse(previewQuery, req.query);
+  const mail = renderInviteEmail({ ...q, firstName: 'Aysel', token: DEMO_TOKEN, optOutToken: null });
+  res.json({ subject: mail.subject, html: mail.html });
+});
+
+/** Sends the preview to the admin's own address (or the given one). */
+adminReviewsRouter.post('/google/test', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(previewQuery.extend({ to: z.string().trim().email().max(200).optional() }), req.body ?? {});
+  const me = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { email: true, firstName: true } });
+  const to = body.to ?? me?.email;
+  if (!to) throw conflict('NO_ADDRESS');
+  await sendTestInvite(to, { locale: body.locale, trigger: body.trigger, kind: body.kind, firstName: me?.firstName ?? 'Aysel' });
+  res.json({ ok: true, to });
 });
 
 /** Runs the daily job now (only clients that are due; never sends twice). */

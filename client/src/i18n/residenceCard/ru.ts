@@ -59,7 +59,7 @@ export const ru: ResidenceCardCopy = {
       aufenthv45c: '§ 45c AufenthV (новая карта)',
       aufenthv47: '§ 47 AufenthV (Fiktionsbescheinigung)',
       aufenthg18g: '§ 18g AufenthG (Голубая карта ЕС)',
-      bamf: 'Брошюра BAMF «Der elektronische Aufenthaltstitel»',
+      bamf: 'Страница BAMF «Der elektronische Aufenthaltstitel»',
       bmi: 'Флаер BMI: eAT как онлайн-удостоверение',
     },
     glossaryTitle: 'Термины на этой странице',

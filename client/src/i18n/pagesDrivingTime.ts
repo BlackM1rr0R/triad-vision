@@ -158,7 +158,7 @@ const de = {
       { q: 'Wie darf die Pause aufgeteilt werden?', a: 'Nach 4,5 Stunden Lenkzeit ist eine Fahrtunterbrechung von 45 Minuten Pflicht. Sie darf geteilt werden: zuerst mindestens 15, danach mindestens 30 Minuten. Umgekehrt (30 + 15) zählt sie nicht.' },
       { q: 'Wie lang muss die tägliche Ruhezeit sein?', a: 'Regelmäßig 11 Stunden, zwischen zwei Wochenruhezeiten höchstens dreimal auf 9 Stunden reduziert. Aufgeteilt geht 3 + 9 Stunden. Die Ruhezeit muss innerhalb von 24 Stunden nach Ende der vorherigen Ruhezeit genommen werden.' },
       { q: 'Zählt Be- und Entladen zur Arbeitszeit?', a: 'Ja. Nach §21a ArbZG zählen neben dem Lenken auch Laden, Reinigen und Papierkram: höchstens 60 Stunden pro Woche, im Schnitt 48 Stunden über vier Monate. Vorher bekannte Wartezeiten (Bereitschaft) zählen nicht.' },
-      { q: 'Welche Bußgelder drohen?', a: 'Nach dem Bußgeldkatalog der Länder z. B. bei Überschreitung der Tageslenkzeit bis 2 Stunden 30 € (Fahrer) bzw. 90 € (Unternehmen) je angefangene halbe Stunde, darüber mehr. Höchstbeträge: 5.000 € für Fahrer (§8 FPersG), 30.000 € für Unternehmen (§8a FPersG). Die Werte hier sind Richtwerte.' },
+      { q: 'Welche Bußgelder drohen?', a: 'Nach dem Bußgeldkatalog der Länder z. B. bei Überschreitung der Tageslenkzeit bis 2 Stunden 30 € (Fahrer) bzw. 90 € (Unternehmen) je angefangene halbe Stunde, darüber mehr. Höchstbeträge: 5.000 € für Fahrer (§8a Abs. 2 FPersG), 30.000 € für Unternehmen (§8a Abs. 1 FPersG). Die Werte hier sind Richtwerte.' },
     ],
   },
 };
@@ -238,7 +238,7 @@ const en = {
       { q: 'How can the break be split?', a: 'After 4.5 hours of driving a 45-minute break is required. It may be split: first at least 15 minutes, then at least 30 minutes. The other way round (30 + 15) does not count.' },
       { q: 'How long must the daily rest be?', a: 'Regularly 11 hours; between two weekly rests it may be reduced to 9 hours at most three times. A split rest is 3 + 9 hours. It must be taken within 24 hours after the end of the previous rest.' },
       { q: 'Does loading and unloading count as working time?', a: 'Yes. Under §21a ArbZG, loading, cleaning and paperwork count besides driving: at most 60 hours a week and 48 hours on average over four months. Waiting time known in advance (standby) does not count.' },
-      { q: 'What fines apply?', a: 'Under the German states’ catalogue, e.g. exceeding the daily driving time by up to 2 hours costs 30 € (driver) or 90 € (company) per started half hour, more beyond that. Maximums: 5,000 € for drivers (§8 FPersG), 30,000 € for companies (§8a FPersG). The amounts here are indicative.' },
+      { q: 'What fines apply?', a: 'Under the German states’ catalogue, e.g. exceeding the daily driving time by up to 2 hours costs 30 € (driver) or 90 € (company) per started half hour, more beyond that. Maximums: 5,000 € for drivers (§8a Abs. 2 FPersG), 30,000 € for companies (§8a Abs. 1 FPersG). The amounts here are indicative.' },
     ],
   },
 };
@@ -318,7 +318,7 @@ const ru = {
       { q: 'Как можно разделить перерыв?', a: 'После 4,5 часа вождения обязателен перерыв 45 минут. Его можно разделить: сначала минимум 15, затем минимум 30 минут. Наоборот (30 + 15) не засчитывается.' },
       { q: 'Каким должен быть ежедневный отдых?', a: 'Обычно 11 часов, между двумя недельными отдыхами не более трёх раз можно сократить до 9 часов. Разделённый вариант — 3 + 9 часов. Отдых нужно взять в течение 24 часов после окончания предыдущего.' },
       { q: 'Считается ли погрузка рабочим временем?', a: 'Да. По §21a ArbZG кроме вождения считаются погрузка, уборка и документы: не более 60 часов в неделю и в среднем 48 часов за четыре месяца. Заранее известное время ожидания (готовность) не считается.' },
-      { q: 'Какие штрафы грозят?', a: 'По каталогу земель, например, за превышение суточного вождения до 2 часов — 30 € (водитель) или 90 € (компания) за каждые начатые полчаса, сверх того больше. Максимум: 5 000 € для водителя (§8 FPersG), 30 000 € для компании (§8a FPersG). Суммы здесь ориентировочные.' },
+      { q: 'Какие штрафы грозят?', a: 'По каталогу земель, например, за превышение суточного вождения до 2 часов — 30 € (водитель) или 90 € (компания) за каждые начатые полчаса, сверх того больше. Максимум: 5 000 € для водителя (§8a Abs. 2 FPersG), 30 000 € для компании (§8a Abs. 1 FPersG). Суммы здесь ориентировочные.' },
     ],
   },
 };
@@ -398,7 +398,7 @@ const tr = {
       { q: 'Mola nasıl bölünebilir?', a: '4,5 saat sürüşten sonra 45 dakikalık mola zorunludur. Bölünebilir: önce en az 15, sonra en az 30 dakika. Tersi (30 + 15) sayılmaz.' },
       { q: 'Günlük dinlenme ne kadar olmalı?', a: 'Normalde 11 saat; iki haftalık dinlenme arasında en çok üç kez 9 saate indirilebilir. Bölünmüş hâli 3 + 9 saattir. Önceki dinlenmenin bitiminden itibaren 24 saat içinde alınmalıdır.' },
       { q: 'Yükleme ve boşaltma çalışma süresine dahil mi?', a: 'Evet. §21a ArbZG’ye göre sürüşün yanında yükleme, temizlik ve evrak işleri de sayılır: haftada en çok 60 saat, dört ayda ortalama 48 saat. Önceden bilinen bekleme süresi sayılmaz.' },
-      { q: 'Hangi cezalar var?', a: 'Eyalet kataloğuna göre örneğin günlük sürüş süresinin 2 saate kadar aşılması her başlayan yarım saat için 30 € (şoför) veya 90 € (şirket); daha fazlasında yükselir. Üst sınırlar: şoför 5.000 € (§8 FPersG), şirket 30.000 € (§8a FPersG). Buradaki tutarlar tahminidir.' },
+      { q: 'Hangi cezalar var?', a: 'Eyalet kataloğuna göre örneğin günlük sürüş süresinin 2 saate kadar aşılması her başlayan yarım saat için 30 € (şoför) veya 90 € (şirket); daha fazlasında yükselir. Üst sınırlar: şoför 5.000 € (§8a Abs. 2 FPersG), şirket 30.000 € (§8a Abs. 1 FPersG). Buradaki tutarlar tahminidir.' },
     ],
   },
 };
@@ -478,7 +478,7 @@ const uk = {
       { q: 'Як можна розділити перерву?', a: 'Після 4,5 години керування обовʼязкова перерва 45 хвилин. Її можна розділити: спершу щонайменше 15, потім щонайменше 30 хвилин. Навпаки (30 + 15) не зараховується.' },
       { q: 'Яким має бути щоденний відпочинок?', a: 'Зазвичай 11 годин; між двома тижневими відпочинками не більше трьох разів можна скоротити до 9 годин. Розділений варіант — 3 + 9 годин. Відпочинок треба взяти протягом 24 годин після закінчення попереднього.' },
       { q: 'Чи вважається завантаження робочим часом?', a: 'Так. За §21a ArbZG, крім керування, рахуються завантаження, прибирання й документи: не більше 60 годин на тиждень і в середньому 48 годин за чотири місяці. Заздалегідь відомий час очікування (готовність) не рахується.' },
-      { q: 'Які штрафи загрожують?', a: 'За каталогом земель, наприклад, за перевищення добового керування до 2 годин — 30 € (водій) або 90 € (компанія) за кожні розпочаті пів години, понад це більше. Максимум: 5 000 € для водія (§8 FPersG), 30 000 € для компанії (§8a FPersG). Суми тут орієнтовні.' },
+      { q: 'Які штрафи загрожують?', a: 'За каталогом земель, наприклад, за перевищення добового керування до 2 годин — 30 € (водій) або 90 € (компанія) за кожні розпочаті пів години, понад це більше. Максимум: 5 000 € для водія (§8a Abs. 2 FPersG), 30 000 € для компанії (§8a Abs. 1 FPersG). Суми тут орієнтовні.' },
     ],
   },
 };

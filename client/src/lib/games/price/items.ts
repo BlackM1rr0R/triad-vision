@@ -5,7 +5,8 @@
  * real prices vary by shop, city and offer). Rents are computed from the city guide's 2026 ranges
  * (lib/cities/data.ts), so both pages agree.
  */
-import { CITIES, DEUTSCHLANDTICKET, KINDERGELD, RUNDFUNK } from '@/lib/cities/data';
+import { CITIES, DEUTSCHLANDTICKET, DEUTSCHLANDTICKET_YEAR, KINDERGELD, RUNDFUNK } from '@/lib/cities/data';
+import { minimumWageAt } from '../../../../../server/src/lib/budget/params';
 import type { Tx } from '@/lib/games/common';
 
 export const PRICE_AS_OF = '2026-11';
@@ -67,7 +68,7 @@ const ROWS: Row[] = [
   ['currywurst', 'eatOut', 'Currywurst mit Pommes', 'Karri kolbasa və kartof fri', 'Currywurst with fries', 'Карривурст с картошкой фри', 'Patates kızartmalı currywurst', 'Каррівурст із картоплею фрі', 6.9],
   ['canteen', 'eatOut', 'Mittagessen in der Kantine', 'İş yerinin yeməkxanasında nahar', 'Lunch in a works canteen', 'Обед в столовой на работе', 'İş yeri kantininde öğle yemeği', 'Обід у їдальні на роботі', 5.5],
   // transport
-  ['dticket', 'transport', 'Deutschlandticket (1 Monat)', 'Deutschlandticket (1 ay)', 'Deutschlandticket (1 month)', 'Deutschlandticket (1 месяц)', 'Deutschlandticket (1 ay)', 'Deutschlandticket (1 місяць)', DEUTSCHLANDTICKET, { label: 'Deutsche Bahn: Deutschlandticket', url: 'https://regional.bahn.de/tickets/Deutschlandticket', date: '2026-01' }],
+  ['dticket', 'transport', 'Deutschlandticket (1 Monat)', 'Deutschlandticket (1 ay)', 'Deutschlandticket (1 month)', 'Deutschlandticket (1 месяц)', 'Deutschlandticket (1 ay)', 'Deutschlandticket (1 місяць)', DEUTSCHLANDTICKET, { label: 'Deutsche Bahn: Deutschlandticket', url: 'https://regional.bahn.de/tickets/Deutschlandticket', date: `${DEUTSCHLANDTICKET_YEAR}-01` }],
   ['petrol', 'transport', 'Super E10, 1 Liter', 'Benzin Super E10, 1 litr', 'Petrol Super E10, 1 litre', 'Бензин Super E10, 1 литр', 'Benzin Super E10, 1 litre', 'Бензин Super E10, 1 літр', 1.98, { label: 'ADAC national average (11 Nov 2026)', url: 'https://presse.adac.de/meldungen/adac-ev/verkehr/kraftstoffpreise-super-e10-wieder-unter-2-euro.html', date: '2026-11' }],
   ['taxi', 'transport', 'Taxifahrt, 5 km in der Stadt', 'Taksi, şəhərdə 5 km', 'Taxi ride, 5 km in town', 'Такси, 5 км по городу', 'Taksi, şehir içi 5 km', 'Таксі, 5 км містом', 16],
   ['flixbus', 'transport', 'Fernbus Berlin–Hamburg (früh gebucht)', 'Avtobus Berlin–Hamburq (erkən alınmış)', 'Long-distance bus Berlin–Hamburg (booked early)', 'Автобус Берлин–Гамбург (заранее)', 'Otobüs Berlin–Hamburg (erken alınmış)', 'Автобус Берлін–Гамбург (заздалегідь)', 14.99],
@@ -86,7 +87,7 @@ const ROWS: Row[] = [
   // official / fixed amounts
   ['rundfunk', 'official', 'Rundfunkbeitrag pro Wohnung, pro Monat', 'Radio-TV rüsumu (Rundfunkbeitrag), mənzil üçün aylıq', 'Broadcasting fee per household, per month', 'Взнос за радио и ТВ на квартиру, в месяц', 'Yayın katkı payı (hane başına), aylık', 'Внесок за радіо й ТБ на квартиру, на місяць', RUNDFUNK, { label: 'rundfunkbeitrag.de', url: 'https://www.rundfunkbeitrag.de/', date: '2026' }],
   ['stamp', 'official', 'Briefmarke Standardbrief (Inland)', 'Adi məktub üçün marka (ölkə daxili)', 'Stamp for a standard letter (domestic)', 'Марка на стандартное письмо (по Германии)', 'Standart mektup pulu (yurt içi)', 'Марка на стандартний лист (по Німеччині)', 0.95, { label: 'Deutsche Post, Briefe national', url: 'https://www.deutschepost.de/de/b/briefe-in-deutschland.html', date: '2026-01' }],
-  ['minWage', 'official', 'Gesetzlicher Mindestlohn pro Stunde (brutto)', 'Minimum əmək haqqı, saatlıq (brutto)', 'Statutory minimum wage per hour (gross)', 'Минимальная оплата труда в час (брутто)', 'Yasal asgari ücret, saatlik (brüt)', 'Мінімальна оплата праці за годину (брутто)', 13.9, { label: 'Bundesregierung: Mindestlohn 13,90 €', url: 'https://www.bundesregierung.de/breg-de/aktuelles/mindestlohn-steigt-2391010', date: '2026-01' }],
+  ['minWage', 'official', 'Gesetzlicher Mindestlohn pro Stunde (brutto)', 'Minimum əmək haqqı, saatlıq (brutto)', 'Statutory minimum wage per hour (gross)', 'Минимальная оплата труда в час (брутто)', 'Yasal asgari ücret, saatlik (brüt)', 'Мінімальна оплата праці за годину (брутто)', minimumWageAt(), { label: 'Bundesregierung: Mindestlohn 13,90 € (2026), 14,60 € (2027)', url: 'https://www.bundesregierung.de/breg-de/aktuelles/mindestlohn-steigt-2391010', date: minimumWageAt() >= 14.6 ? '2027-01' : '2026-01' }],
   ['kindergeld', 'official', 'Kindergeld pro Kind, pro Monat', 'Uşaq pulu (Kindergeld), hər uşaq üçün aylıq', 'Child benefit per child, per month', 'Детское пособие на ребёнка, в месяц', 'Çocuk parası, çocuk başına aylık', 'Дитячі гроші на дитину, на місяць', KINDERGELD, { label: 'Familienkasse (Bundesagentur für Arbeit)', url: 'https://www.arbeitsagentur.de/familie-und-kinder/kindergeld-anspruch-hoehe-dauer', date: '2026-01' }],
 ];
 

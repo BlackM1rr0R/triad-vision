@@ -6,8 +6,9 @@ import { nameLatin, nameMatches, nameSkeleton } from '../aiDocs/docCheck.js';
  *
  * MRZ rules — ICAO Doc 9303 Part 3 (8th ed.), section 6 "Transliteration of multinational Latin-based characters":
  *   Ç → C, Ğ → G, İ / ı (I without dot) → I, Ş → S, Ö → "OE or O", Ü → "UE or UXX or U".
- * Ə (schwa) is not in the ICAO table; Azerbaijani passports write it as A (MƏMMƏDOV → MAMMADOV), and Ö / Ü
- * as O / U — that is what we show as the expected MRZ form, with OE / UE as the ICAO alternative. X and Q are
+ * (table re-checked in the ICAO PDF 2026-11-17). Ə (schwa) is not in the ICAO table; Azerbaijani passports in
+ * practice write it as A (MƏMMƏDOV → MAMMADOV), and Ö / Ü as O / U — observed practice, no published Azerbaijani
+ * specification found, so the UI says "usually" and asks to check the own passport. That is what we show as the expected MRZ form, with OE / UE as the ICAO alternative. X and Q are
  * ordinary A–Z letters and stay (XƏLİLOV → XALILOV). Only A–Z and "<" exist in the MRZ.
  *
  * The comparison reuses the tolerant name helpers of lib/aiDocs/docCheck (consonant skeleton, plain Latin).

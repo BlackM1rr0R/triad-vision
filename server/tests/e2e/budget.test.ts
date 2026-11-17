@@ -5,6 +5,7 @@ import { prisma } from '../helpers/db';
 import { createVisaCategory, uniq } from '../helpers/factories';
 import { cvPdfText as pdfText } from '../unit/cvPdfText';
 import { DEFAULT_CITY_COSTS } from '../../src/lib/budget/cities.js';
+import { deutschlandticketAt } from '../../src/lib/budget/params.js';
 
 const binary = (res: import('superagent').Response, cb: (err: Error | null, body: Buffer) => void) => {
   const chunks: Buffer[] = [];
@@ -26,7 +27,7 @@ describe('public budget API', () => {
     expect(res.body.cities.length).toBe(DEFAULT_CITY_COSTS.length);
     expect(res.body.cities[0]).toMatchObject({ slug: 'berlin', state: 'BE', checkedAt: '2026-10-26' });
     expect(res.body.visas).toEqual([expect.objectContaining({ slug: 'ausbildung-test', blockedAccount: 11_904 })]);
-    expect(res.body.params).toMatchObject({ deutschlandticket: 63, kindergeld: 259, blockedAccountYear: 11_904 });
+    expect(res.body.params).toMatchObject({ deutschlandticket: deutschlandticketAt(), kindergeld: 259, blockedAccountYear: 11_904 });
     expect(await prisma.setting.findUnique({ where: { key: 'cityCostsSeeded' } })).not.toBeNull();
   });
 

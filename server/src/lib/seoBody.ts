@@ -119,12 +119,12 @@ const EMPLOYER_LINKS = ['/cooperation', '/employer-guide-azerbaijan', '/employer
 
 /** Labels of the audience / tools sections (home, /for-workers, /for-employers, /tools). */
 const AL: Record<SeoLocale, { who: string; stories: string; groups: Record<ToolGroupKey, string> }> = {
-  az: { who: 'Siz kimsiniz?', stories: 'Rəylər', groups: { eligibility: 'Uyğunluğu yoxla', costs: 'Xərc və maaşı hesabla', plan: 'Köçünü planla', learn: 'Oyunlarla öyrən', explore: 'Kəşf et' } },
-  de: { who: 'Wer sind Sie?', stories: 'Stimmen', groups: { eligibility: 'Eignung prüfen', costs: 'Kosten und Gehalt berechnen', plan: 'Umzug planen', learn: 'Spielend lernen', explore: 'Entdecken' } },
-  en: { who: 'Who are you?', stories: 'Testimonials', groups: { eligibility: 'Check eligibility', costs: 'Calculate costs and salary', plan: 'Plan your move', learn: 'Learn by playing', explore: 'Explore' } },
-  ru: { who: 'Кто вы?', stories: 'Отзывы', groups: { eligibility: 'Проверить соответствие', costs: 'Рассчитать расходы и зарплату', plan: 'Спланировать переезд', learn: 'Учитесь играя', explore: 'Узнать больше' } },
-  tr: { who: 'Siz kimsiniz?', stories: 'Görüşler', groups: { eligibility: 'Uygunluğu kontrol et', costs: 'Maliyet ve maaşı hesapla', plan: 'Taşınmanı planla', learn: 'Oynayarak öğren', explore: 'Keşfet' } },
-  uk: { who: 'Хто ви?', stories: 'Відгуки', groups: { eligibility: 'Перевірити відповідність', costs: 'Розрахувати витрати й зарплату', plan: 'Спланувати переїзд', learn: 'Навчайтеся граючи', explore: 'Дізнатися більше' } },
+  az: { who: 'Siz kimsiniz?', stories: 'Rəylər', groups: { eligibility: 'Mən uyğunammı?', costs: 'Pul və vergilər', plan: 'Köçü planla', life: 'Almaniyada həyat', learn: 'Alman dili və məşqlər', employers: 'İşəgötürənlər üçün', explore: 'Kəşf et və oxu' } },
+  de: { who: 'Wer sind Sie?', stories: 'Stimmen', groups: { eligibility: 'Komme ich infrage?', costs: 'Geld und Steuern', plan: 'Umzug planen', life: 'Leben in Deutschland', learn: 'Deutsch lernen und üben', employers: 'Für Arbeitgeber', explore: 'Entdecken und nachlesen' } },
+  en: { who: 'Who are you?', stories: 'Testimonials', groups: { eligibility: 'Am I eligible?', costs: 'Money and taxes', plan: 'Plan the move', life: 'Life in Germany', learn: 'Learn German and practise', employers: 'For employers', explore: 'Explore and read' } },
+  ru: { who: 'Кто вы?', stories: 'Отзывы', groups: { eligibility: 'Подхожу ли я?', costs: 'Деньги и налоги', plan: 'Планирование переезда', life: 'Жизнь в Германии', learn: 'Немецкий язык и тренажёры', employers: 'Для работодателей', explore: 'Узнать и почитать' } },
+  tr: { who: 'Siz kimsiniz?', stories: 'Görüşler', groups: { eligibility: 'Uygun muyum?', costs: 'Para ve vergiler', plan: 'Taşınmayı planla', life: "Almanya'da yaşam", learn: 'Almanca ve alıştırmalar', employers: 'İşverenler için', explore: 'Keşfet ve oku' } },
+  uk: { who: 'Хто ви?', stories: 'Відгуки', groups: { eligibility: 'Чи підходжу я?', costs: 'Гроші й податки', plan: 'Планування переїзду', life: 'Життя в Німеччині', learn: 'Німецька мова й тренажери', employers: 'Для роботодавців', explore: 'Дізнатися й почитати' } },
 };
 
 const paragraphs = (text: string) =>

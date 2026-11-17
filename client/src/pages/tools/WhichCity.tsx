@@ -18,7 +18,7 @@ import { useBrand } from '@/lib/brand';
 import { useL10n } from '@/lib/l10n';
 import { localePath } from '@/lib/localeRouter';
 import { usePageTitle } from '@/lib/usePageTitle';
-import type { City } from '@/lib/cities/data';
+import { DEUTSCHLANDTICKET, type City } from '@/lib/cities/data';
 import { DEFAULT_ANSWERS, QUESTION_KEYS, QUESTIONS, decodeAnswers, encodeAnswers, quizCity, rankCities, type Answers, type CityScore, type QuestionKey } from '@/lib/cityQuiz/score';
 
 registerCopy(pagesWhichCity);
@@ -223,7 +223,9 @@ export default function WhichCityPage() {
   const ranking = useMemo(() => (urlAnswers ? rankCities(urlAnswers) : null), [urlAnswers]);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Answers>(DEFAULT_ANSWERS);
-  const faq = t('whichCity.faq.items', { returnObjects: true }) as unknown as { q: string; a: string }[];
+  // Deutschlandticket price of today (63 € in 2026, 66.80 € from 1.1.2027 — lib/cities/data.ts), "66,80" outside English.
+  const ticket = (Number.isInteger(DEUTSCHLANDTICKET) ? String(DEUTSCHLANDTICKET) : DEUTSCHLANDTICKET.toFixed(2)).replace('.', currentSiteLocale() === 'en' ? '.' : ',');
+  const faq = t('whichCity.faq.items', { returnObjects: true, ticket }) as unknown as { q: string; a: string }[];
 
   const top = ranking ? ranking[0] : null;
   const city = top?.city ?? urlCity;

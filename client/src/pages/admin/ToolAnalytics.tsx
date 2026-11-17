@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { ArrowDown, ArrowUp, Download, Eye, Mail, MousePointerClick, Percent, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
@@ -12,6 +13,7 @@ import { pagesAudience } from '@/i18n/pagesAudience';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, ErrorBlock, KpiCell, KpiStrip, ListSkeleton, Panel } from '@/components/admin/ui';
 import { TOOLS } from '@/components/audience/tools';
+import { FeaturedToolsEditor } from '@/components/tools/hub/FeaturedToolsEditor';
 
 registerCopy(pagesToolConversion);
 registerCopy(pagesAudience);
@@ -63,7 +65,7 @@ const Sparkline = ({ values, label }: { values: number[]; label: string }) => {
   );
 };
 
-const fmtPct = (v: number | null) => (v === null ? '—' : `${v.toLocaleString(undefined, { maximumFractionDigits: 1 })} %`);
+const fmtPct = (v: number | null) => (v === null ? '—' : `${v.toLocaleString(i18n.language, { maximumFractionDigits: 1 })} %`);
 
 export default function ToolAnalytics() {
   const { t } = useTranslation();
@@ -118,7 +120,7 @@ export default function ToolAnalytics() {
   };
 
   const trend = (v: number | null) =>
-    v === null ? <span className="text-muted">—</span> : <span className={clsx('num', v > 0 ? 'text-success-fg' : v < 0 ? 'text-danger-fg' : 'text-muted')}>{`${v > 0 ? '+' : ''}${v.toLocaleString(undefined, { maximumFractionDigits: 1 })} %`}</span>;
+    v === null ? <span className="text-muted">—</span> : <span className={clsx('num', v > 0 ? 'text-success-fg' : v < 0 ? 'text-danger-fg' : 'text-muted')}>{`${v > 0 ? '+' : ''}${v.toLocaleString(i18n.language, { maximumFractionDigits: 1 })} %`}</span>;
 
   return (
     <div>
@@ -145,9 +147,9 @@ export default function ToolAnalytics() {
       {data && (
         <div className="space-y-6">
           <KpiStrip cols={5}>
-            <KpiCell icon={Eye} label={t('toolConv.admin.views')} value={data.totals.views.toLocaleString()} aside={trend(data.totals.prevViews ? Math.round(((data.totals.views - data.totals.prevViews) / data.totals.prevViews) * 1000) / 10 : null)} hint={t('toolConv.admin.vsPrev')} />
-            <KpiCell icon={MousePointerClick} label={t('toolConv.admin.uses')} value={data.totals.uses.toLocaleString()} />
-            <KpiCell icon={Mail} label={t('toolConv.admin.leads')} value={data.totals.leads.toLocaleString()} to="/admin/inquiries?source=tool" hint={t('toolConv.admin.leadsLink')} />
+            <KpiCell icon={Eye} label={t('toolConv.admin.views')} value={data.totals.views.toLocaleString(i18n.language)} aside={trend(data.totals.prevViews ? Math.round(((data.totals.views - data.totals.prevViews) / data.totals.prevViews) * 1000) / 10 : null)} hint={t('toolConv.admin.vsPrev')} />
+            <KpiCell icon={MousePointerClick} label={t('toolConv.admin.uses')} value={data.totals.uses.toLocaleString(i18n.language)} />
+            <KpiCell icon={Mail} label={t('toolConv.admin.leads')} value={data.totals.leads.toLocaleString(i18n.language)} to="/admin/inquiries?source=tool" hint={t('toolConv.admin.leadsLink')} />
             <KpiCell icon={UserPlus} label={`${t('toolConv.admin.registrations')} / ${t('toolConv.admin.inquiries')}`} value={`${data.totals.registrations} / ${data.totals.inquiries}`} />
             <KpiCell icon={Percent} label={t('toolConv.admin.conversion')} value={fmtPct(data.totals.conversionRate)} />
           </KpiStrip>
@@ -194,9 +196,9 @@ export default function ToolAnalytics() {
                           </a>
                           <span className="block text-[11px] text-muted">/{r.slug}</span>
                         </td>
-                        <td className="num px-3 py-2 text-right">{r.views.toLocaleString()}</td>
+                        <td className="num px-3 py-2 text-right">{r.views.toLocaleString(i18n.language)}</td>
                         <td className="num px-3 py-2 text-right">
-                          {r.uses.toLocaleString()} <span className="text-[11px] text-muted">{r.useRate !== null ? `(${fmtPct(r.useRate)})` : ''}</span>
+                          {r.uses.toLocaleString(i18n.language)} <span className="text-[11px] text-muted">{r.useRate !== null ? `(${fmtPct(r.useRate)})` : ''}</span>
                         </td>
                         <td className="num px-3 py-2 text-right">
                           {r.leads > 0 ? (
@@ -223,6 +225,8 @@ export default function ToolAnalytics() {
             )}
           </Panel>
           <p className="text-xs leading-relaxed text-muted">{t('toolConv.admin.note')}</p>
+          {/* "Most useful" row of /tools and the header tools menu; "suggest" uses this period's most viewed tools. */}
+          <FeaturedToolsEditor topSlugs={[...data.items].filter((r) => r.views > 0).sort((a, b) => b.views - a.views).map((r) => r.slug)} />
         </div>
       )}
     </div>

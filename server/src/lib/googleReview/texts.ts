@@ -1,6 +1,6 @@
 /**
- * Copy of the Google review request (e-mail, in-app notification, WhatsApp) and of the staff task created
- * instead when the client was unhappy. Client languages az / de / en / ru / tr / uk; anything else → English.
+ * Copy of the legacy one-time Google review request (before 2026-11; its WhatsApp text is still used by the
+ * rating-first request, see inviteTexts.ts for the e-mail). Client languages az / de / en / ru / tr / uk; else English.
  */
 export const GR_LOCALES = ['az', 'de', 'en', 'ru', 'tr', 'uk'] as const;
 export type GrLocale = (typeof GR_LOCALES)[number];
@@ -83,14 +83,3 @@ ${trigger === 'ARRIVAL' ? 'Ласкаво просимо до Німеччини
     whatsapp: ({ firstName, url }) => `Вітаємо, ${firstName}! Відгук про Triad Vision у Google дуже допоможе іншим (1 хвилина): ${url}`,
   },
 };
-
-/** Staff task (Azerbaijani: the team's working language) when a low satisfaction score routes the client to us instead of Google. */
-export const internalTaskText = (p: { clientName: string; number: string | null; score: number; comment: string | null }) => ({
-  title: `Narazı müştəri ilə əlaqə: ${p.clientName}${p.number ? ` (${p.number})` : ''}`,
-  description: [
-    `Müştəri məmnuniyyət sorğusunda ${p.score}/10 qiymət verib. Google rəyi xahişi göndərilmədi — əvəzində müştəri ilə əlaqə saxlayın, nəyin yaxşı getmədiyini öyrənin və həll edin.`,
-    p.comment ? `\nMüştərinin şərhi:\n${p.comment}` : null,
-  ]
-    .filter((l): l is string => l !== null)
-    .join('\n'),
-});

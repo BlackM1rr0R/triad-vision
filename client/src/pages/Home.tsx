@@ -19,7 +19,6 @@ import {
   WhySection,
 } from '@/components/home/Sections';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 import { AUDIENCE_PATH, useAudience, type Audience } from '@/lib/audience';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import { isHydrating } from '@/lib/ssr';
@@ -43,6 +42,9 @@ const WorldBandPlaceholder = () => (
     </div>
   </div>
 );
+// Start-date calculator call-out (below the fold): own chunk, so its copy module (pagesGrowthPlus, ~50 KB)
+// is not part of the home page's first download.
+const CalculatorTeaser = lazy(() => import('@/components/growth/CalculatorTeaser').then((m) => ({ default: m.CalculatorTeaser })));
 // The audience view (after "Who are you?"): own chunk, fetched only once a visitor has chosen.
 const AudienceHome = lazy(() => import('@/components/audience/AudienceHome'));
 
@@ -77,7 +79,9 @@ const AudienceBar = ({ audience, onChoose }: { audience: Audience; onChoose: (a:
 const NeutralHome = () => (
   <>
     <VisaSection />
-    <CalculatorTeaser />
+    <Suspense fallback={null}>
+      <CalculatorTeaser />
+    </Suspense>
     <ServicesSection />
     <ProcessSection />
     <PartnersSection />

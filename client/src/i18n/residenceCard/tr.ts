@@ -59,7 +59,7 @@ export const tr: ResidenceCardCopy = {
       aufenthv45c: '§ 45c AufenthV (yeni kart)',
       aufenthv47: '§ 47 AufenthV (Fiktionsbescheinigung)',
       aufenthg18g: '§ 18g AufenthG (AB Mavi Kart)',
-      bamf: 'BAMF broşürü “Der elektronische Aufenthaltstitel”',
+      bamf: 'BAMF sayfası “Der elektronische Aufenthaltstitel”',
       bmi: 'BMI broşürü: çevrim içi kimlik olarak eAT',
     },
     glossaryTitle: 'Bu sayfadaki terimler',

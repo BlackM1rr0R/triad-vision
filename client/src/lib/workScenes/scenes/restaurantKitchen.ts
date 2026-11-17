@@ -14,10 +14,10 @@ export const RESTAURANT_KITCHEN: WorkScene = {
     { label: 'EU 852/2004 – Lebensmittelhygiene (HACCP)', url: 'https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32004R0852' },
     { label: 'EU 853/2004 – Kühltemperaturen tierischer Lebensmittel', url: 'https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32004R0853' },
     { label: 'LMIV 1169/2011, Anhang II – 14 Allergene', url: 'https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32011R1169' },
-    { label: 'LMIEV – Allergene bei loser Ware', url: 'https://www.gesetze-im-internet.de/lmiev/' },
+    { label: 'LMIDV § 4 – Allergene bei loser Ware', url: 'https://www.gesetze-im-internet.de/lmidv/__4.html' },
     { label: 'BGN – Berufsgenossenschaft Nahrungsmittel und Gastgewerbe', url: 'https://www.bgn.de/' },
     { label: 'BAuA – ASR A2.2 Brandschutz (Fettbrand, Klasse F)', url: 'https://www.baua.de/DE/Angebote/Regelwerk/ASR/ASR-A2-2.html' },
-    { label: 'DGUV Vorschrift 1 – Erste Hilfe, Verbandbuch', url: 'https://publikationen.dguv.de/regelwerk/dguv-vorschriften/2909/grundsaetze-der-praevention' },
+    { label: 'DGUV Vorschrift 1 – Erste Hilfe, Verbandbuch', url: 'https://publikationen.dguv.de/regelwerk/dguv-vorschriften/2909/dguv-vorschrift-1' },
   ],
   spots: [
     {

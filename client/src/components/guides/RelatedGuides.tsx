@@ -1,10 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import { PathLink, useGuides } from '@/components/guides/shared';
 import { registerCopy } from '@/i18n';
-import { pagesSeo } from '@/i18n/pagesSeo';
 import { TOOL_GUIDES } from '@/lib/guideTools';
 
-registerCopy(pagesSeo);
+/*
+ * Only the heading's text (the same string as guidesPage.related in i18n/pagesSeo.ts). Registering the whole
+ * pagesSeo module here put ~35 KB of guide / calculator copy into every tool page that shows related guides.
+ * Deep merge without overwrite: harmless when pagesSeo is registered too.
+ */
+registerCopy({
+  az: { guidesPage: { related: 'Digər bələdçilər' } },
+  de: { guidesPage: { related: 'Weitere Ratgeber' } },
+  en: { guidesPage: { related: 'More guides' } },
+  ru: { guidesPage: { related: 'Другие гиды' } },
+  tr: { guidesPage: { related: 'Diğer rehberler' } },
+  uk: { guidesPage: { related: 'Інші посібники' } },
+});
 
 /**
  * "Related guides" under a tool page: the guides of this tool (lib/guideTools.ts, the same map the crawler HTML

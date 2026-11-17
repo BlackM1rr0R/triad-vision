@@ -25,6 +25,7 @@ const PR_SOURCES = [
   { label: '§ 2 AufenthG (A1 / B1)', href: 'https://www.gesetze-im-internet.de/aufenthg_2004/__2.html' },
   { label: '§ 10 StAG', href: 'https://www.gesetze-im-internet.de/stag/__10.html' },
   { label: '§ 9 StAG', href: 'https://www.gesetze-im-internet.de/stag/__9.html' },
+  { label: 'BGBl. 2025 I Nr. 256 (§ 10 Abs. 3 StAG gestrichen)', href: 'https://www.recht.bund.de/bgbl/1/2025/256/VO.html' },
   { label: 'BAMF: Einbürgerung', href: 'https://www.bamf.de/DE/Themen/Integration/ZugewanderteTeilnehmende/Einbuergerung/einbuergerung-node.html' },
 ];
 

@@ -35,7 +35,7 @@ export const SearchButton = ({ light = false, className }: { light?: boolean; cl
       aria-label={t('search.button')}
       title={`${t('search.button')} (${hint})`}
       className={clsx(
-        'inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full transition-colors duration-300 sm:h-10 sm:min-w-10 2xl:px-3',
+        'inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full transition-colors duration-300 sm:h-10 sm:min-w-10',
         light ? 'text-white hover:bg-white/10' : 'text-ink hover:bg-sunken',
         className,
       )}
@@ -43,7 +43,7 @@ export const SearchButton = ({ light = false, className }: { light?: boolean; cl
       <Search className="size-5" />
       <kbd
         className={clsx(
-          'hidden rounded-md border px-1.5 py-0.5 font-sans text-[11px] leading-none font-semibold whitespace-nowrap 2xl:inline-block',
+          'hidden rounded-md border px-1.5 py-0.5 font-sans text-[11px] leading-none font-semibold whitespace-nowrap',
           light ? 'border-white/25 text-white/75' : 'border-line text-muted',
         )}
       >

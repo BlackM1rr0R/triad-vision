@@ -22,8 +22,8 @@
  *   - §3: ≤ 8 h per day, up to 10 h with compensation (collective agreements may differ, §21a Abs. 6).
  *   - §4: breaks of 30 min after > 6 h and 45 min after > 9 h of work, in blocks of ≥ 15 min; never > 6 h in a row.
  * Fines: indicative Regelsätze of the Länder catalogue (LASI LV 48 Buß- und Verwarnungsgeldkatalog
- * Fahrpersonalrecht, as reported by fine portals — not an official calculation). Maximums: §8 FPersG 5,000 €
- * (driver), §8a FPersG 30,000 € (company), §22 ArbZG 30,000 € (employer).
+ * Fahrpersonalrecht, as reported by fine portals — not an official calculation). Maximums: §8a Abs. 2 FPersG 5,000 €
+ * (driver), §8a Abs. 1 FPersG 30,000 € (company), §22 ArbZG 30,000 € (employer).
  */
 
 export const DRIVING_CHECKED = '2026-11-16';

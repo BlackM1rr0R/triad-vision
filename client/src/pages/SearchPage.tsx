@@ -10,10 +10,12 @@ import { Spinner } from '@/components/ui/Spinner';
 import { PathLink } from '@/components/guides/shared';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
+import { pagesToolsHub } from '@/i18n/pagesToolsHub';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { MIN_QUERY, Marked, SEARCH_TYPES, TYPE_ICON, fetchSearch, groupHits, logSearch, rememberSearch, type SearchType } from '@/components/search/siteSearch';
 
 registerCopy(pagesDiscover);
+registerCopy(pagesToolsHub); // result types glossary / profession / study, "did you mean"
 
 const HERO = 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=2000&q=70';
 
@@ -104,6 +106,7 @@ export default function SearchPage() {
               <SearchEmpty className="mx-auto w-36 sm:w-44" />
               <h2 className="mt-5 font-display text-xl font-semibold break-words text-ink">{t('discover.search.noResults', { query: q })}</h2>
               <p className="mt-1 text-sm text-muted">{t('discover.search.noResultsHint')}</p>
+              {data?.suggestions?.length ? <TermChips terms={data.suggestions} heading={t('discover.search.didYouMean')} /> : null}
               <TermChips terms={terms} heading={t('discover.search.popular')} />
               <Link to="/contact" className="btn-primary mt-6">
                 {t('discover.search.contact')}
@@ -147,6 +150,7 @@ export default function SearchPage() {
                                   <Marked text={h.title} ranges={h.titleHighlights} />
                                 </span>
                                 {h.meta && <span className="rounded-md bg-sunken px-1.5 py-0.5 text-[11px] font-bold text-ink">{h.meta}</span>}
+                                {type === 'all' && <span className="rounded-full border border-line px-2 py-0.5 text-[11px] font-semibold text-muted">{t(`discover.search.groups.${h.type}`)}</span>}
                               </span>
                               {h.snippet && (
                                 <span className="mt-1.5 block text-sm leading-relaxed text-muted">

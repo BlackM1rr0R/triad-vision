@@ -25,7 +25,7 @@ export const HEALTH_TERMS: GlossaryTerm[] = [
     },
     example: "Bei welcher Krankenkasse sind Sie versichert?",
     related: ['gesetzliche-krankenversicherung', 'zusatzbeitrag', 'elektronische-gesundheitskarte', 'mitgliedsbescheinigung'],
-    link: { url: 'https://www.bundesgesundheitsministerium.de/krankenversicherung.html', label: 'Bundesgesundheitsministerium: Krankenversicherung' },
+    link: { url: 'https://www.bundesgesundheitsministerium.de/themen/krankenversicherung', label: 'Bundesgesundheitsministerium: Krankenversicherung' },
   },
   {
     slug: 'gesetzliche-krankenversicherung',
@@ -338,7 +338,7 @@ export const HEALTH_TERMS: GlossaryTerm[] = [
     },
     example: "Auf der Lohnabrechnung steht auch der Beitrag zur Pflegeversicherung.",
     related: ['krankenkasse', 'sozialabgaben', 'lohnabrechnung'],
-    link: { url: 'https://www.bundesgesundheitsministerium.de/pflegeversicherung', label: 'Bundesgesundheitsministerium: Pflegeversicherung' },
+    link: { url: 'https://www.bundesgesundheitsministerium.de/themen/pflege', label: 'Bundesgesundheitsministerium: Pflegeversicherung' },
   },
   {
     slug: 'krankengeld',
@@ -460,7 +460,7 @@ export const HEALTH_TERMS: GlossaryTerm[] = [
     },
     example: "Für die Anmeldung in der Kita brauchen wir den Impfpass des Kindes.",
     related: ['kita', 'hausarzt', 'vorsorgeuntersuchung', 'schulpflicht'],
-    link: { url: 'https://www.masernschutz.de/', label: 'masernschutz.de (BZgA)' },
+    link: { url: 'https://www.infektionsschutz.de/themen/masernschutz/', label: 'masernschutz.de (BZgA)' },
   },
   {
     slug: 'vorsorgeuntersuchung',

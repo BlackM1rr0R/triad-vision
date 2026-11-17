@@ -3,7 +3,9 @@
  * Kultusministerkonferenz: N = 1 + 3 · (Nmax − Nd) / (Nmax − Nmin), Nmax = best grade, Nmin = lowest pass grade,
  * Nd = the grade to convert. Pure (unit-tested in server/tests/unit/publicCalc.test.ts).
  *
- * The result is cut (not rounded) to one decimal, the common practice of German universities, and kept within
+ * The result is cut (not rounded) to one decimal, as the KMK "Vereinbarung über die Festsetzung der Gesamtnote bei
+ * ausländischen Hochschulzugangszeugnissen" (15.03.1991 i.d.F. 12.09.2013, Nr. 4: "auf eine Stelle nach dem Komma
+ * bestimmt; es wird nicht gerundet") prescribes (checked 2026-11-17), and kept within
  * 1.0 – 4.0. Universities and uni-assist decide officially; this is an orientation value.
  *
  * Azerbaijani scales (checked 2026-11, university regulations and admission guides):

@@ -1,0 +1,392 @@
+// Tools hub (/tools) redesign: featured row, instant filter, tags, task-based groups, the header tools menu and the
+// admin "featured tools" editor (Tool analytics). Also the extra search result types (glossary, profession, study)
+// and "did you mean" of the site search. Registered by pages/Tools.tsx, the header tools menu, the search dialog /
+// page and the admin page. Group titles mirror server/src/lib/seoBody.ts AL.groups.
+
+const az = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'İşəgötürən bələdçisi: Azərbaycan', text: 'Azərbaycandan işçi qəbulu: təhsil sistemi, diplomların tanınması, bayramlar və § 81a sürətləndirilmiş prosedur.' },
+      candidateCatalogue: { title: 'Namizəd kataloqu', text: 'Almaniyada işləməyə hazır namizədlər peşə, alman dili və təcrübəyə görə — anonim.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'Ən faydalı alətlər', text: 'Ən çox istifadə olunanlarla başlayın.', aria: 'Ən faydalı alətlər' },
+    filter: {
+      label: 'Alətləri süzgəcdən keçir',
+      placeholder: 'Alət axtar: maaş, viza, imtahan…',
+      clear: 'Təmizlə',
+      count_one: '{{count}} alət',
+      count_few: '{{count}} alət',
+      count_many: '{{count}} alət',
+      count_other: '{{count}} alət',
+      shown: '{{total}} alətdən {{count}} göstərilir',
+      none: '“{{query}}” üzrə alət tapılmadı',
+      noneHint: 'Bütün saytda axtarın — bələdçilər, lüğət və vakansiyalar da daxil.',
+      searchSite: 'Saytda axtar',
+      tagsLabel: 'Növə görə',
+      allTags: 'Hamısı',
+    },
+    tags: { calculator: 'Kalkulyator', check: 'Yoxlama', planner: 'Planlayıcı', practice: 'Məşq', explainer: 'İzah' },
+    groups: {
+      eligibility: { title: 'Mən uyğunammı?', text: 'Hansı viza sizə uyğundur, şərtlərə cavab verirsinizmi və hansı sənədlər lazımdır.' },
+      costs: { title: 'Pul və vergilər', text: 'Xalis maaş, vergilər, sığorta, kirayə və köçün xərcləri.' },
+      plan: { title: 'Köçü planla', text: 'Nə vaxt Almaniyada olacaqsınız, hansı şəhər və növbəti addımlar.' },
+      life: { title: 'Almaniyada həyat', text: 'Mənzil, sürücülük vəsiqəsi, bayramlar, iş vaxtı və gündəlik həyat.' },
+      learn: { title: 'Alman dili və məşqlər', text: 'Sınaq imtahanları, tələffüz, dialoqlar və iş yerinin sözləri — oyun formasında.' },
+      employers: { title: 'İşəgötürənlər üçün', text: 'İşçinin xərci, Azərbaycandan işə qəbul və namizədlər.' },
+      explore: { title: 'Kəşf et və oxu', text: 'Xəritə, bələdçilər, lüğət, vakansiyalar və viza növləri.' },
+    },
+    expand: 'Göstər',
+    collapse: 'Gizlət',
+    jump: 'Bölmələr',
+    extra: {
+      mockExamA1: { title: 'Sınaq imtahanı A1', text: 'Goethe Start Deutsch 1 formatında: dinləmə, oxu, yazı, danışıq — taymerlə.' },
+      mockExamB1: { title: 'Sınaq imtahanı B1', text: 'Goethe B1 formatında dörd modul, taymer və bal ilə.' },
+      phraseOfDay: { title: 'Günün ifadəsi', text: 'Hər gün bir faydalı alman ifadəsi — tələffüz və nümunə ilə.' },
+    },
+    menu: { label: 'Alətlər', featured: 'Ən faydalı', all: 'Bütün alətlər', allText: '{{count}}+ pulsuz kalkulyator, test və oyun' },
+    admin: {
+      title: 'Seçilmiş alətlər',
+      text: '/tools səhifəsinin yuxarısında və başlıq menyusunda göstərilir. Sıranı dəyişmək üçün sürükləyin (və ya oxlarla).',
+      add: 'Alət əlavə et…',
+      remove: 'Sil',
+      up: 'Yuxarı',
+      down: 'Aşağı',
+      save: 'Yadda saxla',
+      saved: 'Yadda saxlanıldı',
+      reset: 'Standart siyahı',
+      suggest: 'Analitikaya görə təklif et',
+      suggestHint: 'Seçilmiş dövrdə ən çox baxılan {{count}} alət.',
+      custom: 'Fərdi siyahı',
+      default: 'Standart siyahı',
+      max: 'Ən çox {{count}} alət.',
+      empty: 'Heç bir alət seçilməyib — standart siyahı göstəriləcək.',
+      forbidden: 'Dəyişmək üçün ADMIN rolu lazımdır.',
+    },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Lüğət', profession: 'Peşələr', study: 'Təhsil proqramları' },
+      didYouMean: 'Bəlkə bunu nəzərdə tutursunuz:',
+    },
+  },
+};
+
+const de: typeof az = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'Arbeitgeber-Leitfaden Aserbaidschan', text: 'Fachkräfte aus Aserbaidschan: Bildungssystem, Anerkennung, Feiertage und beschleunigtes Verfahren nach § 81a.' },
+      candidateCatalogue: { title: 'Kandidatenkatalog', text: 'Anonyme Kandidaten nach Beruf, Deutschniveau und Erfahrung — bereit für Deutschland.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'Am meisten genutzt', text: 'Starten Sie mit den beliebtesten Tools.', aria: 'Beliebteste Tools' },
+    filter: {
+      label: 'Tools filtern',
+      placeholder: 'Tool suchen: Gehalt, Visum, Prüfung…',
+      clear: 'Leeren',
+      count_one: '{{count}} Tool',
+      count_few: '{{count}} Tools',
+      count_many: '{{count}} Tools',
+      count_other: '{{count}} Tools',
+      shown: '{{count}} von {{total}} Tools',
+      none: 'Kein Tool für „{{query}}“',
+      noneHint: 'Durchsuchen Sie die ganze Website — auch Ratgeber, Glossar und Stellen.',
+      searchSite: 'Website durchsuchen',
+      tagsLabel: 'Nach Art',
+      allTags: 'Alle',
+    },
+    tags: { calculator: 'Rechner', check: 'Check', planner: 'Planer', practice: 'Üben', explainer: 'Erklärt' },
+    groups: {
+      eligibility: { title: 'Komme ich infrage?', text: 'Welches Visum passt, erfüllen Sie die Voraussetzungen und welche Unterlagen brauchen Sie?' },
+      costs: { title: 'Geld und Steuern', text: 'Netto, Steuern, Krankenversicherung, Miete und die Kosten des Umzugs.' },
+      plan: { title: 'Umzug planen', text: 'Wann Sie in Deutschland sein können, welche Stadt passt und die nächsten Schritte.' },
+      life: { title: 'Leben in Deutschland', text: 'Wohnung, Führerschein, Feiertage, Arbeitszeit und Alltag.' },
+      learn: { title: 'Deutsch lernen und üben', text: 'Übungsprüfungen, Aussprache, Dialoge und Wörter vom Arbeitsplatz — spielerisch.' },
+      employers: { title: 'Für Arbeitgeber', text: 'Arbeitgeberkosten, Einstellung aus Aserbaidschan und Kandidaten.' },
+      explore: { title: 'Entdecken und nachlesen', text: 'Karte, Ratgeber, Glossar, Stellen und Visaarten.' },
+    },
+    expand: 'Anzeigen',
+    collapse: 'Ausblenden',
+    jump: 'Bereiche',
+    extra: {
+      mockExamA1: { title: 'Übungsprüfung A1', text: 'Im Format Goethe Start Deutsch 1: Hören, Lesen, Schreiben, Sprechen mit Timer.' },
+      mockExamB1: { title: 'Übungsprüfung B1', text: 'Vier Module im Format Goethe B1, mit Timer und Punkten.' },
+      phraseOfDay: { title: 'Satz des Tages', text: 'Jeden Tag ein nützlicher deutscher Satz mit Aussprache und Beispiel.' },
+    },
+    menu: { label: 'Tools', featured: 'Am meisten genutzt', all: 'Alle Tools', allText: '{{count}}+ kostenlose Rechner, Checks und Spiele' },
+    admin: {
+      title: 'Hervorgehobene Tools',
+      text: 'Oben auf /tools und im Tools-Menü der Kopfzeile. Reihenfolge per Drag & Drop (oder mit den Pfeilen) ändern.',
+      add: 'Tool hinzufügen…',
+      remove: 'Entfernen',
+      up: 'Nach oben',
+      down: 'Nach unten',
+      save: 'Speichern',
+      saved: 'Gespeichert',
+      reset: 'Standardliste',
+      suggest: 'Aus der Analyse vorschlagen',
+      suggestHint: 'Die {{count}} meistgesehenen Tools im gewählten Zeitraum.',
+      custom: 'Eigene Liste',
+      default: 'Standardliste',
+      max: 'Höchstens {{count}} Tools.',
+      empty: 'Kein Tool gewählt — die Standardliste wird gezeigt.',
+      forbidden: 'Zum Ändern ist die Rolle ADMIN nötig.',
+    },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Glossar', profession: 'Berufe', study: 'Studiengänge' },
+      didYouMean: 'Meinten Sie:',
+    },
+  },
+};
+
+const en: typeof az = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'Employer guide: Azerbaijan', text: 'Hiring from Azerbaijan: education system, recognition, public holidays and the § 81a fast-track procedure.' },
+      candidateCatalogue: { title: 'Candidate catalogue', text: 'Anonymous candidates by profession, German level and experience — ready for Germany.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'Most useful', text: 'Start with the tools people use most.', aria: 'Most useful tools' },
+    filter: {
+      label: 'Filter tools',
+      placeholder: 'Find a tool: salary, visa, exam…',
+      clear: 'Clear',
+      count_one: '{{count}} tool',
+      count_few: '{{count}} tools',
+      count_many: '{{count}} tools',
+      count_other: '{{count}} tools',
+      shown: '{{count}} of {{total}} tools',
+      none: 'No tool for “{{query}}”',
+      noneHint: 'Search the whole site — guides, glossary and jobs included.',
+      searchSite: 'Search the site',
+      tagsLabel: 'By type',
+      allTags: 'All',
+    },
+    tags: { calculator: 'Calculator', check: 'Check', planner: 'Planner', practice: 'Practice', explainer: 'Explainer' },
+    groups: {
+      eligibility: { title: 'Am I eligible?', text: 'Which visa fits, do you meet the requirements and which documents you need.' },
+      costs: { title: 'Money and taxes', text: 'Net pay, taxes, health insurance, rent and what the move costs.' },
+      plan: { title: 'Plan the move', text: 'When you can be in Germany, which city suits you and the next steps.' },
+      life: { title: 'Life in Germany', text: 'Flat, driving licence, public holidays, working time and everyday life.' },
+      learn: { title: 'Learn German and practise', text: 'Mock exams, pronunciation, dialogues and workplace words — as games.' },
+      employers: { title: 'For employers', text: 'Employer costs, hiring from Azerbaijan and candidates.' },
+      explore: { title: 'Explore and read', text: 'Map, guides, glossary, jobs and visa types.' },
+    },
+    expand: 'Show',
+    collapse: 'Hide',
+    jump: 'Sections',
+    extra: {
+      mockExamA1: { title: 'Mock exam A1', text: 'Goethe Start Deutsch 1 format: listening, reading, writing, speaking with a timer.' },
+      mockExamB1: { title: 'Mock exam B1', text: 'Four modules in the Goethe B1 format, with timer and scores.' },
+      phraseOfDay: { title: 'Phrase of the day', text: 'One useful German phrase a day, with pronunciation and an example.' },
+    },
+    menu: { label: 'Tools', featured: 'Most useful', all: 'All tools', allText: '{{count}}+ free calculators, checks and games' },
+    admin: {
+      title: 'Featured tools',
+      text: 'Shown at the top of /tools and in the header tools menu. Drag to reorder (or use the arrows).',
+      add: 'Add a tool…',
+      remove: 'Remove',
+      up: 'Move up',
+      down: 'Move down',
+      save: 'Save',
+      saved: 'Saved',
+      reset: 'Default list',
+      suggest: 'Suggest from analytics',
+      suggestHint: 'The {{count}} most viewed tools in the selected period.',
+      custom: 'Custom list',
+      default: 'Default list',
+      max: 'At most {{count}} tools.',
+      empty: 'No tool selected — the default list will be shown.',
+      forbidden: 'Changing it needs the ADMIN role.',
+    },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Glossary', profession: 'Professions', study: 'Study programmes' },
+      didYouMean: 'Did you mean:',
+    },
+  },
+};
+
+const ru: typeof az = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'Гид для работодателя: Азербайджан', text: 'Найм из Азербайджана: система образования, признание дипломов, праздники и ускоренная процедура § 81a.' },
+      candidateCatalogue: { title: 'Каталог кандидатов', text: 'Анонимные кандидаты по профессии, уровню немецкого и опыту — готовы к работе в Германии.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'Самое полезное', text: 'Начните с самых популярных инструментов.', aria: 'Самые полезные инструменты' },
+    filter: {
+      label: 'Фильтр инструментов',
+      placeholder: 'Найти инструмент: зарплата, виза, экзамен…',
+      clear: 'Очистить',
+      count_one: '{{count}} инструмент',
+      count_few: '{{count}} инструмента',
+      count_many: '{{count}} инструментов',
+      count_other: '{{count}} инструмента',
+      shown: '{{count}} из {{total}}',
+      none: 'По запросу «{{query}}» инструментов нет',
+      noneHint: 'Поищите по всему сайту — там есть гиды, глоссарий и вакансии.',
+      searchSite: 'Искать на сайте',
+      tagsLabel: 'По типу',
+      allTags: 'Все',
+    },
+    tags: { calculator: 'Калькулятор', check: 'Проверка', planner: 'Планировщик', practice: 'Практика', explainer: 'Объяснение' },
+    groups: {
+      eligibility: { title: 'Подхожу ли я?', text: 'Какая виза подходит, выполняете ли вы условия и какие нужны документы.' },
+      costs: { title: 'Деньги и налоги', text: 'Нетто, налоги, медстраховка, аренда и расходы на переезд.' },
+      plan: { title: 'Планирование переезда', text: 'Когда вы сможете быть в Германии, какой город подходит и следующие шаги.' },
+      life: { title: 'Жизнь в Германии', text: 'Жильё, водительские права, праздники, рабочее время и быт.' },
+      learn: { title: 'Немецкий язык и тренажёры', text: 'Пробные экзамены, произношение, диалоги и слова рабочего места — в игровой форме.' },
+      employers: { title: 'Для работодателей', text: 'Расходы работодателя, найм из Азербайджана и кандидаты.' },
+      explore: { title: 'Узнать и почитать', text: 'Карта, гиды, глоссарий, вакансии и виды виз.' },
+    },
+    expand: 'Показать',
+    collapse: 'Скрыть',
+    jump: 'Разделы',
+    extra: {
+      mockExamA1: { title: 'Пробный экзамен A1', text: 'В формате Goethe Start Deutsch 1: аудирование, чтение, письмо, говорение с таймером.' },
+      mockExamB1: { title: 'Пробный экзамен B1', text: 'Четыре модуля в формате Goethe B1 с таймером и баллами.' },
+      phraseOfDay: { title: 'Фраза дня', text: 'Каждый день полезная немецкая фраза с произношением и примером.' },
+    },
+    menu: { label: 'Инструменты', featured: 'Самое полезное', all: 'Все инструменты', allText: '{{count}}+ бесплатных калькуляторов, проверок и игр' },
+    admin: {
+      title: 'Избранные инструменты',
+      text: 'Показываются вверху /tools и в меню инструментов в шапке. Порядок — перетаскиванием (или стрелками).',
+      add: 'Добавить инструмент…',
+      remove: 'Убрать',
+      up: 'Выше',
+      down: 'Ниже',
+      save: 'Сохранить',
+      saved: 'Сохранено',
+      reset: 'Список по умолчанию',
+      suggest: 'Предложить по аналитике',
+      suggestHint: '{{count}} самых просматриваемых инструментов за выбранный период.',
+      custom: 'Свой список',
+      default: 'Список по умолчанию',
+      max: 'Не больше {{count}} инструментов.',
+      empty: 'Ничего не выбрано — будет показан список по умолчанию.',
+      forbidden: 'Для изменения нужна роль ADMIN.',
+    },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Глоссарий', profession: 'Профессии', study: 'Учебные программы' },
+      didYouMean: 'Возможно, вы искали:',
+    },
+  },
+};
+
+type PublicCopy = { toolsPage: typeof az.toolsPage; toolsHub: Omit<typeof az.toolsHub, 'admin'>; discover: typeof az.discover };
+
+const tr: PublicCopy = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'İşveren rehberi: Azerbaycan', text: "Azerbaycan'dan işe alım: eğitim sistemi, denklik, resmî tatiller ve § 81a hızlandırılmış prosedür." },
+      candidateCatalogue: { title: 'Aday kataloğu', text: 'Meslek, Almanca seviyesi ve deneyime göre anonim adaylar — Almanya için hazır.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'En faydalı araçlar', text: 'En çok kullanılan araçlarla başlayın.', aria: 'En faydalı araçlar' },
+    filter: {
+      label: 'Araçları filtrele',
+      placeholder: 'Araç ara: maaş, vize, sınav…',
+      clear: 'Temizle',
+      count_one: '{{count}} araç',
+      count_few: '{{count}} araç',
+      count_many: '{{count}} araç',
+      count_other: '{{count}} araç',
+      shown: '{{total}} araçtan {{count}} tanesi',
+      none: '“{{query}}” için araç bulunamadı',
+      noneHint: 'Tüm sitede arayın — rehberler, sözlük ve ilanlar dahil.',
+      searchSite: 'Sitede ara',
+      tagsLabel: 'Türe göre',
+      allTags: 'Tümü',
+    },
+    tags: { calculator: 'Hesaplayıcı', check: 'Kontrol', planner: 'Planlayıcı', practice: 'Alıştırma', explainer: 'Açıklama' },
+    groups: {
+      eligibility: { title: 'Uygun muyum?', text: 'Hangi vize uygun, şartları karşılıyor musunuz ve hangi belgeler gerekli.' },
+      costs: { title: 'Para ve vergiler', text: 'Net maaş, vergiler, sağlık sigortası, kira ve taşınma maliyeti.' },
+      plan: { title: 'Taşınmayı planla', text: "Ne zaman Almanya'da olabileceğiniz, hangi şehrin uygun olduğu ve sonraki adımlar." },
+      life: { title: "Almanya'da yaşam", text: 'Daire, ehliyet, resmî tatiller, çalışma süresi ve günlük yaşam.' },
+      learn: { title: 'Almanca ve alıştırmalar', text: 'Deneme sınavları, telaffuz, diyaloglar ve iş yeri kelimeleri — oyun şeklinde.' },
+      employers: { title: 'İşverenler için', text: "İşveren maliyeti, Azerbaycan'dan işe alım ve adaylar." },
+      explore: { title: 'Keşfet ve oku', text: 'Harita, rehberler, sözlük, ilanlar ve vize türleri.' },
+    },
+    expand: 'Göster',
+    collapse: 'Gizle',
+    jump: 'Bölümler',
+    extra: {
+      mockExamA1: { title: 'Deneme sınavı A1', text: 'Goethe Start Deutsch 1 formatında: dinleme, okuma, yazma, konuşma — zamanlayıcıyla.' },
+      mockExamB1: { title: 'Deneme sınavı B1', text: 'Goethe B1 formatında dört modül, zamanlayıcı ve puanla.' },
+      phraseOfDay: { title: 'Günün ifadesi', text: 'Her gün telaffuz ve örnekle faydalı bir Almanca ifade.' },
+    },
+    menu: { label: 'Araçlar', featured: 'En faydalı', all: 'Tüm araçlar', allText: '{{count}}+ ücretsiz hesaplayıcı, test ve oyun' },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Sözlük', profession: 'Meslekler', study: 'Eğitim programları' },
+      didYouMean: 'Bunu mu demek istediniz:',
+    },
+  },
+};
+
+const uk: PublicCopy = {
+  toolsPage: {
+    items: {
+      employerGuide: { title: 'Гід для роботодавця: Азербайджан', text: 'Найм з Азербайджану: система освіти, визнання дипломів, свята та прискорена процедура § 81a.' },
+      candidateCatalogue: { title: 'Каталог кандидатів', text: 'Анонімні кандидати за професією, рівнем німецької та досвідом — готові до Німеччини.' },
+    },
+  },
+  toolsHub: {
+    featured: { title: 'Найкорисніше', text: 'Почніть із найпопулярніших інструментів.', aria: 'Найкорисніші інструменти' },
+    filter: {
+      label: 'Фільтр інструментів',
+      placeholder: 'Знайти інструмент: зарплата, віза, іспит…',
+      clear: 'Очистити',
+      count_one: '{{count}} інструмент',
+      count_few: '{{count}} інструменти',
+      count_many: '{{count}} інструментів',
+      count_other: '{{count}} інструмента',
+      shown: '{{count}} з {{total}}',
+      none: 'За запитом «{{query}}» інструментів немає',
+      noneHint: 'Пошукайте по всьому сайту — там є гіди, глосарій і вакансії.',
+      searchSite: 'Шукати на сайті',
+      tagsLabel: 'За типом',
+      allTags: 'Усі',
+    },
+    tags: { calculator: 'Калькулятор', check: 'Перевірка', planner: 'Планувальник', practice: 'Практика', explainer: 'Пояснення' },
+    groups: {
+      eligibility: { title: 'Чи підходжу я?', text: 'Яка віза підходить, чи виконуєте ви умови і які потрібні документи.' },
+      costs: { title: 'Гроші й податки', text: 'Нетто, податки, медичне страхування, оренда і витрати на переїзд.' },
+      plan: { title: 'Планування переїзду', text: 'Коли ви зможете бути в Німеччині, яке місто підходить і наступні кроки.' },
+      life: { title: 'Життя в Німеччині', text: 'Житло, водійське посвідчення, свята, робочий час і побут.' },
+      learn: { title: 'Німецька мова й тренажери', text: 'Пробні іспити, вимова, діалоги та слова робочого місця — у формі гри.' },
+      employers: { title: 'Для роботодавців', text: 'Витрати роботодавця, найм з Азербайджану та кандидати.' },
+      explore: { title: 'Дізнатися й почитати', text: 'Мапа, гіди, глосарій, вакансії та види віз.' },
+    },
+    expand: 'Показати',
+    collapse: 'Сховати',
+    jump: 'Розділи',
+    extra: {
+      mockExamA1: { title: 'Пробний іспит A1', text: 'У форматі Goethe Start Deutsch 1: аудіювання, читання, письмо, говоріння з таймером.' },
+      mockExamB1: { title: 'Пробний іспит B1', text: 'Чотири модулі у форматі Goethe B1 з таймером і балами.' },
+      phraseOfDay: { title: 'Фраза дня', text: 'Щодня корисна німецька фраза з вимовою та прикладом.' },
+    },
+    menu: { label: 'Інструменти', featured: 'Найкорисніше', all: 'Усі інструменти', allText: '{{count}}+ безкоштовних калькуляторів, перевірок та ігор' },
+  },
+  discover: {
+    search: {
+      groups: { glossary: 'Глосарій', profession: 'Професії', study: 'Навчальні програми' },
+      didYouMean: 'Можливо, ви шукали:',
+    },
+  },
+};
+
+export const pagesToolsHub = { az, de, en, ru, tr, uk };

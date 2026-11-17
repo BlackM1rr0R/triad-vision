@@ -59,7 +59,7 @@ export const AZ_PLACES: AzPlace[] = [
     website: 'https://berlin.mfa.gov.az',
     phone: '+49 30 2191613',
     osm: 'node/548141332',
-    sources: [{ label: 'berlin.mfa.gov.az: Kontakt', url: 'https://berlin.mfa.gov.az/en/content/6/elaqe' }, AA_LIST],
+    sources: [{ label: 'berlin.mfa.gov.az: Kontakt', url: 'https://berlin.mfa.gov.az/en/contacts' }, AA_LIST],
     verifiedOn: VERIFIED_ON,
     note: {
       az: 'Səfirlik bütün Almaniya üzrə məsuldur. Konsulluq şöbəsi: +49 30 20648063. Qəbul və zəng saatlarını səfirliyin saytında yoxlayın.',

@@ -88,7 +88,8 @@ export const PrintableChecklist = ({
           >
             {getBrand().name} · {getBrand().domain}
           </p>
-          <h1 style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 2px' }}>{heading}</h1>
+          {/* not an <h1>: the print sheet is in the DOM of the visa page, which already has its own h1 */}
+          <p style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 2px' }}>{heading}</p>
           <p style={{ fontSize: 14, color: '#5b6b88', margin: '0 0 18px' }}>{subheading}</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {items.map((it) => (

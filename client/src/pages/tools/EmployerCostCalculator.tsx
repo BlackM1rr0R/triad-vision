@@ -15,12 +15,12 @@ import { decimal, Disclaimer, EstimateBadge, GlossaryLinks, NumField, Sources, T
 registerCopy(pagesEmployerCost);
 
 const SOURCES = [
-  { label: 'TK – Sozialversicherungs-Rechengrößen 2026 (BBG 8.450 € / 5.812,50 €)', url: 'https://www.tk.de/firmenkunden/service/fachthemen/fachthema-beitraege/sozialversicherungs-rechengroessen-2026-2203234' },
-  { label: 'TK – Insolvenzgeldumlage 2026 (0,15 %)', url: 'https://www.tk.de/firmenkunden/service/fachthemen/fachthema-beitraege/insolvenzgeldumlage-2047584' },
-  { label: 'Aufwendungsausgleichsgesetz (U1/U2)', url: 'https://www.gesetze-im-internet.de/aag/' },
+  { label: 'TK – Sozialversicherungs-Rechengrößen 2026 (BBG 8.450 € / 5.812,50 €)', url: 'https://www.tk.de/firmenkunden/versicherung/beitraege-faq-und-mehr/zahlen-und-grenzwerte/sozialversicherungs-rechengroessen-2026-2203234' },
+  { label: 'TK – Insolvenzgeldumlage 2026 (0,15 %)', url: 'https://www.tk.de/firmenkunden/versicherung/beitraege-faq-und-mehr/zahlen-und-grenzwerte/insolvenzgeldumlage-2047584' },
+  { label: 'Aufwendungsausgleichsgesetz (U1/U2)', url: 'https://www.gesetze-im-internet.de/aufag/' },
   { label: '§ 46, § 47 AufenthV – Visumgebühr 75 €, beschleunigtes Fachkräfteverfahren 411 €', url: 'https://www.gesetze-im-internet.de/aufenthv/__47.html' },
   { label: 'Make it in Germany – beschleunigtes Fachkräfteverfahren', url: 'https://www.make-it-in-germany.com/de/fachkraefteeinwanderung-mit-dem-beschleunigten-fachkraefteverfahren-wie-funktioniert-es' },
-  { label: 'Anerkennung in Deutschland – Anerkennungszuschuss (Kosten 100–600 €)', url: 'https://www.anerkennung-in-deutschland.de/html/de/anerkennungszuschuss.php' },
+  { label: 'Anerkennung in Deutschland – Anerkennungszuschuss (Kosten 100–600 €)', url: 'https://www.anerkennung-in-deutschland.de/html/de/pro/anerkennungszuschuss.php' },
 ];
 
 const pct = (f: number) => Math.round(f * 10_000) / 100;
@@ -89,7 +89,7 @@ export default function EmployerCostCalculatorPage() {
             <fieldset className="space-y-3 border-t border-line pt-4">
               <legend className="font-display text-base font-semibold text-ink">{t('employerCost.form.sectionAbroad')}</legend>
               <NumField label={t('employerCost.form.hires')} value={input.hires} min={1} max={500} onChange={(v) => set({ hires: Math.round(v) })} />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 items-end gap-3">
                 <Toggle legend={t('employerCost.form.visa', { fee: money(EMPLOYER_RATES.visaFee) })} value={input.visa} onChange={(v) => set({ visa: v })} />
                 <Toggle legend={t('employerCost.form.accelerated', { fee: money(EMPLOYER_RATES.acceleratedFee) })} value={input.accelerated} onChange={(v) => set({ accelerated: v })} />
               </div>
@@ -169,7 +169,7 @@ export default function EmployerCostCalculatorPage() {
                       <th scope="row" className="px-4 py-2 text-left font-medium text-ink">
                         {t(`employerCost.lines.${k}`)}
                       </th>
-                      <td className="px-4 py-2 text-right text-xs tabular-nums text-muted">{rate}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-right text-xs tabular-nums text-muted">{rate}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{money(v, true)}</td>
                     </tr>
                   ))}

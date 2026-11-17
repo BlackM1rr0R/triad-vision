@@ -7,15 +7,19 @@ import clsx from 'clsx';
 import { Spinner } from '@/components/ui/Spinner';
 import { currentSiteLocale, registerCopy } from '@/i18n';
 import { pagesDiscover } from '@/i18n/pagesDiscover';
+import { pagesToolsHub } from '@/i18n/pagesToolsHub';
 import { localePath, navigateToUrl } from '@/lib/localeRouter';
 import { closeSearch } from './searchStore';
 import { MIN_QUERY, Marked, TYPE_ICON, fetchSearch, groupHits, logSearch, readRecent, rememberSearch, writeRecent, type SearchHit } from './siteSearch';
 
 registerCopy(pagesDiscover);
+registerCopy(pagesToolsHub); // result types glossary / profession / study, "did you mean"
 
 // The search palette dialog: its own chunk, downloaded the first time search is opened (SearchPalette.tsx).
-// Results come from the server index (GET /api/search: guides, visas, services, FAQ, news, jobs, events, tools)
-// in the site language, with typo tolerance and cross-language synonyms; this file only renders them.
+// Results come from the server index (GET /api/search: tools, glossary, guides, profession hubs, visas, jobs, study
+// programmes, services, FAQ, news, events) in the site language, with typo tolerance and cross-language synonyms;
+// this file only renders them: grouped (best group first), with type badges, keyboard navigation (↑ ↓ Home End
+// Enter Esc) and "did you mean" suggestions when nothing matched.
 
 type Item = { kind: 'hit'; hit: SearchHit } | { kind: 'recent'; query: string } | { kind: 'term'; query: string } | { kind: 'all' };
 
@@ -63,6 +67,7 @@ const PaletteDialog = () => {
     retry: false,
   });
   const hits = enabled && data?.q === debounced ? data.items : enabled ? (data?.items ?? []) : [];
+  const suggestions = enabled && data?.q === debounced ? (data.suggestions ?? []) : [];
 
   // Log the query once the visitor stopped typing for a moment.
   useEffect(() => {
@@ -82,10 +87,11 @@ const PaletteDialog = () => {
       if (terms.length) s.push({ key: 'popular', heading: t('discover.search.popular'), items: terms.map((q) => ({ kind: 'term', query: q })) });
       return s;
     }
+    if (!hits.length && suggestions.length) return [{ key: 'suggest', heading: t('discover.search.didYouMean'), items: suggestions.map((q): Item => ({ kind: 'term', query: q })) }];
     const groups: Section[] = groupHits(hits, PER_GROUP).map((g) => ({ key: g.type, heading: t(`discover.search.groups.${g.type}`), items: g.items.map((hit): Item => ({ kind: 'hit', hit })) }));
     if (hits.length) groups.push({ key: 'all', heading: '', items: [{ kind: 'all' }] });
     return groups;
-  }, [enabled, hits, recent, terms, t]);
+  }, [enabled, hits, suggestions, recent, terms, t]);
 
   const flat = useMemo(() => sections.flatMap((s) => s.items), [sections]);
 
@@ -126,6 +132,13 @@ const PaletteDialog = () => {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (flat.length) setActive((a) => (a - 1 + flat.length) % flat.length);
+    } else if ((e.key === 'Home' || e.key === 'End') && (e.ctrlKey || e.metaKey || !query)) {
+      // Ctrl+Home / Ctrl+End (or Home / End while the input is empty): first / last result.
+      e.preventDefault();
+      if (flat.length) setActive(e.key === 'Home' ? 0 : flat.length - 1);
+    } else if (e.key === 'PageDown' || e.key === 'PageUp') {
+      e.preventDefault();
+      if (flat.length) setActive((a) => (e.key === 'PageDown' ? Math.min(flat.length - 1, a + 5) : Math.max(0, a - 5)));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       choose(flat[active]);
@@ -228,7 +241,7 @@ const PaletteDialog = () => {
               <p className="mt-4 font-semibold break-words text-navy-900">{t('discover.search.noResults', { query: debounced })}</p>
               <p className="mt-1 text-sm text-muted">{t('discover.search.noResultsHint')}</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {terms.slice(0, 5).map((q) => (
+                {(suggestions.length ? [] : terms.slice(0, 5)).map((q) => (
                   <button
                     key={q}
                     type="button"
@@ -241,7 +254,8 @@ const PaletteDialog = () => {
                 ))}
               </div>
             </div>
-          ) : (
+          ) : null}
+          {(!noResults || suggestions.length > 0) &&
             sections.map((sec) => (
               <Fragment key={sec.key}>
                 {sec.heading && (
@@ -301,6 +315,9 @@ const PaletteDialog = () => {
                               <Marked text={item.hit.title} ranges={item.hit.titleHighlights} />
                             </span>
                             {item.hit.meta && <span className="shrink-0 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700">{item.hit.meta}</span>}
+                            <span className="ml-auto hidden shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold text-muted sm:inline">
+                              {t(`discover.search.groups.${item.hit.type}`)}
+                            </span>
                           </span>
                           {item.hit.snippet && (
                             <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-muted">
@@ -320,8 +337,7 @@ const PaletteDialog = () => {
                   );
                 })}
               </Fragment>
-            ))
-          )}
+            ))}
         </div>
 
         {/* Footer hints (desktop) */}

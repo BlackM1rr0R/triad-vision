@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { Bus, Calculator, Check, ChevronDown, CloudSun, ExternalLink, Factory, Home, MapPin, Plane, Plus, Smartphone, Users } from 'lucide-react';
-import { DATA_YEAR, DEUTSCHLANDTICKET, type City } from '@/lib/cities/data';
+import { DEUTSCHLANDTICKET, DEUTSCHLANDTICKET_YEAR, type City } from '@/lib/cities/data';
 import { keyFigures } from '@/lib/cities/calc';
 import { useCityFormat } from './format';
 
@@ -101,7 +101,7 @@ export const CityCard = ({
             </Row>
             <Row icon={Bus} title={t('citiesPage.detail.transport')}>
               <p className="text-muted">
-                {t('citiesPage.detail.ticket', { price: DEUTSCHLANDTICKET, year: DATA_YEAR })} {t('citiesPage.detail.jobticket')}
+                {t('citiesPage.detail.ticket', { price: DEUTSCHLANDTICKET, year: DEUTSCHLANDTICKET_YEAR })} {t('citiesPage.detail.jobticket')}
               </p>
               {city.transport !== '—' && <p className="text-muted">{t('citiesPage.detail.local', { ops: city.transport })}</p>}
             </Row>

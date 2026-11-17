@@ -24,7 +24,7 @@ const SOURCES = [
   { label: '§ 21 StVG', href: 'https://www.gesetze-im-internet.de/stvg/__21.html' },
   { label: 'BKrFQG', href: 'https://www.gesetze-im-internet.de/bkrfqg_2020/' },
   { label: 'service.berlin.de: Umschreibung (Drittstaat)', href: 'https://service.berlin.de/dienstleistung/327537/' },
-  { label: 'IHK: beschleunigte Grundqualifikation', href: 'https://www.ihk.de/schwerin/bildung/sachkundepruefungen-und-unterrichtungsverfahren/beschleunigte-grundqualifikation-berufskraftfahrer-3032122' },
+  { label: 'IHK: beschleunigte Grundqualifikation', href: 'https://www.ihk.de/schwerin/bildung/sachkundepruefungen-und-unterrichtungsverfahren/beschleunigte-grundqualifikation-berufskraftfahrer-infos-termine-3032122' },
 ];
 
 const list = (v: unknown) => (Array.isArray(v) ? (v as string[]) : []);

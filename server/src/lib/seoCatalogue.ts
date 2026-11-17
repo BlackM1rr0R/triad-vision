@@ -1645,12 +1645,14 @@ export const SPA_ROUTES = [
  * The tools hub (/tools): every calculator, check and planning aid, grouped as on the page
  * (client/src/components/audience/tools.ts). Paths without a catalogue entry are skipped in the crawlable body.
  */
-export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'learn' | 'explore';
+export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'life' | 'learn' | 'employers' | 'explore';
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/germany-vs-other-countries', '/visa-document-checklist', '/visa-refusal', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
-  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/employer-cost-calculator', '/real-salaries'] },
-  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/driving-licence-germany', '/german-apartment', '/residence-card-explained', '/calculator', '/cities', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/events', '/status', '/driving-time-calculator', '/work-schedule-check'] },
+  { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/health-insurance-comparison', '/tax-class-chooser', '/real-salaries'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/which-city', '/residence-card-explained', '/calculator', '/cities', '/events', '/status'] },
+  { key: 'life', paths: ['/life-in-germany', '/german-apartment', '/driving-licence-germany', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/driving-time-calculator', '/work-schedule-check'] },
   { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
+  { key: 'employers', paths: ['/employer-cost-calculator', '/employer-guide-azerbaijan', '/kandidaten'] },
   { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },
 ];
 

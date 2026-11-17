@@ -7102,3 +7102,55 @@ model RealSalarySnapshot {
 
   @@index([computedAt])
 }
+
+/// Automatic Google review request (lib/googleReview): one row per trigger event that reached a client.
+/// Rating-first flow: the e-mail asks for a one-click 1–5 rating; EVERY rater is then offered the Google link
+/// (no review gating, Google policy), and 1–3 also get a private feedback form + a staff follow-up task.
+model GoogleReviewInvite {
+  id              String    @id @default(cuid())
+  userId          String    @db.VarChar(40)
+  caseId          String?   @db.VarChar(40)
+  /// APPROVED | ARRIVAL | CLOSED
+  trigger         String    @db.VarChar(12)
+  /// "<trigger>:<caseId>" — the same event never creates a second invite (idempotent job).
+  dedupeKey       String    @unique @db.VarChar(80)
+  /// HELD (low satisfaction score: staff follow-up first, sent after holdUntil) | SENT | CANCELLED
+  status          String    @db.VarChar(12)
+  locale          String    @db.VarChar(5)
+  holdUntil       DateTime?
+  sentAt          DateTime?
+  remindedAt      DateTime?
+  /// First visit of the rating page (the "click" in the e-mail).
+  openedAt        DateTime?
+  rating          Int?
+  ratedAt         DateTime?
+  feedback        String?   @db.Text
+  feedbackAt      DateTime?
+  googleClickedAt DateTime?
+  googleClicks    Int       @default(0)
+  /// Staff follow-up task (plain id): low NPS before sending, or a 1–3 rating.
+  staffTaskId     String?   @db.VarChar(40)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, sentAt])
+  @@index([status, holdUntil])
+  @@index([createdAt])
+}
+
+/// Data freshness (lib/dataFreshness, /admin/data-freshness): "mark reviewed" of a registry item (registry.ts id).
+/// The latest row per item decides its next due date; older rows are the review history. Reminder dedupe: ReminderLog.
+model DataFreshnessReview {
+  id           String   @id @default(cuid())
+  itemId       String   @db.VarChar(80)
+  reviewedById String?  @db.VarChar(40)
+  /// Name at the time of the review (the user may be deleted later).
+  reviewerName String   @db.VarChar(200)
+  note         String?  @db.VarChar(1000)
+  /// Due date the review settled (ISO day) and the next one it moved the item to (null: nothing due any more).
+  settledDue   String?  @db.VarChar(10)
+  nextDue      String?  @db.VarChar(10)
+  reviewedAt   DateTime @default(now())
+
+  @@index([itemId, reviewedAt])
+}

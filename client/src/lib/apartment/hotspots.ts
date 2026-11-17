@@ -59,7 +59,7 @@ export const APARTMENT_SOURCES = [
   { key: 'bmg17', url: 'https://www.gesetze-im-internet.de/bmg/__17.html' },
   { key: 'bmg19', url: 'https://www.gesetze-im-internet.de/bmg/__19.html' },
   { key: 'tkg56', url: 'https://www.gesetze-im-internet.de/tkg_2021/__56.html' },
-  { key: 'verpackg31', url: 'https://www.gesetze-im-internet.de/verpackg/__31.html' },
+  { key: 'verpackg31', url: 'https://www.gesetze-im-internet.de/verpackdg/__46.html' },
   { key: 'rundfunk', url: 'https://www.rundfunkbeitrag.de/' },
-  { key: 'heating', url: 'https://www.verbraucherzentrale.nrw/heizungsoptimierung' },
+  { key: 'heating', url: 'https://www.verbraucherzentrale.nrw/wissen/energie/heizen-und-warmwasser/heizung-optimieren-und-heizkosten-sparen-so-gehts-30096' },
 ] as const;

@@ -3,7 +3,7 @@ import type { WorkScene } from '../types';
 /**
  * Truck cab (Berufskraftfahrer / truck driver): hotspots of components/workScenes/illustrations/TruckCab
  * (viewBox 1000 × 640). Facts as of 2026-11-16: driving times, breaks and rest periods (EU 561/2006 as amended by
- * 2020/1054 — regular weekly rest not in the vehicle, Art. 8(8a)); tachograph and driver card (EU 165/2014: one
+ * 2020/1054 — regular weekly rest not in the vehicle, Art. 8(8)); tachograph and driver card (EU 165/2014: one
  * personal card, valid at most 5 years, replacement within 7 days, records of today + previous 56 days since
  * 31.12.2024); truck toll above 3.5 t technically permissible maximum mass on Autobahn and Bundesstraßen since
  * 1.7.2024 (BFStrMG, Toll Collect / BALM); StVO § 4 (3) 50 m distance, § 9 (6) right turn at walking pace,

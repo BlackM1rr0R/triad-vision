@@ -585,7 +585,7 @@ describe('crawlable body (/__seo/body)', () => {
     const d = { ...data, services: [svc('hiring', 'company'), svc('visa-help', 'candidate'), svc('docs', 'all')], testimonials: [quote('c1', 'company'), quote('w1', 'candidate')] };
 
     const tools = renderBody('/de/tools', d);
-    expect(tools).toContain('<h2>Eignung prüfen</h2>');
+    expect(tools).toContain('<h2>Komme ich infrage?</h2>');
     expect(tools).toContain('href="/de/salary-calculator"');
     expect(tools).toContain(STATIC_PAGES['/blue-card-check'].description.de);
 

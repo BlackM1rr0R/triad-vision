@@ -2,12 +2,16 @@ import { prisma } from '../../db.js';
 import { cached } from '../cache.js';
 import { guidePath } from '../guides/service.js';
 import { collapse, getSeoData, guidesInLanguage, indexable, liveJobs, localizedPath, pick, pickList, type SeoData } from '../seo.js';
-import { STATIC_PAGES, textIn, type SeoLocale } from '../seoCatalogue.js';
-import { conceptsIn, editDistance, fold, parseQuery, phrasesOf, stripMarkdown, typoBudget } from './text.js';
+import { SEO_LOCALES, STATIC_PAGES, textIn, type SeoLocale } from '../seoCatalogue.js';
+import { GLOSSARY_TERMS, glossaryPath, longIn } from '../glossary/index.js';
+import { PROFESSION_HUB_PATHS } from '../professionHubs.js';
+import { programmeTitle } from '../study/seo.js';
+import { toolSlugs } from '../toolLeads/tools.js';
+import { conceptsIn, editDistance, fold, parseQuery, phrasesOf, stripMarkdown, trigrams, typoBudget } from './text.js';
 
 /**
  * Public site search (GET /api/search): guides, visa categories, services, FAQ, news, open jobs, events,
- * tools and the static pages, in the visitor's language (CMS text falls back like the pages: tr / uk → en,
+ * tools / games / work scenes, glossary terms, profession hubs, study programmes and the static pages, in the visitor's language (CMS text falls back like the pages: tr / uk → en,
  * the others → az; guides missing in a language → their English version).
  *
  * The content is small (a few hundred documents per language), so instead of MySQL full-text indexes (none
@@ -20,10 +24,23 @@ import { conceptsIn, editDistance, fold, parseQuery, phrasesOf, stripMarkdown, t
  * Every query part must match (AND); when nothing matches all of them, documents matching most parts are shown.
  */
 
-export const SEARCH_TYPES = ['tool', 'guide', 'visa', 'job', 'service', 'faq', 'news', 'event', 'page'] as const;
+export const SEARCH_TYPES = ['tool', 'guide', 'visa', 'job', 'service', 'faq', 'news', 'event', 'page', 'glossary', 'profession', 'study'] as const;
 export type SearchType = (typeof SEARCH_TYPES)[number];
 
-const TYPE_BOOST: Record<SearchType, number> = { tool: 1.6, guide: 1.6, visa: 1.3, job: 1, service: 1, faq: 0.8, news: 0.5, event: 0.8, page: 0.7 };
+const TYPE_BOOST: Record<SearchType, number> = {
+  tool: 1.6,
+  guide: 1.6,
+  visa: 1.3,
+  job: 1,
+  service: 1,
+  faq: 0.8,
+  news: 0.5,
+  event: 0.8,
+  page: 0.7,
+  glossary: 1.1,
+  profession: 1.4,
+  study: 0.9,
+};
 
 /** Interactive tools (the rest of the static pages count as plain pages). */
 export const TOOL_PATHS = new Set([
@@ -69,7 +86,12 @@ export const TOOL_PATHS = new Set([
   '/work-scenes/hospital-ward',
   '/work-scenes/construction-site',
   '/work-scenes/electrical-panel',
+  // Every tool of the tools hub (seoCatalogue TOOL_GROUPS) and its extra tool pages, so a new tool is searchable
+  // as a tool without another list.
+  ...toolSlugs().map((s) => `/${s}`),
 ]);
+
+const PROFESSION_PATHS = new Set<string>(PROFESSION_HUB_PATHS);
 
 /** Extra search words of the tools (not shown, any language: the synonyms cover the common terms). */
 const TOOL_KEYWORDS: Record<string, string> = {
@@ -134,15 +156,23 @@ export interface SearchDoc {
   concepts: Set<number>;
 }
 
-interface Index {
+export interface Index {
   docs: SearchDoc[];
   /** folded word → indexes of the documents containing it */
   vocab: Map<string, number[]>;
+  /** The vocabulary as a list (scanned for prefixes and typos). */
+  words: string[];
+  /** trigram → indexes into `words` (last-resort fuzzy matching and "did you mean"). */
+  grams: Map<string, number[]>;
+  /** folded word → how it is written in a title ("gehaltsrechner" → "Gehaltsrechner"), for suggestions. */
+  surface: Map<string, string>;
 }
 
 const words = (folded: string) => folded.split(' ').filter(Boolean);
 
-const makeDoc = (d: { id: string; type: SearchType; title: string; body: string; url: string; meta?: string; keywords?: string }): SearchDoc => {
+const WORD_RE = /[\p{L}\p{N}]+/gu;
+
+export const makeDoc = (d: { id: string; type: SearchType; title: string; body: string; url: string; meta?: string; keywords?: string }): SearchDoc => {
   const title = collapse(d.title);
   const body = collapse(d.body);
   const fTitle = fold(title);
@@ -176,15 +206,47 @@ export const buildDocs = (data: SeoData, lng: SeoLocale, extra: { leadMagnets?: 
 
   for (const [path, page] of Object.entries(STATIC_PAGES)) {
     if (page.index === false || path === '/') continue;
-    const tool = TOOL_PATHS.has(path);
+    const profession = PROFESSION_PATHS.has(path);
     docs.push(
       makeDoc({
         id: `page:${path}`,
-        type: tool ? 'tool' : 'page',
+        type: profession ? 'profession' : TOOL_PATHS.has(path) ? 'tool' : 'page',
         title: textIn(page.name, lng),
         body: joinText(textIn(page.title, lng), textIn(page.description, lng)),
         url: url(path),
-        keywords: TOOL_KEYWORDS[path],
+        // Profession hubs: their name in every language ("nurse" finds the hub on the Azerbaijani site too).
+        keywords: profession ? SEO_LOCALES.map((l) => textIn(page.name, l)).join(' ') : TOOL_KEYWORDS[path],
+      }),
+    );
+  }
+
+  // Glossary (static, lib/glossary): the German term is the title; aliases, the localized one-line definition
+  // and the explanation are searchable. The article ("die") is the badge.
+  for (const g of GLOSSARY_TERMS) {
+    docs.push(
+      makeDoc({
+        id: `glossary:${g.slug}`,
+        type: 'glossary',
+        title: g.term,
+        body: joinText(g.short[lng], longIn(g, lng).text),
+        url: url(glossaryPath(g.slug)),
+        ...(g.article ? { meta: g.article } : {}),
+        keywords: joinText(g.aliases ?? [], g.slug.replace(/-/g, ' ')),
+      }),
+    );
+  }
+
+  // Study programmes (/study/:slug): published catalogue rows.
+  for (const p of data.study ?? []) {
+    docs.push(
+      makeDoc({
+        id: `study:${p.slug}`,
+        type: 'study',
+        title: programmeTitle(p),
+        body: joinText(p.name, p.university, p.city, p.subjectArea, p.degree, pick(p.description, lng)),
+        url: url(`/study/${p.slug}`),
+        meta: p.city,
+        keywords: joinText(p.degree, p.teachingLanguage, p.federalState),
       }),
     );
   }
@@ -268,14 +330,29 @@ export const buildDocs = (data: SeoData, lng: SeoLocale, extra: { leadMagnets?: 
 
 export const buildIndex = (docs: SearchDoc[]): Index => {
   const vocab = new Map<string, number[]>();
+  const surface = new Map<string, string>();
   docs.forEach((d, i) => {
     for (const w of new Set([...d.titleWords, ...d.bodyWords])) {
       const list = vocab.get(w);
       if (list) list.push(i);
       else vocab.set(w, [i]);
     }
+    for (const m of d.title.matchAll(WORD_RE)) {
+      const f = fold(m[0]);
+      if (f && !f.includes(' ') && !surface.has(f)) surface.set(f, m[0]);
+    }
   });
-  return { docs, vocab };
+  const words = [...vocab.keys()];
+  const grams = new Map<string, number[]>();
+  words.forEach((w, i) => {
+    if (w.length < 3) return;
+    for (const g of trigrams(w)) {
+      const list = grams.get(g);
+      if (list) list.push(i);
+      else grams.set(g, [i]);
+    }
+  });
+  return { docs, vocab, words, grams, surface };
 };
 
 const loadIndex = (lng: SeoLocale) =>
@@ -302,20 +379,41 @@ export interface SearchHit {
   score: number;
 }
 
-/** Vocabulary words a query word matches, with a quality factor (exact 1, prefix 0.75, typo 0.55). */
-const matchWord = (vocab: Map<string, number[]>, word: string, allowPrefix: boolean) => {
-  const out = new Map<string, number>();
-  if (vocab.has(word)) out.set(word, 1);
-  const budget = typoBudget(word);
-  for (const v of vocab.keys()) {
-    if (v === word) continue;
-    if (allowPrefix && word.length >= 2 && v.startsWith(word)) out.set(v, Math.max(out.get(v) ?? 0, 0.75));
-    else if (budget && Math.abs(v.length - word.length) <= budget && v.length >= 4 && editDistance(word, v, budget) <= budget) out.set(v, Math.max(out.get(v) ?? 0, 0.55));
+/** Vocabulary words sharing at least `min` trigram similarity (Dice) with `word`, best first. */
+const similarWords = (index: Index, word: string, min: number, limit = 8) => {
+  const q = trigrams(word);
+  const shared = new Map<number, number>();
+  for (const g of q) for (const i of index.grams.get(g) ?? []) shared.set(i, (shared.get(i) ?? 0) + 1);
+  const out: { word: string; sim: number }[] = [];
+  for (const [i, n] of shared) {
+    const w = index.words[i];
+    // Padded trigrams of a word of length L: L + 2 (minus repeats, rare enough to ignore here).
+    const sim = (2 * n) / (q.length + w.length + 2);
+    if (sim >= min && w !== word) out.push({ word: w, sim });
   }
-  return out;
+  return out.sort((a, b) => b.sim - a.sim || a.word.localeCompare(b.word)).slice(0, limit);
 };
 
-const WORD_RE = /[\p{L}\p{N}]+/gu;
+/**
+ * Vocabulary words a query word matches, with a quality factor. Tiers: exact 1, prefix 0.75 (instant search),
+ * typo 0.55 (Damerau-Levenshtein within the typo budget; 0.45 for 4–5 letter words, which only fall back to typos
+ * when nothing matched exactly or as a prefix), trigram look-alike 0.4 (only when nothing else matched).
+ */
+export const matchWord = (index: Index, word: string, allowPrefix: boolean) => {
+  const out = new Map<string, number>();
+  if (index.vocab.has(word)) out.set(word, 1);
+  const budget = typoBudget(word);
+  const typos: string[] = [];
+  for (const v of index.words) {
+    if (v === word) continue;
+    if (allowPrefix && word.length >= 2 && v.startsWith(word)) out.set(v, 0.75);
+    else if (budget && v.length >= 4 && Math.abs(v.length - word.length) <= budget && editDistance(word, v, budget) <= budget) typos.push(v);
+  }
+  const long = word.length >= 6;
+  if (long || !out.size) for (const v of typos) if (!out.has(v)) out.set(v, long ? 0.55 : 0.45);
+  if (!out.size && word.length >= 3 && !/^\d+$/.test(word)) for (const s of similarWords(index, word, 0.5, 5)) out.set(s.word, 0.4);
+  return out;
+};
 
 /** Ranges of the words of `text` whose folded form is in `terms`. */
 export const highlightRanges = (text: string, terms: Set<string>): [number, number][] => {
@@ -363,7 +461,7 @@ export const searchIndex = (index: Index, query: string, opts: SearchOptions = {
   if (!units) return [];
 
   // Per query word: which vocabulary words it matches (the last word may be unfinished → prefixes).
-  const wordMatches = qWords.map((w, i) => matchWord(index.vocab, w, i === qWords.length - 1 || w.length >= 4));
+  const wordMatches = qWords.map((w, i) => matchWord(index, w, i === qWords.length - 1 || w.length >= 4));
 
   const scored: { i: number; score: number; matched: number; terms: Set<string> }[] = [];
   index.docs.forEach((d, i) => {
@@ -392,7 +490,9 @@ export const searchIndex = (index: Index, query: string, opts: SearchOptions = {
       }
     }
     if (!matched) return;
-    if (d.fTitle.includes(folded)) score += d.fTitle.startsWith(folded) ? 5 : 3;
+    // Ranking tiers: the whole query as the exact title > title starting with it > title containing it > the rest.
+    if (d.fTitle === folded) score += 8;
+    else if (d.fTitle.includes(folded)) score += d.fTitle.startsWith(folded) ? 5 : 3;
     scored.push({ i, score: score + TYPE_BOOST[d.type], matched, terms });
   });
 
@@ -421,8 +521,49 @@ export const searchIndex = (index: Index, query: string, opts: SearchOptions = {
   });
 };
 
+/**
+ * "Did you mean": the query with every word the index does not know replaced by its closest known word (typo
+ * distance first, then trigram look-alikes; frequent title words preferred), only when that query finds something.
+ * Pure; used when a search has no results.
+ */
+export const suggestQueries = (index: Index, query: string, limit = 3): string[] => {
+  const qWords = fold(query).slice(0, 200).split(' ').filter((w) => w.length >= 2);
+  if (!qWords.length || qWords.length > 6) return [];
+  const options = qWords.map((w) => {
+    if (index.vocab.has(w) || /^\d+$/.test(w)) return [w];
+    const max = Math.max(1, Math.min(3, Math.floor(w.length / 3)));
+    return similarWords(index, w, 0.25, 30)
+      .map((s) => {
+        const dist = editDistance(w, s.word, max);
+        const df = index.vocab.get(s.word)?.length ?? 0;
+        const title = index.surface.has(s.word) ? 0.3 : 0;
+        return { word: s.word, dist, score: (dist <= max ? 2 - dist * 0.6 : 0) + s.sim + title + Math.log10(1 + df) * 0.2 };
+      })
+      .filter((c) => c.dist <= max || c.score >= 1)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((c) => c.word);
+  });
+  if (options.some((o) => !o.length)) return [];
+  const out: string[] = [];
+  for (let k = 0; k < limit; k++) {
+    const words = options.map((o) => o[Math.min(k, o.length - 1)]);
+    const q = words.map((w) => index.surface.get(w) ?? w).join(' ');
+    if (words.join(' ') === qWords.join(' ') || out.includes(q)) continue;
+    if (searchIndex(index, q, { limit: 1 }).length) out.push(q);
+  }
+  return out;
+};
+
 /** Search in a language (index cached per language). */
 export const siteSearch = async (query: string, lng: SeoLocale, opts: SearchOptions = {}) => searchIndex(await loadIndex(lng), query, opts);
+
+/** Search plus "did you mean" suggestions when nothing was found (GET /api/search). */
+export const siteSearchWithSuggestions = async (query: string, lng: SeoLocale, opts: SearchOptions = {}) => {
+  const index = await loadIndex(lng);
+  const items = searchIndex(index, query, opts);
+  return { items, suggestions: items.length ? [] : suggestQueries(index, query) };
+};
 
 // ─── anonymous term statistics ────────────────────────────────────────
 

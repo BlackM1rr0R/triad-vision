@@ -133,9 +133,9 @@ export default function AccountReadiness() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <header>
-        <h1 className="type-page-title flex items-center gap-2 text-ink">
+        <h2 className="type-page-title flex items-center gap-2 text-ink">
           <Gauge className="size-6 text-primary" aria-hidden /> {t('readiness.title')}
-        </h1>
+        </h2>
         <p className="mt-1 text-sm text-muted">{t('readiness.subtitle')}</p>
       </header>
       {q.isLoading ? (

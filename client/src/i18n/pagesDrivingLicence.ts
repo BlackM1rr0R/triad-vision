@@ -67,7 +67,7 @@ const az = {
       text: 'Azərbaycan C/CE vəsiqəsi də imtahansız dəyişdirilmir: hər kateqoriya üçün nəzəri və praktiki imtahan, həkim və göz müayinəsi lazımdır (C üçün əvvəlcə B lazımdır). Peşəkar sürücülük üçün əlavə olaraq:',
       items: [
         'Berufskraftfahrer ixtisası: sürətləndirilmiş əsas ixtisas — tanınmış təlim mərkəzində 140 saat və IHK-da 90 dəqiqəlik nəzəri imtahan.',
-        'Sonra vəsiqəyə 95 kodu və ya Fahrerqualifizierungsnachweis; hər 5 ildən bir 35 saat təkmilləşdirmə.',
+        'Sonra Almaniyada sübut kimi Fahrerqualifizierungsnachweis (FQN) verilir (§ 7 BKrFQG); AB sürücülük vəsiqəsindəki 95 kodu da qəbul olunur. Hər 5 ildən bir 35 saat təkmilləşdirmə.',
         'C/CE vəsiqəsi 5 il etibarlıdır, uzadılması üçün yenidən tibbi arayış lazımdır.',
         'Təxmini xərc: C/CE imtahanları ilə hər kateqoriya üçün ≈ 2 000–5 000 €, ixtisas kursu ≈ 2 000–4 000 €. Çox vaxt işəgötürən bir hissəni ödəyir.',
       ],
@@ -157,7 +157,7 @@ const de: Copy = {
       text: 'Auch C/CE aus Aserbaidschan wird nicht ohne Prüfung umgeschrieben: Theorie- und Praxisprüfung je Klasse, ärztliche und augenärztliche Untersuchung (C setzt B voraus). Für die gewerbliche Fahrt zusätzlich:',
       items: [
         'Berufskraftfahrerqualifikation: beschleunigte Grundqualifikation – 140 Stunden an einer anerkannten Ausbildungsstätte und 90-minütige Theorieprüfung bei der IHK.',
-        'Danach Schlüsselzahl 95 im Führerschein bzw. Fahrerqualifizierungsnachweis; alle 5 Jahre 35 Stunden Weiterbildung.',
+        'Danach wird in Deutschland der Fahrerqualifizierungsnachweis (FQN) ausgestellt (§ 7 BKrFQG); eine Schlüsselzahl 95 in einem EU-Führerschein gilt ebenfalls. Alle 5 Jahre 35 Stunden Weiterbildung.',
         'C/CE gilt 5 Jahre; für die Verlängerung ist erneut eine ärztliche Bescheinigung nötig.',
         'Geschätzte Kosten: C/CE mit Prüfungen ≈ 2.000–5.000 € je Klasse, Qualifikation ≈ 2.000–4.000 €. Oft übernimmt der Arbeitgeber einen Teil.',
       ],
@@ -245,7 +245,7 @@ const en: Copy = {
       text: 'An Azerbaijani C/CE licence is not exchanged without tests either: a theory and a practical test per class plus a medical and an eye examination (C requires B). For professional driving you also need:',
       items: [
         'Professional driver qualification: accelerated initial qualification — 140 hours at a recognised training centre and a 90-minute theory exam at the IHK.',
-        'Then code 95 in the licence or a driver qualification card (Fahrerqualifizierungsnachweis); 35 hours of further training every 5 years.',
+        'Then Germany issues the driver qualification card (Fahrerqualifizierungsnachweis, FQN; § 7 BKrFQG); code 95 in an EU driving licence is also accepted. 35 hours of further training every 5 years.',
         'C/CE is valid for 5 years; renewal needs a new medical certificate.',
         'Estimated costs: C/CE with tests ≈ €2,000–5,000 per class, qualification ≈ €2,000–4,000. Employers often pay part of it.',
       ],
@@ -333,7 +333,7 @@ const ru: Copy = {
       text: 'Азербайджанские C/CE тоже не меняются без экзаменов: теория и практика по каждой категории, медосмотр и окулист (для C нужна B). Для работы водителем дополнительно:',
       items: [
         'Квалификация Berufskraftfahrer: ускоренная базовая квалификация — 140 часов в аккредитованном учебном центре и 90-минутный теоретический экзамен в IHK.',
-        'Затем код 95 в правах или Fahrerqualifizierungsnachweis; каждые 5 лет — 35 часов повышения квалификации.',
+        'Затем в Германии выдают Fahrerqualifizierungsnachweis (FQN; § 7 BKrFQG); код 95 в правах страны ЕС тоже признаётся. Каждые 5 лет — 35 часов повышения квалификации.',
         'Права C/CE действуют 5 лет; для продления снова нужна медицинская справка.',
         'Примерно: C/CE с экзаменами ≈ 2 000–5 000 € за категорию, квалификация ≈ 2 000–4 000 €. Часто часть оплачивает работодатель.',
       ],
@@ -421,7 +421,7 @@ const tr: Copy = {
       text: 'Azerbaycan C/CE ehliyeti de sınavsız değiştirilmez: her sınıf için teorik ve pratik sınav, sağlık ve göz muayenesi (C için önce B gerekir). Profesyonel sürüş için ayrıca:',
       items: [
         'Berufskraftfahrer yeterliliği: hızlandırılmış temel yeterlilik — tanınmış bir eğitim merkezinde 140 saat ve IHK’da 90 dakikalık teorik sınav.',
-        'Ardından ehliyette 95 kodu veya Fahrerqualifizierungsnachweis; her 5 yılda 35 saat eğitim.',
+        'Ardından Almanya’da Fahrerqualifizierungsnachweis (FQN; § 7 BKrFQG) düzenlenir; bir AB ehliyetindeki 95 kodu da geçerlidir. Her 5 yılda 35 saat eğitim.',
         'C/CE 5 yıl geçerlidir; yenileme için yine sağlık raporu gerekir.',
         'Tahmini maliyet: sınavlarla C/CE sınıf başına ≈ 2.000–5.000 €, yeterlilik ≈ 2.000–4.000 €. Çoğu zaman işveren bir kısmını öder.',
       ],
@@ -509,7 +509,7 @@ const uk: Copy = {
       text: 'Азербайджанські C/CE теж не обмінюють без іспитів: теорія й практика для кожної категорії, медогляд і окуліст (для C потрібна B). Для роботи водієм додатково:',
       items: [
         'Кваліфікація Berufskraftfahrer: прискорена базова кваліфікація — 140 годин в акредитованому навчальному центрі та 90-хвилинний теоретичний іспит в IHK.',
-        'Потім код 95 у посвідченні або Fahrerqualifizierungsnachweis; кожні 5 років — 35 годин підвищення кваліфікації.',
+        'Потім у Німеччині видають Fahrerqualifizierungsnachweis (FQN; § 7 BKrFQG); код 95 у посвідченні країни ЄС теж визнається. Кожні 5 років — 35 годин підвищення кваліфікації.',
         'Посвідчення C/CE дійсне 5 років; для продовження знову потрібна медична довідка.',
         'Орієнтовно: C/CE з іспитами ≈ 2 000–5 000 € за категорію, кваліфікація ≈ 2 000–4 000 €. Часто частину оплачує роботодавець.',
       ],

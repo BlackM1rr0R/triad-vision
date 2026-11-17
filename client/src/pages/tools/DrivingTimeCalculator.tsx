@@ -34,8 +34,7 @@ const SOURCES = [
   { label: 'VO (EG) Nr. 561/2006 – Lenk- und Ruhezeiten (EUR-Lex)', url: 'https://eur-lex.europa.eu/eli/reg/2006/561/oj' },
   { label: '§ 21a ArbZG – Beschäftigung im Straßentransport', url: 'https://www.gesetze-im-internet.de/arbzg/__21a.html' },
   { label: '§§ 3, 4 ArbZG – Arbeitszeit und Ruhepausen', url: 'https://www.gesetze-im-internet.de/arbzg/BJNR117100994.html' },
-  { label: '§ 8 FPersG – Bußgeld Fahrer (bis 5.000 €)', url: 'https://www.gesetze-im-internet.de/fahrpersstg/__8.html' },
-  { label: '§ 8a FPersG – Bußgeld Unternehmen (bis 30.000 €)', url: 'https://www.gesetze-im-internet.de/fahrpersstg/__8a.html' },
+  { label: '§ 8a FPersG – Bußgeld Unternehmen (Abs. 1, bis 30.000 €) und Fahrer (Abs. 2, bis 5.000 €)', url: 'https://www.gesetze-im-internet.de/fahrpersstg/__8a.html' },
   { label: 'IHK Schleswig-Holstein – Lenk- und Ruhezeiten, Bußgeldkataloge Fahrpersonalrecht (LASI LV 48)', url: 'https://www.ihk.de/schleswig-holstein/produktmarken/branchen/verkehrswirtschaft/regeln-pflichten-verkehrsgewerbe/sozialvorschriften-lenk-und-ruhezeiten-im-strassenverkehr-1355012' },
 ];
 

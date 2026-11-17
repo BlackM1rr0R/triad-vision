@@ -3,11 +3,12 @@ import { z } from 'zod';
 import { config } from '../config.js';
 import { limiter, parse } from '../lib/http.js';
 import { parseLocale } from '../lib/seo.js';
-import { SEARCH_TYPES, logSearch, siteSearch } from '../lib/search/index.js';
+import { SEARCH_TYPES, logSearch, siteSearch, siteSearchWithSuggestions } from '../lib/search/index.js';
 
 /**
  * Public site search — mounted at /api/search:
- *   GET  /?q=&lng=&types=guide,job&limit=  ranked hits { type, title, url (localised), snippet, highlights }
+ *   GET  /?q=&lng=&types=guide,job&limit=  ranked hits { type, title, url (localised), snippet, highlights } and,
+ *                                          when nothing matched, `suggestions` ("did you mean" queries that do match)
  *   POST /log { q, lng }                    counts a finished search (anonymous daily aggregates only)
  * The instant search dialog calls GET on every pause in typing; only a settled query (the visitor stopped
  * typing, opened a result or the results page) is logged, so half-typed words never reach the statistics.
@@ -31,9 +32,10 @@ const queryInput = z.object({
 searchRouter.get('/', searchLimiter, async (req, res) => {
   const q = parse(queryInput, req.query);
   const lng = parseLocale(q.lng) ?? 'az';
-  const hits = q.q.length >= 2 || /\d/.test(q.q) ? await siteSearch(q.q, lng, { limit: q.limit, types: q.types?.length ? q.types : undefined }) : [];
+  const { items, suggestions } =
+    q.q.length >= 2 || /\d/.test(q.q) ? await siteSearchWithSuggestions(q.q, lng, { limit: q.limit, types: q.types?.length ? q.types : undefined }) : { items: [], suggestions: [] };
   res.setHeader('Cache-Control', 'public, max-age=60');
-  res.json({ q: q.q, lng, total: hits.length, items: hits });
+  res.json({ q: q.q, lng, total: items.length, items, suggestions });
 });
 
 searchRouter.post('/log', logLimiter, async (req, res) => {

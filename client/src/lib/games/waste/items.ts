@@ -13,10 +13,10 @@ export const WASTE_SOURCES: { label: string; url: string }[] = [
   { label: 'Umweltbundesamt: Abfälle im Haushalt', url: 'https://www.umweltbundesamt.de/themen/abfaelle-im-haushalt' },
   { label: 'Umweltbundesamt: Ohne Mülltrennung kein Recycling', url: 'https://www.umweltbundesamt.de/themen/ohne-muelltrennung-kein-recycling' },
   { label: 'Mülltrennung wirkt (duale Systeme)', url: 'https://www.muelltrennung-wirkt.de/' },
-  { label: 'Verbraucherzentrale NRW: Wertstoffe richtig trennen', url: 'https://www.verbraucherzentrale.nrw/wissen/umwelt-haushalt/abfall/verpackungen-sind-kein-muell-wertstoffe-richtig-trennen-32617' },
+  { label: 'Verbraucherzentrale NRW: Wertstoffe richtig trennen', url: 'https://www.verbraucherzentrale.nrw/wissen/umwelt-haushalt/abfall/recycling-von-verpackungen-wertstoffe-fuer-den-muell-richtig-trennen-32617' },
   { label: 'DPG Deutsche Pfandsystem GmbH', url: 'https://dpg-pfandsystem.de/' },
   { label: 'Arzneimittelentsorgung (BMUV / ISOE)', url: 'https://arzneimittelentsorgung.de/' },
-  { label: 'Batterien zurück (Stiftung GRS)', url: 'https://www.batterie-zurück.de/' },
+  { label: 'Batterien zurück (Stiftung GRS)', url: 'https://www.batterie-zurueck.de/' },
   { label: 'E-Schrott entsorgen (BMUV)', url: 'https://www.e-schrott-entsorgen.org/' },
 ];
 

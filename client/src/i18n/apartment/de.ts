@@ -27,7 +27,7 @@ export const de: ApartmentCopy = {
       bmg17: '§ 17 BMG (Anmeldung binnen 2 Wochen)',
       bmg19: '§ 19 BMG (Wohnungsgeberbestätigung)',
       tkg56: '§ 56 TKG (Vertragslaufzeit, Kündigung)',
-      verpackg31: '§ 31 VerpackG (Pfand auf Einwegflaschen)',
+      verpackg31: '§ 46 VerpackDG (Pfand auf Einwegflaschen)',
       rundfunk: 'Rundfunkbeitrag (ARD ZDF Deutschlandradio Beitragsservice)',
       heating: 'Verbraucherzentrale NRW: Heizen',
     },

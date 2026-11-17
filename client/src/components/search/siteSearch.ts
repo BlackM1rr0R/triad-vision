@@ -1,5 +1,5 @@
 import { createElement, Fragment, type ReactNode } from 'react';
-import { BookOpen, Briefcase, BriefcaseBusiness, Calculator, CalendarDays, CircleHelp, FileText, Newspaper, Stamp, type LucideIcon } from 'lucide-react';
+import { BookA, BookOpen, Briefcase, BriefcaseBusiness, Calculator, CalendarDays, CircleHelp, FileText, GraduationCap, HardHat, Newspaper, Stamp, type LucideIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 
 /**
@@ -7,10 +7,10 @@ import { api } from '@/lib/api';
  * highlighting of the server's match ranges and the visitor's recent searches (localStorage only).
  */
 
-export type SearchType = 'tool' | 'guide' | 'visa' | 'job' | 'service' | 'faq' | 'news' | 'event' | 'page';
+export type SearchType = 'tool' | 'guide' | 'visa' | 'job' | 'service' | 'faq' | 'news' | 'event' | 'page' | 'glossary' | 'profession' | 'study';
 
 /** Order of the result groups (dialog and /search). */
-export const SEARCH_TYPES: SearchType[] = ['tool', 'guide', 'visa', 'job', 'service', 'faq', 'news', 'event', 'page'];
+export const SEARCH_TYPES: SearchType[] = ['tool', 'glossary', 'guide', 'profession', 'visa', 'job', 'study', 'service', 'faq', 'news', 'event', 'page'];
 
 export const TYPE_ICON: Record<SearchType, LucideIcon> = {
   tool: Calculator,
@@ -22,6 +22,9 @@ export const TYPE_ICON: Record<SearchType, LucideIcon> = {
   news: Newspaper,
   event: CalendarDays,
   page: FileText,
+  glossary: BookA,
+  profession: HardHat,
+  study: GraduationCap,
 };
 
 export interface SearchHit {
@@ -42,6 +45,8 @@ export interface SearchResponse {
   lng: string;
   total: number;
   items: SearchHit[];
+  /** "Did you mean" queries (only when nothing was found; older servers omit it). */
+  suggestions?: string[];
 }
 
 export const MIN_QUERY = 2;
@@ -103,6 +108,16 @@ export const rememberSearch = (q: string) => {
   return next;
 };
 
-/** Hits grouped by type in display order, at most `perGroup` each. */
-export const groupHits = (items: SearchHit[], perGroup = Infinity) =>
-  SEARCH_TYPES.map((type) => ({ type, items: items.filter((h) => h.type === type).slice(0, perGroup) })).filter((g) => g.items.length);
+/**
+ * Hits grouped by type, at most `perGroup` each. The server ranks the hits (exact title > prefix > typo > body), so
+ * the group of the best hit comes first; types without a hit are left out (ties: SEARCH_TYPES order).
+ */
+export const groupHits = (items: SearchHit[], perGroup = Infinity) => {
+  const first = (type: SearchType) => {
+    const i = items.findIndex((h) => h.type === type);
+    return i === -1 ? Infinity : i;
+  };
+  return SEARCH_TYPES.map((type) => ({ type, items: items.filter((h) => h.type === type).slice(0, perGroup) }))
+    .filter((g) => g.items.length)
+    .sort((a, b) => first(a.type) - first(b.type));
+};

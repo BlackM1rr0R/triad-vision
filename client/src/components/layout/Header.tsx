@@ -50,6 +50,7 @@ import { useSiteContent } from '@/lib/content';
 import { AUDIENCE_PATH, useAudience, type Audience } from '@/lib/audience';
 import { registerCopy, SITE_LOCALES, switchLanguage } from '@/i18n';
 import { siteNavCopy } from '@/i18n/siteNav';
+import { MobileToolsMenu, ToolsMenu } from '@/components/tools/hub/ToolsMenu';
 
 registerCopy(siteNavCopy);
 
@@ -118,8 +119,8 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [menu, setMenu] = useState<Audience | null>(null);
-  const [mobileGroup, setMobileGroup] = useState<Audience | null>(null);
+  const [menu, setMenu] = useState<Audience | 'tools' | null>(null);
+  const [mobileGroup, setMobileGroup] = useState<Audience | 'tools' | null>(null);
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -145,11 +146,16 @@ export const Header = () => {
   const accountHref = user?.role === 'COMPANY' ? '/company' : user && user.role !== 'CLIENT' ? '/admin' : '/account';
   const portalLabel = user && isStaffRole(user.role) ? t('nav.admin') : t('siteNav.portal');
 
+  // `li`: visibility in the desktop bar. Next to the full logo the bar holds ~620 px of items up to 1535 px (container
+  // 1320 px) and ~830 px from 2xl (header container 1480 px). With 7 items the logo got truncated, in ru / uk / de
+  // even pushed off. "Jobs in Germany" shows from 1360 px (ru / uk: their long labels only fit from 2xl); Contact
+  // lives in the top bar instead (and in the mobile menu).
+  const longLabels = ['ru', 'uk'].includes(i18n.resolvedLanguage ?? i18n.language);
   const plain = [
     { to: '/visas', label: t('nav.visas') },
-    { to: '/jobs/germany', label: t('siteNav.germanyJobs') },
+    { to: '/jobs/germany', label: t('siteNav.germanyJobs'), li: longLabels ? 'hidden 2xl:block' : 'hidden min-[1360px]:block' },
     { to: '/guides', label: t('nav.guides') },
-    { to: '/contact', label: t('nav.contact') },
+    { to: '/contact', label: t('nav.contact'), li: 'hidden' },
   ];
   const audienceItems: { key: Audience; label: string }[] = [
     { key: 'worker', label: t('siteNav.workers') },
@@ -157,7 +163,7 @@ export const Header = () => {
   ];
 
   const navText = 'text-ink hover:text-ink';
-  const itemClass = 'group relative flex h-10 items-center gap-1 rounded-lg px-2 text-[0.9rem] font-semibold whitespace-nowrap transition-colors 2xl:px-4';
+  const itemClass = 'group relative flex h-10 items-center gap-1 rounded-lg px-1.5 text-[0.9rem] font-semibold whitespace-nowrap transition-colors min-[1360px]:px-2';
   const underline = (on: boolean) => (
     <span
       className={clsx(
@@ -177,7 +183,7 @@ export const Header = () => {
           transition={{ duration: 0.3, ease: EASE }}
           className="hidden overflow-hidden bg-navy-950 text-xs text-white/75 lg:block"
         >
-          <div className="container-x flex h-10 items-center justify-between gap-6">
+          <div className="container-x flex h-10 items-center justify-between gap-6 2xl:max-w-[1480px]">
             <div className="flex min-w-0 items-center gap-5">
               {contact && (
                 <>
@@ -194,6 +200,11 @@ export const Header = () => {
               )}
             </div>
             <div className="flex items-center gap-4">
+              {/* Contact page: here rather than in the main bar on desktop (no room there next to the full logo). */}
+              <Link to="/contact" className="flex items-center gap-1.5 whitespace-nowrap hover:text-white">
+                <MessagesSquare className="size-3.5 text-highlight-fg" aria-hidden /> {t('nav.contact')}
+              </Link>
+              <span className="h-4 w-px bg-white/15" />
               {contact && (
                 <a
                   href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`}
@@ -232,7 +243,7 @@ export const Header = () => {
             scrolled && 'shadow-[var(--tv-shadow-card)]',
           )}
         >
-          <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-4 2xl:gap-6">
+          <div className="container-x flex h-16 items-center justify-between gap-3 sm:h-[72px] xl:gap-4 2xl:max-w-[1480px]">
             <Logo shrink />
 
             <nav className="hidden xl:block" aria-label={t('a11y.mainNav')}>
@@ -254,8 +265,20 @@ export const Header = () => {
                     />
                   </li>
                 ))}
+                {/* Tools: the featured tools (admin order) + all tools (components/tools/hub/ToolsMenu). */}
+                <li>
+                  <ToolsMenu
+                    open={menu === 'tools'}
+                    onOpen={() => setMenu('tools')}
+                    onClose={() => setMenu((m) => (m === 'tools' ? null : m))}
+                    active={pathname === '/tools'}
+                    className={clsx(itemClass, navText)}
+                    activeClass="!text-ink"
+                    underline={underline}
+                  />
+                </li>
                 {plain.map((l) => (
-                  <li key={l.to} onMouseEnter={() => setMenu(null)}>
+                  <li key={l.to} className={l.li} onMouseEnter={() => setMenu(null)}>
                     <NavLink to={l.to} className={({ isActive }) => clsx(itemClass, navText, isActive && '!text-ink')}>
                       {({ isActive }) => (
                         <>
@@ -289,18 +312,19 @@ export const Header = () => {
               ) : (
                 <Link
                   to="/login"
+                  title={t('nav.login')}
                   className={clsx(
                     'hidden h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold whitespace-nowrap transition lg:inline-flex',
                     'text-ink hover:bg-sunken',
                   )}
                 >
-                  <LogIn className="size-4" /> {t('nav.login')}
+                  {/* Icon only next to the full desktop nav (the label stays for screen readers). */}
+                  <LogIn className="size-4" aria-hidden /> <span className="xl:sr-only">{t('nav.login')}</span>
                 </Link>
               )}
               <Link to="/booking" className="btn-primary btn-press hidden h-11 px-4 whitespace-nowrap sm:inline-flex">
                 <CalendarCheck className="size-4" aria-hidden />
-                <span className="2xl:hidden">{t('siteNav.bookShort')}</span>
-                <span className="hidden 2xl:inline">{t('siteNav.book')}</span>
+                <span title={t('siteNav.book')}>{t('siteNav.bookShort')}</span>
               </Link>
               <button
                 type="button"
@@ -360,7 +384,12 @@ export const Header = () => {
                     </MobileGroup>
                   </motion.div>
                 ))}
-                {[...plain, { to: '/tools', label: t('siteNav.tools') }].map((l, i) => (
+                <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + audienceItems.length * 0.035 }} className="border-b border-line">
+                  <MobileGroup label={t('siteNav.tools')} open={mobileGroup === 'tools'} onToggle={() => setMobileGroup(mobileGroup === 'tools' ? null : 'tools')}>
+                    <MobileToolsMenu />
+                  </MobileGroup>
+                </motion.div>
+                {plain.map((l, i) => (
                   <motion.div key={l.to} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 + i * 0.035 }} className="border-b border-line">
                     <NavLink to={l.to} className={({ isActive }) => clsx('flex min-h-14 items-center justify-between py-4 font-display text-xl font-semibold', isActive ? 'text-highlight-fg' : 'text-ink')}>
                       {l.label}

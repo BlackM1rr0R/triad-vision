@@ -108,6 +108,7 @@ import { adminOnboardingRouter, adminSaasLeadsRouter } from './saas.js'; // SaaS
 import { adminCourseRouter } from './course.js'; // pre-departure course: builder (ADMIN+), progress report + enroll (STAFF+)
 import { adminCityCostsRouter } from './cityCosts.js'; // first-month budget: city cost table (Sayt → Şəhər xərcləri)
 import { adminLifeRouter } from './life.js'; // Life in Germany: live numbers board toggle, Baku salary reference, CBAR rate
+import { adminDataFreshnessRouter } from './dataFreshness.js'; // data freshness registry: yearly figures, review dates, mark reviewed (ADMIN+)
 import { adminStudyRouter } from './study.js'; // Study in Germany catalogue: CRUD (STAFF+, delete ADMIN+), CSV import / export, application files
 import { adminGermanyJobsRouter } from './germanyJobs.js'; // Adzuna search status, CVs of "apply via Triad Vision" leads
 import { adminExternalApplicationsRouter } from './externalApplications.js'; // apply via Triad Vision: status for the client, Anschreiben
@@ -240,6 +241,7 @@ adminRouter.use('/placement', adminPlacementRouter); // recognition, employer sh
 adminRouter.use('/growth', adminGrowthRouter); // events (Tədbirlər), calculator assumptions, placement map, client referrals
 adminRouter.use('/city-costs', requireMinRole('ADMIN'), adminCityCostsRouter); // first-month budget city costs (ADMIN+, audited)
 adminRouter.use('/life', requireMinRole('ADMIN'), adminLifeRouter); // Life in Germany settings (ADMIN+, audited)
+adminRouter.use('/data-freshness', requireMinRole('ADMIN'), adminDataFreshnessRouter); // data freshness registry (ADMIN+, audited)
 adminRouter.use('/marketing', adminMarketingRouter); // lead scoring, landing pages, cost calculator, origin → destination analytics
 adminRouter.use('/oversight', oversightRouter);
 adminRouter.use('/messaging', adminMessagingRouter);

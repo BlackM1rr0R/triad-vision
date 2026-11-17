@@ -135,7 +135,7 @@ function PrivacyTemplate() {
                   {all.map((s, i) => (
                     <li key={s.id}>
                       <a href={`#${s.id}`} className="flex gap-2 rounded-lg px-2 py-1.5 leading-snug text-muted transition-colors hover:bg-sunken hover:text-ink">
-                        <span className="w-5 shrink-0 text-right tabular-nums">{i + 1}.</span>
+                        <span className="min-w-5 shrink-0 text-right tabular-nums">{i + 1}.</span>
                         <span>{s.title}</span>
                       </a>
                     </li>

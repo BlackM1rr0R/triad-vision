@@ -2,9 +2,10 @@ import { registerJob } from '../lib/scheduler.js';
 import { runGoogleReviewRequests } from '../lib/googleReview/service.js';
 
 /**
- * Google review requests (Admin → Rəylər → Google): once a day, every client whose visa approval (or
- * arrival) is `delayDays` old gets ONE request — or, after a low satisfaction score, a staff task instead.
- * Idempotent through ReminderLog claims; does nothing until the admin turns it on and pastes the link.
+ * Automatic Google review requests (Admin → Rəylər → Google): visa approved / arrival / case closed triggers,
+ * held invites released after a staff follow-up, one reminder after 7 days. Checked a few times a day (only what
+ * is due is sent); idempotent through GoogleReviewInvite.dedupeKey + per-client cooldown. Does nothing until
+ * the admin turns it on and sets the Google link / Place ID.
  */
 registerJob({
   name: 'google-reviews',
@@ -12,6 +13,6 @@ registerJob({
   firstRunAfterMs: 7 * 60 * 1000,
   run: async () => {
     const r = await runGoogleReviewRequests();
-    if (r.sent || r.internal) console.log(`[job:google-reviews] sent=${r.sent} internal=${r.internal} skipped=${r.skipped}`);
+    if (r.sent || r.held || r.released || r.reminded) console.log(`[job:google-reviews] sent=${r.sent} held=${r.held} released=${r.released} reminded=${r.reminded} skipped=${r.skipped}`);
   },
 });

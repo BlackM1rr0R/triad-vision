@@ -42,7 +42,7 @@ const VARS: Record<string, string[]> = {
   salary: ['gfb', 'anp', 'soliFree', 'bbgRv', 'bbgRvMonth', 'bbgKv', 'bbgKvMonth', 'jaeg', 'jaegMonth', 'minijob', 'midijob', 'zusatz', 'zusatzHalf', 'kindergeld', 'gross3000', 'net3000', 'net3000VI', 'diffVI', 'share3000', 'checked'],
   chancenkarte: ['checked'],
   blueCard: ['bbg', 'standard', 'shortage', 'older', 'standardMonth', 'shortageMonth', 'netStandard', 'checked'],
-  cities: ['munich1', 'leipzig1', 'munichSingle', 'berlinSingle', 'leipzigSingle', 'ticket', 'gross', 'year', 'checked', 'net'],
+  cities: ['munich1', 'leipzig1', 'munichSingle', 'berlinSingle', 'leipzigSingle', 'ticket', 'ticketYear', 'gross', 'year', 'checked', 'net'],
 };
 const SLOTS: Record<string, string[]> = { salary: ['examples'], chancenkarte: ['examples'], blueCard: ['history'], cities: ['costs'] };
 

@@ -164,7 +164,7 @@ export default function HealthInsuranceComparisonPage() {
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums">
                             {pct(row.kasse.zb)}
-                            <span className="block text-[11px] text-muted">
+                            <span className="block whitespace-nowrap text-[11px] text-muted">
                               {t('hic.table.rate')}: {pctTrim(row.employeeRate)}
                             </span>
                           </td>

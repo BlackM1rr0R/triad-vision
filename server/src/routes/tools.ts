@@ -8,9 +8,11 @@ import { BEACON_EVENTS } from '../lib/toolAnalytics/compute.js';
 import { recordToolEvent } from '../lib/toolAnalytics/service.js';
 import { isToolSlug, pathMatchesTool, resultPathSchema, summarySchema, toolSlugSchema, verifyLeadToken } from '../lib/toolLeads/tools.js';
 import { confirmLead, createToolLead, findLead, leadView, unsubscribeLead } from '../lib/toolLeads/service.js';
+import { getFeaturedTools } from '../lib/featuredTools.js';
 
 /**
  * Public tool endpoints — mounted at /api/tools:
+ *   GET  /featured                      the "most useful" tools (ordered paths) of /tools and the header menu
  *   POST /track                         cookie-less tool counter { t: slug, e: view | use | register | inquiry |
  *                                       embed_view } (text/plain beacon or JSON). DNT / GPC / bots ignored.
  *   POST /result-email                  "e-mail me my result" { tool, email, name?, phone?, lng, summary[], path?,
@@ -29,6 +31,11 @@ const leadLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 8, skip: () => co
 const tokenLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 40, skip: () => config.isTest });
 
 const noStore = (res: Response) => res.setHeader('Cache-Control', 'no-store, private');
+
+toolsRouter.get('/featured', async (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.json(await getFeaturedTools());
+});
 
 const beaconSchema = z.object({ t: z.string().max(60), e: z.enum(BEACON_EVENTS) });
 

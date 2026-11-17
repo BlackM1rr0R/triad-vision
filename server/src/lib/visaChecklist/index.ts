@@ -343,6 +343,20 @@ export const VISA_FEE = { adult: 75, minor: 37.5 } as const;
 
 const pickLabel = (label: Partial<Record<Lang, string>>, lng: Lang) => label[lng] || label.en || label.de || '';
 
+/**
+ * Categories applied for through the Auslandsportal: the online form there takes the place of the printed VIDEX
+ * form (Baku Merkblatt "Unselbständige Erwerbstätigkeit": application "ausschließlich online über das
+ * Auslandsportal", plus a TLScontact account; checked 2026-11-17). The portal list's VIDEX item is relabelled.
+ */
+const PORTAL_FORM: L6 = l6(
+  'Auslandsportal-da (digital.diplo.de) onlayn ərizə — VIDEX formasını əvəz edir; portalın tələb etdiyini çap edin',
+  'Online-Antrag im Auslandsportal (digital.diplo.de) – ersetzt das VIDEX-Formular; ausdrucken, was das Portal verlangt',
+  'Online application in the Auslandsportal (digital.diplo.de) — replaces the VIDEX form; print what the portal asks for',
+  'Онлайн-заявление в Auslandsportal (digital.diplo.de) — заменяет анкету VIDEX; распечатайте то, что требует портал',
+  'Auslandsportal’da (digital.diplo.de) çevrim içi başvuru — VIDEX formunun yerine geçer; portalın istediklerini yazdırın',
+  'Онлайн-заява в Auslandsportal (digital.diplo.de) — замінює анкету VIDEX; роздрукуйте те, що вимагає портал',
+);
+
 export interface ChecklistEntry {
   key: string;
   label: string;
@@ -352,7 +366,11 @@ export interface ChecklistEntry {
 /** The printable list of one visa type (+ profession) in a language. */
 export const buildChecklist = (settings: CaseAiSettings, type: PublicVisaType, profession: ChecklistProfession, lng: Lang): ChecklistEntry[] => {
   const base: ChecklistItem[] = checklistFor(settings, BASE_TYPE[type]);
-  const out: ChecklistEntry[] = base.map((i) => ({ key: `base.${i.key}`, label: pickLabel(i.label, lng), source: 'portal' }));
+  const out: ChecklistEntry[] = base.map((i) => ({
+    key: `base.${i.key}`,
+    label: i.key === 'videx' && CHANNEL[type] === 'portal' ? PORTAL_FORM[lng] : pickLabel(i.label, lng),
+    source: 'portal',
+  }));
   for (const e of TYPE_EXTRAS[type]) out.push({ key: `type.${e.key}`, label: e.label[lng], source: 'type' });
   if (type !== 'family') for (const e of PROFESSION_EXTRAS[profession]) out.push({ key: `prof.${e.key}`, label: e.label[lng], source: 'profession' });
   for (const e of COMMON_NOTES) out.push({ key: `note.${e.key}`, label: e.label[lng], source: 'note' });

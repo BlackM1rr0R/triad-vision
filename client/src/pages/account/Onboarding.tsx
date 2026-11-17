@@ -221,9 +221,9 @@ export default function Onboarding() {
               <Compass className="size-4" aria-hidden />
               {t('journey.onboarding.caseLabel')} {data.case?.number}
             </span>
-            <h1 id="onboarding-title" className="type-page-title mt-2 text-ink">
+            <h2 id="onboarding-title" className="type-page-title mt-2 text-ink">
               {t('journey.onboarding.title')}
-            </h1>
+            </h2>
             <p className={clsx('mt-1 max-w-[65ch]', active ? 'text-ink/80' : 'text-muted')}>{t('journey.onboarding.subtitle')}</p>
             {active && data.baseDate && <p className="mt-3 text-xs text-muted">{t('journey.onboarding.basedOn', { date: date(data.baseDate) })}</p>}
           </div>

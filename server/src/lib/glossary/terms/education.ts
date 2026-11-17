@@ -172,7 +172,7 @@ export const EDUCATION_TERMS: GlossaryTerm[] = [
     },
     example: 'Für die Blaue Karte habe ich bei der ZAB eine Zeugnisbewertung beantragt.',
     related: ['zeugnisbewertung', 'anabin', 'anerkennung', 'blaue-karte-eu', 'zentrale-auslaenderbehoerde'],
-    link: { url: 'https://www.kmk.org/zab.html', label: 'KMK — ZAB' },
+    link: { url: 'https://www.kmk.org/zab/central-office-for-foreign-education.html', label: 'KMK — ZAB' },
   },
   {
     slug: 'zeugnisbewertung',
@@ -197,7 +197,7 @@ export const EDUCATION_TERMS: GlossaryTerm[] = [
     },
     example: 'Die Botschaft verlangte eine Zeugnisbewertung, weil mein Abschluss nicht in anabin steht.',
     related: ['zab', 'anabin', 'anerkennung', 'blaue-karte-eu'],
-    link: { url: 'https://www.kmk.org/zab.html', label: 'KMK — ZAB' },
+    link: { url: 'https://www.kmk.org/zab/central-office-for-foreign-education.html', label: 'KMK — ZAB' },
   },
   {
     slug: 'anabin',

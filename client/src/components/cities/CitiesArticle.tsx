@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ContentArticle, ContentTable, useContentLocale } from '@/components/seo/ContentArticle';
-import { CITIES, DATA_YEAR, DEUTSCHLANDTICKET, cityBySlug, type Range } from '@/lib/cities/data';
+import { CITIES, DATA_YEAR, DEUTSCHLANDTICKET, DEUTSCHLANDTICKET_YEAR, cityBySlug, type Range } from '@/lib/cities/data';
 import { flatRent, keyFigures } from '@/lib/cities/calc';
 import { calculateSalary, DEFAULT_INPUT, FEDERAL_STATES, STATE_NAMES, type FederalState } from '@/lib/salary';
 import { citiesContent } from '@/lib/seoContent/cities';
@@ -32,6 +32,7 @@ export const CitiesArticle = () => {
       berlinSingle: single('berlin'),
       leipzigSingle: single('leipzig'),
       ticket: formatEuro(DEUTSCHLANDTICKET, lng),
+      ticketYear: String(DEUTSCHLANDTICKET_YEAR),
       gross: formatEuro(CITY_EXAMPLE_GROSS, lng),
       year: String(DATA_YEAR),
       checked: MONTH_YEAR[lng](CONTENT_CHECKED.month, CONTENT_CHECKED.year),

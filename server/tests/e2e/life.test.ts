@@ -8,6 +8,7 @@ import { uniq } from '../helpers/factories';
 import { CBAR_SETTING_KEY, bakuDay, setCbarFetch } from '../../src/lib/life/cbar.js';
 import { clearLiveNumbersCache } from '../../src/lib/life/liveNumbers.js';
 import { clearLifeSalaryCache } from '../../src/lib/life/service.js';
+import { deutschlandticketAt } from '../../src/lib/budget/params.js';
 
 /**
  * "Life in Germany": CBAR EUR→AZN rate (server-side fetch at most daily, stored in Setting, last known rate as
@@ -86,7 +87,7 @@ describe('simulator', () => {
     expect(c.professions.map((p: { key: string }) => p.key)).toEqual(['driver', 'care', 'construction', 'technical', 'hospitality', 'it', 'logistics']);
     expect(c.professions[0]).toMatchObject({ key: 'driver', grossMin: 2800, grossMax: 3600, gross: 3200, source: 'reference' });
     expect(c.cities.some((x: { slug: string }) => x.slug === 'berlin')).toBe(true);
-    expect(c.params).toMatchObject({ deutschlandticket: 63, kindergeld: 259 });
+    expect(c.params).toMatchObject({ deutschlandticket: deutschlandticketAt(), kindergeld: 259 });
     expect(c.baku).toMatchObject({ enabled: true, nationalAverage: { grossAzn: 1102.9, year: 2025 } });
     expect(c.rate).toMatchObject({ rate: 1.8805 });
   });

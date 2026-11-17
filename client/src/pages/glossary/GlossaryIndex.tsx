@@ -190,7 +190,10 @@ export default function GlossaryIndex() {
                 <h2 id={`letter-h-${l}`} className="font-display text-2xl font-semibold text-ink">
                   {l}
                 </h2>
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {/* content-visibility: letters below the screen skip style / layout / paint until scrolled near
+                    (200 cards in the server markup); still found by in-page search, the heading stays the anchor. The
+                    padding (cancelled by the negative margins) keeps card shadows and focus rings clear of the paint clip. */}
+                <ul className="-mx-3 mt-3 -mb-5 grid gap-3 px-3 pb-5 [contain-intrinsic-size:auto_40rem] [content-visibility:auto] sm:grid-cols-2 xl:grid-cols-3">
                   {list.map((i) => (
                     <TermCard key={i.slug} item={i} />
                   ))}

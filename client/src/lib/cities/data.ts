@@ -1,4 +1,5 @@
 import type { Locale } from '@/i18n';
+import { DEUTSCHLANDTICKET_STEPS, deutschlandticketAt, stepAt } from '../../../../server/src/lib/budget/params';
 
 /**
  * German city profiles for the public city guide (/cities) and the cost calculator.
@@ -58,8 +59,13 @@ export interface City {
 
 const same = (s: string): L4 => ({ az: s, de: s, en: s, ru: s });
 
-/** Deutschlandticket price per month in 2026 (raised from 58 € to 63 € on 1 January 2026). */
-export const DEUTSCHLANDTICKET = 63;
+/**
+ * Deutschlandticket price per month on the day the page loads: 63 € in 2026, 66.80 € from 1 January 2027
+ * (one dated table for site and server: DEUTSCHLANDTICKET_STEPS in server/src/lib/budget/params.ts).
+ */
+export const DEUTSCHLANDTICKET = deutschlandticketAt();
+/** Year of the Deutschlandticket price above (shown next to it). */
+export const DEUTSCHLANDTICKET_YEAR = Number(stepAt(DEUTSCHLANDTICKET_STEPS).from.slice(0, 4));
 /** Broadcasting fee per household per month (unchanged at 18.36 € at the time of writing). */
 export const RUNDFUNK = 18.36;
 /** Child benefit per child per month in 2026. */

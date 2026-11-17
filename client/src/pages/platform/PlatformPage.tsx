@@ -6,7 +6,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { ScreenTour } from '@/components/platform/ScreenTour';
 import { DemoRequestForm, INTERESTS } from '@/components/platform/DemoRequestForm';
-import { MODULE_KEYS } from '@/components/command/navRegistry';
+import { MODULE_KEYS } from '@/components/command/moduleKeys';
 import { registerCopy } from '@/i18n';
 import { pagesPlatform } from '@/i18n/pagesPlatform';
 import { adminNavCopy } from '@/i18n/adminNav';

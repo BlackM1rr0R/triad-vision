@@ -77,6 +77,6 @@ export const RESIDENCE_CARD_SOURCES = [
   { key: 'aufenthv45', url: 'https://www.gesetze-im-internet.de/aufenthv/__45.html' },
   { key: 'aufenthv45c', url: 'https://www.gesetze-im-internet.de/aufenthv/__45c.html' },
   { key: 'aufenthv47', url: 'https://www.gesetze-im-internet.de/aufenthv/__47.html' },
-  { key: 'bamf', url: 'https://www.bamf.de/SharedDocs/Anlagen/EN/MigrationAufenthalt/ElektronischerAufenthalt/broschuere-eat-a4-en.html' },
-  { key: 'bmi', url: 'https://marl.de/fileadmin/user_upload/Virtuelles_Rathaus/Amt_33/2026_01_09_Broschuere_zum_elektronischen_Aufenthaltstitel.pdf' },
+  { key: 'bamf', url: 'https://www.bamf.de/DE/Themen/MigrationAufenthalt/ZuwandererDrittstaaten/Migrathek/eAufenthaltstitel/eaufenthaltstitel-node.html' },
+  { key: 'bmi', url: 'https://www.bamf.de/SharedDocs/Anlagen/DE/MigrationAufenthalt/ElektronischerAufenthalt/flyer-eat-lang.html' },
 ] as const;

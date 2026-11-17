@@ -417,7 +417,7 @@ export default function German() {
               <GraduationCap className="size-4" aria-hidden />
               Deutsch
             </span>
-            <h1 id="german-title" className="type-page-title mt-2">{t('journey.german.title')}</h1>
+            <h2 id="german-title" className="type-page-title mt-2">{t('journey.german.title')}</h2>
             <p className="mt-1 max-w-[65ch] text-muted">{t('journey.german.subtitle')}</p>
           </div>
           <dl className="grid grid-cols-2 gap-3 text-sm">

@@ -27,7 +27,7 @@ export const tr: ApartmentCopy = {
       bmg17: '§ 17 BMG (2 hafta içinde Anmeldung)',
       bmg19: '§ 19 BMG (Wohnungsgeberbestätigung)',
       tkg56: '§ 56 TKG (sözleşme süresi, fesih)',
-      verpackg31: '§ 31 VerpackG (tek kullanımlık şişelerde Pfand)',
+      verpackg31: '§ 46 VerpackDG (tek kullanımlık şişelerde Pfand)',
       rundfunk: 'Rundfunkbeitrag (ARD ZDF Deutschlandradio Beitragsservice)',
       heating: 'Verbraucherzentrale NRW: ısınma',
     },

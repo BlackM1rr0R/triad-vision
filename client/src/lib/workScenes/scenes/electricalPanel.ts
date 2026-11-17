@@ -5,7 +5,7 @@ import type { WorkScene } from '../types';
  * components/workScenes/illustrations/ElectricalPanel (viewBox 1000 × 640).
  * Facts as of 2026-11-16: the five safety rules (DIN VDE 0105-100; DGUV Information 203-001), who may work on
  * electrical installations (DGUV Vorschrift 3 § 3: Elektrofachkraft, or under its direction and supervision), RCD
- * test-button intervals (DGUV Vorschrift 3, implementation instructions, table 1B), voltage testers (two-pole,
+ * test-button intervals (DGUV Vorschrift 3, implementation instructions, table 1A), voltage testers (two-pole,
  * DIN EN 61243-3; single-pole phase testers not permitted for proving absence of voltage — BG ETEM), conductor
  * colours (DIN EN IEC 60445, DIN VDE 0100-510), 30 mA RCD for sockets up to 32 A (DIN VDE 0100-410), protection
  * classes (DIN EN 61140), IP code (DIN EN 60529 / IEC 60529), meter area / seals (NAV § 13).
@@ -142,12 +142,12 @@ export const ELECTRICAL_PANEL: WorkScene = {
         uk: 'Порівнює струм туди й назад: якщо частина йде витоком (наприклад, через людину в землю), вимикає за частки секунди. Коротко — «FI» або «FI-Schalter».',
       },
       safety: {
-        az: '32 A-ə qədər rozetkalar üçün 30 mA-lik RCD əlavə qoruma kimi tələb olunur (DIN VDE 0100-410). „T“ test düyməsini müntəzəm basın: stasionar qurğularda adətən 6 ayda bir, tikinti meydançasında hər iş günü (DGUV Vorschrift 3, cədvəl 1B).',
-        de: 'Für Steckdosen bis 32 A ist ein FI mit 30 mA als zusätzlicher Schutz Pflicht (DIN VDE 0100-410). Prüftaste „T“ regelmäßig drücken: in ortsfesten Anlagen halbjährlich, auf Baustellen arbeitstäglich (DGUV Vorschrift 3, Tabelle 1B).',
-        en: 'Sockets up to 32 A need a 30 mA RCD as additional protection (DIN VDE 0100-410). Press the test button "T" regularly: every six months in fixed installations, every working day on construction sites (DGUV Vorschrift 3, table 1B).',
-        ru: 'Для розеток до 32 А обязательно УЗО на 30 мА как дополнительная защита (DIN VDE 0100-410). Кнопку «T» нажимайте регулярно: в стационарных установках раз в полгода, на стройке — каждый рабочий день (DGUV Vorschrift 3, таблица 1B).',
-        tr: '32 A\'ya kadar prizler için ek koruma olarak 30 mA RCD zorunludur (DIN VDE 0100-410). „T“ test düğmesine düzenli basın: sabit tesislerde altı ayda bir, şantiyede her iş günü (DGUV Vorschrift 3, tablo 1B).',
-        uk: 'Для розеток до 32 А обов’язковий ПЗВ на 30 мА як додатковий захист (DIN VDE 0100-410). Кнопку «T» натискайте регулярно: у стаціонарних установках раз на пів року, на будівництві — щодня (DGUV Vorschrift 3, таблиця 1B).',
+        az: '32 A-ə qədər rozetkalar üçün 30 mA-lik RCD əlavə qoruma kimi tələb olunur (DIN VDE 0100-410). „T“ test düyməsini müntəzəm basın: stasionar qurğularda adətən 6 ayda bir, tikinti meydançasında hər iş günü (DGUV Vorschrift 3, cədvəl 1A).',
+        de: 'Für Steckdosen bis 32 A ist ein FI mit 30 mA als zusätzlicher Schutz Pflicht (DIN VDE 0100-410). Prüftaste „T“ regelmäßig drücken: in ortsfesten Anlagen halbjährlich, auf Baustellen arbeitstäglich (DGUV Vorschrift 3, Tabelle 1A).',
+        en: 'Sockets up to 32 A need a 30 mA RCD as additional protection (DIN VDE 0100-410). Press the test button "T" regularly: every six months in fixed installations, every working day on construction sites (DGUV Vorschrift 3, table 1A).',
+        ru: 'Для розеток до 32 А обязательно УЗО на 30 мА как дополнительная защита (DIN VDE 0100-410). Кнопку «T» нажимайте регулярно: в стационарных установках раз в полгода, на стройке — каждый рабочий день (DGUV Vorschrift 3, таблица 1A).',
+        tr: '32 A\'ya kadar prizler için ek koruma olarak 30 mA RCD zorunludur (DIN VDE 0100-410). „T“ test düğmesine düzenli basın: sabit tesislerde altı ayda bir, şantiyede her iş günü (DGUV Vorschrift 3, tablo 1A).',
+        uk: 'Для розеток до 32 А обов’язковий ПЗВ на 30 мА як додатковий захист (DIN VDE 0100-410). Кнопку «T» натискайте регулярно: у стаціонарних установках раз на пів року, на будівництві — щодня (DGUV Vorschrift 3, таблиця 1A).',
       },
       mistake: {
         az: 'Tez-tez açılan RCD-ni dəfələrlə yenidən yandırmaq və ya körpü ilə keçmək — səbəb (nəm, zədəli kabel, nasaz cihaz) tapılmalıdır.',

@@ -62,3 +62,4 @@ import './toolLeads.js'; // 'e-mail me my result': one follow-up 3 days after a 
 import './germanyJobs.js'; // Germany job search: free Arbeitnow feed refreshed at most hourly (in memory + small file cache)
 import './backupCheck.js'; // weekly backup restore test result (deploy/backup-verify.sh -> Setting ops:backupCheck) -> admin notification + e-mail, stale warning
 import './realSalaries.js'; // real salary database: new public snapshot once per Baku month (ranges of groups with >= 3 workers)
+import './dataFreshness.js'; // daily: data freshness registry — admin reminder 30 days before and on each review due date

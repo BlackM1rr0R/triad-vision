@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -31,12 +31,18 @@ import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Lost, SearchEmpty } from '@/components/illustrations';
 import { useJobLabels } from '@/components/jobs/labels';
-import { ApplyDialog, type ExternalListing } from '@/components/germanyJobs/ApplyDialog';
+import type { ExternalListing } from '@/components/germanyJobs/ApplyDialog';
 import { AlertDialog } from '@/components/germanyJobs/AlertDialog';
 import { SaveJobButton } from '@/components/germanyJobs/SaveJobButton';
 import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
 import { useAuth } from '@/lib/auth';
 import { pagesGermanyJobAlerts } from '@/i18n/pagesGermanyJobAlerts';
+import { afterLoad } from '@/lib/idle';
+
+// "Apply via Triad Vision" dialog: own chunk (its form, the CV picker and their copy, ~70 KB), fetched once the
+// page has loaded so it still opens at once, and mounted from the first time a listing is chosen.
+const loadApplyDialog = () => import('@/components/germanyJobs/ApplyDialog');
+const ApplyDialog = lazy(() => loadApplyDialog().then((m) => ({ default: m.ApplyDialog })));
 
 registerCopy(pagesJobs);
 registerCopy(pagesGermanyJobs);
@@ -94,6 +100,11 @@ export default function GermanyJobs() {
   const search = useMemo(() => searchFromParams(params), [params]);
   const [form, setForm] = useState<GermanyJobSearch>(search);
   const [listing, setListing] = useState<ExternalListing | null>(null);
+  const [applyMounted, setApplyMounted] = useState(false);
+  useEffect(() => {
+    if (listing) setApplyMounted(true);
+  }, [listing]);
+  useEffect(() => afterLoad(() => void loadApplyDialog().catch(() => undefined)), []);
   const [pasted, setPasted] = useState('');
   const [pastedTouched, setPastedTouched] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -500,7 +511,11 @@ export default function GermanyJobs() {
         </div>
       </section>
 
-      <ApplyDialog listing={listing} onClose={() => setListing(null)} />
+      {(applyMounted || listing) && (
+        <Suspense fallback={null}>
+          <ApplyDialog listing={listing} onClose={() => setListing(null)} />
+        </Suspense>
+      )}
       <AlertDialog search={search} open={alertOpen} onClose={() => setAlertOpen(false)} />
     </>
   );

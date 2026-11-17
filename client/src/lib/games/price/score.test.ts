@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PRICE_ITEMS } from './items';
+import { DEUTSCHLANDTICKET } from '@/lib/cities/data';
+import { minimumWageAt } from '../../../../../server/src/lib/budget/params';
 import { MAX_POINTS, ROUNDS, buildRounds, parseSeed, pointsFor, verdictFor } from './score';
 
 describe('price game data', () => {
@@ -13,10 +15,11 @@ describe('price game data', () => {
     }
   });
 
-  it('keeps the official amounts of 2026', () => {
+  it('keeps the official amounts (dated: 2026 / 2027)', () => {
     const p = (id: string) => PRICE_ITEMS.find((i) => i.id === id)?.price;
-    expect(p('dticket')).toBe(63);
-    expect(p('minWage')).toBe(13.9);
+    expect(p('dticket')).toBe(DEUTSCHLANDTICKET);
+    expect(p('minWage')).toBe(minimumWageAt());
+    expect([13.9, 14.6]).toContain(p('minWage'));
     expect(p('rundfunk')).toBe(18.36);
     expect(p('rentMunich')!).toBeGreaterThan(p('rentLeipzig')!);
   });

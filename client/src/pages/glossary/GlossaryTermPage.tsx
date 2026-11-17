@@ -9,7 +9,7 @@ import { pagesGlossary } from '@/i18n/pagesGlossary';
 import { worldCopy } from '@/i18n/world';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { PageCta } from '@/components/visa/PageCta';
-import { ListenButton } from '@/components/world/PhraseOfDay';
+import { ListenButton } from '@/components/world/ListenButton';
 import { useWorldLang } from '@/components/world/locale';
 import { withArticle, type GlossaryDetailResponse } from '@/lib/glossary';
 import NotFound from '../NotFound';

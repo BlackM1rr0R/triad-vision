@@ -21,7 +21,7 @@ export const CONSTRUCTION_SITE: WorkScene = {
     { label: 'BAuA – ASR A2.1 Schutz vor Absturz und herabfallenden Gegenständen', url: 'https://www.baua.de/DE/Angebote/Regelwerk/ASR/ASR-A2-1' },
     { label: 'BG BAU – Die neue TRBS 2121-2 (Leitern)', url: 'https://www.bgbau.de/fileadmin/user_upload/Die_neue_TRBS_2121-2.pdf' },
     { label: 'LärmVibrationsArbSchV § 6 – Auslösewerte Lärm', url: 'https://www.gesetze-im-internet.de/l_rmvibrationsarbschv/__6.html' },
-    { label: 'DGUV Vorschrift 1 – Erste Hilfe, Ersthelfer, Verbandbuch', url: 'https://publikationen.dguv.de/regelwerk/dguv-vorschriften/2909/grundsaetze-der-praevention' },
+    { label: 'DGUV Vorschrift 1 – Erste Hilfe, Ersthelfer, Verbandbuch', url: 'https://publikationen.dguv.de/regelwerk/dguv-vorschriften/2909/dguv-vorschrift-1' },
     { label: 'BaustellV § 2 – Vorankündigung', url: 'https://www.gesetze-im-internet.de/baustellv/__2.html' },
     { label: 'BAuA – ASR A1.3 Sicherheitskennzeichnung (Handzeichen)', url: 'https://www.baua.de/DE/Angebote/Regelwerk/ASR/ASR-A1-3' },
     { label: 'BAuA – TRGS 559 Quarzhaltiger Staub', url: 'https://www.baua.de/DE/Angebote/Regelwerk/TRGS/pdf/TRGS-559.pdf?__blob=publicationFile' },

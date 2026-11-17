@@ -30,7 +30,7 @@ export const OnboardingBanner = () => {
   return (
     <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-primary/5 px-4 py-3 text-sm text-ink">
       <Rocket className="size-4 shrink-0 text-link" aria-hidden />
-      <p className="min-w-0 flex-1">{t('onb.banner.text', { percent: data.percent })}</p>
+      <p className="min-w-[12rem] flex-1">{t('onb.banner.text', { percent: data.percent })}</p>
       <Link to="/admin/system/onboarding" className="shrink-0 font-semibold text-link underline underline-offset-2">
         {t('onb.banner.cta')}
       </Link>

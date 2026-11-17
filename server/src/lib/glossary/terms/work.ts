@@ -670,7 +670,7 @@ export const WORK_TERMS: GlossaryTerm[] = [
     article: 'das',
     pron: 'BYR-ger-gelt',
     category: 'work',
-    aliases: ['Grundsicherung', 'Hartz IV'],
+    aliases: ['Grundsicherung', 'Grundsicherungsgeld', 'Hartz IV'],
     short: {
       az: "Bürgergeld — işləyə bilən, lakin dolanışığa kifayət qədər gəliri olmayanlara Jobcenter-in ödədiyi əsas sosial təminat.",
       de: "Grundsicherung für Arbeitsuchende, die das Jobcenter erwerbsfähigen Menschen ohne ausreichendes Einkommen zahlt.",
@@ -680,10 +680,10 @@ export const WORK_TERMS: GlossaryTerm[] = [
       uk: "Базове забезпечення від Jobcenter для працездатних людей, яким не вистачає доходу на життя.",
     },
     long: {
-      az: "Bürgergeld (əvvəllər Hartz IV) gündəlik ehtiyaclar üçün sabit məbləği və uyğun mənzil xərclərini əhatə edir; əvvəlki töhfələrdən asılı deyil. Hökumət onu yeni 'Grundsicherung'-a çevirmək üçün islahat elan edib — cari qaydaları Jobcenter-dən yoxlayın. Əcnəbilər üçün: sosial yardım almaq yaşayış icazəsinin uzadılmasına mane ola bilər.",
-      de: "Bürgergeld (früher Hartz IV) deckt einen Regelbedarf und angemessene Wohnkosten und hängt nicht von früheren Beiträgen ab. Die Bundesregierung hat eine Reform zu einer neuen Grundsicherung angekündigt — den aktuellen Stand erfahren Sie beim Jobcenter. Für Ausländer gilt: Der Bezug kann die Verlängerung des Aufenthaltstitels gefährden.",
-      en: "Bürgergeld (formerly Hartz IV) covers a standard allowance and reasonable housing costs and does not depend on past contributions. The federal government has announced a reform into a new 'Grundsicherung' — ask the Jobcenter for the current rules. For foreign nationals, receiving it can put a residence permit extension at risk.",
-      ru: "Bürgergeld (ранее Hartz IV) покрывает базовую ставку и разумные расходы на жильё и не зависит от прежних взносов. Правительство объявило реформу в новую «Grundsicherung» — актуальные правила уточняйте в Jobcenter. Для иностранцев получение пособия может помешать продлению вида на жительство.",
+      az: "Bürgergeld (əvvəllər Hartz IV) gündəlik ehtiyaclar üçün sabit məbləği və uyğun mənzil xərclərini əhatə edir; əvvəlki töhfələrdən asılı deyil. 1 iyul 2026-cı ildən islahat mərhələlərlə qüvvəyə minib və pul ödənişi 'Grundsicherungsgeld' adlanır (BGBl. 2026 I Nr. 107) — cari qaydaları Jobcenter-dən yoxlayın. Əcnəbilər üçün: sosial yardım almaq yaşayış icazəsinin uzadılmasına mane ola bilər.",
+      de: "Bürgergeld (früher Hartz IV) deckt einen Regelbedarf und angemessene Wohnkosten und hängt nicht von früheren Beiträgen ab. Seit 1. Juli 2026 tritt die Reform zur neuen Grundsicherung schrittweise in Kraft; die Geldleistung heißt jetzt „Grundsicherungsgeld“ (BGBl. 2026 I Nr. 107) — Einzelheiten erfahren Sie beim Jobcenter. Für Ausländer gilt: Der Bezug kann die Verlängerung des Aufenthaltstitels gefährden.",
+      en: "Bürgergeld (formerly Hartz IV) covers a standard allowance and reasonable housing costs and does not depend on past contributions. Since 1 July 2026 the reform into a new 'Grundsicherung' has been coming into force in stages, and the cash benefit is now called 'Grundsicherungsgeld' (BGBl. 2026 I No. 107) — ask the Jobcenter for details. For foreign nationals, receiving it can put a residence permit extension at risk.",
+      ru: "Bürgergeld (ранее Hartz IV) покрывает базовую ставку и разумные расходы на жильё и не зависит от прежних взносов. С 1 июля 2026 года реформа в новую «Grundsicherung» поэтапно вступает в силу, а выплата теперь называется «Grundsicherungsgeld» (BGBl. 2026 I Nr. 107) — подробности уточняйте в Jobcenter. Для иностранцев получение пособия может помешать продлению вида на жительство.",
     },
     example: "Wer Bürgergeld bezieht, muss Termine beim Jobcenter wahrnehmen.",
     related: ['jobcenter', 'arbeitslosengeld', 'wohngeld', 'aufenthaltserlaubnis'],

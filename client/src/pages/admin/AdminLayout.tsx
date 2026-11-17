@@ -577,8 +577,9 @@ export default function AdminLayout() {
           >
             {collapsed ? <PanelLeftOpen className="size-[18px]" aria-hidden /> : <PanelLeftClose className="size-[18px]" aria-hidden />}
           </button>
+          {/* Phones: no room for the title between the menu button and the icons (it truncated to one letter); the page heading shows it. */}
           <nav aria-label={t('ui.breadcrumb')} className="min-w-0 flex-1 pl-1 lg:pl-0">
-            <ol className="flex min-w-0 items-center gap-1.5 text-[13px]">
+            <ol className="hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex">
               {crumbs.map((c) => (
                 <li key={c} className="hidden min-w-0 items-center gap-1.5 text-muted sm:flex">
                   <span className="truncate">{c}</span>

@@ -128,37 +128,9 @@ export const NAV_GROUPS: { key: NavGroupKey; icon: LucideIcon }[] = [
 
 // ─── Modules (System → Modules, SUPER_ADMIN) ───────────────────────────
 
-/** Same keys as server lib/navModules.ts (MODULE_KEYS). Labels: anav.modules.<key>.title / .desc. */
-export const MODULE_KEYS = [
-  'campaigns',
-  'liveChat',
-  'calls',
-  'landingPages',
-  'events',
-  'referrals',
-  'agents',
-  'training',
-  'shifts',
-  'waitingRoom',
-  'aiAssistant',
-  'settlements',
-  'originals',
-  'surveys',
-  'reviews',
-  'announcements',
-  'interviewPrep',
-  'translations',
-  'timeTracking',
-  'kpi',
-  'examDates',
-  'journey',
-  'bookings',
-  'knowledgeBase',
-  'quotes',
-  'checkIns',
-  'guides',
-] as const;
-export type ModuleKey = (typeof MODULE_KEYS)[number];
+// MODULE_KEYS / ModuleKey live in ./moduleKeys.ts (the public /platform page imports them without this registry).
+import { MODULE_KEYS, type ModuleKey } from './moduleKeys';
+export { MODULE_KEYS, type ModuleKey };
 export type ModuleFlags = Partial<Record<ModuleKey, boolean>>;
 
 /** A module is on unless it was switched off explicitly (unknown / not loaded yet = on). */
@@ -316,6 +288,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('contractTemplates', '/admin/contract-templates', FileText, 'site', { adminOnly: true }),
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
   a('cityCosts', '/admin/city-costs', Banknote, 'site', { adminOnly: true }), // first-month budget: city cost table (ADMIN+)
+  a('dataFreshness', '/admin/data-freshness', CalendarClock, 'site', { adminOnly: true }), // data freshness registry: yearly figures, review dates (ADMIN+)
   a('landingPages', '/admin/landing-pages', PanelsTopLeft, 'site', { module: 'landingPages' }),
   a('leadMagnets', '/admin/lead-magnets', BookOpen, 'site', { adminOnly: true, module: 'landingPages' }), // e-book lead magnets
   a('guides', '/admin/guides', BookOpen, 'site', { adminOnly: true, module: 'guides' }), // SEO topic guides (6 languages)
@@ -407,7 +380,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   {
     key: 'site',
     icon: Globe,
-    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts'],
+    tabs: ['services', 'visaCategories', 'partners', 'visaSamples', 'testimonials', 'stats', 'faqs', 'posts', 'landingPages', 'leadMagnets', 'guides', 'studyProgrammes', 'searchPerformance', 'toolAnalytics', 'docGuides', 'events', 'siteTools', 'cityCosts', 'dataFreshness'],
   },
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },

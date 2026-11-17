@@ -59,7 +59,7 @@ export const de: ResidenceCardCopy = {
       aufenthv45c: '§ 45c AufenthV (neue Karte)',
       aufenthv47: '§ 47 AufenthV (Fiktionsbescheinigung)',
       aufenthg18g: '§ 18g AufenthG (Blaue Karte EU)',
-      bamf: 'BAMF-Broschüre „Der elektronische Aufenthaltstitel“',
+      bamf: 'BAMF-Seite „Der elektronische Aufenthaltstitel“',
       bmi: 'BMI-Flyer: der eAT als Online-Ausweis',
     },
     glossaryTitle: 'Begriffe auf dieser Seite',

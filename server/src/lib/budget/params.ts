@@ -20,7 +20,8 @@
  *  - Church tax 8 % (Bavaria, Baden-Württemberg) / 9 % (other states) of the income tax.
  *
  * Cost sources / assumptions (orientation values, conservative, checked 2026-10):
- *  - Deutschlandticket 63 €/month since 01.01.2026 (decision of the transport ministers' conference, 09/2025).
+ *  - Deutschlandticket 63 €/month since 01.01.2026 (decision of the transport ministers' conference, 09/2025);
+ *    66.80 € from 01.01.2027 (price index decided by the VMK, announced 30.09.2026) — DEUTSCHLANDTICKET_STEPS below.
  *  - Rundfunkbeitrag 18.36 €/month per flat (Rundfunkbeitragsstaatsvertrag; billed quarterly, 55.08 €).
  *  - Kindergeld 259 € per child and month in 2026 (§66 EStG).
  *  - Rent deposit: at most 3 net cold rents (§551 BGB); city rents and food: CityCost table (admin-editable).
@@ -141,6 +142,43 @@ export interface BudgetParams {
   costs: CostParams;
 }
 
+/**
+ * Figures with an already decided next value switch by date, so a 1 January change needs no deploy.
+ * Each step applies from its `from` day (ISO, compared with the UTC calendar day). Listed in the data-freshness
+ * registry (lib/dataFreshness/registry.ts), which reminds admins to re-check them.
+ */
+export interface DatedStep {
+  from: string;
+  value: number;
+}
+/** Statutory minimum wage, € gross per hour: 13.90 € (2026), 14.60 € from 1.1.2027 (MiLoV5, BGBl. 2025 I Nr. 268). */
+export const MINIMUM_WAGE_STEPS: readonly DatedStep[] = [
+  { from: '2026-01-01', value: 13.9 },
+  { from: '2027-01-01', value: 14.6 },
+];
+/** Deutschlandticket, € per month: 63 € (2026), 66.80 € from 1.1.2027 (transport ministers' conference, announced 30.09.2026). */
+export const DEUTSCHLANDTICKET_STEPS: readonly DatedStep[] = [
+  { from: '2026-01-01', value: 63 },
+  { from: '2027-01-01', value: 66.8 },
+];
+const isoDay = (at: Date | string) => (typeof at === 'string' ? at.slice(0, 10) : at.toISOString().slice(0, 10));
+/** The value of the last step that started on or before `at` (the first step before any of them). */
+export const stepValueAt = (steps: readonly DatedStep[], at: Date | string = new Date()) => {
+  const day = isoDay(at);
+  let v = steps[0].value;
+  for (const s of steps) if (s.from <= day) v = s.value;
+  return v;
+};
+/** The step in force on `at` (value + its start day). */
+export const stepAt = (steps: readonly DatedStep[], at: Date | string = new Date()): DatedStep => {
+  const day = isoDay(at);
+  let cur = steps[0];
+  for (const s of steps) if (s.from <= day) cur = s;
+  return cur;
+};
+export const minimumWageAt = (at: Date | string = new Date()) => stepValueAt(MINIMUM_WAGE_STEPS, at);
+export const deutschlandticketAt = (at: Date | string = new Date()) => stepValueAt(DEUTSCHLANDTICKET_STEPS, at);
+
 export const BUDGET_PARAMS_2026: BudgetParams = {
   year: 2026,
   checkedAt: '2026-10-26',
@@ -191,7 +229,10 @@ export const BUDGET_PARAMS_2026: BudgetParams = {
     minijobPensionEmployee: 0.036,
   },
   costs: {
-    deutschlandticket: 63,
+    /** Price on the day it is read (63 € in 2026, 66.80 € from 1.1.2027): a getter, so a running server switches too. */
+    get deutschlandticket() {
+      return deutschlandticketAt();
+    },
     rundfunkMonthly: 18.36,
     kindergeld: 259,
     liabilityYear: { single: [45, 90], household: [60, 120] },

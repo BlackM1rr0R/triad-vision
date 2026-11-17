@@ -63,6 +63,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'real-salaries', // /real-salaries: monthly snapshot of salary ranges (groups >= 3 workers only), the same for everyone
   'visa-checklist', // /visa-document-checklist: the public document list per visa type + profession (GET /visa-checklist), the same for everyone
   'public-quarterly-reports', // /reports: published quarterly reports (titles + headline figure k ≥ 3), the same for everyone
+  'tools-featured', // /tools: the admin-ordered "most useful" tools (GET /tools/featured), the same for everyone
 ]);
 
 export interface RenderResult {

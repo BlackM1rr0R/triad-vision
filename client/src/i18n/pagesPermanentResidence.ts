@@ -65,7 +65,7 @@ const az = {
       title: 'Nə dəyişib?',
       items: [
         '27.06.2024: vətəndaşlıq üçün 8 il əvəzinə 5 il; ikili vətəndaşlıq mümkün oldu.',
-        'Oktyabr 2025: 3 illik “sürətli” vətəndaşlıq (xüsusi inteqrasiya) ləğv edildi — indi hamı üçün 5 il.',
+        '30.10.2025: 3 illik “sürətli” vətəndaşlıq (xüsusi inteqrasiya) ləğv edildi — indi hamı üçün 5 il.',
         '18.11.2023-dən: Mavi Kart sahibləri üçün 27 ay (B1 ilə 21 ay), mütəxəssislər üçün 3 il (Almaniyada təhsil alanlar üçün 2 il).',
       ],
     },
@@ -150,7 +150,7 @@ const de: Copy = {
       title: 'Was hat sich geändert?',
       items: [
         '27.06.2024: Einbürgerung nach 5 statt 8 Jahren; Mehrstaatigkeit erlaubt.',
-        'Oktober 2025: Die „Turbo-Einbürgerung“ nach 3 Jahren (besondere Integration) wurde gestrichen – jetzt gelten für alle 5 Jahre.',
+        '30.10.2025: Die „Turbo-Einbürgerung“ nach 3 Jahren (besondere Integration) wurde gestrichen – jetzt gelten für alle 5 Jahre.',
         'Seit 18.11.2023: Blaue Karte 27 Monate (mit B1 21 Monate), Fachkräfte 3 Jahre (nach Ausbildung/Studium in Deutschland 2 Jahre).',
       ],
     },
@@ -233,7 +233,7 @@ const en: Copy = {
       title: 'What has changed?',
       items: [
         '27.06.2024: citizenship after 5 instead of 8 years; dual citizenship allowed.',
-        'October 2025: the 3-year “fast-track” citizenship (special integration) was abolished — 5 years now apply to everyone.',
+        '30.10.2025: the 3-year “fast-track” citizenship (special integration) was abolished — 5 years now apply to everyone.',
         'Since 18.11.2023: Blue Card 27 months (21 with B1), skilled workers 3 years (2 after an Ausbildung / degree in Germany).',
       ],
     },
@@ -316,7 +316,7 @@ const ru: Copy = {
       title: 'Что изменилось?',
       items: [
         '27.06.2024: гражданство через 5 лет вместо 8; двойное гражданство разрешено.',
-        'Октябрь 2025: «ускоренное» гражданство через 3 года (особая интеграция) отменено — теперь для всех 5 лет.',
+        '30.10.2025: «ускоренное» гражданство через 3 года (особая интеграция) отменено — теперь для всех 5 лет.',
         'С 18.11.2023: Голубая карта — 27 месяцев (с B1 — 21), специалисты — 3 года (после учёбы в Германии — 2 года).',
       ],
     },
@@ -399,7 +399,7 @@ const tr: Copy = {
       title: 'Neler değişti?',
       items: [
         '27.06.2024: vatandaşlık 8 yerine 5 yıl sonra; çifte vatandaşlık serbest.',
-        'Ekim 2025: 3 yıllık “hızlı” vatandaşlık (özel uyum) kaldırıldı — artık herkes için 5 yıl.',
+        '30.10.2025: 3 yıllık “hızlı” vatandaşlık (özel uyum) kaldırıldı — artık herkes için 5 yıl.',
         '18.11.2023’ten beri: Mavi Kart 27 ay (B1 ile 21 ay), nitelikli işçiler 3 yıl (Almanya’da eğitim sonrası 2 yıl).',
       ],
     },
@@ -482,7 +482,7 @@ const uk: Copy = {
       title: 'Що змінилося?',
       items: [
         '27.06.2024: громадянство через 5 років замість 8; подвійне громадянство дозволено.',
-        'Жовтень 2025: «прискорене» громадянство через 3 роки (особлива інтеграція) скасовано — тепер для всіх 5 років.',
+        '30.10.2025: «прискорене» громадянство через 3 роки (особлива інтеграція) скасовано — тепер для всіх 5 років.',
         'З 18.11.2023: Блакитна карта — 27 місяців (з B1 — 21), фахівці — 3 роки (після навчання в Німеччині — 2 роки).',
       ],
     },

@@ -57,7 +57,7 @@ export const en = {
       aufenthv45c: '§ 45c AufenthV (new card)',
       aufenthv47: '§ 47 AufenthV (Fiktionsbescheinigung)',
       aufenthg18g: '§ 18g AufenthG (EU Blue Card)',
-      bamf: 'BAMF brochure “Der elektronische Aufenthaltstitel”',
+      bamf: 'BAMF page “Der elektronische Aufenthaltstitel”',
       bmi: 'BMI flyer: the eAT as online ID',
     },
     glossaryTitle: 'Terms on this page',

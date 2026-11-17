@@ -25,7 +25,7 @@ export const en = {
       bmg17: '§ 17 BMG (Anmeldung within 2 weeks)',
       bmg19: '§ 19 BMG (Wohnungsgeberbestätigung)',
       tkg56: '§ 56 TKG (contract term, cancellation)',
-      verpackg31: '§ 31 VerpackG (Pfand on single-use bottles)',
+      verpackg31: '§ 46 VerpackDG (Pfand on single-use bottles)',
       rundfunk: 'Rundfunkbeitrag (ARD ZDF Deutschlandradio Beitragsservice)',
       heating: 'Verbraucherzentrale NRW: heating',
     },

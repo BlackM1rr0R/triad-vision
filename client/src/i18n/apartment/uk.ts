@@ -27,7 +27,7 @@ export const uk: ApartmentCopy = {
       bmg17: '§ 17 BMG (Anmeldung протягом 2 тижнів)',
       bmg19: '§ 19 BMG (Wohnungsgeberbestätigung)',
       tkg56: '§ 56 TKG (строк договору, розірвання)',
-      verpackg31: '§ 31 VerpackG (Pfand на одноразові пляшки)',
+      verpackg31: '§ 46 VerpackDG (Pfand на одноразові пляшки)',
       rundfunk: 'Rundfunkbeitrag (ARD ZDF Deutschlandradio Beitragsservice)',
       heating: 'Verbraucherzentrale NRW: опалення',
     },
