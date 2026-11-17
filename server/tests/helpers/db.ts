@@ -6,6 +6,24 @@ export { prisma };
 
 /** Deletes all rows, children before parents so foreign keys are never violated. */
 export const resetDb = async () => {
+  // Newer add-on tables (plain ids / children only; nothing references them)
+  for (const m of [
+    prisma.germanyJobAlertSent,
+    prisma.arrivalCertificate,
+    prisma.readinessSnapshot,
+    prisma.readinessSelfCheck,
+    prisma.employerChecklistTemplate,
+    prisma.quarterlyReport,
+    prisma.publicApiKeyUsage,
+    prisma.publicApiAttribution,
+    prisma.publicApiKey,
+    prisma.partnerStudentRecord,
+    prisma.realSalaryExclusion,
+    prisma.realSalarySnapshot,
+    prisma.googleReviewInvite,
+    prisma.dataFreshnessReview,
+  ] as { deleteMany: () => Promise<unknown> }[])
+    await m.deleteMany();
   await prisma.saasLead.deleteMany(); // SaaS demo-request pipeline (plain ids)
   await prisma.toolResultLead.deleteMany(); // "e-mail me my result" state of tool leads (plain ids)
   await prisma.agencyOnboarding.deleteMany(); // onboarding wizard progress (one row)
