@@ -4,6 +4,7 @@ import { audit } from '../../lib/audit.js';
 import { getEurAzn, storedRate } from '../../lib/life/cbar.js';
 import { LIFE_DEFAULTS, LIFE_PROFESSIONS, getLifeSettings, lifeSettingsSchema, saveLifeSettings } from '../../lib/life/settings.js';
 import { clearLiveNumbersCache, liveNumbers, MIN_COUNT } from '../../lib/life/liveNumbers.js';
+import { rateAlertStats } from '../../lib/rateAlerts/service.js';
 
 /**
  * Admin side of "Life in Germany" — mounted at /api/admin/life (ADMIN+, Admin → Settings):
@@ -14,8 +15,9 @@ import { clearLiveNumbersCache, liveNumbers, MIN_COUNT } from '../../lib/life/li
 export const adminLifeRouter = Router();
 
 adminLifeRouter.get('/settings', async (_req, res) => {
-  const [settings, rate, board] = await Promise.all([getLifeSettings(), storedRate(), liveNumbers()]);
-  res.json({ settings, defaults: LIFE_DEFAULTS, professions: LIFE_PROFESSIONS, rate, board, minCount: MIN_COUNT });
+  const [settings, rate, board, rateAlerts] = await Promise.all([getLifeSettings(), storedRate(), liveNumbers(), rateAlertStats()]);
+  // rateAlerts: counts only (active / paused / pending) of the EUR → AZN rate alerts (lib/rateAlerts).
+  res.json({ settings, defaults: LIFE_DEFAULTS, professions: LIFE_PROFESSIONS, rate, board, minCount: MIN_COUNT, rateAlerts });
 });
 
 adminLifeRouter.put('/settings', async (req, res) => {

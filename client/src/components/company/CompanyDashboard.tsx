@@ -13,6 +13,7 @@ import { ScorePill } from '@/components/jobs/MatchMeter';
 import type { AnonProfile } from '@/components/jobs/types';
 import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Loading, Section } from './shared';
+import { NovruzBanner } from '@/components/novruz/NovruzInfo'; // Novruz reminder, 1–21 March
 
 interface Dashboard {
   company: { status: string; name: string };
@@ -35,6 +36,7 @@ export const CompanyDashboard = () => {
 
   return (
     <div className="space-y-6">
+      <NovruzBanner />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Kpi
           label={t('jobsArea.portal.dashboard.openVacancies')}

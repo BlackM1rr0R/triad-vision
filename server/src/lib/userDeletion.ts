@@ -13,6 +13,7 @@ import { deleteCourseData } from './course/service.js';
 import { eraseInquiries } from './privacy/inquiries.js';
 import { LEBENSLAUF_SUBDIR, lebenslaufKeysOf } from './cv/versions.js';
 import { eraseGermanyJobAlerts } from './germanyJobs/alerts.js';
+import { eraseRateAlerts } from './rateAlerts/service.js';
 import { revokeAllShares } from './successShare/service.js';
 import { purgeCaseCards } from './successShare/privateCard.js';
 import { eraseArrivalCertificates } from './arrivalCertificate/service.js';
@@ -226,6 +227,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
         await tx.jobAlert.deleteMany({ where: { OR: [{ userId }, { email: target.email.toLowerCase() }] } });
         // Germany job search: alerts of the account / address and saved listings (plain ids).
         await eraseGermanyJobAlerts(target.email, userId, tx);
+        // EUR → AZN rate alerts of the account / address (plain ids).
+        await eraseRateAlerts(target.email, userId, tx);
         await tx.savedGermanyJob.deleteMany({ where: { userId } });
         if (ownCaseIds.length) await tx.casePublicStatus.deleteMany({ where: { caseId: { in: ownCaseIds } } });
 

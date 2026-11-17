@@ -17,6 +17,7 @@ import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Section } from './shared';
 import { WorkerDrawer } from './WorkerDrawer';
 import { CompanyArrivalChecklists } from '@/components/employerExtras/ArrivalChecklist';
+import { NovruzBanner, NovruzCardLink } from '@/components/novruz/NovruzInfo'; // Novruz reminder (1–21 March) + greeting cards
 import { WorkersSkeleton } from './WorkersSkeleton';
 import { CompanyReports } from './CompanyReports';
 import { CheckInCell, DateCell, RISK_TONE, useMilestoneText } from './workerCells';
@@ -140,6 +141,8 @@ export const CompanyWorkers = () => {
         <Kpi label={t('employerWorkers.tiles.atRisk')} value={s.atRisk} hint={t('employerWorkers.tileHints.atRisk')} icon={AlertTriangle} tone={s.atRisk ? 'warn' : undefined} />
       </div>
 
+      <NovruzBanner />
+
       <CompanyArrivalChecklists />
 
       <Section
@@ -148,6 +151,7 @@ export const CompanyWorkers = () => {
         actions={
           data.items.length > 0 && (
             <>
+              <NovruzCardLink />
               <a href={`/api/company/workers/export.csv?lang=${locale}`} className={buttonClass({ variant: 'outline', size: 'sm' })} download>
                 <Download className="size-4" aria-hidden /> {t('employerWorkers.exportCsv')}
               </a>

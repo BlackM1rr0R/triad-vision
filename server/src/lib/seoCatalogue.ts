@@ -574,6 +574,46 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Офіційні свята 2026–2028 усіх 16 земель Німеччини, календар і найкращі «містки»: 4 дні відпустки → 9 днів відпочинку. Завантажити .ics.',
     },
   },
+  // "What changes on 1 January 2027" (client pages/tools/Changes2027; server lib/changes2027 from the data freshness registry, GET /api/changes-2027).
+  '/changes-2027': {
+    name: { az: 'Almaniya 2027: dəyişikliklər', de: 'Änderungen 2027', en: 'Changes in 2027', ru: 'Изменения 2027', tr: '2027 değişiklikleri', uk: 'Зміни 2027' },
+    title: {
+      az: '1 yanvar 2027: Almaniyada nə dəyişir',
+      de: 'Änderungen ab 1. Januar 2027 in Deutschland',
+      en: 'What changes in Germany on 1 January 2027',
+      ru: 'Что изменится в Германии с 1.1.2027',
+      tr: "Almanya'da 1 Ocak 2027 değişiklikleri",
+      uk: 'Що зміниться в Німеччині з 1.1.2027',
+    },
+    description: {
+      az: 'Minimum əmək haqqı, minijob, Deutschlandticket, Kindergeld, vergilər, sosial sığorta və Mavi Kart 2027: köhnə və yeni dəyər, vəziyyət və mənbə.',
+      de: 'Mindestlohn, Minijob, Deutschlandticket, Kindergeld, Steuern, Sozialversicherung und Blaue Karte 2027: alter und neuer Wert, Stand und Quelle.',
+      en: 'Minimum wage, mini-jobs, Deutschlandticket, Kindergeld, taxes, social insurance and Blue Card in 2027: old and new values, status and sources.',
+      ru: 'Минимальная зарплата, мини-джоб, Deutschlandticket, Kindergeld, налоги, соцстрахование и Голубая карта 2027: было и стало, статус и источник.',
+      tr: 'Asgari ücret, minijob, Deutschlandticket, Kindergeld, vergiler, sosyal sigorta ve Mavi Kart 2027: eski ve yeni değer, durum ve kaynak.',
+      uk: 'Мінімальна зарплата, міні-джоб, Deutschlandticket, Kindergeld, податки, соцстрахування й Блакитна карта 2027: було і стало, статус, джерело.',
+    },
+  },
+  // German Advent calendar (client pages/tools/AdventCalendar, lib/advent): static, no API; doors unlock by the Berlin date.
+  '/advent-calendar': {
+    name: { az: 'Advent təqvimi', de: 'Adventskalender', en: 'Advent calendar', ru: 'Адвент-календарь', tr: 'Advent takvimi', uk: 'Адвент-календар' },
+    title: {
+      az: 'Advent təqvimi: Almaniyada Milad',
+      de: 'Adventskalender: Weihnachten in Deutschland',
+      en: 'German Advent calendar: 24 Christmas doors',
+      ru: 'Адвент-календарь: Рождество в Германии',
+      tr: 'Advent takvimi: Almanya’da Noel',
+      uk: 'Адвент-календар: Різдво в Німеччині',
+    },
+    description: {
+      az: '1–24 dekabr hər gün bir qapı açın: alman Milad ənənələri, səsli ifadələr, mini viktorinalar və Almaniyada həyat üçün praktik məsləhətlər.',
+      de: 'Vom 1. bis 24. Dezember jeden Tag ein Türchen: deutsche Weihnachtsbräuche, Sätze mit Audio, Mini-Quiz und praktische Tipps für den Alltag.',
+      en: 'Open a door every day from 1 to 24 December: German Christmas traditions, phrases with audio, mini quizzes and practical tips for life in Germany.',
+      ru: 'С 1 по 24 декабря каждый день новое окошко: немецкие рождественские традиции, фразы с озвучкой, мини-викторины и практичные советы.',
+      tr: '1–24 Aralık her gün bir kapı açın: Alman Noel gelenekleri, sesli ifadeler, mini testler ve Almanya’da yaşam için pratik ipuçları.',
+      uk: 'З 1 по 24 грудня щодня нове віконце: німецькі різдвяні традиції, фрази з озвученням, міні-вікторини й практичні поради для життя.',
+    },
+  },
   '/grade-converter': {
     name: { az: 'Qiymət çevirici', de: 'Notenumrechnung', en: 'Grade converter', ru: 'Пересчёт оценок', tr: 'Not dönüştürücü', uk: 'Перерахунок оцінок' },
     title: { az: 'Azərbaycan qiymətini alman qiymətinə çevir', de: 'Notenumrechnung Aserbaidschan → deutsche Note', en: 'Convert Azerbaijani grades to German grades', ru: 'Пересчёт азербайджанских оценок в немецкие', tr: 'Azerbaycan notunu Alman notuna çevirme', uk: 'Перерахунок оцінок з Азербайджану' },
@@ -829,6 +869,18 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Чиста зарплата, місто й спосіб життя: скільки лишається родині щомісяця — у манатах, з комісіями за переказ і порівнянням із цінами Баку.',
     },
   },
+  '/pocket-guide': {
+    name: { az: 'Almaniya cib bələdçisi', de: 'Deutschland-Taschenguide', en: 'Germany pocket guide', ru: 'Карманный гид по Германии', tr: 'Almanya cep rehberi', uk: 'Кишеньковий гід Німеччиною' },
+    title: { az: 'Almaniya cib bələdçisi: çap üçün PDF', de: 'Deutschland-Taschenguide: PDF zum Ausdrucken', en: 'Germany pocket guide: printable PDF booklet', ru: 'Карманный гид по Германии: PDF для печати', tr: 'Almanya cep rehberi: yazdırılabilir PDF', uk: 'Кишеньковий гід Німеччиною: PDF для друку' },
+    description: {
+      az: '16 səhifəlik pulsuz PDF: təcili nömrələr, ilk 14 gün, 40 almanca ifadə, iş hüquqları, həkim, kirayə və Deutschlandticket. A5 və ya A4 kitabça.',
+      de: 'Kostenloses 16-seitiges PDF: Notrufnummern, erste 14 Tage, 40 Sätze, Rechte bei der Arbeit, Arzt, Miete, Deutschlandticket. A5 oder A4-Broschüre.',
+      en: 'Free 16-page PDF: emergency numbers, your first 14 days, 40 German phrases, work rights, doctors, renting and the Deutschlandticket. A5 or A4 booklet.',
+      ru: 'Бесплатный PDF на 16 страниц: экстренные номера, первые 14 дней, 40 фраз, права на работе, врач, аренда и Deutschlandticket. A5 или брошюра A4.',
+      tr: 'Ücretsiz 16 sayfalık PDF: acil numaralar, ilk 14 gün, 40 Almanca ifade, iş hakları, doktor, kira ve Deutschlandticket. A5 veya A4 kitapçık.',
+      uk: 'Безкоштовний PDF на 16 сторінок: екстрені номери, перші 14 днів, 40 фраз, права на роботі, лікар, оренда й Deutschlandticket. A5 або брошура A4.',
+    },
+  },
   '/five-years-in-germany': {
     name: { az: 'Almaniyada 5 il', de: '5 Jahre in Deutschland', en: '5 years in Germany', ru: '5 лет в Германии', tr: 'Almanya’da 5 yıl', uk: '5 років у Німеччині' },
     title: { az: 'Zaman maşını: Almaniyada 5 il', de: 'Zeitmaschine: 5 Jahre in Deutschland', en: 'Time machine: 5 years in Germany', ru: 'Машина времени: 5 лет в Германии', tr: 'Zaman makinesi: Almanya’da 5 yıl', uk: 'Машина часу: 5 років у Німеччині' },
@@ -997,6 +1049,31 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       ru: 'Покупки в немецком супермаркете по списку: Quark, Sahne, Mehl Type 405, Sprudel. Автомат Pfand, «Tüte?», карта или наличные и чек с НДС.',
       tr: 'Listeyle Alman süpermarketinde alışveriş: Quark, Sahne, Mehl Type 405, Sprudel. Pfand otomatı, “Tüte?”, kart ya da nakit ve KDV’li fiş.',
       uk: 'Покупки в німецькому супермаркеті за списком: Quark, Sahne, Mehl Type 405, Sprudel. Автомат Pfand, «Tüte?», картка чи готівка та чек із ПДВ.',
+    },
+  },
+  // Workplace etiquette quiz (client pages/tools/WorkplaceEtiquette) and Novruz greeting cards (pages/tools/NovruzCard): static, no API.
+  '/workplace-etiquette': {
+    name: { az: 'Almaniyada iş etiketi', de: 'Knigge am Arbeitsplatz', en: 'German workplace etiquette', ru: 'Этикет на работе в Германии', tr: 'Almanya’da iş yeri görgüsü', uk: 'Етикет на роботі в Німеччині' },
+    title: { az: 'Almaniyada iş etiketi: viktorina', de: 'Knigge am Arbeitsplatz in Deutschland: Quiz', en: 'German workplace etiquette: the quiz', ru: 'Этикет на работе в Германии: тест', tr: 'Almanya’da iş yeri görgü kuralları: test', uk: 'Етикет на роботі в Німеччині: тест' },
+    description: {
+      az: 'Sie yoxsa du, dəqiqlik, xəstəlik vərəqəsi (AU), fasilələr, məzuniyyət, sınaq müddəti və iş təhlükəsizliyi: 25 vəziyyət, izah və rəsmi mənbələrlə.',
+      de: 'Sie oder du, Pünktlichkeit, Krankmeldung und AU, Pausen, Urlaub, Probezeit, Arbeitsschutz: 25 Situationen mit Erklärung und offiziellen Quellen.',
+      en: 'Sie or du, punctuality, calling in sick, breaks, leave, probation and safety at work in Germany: 25 situations with explanations and official sources.',
+      ru: 'Sie или du, пунктуальность, больничный, перерывы, отпуск, испытательный срок и охрана труда в Германии: 25 ситуаций с пояснениями и источниками.',
+      tr: 'Sie mi du mu, dakiklik, hastalık bildirimi, molalar, izin, deneme süresi ve iş güvenliği: açıklamalı ve kaynaklı 25 durum.',
+      uk: 'Sie чи du, пунктуальність, лікарняний, перерви, відпустка, випробувальний термін і охорона праці: 25 ситуацій із поясненнями та джерелами.',
+    },
+  },
+  '/novruz-card': {
+    name: { az: 'Novruz təbrik kartı', de: 'Novruz-Grußkarte', en: 'Novruz greeting card', ru: 'Открытка к Новрузу', tr: 'Nevruz tebrik kartı', uk: 'Листівка до Новрузу' },
+    title: { az: 'Komanda üçün Novruz təbrik kartı', de: 'Novruz-Grußkarte für Ihr Team erstellen', en: 'Novruz greeting card for your team', ru: 'Открытка к Новрузу для вашей команды', tr: 'Ekibiniz için Nevruz tebrik kartı', uk: 'Листівка до Новрузу для вашої команди' },
+    description: {
+      az: 'Azərbaycanlı işçilər üçün pulsuz Novruz kartı: düzgün azərbaycanca təbrik, alman dilində sətir və şirkətin adı — PNG və ya A5 PDF.',
+      de: 'Kostenlose Novruz-Karte für aserbaidschanische Mitarbeitende: korrekter Gruß auf Aserbaidschanisch, deutsche Zeile, Firmenname – als PNG oder A5-PDF.',
+      en: 'Free Novruz card for Azerbaijani staff: a correct Azerbaijani greeting, an optional German line and your company name – as PNG or A5 PDF.',
+      ru: 'Бесплатная открытка к Новрузу для сотрудников из Азербайджана: верное поздравление на азербайджанском, строка на немецком, PNG или A5 PDF.',
+      tr: 'Azerbaycanlı çalışanlar için ücretsiz Nevruz kartı: doğru Azerbaycanca tebrik, Almanca satır ve şirket adı – PNG ya da A5 PDF.',
+      uk: 'Безкоштовна листівка до Новрузу для працівників з Азербайджану: правильне привітання азербайджанською, рядок німецькою, PNG або A5 PDF.',
     },
   },
   // German mock exams + level self-assessment (client pages/tools/GermanMockExam, GermanLevelSelf; lib/germanExam): static, no API.
@@ -1713,6 +1790,7 @@ export const SPA_ROUTES = [
   '/legal/:kind/:version',
   '/packages/order/:token',
   '/result-email', // "e-mail me my result": confirm / unsubscribe link (token in the query, lib/toolLeads)
+  '/rate-alert', // EUR → AZN rate alert: confirm / manage / re-arm / unsubscribe link (token in the query, lib/rateAlerts)
 ];
 
 /**
@@ -1723,10 +1801,10 @@ export type ToolGroupKey = 'eligibility' | 'costs' | 'plan' | 'life' | 'learn' |
 export const TOOL_GROUPS: { key: ToolGroupKey; paths: string[] }[] = [
   { key: 'eligibility', paths: ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/germany-vs-other-countries', '/visa-document-checklist', '/visa-refusal', '/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/family-reunification-check', '/grade-converter'] },
   { key: 'costs', paths: ['/salary-calculator', '/cost-calculator', '/budget', '/payslip-explained', '/tax-refund-calculator', '/shift-pay-calculator', '/rent-check', '/send-money-home', '/health-insurance-comparison', '/tax-class-chooser', '/real-salaries'] },
-  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/five-years-in-germany', '/which-city', '/residence-card-explained', '/calculator', '/cities', '/events', '/status'] },
-  { key: 'life', paths: ['/life-in-germany', '/german-apartment', '/apartment-viewing', '/german-street', '/driving-licence-germany', '/holiday-planner', '/weekend-trips', '/emergency-wallpaper', '/driving-time-calculator', '/work-schedule-check'] },
-  { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/ticket-machine', '/supermarket-game', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
-  { key: 'employers', paths: ['/employer-cost-calculator', '/employer-guide-azerbaijan', '/kandidaten'] },
+  { key: 'plan', paths: ['/when-in-germany', '/permanent-residence', '/five-years-in-germany', '/which-city', '/residence-card-explained', '/calculator', '/cities', '/events', '/status', '/changes-2027'] },
+  { key: 'life', paths: ['/life-in-germany', '/german-apartment', '/apartment-viewing', '/german-street', '/driving-licence-germany', '/holiday-planner', '/advent-calendar', '/weekend-trips', '/emergency-wallpaper', '/pocket-guide', '/driving-time-calculator', '/work-schedule-check'] },
+  { key: 'learn', paths: ['/german-mock-exam', '/german-level-test-self', '/german-simulator', '/pronunciation', '/price-game', '/traffic-signs', '/waste-sorting', '/ticket-machine', '/supermarket-game', '/workplace-etiquette', '/work-scenes', '/work-scenes/restaurant-kitchen', '/work-scenes/truck-cab', '/work-scenes/hospital-ward', '/work-scenes/construction-site', '/work-scenes/electrical-panel'] },
+  { key: 'employers', paths: ['/employer-cost-calculator', '/employer-guide-azerbaijan', '/kandidaten', '/novruz-card'] },
   { key: 'explore', paths: ['/map', '/azerbaijan-in-germany', '/guides', '/shortage-barometer', '/glossary', '/jobs', '/visas'] },
 ];
 

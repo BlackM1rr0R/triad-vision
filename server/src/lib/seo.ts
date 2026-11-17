@@ -33,6 +33,7 @@ import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, stu
 import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
 import { germanExamFaqFor } from './germanExam/seo.js';
+import { CHANGES_PATH, changes2027Ld } from './changes2027/seo.js';
 import { getCatalogue } from './candidateCatalogue/index.js';
 import { professionLabel } from './candidateCatalogue/labels.js';
 
@@ -728,6 +729,9 @@ export const TOOL_PAGES = new Set([
   '/german-street',
   '/ticket-machine',
   '/supermarket-game',
+  '/workplace-etiquette',
+  '/novruz-card',
+  '/advent-calendar',
   '/work-scenes/restaurant-kitchen',
   '/work-scenes/truck-cab',
   '/work-scenes/hospital-ward',
@@ -761,6 +765,9 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/german-street': 'EducationalApplication',
   '/ticket-machine': 'EducationalApplication',
   '/supermarket-game': 'GameApplication',
+  '/workplace-etiquette': 'EducationalApplication',
+  '/novruz-card': 'DesignApplication',
+  '/advent-calendar': 'EducationalApplication',
   '/work-scenes/restaurant-kitchen': 'EducationalApplication',
   '/work-scenes/truck-cab': 'EducationalApplication',
   '/work-scenes/hospital-ward': 'EducationalApplication',
@@ -1022,6 +1029,11 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       const content = compareContent(lng, data.compareThresholds ?? COMPARE_FALLBACK);
       const ld = faqPageLd(content.faq, lng);
       if (ld) resolved.jsonLd.push(ld);
+    }
+    if (path === CHANGES_PATH) {
+      // Article + FAQPage from the data freshness registry (lib/changes2027).
+      resolved.ogType = 'article';
+      resolved.jsonLd.push(...changes2027Ld(lng, url, `${origin}/og-default.png`, { '@id': organizationId() }, pageUrl('/about', lng)));
     }
     const germanExamFaq = germanExamFaqFor(path, lng);
     if (germanExamFaq) {

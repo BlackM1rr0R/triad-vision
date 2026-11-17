@@ -11,6 +11,7 @@ import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/pri
 import { eraseInquiries, exportInquiries } from '../../lib/privacy/inquiries.js';
 import { eraseGermanyJobAlerts, exportGermanyJobAlerts } from '../../lib/germanyJobs/alerts.js';
 import { eraseToolLeads, exportToolLeads } from '../../lib/toolLeads/service.js';
+import { eraseRateAlerts, exportRateAlerts } from '../../lib/rateAlerts/service.js';
 import { pageArgs, pageMeta, pageShape, splitPage } from '../../lib/paging.js';
 
 /**
@@ -222,7 +223,7 @@ adminPrivacyRouter.get('/inquiries', async (req, res) => {
   if (q.format === 'download') {
     res.setHeader('Content-Disposition', `attachment; filename="inquiries-${new Date().toISOString().slice(0, 10)}.json"`);
   }
-  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts, toolResultEmails: await exportToolLeads(q.email) });
+  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts, toolResultEmails: await exportToolLeads(q.email), rateAlerts: await exportRateAlerts(q.email, q.userId) });
 });
 
 adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
@@ -230,8 +231,9 @@ adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
   const anonymized = await eraseInquiries(body.email, body.userId);
   const germanyJobAlerts = await eraseGermanyJobAlerts(body.email, body.userId);
   await eraseToolLeads(body.email); // "e-mail me my result" rows (lib/toolLeads)
-  await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized, germanyJobAlerts });
-  res.json({ ok: true, anonymized, germanyJobAlerts });
+  const rateAlerts = await eraseRateAlerts(body.email, body.userId); // EUR → AZN rate alerts (lib/rateAlerts)
+  await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized, germanyJobAlerts, rateAlerts });
+  res.json({ ok: true, anonymized, germanyJobAlerts, rateAlerts });
 });
 
 // ─── Consent log ───────────────────────────────────────────────────────

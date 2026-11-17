@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
-import { ArrowLeft, Briefcase, CloudOff, Download, Home, IdCard, Landmark, LifeBuoy, Phone, Plane, Printer, ShieldCheck, Siren, Smartphone, Trash2 } from 'lucide-react';
+import { ArrowLeft, BellRing, BookOpen, Briefcase, CloudOff, Download, Home, IdCard, Landmark, LifeBuoy, Phone, Plane, Printer, ShieldCheck, Siren, Smartphone, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -18,9 +18,13 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { registerCopy } from '@/i18n';
 import { pagesGermanyDay } from '@/i18n/pagesGermanyDay';
 import { pagesEmergencyWallpaper } from '@/i18n/pagesEmergencyWallpaper';
+import { pagesPocketGuide } from '@/i18n/pagesPocketGuide';
+import { pagesRateAlert } from '@/i18n/pagesRateAlert';
 
 registerCopy(pagesGermanyDay);
 registerCopy(pagesEmergencyWallpaper);
+registerCopy(pagesPocketGuide);
+registerCopy(pagesRateAlert);
 
 type Row = { label: string; value: string; tel?: string };
 type Section = { key: string; title: string; icon: typeof Home; rows: Row[] };
@@ -301,6 +305,12 @@ export default function ArrivalCardPage() {
 
       <Link to="/account/emergency-wallpaper" className="card flex min-h-14 items-center gap-3 px-4 py-2 text-sm font-semibold text-ink hover:bg-sunken print:hidden">
         <Smartphone className="size-5 text-primary" aria-hidden /> {t('ewp.portalTitle')}
+      </Link>
+      <Link to="/account/pocket-guide" className="card flex min-h-14 items-center gap-3 px-4 py-2 text-sm font-semibold text-ink hover:bg-sunken print:hidden">
+        <BookOpen className="size-5 text-primary" aria-hidden /> {t('pocketGuide.portalTitle')}
+      </Link>
+      <Link to="/account/rate-alerts" className="card flex min-h-14 items-center gap-3 px-4 py-2 text-sm font-semibold text-ink hover:bg-sunken print:hidden">
+        <BellRing className="size-5 text-primary" aria-hidden /> {t('rateAlert.portal.title')}
       </Link>
 
       <p className="flex items-start gap-2 text-xs text-muted">

@@ -15,6 +15,8 @@ import { pagesEmployerGuideAz } from '@/i18n/pagesEmployerGuideAz';
 import { useBrand } from '@/lib/brand';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { HOLIDAY_YEARS, holidayDays, holidayRange, holidaysFor } from '@/lib/employerGuideAz/holidays';
+import { EtiquetteTeaser } from '@/components/etiquette/EtiquetteTeaser'; // workplace etiquette quiz to share with new staff
+import { NovruzTeaser } from '@/components/novruz/NovruzInfo'; // Novruz greeting card generator
 
 registerCopy(pagesEmployerGuideAz);
 
@@ -241,6 +243,7 @@ export default function EmployerGuideAzerbaijanPage() {
                 ))}
               </ul>
               <p className="text-xs text-muted">{t('ega.culture.caveat')}</p>
+              <EtiquetteTeaser className="bg-sunken" />
             </Card>
 
             <Card id="ega-holidays" icon={<CalendarDays className="size-6" aria-hidden />} title={t('ega.holidays.title')}>
@@ -267,6 +270,7 @@ export default function EmployerGuideAzerbaijanPage() {
                 rows={holidaysFor(year).map((h) => [holidayRange(h), t(`ega.holidays.names.${h.key}`), String(holidayDays(h)), t(`ega.holidays.status.${h.status}`)])}
               />
               <p className="text-xs text-muted">{t('ega.holidays.note')}</p>
+              <NovruzTeaser />
               <h3 className="pt-2 font-display text-lg font-semibold">{t('ega.religion.title')}</h3>
               <p>{t('ega.religion.text')}</p>
             </Card>

@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/Switch';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { fmtDate } from '@/components/admin/labels';
 import { toastJobsError } from '@/components/jobs/labels';
+import { WelcomePosterCard, WelcomePosterHint } from '@/components/welcomePoster/WelcomePoster'; // A3 welcome poster for the first work day
 
 registerCopy(pagesEmployerExtras);
 
@@ -131,6 +132,7 @@ const ItemRow = ({ caseId, item, onSaved }: { caseId: string; item: ChecklistIte
             <DueChip state={item.dueState} />
           </p>
           {hint && !item.done && <p className="text-[11px] leading-snug text-muted">{hint}</p>}
+          {item.key === 'FIRST_DAY' && <WelcomePosterHint caseId={caseId} />}
           {item.done && item.doneAt && (
             <p className="text-[11px] text-muted">{t('employerChecklist.doneBy', { name: item.doneByName ?? '—', date: fmtDate(item.doneAt) })}</p>
           )}
@@ -207,6 +209,7 @@ export const ChecklistDrawer = ({ caseId, name, onClose }: { caseId: string | nu
         <ErrorState onRetry={() => void q.refetch()} />
       ) : (
         <div className="space-y-4">
+          <WelcomePosterCard caseId={caseId!} name={name} />
           <ProgressBar progress={q.data.progress} />
           <ul className="space-y-2">
             {q.data.items.map((i) => (

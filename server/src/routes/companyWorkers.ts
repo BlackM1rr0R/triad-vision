@@ -14,6 +14,7 @@ import { storedPath } from '../lib/esign/service.js';
 import { onePagerPdf, workerOnePagerInput } from '../lib/onePager/pdf.js';
 import { workerReadinessRows } from '../lib/readyProgress/onePager.js'; // consent-gated readiness rows on the one-pager
 import { addItem, companyChecklist, companyOverview, createInput, deleteItem, patchInput, updateItem } from '../lib/employerArrival.js';
+import { welcomePoster } from '../lib/welcomePoster/service.js'; // bilingual A3 welcome poster for the first work day
 
 /**
  * "My workers" (Mitarbeiter) — mounted at /api/company/workers, before the main company router, so the
@@ -26,6 +27,7 @@ import { addItem, companyChecklist, companyOverview, createInput, deleteItem, pa
  *   GET /:caseId/one-pager.pdf  ?lang=&branding=0|1 → one-page PDF of what the panel shows about this worker
  *   GET /checklists/overview   arrival checklist progress of every approved / arrived worker (lib/employerArrival)
  *   GET|POST /:caseId/checklist, PATCH|DELETE /:caseId/checklist/:itemId   the company's arrival checklist of one worker
+ *   GET /:caseId/welcome-poster.pdf   A3 "Xoş gəlmisiniz / Herzlich willkommen" poster (same eligibility as the checklist)
  *
  * Every lookup is scoped by Case.companyId: another company's worker answers 404 exactly like a missing one.
  */
@@ -86,6 +88,16 @@ companyWorkersRouter.get('/:caseId/one-pager.pdf', async (req, res) => {
   const pdf = await onePagerPdf(input);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="worker-${caseId.slice(-8)}.pdf"`);
+  res.send(pdf);
+});
+
+/** Welcome poster (A3 PDF) for the first work day of an incoming worker: own, approved, not-left workers only (404 otherwise). */
+companyWorkersRouter.get('/:caseId/welcome-poster.pdf', async (req, res) => {
+  const caseId = caseIdOf(req);
+  const pdf = await welcomePoster(co(res).id, caseId);
+  await audit(req, 'EMPLOYER_WELCOME_POSTER', `case:${caseId}`);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="welcome-${caseId.slice(-8)}.pdf"`);
   res.send(pdf);
 });
 

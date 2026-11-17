@@ -18,6 +18,7 @@ import { EmployerAcceleratedBlock } from '@/components/recognition/EmployerAccel
 import { euro } from '@/components/recognition/api';
 import { OnePagerButton } from './OnePagerButton'; // one-page PDF of what this panel shows
 import { WorkerReadinessCard } from '@/components/ready/ReadinessProfileCard'; // consent-gated readiness profile
+import { NovruzCardLink } from '@/components/novruz/NovruzInfo'; // Novruz greeting card for this worker
 
 registerCopy(pagesTimeCare); // check-in topic labels (checkIn.topics.*)
 registerCopy(pagesEmployerWorkers);
@@ -57,7 +58,8 @@ export const WorkerDrawer = ({ id, onClose }: { id: string | null; onClose: () =
         <p className="text-sm text-muted">{t('jobsArea.errors.generic')}</p>
       ) : (
         <div className="space-y-7">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            {w.phase !== 'LEFT' && w.phase !== 'CLOSED' && <NovruzCardLink caseId={w.id} />}
             <OnePagerButton path={`/company/workers/${encodeURIComponent(w.id)}/one-pager.pdf`} fileName={`worker-${w.id.slice(-8)}.pdf`} />
           </div>
           <Block title={t('employerWorkers.drawer.overview')} icon={UserRound}>

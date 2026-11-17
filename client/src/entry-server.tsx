@@ -57,6 +57,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'globe-map', // home globe: placement map aggregates (GET /growth/map, cities with ≥ 3 workers only)
   'eur-azn', // /salary-calculator (+ other tools): the CBAR EUR→AZN rate (GET /life/rate), the same for everyone
   'when-estimate', // /when-in-germany: percentiles of groups ≥ 10 cases (daily), the same for everyone with the same answers
+  'changes-2027', // /changes-2027: the 1 January 2027 changes of the data freshness registry (GET /changes-2027?lng=), the same for everyone
   'candidate-catalogue', // /kandidaten: k-anonymous groups of the consented pool (≥ 3), the same for everyone
   'trust-center', // /trust: implemented measures, configured sub-processors, owner-confirmed facts
   'rent-check-cities', // /rent-check: city rent ranges (GET /budget/config, CityCost table), the same for everyone

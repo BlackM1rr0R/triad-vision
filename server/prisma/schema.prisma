@@ -7249,3 +7249,39 @@ model FutureLetter {
 
   @@index([deliveredAt, deliverOn])
 }
+
+/// EUR → AZN rate alert (lib/rateAlerts): "e-mail me when 1 EUR is ≥ / ≤ X AZN" at the official CBAR rate. Visitors:
+/// double opt-in; signed-in clients: confirmed for their account address. One e-mail when the condition is met, then
+/// paused until re-armed (never more than one per alert and Baku day); expires 6 months after confirmation / re-arming
+/// with a notice. Unconfirmed rows are deleted after 7 days, unsubscribed / expired ones 30 days later.
+model RateAlert {
+  id             String    @id @default(cuid())
+  email          String    @db.VarChar(190)
+  userId         String?   @db.VarChar(40)
+  locale         String    @default("az") @db.VarChar(8)
+  /// gte | lte
+  direction      String    @db.VarChar(4)
+  /// AZN per 1 EUR
+  target         Float
+  /// Consent wording version (lib/rateAlerts/texts.ts CONSENT_VERSION).
+  consentVersion String?   @db.VarChar(20)
+  confirmedAt    DateTime?
+  /// Set when the alert fired (paused until re-armed).
+  pausedAt       DateTime?
+  lastSentAt     DateTime?
+  lastRate       Float?
+  /// YYYY-MM-DD of the CBAR bulletin of the last e-mail.
+  lastRateDate   String?   @db.VarChar(10)
+  sentCount      Int       @default(0)
+  expiresAt      DateTime?
+  /// Expired (the notice was sent).
+  expiredAt      DateTime?
+  unsubscribedAt DateTime?
+  visitorId      String?   @db.VarChar(40)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([email])
+  @@index([userId])
+  @@index([confirmedAt, unsubscribedAt])
+}

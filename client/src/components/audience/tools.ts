@@ -57,6 +57,10 @@ import {
   KeyRound,
   Send,
   Hourglass,
+  Gift,
+  CalendarCheck,
+  Handshake,
+  Flower2,
 } from 'lucide-react';
 
 /**
@@ -115,12 +119,15 @@ export const TOOLS: ToolItem[] = [
   { key: 'startDate', to: '/calculator', icon: CalendarClock, group: 'plan' },
   { key: 'cities', to: '/cities', icon: Building, group: 'plan' },
   { key: 'holidayPlanner', to: '/holiday-planner', icon: PartyPopper, group: 'life' },
+  { key: 'adventCalendar', to: '/advent-calendar', icon: Gift, group: 'life' }, // seasonal: German Advent calendar (doors unlock 1–24 Dec, Berlin date)
   { key: 'weekendTrips', to: '/weekend-trips', icon: TrainFront, group: 'life' },
   { key: 'drivingTime', to: '/driving-time-calculator', icon: Truck, group: 'life' },
   { key: 'workSchedule', to: '/work-schedule-check', icon: ClipboardList, group: 'life' },
   { key: 'emergencyWallpaper', to: '/emergency-wallpaper', icon: Smartphone, group: 'life' },
+  { key: 'pocketGuide', to: '/pocket-guide', icon: BookOpen, group: 'life' }, // printable Germany pocket guide PDF (A5 pages / A4 booklet)
   { key: 'events', to: '/events', icon: CalendarDays, group: 'plan' },
   { key: 'status', to: '/status', icon: ScanSearch, group: 'plan' },
+  { key: 'changes2027', to: '/changes-2027', icon: CalendarCheck, group: 'plan' }, // what changes on 1 January 2027 (data freshness registry)
   { key: 'map', to: '/map', icon: MapPinned, group: 'explore' },
   { key: 'azInGermany', to: '/azerbaijan-in-germany', icon: Flag, group: 'explore' },
   { key: 'guides', to: '/guides', icon: BookOpen, group: 'explore' },
@@ -139,7 +146,9 @@ export const TOOLS: ToolItem[] = [
   { key: 'ticketMachine', to: '/ticket-machine', icon: Ticket, group: 'learn' },
   { key: 'supermarketGame', to: '/supermarket-game', icon: ShoppingCart, group: 'learn' },
   { key: 'workScenes', to: '/work-scenes', icon: HardHat, group: 'learn' }, // interactive workplaces (pages/tools/workScenes)
+  { key: 'workplaceEtiquette', to: '/workplace-etiquette', icon: Handshake, group: 'learn' }, // German workplace etiquette quiz (pages/tools/WorkplaceEtiquette)
   // Employers (titles: i18n/pagesToolsHub.ts toolsPage.items).
   { key: 'employerGuide', to: '/employer-guide-azerbaijan', icon: BookOpen, group: 'employers' },
   { key: 'candidateCatalogue', to: '/kandidaten', icon: Users, group: 'employers' },
+  { key: 'novruzCard', to: '/novruz-card', icon: Flower2, group: 'employers' }, // Novruz greeting cards (pages/tools/NovruzCard)
 ];

@@ -8,6 +8,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { buttonClass } from '@/components/ui/Button';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { RateAlertSlot } from '@/components/rateAlert/RateAlertForm';
 import { useEurAzn } from '@/components/tools/AznEquivalent';
 import { copyLink, downloadResultCard } from '@/components/games/shareCard';
 import { decimal, Disclaimer, dmy, EstimateBadge, GlossaryLinks, NumField, Sources, ToolFaq, useFaq, useLng, useMoney } from '@/components/tools/calc/CalcShared';
@@ -235,6 +236,9 @@ export default function SendMoneyHomePage() {
               </ul>
               <p className="mt-3 text-xs text-muted">{t('moneyHome.transfer.noAdvice')}</p>
             </section>
+
+            {/* EUR → AZN rate alert (server routes/rateAlerts.ts) */}
+            <RateAlertSlot />
 
             <GlossaryLinks
               terms={[

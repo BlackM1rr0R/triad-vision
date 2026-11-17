@@ -9,6 +9,7 @@ import { studentRecordsExport } from '../partners/schools.js'; // language-schoo
 import { partnerExportProfile } from '../partners/profile.js'; // referral partner logins: their partner profile
 import { listFieldDefs } from '../partners/fieldDefs.js';
 import { exportGermanyJobAlerts } from '../germanyJobs/alerts.js'; // Germany job search: alerts and saved listings
+import { exportRateAlerts } from '../rateAlerts/service.js'; // EUR → AZN rate alerts
 import { exportSavedJobs } from '../germanyJobs/saved.js';
 import { exportInquiries } from './inquiries.js'; // website contact / employer enquiries sent with this e-mail
 import { cvPrivacyExport } from '../cv/privacy.js'; // CV builder, Lebenslauf versions, letters, external job applications
@@ -195,6 +196,8 @@ export const buildUserExport = async (userId: string) => {
     // Germany job search (/jobs/germany): job alerts of this account / e-mail address and saved listings.
     germanyJobAlerts: await exportGermanyJobAlerts(user.email, userId),
     savedGermanyJobs: await exportSavedJobs(userId),
+    // EUR → AZN rate alerts of this account / e-mail address.
+    rateAlerts: await exportRateAlerts(user.email, userId),
     notifications,
     devices,
     supportViews: supportViews.map((v) => ({

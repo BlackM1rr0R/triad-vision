@@ -192,9 +192,11 @@ export const subOfLocation = (pathname: string, search = ''): SubKey | null => {
     case 'arrival-prep':
     case 'arrival-card': // the digital arrival card belongs to the arrival preparation
     case 'emergency-wallpaper': // lock-screen emergency wallpaper: arrival preparation too
+    case 'pocket-guide': // personalised printable Germany pocket guide: arrival preparation too
       return 'arrivalPrep';
     case 'badges': // achievements: part of the overview
     case 'readiness': // Germany readiness score: part of the overview
+    case 'rate-alerts': // EUR → AZN rate alerts: part of the overview
       return 'overview';
     case 'checklist':
       return 'docChecklist';

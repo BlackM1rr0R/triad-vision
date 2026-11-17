@@ -13,7 +13,10 @@ import { cookieConsentCopy } from '@/i18n/cookieConsent';
 import { siteNavCopy } from '@/i18n/siteNav';
 import { platformFooterCopy } from '@/i18n/platformFooter';
 import { getBrand } from '@/lib/brand';
+import { adventPromoActive, berlinDay, changes2027PromoActive } from '@/lib/seasonal';
+import { seasonalCopy } from '@/i18n/seasonal';
 
+registerCopy(seasonalCopy); // seasonal links (Advent calendar, changes 2027), shown only in their season
 registerCopy(cookieConsentCopy); // "AGB" + "Cookie settings" links
 registerCopy(siteNavCopy); // footer columns (also registered by the header)
 registerCopy(platformFooterCopy); // small "platform for agencies" link (/platform)
@@ -104,6 +107,10 @@ export const Footer = () => {
     { to: '/map', label: t('nav.map') },
     { to: '/cities', label: t('nav.cities') },
   ];
+  // Seasonal links (lib/seasonal.ts): the Advent calendar 15 Nov – 6 Jan, "changes 2027" until March 2027.
+  const today = berlinDay();
+  if (adventPromoActive(today)) resources.push({ to: '/advent-calendar', label: t('seasonal.advent') });
+  if (changes2027PromoActive(today)) resources.push({ to: '/changes-2027', label: t('seasonal.changes') });
   const company: FooterLink[] = [
     { to: '/about', label: t('nav.about') },
     { to: '/stories', label: t('nav.stories') },

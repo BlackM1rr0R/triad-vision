@@ -50,6 +50,8 @@ export const READY_ACTIVITIES = [
   { id: 'german-street', group: 'everyday', source: 'client', path: '/german-street', points: 5, passPercent: 70, items: 'any', requiredItems: 1, maxScore: 1000 },
   { id: 'ticket-machine', group: 'everyday', source: 'client', path: '/ticket-machine', points: 5, passPercent: 70, items: 'any', requiredItems: 1, maxScore: 1000 },
   { id: 'supermarket-game', group: 'everyday', source: 'client', path: '/supermarket-game', points: 5, passPercent: 70, items: 'any', requiredItems: 1, maxScore: 1000 },
+  { id: 'advent-calendar', group: 'everyday', source: 'client', path: '/advent-calendar', points: 5, passPercent: 100, items: 'any', requiredItems: 4, maxScore: 1 },
+  { id: 'workplace-etiquette', group: 'work', source: 'client', path: '/workplace-etiquette', points: 5, passPercent: 70, maxScore: 100 },
   { id: 'mock-a1', group: 'exam', source: 'client', path: '/german-mock-exam/a1', points: 10, passPercent: 60, items: ['hoeren', 'lesen', 'schreiben', 'sprechen'], requiredItems: 2, maxScore: 1000 },
   { id: 'mock-b1', group: 'exam', source: 'client', path: '/german-mock-exam/b1', points: 15, passPercent: 60, items: ['hoeren', 'lesen', 'schreiben', 'sprechen'], requiredItems: 2, maxScore: 1000 },
   { id: 'level-self', group: 'exam', source: 'client', path: '/german-level-test-self', points: 5, passPercent: 0, maxScore: 4 },

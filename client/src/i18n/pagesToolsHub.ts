@@ -7,10 +7,13 @@ const az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'İşəgötürən bələdçisi: Azərbaycan', text: 'Azərbaycandan işçi qəbulu: təhsil sistemi, diplomların tanınması, bayramlar və § 81a sürətləndirilmiş prosedur.' },
+      adventCalendar: { title: 'Advent təqvimi', text: '1–24 dekabr: hər gün bir qapı — alman Milad ənənələri, səsli ifadələr, viktorinalar və məsləhətlər.' },
+      changes2027: { title: '2027-də nə dəyişir', text: 'Minimum əmək haqqı, minijob, vergi, Kindergeld, Deutschlandticket, Mavi Kart: köhnə → yeni dəyər, vəziyyət və mənbə.' },
       germanStreet: { title: 'Virtual alman küçəsi', text: 'Bürgeramt, bank, vağzal, supermarket, həkim: binaya daxil olun və uyğun oyun və ya səhnəni açın.' },
       ticketMachine: { title: 'Bilet avtomatı simulyatoru', text: 'Zona AB/ABC, bilet növü, ödəniş və kompostlama — tapşırıqlarla və 60 € cərimənin izahı ilə.' },
       supermarketGame: { title: 'Supermarket oyunu', text: 'Quark, Sahne, Mehl Type 405: siyahı ilə rəflərdə alış-veriş, Pfand avtomatı və çek.' },
       candidateCatalogue: { title: 'Namizəd kataloqu', text: 'Almaniyada işləməyə hazır namizədlər peşə, alman dili və təcrübəyə görə — anonim.' },
+      novruzCard: { title: 'Novruz təbrik kartı', text: 'Azərbaycanlı komandanız üçün düzgün təbriklə kart — PNG və ya A5 PDF.' },
     },
   },
   toolsHub: {
@@ -80,10 +83,13 @@ const de: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Arbeitgeber-Leitfaden Aserbaidschan', text: 'Fachkräfte aus Aserbaidschan: Bildungssystem, Anerkennung, Feiertage und beschleunigtes Verfahren nach § 81a.' },
+      adventCalendar: { title: 'Adventskalender', text: '1. bis 24. Dezember: jeden Tag ein Türchen — Weihnachtsbräuche, Sätze mit Audio, Quiz und Tipps.' },
+      changes2027: { title: 'Was sich 2027 ändert', text: 'Mindestlohn, Minijob, Steuern, Kindergeld, Deutschlandticket, Blaue Karte: alt → neu, Stand und Quelle.' },
       germanStreet: { title: 'Virtuelle deutsche Straße', text: 'Bürgeramt, Bank, Bahnhof, Supermarkt, Arzt: hineingehen und das passende Spiel oder die Szene öffnen.' },
       ticketMachine: { title: 'Fahrkartenautomat-Simulator', text: 'Zone AB/ABC, Fahrkartenart, Bezahlen und Entwerten — mit Aufgaben und dem 60-€-Bußgeld erklärt.' },
       supermarketGame: { title: 'Supermarkt-Spiel', text: 'Quark, Sahne, Mehl Type 405: mit Einkaufszettel durch die Regale, Pfandautomat und Kassenbon.' },
       candidateCatalogue: { title: 'Kandidatenkatalog', text: 'Anonyme Kandidaten nach Beruf, Deutschniveau und Erfahrung — bereit für Deutschland.' },
+      novruzCard: { title: 'Novruz-Grußkarte', text: 'Karte mit korrektem aserbaidschanischem Gruß für Ihr Team – als PNG oder A5-PDF.' },
     },
   },
   toolsHub: {
@@ -153,10 +159,13 @@ const en: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Employer guide: Azerbaijan', text: 'Hiring from Azerbaijan: education system, recognition, public holidays and the § 81a fast-track procedure.' },
+      adventCalendar: { title: 'Advent calendar', text: '1–24 December: a door a day — German Christmas traditions, phrases with audio, quizzes and tips.' },
+      changes2027: { title: 'What changes in 2027', text: 'Minimum wage, mini-jobs, tax, Kindergeld, Deutschlandticket, Blue Card: old → new value, status and source.' },
       germanStreet: { title: 'Virtual German street', text: 'Bürgeramt, bank, station, supermarket, doctor: step inside and open the matching game or scene.' },
       ticketMachine: { title: 'Ticket machine simulator', text: 'Zones AB/ABC, ticket types, payment and validation — with tasks and the €60 penalty fare explained.' },
       supermarketGame: { title: 'Supermarket game', text: 'Quark, Sahne, Mehl Type 405: shop the shelves from a list, the Pfand machine and the receipt.' },
       candidateCatalogue: { title: 'Candidate catalogue', text: 'Anonymous candidates by profession, German level and experience — ready for Germany.' },
+      novruzCard: { title: 'Novruz greeting card', text: 'A card with a correct Azerbaijani greeting for your team – PNG or A5 PDF.' },
     },
   },
   toolsHub: {
@@ -226,10 +235,13 @@ const ru: typeof az = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Гид для работодателя: Азербайджан', text: 'Найм из Азербайджана: система образования, признание дипломов, праздники и ускоренная процедура § 81a.' },
+      adventCalendar: { title: 'Адвент-календарь', text: '1–24 декабря: каждый день окошко — немецкие рождественские традиции, фразы с озвучкой, викторины и советы.' },
+      changes2027: { title: 'Что изменится в 2027', text: 'Минимальная зарплата, мини-джоб, налоги, Kindergeld, Deutschlandticket, Голубая карта: было → стало, статус, источник.' },
       germanStreet: { title: 'Виртуальная немецкая улица', text: 'Bürgeramt, банк, вокзал, супермаркет, врач: заходите и открывайте нужную игру или сцену.' },
       ticketMachine: { title: 'Симулятор билетного автомата', text: 'Зоны AB/ABC, виды билетов, оплата и компостирование — с заданиями и разбором штрафа 60 €.' },
       supermarketGame: { title: 'Игра «Супермаркет»', text: 'Quark, Sahne, Mehl Type 405: покупки по списку, автомат Pfand и чек.' },
       candidateCatalogue: { title: 'Каталог кандидатов', text: 'Анонимные кандидаты по профессии, уровню немецкого и опыту — готовы к работе в Германии.' },
+      novruzCard: { title: 'Открытка к Новрузу', text: 'Открытка с правильным азербайджанским поздравлением для команды — PNG или A5 PDF.' },
     },
   },
   toolsHub: {
@@ -301,10 +313,13 @@ const tr: PublicCopy = {
   toolsPage: {
     items: {
       employerGuide: { title: 'İşveren rehberi: Azerbaycan', text: "Azerbaycan'dan işe alım: eğitim sistemi, denklik, resmî tatiller ve § 81a hızlandırılmış prosedür." },
+      adventCalendar: { title: 'Advent takvimi', text: '1–24 Aralık: her gün bir kapı — Alman Noel gelenekleri, sesli ifadeler, testler ve ipuçları.' },
+      changes2027: { title: '2027’de neler değişiyor', text: 'Asgari ücret, minijob, vergi, Kindergeld, Deutschlandticket, Mavi Kart: eski → yeni değer, durum ve kaynak.' },
       germanStreet: { title: 'Sanal Alman sokağı', text: 'Bürgeramt, banka, istasyon, süpermarket, doktor: içeri girin ve ilgili oyunu ya da sahneyi açın.' },
       ticketMachine: { title: 'Bilet otomatı simülatörü', text: 'AB/ABC bölgeleri, bilet türleri, ödeme ve damgalama — görevler ve 60 € ceza açıklamasıyla.' },
       supermarketGame: { title: 'Süpermarket oyunu', text: 'Quark, Sahne, Mehl Type 405: listeyle raflarda alışveriş, Pfand otomatı ve fiş.' },
       candidateCatalogue: { title: 'Aday kataloğu', text: 'Meslek, Almanca seviyesi ve deneyime göre anonim adaylar — Almanya için hazır.' },
+      novruzCard: { title: 'Nevruz tebrik kartı', text: 'Ekibiniz için doğru Azerbaycanca tebrikli kart – PNG ya da A5 PDF.' },
     },
   },
   toolsHub: {
@@ -356,10 +371,13 @@ const uk: PublicCopy = {
   toolsPage: {
     items: {
       employerGuide: { title: 'Гід для роботодавця: Азербайджан', text: 'Найм з Азербайджану: система освіти, визнання дипломів, свята та прискорена процедура § 81a.' },
+      adventCalendar: { title: 'Адвент-календар', text: '1–24 грудня: щодня віконце — німецькі різдвяні традиції, фрази з озвученням, вікторини й поради.' },
+      changes2027: { title: 'Що зміниться у 2027', text: 'Мінімальна зарплата, міні-джоб, податки, Kindergeld, Deutschlandticket, Блакитна карта: було → стало, статус, джерело.' },
       germanStreet: { title: 'Віртуальна німецька вулиця', text: 'Bürgeramt, банк, вокзал, супермаркет, лікар: заходьте й відкривайте потрібну гру чи сцену.' },
       ticketMachine: { title: 'Симулятор квиткового автомата', text: 'Зони AB/ABC, види квитків, оплата й компостування — із завданнями та поясненням штрафу 60 €.' },
       supermarketGame: { title: 'Гра «Супермаркет»', text: 'Quark, Sahne, Mehl Type 405: покупки за списком, автомат Pfand і чек.' },
       candidateCatalogue: { title: 'Каталог кандидатів', text: 'Анонімні кандидати за професією, рівнем німецької та досвідом — готові до Німеччини.' },
+      novruzCard: { title: 'Листівка до Новрузу', text: 'Листівка з правильним азербайджанським привітанням для команди — PNG або A5 PDF.' },
     },
   },
   toolsHub: {

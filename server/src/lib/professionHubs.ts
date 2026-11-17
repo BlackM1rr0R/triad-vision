@@ -20,33 +20,33 @@ export const PROFESSION_HUBS: ProfessionHub[] = [
   {
     slug: 'truck-driver',
     professions: ['truck_driver', 'bus_driver', 'courier'],
-    tools: ['/salary-calculator', '/driving-time-calculator', '/shift-pay-calculator', '/work-schedule-check', '/driving-licence-germany', '/traffic-signs', '/work-scenes/truck-cab', '/which-city'],
+    tools: ['/salary-calculator', '/driving-time-calculator', '/shift-pay-calculator', '/work-schedule-check', '/driving-licence-germany', '/traffic-signs', '/work-scenes/truck-cab', '/which-city', '/workplace-etiquette'],
   },
   {
     slug: 'cook',
     professions: ['cook', 'baker', 'butcher', 'waiter', 'hotel'],
-    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/work-scenes/restaurant-kitchen', '/german-mock-exam', '/budget', '/which-city'],
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/work-scenes/restaurant-kitchen', '/german-mock-exam', '/budget', '/which-city', '/workplace-etiquette'],
   },
   {
     slug: 'nurse',
     // Care jobs share one canonical profession (Pflegefachkraft, Altenpflege and Pflegehelfer are all "nurse").
     professions: ['nurse'],
-    tools: ['/anerkennung', '/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/work-scenes/hospital-ward', '/german-mock-exam', '/blue-card-check', '/family-reunification-check'],
+    tools: ['/anerkennung', '/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/work-scenes/hospital-ward', '/german-mock-exam', '/blue-card-check', '/family-reunification-check', '/workplace-etiquette'],
   },
   {
     slug: 'care-worker',
     professions: ['nurse'],
-    tools: ['/salary-calculator', '/shift-pay-calculator', '/anerkennung', '/work-scenes/hospital-ward', '/german-mock-exam', '/german-level-test-self', '/budget', '/rent-check'],
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/anerkennung', '/work-scenes/hospital-ward', '/german-mock-exam', '/german-level-test-self', '/budget', '/rent-check', '/workplace-etiquette'],
   },
   {
     slug: 'electrician',
     professions: ['electrician'],
-    tools: ['/anerkennung', '/salary-calculator', '/work-scenes/electrical-panel', '/german-mock-exam', '/blue-card-check', '/chancenkarte-calculator', '/which-city', '/budget'],
+    tools: ['/anerkennung', '/salary-calculator', '/work-scenes/electrical-panel', '/german-mock-exam', '/blue-card-check', '/chancenkarte-calculator', '/which-city', '/budget', '/workplace-etiquette'],
   },
   {
     slug: 'construction-worker',
     professions: ['construction_worker', 'welder', 'carpenter', 'painter', 'plumber'],
-    tools: ['/salary-calculator', '/work-scenes/construction-site', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/german-mock-exam', '/budget', '/rent-check'],
+    tools: ['/salary-calculator', '/work-scenes/construction-site', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/german-mock-exam', '/budget', '/rent-check', '/workplace-etiquette'],
   },
 ];
 

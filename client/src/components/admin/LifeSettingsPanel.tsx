@@ -29,6 +29,8 @@ interface AdminLife {
   rate: Omit<EurAzn, 'stale' | 'source'> | null;
   board: LiveNumbers['data'];
   minCount: number;
+  /** EUR → AZN rate alerts (lib/rateAlerts): counts only. */
+  rateAlerts?: { active: number; paused: number; pending: number };
 }
 
 const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(',', '.')) || null);
@@ -184,6 +186,7 @@ export const LifeSettingsPanel = () => {
             <p className="text-muted tabular-nums">
               {data.rate ? t('life.admin.rateValue', { rate: data.rate.rate, date: data.rate.date, fetched: fmtDateTime(data.rate.fetchedAt) }) : t('life.admin.rateNone')}
             </p>
+            {data.rateAlerts && <p className="text-muted tabular-nums">{t('life.admin.rateAlerts', data.rateAlerts)}</p>}
           </div>
           <button type="button" className="btn-ghost btn-sm" onClick={refresh} disabled={refreshing}>
             {refreshing ? <Spinner className="size-3.5" /> : <RefreshCw className="size-3.5" aria-hidden />} {t('life.admin.refresh')}

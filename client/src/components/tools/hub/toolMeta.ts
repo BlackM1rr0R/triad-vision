@@ -51,6 +51,8 @@ const TAGS: Record<string, ToolTag[]> = {
   startDate: ['calculator', 'planner'],
   cities: ['explainer'],
   holidayPlanner: ['planner'],
+  adventCalendar: ['practice'],
+  changes2027: ['explainer'],
   weekendTrips: ['planner'],
   drivingTime: ['calculator', 'check'],
   workSchedule: ['check'],
@@ -75,8 +77,10 @@ const TAGS: Record<string, ToolTag[]> = {
   ticketMachine: ['practice'],
   supermarketGame: ['practice'],
   workScenes: ['practice'],
+  workplaceEtiquette: ['practice', 'explainer'],
   employerGuide: ['explainer'],
   candidateCatalogue: ['explainer'],
+  novruzCard: ['planner'],
 };
 
 export const tagsOf = (key: string): ToolTag[] => TAGS[key] ?? [];

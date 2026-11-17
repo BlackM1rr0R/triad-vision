@@ -33,6 +33,7 @@ import { CompanyPipeline } from '@/components/pipeline/CompanyPipeline'; // cand
 import { CompanyConfigurator } from '@/components/configurator/CompanyConfigurator'; // package configurator → offer request
 import { pagesEmployerPipeline } from '@/i18n/pagesEmployerPipeline';
 import { pagesConfigurator } from '@/i18n/pagesConfigurator';
+import { CompanyNovruzCard } from '@/components/novruz/CompanyNovruzCard'; // Novruz greeting cards for the own workers
 
 registerCopy(pagesJobs);
 registerCopy(pagesSign);
@@ -59,7 +60,7 @@ export default function CompanyApp() {
     { to: '/company/candidates', label: t('jobsArea.portal.nav.candidates'), icon: Users, match: (p: string) => p.startsWith('/company/candidates') },
     { to: '/company/requests', label: t('requests.nav'), icon: ClipboardList, match: (p: string) => p.startsWith('/company/requests') },
     { to: '/company/pipeline', label: t('employerPipeline.nav'), icon: Workflow, match: (p: string) => p.startsWith('/company/pipeline') },
-    { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') },
+    { to: '/company/workers', label: t('jobsArea.portal.nav.workers'), icon: Handshake, match: (p: string) => p.startsWith('/company/workers') || p.startsWith('/company/novruz-card') },
     { to: '/company/interviews', label: t('ops.company.title'), icon: Video, match: (p: string) => p.startsWith('/company/interviews') },
     { to: '/company/contracts', label: t('esign.portal.companyTitle'), icon: FileSignature, match: (p: string) => p.startsWith('/company/contracts') },
     { to: '/company/forms', label: t('officialForms.company.nav'), icon: FileText, match: (p: string) => p.startsWith('/company/forms') },
@@ -179,6 +180,7 @@ export default function CompanyApp() {
                 <Route path="requests/*" element={<CompanyRequests />} />
                 <Route path="pipeline" element={<CompanyPipeline />} />
                 <Route path="workers" element={<CompanyWorkers />} />
+                <Route path="novruz-card" element={<CompanyNovruzCard />} />
                 <Route path="interviews" element={<CompanyInterviews />} />
                 <Route path="contracts" element={<CompanyContracts />} />
                 <Route path="contracts/:signerId" element={<CompanyContracts />} />

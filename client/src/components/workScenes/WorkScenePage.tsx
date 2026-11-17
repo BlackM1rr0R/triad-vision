@@ -13,6 +13,7 @@ import { pagesWorkScenes } from '@/i18n/pagesWorkScenes';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { pickTx } from '@/lib/games/common';
 import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
+import { EtiquetteTeaser } from '@/components/etiquette/EtiquetteTeaser'; // workplace etiquette quiz
 import { SCENE_META, WORK_SCENES_PATH, sceneMeta } from '@/lib/workScenes/meta';
 import { WORK_SCENES_AS_OF, type SceneSpot, type WorkScene } from '@/lib/workScenes/types';
 import { answerQuiz, currentTarget, isFinished, nextQuestion, quizOptions, quizPercent, startQuiz, type QuizItem, type QuizState } from '@/lib/workScenes/quiz';
@@ -337,6 +338,8 @@ export function WorkScenePage({ scene, art }: { scene: WorkScene; art: ReactNode
               </Link>
             </div>
           </div>
+
+          <EtiquetteTeaser />
 
           {/* All words (also the crawlable / no-picture version) */}
           <section aria-labelledby="ws-list" className="pt-4">

@@ -22,6 +22,7 @@ import { findJobLanding, jobLandings, jobLandingTexts, landingOfJob, parseJobLan
 import { studyDetailBody, studyDetailSlug, studyListBody } from './study/seo.js';
 import { glossaryListBody, glossaryTermBody, glossaryTermOfPath } from './glossary/seo.js';
 import { hubOfPath } from './professionHubs.js';
+import { CHANGES_PATH, changes2027Body } from './changes2027/seo.js';
 
 /*
  * Crawlable page body ("SSR-lite") for search engines and link previews that do not run JavaScript.
@@ -112,7 +113,7 @@ const LANGUAGE_NAMES: Record<SeoLocale, string> = { az: 'Azərbaycan', de: 'Deut
 
 // Same structure as the site header (For workers, For employers, Visas, Guides, Contact + Tools) and footer.
 const NAV = ['/for-workers', '/for-employers', '/visas', '/guides', '/contact', '/tools'];
-const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/german-apartment', '/residence-card-explained', '/shortage-barometer', '/tax-refund-calculator', '/shift-pay-calculator', '/driving-time-calculator', '/work-schedule-check', '/tax-class-chooser', '/employer-cost-calculator', '/rent-check', '/real-salaries', '/health-insurance-comparison', '/emergency-wallpaper', '/holiday-planner', '/grade-converter', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/weekend-trips', '/map', '/azerbaijan-in-germany', '/tools'];
+const TOOLS = ['/path-finder', '/uygunluq-testi', '/eligibility', '/compare-visas', '/chancenkarte-calculator', '/blue-card-check', '/salary-calculator', '/cost-calculator', '/budget', '/life-in-germany', '/payslip-explained', '/german-apartment', '/residence-card-explained', '/shortage-barometer', '/tax-refund-calculator', '/shift-pay-calculator', '/driving-time-calculator', '/work-schedule-check', '/tax-class-chooser', '/employer-cost-calculator', '/rent-check', '/real-salaries', '/health-insurance-comparison', '/emergency-wallpaper', '/holiday-planner', '/changes-2027', '/grade-converter', '/anerkennung', '/when-in-germany', '/calculator', '/cities', '/weekend-trips', '/map', '/azerbaijan-in-germany', '/tools'];
 const FOOTER = ['/jobs', '/ausbildung', '/study', '/glossary', '/services', '/packages', '/cooperation', '/partners', '/stories', '/events', '/news', '/faq', '/booking', '/about', '/impressum', '/privacy', '/accessibility'];
 /** Links of the employer landing page besides its services. */
 const EMPLOYER_LINKS = ['/cooperation', '/employer-guide-azerbaijan', '/employers/register', '/partners', '/stories', '/booking'];
@@ -476,10 +477,15 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       case '/health-insurance-comparison':
       case '/emergency-wallpaper':
       case '/holiday-planner':
+      case '/advent-calendar':
       case '/grade-converter':
       case '/calculator':
         // The guides of this tool first (lib/seoLinks.ts; the page shows them as "Related guides").
         out.push(section(t.guides, guideList(orderGuidesForTool(path, guides))), cta);
+        break;
+      case CHANGES_PATH:
+        // Every 2027 change from the data freshness registry: table, one section per change, FAQ (lib/changes2027).
+        out.push(...changes2027Body(lng, link), section(t.guides, guideList(orderGuidesForTool(path, guides))), cta);
         break;
       case '/anerkennung': {
         // Profession recognition guides first (anerkennung-koch, -arzt …, seed guideDrafts/professions), then the rest.

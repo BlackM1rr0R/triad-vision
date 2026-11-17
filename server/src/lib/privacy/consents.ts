@@ -20,6 +20,7 @@ export const CONSENT_TYPES = [
   'PARTNER_SHARING', // the owning referral partner may see more of the client's case (lib/partners/owned.ts)
   'CANDIDATE_POOL', // anonymous profile in the employer candidate pool (lib/pool; switched in the profile)
   'READINESS_PROFILE', // employers may see the readiness profile card (lib/readyProgress; default off, privacy centre)
+  'RATE_ALERT', // EUR → AZN rate alert e-mails (lib/rateAlerts): double opt-in / portal, withdrawal on unsubscribe
   // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
   'COOKIES',
   'COOKIES_ANALYTICS',

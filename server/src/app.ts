@@ -135,7 +135,10 @@ import { accountVisaStoryRouter } from './routes/visaStory.js'; // client 'Your 
 import { googleReviewPublicRouter } from './routes/googleReview.js'; // Google review request: tracked redirect + opt-out
 import { budgetRouter } from './routes/budget.js'; // first-month budget calculator (/budget): config, estimate, PDF, portal prefill
 import { lifeRouter } from './routes/life.js'; // "Life in Germany" simulator, CBAR EUR→AZN rate, live numbers board
+import { rateAlertsRouter } from './routes/rateAlerts.js'; // EUR → AZN rate alerts (double opt-in, portal alerts, one-click unsubscribe)
+import { pocketGuideRouter } from './routes/pocketGuide.js'; // printable Germany pocket guide PDF (public per language + personalised in the portal)
 import { whenInGermanyRouter } from './routes/whenInGermany.js'; // "When could I be in Germany?" estimator (case-history percentiles, daily cache)
+import { changes2027Router } from './routes/changes2027.js'; // "What changes on 1 January 2027" (public, from the data freshness registry)
 import { rentalDisclosureRouter } from './routes/rentalDisclosure.js'; // Mieterselbstauskunft PDF (DSK-permissible fields, nothing stored) + client prefill
 import { realSalariesRouter } from './routes/realSalaries.js'; // real salary database (public ranges, groups with >= 3 workers, monthly snapshot)
 import { platformRouter } from './routes/platform.js'; // /platform: product page of the platform for other agencies (status, demo request)
@@ -306,8 +309,11 @@ export const createApp = () => {
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)
   app.use('/api/life', lifeRouter); // Life in Germany simulator + live numbers board (public)
+  app.use('/api/rate-alerts', rateAlertsRouter); // EUR → AZN rate alerts (public double opt-in + client portal)
+  app.use('/api/pocket-guide', pocketGuideRouter); // Germany pocket guide PDF: A5 pages / A4 booklet (public), personalised (/mine, clients)
   app.use('/api/platform', platformRouter); // platform for other agencies: demo request → SaaS lead (owner instance only)
   app.use('/api/when-in-germany', whenInGermanyRouter); // arrival-month estimator (public, aggregates only)
+  app.use('/api/changes-2027', changes2027Router); // "what changes on 1 January 2027" (public, registry-based, no DB)
   app.use('/api/rental-disclosure', rentalDisclosureRouter); // Mieterselbstauskunft generator (public PDF, client prefill)
   app.use('/api/real-salaries', realSalariesRouter); // real salaries of placed workers (public, k-anonymous ranges only)
   app.use('/api/family-check', familyCheckRouter); // family reunification self-check (public, no case)

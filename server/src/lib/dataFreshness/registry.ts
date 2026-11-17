@@ -5,6 +5,7 @@ import {
   deutschlandticketAt,
   minimumWageAt,
   stepAt,
+  stepValueAt,
 } from '../budget/params.js';
 import { GLOSSARY_AS_OF } from '../glossary/types.js';
 
@@ -47,9 +48,25 @@ export interface FreshnessItem {
   /** First due date (ISO day). Later due dates follow `cadence` (lib/dataFreshness/schedule.ts). */
   reviewBy: string;
   cadence: FreshnessCadence;
-  /** Known next value. `implemented`: the code already switches on that date. */
-  upcoming?: { value: string; from: string; status: 'enacted' | 'decided' | 'proposed' | 'expected'; implemented: boolean };
+  /**
+   * Known next value. `implemented`: the code already switches on that date. `change`: shown on the public
+   * "what changes on 1 January" page (/changes-2027, lib/changes2027) — keep `value` a plain figure then.
+   */
+  upcoming?: { value: string; from: string; status: FreshnessStatus; implemented: boolean; change?: YearChange };
   note: { az: string; en: string };
+}
+
+export type FreshnessStatus = 'enacted' | 'decided' | 'proposed' | 'expected';
+/** Who a change affects (public page filter chips). */
+export type ChangeAudience = 'workers' | 'families' | 'employers' | 'households' | 'commuters' | 'newcomers' | 'drivers';
+export type ChangeLocale = 'az' | 'de' | 'en' | 'ru' | 'tr' | 'uk';
+/** Public-page data of an upcoming change; the new value is `upcoming.value`, the status `upcoming.status`. */
+export interface YearChange {
+  /** The figure before the change (language-neutral, English number format like `value`). */
+  before: string;
+  affects: ChangeAudience[];
+  /** The legal stage in words: who decided what, what is still pending. */
+  statusLabel: Record<ChangeLocale, string>;
 }
 
 const eur = (n: number) => `${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })} €`;
@@ -57,6 +74,18 @@ const pct = (n: number) => `${Math.round(n * 1000) / 10} %`;
 const P = CURRENT_PARAMS.payroll;
 const C = CURRENT_PARAMS.costs;
 const nextStep = (steps: readonly { from: string; value: number }[]) => steps[steps.length - 1];
+/** Value of a dated table on the day before 1 January 2027 (the "before" of /changes-2027). */
+const before2027 = (steps: Parameters<typeof stepValueAt>[0]) => eur(stepValueAt(steps, '2026-12-31'));
+const sixLangs = (az: string, de: string, en: string, ru: string, tr: string, uk: string): Record<ChangeLocale, string> => ({ az, de, en, ru, tr, uk });
+/** Stage of the Einkommensteuerreformgesetz 2027 (BT-Drs. 21/8235; checked 2026-11-17: first reading 8.10.2026, not yet passed). */
+const TAX_BILL_2027 = sixLangs(
+  'Qanun layihəsi (Einkommensteuerreformgesetz 2027): kabinet 2.9.2026 təsdiqləyib, Bundestag və Bundesrat hələ səs verməyib',
+  'Gesetzentwurf (Einkommensteuerreformgesetz 2027): Kabinett 2.9.2026, Bundestag und Bundesrat müssen noch zustimmen',
+  'Bill (Einkommensteuerreformgesetz 2027): cabinet 2 Sep 2026, Bundestag and Bundesrat still have to approve it',
+  'Законопроект (Einkommensteuerreformgesetz 2027): кабинет 2.9.2026, Бундестаг и Бундесрат ещё должны его одобрить',
+  'Kanun tasarısı (Einkommensteuerreformgesetz 2027): kabine 2.9.2026, Bundestag ve Bundesrat henüz onaylamadı',
+  'Законопроєкт (Einkommensteuerreformgesetz 2027): кабінет 2.9.2026, Бундестаг і Бундесрат ще мають його схвалити',
+);
 const PARAMS = 'server/src/lib/budget/params.ts';
 const CASE_AI = 'server/src/lib/ai/features/caseAi/config.ts';
 const CITIES = 'client/src/lib/cities/data.ts';
@@ -77,7 +106,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'MiLoV5 (BGBl. 2025 I Nr. 268)', url: 'https://www.gesetze-im-internet.de/milov5/BJNR10C0A0025.html' },
     reviewBy: '2027-07-01',
     cadence: 'yearly',
-    upcoming: { value: eur(nextStep(MINIMUM_WAGE_STEPS).value), from: nextStep(MINIMUM_WAGE_STEPS).from, status: 'enacted', implemented: true },
+    upcoming: {
+      value: eur(nextStep(MINIMUM_WAGE_STEPS).value),
+      from: nextStep(MINIMUM_WAGE_STEPS).from,
+      status: 'enacted',
+      implemented: true,
+      change: {
+        before: before2027(MINIMUM_WAGE_STEPS),
+        affects: ['workers', 'employers'],
+        statusLabel: sixLangs(
+          'Hökumət fərmanı ilə müəyyən edilib (MiLoV5, BGBl. 2025 I Nr. 268)',
+          'Per Verordnung festgelegt (MiLoV5, BGBl. 2025 I Nr. 268)',
+          'Set by government ordinance (MiLoV5, BGBl. 2025 I No. 268)',
+          'Установлено постановлением правительства (MiLoV5, BGBl. 2025 I Nr. 268)',
+          'Hükümet yönetmeliğiyle belirlendi (MiLoV5, BGBl. 2025 I Nr. 268)',
+          'Встановлено постановою уряду (MiLoV5, BGBl. 2025 I Nr. 268)',
+        ),
+      },
+    },
     note: {
       az: '14,60 € 1.1.2027-dən kodda avtomatik keçir (params.ts MINIMUM_WAGE_STEPS). Mindestlohnkommission 2027-ci ilin ortasında 2028 üçün qərar verəcək — onda yeni addım əlavə edin; 2027-dən sonra mətnlərdə "13,90" qalmasın.',
       en: '14.60 € switches automatically on 1.1.2027 (params.ts MINIMUM_WAGE_STEPS). The Mindestlohnkommission decides the 2028 value around mid-2027 — add a step then; after 1.1.2027 texts should no longer present 13.90 € as current.',
@@ -98,7 +144,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'Minijob-Zentrale: Minijob-Grenze 2027', url: 'https://magazin.minijob-zentrale.de/minijob-grenze-2027' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: '633 € (633.01–2,000 €)', from: '2027-01-01', status: 'enacted', implemented: false },
+    upcoming: {
+      value: '633 € (633.01–2,000 €)',
+      from: '2027-01-01',
+      status: 'enacted',
+      implemented: false,
+      change: {
+        before: `${eur(P.minijobUpTo)} (${(P.minijobUpTo + 0.01).toFixed(2)}–${eur(P.midijobUpTo)})`,
+        affects: ['workers', 'employers'],
+        statusLabel: sixLangs(
+          'Qanundan avtomatik irəli gəlir: minimum əmək haqqı × 130 / 3 (§ 8 Abs. 1a SGB IV)',
+          'Ergibt sich automatisch aus dem Mindestlohn × 130 / 3 (§ 8 Abs. 1a SGB IV)',
+          'Follows automatically from the law: minimum wage × 130 / 3 (§ 8(1a) SGB IV)',
+          'Следует из закона автоматически: минимальная зарплата × 130 / 3 (§ 8 Abs. 1a SGB IV)',
+          'Kanundan otomatik çıkar: asgari ücret × 130 / 3 (§ 8 Abs. 1a SGB IV)',
+          'Випливає із закону автоматично: мінімальна зарплата × 130 / 3 (§ 8 Abs. 1a SGB IV)',
+        ),
+      },
+    },
     note: {
       az: 'Hədd minimum əmək haqqından hesablanır (× 130 / 3, § 8 Abs. 1a SGB IV): 2027-də 633 €. 2027 vergi parametrləri ilə birlikdə params.ts-də yeniləyin və mətnlərdəki "603"-ü dəyişin.',
       en: 'Derived from the minimum wage (× 130 / 3, § 8(1a) SGB IV): 633 € in 2027. Update params.ts together with the 2027 payroll parameters and replace "603" in the texts.',
@@ -132,7 +195,17 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'BMF – Programmablaufplan Lohnsteuer', url: 'https://www.bundesfinanzministerium.de/Web/DE/Themen/Steuern/Steuerarten/Lohnsteuer/Programmablaufplan/programmablaufplan.html' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: 'Grundfreibetrag 12,564 €, ANP 1,430 € (Einkommensteuerreformgesetz 2027)', from: '2027-01-01', status: 'proposed', implemented: false },
+    upcoming: {
+      value: 'Grundfreibetrag 12,564 €, Arbeitnehmer-Pauschbetrag 1,430 €, Kinderfreibetrag 10,056 €',
+      from: '2027-01-01',
+      status: 'proposed',
+      implemented: false,
+      change: {
+        before: `Grundfreibetrag ${eur(P.tax.gfb)}, Arbeitnehmer-Pauschbetrag ${eur(P.tax.anp)}, Kinderfreibetrag ${eur(P.tax.kfbFull)}`,
+        affects: ['workers', 'families'],
+        statusLabel: TAX_BILL_2027,
+      },
+    },
     note: {
       az: 'BMF hər noyabrda növbəti ilin PAP-ını dərc edir. params.ts-də BUDGET_PARAMS_2027 yaradın, CURRENT_PARAMS-ı ona yönləndirin, budgetPayroll.test.ts istinad dəyərlərini PAP Prüftabelle ilə yeniləyin.',
       en: 'The BMF publishes the next PAP every November. Copy BUDGET_PARAMS_2026 to BUDGET_PARAMS_2027 in params.ts, point CURRENT_PARAMS at it and update the reference values in budgetPayroll.test.ts from the PAP test table.',
@@ -152,7 +225,13 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'Familienkasse – Kindergeld', url: 'https://www.arbeitsagentur.de/familie-und-kinder/kindergeld' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: '267 € (proposed, Einkommensteuerreformgesetz 2027)', from: '2027-01-01', status: 'proposed', implemented: false },
+    upcoming: {
+      value: '267 €',
+      from: '2027-01-01',
+      status: 'proposed',
+      implemented: false,
+      change: { before: eur(C.kindergeld), affects: ['families'], statusLabel: TAX_BILL_2027 },
+    },
     note: {
       az: 'Qanun qəbul olunarsa 2027: 267 €. Server (params.ts), sayt (cities/data.ts, LifeArticle FALLBACK, BudgetCalculator fallback) və lüğət mətnlərini birlikdə dəyişin.',
       en: 'If the bill passes: 267 € in 2027. Change server (params.ts), site (cities/data.ts, LifeArticle FALLBACK, BudgetCalculator fallback) and glossary texts together.',
@@ -171,7 +250,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'Bundesregierung – Beitragsbemessungsgrenzen 2027', url: 'https://www.bundesregierung.de/breg-de/bundesregierung/bundeskanzleramt/beitragsbemessungsgrenzen-2027-2454638' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: 'BBG RV/ALV 106,200 €, KV/PV 76,500 €, JAEG 84,150 €', from: '2027-01-01', status: 'decided', implemented: false },
+    upcoming: {
+      value: 'BBG RV/ALV 106,200 €, KV/PV 76,500 €, JAEG 84,150 €',
+      from: '2027-01-01',
+      status: 'decided',
+      implemented: false,
+      change: {
+        before: `BBG RV/ALV ${eur(P.social.bbgRvAlvYear)}, KV/PV ${eur(P.social.bbgKvPvYear)}, JAEG ${eur(P.social.jaegYear)}`,
+        affects: ['workers', 'employers', 'newcomers'],
+        statusLabel: sixLangs(
+          'Kabinet fərmanı (oktyabr 2026); Bundesrat-ın razılığı gözlənilir',
+          'Verordnung vom Kabinett beschlossen (Oktober 2026); Zustimmung des Bundesrats steht aus',
+          'Ordinance adopted by the cabinet (October 2026); Bundesrat approval pending',
+          'Постановление принято кабинетом (октябрь 2026); ждёт одобрения Бундесрата',
+          'Yönetmelik kabinede kabul edildi (Ekim 2026); Bundesrat onayı bekleniyor',
+          'Постанову ухвалив кабінет (жовтень 2026); чекає схвалення Бундесрату',
+        ),
+      },
+    },
     note: {
       az: 'Kabinet təsdiqləyib, Bundesrat gözlənilir. Blue Card / § 18(2) / § 19c hədləri RV BBG-dən hesablanır — onları da yeniləyin.',
       en: 'Cabinet-approved, Bundesrat pending. The Blue Card / § 18(2) / § 19c thresholds derive from the pension BBG — update them too.',
@@ -186,7 +282,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'BMG – Zusatzbeitragssatz 2027', url: 'https://www.bundesgesundheitsministerium.de/presse/pressemitteilungen/zusatzbeitragssatz-gkv-2027-festgelegt' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: 'avg. Zusatzbeitrag 2.9 % (unchanged)', from: '2027-01-01', status: 'decided', implemented: true },
+    upcoming: {
+      value: 'Zusatzbeitrag Ø 2.9 %',
+      from: '2027-01-01',
+      status: 'decided',
+      implemented: true,
+      change: {
+        before: `Zusatzbeitrag Ø ${pct(P.social.averageZusatzbeitrag)}`,
+        affects: ['workers', 'employers'],
+        statusLabel: sixLangs(
+          'Federal Səhiyyə Nazirliyi müəyyən edib (dəyişmir); öz kassanızın faizi fərqli ola bilər',
+          'Vom Bundesgesundheitsministerium festgelegt (unverändert); der Satz Ihrer Kasse kann abweichen',
+          'Set by the Federal Ministry of Health (unchanged); your own fund’s rate can differ',
+          'Установлено Минздравом ФРГ (без изменений); ставка вашей кассы может отличаться',
+          'Federal Sağlık Bakanlığı belirledi (değişmiyor); kendi kasanızın oranı farklı olabilir',
+          'Встановлено МОЗ ФРН (без змін); ставка вашої каси може відрізнятися',
+        ),
+      },
+    },
     note: {
       az: 'Orta Zusatzbeitrag 2027 üçün də 2,9 %. RV 18,6 % hələ Rentenversicherungsbericht ilə təsdiqlənməlidir; PV/ALV dəyişikliklərini yoxlayın.',
       en: 'Average Zusatzbeitrag stays 2.9 % in 2027. Pension 18.6 % still to be confirmed by the Rentenversicherungsbericht; check care / unemployment too.',
@@ -221,7 +334,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'StMB Bayern – Deutschlandticket 2027 (VMK)', url: 'https://www.stmb.bayern.de/med/pressemitteilungen/pressearchiv/2026/115/index.php' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: eur(nextStep(DEUTSCHLANDTICKET_STEPS).value), from: nextStep(DEUTSCHLANDTICKET_STEPS).from, status: 'decided', implemented: true },
+    upcoming: {
+      value: eur(nextStep(DEUTSCHLANDTICKET_STEPS).value),
+      from: nextStep(DEUTSCHLANDTICKET_STEPS).from,
+      status: 'decided',
+      implemented: true,
+      change: {
+        before: before2027(DEUTSCHLANDTICKET_STEPS),
+        affects: ['commuters', 'households'],
+        statusLabel: sixLangs(
+          'Federal və əyalət nəqliyyat nazirlərinin konfransı (VMK) qərar verib',
+          'Von der Verkehrsministerkonferenz (VMK) beschlossen',
+          'Decided by the federal and state transport ministers (VMK)',
+          'Решение конференции министров транспорта (VMK)',
+          'Ulaştırma bakanları konferansı (VMK) karar verdi',
+          'Рішення конференції міністрів транспорту (VMK)',
+        ),
+      },
+    },
     note: {
       az: '66,80 € 1.1.2027-dən kodda avtomatik (DEUTSCHLANDTICKET_STEPS). Şəhər bələdçisi, qiymət oyunu və pagesWhichCity qiyməti avtomatik götürür; yalnız yükləmə fallback-ları (LifeArticle, BudgetCalculator) və grep nəticələri əl ilə yoxlanmalıdır.',
       en: '66.80 € switches automatically on 1.1.2027 (DEUTSCHLANDTICKET_STEPS). City guide, price game and pagesWhichCity read the dated price; only the loading fallbacks (LifeArticle, BudgetCalculator) and grep hits need a manual check.',
@@ -241,7 +371,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'ARD ZDF Deutschlandradio Beitragsservice', url: 'https://www.rundfunkbeitrag.de/' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: '18.64 € (KEF recommendation; needs the state treaty / BVerfG ruling pending)', from: '2027-01-01', status: 'proposed', implemented: false },
+    upcoming: {
+      value: '18.64 €',
+      from: '2027-01-01',
+      status: 'proposed',
+      implemented: false,
+      change: {
+        before: eur(C.rundfunkMonthly),
+        affects: ['households'],
+        statusLabel: sixLangs(
+          'Yalnız KEF tövsiyəsi: 16 əyalətin müqaviləsi və ya Konstitusiya Məhkəməsinin (BVerfG) qərarı lazımdır — hələ yoxdur',
+          'Nur KEF-Empfehlung: nötig ist ein Staatsvertrag aller Länder oder ein Urteil des BVerfG — beides steht aus',
+          'KEF recommendation only: needs a treaty of all 16 states or a Constitutional Court (BVerfG) ruling — neither exists yet',
+          'Только рекомендация KEF: нужен договор всех земель или решение Конституционного суда (BVerfG) — их пока нет',
+          'Yalnızca KEF tavsiyesi: tüm eyaletlerin antlaşması ya da Anayasa Mahkemesi (BVerfG) kararı gerekir — henüz yok',
+          'Лише рекомендація KEF: потрібен договір усіх земель або рішення Конституційного суду (BVerfG) — їх поки немає',
+        ),
+      },
+    },
     note: {
       az: 'Artım yalnız 16 Landtag ratifikasiya etsə və ya BVerfG qərarı ilə. Qüvvəyə minəndə bütün "18,36" mətnlərini dəyişin.',
       en: 'An increase needs ratification by all 16 Länder or a BVerfG ruling. When it takes effect, replace every "18.36" text.',
@@ -306,7 +453,24 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     source: { label: 'Make it in Germany – Blaue Karte EU', url: 'https://www.make-it-in-germany.com/de/visum-aufenthalt/arten/blaue-karte-eu' },
     reviewBy: '2027-01-01',
     cadence: 'yearly',
-    upcoming: { value: 'expected 53,100 € / 48,108.60 €, 45+: 58,410 €, § 19c(2): 47,790 € (from BBG 106,200 €)', from: '2027-01-01', status: 'expected', implemented: false },
+    upcoming: {
+      value: '53,100 € / 48,108.60 €, 45+: 58,410 €, § 19c(2): 47,790 €',
+      from: '2027-01-01',
+      status: 'expected',
+      implemented: false,
+      change: {
+        before: '50,700 € / 45,934.20 €, 45+: 55,770 €, § 19c(2): 45,630 €',
+        affects: ['newcomers', 'employers'],
+        statusLabel: sixLangs(
+          '2027 pensiya həddindən (BBG 106,200 €) hesablanıb; rəsmi rəqəmləri BMI dekabrda dərc edir',
+          'Berechnet aus der Beitragsbemessungsgrenze 2027 (106,200 €); die amtlichen Zahlen veröffentlicht das BMI im Dezember',
+          'Calculated from the 2027 pension ceiling (106,200 €); the BMI publishes the official figures in December',
+          'Рассчитано из потолка 2027 года (106,200 €); официальные цифры BMI публикует в декабре',
+          '2027 emeklilik tavanından (106,200 €) hesaplandı; resmi rakamları BMI aralıkta yayımlar',
+          'Розраховано зі стелі 2027 року (106,200 €); офіційні цифри BMI публікує в грудні',
+        ),
+      },
+    },
     note: {
       az: 'BMI rəqəmləri Bundesanzeiger-də dekabrda dərc edir. caseAi BLUE_CARD/OLDER_WORKER cədvəllərinə 2027 sətri əlavə edin (və ya admin panelində), sonra mətnləri (grep) yeniləyin; bələdçilər admin paneldə də.',
       en: 'The BMI publishes the figures in the Bundesanzeiger in December. Add a 2027 row to caseAi BLUE_CARD / OLDER_WORKER (or in the admin settings), then update the texts (grep); guides also in the admin.',
@@ -540,6 +704,48 @@ export const FRESHNESS_ITEMS: readonly FreshnessItem[] = [
     note: {
       az: 'Hər payız növbəti ili əlavə edin (məs. 2029) və keçmiş ili çıxarın; yeni Land bayramlarını yoxlayın.',
       en: 'Every autumn add the next year (e.g. 2029) and drop the past one; check for new state holidays.',
+    },
+  },
+  {
+    id: 'az-holidays-2027',
+    category: 'calendar',
+    label: { az: 'Azərbaycan bayramları 2027 (Novruz, Ramazan, Qurban)', en: 'Azerbaijani holidays 2027 (Novruz, Ramazan, Qurban)' },
+    value: '2027 estimated (no Cabinet decision yet)',
+    files: [{ path: 'client/src/lib/employerGuideAz/holidays.ts', needle: "{ key: 'novruz', start: '2027-03-20', end: '2027-03-24', status: 'estimated' }" }],
+    source: { label: 'Nazirlər Kabineti (nk.gov.az)', url: 'https://nk.gov.az/az/documents' },
+    reviewBy: '2027-01-15',
+    cadence: 'yearly',
+    note: {
+      az: 'Nazirlər Kabinetinin 2027 qərarı dərc olunanda (adətən dekabrda) tarixləri yeniləyin və statusu decree edin; işəgötürən bələdçisi, Novruz kartı və portal xatırlatması bu moduldan istifadə edir.',
+      en: 'When the Cabinet decision for 2027 is published (usually in December), update the dates and set the status to decree; the employer guide, the Novruz card and the portal reminder use this module.',
+    },
+  },
+  {
+    id: 'workplace-etiquette-rules',
+    category: 'content',
+    label: { az: 'İş etiketi viktorinası (EntgFG, ArbZG, BUrlG …)', en: 'Workplace etiquette quiz (EntgFG, ArbZG, BUrlG …)' },
+    value: 'as of 2026-11-17',
+    files: [{ path: 'client/src/lib/workplaceEtiquette/sources.ts', needle: "export const ETIQUETTE_AS_OF = '2026-11-17';" }],
+    source: { label: '§ 5 EntgFG', url: 'https://www.gesetze-im-internet.de/entgfg/__5.html' },
+    reviewBy: '2027-11-01',
+    cadence: 'yearly',
+    note: {
+      az: 'Suallardakı qanun cavablarını (AU qaydası, fasilələr, məzuniyyət, sınaq müddəti, Betriebsrat, § 109 GewO) yoxlayın, sonra ETIQUETTE_AS_OF-u yeniləyin.',
+      en: 'Re-check the legal answers (sick-note rule, breaks, leave, probation, works council, § 109 GewO), then bump ETIQUETTE_AS_OF.',
+    },
+  },
+  {
+    id: 'advent-calendar',
+    category: 'calendar',
+    label: { az: 'Advent təqvimi (ilə bağlı məsləhətlər)', en: 'Advent calendar (year-specific tips)' },
+    value: 'season 2026',
+    files: [{ path: 'client/src/lib/advent/calendar.ts', needle: 'export const ADVENT_YEAR = 2026;' }],
+    source: { label: '§ 3 Ladenschlussgesetz; 1. SprengV §§ 22, 23', url: 'https://www.gesetze-im-internet.de/ladschlg/__3.html' },
+    reviewBy: '2027-11-01',
+    cadence: 'yearly',
+    note: {
+      az: 'Hər noyabr lib/advent/doors.ts-də 22-ci qapını (24–27 dekabrın həftə günləri) yeni ilə uyğunlaşdırın, fişəng və mağaza qaydalarını yoxlayın, sonra ADVENT_YEAR və ADVENT_AS_OF-u yeniləyin.',
+      en: 'Every November rewrite door 22 in lib/advent/doors.ts (weekdays of 24–27 December) for the new season, re-check the shop-closing and fireworks rules, then bump ADVENT_YEAR and ADVENT_AS_OF.',
     },
   },
 ];

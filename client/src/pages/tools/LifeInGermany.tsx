@@ -7,6 +7,7 @@ import { LifeSimulator } from '@/components/life/LifeSimulator';
 import { LifeArticle } from '@/components/life/LifeArticle';
 import { useLifeConfig } from '@/components/life/api';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
+import { RateAlertSlot } from '@/components/rateAlert/RateAlertForm';
 import { registerCopy } from '@/i18n';
 import { pagesLife } from '@/i18n/pagesLife';
 import { useClientOnly } from '@/lib/ssr';
@@ -31,6 +32,12 @@ export default function LifeInGermanyPage() {
         <div className="container-x">{client ? <LifeSimulator /> : <div className="min-h-[52rem] lg:min-h-[40rem]" aria-hidden />}</div>
       </section>
       <LifeArticle config={config.data} />
+      {/* EUR → AZN rate alert (server routes/rateAlerts.ts) */}
+      <section className="section pt-0">
+        <div className="container-x max-w-3xl">
+          <RateAlertSlot />
+        </div>
+      </section>
       <RelatedGuides tool="/life-in-germany" />
       <PageCta
         icon={<HeartHandshake className="size-7" aria-hidden />}

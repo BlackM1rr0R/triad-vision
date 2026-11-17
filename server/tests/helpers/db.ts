@@ -30,6 +30,7 @@ export const resetDb = async () => {
     await m.deleteMany();
   await prisma.saasLead.deleteMany(); // SaaS demo-request pipeline (plain ids)
   await prisma.toolResultLead.deleteMany(); // "e-mail me my result" state of tool leads (plain ids)
+  await prisma.rateAlert.deleteMany(); // EUR → AZN rate alerts (plain ids)
   await prisma.agencyOnboarding.deleteMany(); // onboarding wizard progress (one row)
   await prisma.cityCost.deleteMany(); // first-month budget city costs (no relations)
   await prisma.clientBadge.deleteMany(); // client badges (plain ids)
