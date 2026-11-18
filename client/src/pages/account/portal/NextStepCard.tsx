@@ -201,6 +201,8 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
   const a = data.primary;
   if (!a) {
     const side = data.waiting?.side ?? 'NONE';
+    // Two-step contract: Triad Vision signs first (or prepares a new version) — say so instead of the generic text.
+    const waitKey = side === 'TEAM' && (data.waiting?.reason === 'TRIAD_SIGN_CONTRACT' || data.waiting?.reason === 'RESEND_CONTRACT') ? data.waiting.reason : side;
     const Icon = side === 'EMBASSY' ? Landmark : side === 'TEAM' ? Hourglass : CheckCircle2;
     const WaitArt = side === 'EMBASSY' ? Germany : side === 'TEAM' ? Documents : Success;
     return (
@@ -213,9 +215,9 @@ export function NextStepCard({ data, loading, caseLink, tour }: { data: NextStep
             </p>
             <h2 id="next-step-title" className="mt-2 flex items-center gap-2.5 text-2xl font-semibold break-words text-ink sm:text-3xl sm:leading-tight" {...morph.part('title')}>
               <Icon className={clsx('size-6 shrink-0 sm:hidden', side === 'NONE' ? 'text-success' : 'text-info')} aria-hidden />
-              {t(`pnav.next.wait.${side}.title`)}
+              {t(`pnav.next.wait.${waitKey}.title`)}
             </h2>
-            <p className="mt-2 max-w-[60ch] text-muted">{t(`pnav.next.wait.${side}.text`)}</p>
+            <p className="mt-2 max-w-[60ch] text-muted">{t(`pnav.next.wait.${waitKey}.text`)}</p>
             {data.waiting?.expectedBy && (
               <p className="mt-3 text-sm font-semibold text-info-fg">{t('pnav.next.wait.expected', { date: date(data.waiting.expectedBy, { day: 'numeric', month: 'long' }) })}</p>
             )}

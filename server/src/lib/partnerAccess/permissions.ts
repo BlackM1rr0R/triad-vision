@@ -228,6 +228,35 @@ export const shapeClientRow = <T extends ClientRowLike>(row: T, perms: PartnerPe
   return out;
 };
 
+/**
+ * Attendance / exam records of a language school (lib/partners/schools.ts). They are the school's OWN data about
+ * its own course — not the client's case documents — so they do not follow the `documents` level (DEFAULT has only
+ * `status`, REFERRER `none`, and the school's core feature would be refused). Students are clients, so the client
+ * list is required (masked or better); the student's consent and the LANGUAGE_SCHOOL category are checked by the
+ * routes as before. Writing (add / withdraw) and the school's own certificate file need the same level.
+ */
+export const schoolRecordAccess = (perms: PartnerPerms, category: string | null | undefined) => {
+  const students = perms.clientList !== 'none';
+  return { view: students, write: students && category === 'LANGUAGE_SCHOOL', certificate: students };
+};
+
+/**
+ * Whether a notification to the partner's portal login (lib/partnerPortal/notify.ts, lib/partners/owned.ts → notifyPartner)
+ * fits the partner's permission set, by notification type; null = do not send. Notifications never carry more than
+ * the portal shows, and their link always points to an area that exists for this login:
+ *   PARTNER_COMMISSION_*                  payments (link /partner/commissions); client names only with the client list
+ *   PARTNER_CASE_*, PARTNER_APPOINTMENT*  case stage + client list (name in the title, link /partner/clients/:id)
+ *   PARTNER_NEW_CLIENT, PARTNER_NEW_CASE  client list (link /partner/people or /partner/clients/:id)
+ *   anything else                         sent as before
+ */
+export const partnerNoticeRule = (perms: PartnerPerms, type: string): { names: boolean } | null => {
+  const clients = perms.clientList !== 'none';
+  if (type.startsWith('PARTNER_COMMISSION_')) return perms.payments ? { names: clients } : null;
+  if (type.startsWith('PARTNER_CASE_') || type.startsWith('PARTNER_APPOINTMENT')) return perms.caseStage && clients ? { names: true } : null;
+  if (type === 'PARTNER_NEW_CLIENT' || type === 'PARTNER_NEW_CASE') return clients ? { names: true } : null;
+  return { names: clients };
+};
+
 /** Portal areas the UI shows (cosmetic; the server checks every request). */
 export const portalAreas = (perms: PartnerPerms, opts: { owner: boolean }) => ({
   clients: perms.clientList !== 'none',

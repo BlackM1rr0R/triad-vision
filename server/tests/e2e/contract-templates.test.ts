@@ -183,19 +183,24 @@ describe('send for e-signature', () => {
     await vi.waitFor(async () => expect(await prisma.auditLog.count({ where: { action: 'contractTemplate.send' } })).toBe(1));
   });
 
-  it('service contract in the contract step becomes the case contract with the staff member as STAFF', async () => {
-    const { client, c } = await makeCase({ status: 'CONTRACT_SENT' });
+  it('service contract in the contract step never becomes the case contract and leaves the open Əmək müqaviləsi alone', async () => {
+    const { client, c } = await makeCase({ status: 'CONTRACT_SIGNED' });
+    // The open two-step Əmək müqaviləsi of the case (the case contract).
+    const labour = await prisma.signatureRequest.create({
+      data: { title: 'Əmək müqaviləsi', caseId: c.id, status: 'SENT', isCaseContract: true, contractKind: 'LABOUR', order: 'SEQUENTIAL', originalKey: `${uniq('lab')}.pdf`, originalName: 'x.pdf', originalSha256: 'a'.repeat(64), originalSize: 1, originalPages: 1 },
+    });
     const { t } = await createTemplate({ kind: 'SERVICE', name: 'Dienstleistungsvertrag' });
     const staff = await asStaff();
     const res = expectStatus(await staff.agent.post(`${BASE}/${t.id}/send`).send({ caseId: c.id, inputs: {} }), 201).body;
-    expect(res.caseContract).toBe(true);
+    expect(res.caseContract).toBe(false);
     const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: res.signatureRequestId } });
-    expect(r.isCaseContract).toBe(true);
+    expect(r.isCaseContract).toBe(false);
     expect((await signersOf(r.id)).map((s) => [s.role, s.userId])).toEqual([
       ['CANDIDATE', client.user.id],
       ['STAFF', staff.user.id],
     ]);
-    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('CONTRACT_SENT');
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('CONTRACT_SIGNED');
+    expect((await prisma.signatureRequest.findUniqueOrThrow({ where: { id: labour.id } })).status).toBe('SENT');
   });
 
   it('service contract outside the contract step (or refused by the case flow) is sent as an ordinary request', async () => {

@@ -7,6 +7,8 @@ import { formatDateTime, notifyUser } from '../notifications.js';
 import { formatMoney } from '../agents/texts.js';
 import { PARTNER_TEXT } from './texts.js';
 import { PARTNER_CLIENT_TEXT, type PartnerClientText } from './clientTexts.js';
+import { loadPartnerPerms } from '../partnerAccess/context.js';
+import { partnerNoticeRule } from '../partnerAccess/permissions.js'; // notifications follow the partner's permission set
 
 /**
  * Notifications for referral partners with a portal login (in-app + e-mail in their language).
@@ -37,11 +39,14 @@ export const notifyPartnerCaseStatus = async (caseId: string, to: CaseStatus, ev
         number: true,
         appointmentAt: true,
         client: { select: { firstName: true, lastName: true } },
-        partner: { select: { userId: true, active: true, user: { select: { locale: true, role: true } } } },
+        partner: { select: { id: true, visibility: true, userId: true, active: true, user: { select: { locale: true, role: true } } } },
       },
     });
     const userId = c?.partner?.userId;
     if (!c || !userId || c.partner?.user?.role !== 'AGENT') return;
+    const type = to === 'APPOINTMENT_SCHEDULED' ? (eventType === 'APPOINTMENT_RESCHEDULED' ? 'PARTNER_APPOINTMENT_MOVED' : 'PARTNER_APPOINTMENT') : `PARTNER_CASE_${to}`;
+    // Stage news with the client's name and a link to the case page: only if the partner sees both (lib/partnerAccess).
+    if (!partnerNoticeRule((await loadPartnerPerms(c.partner)).perms, type)) return;
     const locale: Locale = c.partner.user.locale ?? 'az';
     const t = PARTNER_TEXT[locale];
     const name = clientName(c.client);
@@ -54,7 +59,7 @@ export const notifyPartnerCaseStatus = async (caseId: string, to: CaseStatus, ev
           ? { title: t.rejectedTitle(name), body: t.rejectedBody(name, c.number) }
           : { title: t.appointmentTitle(name), body: t.appointmentBody(name, c.number, c.appointmentAt ? formatDateTime(c.appointmentAt, locale) : '—') };
     await notifyUser(userId, {
-      type: to === 'APPOINTMENT_SCHEDULED' ? (eventType === 'APPOINTMENT_RESCHEDULED' ? 'PARTNER_APPOINTMENT_MOVED' : 'PARTNER_APPOINTMENT') : `PARTNER_CASE_${to}`,
+      type,
       ...msg,
       link: `/partner/clients/${caseId}`,
       ctaLabel: t.caseCta,
@@ -77,8 +82,9 @@ export const notifyPartnerCommissionsPaid = async (rows: { partnerId: string; am
       groups.set(k, g);
     }
     for (const g of groups.values()) {
-      const p = await prisma.referralPartner.findUnique({ where: { id: g.partnerId }, select: { userId: true, user: { select: { locale: true, role: true } } } });
+      const p = await prisma.referralPartner.findUnique({ where: { id: g.partnerId }, select: { id: true, visibility: true, userId: true, user: { select: { locale: true, role: true } } } });
       if (!p?.userId || p.user?.role !== 'AGENT') continue;
+      if (!partnerNoticeRule((await loadPartnerPerms(p)).perms, 'PARTNER_COMMISSION_PAID')) continue; // no commissions area: no message
       const locale: Locale = p.user.locale ?? 'az';
       const t = PARTNER_TEXT[locale];
       await notifyUser(p.userId, {

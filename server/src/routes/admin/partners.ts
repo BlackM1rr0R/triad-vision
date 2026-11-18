@@ -12,7 +12,8 @@ import { ensurePartnerFolder, partnerFolderId, partnerFolderIds, syncPartnerFold
 import { PARTNER_COMMISSION_TRIGGERS, partnerCommissionTotals } from '../../lib/partners/commissions.js';
 import { PARTNER_VISIBILITY, codeInUse, partnerLinks, setClientOwner, suggestPartnerCode } from '../../lib/partners/owned.js';
 import { normaliseAgentCode } from '../../lib/agents/referral.js';
-import { assignCases, deletePartner } from '../../lib/partners/manage.js';
+import { deletePartner } from '../../lib/partners/manage.js';
+import { assignPartnerToCases } from '../../lib/clientFolders/partner.js'; // PATCH /assign = the drive's setCasePartner per case
 import { partnerLoginRouter, partnerLoginView } from '../../lib/partners/adminLoginRoutes.js';
 import { partnerCommissionsRouter } from '../../lib/partners/adminCommissionRoutes.js';
 import { maskWith, requestMaskGroups } from '../../lib/privacy/mask.js';
@@ -430,13 +431,9 @@ adminPartnersRouter.patch('/assign', async (req, res) => {
     req.body,
   );
   const ids = [...new Set(body.caseIds)];
-  if (body.partnerId) {
-    const p = await prisma.referralPartner.findUnique({ where: { id: body.partnerId }, select: { id: true } });
-    if (!p) throw badRequest('INVALID_PARTNER');
-  }
-  if ((await prisma.case.count({ where: { id: { in: ids } } })) !== ids.length) throw badRequest('INVALID_CASE');
-  // Folders move in the background; automatic commissions follow (lib/partners/manage.ts).
-  const { changed, commissionsCreated } = await assignCases(ids, body.partnerId, req.user!.id);
+  // The same per-case assignment as the drive client folders (history, owner, partner notice, inactive partner
+  // refused); folders move in the background; automatic commissions follow (lib/partners/manage.ts).
+  const { changed, commissionsCreated } = await assignPartnerToCases(ids, body.partnerId, req.user!.id);
   await audit(req, body.partnerId ? 'PARTNER_CASES_ASSIGNED' : 'PARTNER_CASES_UNASSIGNED', body.partnerId ?? undefined, {
     caseIds: ids,
     changed: changed.length,

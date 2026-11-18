@@ -13,6 +13,7 @@ import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
 import { Documents, Success } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
+import { useCompanyAccess } from './access'; // submitting (and signing) needs signEzb
 import { openPdfBlob, toastFormError } from '@/components/officialForms/api';
 import { EzbWizard, wizardHasErrors, type WizardField, type WizardMeta } from '@/components/officialForms/EzbWizard';
 
@@ -149,6 +150,7 @@ const FormEditor = ({ id }: { id: string }) => {
   const { data, isLoading, error } = useQuery({ queryKey: ['company-forms', id], queryFn: async () => (await api.get<{ form: FormDetail }>(`/company/forms/${id}`)).data.form });
   const [values, setValues] = useState<Record<string, string> | null>(null);
   const [invalid, setInvalid] = useState<string[]>([]);
+  const canSubmit = useCompanyAccess().canDo('submitEzb');
   const v = values ?? Object.fromEntries((data?.fields ?? []).map((f) => [f.key, f.value]));
 
   const preview = useMutation({
@@ -260,15 +262,17 @@ const FormEditor = ({ id }: { id: string }) => {
                 {preview.isPending ? <Spinner className="size-4" /> : <Eye className="size-4" aria-hidden />}
                 {t('officialForms.company.preview')}
               </button>
-              <button type="button" className="btn-primary" onClick={() => submit.mutate()} disabled={submit.isPending || hasErrors}>
-                {submit.isPending ? <Spinner className="size-4" /> : <PenLine className="size-4" aria-hidden />}
-                {t('ezbWizard.company.submit')}
-              </button>
+              {canSubmit && (
+                <button type="button" className="btn-primary" onClick={() => submit.mutate()} disabled={submit.isPending || hasErrors}>
+                  {submit.isPending ? <Spinner className="size-4" /> : <PenLine className="size-4" aria-hidden />}
+                  {t('ezbWizard.company.submit')}
+                </button>
+              )}
             </>
           }
         />
       )}
-      {data.editable && <p className="text-xs text-muted">{t('officialForms.company.submitHint')}</p>}
+      {data.editable && <p className="text-xs text-muted">{canSubmit ? t('officialForms.company.submitHint') : t('officialForms.company.submitNoRight')}</p>}
     </div>
   );
 };

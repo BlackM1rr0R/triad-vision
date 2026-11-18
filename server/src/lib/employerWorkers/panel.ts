@@ -391,6 +391,19 @@ export interface TimelineItem {
   params?: Record<string, string | number>;
 }
 
+/**
+ * "Work contract concluded" for the drawer timeline (pure). Since the two-step case contracts (lib/caseContracts) the
+ * employer is no party of the client's contracts, so no employer-visible signature request carries the
+ * CONTRACT_SIGNED milestone any more. The date only — never the document — comes from the approved İş müqaviləsi
+ * (WORK step) or, failing that, the employment contract's signing date. Nothing is added when an employer-visible
+ * case contract already put CONTRACT_SIGNED on the timeline (older cases).
+ */
+export const workContractMilestone = (timeline: TimelineItem[], src: { workApprovedAt: Date | null; employmentSignedAt: Date | null }): TimelineItem | null => {
+  if (timeline.some((t) => t.code === 'CONTRACT_SIGNED' || t.code === 'WORK_CONTRACT_SIGNED')) return null;
+  const at = src.workApprovedAt ?? src.employmentSignedAt;
+  return at ? { code: 'WORK_CONTRACT_SIGNED', at } : null;
+};
+
 /** One worker of the company with timeline, upcoming dates, the employer's documents and check-in history. */
 export const workerDetail = async (companyId: string, caseId: string, now = new Date(), viewerId?: string) => {
   const rows = await buildPanel(companyId, now, viewerId);
@@ -433,6 +446,17 @@ export const workerDetail = async (companyId: string, caseId: string, now = new 
   // Timeline: stages, contract signed, arrival, check-ins answered by the employer, left.
   const timeline: TimelineItem[] = row.timeline.map((t) => ({ code: `STAGE_${t.stage}`, at: t.at }));
   for (const s of signatures) if (s.completedAt) timeline.push({ code: s.isCaseContract ? 'CONTRACT_SIGNED' : 'DOCUMENT_SIGNED', at: s.completedAt, params: { title: s.title } });
+  const [workStep, employment] = await Promise.all([
+    // Only the approval date of the case's İş müqaviləsi (no title, file or parties).
+    prisma.signatureRequest.findFirst({
+      where: { caseId, contractKind: { in: ['WORK', 'AUSBILDUNG'] }, status: 'COMPLETED', approvedAt: { not: null } },
+      orderBy: { approvedAt: 'desc' },
+      select: { approvedAt: true },
+    }),
+    prisma.employmentContract.findFirst({ where: { caseId, signedAt: { not: null } }, orderBy: { signedAt: 'desc' }, select: { signedAt: true } }),
+  ]);
+  const work = workContractMilestone(timeline, { workApprovedAt: workStep?.approvedAt ?? null, employmentSignedAt: employment?.signedAt ?? null });
+  if (work) timeline.push(work);
   if (row.arrivedAt && !timeline.some((t) => t.code === 'STAGE_ARRIVED')) timeline.push({ code: 'STAGE_ARRIVED', at: row.arrivedAt });
   if (row.leftAt) timeline.push({ code: 'LEFT', at: row.leftAt });
   timeline.sort((a, b) => a.at.getTime() - b.at.getTime());

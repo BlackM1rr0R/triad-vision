@@ -177,7 +177,8 @@ const searchWhere = (search: string): Prisma.CaseWhereInput[] => {
 
 adminCasesRouter.get('/', async (req, res) => {
   const q = parse(caseListQuery, req.query);
-  const where: Prisma.CaseWhereInput = await resolveCaseListWhere(q, req.user!.id, await caseScopeWhere(req.user));
+  const scope = await caseScopeWhere(req.user);
+  const where: Prisma.CaseWhereInput = await resolveCaseListWhere(q, req.user!.id, scope);
   const pageSize = 25;
   const [items, total, byStatus, processingCounts] = await Promise.all([
     prisma.case.findMany({
@@ -195,8 +196,9 @@ adminCasesRouter.get('/', async (req, res) => {
       },
     }),
     prisma.case.count({ where }),
-    prisma.case.groupBy({ by: ['status'], _count: { _all: true } }),
-    stageCounts(),
+    // The status / workflow counts cover the viewer's case scope only (no totals of cases they cannot see).
+    prisma.case.groupBy({ by: ['status'], where: withCaseScope({}, scope), _count: { _all: true } }),
+    stageCounts(withCaseScope({}, scope)),
   ]);
   // When the current status was entered (first status-changing event into it, newest first).
   const entered = items.length

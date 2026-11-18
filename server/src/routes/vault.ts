@@ -12,7 +12,9 @@ import { requireAuth } from '../middleware/auth.js';
 import { clientDocFilter, decodeOriginalName, verifyUploadedFile } from '../middleware/upload.js';
 import { audit } from '../lib/audit.js';
 import { CLIENT_UPLOAD_STAGE } from '../lib/caseFlow.js';
-import { notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
+import { notifyClientUpload, resolveClientUploadTarget, uploadableRequirements } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document, early embassy uploads
+import { earlyEmbassyOpenFor } from '../lib/earlyEmbassy/service.js';
+import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 import { CASE_DOC_MIME } from '../lib/fileCheck.js';
 import { badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { buildDocumentsZip, zipFileName } from '../lib/vaultExport.js';
@@ -106,19 +108,23 @@ vaultRouter.get('/', async (req, res) => {
 vaultRouter.get('/suggestions', async (req, res) => {
   const { caseId } = parse(z.object({ caseId: z.string().min(1) }), req.query);
   const c = await ownCase(caseId, req.user!.id);
-  const stage = CLIENT_UPLOAD_STAGE[c.status] ?? null;
-  if (!stage) {
-    res.json({ stage: null, suggestions: [] });
-    return;
-  }
-  const [requirements, vault] = await Promise.all([
+  // Every requirement the client may upload to now — the open step, early embassy documents while the case waits for
+  // the contract, replacements for rejected documents (lib/clientUploadTarget) — the same rule as POST /:id/use.
+  const [all, early] = await Promise.all([
     prisma.documentRequirement.findMany({
-      where: { caseId: c.id, stage },
-      orderBy: { sortOrder: 'asc' },
+      where: { caseId: c.id, stage: { in: ['INITIAL', 'EMBASSY'] } },
+      orderBy: [{ stage: 'asc' }, { sortOrder: 'asc' }],
       include: { documents: { select: { status: true } } },
     }),
-    prisma.vaultDocument.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: 'desc' } }),
+    earlyEmbassyOpenFor(c),
   ]);
+  const requirements = uploadableRequirements(c.status, all, early).map((x) => x.requirement);
+  const stage = CLIENT_UPLOAD_STAGE[c.status] ?? requirements[0]?.stage ?? null;
+  if (!requirements.length) {
+    res.json({ stage, suggestions: [] });
+    return;
+  }
+  const vault = await prisma.vaultDocument.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: 'desc' } });
   const now = new Date();
   const suggestions = requirements.map((r) => {
     const kinds = vaultKindsFor(r.key);
@@ -126,7 +132,7 @@ vaultRouter.get('/suggestions', async (req, res) => {
       .filter((v) => kinds.includes(v.kind))
       .sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind))
       .map((v) => vaultDto(v, now));
-    return { requirementId: r.id, key: r.key, title: r.title, required: r.required, kinds, satisfied: r.documents.some((d) => d.status !== 'REJECTED'), documents };
+    return { requirementId: r.id, key: r.key, stage: r.stage, title: r.title, required: r.required, kinds, satisfied: r.documents.some((d) => d.status !== 'REJECTED'), documents };
   });
   res.json({ stage, suggestions });
 });
@@ -353,7 +359,8 @@ vaultRouter.post('/:id/use', async (req, res) => {
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away (type folder; never throws)
-    if (target.replacement) await notifyReplacement(c, requirement, doc.originalName); // staff: a rejected document was replaced
+    await notifyClientUpload(c, target, requirement, doc.originalName); // staff: a rejected document replaced / an early embassy upload
+    void completeTasksForUpload(doc.id); // client tasks linked to this requirement are done (never throws)
     const checks = await checkCaseDocument(doc.id);
     await audit(req, 'vault.use', v.id, { caseId: c.id, documentId: doc.id });
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // smart uploads: scan quality, never throws

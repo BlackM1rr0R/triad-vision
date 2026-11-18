@@ -37,6 +37,25 @@ export const useLeadMagnet = (slug: string) => {
   });
 };
 
+/** The published e-book with that slug from the public list, or null (pure; see usePublishedLeadMagnet). */
+export const pickMagnet = (items: PublicLeadMagnet[] | undefined, slug: string) => items?.find((m) => m.slug === slug && !!m.fileLocale) ?? null;
+
+/**
+ * One e-book for an optional block: looked up in the public list (always 200), so a page that only offers it when
+ * it is published does not request a missing slug (404 in the console on every guide page, QA PUB-6). The
+ * /ebook/:slug page itself keeps useLeadMagnet and its 404.
+ */
+export const usePublishedLeadMagnet = (slug: string) => {
+  const lng = currentSiteLocale();
+  return useQuery({
+    queryKey: ['lead-magnets', lng],
+    queryFn: async () => (await api.get<{ items: PublicLeadMagnet[] }>('/lead-magnets', { params: { lng } })).data.items,
+    staleTime: 10 * 60_000,
+    retry: false,
+    select: (items) => pickMagnet(items, slug),
+  });
+};
+
 /** Cover image of an e-book, or a drawn cover with its title. */
 export const EbookCover = ({ magnet, className }: { magnet: Pick<PublicLeadMagnet, 'title' | 'coverUrl'>; className?: string }) =>
   magnet.coverUrl ? (
@@ -151,7 +170,7 @@ export const LeadMagnetForm = ({ magnet, from, dark = false }: { magnet: PublicL
  */
 export const LeadMagnetBlock = ({ slug = STARTER_EBOOK, from, className }: { slug?: string; from?: string; className?: string }) => {
   const { t } = useTranslation();
-  const { data } = useLeadMagnet(slug);
+  const { data } = usePublishedLeadMagnet(slug);
   if (!data || !data.fileLocale) return null;
   return (
     <section className={clsx('rounded-3xl border border-line bg-sunken p-6 sm:p-8', className)} aria-labelledby={`lm-${slug}`}>

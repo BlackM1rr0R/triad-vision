@@ -225,6 +225,6 @@ export const startReunion = async (mainCaseId: string, actorId: string) => {
   const locale: Locale = main.client.locale;
   const tx = reunionTexts(locale);
   await prisma.caseEvent.create({ data: { caseId: main.id, type: REUNION_EVENT, note: tx.mainEvent({ firstName: '', names, number: main.number, copied }), actorId, visibleToClient: true, createdAt: now } });
-  await notifyUser(main.clientId, { type: 'FAMILY_REUNION_STARTED', title: tx.title, body: tx.body({ firstName: main.client.firstName, names, number: main.number, copied }), link: `/account/cases/${main.id}#family`, caseId: main.id, ctaLabel: tx.cta }).catch(() => undefined);
+  await notifyUser(main.clientId, { type: 'FAMILY_REUNION_STARTED', title: tx.title, body: tx.body({ firstName: main.client.firstName, names, number: main.number, copied }), link: `/account/cases/${main.id}#family-members`, caseId: main.id, ctaLabel: tx.cta }).catch(() => undefined);
   return { started };
 };

@@ -530,6 +530,11 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
   const tokenHash = crypto.createHash('sha256').update(body.token).digest('hex');
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
   if (!record || record.usedAt || record.expiresAt < new Date()) throw new HttpError(400, 'INVALID_TOKEN');
+  // A deactivated account could not log in with the new password anyway (login answers INVALID_CREDENTIALS):
+  // say so clearly and keep the link unused, so it still works once the account is reactivated.
+  const target = await prisma.user.findUnique({ where: { id: record.userId }, select: { isActive: true } });
+  if (!target) throw new HttpError(400, 'INVALID_TOKEN');
+  if (!target.isActive) throw new HttpError(403, 'ACCOUNT_INACTIVE');
 
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash: await bcrypt.hash(body.password, 12) } }),
@@ -580,11 +585,13 @@ authRouter.post('/resend-verification', resendLimiter, requireAuth, async (req, 
     res.json({ ok: true, alreadyVerified: true });
     return;
   }
-  // At most one new link per minute per account (on top of the per-IP limit).
-  const recent = await prisma.emailVerificationToken.count({
-    where: { userId: req.user!.id, createdAt: { gt: new Date(Date.now() - 60 * 1000) } },
+  // At most one resend per minute per account (on top of the per-IP limit). Only resends count: the link sent at sign-up
+  // never blocks the first resend (someone who notices a missing mail right after signing up must not get an error).
+  const recentResends = await prisma.auditLog.count({
+    where: { action: 'EMAIL_VERIFICATION_RESENT', target: `user:${req.user!.id}`, createdAt: { gt: new Date(Date.now() - 60 * 1000) } },
   });
-  if (recent > 0) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  if (recentResends > 0) throw new HttpError(429, 'TOO_MANY_REQUESTS');
+  await audit(req, 'EMAIL_VERIFICATION_RESENT', `user:${req.user!.id}`);
   await sendVerificationEmail(req.user!.id);
   res.json({ ok: true });
 });

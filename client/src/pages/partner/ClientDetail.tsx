@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { day } from '@/components/agents/format';
 import { accessOf, downloadFile, portalError, usePartnerMe, type DocState, type PartnerCaseDetail, type PartnerRequirement } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
+import { documentHintKey } from '@/components/partnerPortal/hints';
 import { optimizeImage } from '@/lib/imageCompress';
 
 const STATE_ICON: Record<DocState, { icon: typeof CheckCircle2; tone: string }> = {
@@ -191,11 +192,7 @@ export default function PartnerClientDetailPage() {
             <div className="space-y-5">
               <p className="flex items-start gap-2 rounded-xl bg-sunken px-3 py-2.5 text-xs text-muted">
                 <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-                {docLevel === 'status'
-                  ? t('partnerAccess.docs.statusOnly')
-                  : c.uploadStage
-                    ? t('partnerPortal.detail.uploadHint')
-                    : t('partnerPortal.detail.uploadClosed')}
+                {t(documentHintKey(docLevel, c.uploadStage, c.requirements))}
               </p>
               {stages.map((s) => (
                 <div key={s}>

@@ -56,8 +56,32 @@ const buildWordMap = (NativeDTF: Ctor) => {
   return map;
 };
 
+/**
+ * ICU's Azerbaijani pattern puts the weekday after the date with a comma ("18 noyabr 2026, çərşənbə"); Turkish
+ * only has a space ("18 Kasım 2026 Çarşamba"). Without the comma the browser text differs from the server markup
+ * (Node, full ICU) and React throws the hydration away (QA PUB-4).
+ */
+export const commaBeforeWeekday = (parts: Intl.DateTimeFormatPart[]): Intl.DateTimeFormatPart[] => {
+  const w = parts.findIndex((p) => p.type === 'weekday');
+  if (w < 2 || parts[w - 1].type !== 'literal' || !parts.slice(0, w - 1).some((p) => p.type === 'day' || p.type === 'month' || p.type === 'year')) return parts;
+  if (parts[w - 1].value.includes(',')) return parts;
+  return parts.map((p, i) => (i === w - 1 ? { ...p, value: ', ' } : p));
+};
+
 const translateParts = (parts: Intl.DateTimeFormatPart[], words: Map<string, string>) =>
-  parts.map((p) => (p.type === 'month' || p.type === 'weekday' ? { ...p, value: words.get(p.value) ?? p.value } : p));
+  commaBeforeWeekday(parts.map((p) => (p.type === 'month' || p.type === 'weekday' ? { ...p, value: words.get(p.value) ?? p.value } : p)));
+
+/**
+ * An Azerbaijani calendar day written out without Intl ("18 noyabr 2026, çərşənbə", "17 noyabr, Ç.a."), read in
+ * UTC: identical on the server and in every browser, whatever ICU data or polyfill is present. Same words and
+ * order as ICU's az data.
+ */
+export const formatAzDayUtc = (d: Date, o: { weekday?: 'long' | 'short'; month?: 'long' | 'short'; year?: boolean } = {}) => {
+  const month = (o.month === 'short' ? MONTHS_SHORT : MONTHS_LONG)[d.getUTCMonth()];
+  const date = `${d.getUTCDate()} ${month}${o.year ? ` ${d.getUTCFullYear()}` : ''}`;
+  if (!o.weekday) return date;
+  return `${date}, ${(o.weekday === 'short' ? WEEKDAYS_SHORT : WEEKDAYS_LONG)[d.getUTCDay()]}`;
+};
 
 /** Turkish relative-time words → Azerbaijani. Unicode-aware word edges: `` does not treat ö/ş/ı as letters. */
 const word = (w: string) => new RegExp(`(?<!\\p{L})${w.replace(/\./g, '\\.')}(?!\\p{L})`, 'gu');

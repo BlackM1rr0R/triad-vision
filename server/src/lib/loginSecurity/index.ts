@@ -114,3 +114,7 @@ export const webIdleOverrideNow = (u: { id?: string; role: Role }) => {
   const minutes = Math.round(sessionLifetimeFor(u.role, u.id, 'web').idleMs / 60_000);
   return minutes !== config.session.webIdleMinutes ? minutes : null;
 };
+
+/** The effective web idle timeout in minutes for this account (settings or the server configuration; 0 = off). */
+export const webIdleMinutesNow = (u: { id?: string; role: Role }) =>
+  u.id ? Math.round(sessionLifetimeFor(u.role, u.id, 'web').idleMs / 60_000) : config.session.webIdleMinutes;

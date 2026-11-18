@@ -1,15 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import type { CaseStatus, DocStage, DocStatus, User } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
-import { limiter, parse } from '../lib/http.js';
+import { badRequest, HttpError, limiter, parse } from '../lib/http.js';
 import { notifyStaff } from '../lib/notifications.js';
 import { publicUser } from './auth.js';
-import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
+import { sendSelfServiceExport } from '../lib/privacy/selfExport.js'; // records + notifies like /privacy/export
 import { OPEN_STATUSES, dueFrom } from '../lib/privacy/requests.js';
 import { loadNextStep } from '../lib/account/nextStep.js';
+import type { ContractTurn } from '../lib/caseContracts/flow.js';
+import { loadContractTurns } from '../lib/caseContracts/turn.js'; // whose turn the case contract is (Triad Vision signs first)
 import { loadPortalStage } from '../lib/account/portalStage.js';
 
 export const accountRouter = Router();
@@ -130,6 +133,8 @@ export type NextActionKind =
 export const nextAction = (
   status: CaseStatus,
   docs: ReturnType<typeof documentSummary>,
+  /** Whose turn the case contract is (lib/caseContracts/turn); undefined = the client's. */
+  contractTurn?: ContractTurn | null,
 ): { kind: NextActionKind; owner: 'client' | 'staff' | null; anchor: string | null } => {
   const docsAnchor = `#docs-${docs.stage.toLowerCase()}`;
   switch (status) {
@@ -139,6 +144,8 @@ export const nextAction = (
       if (docs.missingRequired === 0) return { kind: 'SUBMIT_DOCUMENTS', owner: 'client', anchor: docsAnchor };
       return { kind: 'UPLOAD_DOCUMENTS', owner: 'client', anchor: docsAnchor };
     case 'CONTRACT_SENT':
+      // Triad Vision signs first (or a new version is being prepared): nothing to sign for the client yet.
+      if (contractTurn === 'TRIAD' || contractTurn === 'STAFF') return { kind: 'WAIT_REVIEW', owner: 'staff', anchor: '#contract' };
       return { kind: 'SIGN_CONTRACT', owner: 'client', anchor: '#contract' };
     case 'DOCUMENTS_REVIEW':
     case 'EMBASSY_REVIEW':
@@ -215,7 +222,7 @@ accountRouter.get('/overview', async (req, res) => {
       where: { id: activeRow.id },
       include: {
         assignedStaff: { select: { firstName: true, lastName: true } },
-        contract: { select: { version: true, sentAt: true, signedAt: true } },
+        contract: { select: { version: true, sentAt: true, signedAt: true, signatureRequestId: true } },
         requirements: { include: { documents: { select: { status: true, reviewNote: true, createdAt: true } } } },
         _count: { select: { messages: true, events: { where: { visibleToClient: true } } } },
       },
@@ -228,18 +235,20 @@ accountRouter.get('/overview', async (req, res) => {
     });
     const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
     const docs = documentSummary(c.requirements, summaryStage(c.status, hasEmbassy));
+    const contractTurn = (await loadContractTurns([c])).get(c.id);
+    const teamContract = contractTurn === 'TRIAD' || contractTurn === 'STAFF';
     activeCase = {
       ...activeRow,
       step: STATUS_STEP[c.status],
       stepCount: STEP_COUNT,
       percent: progressPercent(c.status, docs),
-      turn: CLIENT_TURN.includes(c.status) ? 'client' : STAFF_TURN.includes(c.status) ? 'staff' : null,
-      nextAction: nextAction(c.status, docs),
+      turn: teamContract ? 'staff' : CLIENT_TURN.includes(c.status) ? 'client' : STAFF_TURN.includes(c.status) ? 'staff' : null,
+      nextAction: nextAction(c.status, docs, contractTurn),
       staffNote: c.staffNote,
       documents: docs,
       appointment: c.appointmentAt ? { at: c.appointmentAt, place: c.appointmentPlace } : null,
       manager: c.assignedStaff ? { firstName: c.assignedStaff.firstName, lastName: c.assignedStaff.lastName } : null,
-      contract: c.contract,
+      contract: c.contract ? { version: c.contract.version, sentAt: c.contract.sentAt, signedAt: c.contract.signedAt } : null,
       stats: {
         ageDays: Math.floor((Date.now() - c.createdAt.getTime()) / DAY),
         daysInStatus: Math.floor((Date.now() - (lastStatusEvent?.createdAt ?? c.createdAt).getTime()) / DAY),
@@ -289,21 +298,24 @@ accountRouter.get('/stage', async (req, res) => {
   res.json(await loadPortalStage(req.user!.id));
 });
 
-/** GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). */
-accountRouter.get('/export', async (req, res) => {
-  const data = await buildUserExport(req.user!.id);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${exportFilename()}"`);
-  res.setHeader('Cache-Control', 'no-store');
-  res.send(JSON.stringify(data, null, 2));
-});
+/**
+ * GDPR export: everything stored about the user, as a JSON download (file metadata only, no contents). The same as
+ * GET /api/privacy/export: recorded as a completed EXPORT request, audited and the user is notified.
+ */
+accountRouter.get('/export', sendSelfServiceExport);
 
 const deleteLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 3, keyGenerator: (req) => req.user?.id ?? 'anonymous' });
 
 /** Asks staff to delete the account. Nothing is deleted automatically. */
 accountRouter.post('/delete-request', deleteLimiter, async (req, res) => {
-  const { reason } = parse(z.object({ reason: z.string().trim().max(1000).optional() }), req.body ?? {});
+  const { reason, currentPassword } = parse(
+    z.object({ reason: z.string().trim().max(1000).optional(), currentPassword: z.string().max(200).optional() }),
+    req.body ?? {},
+  );
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
+  // Same as the privacy centre's deletion request (POST /api/privacy/requests): the password confirms it is the owner.
+  if (!currentPassword) throw badRequest('PASSWORD_REQUIRED');
+  if (!(await bcrypt.compare(currentPassword, user.passwordHash))) throw new HttpError(400, 'WRONG_PASSWORD');
   const activeCases = await prisma.case.findMany({
     where: { clientId: user.id, status: { notIn: FINAL_STATUSES } },
     select: { number: true },

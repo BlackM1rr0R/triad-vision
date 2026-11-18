@@ -143,8 +143,19 @@ describe('partner portal: upload on behalf of the client', () => {
     expect(wrong.status).toBe(400);
     expect(wrong.body.error).toBe('INVALID_REQUIREMENT');
     await prisma.case.update({ where: { id: c.id }, data: { status: 'DOCUMENTS_REVIEW' } });
-    const closed = await p.agent.post(`/api/partner/cases/${c.id}/documents`).field('requirementId', initial.id).attach('file', await makePdf('c'), { filename: 'c.pdf', ...PDF });
+    // After the hand-in only a rejected requirement takes a new file (the client's replacement rule, QA PE-02).
+    const untouched = reqs.find((x) => x.stage === 'INITIAL' && x.id !== initial.id)!;
+    const closed = await p.agent.post(`/api/partner/cases/${c.id}/documents`).field('requirementId', untouched.id).attach('file', await makePdf('c'), { filename: 'c.pdf', ...PDF });
     expect(closed.status).toBe(409);
+    const inReview = expectStatus(await p.agent.get(`/api/partner/cases/${c.id}`), 200).body.case;
+    expect(inReview.requirements.find((x: { id: string }) => x.id === initial.id)).toMatchObject({ state: 'REJECTED', canUpload: true });
+    expect(inReview.requirements.find((x: { id: string }) => x.id === untouched.id)).toMatchObject({ canUpload: false });
+    const replaced = await p.agent.post(`/api/partner/cases/${c.id}/documents`).field('requirementId', initial.id).attach('file', await makePdf('r'), { filename: 'neu.pdf', ...PDF });
+    expect(replaced.status).toBe(201);
+    expect(await prisma.document.findUniqueOrThrow({ where: { id: replaced.body.document.id } })).toMatchObject({ stage: 'INITIAL', status: 'PENDING', uploadedById: p.user.id });
+    // Staff are told right away (no hand-in follows a replacement).
+    const staffNote = await waitFor(() => prisma.notification.findFirst({ where: { userId: admin.user.id, caseId: c.id, type: 'STAFF', body: { contains: 'neu.pdf (partnyor)' } } }));
+    expect(staffNote.link).toBe(`/admin/cases/${c.id}`);
     // A fake PDF is refused by the content check (same as the client upload).
     await prisma.case.update({ where: { id: c.id }, data: { status: 'DOCUMENTS_PENDING' } });
     const fake = await p.agent.post(`/api/partner/cases/${c.id}/documents`).field('requirementId', initial.id).attach('file', Buffer.from('not a pdf at all'), { filename: 'f.pdf', ...PDF });

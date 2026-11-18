@@ -12,6 +12,7 @@ import { careerjetAlertBudget, careerjetAlertSearch, type AlertSearchStatus } fr
 import { RADII, dedupeKey, type GermanyJob, type SearchQuery } from './common.js';
 import { CONSENT_VERSION, GERMANY_ALERT_MAIL } from './alertTexts.js';
 import { PROVIDERS } from './providers.js';
+import { getApplicationPolicy } from '../vacancyPlaces/policy.js';
 
 /**
  * Germany job alerts (model GermanyJobAlert): "notify me about new jobs like this" for a search on /jobs/germany
@@ -253,13 +254,31 @@ const groupListings = async (q: SearchQuery, now: Date): Promise<{ items: German
 
 const sourceName = (id: string) => PROVIDERS.find((p) => p.info.id === id)?.info.name ?? id;
 
-const digestHtml = (alert: GermanyJobAlert, jobs: GermanyJob[], lng: SeoLocale) => {
+/** Only http(s) links of a listing are put into an e-mail. */
+const safeHttpUrl = (u: string) => {
+  try {
+    const url = new URL(u);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * The listings of a digest. With "apply via Triad Vision" on, title and apply line open our apply flow; with it
+ * off (policy allowExternalApplications), the title links to the original ad and the line says so — the apply
+ * flow would only land on an empty search page.
+ */
+export const digestHtml = (alert: SearchRow, jobs: GermanyJob[], lng: SeoLocale, allowApply: boolean) => {
   const m = GERMANY_ALERT_MAIL[lng];
   const rows = jobs
     .map((j) => {
       const meta = [j.company, j.location, m.via(sourceName(j.source))].filter(Boolean).join(' · ');
-      const href = escapeHtml(applyUrl(alert, j, lng));
-      return `<li style="margin:0 0 14px"><a href="${href}" style="color:#0b1f44;font-weight:600;text-decoration:none">${escapeHtml(j.title)}</a><br><span style="color:#5b6b88;font-size:13px">${escapeHtml(meta)}</span><br><a href="${href}" style="color:#1565e8;font-size:13px;font-weight:600">${escapeHtml(m.apply)} →</a></li>`;
+      const original = allowApply ? null : safeHttpUrl(j.url);
+      const href = escapeHtml(original ?? (allowApply ? applyUrl(alert, j, lng) : searchPageUrl(alert, lng)));
+      const label = allowApply ? m.apply : m.original;
+      const action = allowApply || original ? `<br><a href="${href}" style="color:#1565e8;font-size:13px;font-weight:600">${escapeHtml(label)} →</a>` : '';
+      return `<li style="margin:0 0 14px"><a href="${href}" style="color:#0b1f44;font-weight:600;text-decoration:none">${escapeHtml(j.title)}</a><br><span style="color:#5b6b88;font-size:13px">${escapeHtml(meta)}</span>${action}</li>`;
     })
     .join('');
   return `<ul style="padding-left:18px;margin:0 0 8px">${rows}</ul>`;
@@ -306,6 +325,7 @@ export const runGermanyJobAlerts = async (now = new Date()): Promise<AlertRunRes
   }
   const ordered = [...groups.values()].sort((x, y) => y.length - x.length);
   result.groups = ordered.length;
+  const allowApply = (await getApplicationPolicy()).allowExternalApplications;
   const oldest = now.getTime() - MAX_LOOKBACK_DAYS * DAY;
 
   for (const members of ordered) {
@@ -328,8 +348,9 @@ export const runGermanyJobAlerts = async (now = new Date()): Promise<AlertRunRes
       const lng = siteLocale(alert.locale);
       const m = GERMANY_ALERT_MAIL[lng];
       const subject = m.digestSubject(jobs.length);
-      const html = renderEmail(subject, m.digestIntro(searchSummary(alert, lng)), { label: m.allResults, url: searchPageUrl(alert, lng) }, {
-        html: digestHtml(alert, jobs, lng) + footerHtml(alert, alertToken(alert.id), lng),
+      const intro = allowApply ? m.digestIntro(searchSummary(alert, lng)) : m.digestIntroListings(searchSummary(alert, lng));
+      const html = renderEmail(subject, intro, { label: m.allResults, url: searchPageUrl(alert, lng) }, {
+        html: digestHtml(alert, jobs, lng, allowApply) + footerHtml(alert, alertToken(alert.id), lng),
       });
       const to = alert.userId ? (userById.get(alert.userId)?.email ?? alert.email) : alert.email;
       await sendMail(to, subject, html);

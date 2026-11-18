@@ -17,6 +17,7 @@ import {
 import { DEFAULT_MASKING, loadMaskingSettings, MASK_GROUPS, maskingSettingsSchema, saveMaskingSettings, groupOfField, policyForViewer } from '../../lib/privacy/mask.js';
 import { EXTRA_REASON_MIN, EXTRA_REVEALERS, extraRevealGroup, inCaseScope, inClientScope, type ExtraRevealEntity } from '../../lib/privacy/sensitiveReveal.js';
 import { loadInvoiceSettings } from './invoices.js';
+import { can } from '../../lib/access/api.js'; // partner reveals need partners:view
 
 /**
  * Privacy tools for staff:
@@ -135,13 +136,26 @@ const jsonField = (j: Prisma.JsonValue | null | undefined, field: string): strin
 };
 
 /** What can be revealed, who may reveal it (on top of STAFF+), and where the plaintext lives. */
-const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMinRole?: Record<string, Role>; load: (id: string, field: string) => Promise<{ found: boolean; value: string | null }> }> = {
+/**
+ * Where a revealed value belongs, for the case scope of the access engine (lib/access): the case(s) and / or the
+ * client. A scoped staff member (ASSIGNED / TEAM) only reveals values of cases and clients inside the scope; one
+ * of several cases is enough (a family member belongs to the main and to the member case).
+ */
+interface RevealOwner {
+  caseIds?: (string | null | undefined)[];
+  clientId?: string | null;
+  /** Not case data (referral partner): the viewer needs this permission area instead. */
+  area?: 'partners';
+}
+type Loaded = { found: boolean; value: string | null; owner?: RevealOwner };
+
+const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMinRole?: Record<string, Role>; load: (id: string, field: string) => Promise<Loaded> }> = {
   user: {
     fields: ['passportNumber'],
     minRole: 'STAFF',
     load: async (id) => {
       const u = await prisma.user.findUnique({ where: { id }, select: { passportNumber: true } });
-      return { found: !!u, value: u?.passportNumber ?? null };
+      return { found: !!u, value: u?.passportNumber ?? null, owner: { clientId: id } };
     },
   },
   company: {
@@ -173,16 +187,16 @@ const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMi
     fields: ['documentNumber', 'passportNumber'],
     minRole: 'STAFF',
     load: async (id, field) => {
-      const d = await prisma.document.findUnique({ where: { id }, select: { ocr: true } });
-      return { found: !!d, value: jsonField(d?.ocr, field) };
+      const d = await prisma.document.findUnique({ where: { id }, select: { ocr: true, caseId: true } });
+      return { found: !!d, value: jsonField(d?.ocr, field), owner: { caseIds: [d?.caseId] } };
     },
   },
   familyMember: {
     fields: ['passportNumber', 'birthPlace'], // FamilyMember (Familiennachzug), id = FamilyMember.id
     minRole: 'STAFF',
     load: async (id, field) => {
-      const m = await prisma.familyMember.findUnique({ where: { id }, select: { passportNumber: true, birthPlace: true } });
-      return { found: !!m, value: m ? (field === 'birthPlace' ? m.birthPlace : m.passportNumber) : null };
+      const m = await prisma.familyMember.findUnique({ where: { id }, select: { passportNumber: true, birthPlace: true, mainCaseId: true, memberCaseId: true } });
+      return { found: !!m, value: m ? (field === 'birthPlace' ? m.birthPlace : m.passportNumber) : null, owner: { caseIds: [m?.mainCaseId, m?.memberCaseId] } };
     },
   },
   partner: {
@@ -192,17 +206,30 @@ const REVEALERS: Record<RevealEntity, { fields: string[]; minRole: Role; fieldMi
     fieldMinRole: { iban: 'ADMIN', bic: 'ADMIN' },
     load: async (id, field) => {
       const p = await prisma.referralPartner.findUnique({ where: { id }, select: { taxId: true, vatId: true, iban: true, bic: true } });
-      return { found: !!p, value: p ? (field === 'iban' ? p.iban : field === 'bic' ? p.bic : field === 'vatId' ? p.vatId : p.taxId) : null };
+      return { found: !!p, value: p ? (field === 'iban' ? p.iban : field === 'bic' ? p.bic : field === 'vatId' ? p.vatId : p.taxId) : null, owner: { area: 'partners' } };
     },
   },
   insight: {
     fields: ['documentNumber'],
     minRole: 'STAFF',
     load: async (id, field) => {
-      const i = await prisma.documentInsight.findUnique({ where: { id }, select: { fields: true } });
-      return { found: !!i, value: jsonField(i?.fields, field) };
+      const i = await prisma.documentInsight.findUnique({ where: { id }, select: { fields: true, caseId: true } });
+      return { found: !!i, value: jsonField(i?.fields, field), owner: { caseIds: [i?.caseId] } };
     },
   },
+};
+
+/** Whether the viewer's case scope (and permissions) cover the owner of a revealed value; out of scope reads as 404. */
+const ownerInScope = async (user: { id: string; role: Role }, owner: RevealOwner | undefined) => {
+  if (!owner) return true;
+  if (owner.area && !(await can(user, owner.area, 'view'))) return false;
+  const caseIds = (owner.caseIds ?? []).filter((x): x is string => !!x);
+  if (caseIds.length) {
+    let any = false;
+    for (const caseId of caseIds) if (await inCaseScope(user, caseId)) { any = true; break; }
+    if (!any) return false;
+  }
+  return inClientScope(user, owner.clientId);
 };
 
 const revealLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 30, keyGenerator: (req) => `reveal:${req.user?.id ?? 'anonymous'}` });
@@ -237,8 +264,10 @@ adminSensitiveRouter.post('/reveal', revealLimiter, async (req, res) => {
   if (!hasMinRole(req.user!.role, spec.fieldMinRole?.[body.field] ?? spec.minRole)) throw forbidden();
   const hiddenGroup = groupOfField(body.field);
   if (hiddenGroup && (await policyForViewer(req.user)).hidden.has(hiddenGroup)) throw forbidden('FIELD_HIDDEN');
-  const { found, value } = await spec.load(body.id, body.field);
+  const { found, value, owner } = await spec.load(body.id, body.field);
   if (!found) throw notFound();
+  // The same case scope as the Access Center entities: a scoped staff member reveals nothing outside it.
+  if (!(await ownerInScope(req.user!, owner))) throw notFound();
   const group = groupOfField(body.field);
   await audit(req, 'SENSITIVE_REVEALED', `${body.entity}:${body.id}`, {
     entity: body.entity,

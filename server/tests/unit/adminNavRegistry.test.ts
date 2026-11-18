@@ -76,9 +76,18 @@ describe('admin navigation registry', () => {
     expect(r.isVisible(ai, 'SUPER_ADMIN', {})).toBe(true);
     expect(r.isVisible(ai, 'SUPER_ADMIN', { aiAssistant: false })).toBe(false);
     expect(r.isVisible(ai, 'STAFF', {})).toBe(false);
-    expect(r.hubTabs('finance', 'STAFF', {}).map((i) => i.id)).toEqual(['settlements']);
+    expect(r.hubTabs('finance', 'STAFF', {}).map((i) => i.id)).toEqual(['settlements', 'quarterlyReport']);
     expect(r.activeNavItem('/admin/cases/abc')?.id).toBe('cases');
     expect(r.activeNavItem('/admin/system/modules')?.id).toBe('modules');
+  });
+
+  it('STAFF see the pages their server routes let them read; ADMIN-only routers stay hidden', () => {
+    const item = (id: string) => r.STAFF_NAV.find((i) => i.id === id)!;
+    r.setStaffPermissions(null);
+    // GET is STAFF+ (quarterly-report, contract-templates, own calendar feed on integrations)
+    for (const id of ['quarterlyReport', 'contractTemplates', 'integrations']) expect(r.isVisible(item(id), 'STAFF', {}), id).toBe(true);
+    // routers behind requireMinRole('ADMIN') (finance, profitability, reports, agents, privacy, settings, guides, cover letters)
+    for (const id of ['finance', 'profitability', 'reports', 'agents', 'privacyRequests', 'settings', 'guides', 'coverLetterTemplates']) expect(r.isVisible(item(id), 'STAFF', {}), id).toBe(false);
   });
 
   it('every admin page has a route in App.tsx', () => {

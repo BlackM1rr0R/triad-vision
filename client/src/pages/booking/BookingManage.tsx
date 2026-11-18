@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { bookingCopy } from '@/i18n/pagesBooking';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
 import { CalendarDay, Lost } from '@/components/illustrations';
-import { BOOKING_STATUS_TONE, browserTimeZone, fmtTime, useDayLabels, type BookingStatus, type Topic } from '@/components/booking/time';
+import { BOOKING_STATUS_TONE, useBrowserTimeZone, fmtTime, useDayLabels, type BookingStatus, type Topic } from '@/components/booking/time';
 import { getBrand } from '@/lib/brand';
 
 registerCopy(bookingCopy);
@@ -39,7 +39,7 @@ export default function BookingManage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const qc = useQueryClient();
-  const tz = useMemo(browserTimeZone, []);
+  const tz = useBrowserTimeZone();
   const labels = useDayLabels();
   const [confirm, setConfirm] = useState(false);
   const [reason, setReason] = useState('');

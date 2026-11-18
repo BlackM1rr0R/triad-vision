@@ -19,6 +19,8 @@ export interface PartnerClientText {
   cancelledBody: (client: string, number: string) => string;
   earnedTitle: (amount: string) => string;
   earnedBody: (client: string, number: string) => string;
+  /** Without the client-list permission: no client name (lib/partnerAccess → partnerNoticeRule). */
+  earnedBodyNoName: (number: string) => string;
   clientsCta: string;
   /** E-mail to a client registered by a partner. */
   inviteTitle: string;
@@ -42,6 +44,7 @@ export const PARTNER_CLIENT_TEXT: Record<Locale, PartnerClientText> = {
     cancelledBody: (c, n) => `Müştəriniz ${c} üçün müraciət ${n} ləğv edildi.`,
     earnedTitle: (a) => `Yeni komissiya: ${a}`,
     earnedBody: (c, n) => `Müştəriniz ${c} (müraciət ${n}) üçün komissiya yaradıldı.`,
+    earnedBodyNoName: (n) => `Müraciət ${n} üçün komissiya yaradıldı.`,
     clientsCta: 'Müştərilərə bax',
     inviteTitle: 'Triad Vision şəxsi kabinetiniz yaradıldı',
     inviteBody: (n, p) =>
@@ -63,6 +66,7 @@ export const PARTNER_CLIENT_TEXT: Record<Locale, PartnerClientText> = {
     cancelledBody: (c, n) => `Der Antrag ${n} Ihres Kunden ${c} wurde storniert.`,
     earnedTitle: (a) => `Neue Provision: ${a}`,
     earnedBody: (c, n) => `Für Ihren Kunden ${c} (Antrag ${n}) wurde eine Provision angelegt.`,
+    earnedBodyNoName: (n) => `Für den Antrag ${n} wurde eine Provision angelegt.`,
     clientsCta: 'Kunden ansehen',
     inviteTitle: 'Ihr Triad-Vision-Kundenkonto wurde angelegt',
     inviteBody: (n, p) =>
@@ -84,6 +88,7 @@ export const PARTNER_CLIENT_TEXT: Record<Locale, PartnerClientText> = {
     cancelledBody: (c, n) => `Application ${n} of your client ${c} was cancelled.`,
     earnedTitle: (a) => `New commission: ${a}`,
     earnedBody: (c, n) => `A commission was created for your client ${c} (application ${n}).`,
+    earnedBodyNoName: (n) => `A commission was created for application ${n}.`,
     clientsCta: 'View clients',
     inviteTitle: 'Your Triad Vision account was created',
     inviteBody: (n, p) =>
@@ -105,6 +110,7 @@ export const PARTNER_CLIENT_TEXT: Record<Locale, PartnerClientText> = {
     cancelledBody: (c, n) => `Заявка ${n} вашего клиента ${c} отменена.`,
     earnedTitle: (a) => `Новая комиссия: ${a}`,
     earnedBody: (c, n) => `Создана комиссия за вашего клиента ${c} (заявка ${n}).`,
+    earnedBodyNoName: (n) => `Создана комиссия по заявке ${n}.`,
     clientsCta: 'Открыть клиентов',
     inviteTitle: 'Ваш личный кабинет Triad Vision создан',
     inviteBody: (n, p) =>

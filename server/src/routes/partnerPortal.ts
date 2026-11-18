@@ -163,30 +163,41 @@ partnerPortalRouter.get('/cases/:id', async (req, res) => {
 });
 
 /** Upload on behalf of the client (multipart: file + requirementId); goes to the normal staff review. */
-partnerPortalRouter.post('/cases/:id/documents', documentUpload.single('file'), async (req, res) => {
-  const file = req.file;
-  if (!file) throw badRequest('FILE_REQUIRED');
-  try {
+partnerPortalRouter.post(
+  '/cases/:id/documents',
+  async (req, _res, next) => {
+    // Rights are checked before a single byte is spooled to disk (like the drive upload).
     const ctx = await partnerContextOf(req);
     requireClientList(ctx);
     requireDocuments(ctx, 'upload');
-    const { partner } = ctx;
-    await verifyUploadedFile(file);
-    const { requirementId } = parse(z.object({ requirementId: z.string().min(1).max(40) }), req.body);
-    const out = await storePartnerUpload({
-      partnerId: partner.id,
-      caseId: String(req.params.id),
-      requirementId,
-      userId: req.user!.id,
-      file: { originalName: decodeOriginalName(file.originalname), storedName: file.filename, mimeType: file.mimetype, size: file.size },
-    });
-    await audit(req, 'PARTNER_DOCUMENT_UPLOADED', `case:${req.params.id}`, { partnerId: partner.id, documentId: out.document.id });
-    res.status(201).json({ document: out.document, checks: out.checks });
-  } catch (err) {
-    await fs.unlink(path.join(config.uploads.privateDir, file.filename)).catch(() => undefined);
-    throw err;
-  }
-});
+    next();
+  },
+  documentUpload.single('file'),
+  async (req, res) => {
+    const file = req.file;
+    if (!file) throw badRequest('FILE_REQUIRED');
+    try {
+      const ctx = await partnerContextOf(req);
+      requireClientList(ctx);
+      requireDocuments(ctx, 'upload');
+      const { partner } = ctx;
+      await verifyUploadedFile(file);
+      const { requirementId } = parse(z.object({ requirementId: z.string().min(1).max(40) }), req.body);
+      const out = await storePartnerUpload({
+        partnerId: partner.id,
+        caseId: String(req.params.id),
+        requirementId,
+        userId: req.user!.id,
+        file: { originalName: decodeOriginalName(file.originalname), storedName: file.filename, mimeType: file.mimetype, size: file.size },
+      });
+      await audit(req, 'PARTNER_DOCUMENT_UPLOADED', `case:${req.params.id}`, { partnerId: partner.id, documentId: out.document.id });
+      res.status(201).json({ document: out.document, checks: out.checks });
+    } catch (err) {
+      await fs.unlink(path.join(config.uploads.privateDir, file.filename)).catch(() => undefined);
+      throw err;
+    }
+  },
+);
 
 const commissionQuery = z.object({
   status: z.enum(['PENDING', 'APPROVED', 'PAID', 'CANCELLED']).optional(),

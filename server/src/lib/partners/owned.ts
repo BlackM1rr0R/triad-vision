@@ -11,6 +11,8 @@ import { PARTNER_CLIENT_TEXT } from '../partnerPortal/clientTexts.js';
 import { caseListView } from '../partnerPortal/cases.js';
 import { commissionTriggerReached, ensurePartnerCommission } from './commissions.js';
 import { assignCases } from './manage.js';
+import { loadPartnerPerms } from '../partnerAccess/context.js';
+import { partnerNoticeRule } from '../partnerAccess/permissions.js'; // notifications follow the partner's permission set
 
 /**
  * Partner-owned clients. A referral partner has a personal sign-up code (`ReferralPartner.code`, link
@@ -81,13 +83,25 @@ export const partnerIdFromRequest = async (req: { cookies?: Record<string, unkno
   return (await findPartnerByCode(raw.slice(0, 64)))?.id ?? null;
 };
 
-/** Notifies the partner's portal login (fire-and-forget safe). Also used by lib/clientFolders (partner set from a drive client folder). */
-export const notifyPartner = async (partnerId: string, msg: (t: (typeof PARTNER_CLIENT_TEXT)['az'], locale: Locale) => { title: string; body: string; link: string; cta?: string; type: string }) => {
+/**
+ * Notifies the partner's portal login (fire-and-forget safe). Also used by lib/clientFolders (partner set from a drive
+ * client folder). The partner's permission set decides whether the message is sent and whether it may name the client
+ * (lib/partnerAccess → partnerNoticeRule, by message type; `opts.names` tells the builder).
+ */
+export const notifyPartner = async (
+  partnerId: string,
+  msg: (t: (typeof PARTNER_CLIENT_TEXT)['az'], locale: Locale, opts: { names: boolean }) => { title: string; body: string; link: string; cta?: string; type: string },
+) => {
   try {
-    const p = await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { userId: true, user: { select: { locale: true, role: true } } } });
+    const p = await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { id: true, visibility: true, userId: true, user: { select: { locale: true, role: true } } } });
     if (!p?.userId || p.user?.role !== 'AGENT') return;
     const locale: Locale = p.user.locale ?? 'az';
-    const m = msg(PARTNER_CLIENT_TEXT[locale], locale);
+    const { perms } = await loadPartnerPerms(p);
+    // The type is known only from the builder: build once with names, check, rebuild without names if needed.
+    const first = msg(PARTNER_CLIENT_TEXT[locale], locale, { names: true });
+    const rule = partnerNoticeRule(perms, first.type);
+    if (!rule) return;
+    const m = rule.names ? first : msg(PARTNER_CLIENT_TEXT[locale], locale, { names: false });
     await notifyUser(p.userId, { type: m.type, title: m.title, body: m.body, link: m.link, ctaLabel: m.cta ?? PARTNER_CLIENT_TEXT[locale].clientsCta, push: false });
   } catch (err) {
     console.error('[partners] notification failed', partnerId, err);
@@ -174,10 +188,10 @@ export const partnerCommissionOnStatus = async (caseId: string, to: CaseStatus) 
     if (!(await ensurePartnerCommission(c.partnerId, caseId, null))) return;
     const row = await prisma.partnerCommission.findUnique({ where: { partnerId_caseId: { partnerId: c.partnerId, caseId } }, select: { amountCents: true, currency: true } });
     if (!row) return;
-    void notifyPartner(c.partnerId, (t, locale) => ({
+    void notifyPartner(c.partnerId, (t, locale, { names }) => ({
       type: 'PARTNER_COMMISSION_EARNED',
       title: t.earnedTitle(formatMoney(row.amountCents, row.currency, locale)),
-      body: t.earnedBody(fullName(c.client), c.number),
+      body: names ? t.earnedBody(fullName(c.client), c.number) : t.earnedBodyNoName(c.number),
       link: '/partner/commissions',
     }));
   } catch (err) {

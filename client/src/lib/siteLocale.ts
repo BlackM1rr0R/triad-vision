@@ -58,7 +58,11 @@ export const ROUTING_PRIVATE_PREFIXES = [
   '/kandidat',
   '/job-alert', // job alert confirm / manage link (token)
   '/r', // personal referral landing pages (/r/<slug>) and tracked review links
+  '/upload', // login-free case upload link (/upload/<token>)
+  '/originals', // hand-over receipt check (/originals/verify/<code>, QR on the act)
 ];
+// Mirrors server lib/seoCatalogue.ts PRIVATE_PREFIXES and the Caddy @lnglegacy exclusions (deploy/Caddyfile);
+// server/tests/unit/privatePrefixes.test.ts keeps the three in sync.
 
 export const isPrivatePath = (path: string) => ROUTING_PRIVATE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 

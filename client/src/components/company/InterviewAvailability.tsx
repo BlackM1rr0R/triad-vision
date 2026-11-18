@@ -16,6 +16,7 @@ import { toastOpsError } from '@/components/ops/shared';
 import { SETTING_KEYS, type Availability, type AvailabilityRule, type InterviewInvite, type SchedulingSettings, type Slot } from '@/components/ops/interviewCalendar';
 import { Section } from './shared';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
+import { useCompanyAccess } from './access';
 
 registerCopy(pagesOps);
 registerCopy(pagesInterviewCalendar);
@@ -52,6 +53,10 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
   const [applicationId, setApplicationId] = useState('');
   const [minutes, setMinutes] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
+  // Writes need decideCandidates, the applicant picker viewCandidatePool (server: lib/companyAccess/rules.ts).
+  const access = useCompanyAccess();
+  const canManage = access.canDo('manageInterviews');
+  const canInvite = canManage && access.canDo('interviewApplicants');
 
   const availability = useQuery({
     queryKey: ['company-interview-availability'],
@@ -69,7 +74,7 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
   const applicants = useQuery({
     queryKey: ['company-interview-applicants'],
     queryFn: async () => (await api.get<{ items: Applicant[] }>('/interviews/applicants')).data.items,
-    enabled: inviting,
+    enabled: inviting && canInvite,
   });
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['company-interview-availability'] });
@@ -139,14 +144,18 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
       title={t('ivcal.title')}
       icon={CalendarClock}
       actions={
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary" disabled={!a} onClick={() => a && setDraft(toDraft(a))}>
-            <Clock3 className="size-4" aria-hidden /> {t('ivcal.open')}
-          </button>
-          <button type="button" className="btn-primary" disabled={!hasHours} title={hasHours ? undefined : t('ivcal.noAvailability')} onClick={() => setInviting(true)}>
-            <Send className="size-4" aria-hidden /> {t('ivcal.invite')}
-          </button>
-        </div>
+        canManage ? (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary" disabled={!a} onClick={() => a && setDraft(toDraft(a))}>
+              <Clock3 className="size-4" aria-hidden /> {t('ivcal.open')}
+            </button>
+            {canInvite && (
+              <button type="button" className="btn-primary" disabled={!hasHours} title={hasHours ? undefined : t('ivcal.noAvailability')} onClick={() => setInviting(true)}>
+                <Send className="size-4" aria-hidden /> {t('ivcal.invite')}
+              </button>
+            )}
+          </div>
+        ) : undefined
       }
     >
       <p className="-mt-2 mb-3 text-sm text-muted">{t('ivcal.subtitle')}</p>
@@ -171,9 +180,9 @@ export const CompanyInterviewCalendar = ({ onChanged }: { onChanged?: () => void
                   {v.application && <span className="text-muted"> · {tr(v.application.vacancy.title)}</span>}
                   <span className="text-muted"> · {t('ivcal.minutes', { count: v.minutes })}</span>
                 </span>
-                <button type="button" className="btn-ghost btn-sm text-danger" disabled={withdraw.isPending} onClick={async () => (await confirmDialog({ title: t('ivcal.withdraw'), message: [v.candidate.name, v.application && tr(v.application.vacancy.title)].filter(Boolean).join(' · '), confirmLabel: t('ivcal.withdraw') })) && withdraw.mutate(v.id)}>
+                {canManage && <button type="button" className="btn-ghost btn-sm text-danger" disabled={withdraw.isPending} onClick={async () => (await confirmDialog({ title: t('ivcal.withdraw'), message: [v.candidate.name, v.application && tr(v.application.vacancy.title)].filter(Boolean).join(' · '), confirmLabel: t('ivcal.withdraw') })) && withdraw.mutate(v.id)}>
                   <Undo2 className="size-3.5" /> {t('ivcal.withdraw')}
-                </button>
+                </button>}
               </li>
             ))}
           </ul>

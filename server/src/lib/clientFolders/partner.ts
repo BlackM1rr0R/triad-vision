@@ -23,11 +23,20 @@ export interface PartnerChange {
   to: { id: string; name: string } | null;
   ownerChanged: boolean;
   folderId: string | null;
+  /** Automatic commissions created for the new partner (lib/partners/manage.syncCaseCommissions). */
+  commissionsCreated: number;
 }
 
 const fullName = (u: { firstName: string; lastName: string }) => `${u.firstName} ${u.lastName}`.trim();
 
-export const setCasePartner = async (caseId: string, partnerId: string | null, actorId: string, note?: string | null): Promise<PartnerChange> => {
+export const setCasePartner = async (
+  caseId: string,
+  partnerId: string | null,
+  actorId: string,
+  note?: string | null,
+  /** awaitFolders false: the client folder moves in the background (bulk assignment of many cases). */
+  opts: { awaitFolders?: boolean } = {},
+): Promise<PartnerChange> => {
   const c = await prisma.case.findUnique({
     where: { id: caseId },
     select: {
@@ -47,10 +56,10 @@ export const setCasePartner = async (caseId: string, partnerId: string | null, a
   const from = c.partner;
   if ((from?.id ?? null) === (to?.id ?? null)) {
     const folder = await prisma.case.findUnique({ where: { id: caseId }, select: { driveFolderId: true } });
-    return { changed: false, from, to: from, ownerChanged: false, folderId: folder?.driveFolderId ?? null };
+    return { changed: false, from, to: from, ownerChanged: false, folderId: folder?.driveFolderId ?? null, commissionsCreated: 0 };
   }
 
-  await assignCases([caseId], to?.id ?? null, actorId, { awaitFolders: true });
+  const { commissionsCreated } = await assignCases([caseId], to?.id ?? null, actorId, { awaitFolders: opts.awaitFolders ?? true });
   const cleanNote = note?.trim().slice(0, 500) || null;
   await prisma.caseEvent.create({
     data: {
@@ -83,5 +92,32 @@ export const setCasePartner = async (caseId: string, partnerId: string | null, a
     await notifyPartner(to.id, (t) => ({ type: 'PARTNER_NEW_CASE', title: t.newCaseTitle(client), body: t.newCaseBody(client, c.number), link: `/partner/clients/${caseId}` }));
   }
   const after = await prisma.case.findUnique({ where: { id: caseId }, select: { driveFolderId: true } });
-  return { changed: true, from, to: to ? { id: to.id, name: to.name } : null, ownerChanged, folderId: after?.driveFolderId ?? null };
+  return { changed: true, from, to: to ? { id: to.id, name: to.name } : null, ownerChanged, folderId: after?.driveFolderId ?? null, commissionsCreated };
+};
+
+/**
+ * PATCH /admin/partners/assign (partner page "add clients", partner folder "Müştəri əlavə et", cases list, case
+ * page): the same per-case assignment as the drive tiles (setCasePartner: PARTNER_CHANGED history, owner follows,
+ * partner notified, inactive partner / own login refused) for many cases. All cases are checked first, so the
+ * request is all-or-nothing for the validation errors (400 INVALID_PARTNER / INVALID_CASE / PARTNER_INACTIVE /
+ * PARTNER_OWN_LOGIN) as before; the client folders move in the background.
+ */
+export const assignPartnerToCases = async (caseIds: string[], partnerId: string | null, actorId: string) => {
+  const ids = [...new Set(caseIds)];
+  const to = partnerId ? await prisma.referralPartner.findUnique({ where: { id: partnerId }, select: { id: true, active: true, userId: true } }) : null;
+  if (partnerId && !to) throw badRequest('INVALID_PARTNER');
+  const rows = await prisma.case.findMany({ where: { id: { in: ids } }, select: { id: true, partnerId: true, clientId: true, parentCaseId: true } });
+  if (rows.length !== ids.length) throw badRequest('INVALID_CASE');
+  // Main applicants first: family members' folders live inside the main applicant's folder.
+  const moving = rows.filter((r) => r.partnerId !== (to?.id ?? null)).sort((a, b) => Number(!!a.parentCaseId) - Number(!!b.parentCaseId));
+  if (to && !to.active && moving.length) throw badRequest('PARTNER_INACTIVE');
+  if (to?.userId && moving.some((r) => r.clientId === to.userId)) throw badRequest('PARTNER_OWN_LOGIN');
+  const changed: string[] = [];
+  let commissionsCreated = 0;
+  for (const r of moving) {
+    const x = await setCasePartner(r.id, to?.id ?? null, actorId, null, { awaitFolders: false });
+    if (x.changed) changed.push(r.id);
+    commissionsCreated += x.commissionsCreated;
+  }
+  return { changed, commissionsCreated };
 };

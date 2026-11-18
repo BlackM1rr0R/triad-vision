@@ -134,10 +134,10 @@ export const sendReadyDocs = async (caseId: string, actor: { id: string }, opts:
   const { files } = await readyFilesOf(c.id, c.driveFolderId);
   const live = await liveSentFiles(caseId);
   const resend = !!opts.resend;
-  const blocker = sendBlocker({ stage: effectiveStage(c.processingStage, c.status), fileCount: files.length, sentBefore: live.count > 0, resend });
+  const fresh = newFiles(files, live.sent);
+  const blocker = sendBlocker({ stage: effectiveStage(c.processingStage, c.status), fileCount: files.length, sentBefore: live.count > 0, resend, newCount: fresh.length });
   if (blocker) throw conflict(blocker);
 
-  const fresh = newFiles(files, live.sent);
   // Every source must be readable before anything is written (no half send).
   for (const f of fresh) {
     try {
@@ -190,8 +190,8 @@ export const sendReadyDocs = async (caseId: string, actor: { id: string }, opts:
   const tx = READY_DOCS_TEXT[c.client.locale ?? 'az'] ?? READY_DOCS_TEXT.az;
   await notifyUser(c.client.id, {
     type: 'READY_DOCS',
-    title: tx.title(created.length || files.length),
-    body: tx.body({ name: c.client.firstName, number: c.number, count: created.length || files.length, resend }),
+    title: tx.title(created.length),
+    body: tx.body({ name: c.client.firstName, number: c.number, count: created.length, resend }),
     link: `/account/cases/${c.id}?tab=docs`,
     caseId: c.id,
     ctaLabel: tx.cta,

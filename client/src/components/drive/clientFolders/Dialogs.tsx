@@ -261,7 +261,7 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
   const { busy, run } = useRun(onResult);
   const data = view.data;
   const sentBefore = one ? !!data?.sends.length : targets.some((x) => x.readySentAt);
-  const blocked = one ? !data || data.stage !== 'DONE' || !data.files.length || (data.sends.length > 0 && !resend) : false;
+  const blocked = one ? !data || data.stage !== 'DONE' || !data.files.length || (data.sends.length > 0 && (!resend || data.newCount === 0)) : false;
   const last = data?.sends[0];
   return (
     <Modal

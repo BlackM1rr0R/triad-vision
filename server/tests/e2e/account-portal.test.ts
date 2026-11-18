@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient, asStaff } from '../helpers/api';
 import { emailsTo, prisma, settle, waitFor } from '../helpers/db';
 import { ADMIN_INBOX } from '../helpers/testEnv';
+import { TEST_PASSWORD } from '../helpers/factories';
 import { surveyTexts } from '../../src/lib/surveys/texts';
 import { staffNotifications } from '../helpers/notify';
 import { act, adminCase, createCaseVia, driveCaseTo, expectStatus, reviewAll, uploadDoc, uploadRequired } from '../helpers/workflow';
@@ -324,6 +325,13 @@ describe('GET /api/account/export', () => {
     expect(text).not.toContain(otherCase.number);
     expect(text).not.toContain(other.user.email);
   });
+
+  it('is recorded as a completed EXPORT request and the user is notified, like /api/privacy/export', async () => {
+    const client = await asClient();
+    expectStatus(await client.agent.get('/api/account/export'), 200);
+    expect(await prisma.privacyRequest.count({ where: { userId: client.user.id, type: 'EXPORT', status: 'COMPLETED' } })).toBe(1);
+    expect(await prisma.notification.count({ where: { userId: client.user.id, type: 'PRIVACY_EXPORT' } })).toBe(1);
+  });
 });
 
 describe('POST /api/account/delete-request', () => {
@@ -336,7 +344,7 @@ describe('POST /api/account/delete-request', () => {
     const client = await asClient({ email: 'leaving@test.local', firstName: 'Kamran', lastName: 'Əliyev' });
     const created = await createCaseVia(client.agent);
 
-    const res = expectStatus(await client.agent.post('/api/account/delete-request').send({ reason: 'Plans changed' }), 200);
+    const res = expectStatus(await client.agent.post('/api/account/delete-request').send({ reason: 'Plans changed', currentPassword: TEST_PASSWORD }), 200);
     expect(res.body).toEqual({ ok: true, requestId: expect.any(String) });
     const pr = await prisma.privacyRequest.findUniqueOrThrow({ where: { id: res.body.requestId } });
     expect(pr).toMatchObject({ type: 'DELETION', status: 'OPEN', email: 'leaving@test.local', message: 'Plans changed' });
@@ -357,21 +365,34 @@ describe('POST /api/account/delete-request', () => {
     expect(await prisma.case.count({ where: { id: created.id } })).toBe(1);
   });
 
+  it('needs the current password, like the privacy centre (nothing is filed without it)', async () => {
+    await asAdmin();
+    const client = await asClient();
+    const missing = await client.agent.post('/api/account/delete-request').send({ reason: 'x' });
+    expect(missing.status).toBe(400);
+    expect(missing.body.error).toBe('PASSWORD_REQUIRED');
+    const wrong = await client.agent.post('/api/account/delete-request').send({ currentPassword: 'not-my-password' });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.error).toBe('WRONG_PASSWORD');
+    expect(await prisma.privacyRequest.count({ where: { userId: client.user.id, type: 'DELETION' } })).toBe(0);
+  });
+
   it('works without a reason and validates its length', async () => {
     await asAdmin();
     const client = await asClient();
-    expectStatus(await client.agent.post('/api/account/delete-request').send({}), 200);
-    const long = await client.agent.post('/api/account/delete-request').send({ reason: 'x'.repeat(1001) });
+    expectStatus(await client.agent.post('/api/account/delete-request').send({ currentPassword: TEST_PASSWORD }), 200);
+    const long = await client.agent.post('/api/account/delete-request').send({ reason: 'x'.repeat(1001), currentPassword: TEST_PASSWORD });
     expect(long.status).toBe(400);
   });
 
   it('is rate limited per user', async () => {
     const client = await asClient();
     const other = await asClient();
-    for (let i = 0; i < 3; i++) expectStatus(await client.agent.post('/api/account/delete-request').send({}), 200);
-    const limited = await client.agent.post('/api/account/delete-request').send({});
+    const pw = { currentPassword: TEST_PASSWORD };
+    for (let i = 0; i < 3; i++) expectStatus(await client.agent.post('/api/account/delete-request').send(pw), 200);
+    const limited = await client.agent.post('/api/account/delete-request').send(pw);
     expect(limited.status).toBe(429);
     expect(limited.body.error).toBe('TOO_MANY_REQUESTS');
-    expectStatus(await other.agent.post('/api/account/delete-request').send({}), 200);
+    expectStatus(await other.agent.post('/api/account/delete-request').send(pw), 200);
   });
 });

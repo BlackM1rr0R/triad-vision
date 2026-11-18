@@ -255,6 +255,9 @@ export default function Register() {
   const [scanned, setScanned] = useState<Partial<Form> | null>(null);
   // Optional, visible "Referral code" field: prefilled from ?ref= / the tab / the 60-day cookie, checked live.
   const [refInput, setRefInput] = useState(() => readRef(location.search));
+  // A code only counts as typed once the person edits the field: a prefilled link code (?ref=, tab, 60-day cookie) that is
+  // old or paused never blocks the sign-up (the server ignores such codes); it gets a soft hint instead.
+  const [refTyped, setRefTyped] = useState(false);
   const refCode = normaliseRef(refInput);
   const [refCheck, setRefCheck] = useState<{ code: string; kind: 'AGENT' | 'CLIENT' | 'PARTNER' | null; partnerName?: string; failed?: boolean } | null>(null);
   // Partner code: optional consent to share the application with the partner (unchecked by default, logged).
@@ -278,7 +281,7 @@ export default function Register() {
       window.clearTimeout(timer);
     };
   }, [refCode]);
-  const refState: 'empty' | 'checking' | 'valid' | 'invalid' | 'unverified' = !refCode
+  const refState: 'empty' | 'checking' | 'valid' | 'invalid' | 'stale' | 'unverified' = !refCode
     ? 'empty'
     : refCheck?.code !== refCode
       ? 'checking'
@@ -286,7 +289,9 @@ export default function Register() {
         ? 'valid'
         : refCheck.failed
           ? 'unverified'
-          : 'invalid';
+          : refTyped
+            ? 'invalid'
+            : 'stale';
   usePageTitle(t('auth.registerTitle'));
 
   const fillFromPassport = (p: PassportScanFields) => {
@@ -371,7 +376,8 @@ export default function Register() {
         phone: compactPhone(f.phone),
         password: f.password,
         locale,
-        ...(refCode ? { ref: refCode, refEntered: true } : {}),
+        // A stale link code is not sent (the server would ignore it anyway); a typed one is checked strictly.
+        ...(refCode && refState !== 'stale' ? { ref: refCode, ...(refTyped ? { refEntered: true } : {}) } : {}),
         ...(refCode && refCheck?.code === refCode && refCheck.kind === 'PARTNER' ? { partnerConsent: partnerShare } : {}),
         ...(scanned && Object.keys(scanned).length ? { passportScanned: true } : {}),
         ...(marketing ? { marketingOptIn: true } : {}),
@@ -567,7 +573,9 @@ export default function Register() {
                     ? refCheck?.kind === 'PARTNER'
                       ? t('partnerClients.signup.partner', { name: refCheck.partnerName ?? refCode })
                       : t(refCheck?.kind === 'AGENT' ? 'registerPage.referral.validAgent' : 'registerPage.referral.validClient')
-                    : t('registerPage.referral.hint')
+                    : refState === 'stale'
+                      ? t('registerPage.referral.staleLink')
+                      : t('registerPage.referral.hint')
               }
               ok={refState === 'valid'}
               error={refState === 'invalid' ? t('registerPage.referral.invalid') : null}
@@ -583,7 +591,10 @@ export default function Register() {
                 placeholder={t('registerPage.referral.placeholder')}
                 className={clsx('input h-11 pl-10 uppercase placeholder:normal-case', refState === 'invalid' && 'border-danger focus:border-danger focus:ring-danger/15')}
                 value={refInput}
-                onChange={(e) => setRefInput(e.target.value.toUpperCase().replace(/[^A-Za-z0-9-]/g, '').slice(0, 32))}
+                onChange={(e) => {
+                  setRefTyped(true);
+                  setRefInput(e.target.value.toUpperCase().replace(/[^A-Za-z0-9-]/g, '').slice(0, 32));
+                }}
                 aria-invalid={refState === 'invalid' ? true : undefined}
                 aria-describedby={`${id('ref')}-hint`}
               />

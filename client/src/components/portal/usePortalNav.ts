@@ -21,6 +21,7 @@ import type { JourneyData } from './journey';
 import { useMyCourses } from '@/components/course/api';
 import { useChosenCase } from '@/lib/caseContext';
 import { PORTAL_TOOL_KEYS, hiddenBadge, toolBadge, type PortalStageKey, type PortalToolKey } from '@/lib/portalTools';
+import { mainApprovedCaseId } from '@/pages/account/portal/celebration'; // own approved main case (visa story)
 
 /** Kinds of GET /api/account/next-step (server: lib/account/nextStep.ts). */
 export type NextKind =
@@ -70,7 +71,8 @@ export interface NextStep {
   secondary: NextAction[];
   /** Every further open action after the first three ("+N more"; older servers: absent). */
   more?: NextAction[];
-  waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null } | null;
+  /** reason: the ball reason (e.g. TRIAD_SIGN_CONTRACT: Triad Vision signs the contract first). */
+  waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null; reason?: string } | null;
   /** Stage-based portal (server: lib/account/portalStage.ts; older servers: absent). */
   portal?: PortalInfo;
   counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number; openInvoices?: number; hasBilling?: boolean };
@@ -179,7 +181,8 @@ export function usePortalNav() {
   const subBadges = (sub: SubKey) => subBadge(sub, badges);
   const toolBadges = (k: PortalToolKey) => toolBadge(k, badges);
   const allBadge = hiddenBadge(featured, badges);
-  const approvedCaseId = cases.find((c) => c.status === 'APPROVED' && !c.parentCaseId)?.id ?? cases.find((c) => c.status === 'APPROVED')?.id ?? null;
+  // Visa story link: only the own main application has one (a family member's case would 404).
+  const approvedCaseId = mainApprovedCaseId(cases);
 
   // With a family (several cases) and a chosen case, section links go straight to that case, not to the case list.
   const caseCount = chosenOwn ? 1 : cases.length;

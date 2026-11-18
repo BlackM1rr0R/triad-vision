@@ -25,8 +25,11 @@ import { STORED_NAME } from './publicImages.js';
  * `Cache-Control: public, max-age=31536000, immutable` (the source URLs are content-addressed: an Unsplash photo id
  * or a CMS file name never changes its bytes). Concurrent misses of one key share a single conversion; at most
  * MAX_CONVERSIONS run at once and a long queue answers with a redirect to the original instead of waiting.
- * When the upstream fails the response is a short-lived 302 to the original image, so a page never shows a broken
- * image because of the proxy. pruneImageCache (nightly job) keeps the folder under IMAGE_CACHE_MAX_MB.
+ * When the proxy cannot deliver, a CMS photo answers with a 302 to its /uploads original (same origin). A remote
+ * photo never sends the visitor to the third-party host (no visitor IP to Unsplash, QA PUB-9): it answers with a
+ * small neutral placeholder WebP (`no-store`, header X-Image-Fallback), and the next view tries again. Set
+ * IMAGE_PROXY_REDIRECT_REMOTE=1 to get the old 302 to the original back. `[image-proxy]` warnings in the log show
+ * failing upstream fetches. pruneImageCache (nightly job) keeps the folder under IMAGE_CACHE_MAX_MB.
  */
 
 export const IMAGE_WIDTHS = [160, 240, 320, 400, 480, 600, 640, 720, 800, 900, 960, 1000, 1200, 1280, 1600, 1920] as const;
@@ -152,6 +155,13 @@ const convert = (src: ImageSource, width: number, file: string) =>
 
 const DAY = 24 * 60 * 60 * 1000;
 
+let placeholder: Promise<Buffer> | null = null;
+/** Neutral 16:9 placeholder shown instead of a remote photo the proxy could not fetch (never a third-party redirect). */
+export const placeholderWebp = () =>
+  (placeholder ??= sharp({ create: { width: 32, height: 18, channels: 3, background: '#d9dee7' } })
+    .webp({ quality: 60 })
+    .toBuffer());
+
 const sendCached = (res: Response, file: string) => {
   res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -177,9 +187,12 @@ export const imageProxyHandler = async (req: Request, res: Response) => {
     sendCached(res, file);
     return;
   }
-  const fallback = () => {
+  const fallback = async () => {
     res.setHeader('Cache-Control', 'no-store');
-    res.redirect(302, fallbackUrl(src, width));
+    if (src.kind === 'local' || process.env.IMAGE_PROXY_REDIRECT_REMOTE === '1') return res.redirect(302, fallbackUrl(src, width));
+    res.setHeader('X-Image-Fallback', '1');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.type('image/webp').send(await placeholderWebp());
   };
   let job = inflight.get(file);
   if (!job) {

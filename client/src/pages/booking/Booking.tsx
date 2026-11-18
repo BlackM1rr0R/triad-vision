@@ -30,7 +30,7 @@ import { PageHero } from '@/components/layout/PageHero';
 import { leadVisitorId } from '@/lib/leadVisitor';
 import { Spinner } from '@/components/ui/Spinner';
 import { CalendarDay, Success as SuccessArt } from '@/components/illustrations';
-import { TOPICS, browserTimeZone, fmtTime, useDayLabels, zoned, type Topic } from '@/components/booking/time';
+import { TOPICS, useBrowserTimeZone, fmtTime, useDayLabels, zoned, type Topic } from '@/components/booking/time';
 
 registerCopy(bookingCopy);
 
@@ -62,7 +62,7 @@ export default function Booking() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [params] = useSearchParams();
-  const tz = useMemo(browserTimeZone, []);
+  const tz = useBrowserTimeZone();
   const labels = useDayLabels();
 
   const initialTopic = params.get('topic');

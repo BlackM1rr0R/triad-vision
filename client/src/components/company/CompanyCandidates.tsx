@@ -21,6 +21,7 @@ import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/Shared
 import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 import { CandidateVotes, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
+import { useCompanyAccess } from './access'; // votes / decisions need decideCandidates
 
 interface Item {
   id: string;
@@ -93,6 +94,7 @@ export const CompanyCandidates = () => {
   const [params, setParams] = useSearchParams();
   const status = params.get('status') ?? '';
   const vacancyId = params.get('vacancyId') ?? '';
+  const canDecide = useCompanyAccess().canDo('decideCandidates');
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-candidates', status, vacancyId],
     queryFn: async () =>
@@ -201,9 +203,9 @@ export const CompanyCandidates = () => {
               <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />
               <p className="mt-3 text-[11px] text-muted">{t('jobsArea.portal.candidates.updated', { date: fmtDate(a.updatedAt) })}</p>
               {(a.status === 'PROPOSED' || a.status === 'INTERVIEW' || !!a.votes?.length) && (
-                <CandidateVotes key={(a.votes ?? []).map((v) => v.id + v.updatedAt).join()} applicationId={a.id} status={a.status} votes={a.votes ?? []} onDone={refresh} />
+                <CandidateVotes key={(a.votes ?? []).map((v) => v.id + v.updatedAt).join()} applicationId={a.id} status={a.status} votes={a.votes ?? []} onDone={refresh} canVote={canDecide} />
               )}
-              {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && <DecisionBox item={a} onDone={refresh} />}
+              {(a.status === 'PROPOSED' || a.status === 'INTERVIEW') && canDecide && <DecisionBox item={a} onDone={refresh} />}
             </li>
           ))}
         </ul>

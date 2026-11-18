@@ -111,6 +111,15 @@ export const onSessionLost = (handler: SessionLostHandler | null) => {
   sessionLostHandler = handler;
 };
 
+/**
+ * 403 TWO_FACTOR_ENROLLMENT_REQUIRED: the Access Center switched 2FA on for this account during the session. The handler
+ * (AuthProvider) reloads the user, so the portal shows the guided set-up instead of failing requests.
+ */
+let twoFactorRequiredHandler: (() => void) | null = null;
+export const onTwoFactorRequired = (handler: (() => void) | null) => {
+  twoFactorRequiredHandler = handler;
+};
+
 api.interceptors.response.use(
   (res) => {
     if (impersonationState && res.headers?.['x-impersonation-ended']) endedHandler?.();
@@ -125,6 +134,9 @@ api.interceptors.response.use(
           code === 'SESSION_EXPIRED' || code === 'SESSION_REVOKED' || code === 'INVALID_TOKEN' ? code : 'UNAUTHENTICATED';
         sessionLostHandler?.(reason);
       }
+    }
+    if (err instanceof AxiosError && err.response?.status === 403 && (err.response.data as { error?: string } | undefined)?.error === 'TWO_FACTOR_ENROLLMENT_REQUIRED') {
+      twoFactorRequiredHandler?.();
     }
     return Promise.reject(err);
   },

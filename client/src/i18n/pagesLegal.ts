@@ -161,6 +161,7 @@ const az = {
       validAgent: 'Kod təsdiqləndi: agent dəvəti.',
       validClient: 'Kod təsdiqləndi: dost dəvəti.',
       invalid: 'Belə referans kodu tapılmadı. Kodu yoxlayın və ya sahəni boş buraxın.',
+      staleLink: 'Keçiddən gələn bu kod artıq etibarlı deyil. Qeydiyyat onsuz davam edəcək; istəsəniz başqa kod yazın.',
     },
     scan: {
       title: 'Pasportun şəklini çəkin — məlumatlar avtomatik dolsun',
@@ -510,6 +511,7 @@ const de: LegalCopy = {
       validAgent: 'Code bestätigt: Empfehlung durch einen Agenten.',
       validClient: 'Code bestätigt: Empfehlung durch einen Bekannten.',
       invalid: 'Diesen Empfehlungscode gibt es nicht. Bitte prüfen Sie ihn oder lassen Sie das Feld leer.',
+      staleLink: 'Dieser Code aus dem Link ist nicht mehr gültig. Die Registrierung geht ohne ihn weiter; Sie können einen anderen Code eingeben.',
     },
     scan: {
       title: 'Reisepass fotografieren – die Daten werden automatisch ausgefüllt',
@@ -857,6 +859,7 @@ const en: LegalCopy = {
       validAgent: 'Code confirmed: agent referral.',
       validClient: 'Code confirmed: friend referral.',
       invalid: 'We could not find this referral code. Please check it or leave the field empty.',
+      staleLink: 'This code from your link is no longer valid. You can sign up without it or enter another code.',
     },
     scan: {
       title: 'Take a photo of your passport — the form fills itself',
@@ -1204,6 +1207,7 @@ const ru: LegalCopy = {
       validAgent: 'Код подтверждён: приглашение агента.',
       validClient: 'Код подтверждён: приглашение друга.',
       invalid: 'Такой реферальный код не найден. Проверьте его или оставьте поле пустым.',
+      staleLink: 'Код из ссылки больше не действует. Регистрация продолжится без него; при желании введите другой код.',
     },
     scan: {
       title: 'Сфотографируйте паспорт — данные заполнятся автоматически',

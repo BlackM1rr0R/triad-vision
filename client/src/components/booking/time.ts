@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useClientOnly } from '@/lib/ssr';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 
 /** The visitor's IANA time zone (falls back to Baku). */
@@ -8,6 +10,21 @@ export const browserTimeZone = () => {
   } catch {
     return 'Asia/Baku';
   }
+};
+
+/** Zone of the server-rendered first paint (the office's; the SSR service itself runs in UTC). */
+export const SSR_TIME_ZONE = 'Asia/Baku';
+
+/** The zone to show: a fixed one while server markup is rendered/hydrated, the visitor's afterwards. */
+export const pageTimeZone = (clientReady: boolean) => (clientReady ? browserTimeZone() : SSR_TIME_ZONE);
+
+/**
+ * The visitor's time zone for server-rendered pages: SSR_TIME_ZONE on the server and during hydration (so the
+ * markup matches), the browser's zone right after (no React #418 text mismatch on /booking).
+ */
+export const useBrowserTimeZone = () => {
+  const ready = useClientOnly();
+  return useMemo(() => pageTimeZone(ready), [ready]);
 };
 
 const partsCache = new Map<string, Intl.DateTimeFormat>();

@@ -91,3 +91,32 @@ export const resolveClientUploadTarget = async (c: { id: string; status: CaseSta
   const target = clientUploadStageFor(c.status, requirement, { earlyEmbassy: requirement.stage === 'EMBASSY' && (await earlyEmbassyOpenFor(c)) });
   return target ? { ...target, requirement } : null;
 };
+
+/**
+ * After a client upload that no hand-in ("submit") follows — a replacement for a rejected document, or an embassy
+ * document uploaded early — the case's staff are told. Shared by every client upload path (case upload, scan, vault).
+ */
+export const notifyClientUpload = async (
+  c: { id: string; number: string },
+  target: Pick<UploadTarget, 'replacement' | 'early'>,
+  requirement: { title: unknown },
+  fileName: string,
+) => {
+  if (target.replacement) await notifyReplacement(c, requirement, fileName);
+  else if (target.early) await notifyEarlyEmbassyUpload(c, requirement, fileName);
+};
+
+/**
+ * Pure: the requirements a client may upload to right now, with their target (clientUploadStageFor): the open step, an
+ * early embassy document, or a replacement for a rejected one. `earlyEmbassy` = lib/earlyEmbassy says the case waits
+ * for the work contract. Drives "use from my vault" suggestions, so they match what POST /vault/:id/use accepts.
+ */
+export const uploadableRequirements = <R extends { stage: DocStage; documents: { status: DocStatus }[] }>(
+  status: CaseStatus,
+  requirements: R[],
+  earlyEmbassy: boolean,
+): { requirement: R; target: UploadTarget }[] =>
+  requirements.flatMap((requirement) => {
+    const target = clientUploadStageFor(status, requirement, { earlyEmbassy: requirement.stage === 'EMBASSY' && earlyEmbassy });
+    return target ? [{ requirement, target }] : [];
+  });

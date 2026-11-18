@@ -54,6 +54,12 @@ export const tabOfAnchor = (hash: string): CaseTab | null => {
   return 'overview';
 };
 
+/** Element id an anchor scrolls to: old notification links used #family for the family section (id family-members). */
+export const anchorTargetId = (hash: string) => {
+  const id = decodeURIComponent(hash.replace(/^#/, ''));
+  return id === 'family' ? 'family-members' : id;
+};
+
 /** Case-page link to a tab (and an anchor inside it). */
 export const caseHref = (caseId: string, tab: CaseTab, anchor?: string | null) =>
   `/account/cases/${caseId}${tab === 'overview' ? '' : `?tab=${tab}`}${anchor ?? ''}`;

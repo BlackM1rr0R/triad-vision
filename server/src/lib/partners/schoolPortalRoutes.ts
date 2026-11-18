@@ -6,7 +6,8 @@ import { prisma } from '../../db.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../http.js';
 import { audit } from '../audit.js';
-import { partnerContextOf, requireClientList, requireDocuments } from '../partnerAccess/context.js'; // per-partner permissions
+import { partnerContextOf, requireClientList } from '../partnerAccess/context.js'; // per-partner permissions
+import { schoolRecordAccess } from '../partnerAccess/permissions.js';
 import {
   ownStudent,
   listStudents,
@@ -34,13 +35,14 @@ export const partnerSchoolRouter = Router();
 
 /**
  * The partner (owner or team member, lib/partnerAccess) with the permission the action needs: students are clients
- * (client list), records are documents the school adds (upload level), certificates are files (list level).
+ * (client list). Records and their certificates are the school's own data, not case documents, so the documents
+ * level does not apply (schoolRecordAccess); the category / consent checks stay in the routes.
  */
 const partnerOf = async (req: Request, need: 'view' | 'write' | 'file' = 'view'): Promise<ReferralPartner> => {
   const ctx = await partnerContextOf(req);
   requireClientList(ctx);
-  if (need === 'write') requireDocuments(ctx, 'upload');
-  if (need === 'file') requireDocuments(ctx, 'list');
+  const access = schoolRecordAccess(ctx.perms, ctx.partner.category);
+  if (need === 'file' && !access.certificate) throw forbidden('PARTNER_PERMISSION_DENIED');
   return ctx.partner;
 };
 
@@ -62,7 +64,13 @@ partnerSchoolRouter.get('/students/:clientId', async (req, res) => {
 
 const recordLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 120, keyGenerator: (req) => `partner-records:${req.user?.id ?? 'anon'}` });
 
-partnerSchoolRouter.post('/students/:clientId/records', recordLimiter, documentUpload.single('certificate'), async (req, res) => {
+/** Rights before the optional certificate is spooled to disk. */
+const recordPrecheck = async (req: Request, _res: unknown, next: () => void) => {
+  requireLanguageSchool(await partnerOf(req, 'write'));
+  next();
+};
+
+partnerSchoolRouter.post('/students/:clientId/records', recordLimiter, recordPrecheck, documentUpload.single('certificate'), async (req, res) => {
   const file = req.file;
   try {
     const partner = await partnerOf(req, 'write');

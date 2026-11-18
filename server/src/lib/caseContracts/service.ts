@@ -7,7 +7,7 @@ import { notifyStaff, notifyUser } from '../notifications.js';
 import { renderContract } from '../contracts/render.js';
 import { asContractLang, contractValues, loadContractCase } from '../contracts/values.js';
 import { renderContractPdf } from '../contracts/pdf.js';
-import { staffConfirmContract } from '../caseFlow.js';
+import { clientSignContract, staffConfirmContract } from '../caseFlow.js';
 import { ensureCaseFolder } from '../drive/caseFolders.js';
 import { createFileIn } from '../drive/files.js';
 import { nodeLiteSelect } from '../drive/access.js';
@@ -279,7 +279,16 @@ export const approveStep = async (caseId: string, step: Step, actor: Actor) => {
   if (!canApprove(state)) throw conflict('NOT_FULLY_SIGNED');
   if (!(await markApproved(r, actor.id))) throw conflict('ALREADY_APPROVED');
   if (step === 'LABOUR' && r.isCaseContract) {
-    const c = await prisma.case.findUnique({ where: { id: caseId }, select: { status: true } });
+    const c = await prisma.case.findUnique({ where: { id: caseId }, select: { status: true, clientId: true, contract: { select: { signatureRequestId: true } } } });
+    // The completion did not move the case (e.g. it was skipped): this signed request is still the case contract,
+    // so it takes the case through CONTRACT_SIGNED now instead of stranding it in CONTRACT_SENT.
+    if (c?.status === 'CONTRACT_SENT' && c.contract?.signatureRequestId === r.id && r.finalDocumentId) {
+      const cand = r.signers.find((s) => s.role === 'CANDIDATE');
+      await clientSignContract(caseId, c.clientId, { signerName: cand?.name ?? 'Client', signedDocumentId: r.finalDocumentId, ip: cand?.ip ?? 'unknown', userAgent: cand?.userAgent ?? 'unknown' }).catch((err) =>
+        console.warn('[caseContracts] contract step not signed', caseId, (err as Error).message),
+      );
+      c.status = (await prisma.case.findUnique({ where: { id: caseId }, select: { status: true } }))?.status ?? c.status;
+    }
     if (c?.status === 'CONTRACT_SIGNED') {
       await staffConfirmContract(caseId, actor.id).catch((err) => console.warn('[caseContracts] contract step not confirmed', caseId, (err as Error).message));
     }

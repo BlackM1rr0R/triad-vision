@@ -10,6 +10,7 @@ import { CONSENT_TYPES } from '../../lib/privacy/consents.js';
 import { dataOverview, notifyRequestDecided, OPEN_STATUSES } from '../../lib/privacy/requests.js';
 import { eraseInquiries, exportInquiries } from '../../lib/privacy/inquiries.js';
 import { eraseGermanyJobAlerts, exportGermanyJobAlerts } from '../../lib/germanyJobs/alerts.js';
+import { eraseJobAlerts, exportJobAlerts } from '../../lib/jobAlerts/privacy.js'; // vacancy alerts + vacancy waitlist
 import { eraseToolLeads, exportToolLeads } from '../../lib/toolLeads/service.js';
 import { eraseRateAlerts, exportRateAlerts } from '../../lib/rateAlerts/service.js';
 import { pageArgs, pageMeta, pageShape, splitPage } from '../../lib/paging.js';
@@ -219,11 +220,12 @@ adminPrivacyRouter.get('/inquiries', async (req, res) => {
   const items = await exportInquiries(q.email, q.userId);
   // Germany job alerts of the address (no account needed for them).
   const germanyJobAlerts = await exportGermanyJobAlerts(q.email, q.userId);
-  await audit(req, 'PRIVACY_INQUIRIES_EXPORTED', `email:${q.email}`, { count: items.length, germanyJobAlerts: germanyJobAlerts.length });
+  const vacancyAlerts = await exportJobAlerts(q.email, q.userId); // our vacancy alerts + waitlist entries (lib/jobAlerts)
+  await audit(req, 'PRIVACY_INQUIRIES_EXPORTED', `email:${q.email}`, { count: items.length, germanyJobAlerts: germanyJobAlerts.length, vacancyAlerts: vacancyAlerts.length });
   if (q.format === 'download') {
     res.setHeader('Content-Disposition', `attachment; filename="inquiries-${new Date().toISOString().slice(0, 10)}.json"`);
   }
-  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts, toolResultEmails: await exportToolLeads(q.email), rateAlerts: await exportRateAlerts(q.email, q.userId) });
+  res.json({ exportedAt: new Date().toISOString(), email: q.email, items, germanyJobAlerts, vacancyAlerts, toolResultEmails: await exportToolLeads(q.email), rateAlerts: await exportRateAlerts(q.email, q.userId) });
 });
 
 adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
@@ -232,8 +234,9 @@ adminPrivacyRouter.post('/inquiries/erase', async (req, res) => {
   const germanyJobAlerts = await eraseGermanyJobAlerts(body.email, body.userId);
   await eraseToolLeads(body.email); // "e-mail me my result" rows (lib/toolLeads)
   const rateAlerts = await eraseRateAlerts(body.email, body.userId); // EUR → AZN rate alerts (lib/rateAlerts)
-  await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized, germanyJobAlerts, rateAlerts });
-  res.json({ ok: true, anonymized, germanyJobAlerts, rateAlerts });
+  const vacancyAlerts = await eraseJobAlerts(body.email, body.userId); // vacancy alerts + waitlist entries and their notices
+  await audit(req, 'PRIVACY_INQUIRIES_ERASED', body.requestId ? `privacy-request:${body.requestId}` : `email:${body.email}`, { email: body.email, anonymized, germanyJobAlerts, rateAlerts, vacancyAlerts });
+  res.json({ ok: true, anonymized, germanyJobAlerts, rateAlerts, vacancyAlerts });
 });
 
 // ─── Consent log ───────────────────────────────────────────────────────

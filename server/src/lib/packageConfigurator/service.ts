@@ -146,7 +146,7 @@ export const submitPublicRequest = async (req: Request, body: z.infer<typeof pub
   });
   void onInquiryCreated(inquiry.id);
   await notifyStaff(`Paketkonfigurator: Angebotsanfrage von ${body.companyName}`, `${body.contactName} · ${body.email}${body.phone ? ` · ${body.phone}` : ''}\n\n${summaryText(input, priced, body.message)}`, {
-    link: `/admin/inquiries?id=${inquiry.id}`,
+    link: `/admin/inquiries?open=${inquiry.id}`, // the list opens the drawer from ?open= (useDrawerParam)
   });
   await attachLeadContext(inquiry.id, { visitorId: body.visitorId, utm: body.utm });
   await audit(req, 'CONFIGURATOR_REQUEST', inquiry.id, { workers: priced.workers, services: input.services, via: 'public' });

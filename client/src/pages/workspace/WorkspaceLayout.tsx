@@ -26,6 +26,7 @@ import { STAFF_TOUR, TourHost, TourRestartButton } from '@/components/onboarding
 import { CommandPaletteButton, CommandPaletteHotkey } from '@/components/command'; // Ctrl+K
 import { usePageVisits, useStaffNav } from '@/components/command/navPrefs'; // usage + module toggles
 import { useSurface } from '@/lib/theme'; // crisp staff surface tokens (index.css [data-surface=admin])
+import { BreakGlassHost } from '@/components/access/BreakGlassHost'; // 403 OUT_OF_SCOPE on drive / tasks / mail → "request emergency access"
 
 registerCopy(workspaceCopy);
 registerCopy(pagesCalls);
@@ -260,6 +261,7 @@ export default function WorkspaceLayout() {
         />
         <TourHost autoStart={STAFF_TOUR} />
         <CommandPaletteHotkey />
+        <BreakGlassHost />
       </div>
     </div>
   );

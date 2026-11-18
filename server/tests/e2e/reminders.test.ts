@@ -301,6 +301,43 @@ describe('contract signature reminder', () => {
     expect(n[0].body).toContain('6 gündür');
   });
 
+  it('two-step contract: no client reminder while Triad Vision has to sign first; reminded once it is the turn of the client', async () => {
+    const { user: client } = await createClient({ locale: 'az' });
+    const c = await makeCase(client.id, { status: 'CONTRACT_SENT' });
+    const sentAt = new Date();
+    const r = await prisma.signatureRequest.create({
+      data: {
+        title: 'Əmək müqaviləsi',
+        caseId: c.id,
+        status: 'SENT',
+        isCaseContract: true,
+        contractKind: 'LABOUR',
+        order: 'SEQUENTIAL',
+        expiresAt: new Date(sentAt.getTime() + 30 * DAY),
+        originalKey: `${uniq('rem')}.pdf`,
+        originalName: 'x.pdf',
+        originalSha256: 'a'.repeat(64),
+        originalSize: 1,
+        originalPages: 1,
+        signers: {
+          create: [
+            { role: 'STAFF', name: 'Triad', email: `${uniq('t')}@tv.test`, order: 1 },
+            { role: 'CANDIDATE', name: 'Client', email: client.email, userId: client.id, order: 2 },
+          ],
+        },
+      },
+      include: { signers: true },
+    });
+    await prisma.contract.create({ data: { caseId: c.id, fileDocumentId: 'doc-x', sentAt, signatureRequestId: r.id } });
+
+    await runContractReminders(new Date(sentAt.getTime() + 6 * DAY));
+    expect(await notes(client.id, 'CONTRACT_SIGN_REMINDER')).toHaveLength(0);
+    // Triad Vision signed: now it is the client's turn.
+    await prisma.signatureSigner.update({ where: { id: r.signers.find((s) => s.role === 'STAFF')!.id }, data: { status: 'SIGNED', signedAt: new Date() } });
+    await runContractReminders(new Date(sentAt.getTime() + 7 * DAY));
+    expect(await notes(client.id, 'CONTRACT_SIGN_REMINDER')).toHaveLength(1);
+  });
+
   it('runs every part together without throwing', async () => {
     await expect(runReminders(new Date())).resolves.toBeUndefined();
   });

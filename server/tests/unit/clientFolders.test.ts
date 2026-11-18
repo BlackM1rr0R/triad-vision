@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newFiles, nextOwner, parseSentFiles, sendBlocker, summarize } from '../../src/lib/clientFolders/logic.js';
+import { bulkAssignee, newFiles, nextOwner, parseSentFiles, sendBlocker, summarize } from '../../src/lib/clientFolders/logic.js';
 import { classifyRoute } from '../../src/lib/access/routeMap.js';
 import { READY_DOCS_TEXT } from '../../src/lib/clientFolders/texts.js';
 
@@ -27,6 +27,18 @@ describe('client folders: Fertig → client', () => {
     expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: false })).toBe('READY_DOCS_ALREADY_SENT');
     expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: true })).toBeNull();
     expect(sendBlocker({ stage: 'DONE', fileCount: 1, sentBefore: false, resend: false })).toBeNull();
+    // a re-send with nothing new would only re-notify the client
+    expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: true, newCount: 0 })).toBe('READY_DOCS_NOTHING_NEW');
+    expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: true, newCount: 1 })).toBeNull();
+    expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: false, resend: false, newCount: 2 })).toBeNull();
+  });
+
+  it('bulk stage move: nobody chosen keeps the assignee of a case already in the stage', () => {
+    expect(bulkAssignee({ from: 'WRITTEN', to: 'WRITTEN', requested: null, current: 'u1' })).toBe('u1');
+    expect(bulkAssignee({ from: 'WRITTEN', to: 'WRITTEN', requested: undefined, current: null })).toBeNull();
+    expect(bulkAssignee({ from: 'WRITTEN', to: 'WRITTEN', requested: 'u2', current: 'u1' })).toBe('u2');
+    expect(bulkAssignee({ from: null, to: 'WRITTEN', requested: null, current: 'u1' })).toBeNull();
+    expect(bulkAssignee({ from: 'IN_PROGRESS', to: 'DONE', requested: 'u3', current: 'u1' })).toBe('u3');
   });
 
   it('sends only files that are new or replaced since (node + version)', () => {

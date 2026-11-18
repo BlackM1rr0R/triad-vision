@@ -113,7 +113,7 @@ export interface NextStepFacts {
   /** Any case ever approved (then no "start a case" nudge). */
   hasApproved: boolean;
   primary: { id: string; status: CaseStatus; appointmentAt: Date | null; appointmentPlace: string | null } | null;
-  ball: Pick<BallInCourt, 'side' | 'items' | 'eta'> | null;
+  ball: (Pick<BallInCourt, 'side' | 'items' | 'eta'> & { reason?: BallInCourt['reason'] }) | null;
   firstMissingDoc: L10nLike | null;
   firstRejectedDoc: L10nLike | null;
   /** Stage of that rejected document (its section on the case page); absent / null = the open upload step. */
@@ -257,7 +257,7 @@ export const pickNextStep = (f: NextStepFacts) => {
   const clientMove = !!primary && !SOFT.includes(primary.kind);
   const waiting =
     !clientMove && f.primary && f.ball && f.ball.side !== 'CLIENT'
-      ? { side: f.ball.side, expectedBy: f.ball.eta?.expectedBy ?? null }
+      ? { side: f.ball.side, expectedBy: f.ball.eta?.expectedBy ?? null, ...(f.ball.reason ? { reason: f.ball.reason } : {}) }
       : null;
   return { primary, secondary, more, waiting, actionCount: actions.filter((a) => !SOFT.includes(a.kind)).length };
 };
@@ -375,7 +375,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     hasCases: cases.length > 0,
     hasApproved: !!approved,
     primary: open ? { id: open.id, status: open.status, appointmentAt: open.appointmentAt, appointmentPlace: open.appointmentPlace } : null,
-    ball: ball ? { side: ball.side, items: ball.items, eta: ball.eta } : null,
+    ball: ball ? { side: ball.side, items: ball.items, eta: ball.eta, reason: ball.reason } : null,
     firstMissingDoc: (missing?.title as L10nLike | undefined) ?? null,
     firstRejectedDoc: (fixDoc?.title as L10nLike | undefined) ?? null,
     firstRejectedStage: fixDoc && !rejected ? fixDoc.stage : null,

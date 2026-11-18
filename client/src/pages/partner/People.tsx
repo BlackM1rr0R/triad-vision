@@ -186,6 +186,8 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
     onError: (err) => toast.error(clientError(err)),
   });
   const items = q.data?.items;
+  /** Resending an invitation needs the add-clients permission (server: requireFlag(ctx, 'addClients')). */
+  const canInvite = me.partner.active && accessOf(me).areas.addClients;
 
   return (
     <div className="space-y-6">
@@ -258,9 +260,11 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
                   {c.owned && !c.activated && (
                     <span className="inline-flex items-center gap-2 text-muted">
                       {t('partnerClients.list.invited')}
-                      <button type="button" className="btn-ghost btn-sm" disabled={resend.isPending} onClick={() => resend.mutate(c.id)}>
-                        {t('partnerClients.list.resend')}
-                      </button>
+                      {canInvite && (
+                        <button type="button" className="btn-ghost btn-sm" disabled={resend.isPending} onClick={() => resend.mutate(c.id)}>
+                          {t('partnerClients.list.resend')}
+                        </button>
+                      )}
                     </span>
                   )}
                   {c.cases > 1 && <span className="text-muted">{t('partnerClients.list.cases', { count: c.cases })}</span>}

@@ -13,7 +13,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SearchEmpty } from '@/components/illustrations';
 import { day } from '@/components/agents/format';
-import { downloadFile, portalError, type PartnerMe, type PortalStep } from '@/components/partnerPortal/api';
+import { accessOf, downloadFile, portalError, type PartnerMe, type PortalStep } from '@/components/partnerPortal/api';
 import { ErrorRetry, Loading, Section, StatusPill, StepBar } from '@/components/partnerPortal/ui';
 import type { CaseStatus } from '@/lib/types';
 
@@ -218,7 +218,7 @@ function RecordRow({ r }: { r: StudentRecord }) {
   );
 }
 
-function StudentCard({ s, canRecord }: { s: Student; canRecord: boolean }) {
+function StudentCard({ s, canRecord, showStage }: { s: Student; canRecord: boolean; showStage: boolean }) {
   const { t } = useTranslation();
   const [adding, setAdding] = useState(false);
   return (
@@ -250,7 +250,8 @@ function StudentCard({ s, canRecord }: { s: Student; canRecord: boolean }) {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted">{t('partnerSchools.noCase')}</p>
+            // Without the case-stage permission the server sends no stage at all: "no case" would be false.
+            <p className="text-sm text-muted">{showStage ? t('partnerSchools.noCase') : t('partnerAccess.noStage')}</p>
           )}
           <p className="text-sm text-ink">
             <span className="text-muted">{t('partnerSchools.level')}: </span>
@@ -295,7 +296,10 @@ function StudentCard({ s, canRecord }: { s: Student; canRecord: boolean }) {
 export default function PartnerStudentsPage({ me }: { me: PartnerMe }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  // Records are the school's own data: the client list (needed for this page) is enough, not the documents level
+  // (server: lib/partnerAccess/permissions.ts → schoolRecordAccess).
   const canRecord = me.partner.category === 'LANGUAGE_SCHOOL';
+  const showStage = accessOf(me).permissions.caseStage;
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: [...KEY, search.trim()],
     queryFn: async () => (await api.get<{ items: Student[] }>('/partner/students', { params: { search: search.trim() || undefined } })).data,
@@ -327,7 +331,7 @@ export default function PartnerStudentsPage({ me }: { me: PartnerMe }) {
         ) : (
           <ul className="grid gap-3">
             {items.map((s) => (
-              <StudentCard key={s.id} s={s} canRecord={canRecord} />
+              <StudentCard key={s.id} s={s} canRecord={canRecord} showStage={showStage} />
             ))}
           </ul>
         )}

@@ -109,11 +109,15 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
                   <p className="mt-1 text-[11px] text-muted">
                     {t(`jobsArea.portal.vacancies.statusHint.${v.status}`)}
                     {v.publishedAt && ` · ${t('jobsArea.common.postedOn', { date: fmtDate(v.publishedAt) })}`}
-                    {proposed > 0 && (
-                      <Link to={`/company/candidates?vacancyId=${v.id}`} className="ml-1 font-semibold text-link hover:underline">
-                        · {t('jobsArea.portal.vacancies.candidates', { count: proposed })}
-                      </Link>
-                    )}
+                    {proposed > 0 &&
+                      (can('viewCandidatePool') ? (
+                        <Link to={`/company/candidates?vacancyId=${v.id}`} className="ml-1 font-semibold text-link hover:underline">
+                          · {t('jobsArea.portal.vacancies.candidates', { count: proposed })}
+                        </Link>
+                      ) : (
+                        // /company/candidates needs viewCandidatePool: the count as plain text.
+                        <span className="ml-1">· {t('jobsArea.portal.vacancies.candidates', { count: proposed })}</span>
+                      ))}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-1.5">

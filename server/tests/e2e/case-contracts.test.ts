@@ -174,4 +174,80 @@ describe('two-step case contracts', () => {
     await prisma.case.update({ where: { id: c.id }, data: { status: 'CANCELLED' } });
     expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 409).body.error).toBe('CASE_CLOSED');
   });
+
+  /** Sends the Əmək müqaviləsi and has Triad Vision and the client sign it (case → CONTRACT_SIGNED). */
+  const signLabour = async (caseId: string, templateId: string, staff: Awaited<ReturnType<typeof asStaff>>, client: Awaited<ReturnType<typeof asClient>>) => {
+    const sent = expectStatus(await staff.agent.post(`${BASE}/${caseId}/send`).send({ step: 'LABOUR', templateId, inputs: {} }), 201).body;
+    expectStatus(await staff.agent.post(`${BASE}/${caseId}/triad-sign`).send({ step: 'LABOUR', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
+    const [, cand] = await signers(sent.signatureRequestId);
+    expectStatus(await client.agent.post(`/api/signatures/my/${cand.id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
+    await waitFor(async () => ((await prisma.case.findUniqueOrThrow({ where: { id: caseId } })).status === 'CONTRACT_SIGNED' ? true : null));
+    return sent.signatureRequestId as string;
+  };
+
+  it('C-CON-1: while Triad Vision signs first the client is not told to sign; afterwards they are', async () => {
+    const { c, labourTpl, client } = await setup();
+    const staff = await asStaff();
+    expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 201);
+    let overview = expectStatus(await client.agent.get('/api/account/overview'), 200).body.activeCase;
+    expect(overview).toMatchObject({ status: 'CONTRACT_SENT', turn: 'staff', nextAction: { kind: 'WAIT_REVIEW', owner: 'staff' } });
+    expectStatus(await staff.agent.post(`${BASE}/${c.id}/triad-sign`).send({ step: 'LABOUR', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
+    overview = expectStatus(await client.agent.get('/api/account/overview'), 200).body.activeCase;
+    expect(overview).toMatchObject({ turn: 'client', nextAction: { kind: 'SIGN_CONTRACT', owner: 'client' } });
+  });
+
+  it('A-1 / C-CON-2: no Əmək müqaviləsi before the contract step; one approved before a reopen does not strand the case', async () => {
+    const { c, labourTpl, client } = await setup('DOCUMENTS_PENDING');
+    const staff = await asStaff();
+    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 409).body.error).toBe('NOT_CONTRACT_STEP');
+    await prisma.case.update({ where: { id: c.id }, data: { status: 'DOCUMENTS_REVIEW' } });
+    await signLabour(c.id, labourTpl.id, staff, client);
+    expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'LABOUR' }), 200);
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('EMBASSY_DOCUMENTS');
+    // Cancelled, reopened at the start: the client hands the documents in again.
+    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/actions`).send({ action: 'CANCEL', reason: 'Pause' }), 200);
+    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/actions`).send({ action: 'REOPEN', to: 'DOCUMENTS_PENDING' }), 200);
+    await prisma.case.update({ where: { id: c.id }, data: { status: 'DOCUMENTS_REVIEW' } });
+    const view = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps[0];
+    expect(view).toMatchObject({ state: 'APPROVED', blockedReason: null });
+    const again = expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 201).body;
+    expect(again.caseContract).toBe(true);
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('CONTRACT_SENT');
+    // Past the contract step an approved one stays final.
+    await prisma.case.update({ where: { id: c.id }, data: { status: 'EMBASSY_DOCUMENTS' } });
+    await prisma.signatureRequest.update({ where: { id: again.signatureRequestId }, data: { status: 'COMPLETED', approvedAt: new Date() } });
+    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 409).body.error).toBe('ALREADY_APPROVED');
+  });
+
+  it('A-2: "Reject signature" on an e-signed Əmək müqaviləsi voids the request; staff send a new version (no approve that strands the case)', async () => {
+    const { c, labourTpl, client } = await setup();
+    const staff = await asStaff();
+    const requestId = await signLabour(c.id, labourTpl.id, staff, client);
+    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/actions`).send({ action: 'REJECT_SIGNATURE', note: 'Name falsch geschrieben' }), 200);
+    const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: requestId } });
+    expect(r).toMatchObject({ status: 'CANCELLED', approvedAt: null });
+    expect((await prisma.document.findUniqueOrThrow({ where: { id: r.finalDocumentId! } })).status).toBe('REJECTED');
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id }, include: { contract: true } })).contract).toMatchObject({ signedAt: null, signatureRequestId: requestId });
+    const step = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps[0];
+    expect(step).toMatchObject({ canApprove: false, blockedReason: null });
+    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'LABOUR' }), 409).body.error).toBe('NOT_FULLY_SIGNED');
+    // The client has nothing to sign: the team's turn, not "sign the contract".
+    expect(expectStatus(await client.agent.get('/api/account/overview'), 200).body.activeCase.nextAction).toMatchObject({ kind: 'WAIT_REVIEW', owner: 'staff' });
+    const next = expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: {} }), 201).body;
+    expect(next.caseContract).toBe(true);
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id }, include: { contract: true } })).contract?.signatureRequestId).toBe(next.signatureRequestId);
+  });
+
+  it('A-4: a family-member case and the main case of the same client reopen independently', async () => {
+    const client = await asClient();
+    const staff = await asStaff();
+    const main = await prisma.case.create({ data: { clientId: client.user.id, number: `TV-2026-${uniq('m')}`, profession: 'LKW-Fahrer', status: 'DOCUMENTS_REVIEW' } });
+    const member = await prisma.case.create({ data: { clientId: client.user.id, number: `TV-2026-${uniq('f')}`, profession: 'Ehepartner', status: 'REJECTED', parentCaseId: main.id, relation: 'spouse' } });
+    expectStatus(await staff.agent.post(`/api/admin/cases/${member.id}/actions`).send({ action: 'REOPEN', to: 'EMBASSY_DOCUMENTS' }), 200);
+    await prisma.case.update({ where: { id: main.id }, data: { status: 'REJECTED' } });
+    expectStatus(await staff.agent.post(`/api/admin/cases/${main.id}/actions`).send({ action: 'REOPEN', to: 'EMBASSY_DOCUMENTS' }), 200);
+    // A second open MAIN case of the client still blocks a reopen.
+    const other = await prisma.case.create({ data: { clientId: client.user.id, number: `TV-2026-${uniq('o')}`, profession: 'LKW-Fahrer', status: 'CANCELLED' } });
+    expect(expectStatus(await staff.agent.post(`/api/admin/cases/${other.id}/actions`).send({ action: 'REOPEN', to: 'EMBASSY_DOCUMENTS' }), 409).body.error).toBe('ACTIVE_CASE_EXISTS');
+  });
 });

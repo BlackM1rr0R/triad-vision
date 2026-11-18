@@ -54,14 +54,23 @@ export const newFiles = <F extends ReadyFile>(files: F[], sent: SentFile[]) => {
 
 /**
  * Whether "Müştəriyə göndər" may run: the case must be Fertig, have files, and — once sent — needs an explicit
- * re-send (the UI asks first). Returns the error code, or null.
+ * re-send (the UI asks first). A re-send without any new or replaced file is refused (READY_DOCS_NOTHING_NEW): it
+ * would copy nothing but still tell the client "N documents are ready". Returns the error code, or null.
  */
-export const sendBlocker = (p: { stage: string | null; fileCount: number; sentBefore: boolean; resend: boolean }) => {
+export const sendBlocker = (p: { stage: string | null; fileCount: number; sentBefore: boolean; resend: boolean; newCount?: number }) => {
   if (p.stage !== 'DONE') return 'READY_DOCS_NOT_DONE';
   if (p.fileCount === 0) return 'READY_DOCS_NO_FILES';
   if (p.sentBefore && !p.resend) return 'READY_DOCS_ALREADY_SENT';
+  if (p.sentBefore && p.newCount === 0) return 'READY_DOCS_NOTHING_NEW';
   return null;
 };
+
+/**
+ * The next admin of a bulk stage move: the chosen one; with nobody chosen, a case already in the target stage keeps
+ * its current assignee (only a note is added), a real move clears it (as a single move with "nobody" does).
+ */
+export const bulkAssignee = (p: { from: string | null; to: string; requested: string | null | undefined; current: string | null | undefined }) =>
+  p.requested ? p.requested : p.from === p.to ? (p.current ?? null) : null;
 
 /** Parses CaseReadyDocsSend.files (JSON) defensively. */
 export const parseSentFiles = (v: unknown): SentFile[] =>

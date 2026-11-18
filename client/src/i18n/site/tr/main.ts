@@ -282,6 +282,7 @@ const tr: SiteCopy<Messages> = {
       INVALID_TOKEN: 'Bağlantı geçersiz veya süresi dolmuş.',
       TOO_MANY_REQUESTS: 'Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.',
       ACCOUNT_LOCKED: 'Çok sayıda başarısız deneme nedeniyle giriş geçici olarak engellendi. Lütfen birkaç dakika sonra tekrar deneyin.',
+      ACCOUNT_INACTIVE: 'Bu hesap devre dışı bırakıldı. Yeniden etkinleştirmek için bizimle iletişime geçin.',
       PASSWORD_TOO_WEAK: 'Şifre en az 8 karakterden oluşmalı ve en az bir harf ile bir rakam içermelidir.',
       VALIDATION: 'Girilen bilgiler geçerli değil.',
       NETWORK: 'Sunucuya ulaşılamadı. Lütfen internet bağlantınızı kontrol edin.',

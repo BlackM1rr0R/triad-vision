@@ -1,12 +1,16 @@
-import { VisaType as VisaTypes, type CaseStatus, type DocStatus, type Prisma, type VisaType } from '@prisma/client';
+import { VisaType as VisaTypes, type CaseStatus, type DocStage, type DocStatus, type Prisma, type VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { CLIENT_UPLOAD_STAGE } from '../caseFlow.js';
+import { clientUploadStageFor, notifyEarlyEmbassyUpload, notifyReplacement, resolveClientUploadTarget } from '../clientUploadTarget.js'; // same rules as the client's own upload
+import { earlyEmbassyOpenFor } from '../earlyEmbassy/service.js';
 
 import { emitAutomationEvent } from '../automation/events.js';
 import { isRefused } from '../caseProcessing/index.js';
 import { visaKeyOf } from '../partners/index.js';
+import { loadContractTurns } from '../caseContracts/turn.js'; // whose turn a two-step contract is (Triad Vision signs first)
+import type { ContractTurn } from '../caseContracts/flow.js';
 
 /**
  * What a referral partner may see of "their" clients' cases (data minimisation):
@@ -48,7 +52,8 @@ export type NextAction =
   | 'WAIT_DECISION'
   | 'NONE';
 
-export const nextActionOf = (s: CaseStatus, missingRequired: number): NextAction => {
+/** `contractTurn`: in CONTRACT_SENT the client only signs when it is their turn (two-step contracts: Triad Vision signs first). */
+export const nextActionOf = (s: CaseStatus, missingRequired: number, contractTurn?: ContractTurn | null): NextAction => {
   switch (s) {
     case 'DOCUMENTS_PENDING':
     case 'EMBASSY_DOCUMENTS':
@@ -57,7 +62,7 @@ export const nextActionOf = (s: CaseStatus, missingRequired: number): NextAction
     case 'EMBASSY_REVIEW':
       return 'WAIT_REVIEW';
     case 'CONTRACT_SENT':
-      return 'SIGN_CONTRACT';
+      return contractTurn && contractTurn !== 'CLIENT' ? 'WAIT_CONTRACT_CHECK' : 'SIGN_CONTRACT';
     case 'CONTRACT_SIGNED':
       return 'WAIT_CONTRACT_CHECK';
     case 'APPOINTMENT_SCHEDULED':
@@ -107,11 +112,12 @@ const LIST_SELECT = {
   client: { select: { firstName: true, lastName: true, passportNumber: true } },
   visaCategory: { select: { title: true, visaLabel: true } },
   requirements: { select: { stage: true, required: true, documents: { select: { status: true } } } },
+  contract: { select: { signedAt: true, signatureRequestId: true } },
 } satisfies Prisma.CaseSelect;
 
 type ListCase = Prisma.CaseGetPayload<{ select: typeof LIST_SELECT }>;
 
-const listView = (c: ListCase) => {
+const listView = (c: ListCase, turns?: Map<string, ContractTurn | null>) => {
   const missing = missingCount(c.status, c.requirements);
   return {
     id: c.id,
@@ -125,7 +131,7 @@ const listView = (c: ListCase) => {
     refused: isRefused(c),
     status: c.status,
     step: stepOf(c.status),
-    nextAction: nextActionOf(c.status, missing),
+    nextAction: nextActionOf(c.status, missing, turns?.get(c.id)),
     missingDocuments: missing,
     appointmentAt: c.appointmentAt,
     decisionAt: c.decisionAt,
@@ -137,7 +143,8 @@ const listView = (c: ListCase) => {
 /** List rows (newest first) with the client id, for the partner's client list (lib/partners/owned.ts). */
 export const caseListView = async (where: Prisma.CaseWhereInput) => {
   const rows = await prisma.case.findMany({ where, orderBy: { createdAt: 'desc' }, take: 2000, select: { ...LIST_SELECT, clientId: true } });
-  return rows.map((c) => ({ ...listView(c), clientId: c.clientId }));
+  const turns = await loadContractTurns(rows);
+  return rows.map((c) => ({ ...listView(c, turns), clientId: c.clientId }));
 };
 
 export const ACTIVE_FILTER = ['active', 'closed', 'all'] as const;
@@ -194,7 +201,8 @@ export const listPartnerCases = async (partnerId: string, q: { search?: string; 
       : {}),
   };
   const rows = await prisma.case.findMany({ where, orderBy: { createdAt: 'desc' }, take: 500, select: LIST_SELECT });
-  return rows.map(listView);
+  const turns = await loadContractTurns(rows);
+  return rows.map((c) => listView(c, turns));
 };
 
 /** The partner's own case or 404 (another partner's case looks exactly like a missing one). */
@@ -238,9 +246,12 @@ export const partnerCaseDetail = async (partnerId: string, caseId: string, partn
     },
   });
   if (!c) throw notFound('CASE_NOT_FOUND');
-  const uploadStage = CLIENT_UPLOAD_STAGE[c.status] ?? null;
+  // The same rules as the client's own upload (lib/clientUploadTarget): the open upload step, a replacement for a
+  // rejected document after the hand-in, and embassy documents early while the case waits for the contract.
+  const earlyEmbassy = await earlyEmbassyOpenFor(c);
+  const uploadStage = CLIENT_UPLOAD_STAGE[c.status] ?? (earlyEmbassy ? 'EMBASSY' : null);
   return {
-    ...listView(c),
+    ...listView(c, await loadContractTurns([c])),
     appointmentPlace: c.appointmentPlace,
     visaValidFrom: c.visaValidFrom,
     visaValidTo: c.visaValidTo,
@@ -260,7 +271,7 @@ export const partnerCaseDetail = async (partnerId: string, caseId: string, partn
           state,
           // The client-facing reason of the latest rejection (shown to the client too).
           rejectionReason: state === 'REJECTED' ? (latest?.reviewNote ?? null) : null,
-          canUpload: uploadStage === r.stage && state !== 'ACCEPTED',
+          canUpload: partnerCanUpload(c.status, r, { earlyEmbassy }),
           documentCount: r.documents.length,
           // File names only of what the partner uploaded themself.
           myUploads: r.documents
@@ -272,9 +283,20 @@ export const partnerCaseDetail = async (partnerId: string, caseId: string, partn
 };
 
 /**
+ * Whether the partner may upload for this requirement right now: where the client could upload
+ * (clientUploadStageFor) and the requirement is not accepted yet. Pure.
+ */
+export const partnerCanUpload = (
+  status: CaseStatus,
+  r: { stage: DocStage; documents: { status: DocStatus }[] },
+  ctx: { earlyEmbassy?: boolean } = {},
+) => docState(r.documents) !== 'ACCEPTED' && !!clientUploadStageFor(status, r, ctx);
+
+/**
  * Stores a document a partner uploads on behalf of their client: the same rules as the client's own
- * upload (current upload stage, requirement of that stage, content sniffing done by the caller,
- * automatic quality checks), attributed to the partner user and left PENDING for the normal staff review.
+ * upload (lib/clientUploadTarget: open upload step, replacement of a rejected document, early embassy documents;
+ * content sniffing done by the caller, automatic quality checks), attributed to the partner user and left PENDING
+ * for the normal staff review. Replacements and early embassy uploads tell the staff (no hand-in follows).
  */
 export const storePartnerUpload = async (input: {
   partnerId: string;
@@ -284,10 +306,10 @@ export const storePartnerUpload = async (input: {
   file: { originalName: string; storedName: string; mimeType: string; size: number };
 }) => {
   const c = await partnerCaseOr404(input.partnerId, input.caseId);
-  const stage = CLIENT_UPLOAD_STAGE[c.status];
-  if (!stage) throw conflict('UPLOAD_NOT_ALLOWED');
-  const requirement = await prisma.documentRequirement.findUnique({ where: { id: input.requirementId } });
-  if (!requirement || requirement.caseId !== c.id || requirement.stage !== stage) throw badRequest('INVALID_REQUIREMENT');
+  const target = await resolveClientUploadTarget(c, input.requirementId);
+  if (!target && !CLIENT_UPLOAD_STAGE[c.status]) throw conflict('UPLOAD_NOT_ALLOWED');
+  if (!target) throw badRequest('INVALID_REQUIREMENT');
+  const { stage, requirement } = target;
   const doc = await prisma.document.create({
     data: {
       caseId: c.id,
@@ -304,6 +326,8 @@ export const storePartnerUpload = async (input: {
     data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: `${doc.originalName} (partnyor)`, actorId: input.userId, visibleToClient: false },
   });
   void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
+  if (target.replacement) await notifyReplacement(c, requirement, `${doc.originalName} (partnyor)`);
+  if (target.early) await notifyEarlyEmbassyUpload(c, requirement, `${doc.originalName} (partnyor)`);
   const checks = await checkCaseDocument(doc.id);
   return { document: { id: doc.id, name: doc.originalName, status: doc.status, createdAt: doc.createdAt }, checks, caseNumber: c.number };
 };

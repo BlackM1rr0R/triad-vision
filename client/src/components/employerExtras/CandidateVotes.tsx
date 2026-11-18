@@ -76,11 +76,14 @@ export const CandidateVotes = ({
   status,
   votes,
   onDone,
+  canVote = true,
 }: {
   applicationId: string;
   status: string;
   votes: EmployerVote[];
   onDone: () => void;
+  /** false = the member lacks decideCandidates (server refuses votes): the team's votes only, read-only. */
+  canVote?: boolean;
 }) => {
   const { t } = useTranslation();
   const mine = votes.find((v) => v.mine);
@@ -116,6 +119,15 @@ export const CandidateVotes = ({
     onError: toastJobsError,
   });
   const others = votes.filter((v) => !v.mine);
+  if (!canVote)
+    return (
+      <div className="mt-4 space-y-3 border-t border-line pt-4">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+          <Users className="size-4 text-primary" aria-hidden /> {t('employerVotes.title')}
+        </p>
+        <EmployerVotesList votes={votes} />
+      </div>
+    );
 
   return (
     <div className="mt-4 space-y-3 border-t border-line pt-4">

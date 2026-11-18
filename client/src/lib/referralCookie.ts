@@ -46,20 +46,40 @@ export const captureRefFromUrl = (search = window.location.search) => {
   }
 };
 
+/** The remembered visa choice lasts this long (also across tabs: the verification link opens a new one). */
+export const VISA_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+const normaliseVisa = (slug: string | null | undefined) => (slug ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120);
+
+/** Pure: the stored visa choice ({"s":slug,"at":ms}) if still fresh, else ''. */
+export const parseRememberedVisa = (raw: string | null | undefined, now = Date.now()): string => {
+  if (!raw) return '';
+  try {
+    const v = JSON.parse(raw) as { s?: unknown; at?: unknown };
+    if (typeof v.s !== 'string' || typeof v.at !== 'number' || now - v.at > VISA_TTL_MS || v.at - now > 60_000) return '';
+    return normaliseVisa(v.s);
+  } catch {
+    return '';
+  }
+};
+
 export const rememberVisa = (slug: string | null) => {
-  const s = (slug ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120);
+  const s = normaliseVisa(slug);
   if (!s) return;
   try {
-    sessionStorage.setItem(VISA_KEY, s);
+    localStorage.setItem(VISA_KEY, JSON.stringify({ s, at: Date.now() }));
   } catch {
     // storage unavailable
   }
 };
 
-/** The visa slug picked before registering (calculator / visa page), or ''. */
+/** The visa slug picked before registering (calculator / visa page), or ''. Kept until a case was started. */
 export const rememberedVisa = () => {
   try {
-    return sessionStorage.getItem(VISA_KEY) ?? '';
+    const fresh = parseRememberedVisa(localStorage.getItem(VISA_KEY));
+    if (!fresh) localStorage.removeItem(VISA_KEY);
+    // Older builds kept it for the tab only.
+    return fresh || normaliseVisa(sessionStorage.getItem(VISA_KEY));
   } catch {
     return '';
   }
@@ -67,6 +87,7 @@ export const rememberedVisa = () => {
 
 export const forgetVisa = () => {
   try {
+    localStorage.removeItem(VISA_KEY);
     sessionStorage.removeItem(VISA_KEY);
   } catch {
     // storage unavailable

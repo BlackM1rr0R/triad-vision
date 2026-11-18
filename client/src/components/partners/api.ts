@@ -4,11 +4,13 @@ import { api, errorCode } from '@/lib/api';
 import i18n, { registerCopy } from '@/i18n';
 import { pagesPartners } from '@/i18n/pagesPartners';
 import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing'; // visa kinds, "rədd", Ablehnung report, drive card count
+import { pagesDriveClientFolders } from '@/i18n/pagesDriveClientFolders'; // PARTNER_INACTIVE / PARTNER_OWN_LOGIN of PATCH /assign
 import { toastError } from '@/components/admin/labels';
 import type { CaseStatus, L10n } from '@/lib/types';
 
 registerCopy(pagesPartners);
 registerCopy(pagesCaseProcessing);
+registerCopy(pagesDriveClientFolders);
 
 /** Referral partners (middlemen who bring clients) — shared client code. */
 export interface PartnerRef {
@@ -196,6 +198,7 @@ export const partnerError = (err: unknown) => {
   const code = errorCode(err);
   if (code && i18n.exists(`refPartners.errors.${code}`)) toast.error(i18n.t(`refPartners.errors.${code}`));
   else if (code && i18n.exists(`refPartners.errors2.${code}`)) toast.error(i18n.t(`refPartners.errors2.${code}`));
+  else if (code && i18n.exists(`clientFolders.errors.${code}`)) toast.error(i18n.t(`clientFolders.errors.${code}`));
   else toastError(err);
 };
 

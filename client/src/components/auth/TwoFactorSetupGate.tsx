@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useBrand } from '@/lib/brand';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmailOtpCard } from './EmailOtpCard';
+import { VerifyBanner } from './VerifyBanner'; // unverified e-mail: the set-up needs it, so the resend link is offered here
 
 registerCopy(pagesPartnerAccess);
 
@@ -48,6 +49,8 @@ export default function TwoFactorSetupGate() {
             </div>
           </div>
         </div>
+        {/* The e-mail code needs a confirmed address: without this the only "send the link again" was right after sign-up. */}
+        <VerifyBanner />
         <EmailOtpCard />
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className="btn-primary" onClick={recheck} disabled={busy}>

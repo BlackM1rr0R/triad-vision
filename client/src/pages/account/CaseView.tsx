@@ -46,7 +46,7 @@ import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { NextUpCard, StickyBelowHeader } from './portal/NextUpCard';
 import { CaseNumbers } from './portal/SecondaryCards';
 import { NextItems } from './portal/NextItems';
-import { tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
+import { anchorTargetId, tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
 import { CaseDocProgress } from '@/components/docProgress/DocProgress'; // status bars, team stage (Schon geschrieben / Fertig / Ablehnung), embassy collection
 import { OfflineCard } from '@/components/offline/OfflineCard'; // "Oflayn sənədlərim" + "Termin məlumatı" (PWA, own device)
 
@@ -190,7 +190,7 @@ export default function CaseView() {
   useEffect(() => {
     if (!ready || !hash || tabOfAnchor(hash) !== tab) return;
     const timer = window.setTimeout(() => {
-      const el = document.getElementById(decodeURIComponent(hash.slice(1)));
+      const el = document.getElementById(anchorTargetId(hash)); // #family (older links) → the family section
       if (el && el.getBoundingClientRect().top > window.innerHeight * 0.6) smoothScrollTo(el, { offset: -160 });
     }, 260);
     return () => window.clearTimeout(timer);

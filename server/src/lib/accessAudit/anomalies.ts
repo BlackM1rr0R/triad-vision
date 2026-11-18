@@ -7,6 +7,7 @@ import { getSecuritySettings, type RuleKey, type Severity } from '../aiMgmt/sett
 import { raiseAlert } from '../aiMgmt/security/alerts.js';
 import type { Hit } from '../aiMgmt/security/rules.js';
 import { auditText } from './texts.js';
+import { canManageAccess } from '../access/api.js';
 
 /**
  * Access anomaly alerts: deterministic thresholds, no AI. Sources: the record-access counter (StaffRecordAccess),
@@ -217,7 +218,8 @@ const notifyAdmins = async (alert: SecurityAlert) => {
       type: 'SECURITY_ALERT',
       title: t.anomalyTitles[alert.rule] ?? alert.rule,
       body: t.anomalySummary[alert.rule]?.(f) ?? '',
-      link: a.role === 'SUPER_ADMIN' ? `/admin/security-alerts?id=${alert.id}` : '/admin/access?tab=audit',
+      // An ADMIN without "manage access" cannot open the Access Center: no link rather than a "no access" page.
+      link: a.role === 'SUPER_ADMIN' ? `/admin/security-alerts?id=${alert.id}` : (await canManageAccess(a)) ? '/admin/access?tab=audit' : undefined,
       push: true,
       email: alert.severity === 'HIGH',
     }).catch(() => undefined);

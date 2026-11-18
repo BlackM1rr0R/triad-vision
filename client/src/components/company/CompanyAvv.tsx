@@ -13,6 +13,7 @@ import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
 import { Loading, Section } from './shared';
 import { openPdfBlob } from '@/components/officialForms/api';
+import { useCompanyAccess } from './access'; // fill / preview / sign need signAvv (server: lib/companyAccess/rules.ts)
 
 registerCopy(pagesAvv);
 
@@ -62,6 +63,7 @@ export const CompanyAvv = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const q = useCompanyAvv();
+  const canSign = useCompanyAccess().canDo('signAvv');
   const [values, setValues] = useState<Partial<Record<FieldKey, string>> | null>(null);
   const [invalid, setInvalid] = useState<string[]>([]);
   const v = values ?? q.data?.prefill ?? {};
@@ -126,8 +128,8 @@ export const CompanyAvv = () => {
         {cur?.status === 'SENT' && (
           <div className={clsx('mt-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 text-sm', TONE_CLASS.info)}>
             <Clock3 className="size-5 shrink-0" aria-hidden />
-            <p className="min-w-0 flex-1">{cur.companySigned ? t('avv.company.waitingCountersign') : t('avv.company.waitingYou')}</p>
-            {!cur.companySigned && cur.signerId && (
+            <p className="min-w-0 flex-1">{cur.companySigned ? t('avv.company.waitingCountersign') : canSign ? t('avv.company.waitingYou') : t('avv.company.waitingSigner')}</p>
+            {!cur.companySigned && cur.signerId && canSign && (
               <Link to={`/company/contracts/${cur.signerId}`} className="btn-primary btn-sm">
                 <PenLine className="size-4" aria-hidden />
                 {t('avv.company.signNow')}
@@ -137,7 +139,13 @@ export const CompanyAvv = () => {
         )}
       </Section>
 
-      {cur?.status !== 'COMPLETED' && !(cur?.status === 'SENT' && cur.companySigned) && (
+      {cur?.status !== 'COMPLETED' && !(cur?.status === 'SENT' && cur.companySigned) && !canSign && (
+        <Section>
+          <p className="text-sm text-muted">{t('avv.company.readOnly')}</p>
+        </Section>
+      )}
+
+      {cur?.status !== 'COMPLETED' && !(cur?.status === 'SENT' && cur.companySigned) && canSign && (
         <form onSubmit={onSubmit} noValidate>
           <Section>
             <div className="grid gap-4 sm:grid-cols-2">

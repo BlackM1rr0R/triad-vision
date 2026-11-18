@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import clsx from 'clsx';
@@ -24,7 +24,9 @@ const write = (id: string, keys: DocKey[]) => {
 /** Document checklist for one profession; ticks persist per profession in localStorage. Render with key={profession.id}. */
 export const DocChecklist = ({ profession }: { profession: Profession }) => {
   const { t } = useTranslation();
-  const [done, setDone] = useState<DocKey[]>(() => read(profession.id));
+  // Stored ticks: read after mount, so the hydrating render matches the server markup (/anerkennung is SSR).
+  const [done, setDone] = useState<DocKey[]>([]);
+  useEffect(() => setDone(read(profession.id)), [profession.id]);
 
   const toggle = (k: DocKey) =>
     setDone((prev) => {

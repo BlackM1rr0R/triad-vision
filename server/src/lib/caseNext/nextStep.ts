@@ -5,6 +5,8 @@ import { checklistFor, getCaseAiSettings, STATUTORY, type ChecklistItem } from '
 import type { L10n } from '../ai/features/caseAi/texts.js';
 import { PACKAGE_EVENT } from './embassyPackage.js';
 import { confirmationStates, type ConfirmState } from '../clientData/confirmation.js';
+import type { ContractTurn } from '../caseContracts/flow.js';
+import { loadContractTurns } from '../caseContracts/turn.js'; // CONTRACT_SENT: Triad Vision signs first / new version due
 import { CHANGES_NOTE, fmtDate, fmtDateTime, message, MESSAGE_TEXT, TRANSLATION_TITLE } from './texts.js';
 
 /**
@@ -74,6 +76,8 @@ export interface CaseFacts {
   appointmentAt: Date | null;
   appointmentPlace: string | null;
   contract: { sentAt: Date; signedAt: Date | null } | null;
+  /** CONTRACT_SENT: whose turn the case contract is (lib/caseContracts/turn); undefined = the client's. */
+  contractTurn?: ContractTurn | null;
   requirements: FactRequirement[];
   lastClientActivityAt: Date | null;
   lastClientMessageAt: Date | null;
@@ -109,7 +113,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
       select: {
         id: true, number: true, status: true, visaType: true, createdAt: true, clientId: true, assignedStaffId: true, appointmentAt: true, appointmentPlace: true, documentsPurgedAt: true,
         client: { select: { id: true, firstName: true, lastName: true, locale: true, passportExpiry: true } },
-        contract: { select: { sentAt: true, signedAt: true } },
+        contract: { select: { sentAt: true, signedAt: true, signatureRequestId: true } },
         arrivalPlan: { select: { flightDate: true } },
         visaCategory: { select: { processingMax: true } },
         requirements: {
@@ -134,6 +138,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
     confirmationStates(ids),
   ]);
 
+  const turns = await loadContractTurns(cases, now);
   return cases.map((c) => {
     const since = opts.statusSince?.get(c.id) ?? entered.find((e) => e.caseId === c.id && e.toStatus === c.status)?.createdAt ?? c.createdAt;
     const clientMsg = msgs.find((m) => m.caseId === c.id && m.authorId === c.clientId)?._max.createdAt ?? null;
@@ -170,7 +175,8 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
       plannedEntry,
       appointmentAt: c.appointmentAt,
       appointmentPlace: c.appointmentPlace,
-      contract: c.contract,
+      contract: c.contract ? { sentAt: c.contract.sentAt, signedAt: c.contract.signedAt } : null,
+      contractTurn: turns.get(c.id) ?? null,
       requirements,
       lastClientActivityAt: maxDate(clientMsg, clientEvent, clientUpload),
       lastClientMessageAt: clientMsg,
@@ -206,6 +212,8 @@ export type RuleCode =
   | 'CLIENT_IDLE'
   | 'OVERDUE_TASKS'
   | 'CONTRACT_NOT_SIGNED'
+  | 'TRIAD_SIGN_CONTRACT'
+  | 'RESEND_CONTRACT'
   | 'MISSING_DOCS'
   | 'DECISION_OVERDUE'
   | 'CHECKLIST_GAP'
@@ -236,7 +244,8 @@ export type ActionId =
   | 'REQUEST_TRANSLATION'
   | 'ORDER_TRANSLATION'
   | 'ASK_CONFIRM_DATA'
-  | 'OPEN_DATA';
+  | 'OPEN_DATA'
+  | 'OPEN_CONTRACT';
 
 export interface ApiCall {
   method: 'POST';
@@ -252,7 +261,7 @@ export type NextAction =
   | { id: ActionId; kind: 'task'; request: ApiCall; title: string }
   | { id: ActionId; kind: 'transition'; request: ApiCall; confirm: true; note?: string }
   | { id: ActionId; kind: 'package' }
-  | { id: ActionId; kind: 'scroll'; target: 'case-actions' | 'case-messages' | 'case-tasks' | 'case-onboarding' | 'case-data' };
+  | { id: ActionId; kind: 'scroll'; target: 'case-actions' | 'case-messages' | 'case-tasks' | 'case-onboarding' | 'case-data' | 'case-contract' };
 
 export interface NextStep {
   code: RuleCode;
@@ -405,7 +414,15 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
     add({ code: 'CONFIRM_CONTRACT', priority: slow ? 90 : 85, tone: slow ? 'urgent' : 'action', params: { days: signedDays }, actions: [transition(f, 'CONFIRM_CONTRACT', { action: 'CONFIRM_CONTRACT' }), { id: 'OPEN_ACTIONS', kind: 'scroll', target: 'case-actions' }] });
   }
 
-  if (f.status === 'CONTRACT_SENT' && f.daysInStatus >= 3) {
+  // Two-step contracts: Triad Vision signs first; the client is invited only afterwards — never chase the client then.
+  const clientContractTurn = f.status === 'CONTRACT_SENT' && (f.contractTurn === undefined || f.contractTurn === 'CLIENT' || f.contractTurn === null);
+  if (f.status === 'CONTRACT_SENT' && f.contractTurn === 'TRIAD') {
+    add({ code: 'TRIAD_SIGN_CONTRACT', priority: f.daysInStatus >= 1 ? 87 : 80, tone: f.daysInStatus >= 2 ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+  }
+  if (f.status === 'CONTRACT_SENT' && f.contractTurn === 'STAFF') {
+    add({ code: 'RESEND_CONTRACT', priority: 86, tone: 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+  }
+  if (clientContractTurn && f.daysInStatus >= 3) {
     add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign)] });
   }
 
@@ -427,7 +444,7 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   }
 
   // Client silent while the case waits for them
-  if (CLIENT_SIDE.includes(f.status)) {
+  if (CLIENT_SIDE.includes(f.status) && (f.status !== 'CONTRACT_SENT' || clientContractTurn)) {
     const idle = daysSince(f.lastClientActivityAt ?? f.statusSince);
     const staffRecent = f.lastStaffMessageAt && now.getTime() - f.lastStaffMessageAt.getTime() < 3 * DAY;
     if (idle !== null && idle >= 7 && !staffRecent) {

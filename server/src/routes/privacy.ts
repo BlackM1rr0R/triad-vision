@@ -7,13 +7,10 @@ import { requireAuth } from '../middleware/auth.js';
 import { audit } from '../lib/audit.js';
 import { badRequest, conflict, HttpError, limiter, notFound, parse } from '../lib/http.js';
 import { getRetentionSettings } from '../lib/legalSettings.js';
-import { notifyUser } from '../lib/notifications.js';
-import { renderEmail, sendMail } from '../lib/mailer.js';
 import { effectiveConsents, recordConsent, TOGGLE_TYPES, type ToggleType } from '../lib/privacy/consents.js';
 import { ACCEPT_KINDS, CONSENT_TYPE_FOR_KIND, currentRef } from '../lib/legal/documents.js';
-import { buildUserExport, exportFilename } from '../lib/privacy/export.js';
 import { dataOverview, dueFrom, notifyAdminsNewRequest, notifyRequestReceived, OPEN_STATUSES } from '../lib/privacy/requests.js';
-import { exportedText } from '../lib/privacy/texts.js';
+import { sendSelfServiceExport } from '../lib/privacy/selfExport.js';
 
 /**
  * Privacy centre (DSGVO / GDPR) for every signed-in portal user, plus one public form for people
@@ -201,21 +198,5 @@ privacyRouter.post('/requests/:id/cancel', async (req, res) => {
 
 // ─── Self-service export ───────────────────────────────────────────────
 
-privacyRouter.get('/export', async (req, res) => {
-  const userId = req.user!.id;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { email: true, locale: true } });
-  const now = new Date();
-  // Fulfilled instantly: kept as proof that the Art. 15 / 20 request was answered.
-  const r = await prisma.privacyRequest.create({
-    data: { userId, email: user.email, type: 'EXPORT', status: 'COMPLETED', dueAt: dueFrom(now), completedAt: now, decisionNote: 'Self-service download' },
-  });
-  const data = await buildUserExport(userId);
-  await audit(req, 'PRIVACY_EXPORT', `privacy-request:${r.id}`);
-  const texts = exportedText(user.locale);
-  await notifyUser(userId, { type: 'PRIVACY_EXPORT', title: texts.title, body: texts.body, link: '/account/privacy', email: false });
-  void sendMail(user.email, `Triad Vision · ${texts.title}`, renderEmail(texts.title, texts.body));
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${exportFilename()}"`);
-  res.setHeader('Cache-Control', 'no-store');
-  res.send(JSON.stringify(data, null, 2));
-});
+// Recorded as a completed EXPORT request, audited, the user is notified (lib/privacy/selfExport; also /account/export).
+privacyRouter.get('/export', sendSelfServiceExport);

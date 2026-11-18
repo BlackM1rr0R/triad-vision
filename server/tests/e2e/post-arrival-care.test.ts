@@ -304,6 +304,7 @@ describe('post-arrival care: family reunion (Familiennachzug)', () => {
     const n = await prisma.notification.findFirstOrThrow({ where: { userId: client.user.id, type: 'FAMILY_REUNION_STARTED' } });
     expect(n.title).toBe('Familiennachzug gestartet');
     expect(n.body).toContain('Aysel Quliyeva');
+    expect(n.link).toMatch(/#family-members$/); // the section's id on the case page (FamilyMembersSection)
     expect(await prisma.auditLog.count({ where: { action: 'FAMILY_REUNION_STARTED' } })).toBe(1);
 
     ov = expectStatus(await client.agent.get(`/api/family/cases/${c.id}`), 200).body;

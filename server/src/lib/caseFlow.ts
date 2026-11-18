@@ -317,15 +317,29 @@ export const clientSignContract = async (
 };
 
 export const staffRejectSignature = async (caseId: string, actorId: string, note: string) => {
+  const contract = await prisma.contract.findUnique({ where: { caseId }, select: { signatureRequestId: true, signedDocumentId: true } });
   await transition(caseId, ['CONTRACT_SIGNED'], 'CONTRACT_SENT', actorId, {
     note,
     eventType: 'SIGNATURE_REJECTED',
     data: { staffNote: note },
-    extra: (tx) =>
-      tx.contract.update({
+    extra: async (tx) => {
+      await tx.contract.update({
         where: { caseId },
         data: { signedDocumentId: null, signerName: null, signedAt: null, signerIp: null, signerUserAgent: null },
-      }),
+      });
+      // Signed through the e-signature module: the completed request cannot be signed again, so it is voided
+      // (cancelled, never approved) and its signed copy rejected. The case waits for a new version from staff
+      // (two-step panel "Send a new version"); the contract keeps the request id, so the legacy portal signing
+      // stays closed and the ball / next step show the team's turn instead of "sign" for the client.
+      if (contract?.signatureRequestId) {
+        await tx.signatureRequest.updateMany({
+          where: { id: contract.signatureRequestId, status: 'COMPLETED' },
+          data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: `Signature rejected: ${note}`.slice(0, 500), approvedAt: null, approvedById: null },
+        });
+        if (contract.signedDocumentId) await tx.document.updateMany({ where: { id: contract.signedDocumentId, status: 'PENDING' }, data: { status: 'REJECTED', reviewNote: note.slice(0, 1000) } });
+        await tx.signatureEvent.create({ data: { requestId: contract.signatureRequestId, type: 'CANCELLED', actorId, note: `Signature rejected: ${note}`.slice(0, 500) } });
+      }
+    },
   });
   await after(caseId, 'CONTRACT_RESIGN_REQUESTED', { note });
 };
@@ -422,10 +436,14 @@ export const staffReopen = async (
   note?: string | null,
 ) => {
   const c = await loadCase(caseId);
-  const others = await prisma.case.count({
-    where: { clientId: c.clientId, id: { not: caseId }, status: { notIn: FINAL_STATUSES } },
-  });
-  if (others > 0) throw conflict('ACTIVE_CASE_EXISTS');
+  // Same rule as createCase: one active MAIN case per client; family-member cases (same clientId) are separate
+  // applications and neither block nor are blocked.
+  if (!c.parentCaseId) {
+    const others = await prisma.case.count({
+      where: { clientId: c.clientId, id: { not: caseId }, status: { notIn: FINAL_STATUSES }, parentCaseId: null },
+    });
+    if (others > 0) throw conflict('ACTIVE_CASE_EXISTS');
+  }
   await transition(caseId, ['REJECTED', 'CANCELLED'], to, actorId, {
     eventType: 'REOPENED',
     note,

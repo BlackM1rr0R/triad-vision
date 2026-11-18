@@ -13,6 +13,7 @@ import { registerCopy } from '@/i18n';
 import { pagesPool } from '@/i18n/pagesPool';
 import { Empty, Loading, Section } from '@/components/company/shared';
 import { CompanyCandidates } from '@/components/company/CompanyCandidates';
+import { useCompanyAccess } from '@/components/company/access'; // save / interest need decideCandidates
 import { PoolCardView } from './PoolCardView';
 import { OnePagerButton } from '@/components/company/OnePagerButton'; // one-page PDF of the anonymous card (counts as a view)
 import { PoolReadinessBands } from '@/components/ready/ReadinessProfileCard'; // consent-gated readiness bands
@@ -47,6 +48,8 @@ const useSaveToggle = () => {
 const SaveButton = ({ card }: { card: PoolCard }) => {
   const { t } = useTranslation();
   const m = useSaveToggle();
+  const canAct = useCompanyAccess().canDo('poolActions');
+  if (!canAct) return null;
   return (
     <button type="button" className="btn-ghost btn-sm" disabled={m.isPending} aria-pressed={!!card.saved} onClick={() => m.mutate({ code: card.code, saved: !!card.saved })}>
       {card.saved ? <BookmarkCheck className="size-4 text-primary" aria-hidden /> : <Bookmark className="size-4" aria-hidden />}
@@ -307,6 +310,7 @@ const PoolDetail = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [asking, setAsking] = useState(false);
+  const canAct = useCompanyAccess().canDo('poolActions');
   const q = useQuery({
     queryKey: [SEARCH_KEY, 'detail', code],
     queryFn: async () => (await api.get<{ candidate: PoolCard; interests: { id: string; status: PoolInterestStatus; positions: number; createdAt: string }[] }>(`/company/pool/${encodeURIComponent(code)}`)).data,
@@ -329,7 +333,7 @@ const PoolDetail = () => {
             detailed
             actions={
               <>
-                {!open && !asking && (
+                {!open && !asking && canAct && (
                   <button type="button" className="btn-primary btn-sm" onClick={() => setAsking(true)}>
                     <HandHeart className="size-4" aria-hidden /> {c('interested')}
                   </button>

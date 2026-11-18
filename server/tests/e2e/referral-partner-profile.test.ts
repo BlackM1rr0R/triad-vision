@@ -144,7 +144,9 @@ describe('referral partner list: search, filters, contract status, sort, CSV', (
     // Sorting by clients count: the partner with a case comes first descending.
     const client = await asClient();
     const c = await createCaseVia(client.agent);
-    expectStatus(await admin.agent.patch('/api/admin/partners/assign').send({ caseIds: [c.id], partnerId: cebi.id }), 200);
+    // An inactive partner cannot get new cases through /assign (same rule as the drive client folders).
+    expect(expectStatus(await admin.agent.patch('/api/admin/partners/assign').send({ caseIds: [c.id], partnerId: cebi.id }), 400).body.error).toBe('PARTNER_INACTIVE');
+    await prisma.case.update({ where: { id: c.id }, data: { partnerId: cebi.id } });
     expect((await list({ sort: 'clients', dir: 'desc' }))[0]).toBe(cebi.id);
     expect((await list({ sort: 'name', dir: 'asc' }))).toEqual([cebi.id, ilgar.id, none.id, xta.id]);
     const byActivity = await list({ sort: 'lastActivity', dir: 'desc' });

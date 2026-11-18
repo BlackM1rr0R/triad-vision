@@ -7,7 +7,7 @@ import { CheckCircle2, Clock3, Coins, Download, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Spinner } from '@/components/ui/Spinner';
 import { day, money } from '@/components/agents/format';
-import { downloadFile, type PartnerCommissionRow, type Totals } from '@/components/partnerPortal/api';
+import { accessOf, downloadFile, usePartnerMe, type PartnerCommissionRow, type Totals } from '@/components/partnerPortal/api';
 import { CommissionPill, ErrorRetry, Kpi, Loading, Section } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Documents } from '@/components/illustrations';
@@ -25,6 +25,10 @@ export default function PartnerCommissionsPage() {
   const { t } = useTranslation();
   const [month, setMonth] = useState('');
   const months = useMemo(recentMonths, []);
+  const access = accessOf(usePartnerMe().data);
+  /** The export lists client names (server: clientList ≥ masked); case links only where the case page exists. */
+  const canExport = access.permissions.clientList !== 'none';
+  const canOpenCase = access.areas.cases;
   const q = useQuery({
     queryKey: ['partner-portal', 'commissions', month],
     queryFn: async () => (await api.get<{ currency: string; totals: Totals; items: PartnerCommissionRow[] }>('/partner/commissions', { params: { month: month || undefined } })).data,
@@ -53,9 +57,11 @@ export default function PartnerCommissionsPage() {
                 </option>
               ))}
             </select>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => download.mutate()} disabled={download.isPending}>
-              {download.isPending ? <Spinner className="size-3.5" /> : <Download className="size-3.5" aria-hidden />} {t('partnerPortal.common.download')}
-            </button>
+            {canExport && (
+              <button type="button" className="btn-secondary btn-sm" onClick={() => download.mutate()} disabled={download.isPending}>
+                {download.isPending ? <Spinner className="size-3.5" /> : <Download className="size-3.5" aria-hidden />} {t('partnerPortal.common.download')}
+              </button>
+            )}
           </>
         }
       >
@@ -111,10 +117,14 @@ export default function PartnerCommissionsPage() {
                         <tr key={r.id}>
                           <td className="whitespace-nowrap text-muted">{day(r.createdAt)}</td>
                           <td>
-                            {r.case ? (
+                            {r.case && canOpenCase ? (
                               <Link to={`/partner/clients/${r.case.id}`} className="font-medium text-ink hover:text-link">
                                 {r.case.client} <span className="font-mono text-xs text-muted">{r.case.number}</span>
                               </Link>
+                            ) : r.case ? (
+                              <span className="font-medium text-ink">
+                                {r.case.client} <span className="font-mono text-xs text-muted">{r.case.number}</span>
+                              </span>
                             ) : (
                               <span className={r.clientName ? 'font-medium text-ink' : 'text-muted'}>{r.clientName ?? t('partnerPortal.commissions.manual')}</span>
                             )}

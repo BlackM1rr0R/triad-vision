@@ -9,6 +9,7 @@ import { worldCopy } from '@/i18n/world';
 import { berlinDay, isDay, phraseForDay } from './dailyPhrase';
 import type { Phrase } from './phrases';
 import { INTL_LOCALE, useWorldLang, type WorldLang } from './locale';
+import { formatAzDayUtc } from '@/lib/azIntl';
 import { ListenButton } from './ListenButton';
 
 export { ListenButton };
@@ -37,8 +38,13 @@ export const pronFor = (p: Phrase, lang: WorldLang): string | null => (lang === 
 /** Meaning in the site language (German visitors get the German explanation). */
 export const meaningFor = (p: Phrase, lang: WorldLang): string => (lang === 'de' ? p.deNote : p[lang]);
 
-export const formatDay = (day: string, lang: WorldLang, opts: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) =>
-  new Intl.DateTimeFormat(INTL_LOCALE[lang], { ...opts, timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+export const formatDay = (day: string, lang: WorldLang, opts: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) => {
+  const d = new Date(`${day}T12:00:00Z`);
+  // Azerbaijani: written out by hand, so the server (Node ICU) and Chrome (lib/azIntl polyfill) print the same text.
+  if (lang === 'az' && (opts.month === 'long' || opts.month === 'short') && (opts.weekday === undefined || opts.weekday === 'long' || opts.weekday === 'short'))
+    return formatAzDayUtc(d, { weekday: opts.weekday as 'long' | 'short' | undefined, month: opts.month, year: !!opts.year });
+  return new Intl.DateTimeFormat(INTL_LOCALE[lang], { ...opts, timeZone: 'UTC' }).format(d);
+};
 
 /** One phrase: German (lang="de"), pronunciation, meaning, German hint, topic, listen. */
 export const PhraseBody = ({ phrase, size = 'lg' }: { phrase: Phrase; size?: 'lg' | 'md' }) => {

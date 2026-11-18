@@ -2,6 +2,8 @@ import type { CaseStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from '../caseFlow.js';
 import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
+import type { ContractTurn } from '../caseContracts/flow.js';
+import { loadContractTurns } from '../caseContracts/turn.js'; // whose turn the case contract is (Triad Vision signs first)
 import { getClientProcessSettings, type ClientProcessSettings, type Eta, type EtaStatus } from './settings.js';
 
 /**
@@ -28,6 +30,8 @@ export type BallReason =
   | 'CHECK_SIGNATURE'
   | 'LODGE_APPLICATION'
   | 'REPLY_MESSAGE'
+  | 'TRIAD_SIGN_CONTRACT' // Triad Vision signs the case contract before the client is invited
+  | 'RESEND_CONTRACT' // the contract request expired / was declined / voided: staff send a new version
   // embassy
   | 'DECISION'
   // closed
@@ -88,7 +92,7 @@ const STATUS_SIDE: Record<CaseStatus, BallSide> = {
 };
 
 const CLIENT_ORDER: BallReason[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'ATTEND_APPOINTMENT', 'SIGN_DOCUMENTS', 'CLIENT_TASKS'];
-const TEAM_ORDER: BallReason[] = ['REVIEW_DOCS', 'CHECK_SIGNATURE', 'LODGE_APPLICATION', 'REPLY_MESSAGE'];
+const TEAM_ORDER: BallReason[] = ['REVIEW_DOCS', 'TRIAD_SIGN_CONTRACT', 'RESEND_CONTRACT', 'CHECK_SIGNATURE', 'LODGE_APPLICATION', 'REPLY_MESSAGE'];
 
 export interface BallFacts {
   id: string;
@@ -97,6 +101,8 @@ export interface BallFacts {
   appointmentAt: Date | null;
   processing: { min: number | null; max: number | null };
   contract: { signedAt: Date | null; signatureRequestId: string | null } | null;
+  /** Whose turn the open case contract is (lib/caseContracts/turn); undefined = the client's (legacy facts). */
+  contractTurn?: ContractTurn | null;
   /** Required requirements of the open upload stage with their documents' statuses (newest first). */
   uploadReqs: { docs: string[] }[];
   /** Requirements outside the open upload step whose files were all rejected: the client may upload a new one (lib/clientUploadTarget). */
@@ -162,7 +168,9 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
     // After hand-in: documents the team rejected can be uploaded again right away (no "request changes" needed).
     add('CLIENT', 'FIX_DOCS', f.replaceReqs ?? 0);
   }
-  if (f.status === 'CONTRACT_SENT' && f.contract && !f.contract.signedAt) add('CLIENT', 'SIGN_CONTRACT', 1);
+  // The case contract: the client signs only when it is their turn (two-step contracts: Triad Vision signs first).
+  const contractTurn = f.status === 'CONTRACT_SENT' && f.contract && !f.contract.signedAt ? (f.contractTurn === undefined ? 'CLIENT' : f.contractTurn) : null;
+  if (contractTurn === 'CLIENT') add('CLIENT', 'SIGN_CONTRACT', 1);
   const apptFuture = f.status === 'APPOINTMENT_SCHEDULED' && !!f.appointmentAt && f.appointmentAt > now;
   if (apptFuture) add('CLIENT', 'ATTEND_APPOINTMENT', 1, f.appointmentAt);
   // A case contract signed through the e-signature module is already counted as SIGN_CONTRACT.
@@ -171,6 +179,8 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
 
   // Team.
   if (f.status === 'DOCUMENTS_REVIEW' || f.status === 'EMBASSY_REVIEW') add('TEAM', 'REVIEW_DOCS', Math.max(1, f.pendingDocs));
+  if (contractTurn === 'TRIAD') add('TEAM', 'TRIAD_SIGN_CONTRACT', 1);
+  if (contractTurn === 'STAFF') add('TEAM', 'RESEND_CONTRACT', 1);
   if (f.status === 'CONTRACT_SIGNED') add('TEAM', 'CHECK_SIGNATURE', 1);
   if (f.status === 'APPOINTMENT_SCHEDULED' && !apptFuture) add('TEAM', 'LODGE_APPLICATION', 1);
   const unanswered = !!f.lastClientMsg && (!f.lastStaffMsg || f.lastClientMsg > f.lastStaffMsg);
@@ -186,7 +196,8 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   const since = current ? new Date(current.from) : f.createdAt;
   const days = Math.floor((now.getTime() - since.getTime()) / DAY);
 
-  const statusSide = sideAt(f.status, now.getTime(), f.appointmentAt);
+  const teamContract = contractTurn === 'TRIAD' || contractTurn === 'STAFF';
+  const statusSide = teamContract ? 'TEAM' : sideAt(f.status, now.getTime(), f.appointmentAt);
   if (statusSide === 'NONE') {
     return {
       side: 'NONE',
@@ -209,7 +220,8 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   const primary = items.find((i) => i.side === statusSide) ?? { side: statusSide, reason: statusSide === 'TEAM' ? 'REVIEW_DOCS' : 'DECISION', count: 1, dueAt: null, overdue: false };
 
   let eta: BallInCourt['eta'] = null;
-  if (statusSide === 'TEAM' || statusSide === 'EMBASSY') {
+  // No typical duration for the team's contract turn (CONTRACT_SENT is normally the client's).
+  if ((statusSide === 'TEAM' || statusSide === 'EMBASSY') && !teamContract) {
     const key = f.status as EtaStatus;
     let e: Eta = settings.eta[key] ?? settings.eta.DOCUMENTS_REVIEW;
     if (f.status === 'DECISION_PENDING' && settings.useCategoryProcessing && f.processing.max) {
@@ -260,6 +272,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
       select: { userId: true, request: { select: { caseId: true, isCaseContract: true } } },
     }),
   ]);
+  const turns = await loadContractTurns(cases);
   return cases.map((c) => {
     const stage = CLIENT_UPLOAD_STAGE[c.status];
     const clientMsgs = msgs.filter((m) => m.caseId === c.id && m.authorId === c.clientId).map((m) => m._max.createdAt);
@@ -272,6 +285,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
       appointmentAt: c.appointmentAt,
       processing: { min: c.visaCategory?.processingMin ?? null, max: c.visaCategory?.processingMax ?? null },
       contract: c.contract,
+      contractTurn: turns.get(c.id) ?? null,
       uploadReqs: stage ? c.requirements.filter((r) => r.stage === stage && r.required).map((r) => ({ docs: r.documents.map((d) => d.status) })) : [],
       replaceReqs: c.requirements.filter((r) => clientUploadStageFor(c.status, r)?.replacement).length,
       pendingDocs: c.documents.length,

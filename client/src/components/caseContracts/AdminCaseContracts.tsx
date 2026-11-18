@@ -56,6 +56,8 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
   const r = s.request;
   const name = t(`caseContracts.steps.${s.step}.name`);
   const blocked = s.blockedReason && s.state !== 'APPROVED' ? s.blockedReason : null;
+  // An Əmək müqaviləsi approved outside the contract step (early / before a reopen): the server allows a new version.
+  const resendApproved = s.state === 'APPROVED' && !s.blockedReason;
   return (
     <article className={clsx('flex flex-col gap-3 rounded-xl border p-4', blocked === 'LABOUR_NOT_APPROVED' ? 'border-dashed border-line bg-surface/40' : 'border-line bg-card')} aria-label={name}>
       <header className="flex flex-wrap items-start gap-3">
@@ -80,6 +82,7 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
       {r && r.others.length > 0 && <p className="text-[11px] text-muted">{t('caseContracts.otherParties', { names: r.others.map((o) => o.name).join(', ') })}</p>}
 
       {blocked && <Hint tone="info">{t(`caseContracts.blocked.${blocked}`)}</Hint>}
+      {resendApproved && <Hint tone="warning">{t('caseContracts.approvedOutsideStep')}</Hint>}
       {s.state === 'TRIAD_TO_SIGN' && !s.canTriadSign && r?.triad && <Hint tone="warning">{t('caseContracts.triadWaitOther', { name: r.triad.name })}</Hint>}
 
       <div className="mt-auto flex flex-wrap items-center gap-2">
@@ -93,7 +96,7 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
             <CheckCircle2 className="size-3.5" aria-hidden /> {t('caseContracts.approve')}
           </button>
         )}
-        {s.state !== 'APPROVED' && (
+        {(s.state !== 'APPROVED' || resendApproved) && (
           <button type="button" className={s.state === 'NOT_SENT' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} disabled={!!blocked} onClick={onSend}>
             <Send className="size-3.5" aria-hidden /> {s.state === 'NOT_SENT' ? t('caseContracts.send') : t('caseContracts.resend')}
           </button>

@@ -16,6 +16,8 @@ const main = async () => {
     ? await prisma.user.findFirst({ where: { email, role: 'SUPER_ADMIN' } })
     : await prisma.user.findFirst({ where: { role: 'SUPER_ADMIN' }, orderBy: { createdAt: 'asc' } });
   if (!user) throw new Error(email ? `No SUPER_ADMIN with e-mail ${email}` : 'No SUPER_ADMIN account yet: run the seed first');
+  // POST /auth/reset-password refuses deactivated accounts (ACCOUNT_INACTIVE): a link would be useless.
+  if (!user.isActive) throw new Error(`The SUPER_ADMIN account ${user.email} is deactivated: reactivate it (User.isActive) before creating a setup link`);
   await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
   const token = crypto.randomBytes(32).toString('hex');
   await prisma.passwordResetToken.create({

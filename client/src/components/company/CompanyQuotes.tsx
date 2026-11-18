@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { QUOTE_STATUS_TONE, QuoteDocument, QuoteRespond, deDate, fmtEur, type CustomerQuote, type QuoteStatus } from '@/components/quotes/QuoteDocument';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Documents } from '@/components/illustrations';
+import { useCompanyAccess } from './access'; // accept / decline need manageBilling
 
 registerCopy(pagesQuotes);
 
@@ -98,6 +99,7 @@ const QuoteDetail = ({ id }: { id: string }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const key = ['company-quote', id];
+  const canRespond = useCompanyAccess().canDo('respondQuotes');
   const q = useQuery({ queryKey: key, queryFn: async () => (await api.get<{ quote: CustomerQuote }>(`/company/quotes/${id}`)).data.quote });
   const act = useMutation({
     mutationFn: async (a: { kind: 'accept'; name: string } | { kind: 'decline'; reason: string }) =>
@@ -122,13 +124,15 @@ const QuoteDetail = ({ id }: { id: string }) => {
       ) : (
         <>
           <p className="text-xs text-muted">{t('quotePublic.germanNote')}</p>
-          <QuoteRespond
-            q={q.data}
-            busy={act.isPending}
-            error={act.error ? errText(act.error) : null}
-            onAccept={(name) => act.mutate({ kind: 'accept', name })}
-            onDecline={(reason) => act.mutate({ kind: 'decline', reason })}
-          />
+          {canRespond && (
+            <QuoteRespond
+              q={q.data}
+              busy={act.isPending}
+              error={act.error ? errText(act.error) : null}
+              onAccept={(name) => act.mutate({ kind: 'accept', name })}
+              onDecline={(reason) => act.mutate({ kind: 'decline', reason })}
+            />
+          )}
           <QuoteDocument q={q.data} pdfHref={`/api/company/quotes/${id}/pdf`} />
         </>
       )}

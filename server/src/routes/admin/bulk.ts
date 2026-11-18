@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { ApplicationStatus, CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
-import { badRequest, conflict, notFound, parse } from '../../lib/http.js';
+import { badRequest, conflict, forbidden, notFound, parse } from '../../lib/http.js';
 import { staffCancel, staffConfirmContract, staffMarkLodged, staffReopen, staffRequestChanges, FINAL_STATUSES } from '../../lib/caseFlow.js';
 import { moveSchema, moveStage } from '../../lib/caseProcessing/index.js';
 import { createCaseMessage } from '../../lib/messaging/caseMessages.js';
@@ -107,7 +107,12 @@ adminBulkRouter.post('/cases/restore-assign', async (req, res) => {
     (await prisma.user.findMany({ where: { id: { in: staffIds }, isActive: true, role: { in: ['STAFF', 'ADMIN', 'SUPER_ADMIN'] } }, select: { id: true } })).map((u) => u.id),
   );
   const target = new Map(body.items.map((i) => [i.id, i.staffId]));
+  // The body names the cases as items[].id, which the access guard does not scope-check: cases outside the
+  // viewer's case scope fail one by one (OUT_OF_SCOPE), like resolveCases drops them.
+  const scope = await caseScopeWhere(req.user);
+  const inScope = new Set((await prisma.case.findMany({ where: withCaseScope({ id: { in: [...target.keys()] } }, scope), select: { id: true } })).map((c) => c.id));
   const results = await runBatched(body.items.map((i) => i.id), async (caseId) => {
+    if (!inScope.has(caseId)) throw forbidden('OUT_OF_SCOPE');
     const staffId = target.get(caseId) ?? null;
     if (staffId && !valid.has(staffId)) throw badRequest('INVALID_STAFF');
     await prisma.case.update({ where: { id: caseId }, data: { assignedStaffId: staffId } });

@@ -206,6 +206,8 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
       case 'REJECT_SIGNATURE':
         return (
           <div className="space-y-3">
+            {/* E-signed (two-step) contract: the server voids the completed request; a new version is sent from the contracts panel. */}
+            {c.contract?.signatureRequestId && <Hint tone="info">{a('rejectSigEsign')}</Hint>}
             <Field label={a('reasonLabel')} htmlFor="ap-sig" hint={a('min3')}>
               <textarea id="ap-sig" className="input" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder={a('sigPlaceholder')} />
             </Field>

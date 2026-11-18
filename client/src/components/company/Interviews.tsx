@@ -17,6 +17,7 @@ import { CalendarDay } from '@/components/illustrations';
 import { Empty, Loading, Section } from './shared';
 import { EvaluateButton } from '@/components/placement/Evaluations';
 import { CompanyInterviewCalendar } from './InterviewAvailability';
+import { useCompanyAccess } from './access';
 
 registerCopy(pagesOps);
 
@@ -34,6 +35,11 @@ export const CompanyInterviews = () => {
   const [notes, setNotes] = useState('');
   const [reschedule, setReschedule] = useState<{ id: string; at: string } | null>(null);
   const [cancelling, setCancelling] = useState<{ id: string; reason: string } | null>(null);
+  // Proposing / rescheduling / cancelling / evaluating need decideCandidates; the applicant picker and the
+  // evaluations need viewCandidatePool (server: lib/companyAccess/rules.ts). Without them the tab is read-only.
+  const access = useCompanyAccess();
+  const canManage = access.canDo('manageInterviews');
+  const canPropose = canManage && access.canDo('interviewApplicants');
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-interviews'],
@@ -43,7 +49,7 @@ export const CompanyInterviews = () => {
   const applicants = useQuery({
     queryKey: ['company-interview-applicants'],
     queryFn: async () => (await api.get<{ items: Applicant[] }>('/interviews/applicants')).data.items,
-    enabled: proposing,
+    enabled: proposing && canPropose,
   });
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['company-interviews'] });
@@ -86,10 +92,10 @@ export const CompanyInterviews = () => {
   const past = data.filter((i) => !upcoming.includes(i)).reverse();
 
   /** After the interview started (or was marked done) the employer can evaluate it. */
-  const evaluable = (i: Interview) => i.status === 'DONE' || ((i.status === 'PROPOSED' || i.status === 'CONFIRMED') && new Date(i.startsAt).getTime() <= now);
+  const evaluable = (i: Interview) => canPropose && (i.status === 'DONE' || ((i.status === 'PROPOSED' || i.status === 'CONFIRMED') && new Date(i.startsAt).getTime() <= now));
   const actionsFor = (i: Interview) => {
     const live = i.status === 'PROPOSED' || i.status === 'CONFIRMED';
-    if (!live) return null;
+    if (!live || !canManage) return null;
     return (
       <>
         {evaluable(i) && <EvaluateButton interviewId={i.id} />}
@@ -109,9 +115,11 @@ export const CompanyInterviews = () => {
         title={t('ops.company.title')}
         icon={Video}
         actions={
-          <button type="button" className="btn-primary" onClick={() => setProposing(true)}>
-            <Plus className="size-4" aria-hidden /> {t('ops.company.propose')}
-          </button>
+          canPropose ? (
+            <button type="button" className="btn-primary" onClick={() => setProposing(true)}>
+              <Plus className="size-4" aria-hidden /> {t('ops.company.propose')}
+            </button>
+          ) : undefined
         }
       >
         <p className="-mt-2 mb-5 text-sm text-muted">{t('ops.company.subtitle')} {t('ops.company.hint')}</p>

@@ -5,7 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { visitorIdSchema, utmSchema } from '../lib/marketing/leadScoring.js';
 import { normalizePhoneNumber } from '../lib/phone.js';
-import { joinWaitlistAsClient, joinWaitlistAsVisitor, runWaitlistNoticesSoon, waitlistInputSchema, waitlistView } from '../lib/jobAlerts/waitlist.js';
+import { joinWaitlistAsClient, joinWaitlistAsVisitor, onWaitlistUnsubscribed, runWaitlistNoticesSoon, waitlistInputSchema, waitlistView } from '../lib/jobAlerts/waitlist.js';
 
 /**
  * Vacancy waitlist — mounted at /api/job-alerts/waitlist (design: lib/jobAlerts/waitlist.ts). The confirmation,
@@ -64,6 +64,8 @@ waitlistRouter.get('/mine', requireAuth, async (req, res) => {
 waitlistRouter.delete('/mine/:id', requireAuth, async (req, res) => {
   const entry = await prisma.jobAlert.findUnique({ where: { id: String(req.params.id) } });
   if (!entry || !entry.waitlist || entry.userId !== req.user!.id) throw notFound('ALERT_NOT_FOUND');
+  // Removing the entry withdraws the VACANCY_WAITLIST consent: logged like the unsubscribe link (not twice).
+  if (entry.confirmedAt && !entry.unsubscribedAt) await onWaitlistUnsubscribed(entry, req);
   await prisma.jobAlert.delete({ where: { id: entry.id } });
   res.json({ ok: true });
 });

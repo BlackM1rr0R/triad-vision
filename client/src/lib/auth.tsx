@@ -3,11 +3,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api, onSessionLost, setImpersonation, type ImpersonationState, type SessionLostReason } from './api';
+import { api, onSessionLost, onTwoFactorRequired, setImpersonation, type ImpersonationState, type SessionLostReason } from './api';
 import { isStaffRole, type Role, type SessionInfo, type User } from './types';
 import { Spinner } from '@/components/ui/Spinner';
 import { clearOffline } from './offlineDocs'; // offline documents (PWA cache) go on logout
 import { clearChosenCase } from './caseContext'; // family switcher choice
+import { clearSharedActivity, IDLE_ACTIVITY_KEY, latestActivity, readSharedActivity, SHARED_WRITE_THROTTLE_MS, writeSharedActivity } from './idleSync'; // idle time shared by all tabs
 
 interface AuthState {
   user: User | null;
@@ -28,7 +29,7 @@ export interface SecurityFlags {
   emailOtpEnabled?: boolean;
   /** Partners / employers / clients for whom the Access Center requires 2FA but who have none yet: the portal shows the set-up. */
   twoFactorSetupNeeded?: boolean;
-  /** Web idle timeout (minutes) when the Access Center set one for this account; absent = the default. */
+  /** Effective web idle timeout in minutes (Access Center or server setting; 0 = off); absent (older API) = the default. */
   sessionIdleMinutes?: number;
 }
 export const securityOf = (u: User | null | undefined): SecurityFlags => (u ?? {}) as SecurityFlags;
@@ -67,6 +68,7 @@ export const isTwoFactorChallenge = (d: unknown): d is TwoFactorChallenge =>
 const forgetDevicePortalData = () => {
   void clearOffline().catch(() => undefined);
   clearChosenCase();
+  clearSharedActivity();
 };
 
 /** Query keys holding public CMS data that is safe to keep after logout. */
@@ -165,26 +167,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => onSessionLost(null);
   }, []);
 
-  // Client-side idle logout: one timer, activity only updates a timestamp (no re-render per event).
+  // 2FA switched on for this account mid-session (403 TWO_FACTOR_ENROLLMENT_REQUIRED): reload the user once, so
+  // RequireAuth shows the set-up instead of generic errors. At most every 30 s (several requests fail together).
+  useEffect(() => {
+    let last = 0;
+    onTwoFactorRequired(() => {
+      const now = Date.now();
+      if (now - last < 30_000) return;
+      last = now;
+      void qc.invalidateQueries({ queryKey: ['me'] });
+    });
+    return () => onTwoFactorRequired(null);
+  }, [qc]);
+
+  // Client-side idle logout: one timer, activity only updates a timestamp (no re-render per event). The timestamp is
+  // shared by every tab of this login (lib/idleSync): a tab in the background never logs out while another one is used.
   const userId = user?.id;
-  // The Access Center may set another idle timeout for this account (the server sends it; else the default).
+  // Effective idle timeout of this account (the server sends it; 0 = off; absent = the default).
   const idleMinutes = securityOf(user).sessionIdleMinutes;
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || idleMinutes === 0) return;
     const IDLE_LIMIT = idleMinutes && idleMinutes > 0 ? idleMinutes * 60 * 1000 : IDLE_LIMIT_MS;
     let lastActivity = Date.now();
     let lastSample = 0;
+    let lastShared = 0;
     let warned = false;
     let timer = 0;
 
+    const share = (at: number, force = false) => {
+      if (!force && at - lastShared < SHARED_WRITE_THROTTLE_MS) return;
+      lastShared = at;
+      writeSharedActivity(userId, at);
+    };
+    /** Idle time of the whole browser: since the latest activity in any tab of this login. */
+    const idleFor = () => Date.now() - latestActivity(lastActivity, readSharedActivity(userId));
+    const unwarn = () => {
+      warned = false;
+      toast.dismiss(IDLE_TOAST_ID);
+    };
+
     const schedule = () => {
       window.clearTimeout(timer);
-      const elapsed = Date.now() - lastActivity;
-      const next = (warned ? IDLE_LIMIT : IDLE_LIMIT - IDLE_WARN_MS) - elapsed;
+      const next = (warned ? IDLE_LIMIT : IDLE_LIMIT - IDLE_WARN_MS) - idleFor();
       timer = window.setTimeout(tick, Math.max(next, 1000));
     };
     const tick = () => {
-      const elapsed = Date.now() - lastActivity;
+      const elapsed = idleFor();
       if (elapsed >= IDLE_LIMIT) {
         window.clearTimeout(timer);
         void api.post('/auth/logout').catch(() => undefined);
@@ -195,6 +223,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (elapsed >= IDLE_LIMIT - IDLE_WARN_MS && !warned) {
         warned = true;
         toast.warning(sessionMessage('idleWarning'), { id: IDLE_TOAST_ID, duration: IDLE_WARN_MS });
+      } else if (warned && elapsed < IDLE_LIMIT - IDLE_WARN_MS) {
+        unwarn(); // the user came back in another tab
       }
       schedule();
     };
@@ -203,26 +233,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (now - lastSample < ACTIVITY_THROTTLE_MS) return;
       lastSample = now;
       lastActivity = now;
+      share(now, warned);
       if (warned) {
-        warned = false;
-        toast.dismiss(IDLE_TOAST_ID);
+        unwarn();
         schedule();
       }
     };
     const onVisibility = () => {
       if (document.visibilityState !== 'visible') return;
       // Timers are throttled in background tabs: re-check the clock first, then count the return as activity.
-      if (Date.now() - lastActivity >= IDLE_LIMIT) tick();
+      if (idleFor() >= IDLE_LIMIT) tick();
       else onActivity();
+    };
+    // Activity in another tab: drop this tab's warning and plan the next check from the shared time.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== IDLE_ACTIVITY_KEY) return;
+      if (warned && idleFor() < IDLE_LIMIT - IDLE_WARN_MS) unwarn();
+      schedule();
     };
 
     for (const ev of ACTIVITY_EVENTS) window.addEventListener(ev, onActivity, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('storage', onStorage);
+    share(lastActivity, true);
     schedule();
     return () => {
       window.clearTimeout(timer);
       for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('storage', onStorage);
       toast.dismiss(IDLE_TOAST_ID);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

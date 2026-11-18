@@ -56,17 +56,20 @@ export function ApprovedCelebration() {
   const { user } = useAuth();
   const isClient = user?.role === 'CLIENT' && getImpersonation() === null;
   const { data } = useOverview(!!user && user.role === 'CLIENT');
-  const [shown, setShown] = useState<{ id: string; number: string } | null>(null);
+  // `main`: the client's own application; a family member's approval is celebrated too, but the visa story and the
+  // Instagram card exist only for the main case (the server answers 404 for a member case).
+  const [shown, setShown] = useState<{ id: string; number: string; main: boolean } | null>(null);
   const [instaCase, setInstaCase] = useState<string | null>(null);
 
   const target = isClient && data ? caseToCelebrate(data.cases) : null;
   const targetId = target?.id ?? null;
   const targetNumber = target?.number ?? '';
+  const targetMain = !target?.parentCaseId;
   useEffect(() => {
     if (!targetId || wasSeen(targetId)) return;
     markSeen(targetId);
-    setShown({ id: targetId, number: targetNumber });
-  }, [targetId, targetNumber]);
+    setShown({ id: targetId, number: targetNumber, main: targetMain });
+  }, [targetId, targetNumber, targetMain]);
   // Same key as the case page's burst, so the confetti never plays twice for one approval (no-op for reduced motion).
   const shownId = shown?.id ?? null;
   useEffect(() => {
@@ -106,6 +109,7 @@ export function ApprovedCelebration() {
           <Success className="hidden w-28 shrink-0 sm:block" />
           <p className="text-ink/85">{t('pmom.approved.text', { number: shown.number })}</p>
         </div>
+        {shown.main && (
         <div>
           <Button
             variant="secondary"
@@ -123,6 +127,7 @@ export function ApprovedCelebration() {
             <Sparkles className="size-4" aria-hidden /> {t('vstory.cta.open')}
           </Link>
         </div>
+        )}
 
         <section aria-labelledby="approved-next-title">
           <h3 id="approved-next-title" className="type-overline text-muted">

@@ -200,10 +200,14 @@ export const usePartnerMe = (enabled = true) =>
     enabled,
   });
 
+/** Error-key namespaces of the partner portal, in lookup order (permission-matrix codes live in partnerAccess.errors). */
+export const PORTAL_ERROR_NAMESPACES = ['partnerPortal.errors', 'partnerAccess.errors'] as const;
+
 /** Translated portal error message (falls back to the generic error). */
 export const portalError = (err: unknown) => {
   const code = errorCode(err);
-  return i18n.exists(`partnerPortal.errors.${code}`) ? i18n.t(`partnerPortal.errors.${code}`) : i18n.t('partnerPortal.common.error');
+  if (code) for (const ns of PORTAL_ERROR_NAMESPACES) if (i18n.exists(`${ns}.${code}`)) return i18n.t(`${ns}.${code}`);
+  return i18n.t('partnerPortal.common.error');
 };
 
 /** Downloads a file from the API (cookie session) and saves it under `name`. */

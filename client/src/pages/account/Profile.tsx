@@ -60,6 +60,7 @@ import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
+import { pagesPrivacy } from '@/i18n/pagesPrivacy'; // deletion request: "your password to confirm" + its errors
 import { IntroVideoPanel } from '@/components/placement/IntroVideo';
 import { SkillVideosPanel } from '@/components/skillVideos/SkillVideosPanel';
 import { RECOGNITION_STATUSES } from '@/components/placement/api';
@@ -72,6 +73,7 @@ registerCopy(pagesGrowth);
 registerCopy(pagesMessaging);
 registerCopy(campaignConsentCopy);
 registerCopy(pagesPlacement);
+registerCopy(pagesPrivacy);
 
 const TAB_ICON: Record<ProfileTab, LucideIcon> = {
   personal: UserRound,
@@ -968,19 +970,29 @@ const PrivacyPanel = () => {
   const uid = useId();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
   const send = async () => {
+    // The server asks for the password (same as the privacy centre's deletion request).
+    if (!password) {
+      toast.error(t('privacy.errors.PASSWORD_REQUIRED'));
+      document.getElementById(`${uid}-password`)?.focus();
+      return;
+    }
     setBusy(true);
     try {
-      await api.post('/account/delete-request', reason.trim() ? { reason: reason.trim() } : {});
+      await api.post('/account/delete-request', { ...(reason.trim() ? { reason: reason.trim() } : {}), currentPassword: password });
       setOpen(false);
       setSent(true);
       setReason('');
+      setPassword('');
       toast.success(t('accountPage.profile.privacy.sent'));
     } catch (err) {
-      if (errorCode(err) === 'TOO_MANY_REQUESTS') toast.error(t('accountPage.profile.privacy.tooMany'));
+      const code = errorCode(err);
+      if (code === 'TOO_MANY_REQUESTS') toast.error(t('accountPage.profile.privacy.tooMany'));
+      else if (code === 'WRONG_PASSWORD' || code === 'PASSWORD_REQUIRED') toast.error(t(`privacy.errors.${code}`));
       else onError(err);
     } finally {
       setBusy(false);
@@ -1041,6 +1053,10 @@ const PrivacyPanel = () => {
           maxLength={1000}
           onChange={(e) => setReason(e.target.value)}
         />
+        <label htmlFor={`${uid}-password`} className="label mt-4">
+          {t('privacy.deletion.password')}
+        </label>
+        <PasswordInput id={`${uid}-password`} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </ConfirmDialog>
     </div>
   );

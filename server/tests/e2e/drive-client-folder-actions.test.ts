@@ -180,9 +180,10 @@ describe('client folders: Fertig → client portal', () => {
 
     // a second send needs "resend"; nothing is duplicated
     expect(expectStatus(await send({}), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_ALREADY_SENT' });
-    expectStatus(await send({ resend: true }), 200);
+    // a re-send without any new file is refused: no copy, no "N documents ready" notice to the client
+    expect(expectStatus(await send({ resend: true }), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NOTHING_NEW' });
     expect(await prisma.document.count({ where: { caseId: c.id, stage: 'OTHER' } })).toBe(2);
-    expect(await prisma.notification.count({ where: { userId: client.user.id, type: 'READY_DOCS' } })).toBe(2);
+    expect(await prisma.notification.count({ where: { userId: client.user.id, type: 'READY_DOCS' } })).toBe(1);
 
     // a new finished file: a re-send adds only that one
     const f3 = await upload(staff.agent, folder.id, 'Lebenslauf.pdf');
@@ -193,7 +194,6 @@ describe('client folders: Fertig → client portal', () => {
     const sends = await prisma.caseReadyDocsSend.findMany({ where: { caseId: c.id }, orderBy: { createdAt: 'asc' } });
     expect(sends.map((s) => [s.newCount, s.fileCount, s.resend])).toEqual([
       [2, 2, false],
-      [0, 2, true],
       [1, 3, true],
     ]);
   });

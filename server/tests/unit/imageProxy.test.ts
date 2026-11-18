@@ -90,7 +90,7 @@ describe('image proxy: GET /api/img/:w/:file', () => {
     expect(second.status).toBe(200);
   });
 
-  it('fetches remote photos once (no redirects followed) and redirects to the original when the upstream fails', async () => {
+  it('fetches remote photos once (no redirects followed) and never sends the visitor to the upstream when it fails', async () => {
     const body = await jpeg(640, 400);
     const fetchMock = vi.fn(async (_url: URL, init: RequestInit) => {
       expect(init.redirect).toBe('manual');
@@ -106,10 +106,25 @@ describe('image proxy: GET /api/img/:w/:file', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('moved', { status: 301, headers: { location: 'https://evil.example/' } })));
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const other = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?fit=crop&w=2000';
-    const failed = await request(app).get(`/api/img/800/${b64(other)}.webp`);
-    expect(failed.status).toBe(302);
-    expect(failed.headers.location).toMatch(/^https:\/\/images\.unsplash\.com\/photo-1601584115197-04ecc0da31d7\?.*w=800/);
+    // QA PUB-9: a placeholder from our origin instead of a 302 to images.unsplash.com (visitor IP stays with us).
+    const failed = await request(app).get(`/api/img/800/${b64(other)}.webp`).buffer(true).parse((r, cb) => {
+      const chunks: Buffer[] = [];
+      r.on('data', (c: Buffer) => chunks.push(c));
+      r.on('end', () => cb(null, Buffer.concat(chunks)));
+    });
+    expect(failed.status).toBe(200);
+    expect(failed.headers.location).toBeUndefined();
+    expect(failed.headers['x-image-fallback']).toBe('1');
+    expect(failed.headers['content-type']).toMatch(/image\/webp/);
     expect(failed.headers['cache-control']).toBe('no-store');
+    expect((await sharp(failed.body as Buffer).metadata()).format).toBe('webp');
+
+    // Opt-in: the old redirect to the original.
+    vi.stubEnv('IMAGE_PROXY_REDIRECT_REMOTE', '1');
+    const redirected = await request(app).get(`/api/img/800/${b64(other)}.webp`);
+    expect(redirected.status).toBe(302);
+    expect(redirected.headers.location).toMatch(/^https:\/\/images\.unsplash\.com\/photo-1601584115197-04ecc0da31d7\?.*w=800/);
+    vi.unstubAllEnvs();
   });
 
   it('404s on unknown widths, hosts and file names', async () => {

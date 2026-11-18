@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesAccessEmployers } from '@/i18n/pagesAccessEmployers';
 import { Section } from './shared';
+import { companyCan, type CompanyAction } from './uiPerms';
 
 registerCopy(pagesAccessEmployers);
 
@@ -48,7 +49,9 @@ export const useCompanyAccess = () => {
   const q = useQuery({ queryKey: COMPANY_ACCESS_KEY, queryFn: async () => (await api.get<AccessMe>('/company/access/me')).data, staleTime: 60_000 });
   const can = (...perms: CompanyPerm[]) => !q.data || perms.every((p) => q.data!.permissions[p] !== false);
   const canAny = (...perms: CompanyPerm[]) => !q.data || perms.some((p) => q.data!.permissions[p] !== false);
-  return { data: q.data, can, canAny };
+  /** A portal control by what it does (uiPerms.ts mirrors the server's endpoint rules). */
+  const canDo = (action: CompanyAction) => companyCan(q.data?.permissions, action);
+  return { data: q.data, can, canAny, canDo };
 };
 
 export const NoCompanyAccess = () => {

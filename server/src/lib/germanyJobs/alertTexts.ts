@@ -13,7 +13,11 @@ export interface GermanyAlertMail {
   confirmCta: string;
   digestSubject: (n: number) => string;
   digestIntro: (search: string) => string;
+  /** Intro when "apply via Triad Vision" for external listings is switched off (policy allowExternalApplications). */
+  digestIntroListings: (search: string) => string;
   apply: string;
+  /** Link to the original ad on the source site (used when applying via Triad Vision is off). */
+  original: string;
   allResults: string;
   via: (source: string) => string;
   manage: string;
@@ -39,7 +43,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Bildirişi təsdiqlə',
     digestSubject: (n) => `Axtarışınıza uyğun ${n} yeni iş elanı`,
     digestIntro: (s) => `Axtarışınıza uyğun yeni elanlar: ${s}. Bəyəndiyiniz vakansiyaya Triad Vision vasitəsilə müraciət edin — elanı və şərtləri sizin üçün yoxlayaq.`,
+    digestIntroListings: (s) => `Axtarışınıza uyğun yeni elanlar: ${s}. Elanlar başqa saytlardandır — müraciət orijinal elan vasitəsilə olur.`,
     apply: 'Triad Vision ilə müraciət et',
+    original: 'Orijinal elanı aç',
     allResults: 'Bütün nəticələr',
     via: (s) => `mənbə: ${s}`,
     manage: 'Bildirişi idarə etmək',
@@ -62,7 +68,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Job-Alarm bestätigen',
     digestSubject: (n) => `${n} neue Stellen zu Ihrer Suche`,
     digestIntro: (s) => `Neue Stellen zu Ihrer Suche: ${s}. Bewerben Sie sich über Triad Vision — wir prüfen die Anzeige und die Bedingungen für Sie.`,
+    digestIntroListings: (s) => `Neue Stellen zu Ihrer Suche: ${s}. Die Anzeigen stammen von anderen Jobbörsen — beworben wird über die Originalanzeige.`,
     apply: 'Über Triad Vision bewerben',
+    original: 'Originalanzeige öffnen',
     allResults: 'Alle Ergebnisse',
     via: (s) => `via ${s}`,
     manage: 'Job-Alarm verwalten',
@@ -85,7 +93,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Confirm job alert',
     digestSubject: (n) => `${n} new jobs for your search`,
     digestIntro: (s) => `New jobs for your search: ${s}. Apply through Triad Vision — we check the listing and the conditions for you.`,
+    digestIntroListings: (s) => `New jobs for your search: ${s}. The listings come from other job sites — you apply through the original ad.`,
     apply: 'Apply via Triad Vision',
+    original: 'Open the original ad',
     allResults: 'All results',
     via: (s) => `via ${s}`,
     manage: 'Manage job alert',
@@ -108,7 +118,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Подтвердить уведомления',
     digestSubject: (n) => `Новые вакансии по вашему поиску: ${n}`,
     digestIntro: (s) => `Новые вакансии по вашему поиску: ${s}. Подайте заявку через Triad Vision — мы проверим объявление и условия для вас.`,
+    digestIntroListings: (s) => `Новые вакансии по вашему поиску: ${s}. Объявления взяты с других сайтов — откликнуться можно в оригинальном объявлении.`,
     apply: 'Подать заявку через Triad Vision',
+    original: 'Открыть оригинальное объявление',
     allResults: 'Все результаты',
     via: (s) => `источник: ${s}`,
     manage: 'Настроить уведомления',
@@ -131,7 +143,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Bildirimi onayla',
     digestSubject: (n) => `Aramanıza uygun ${n} yeni ilan`,
     digestIntro: (s) => `Aramanıza uygun yeni ilanlar: ${s}. Triad Vision üzerinden başvurun — ilanı ve koşulları sizin için kontrol edelim.`,
+    digestIntroListings: (s) => `Aramanıza uygun yeni ilanlar: ${s}. İlanlar başka sitelerden — başvuru orijinal ilan üzerinden yapılır.`,
     apply: 'Triad Vision ile başvur',
+    original: 'Orijinal ilanı aç',
     allResults: 'Tüm sonuçlar',
     via: (s) => `kaynak: ${s}`,
     manage: 'Bildirimi yönet',
@@ -154,7 +168,9 @@ export const GERMANY_ALERT_MAIL: Record<SeoLocale, GermanyAlertMail> = {
     confirmCta: 'Підтвердити сповіщення',
     digestSubject: (n) => `Нові вакансії за вашим пошуком: ${n}`,
     digestIntro: (s) => `Нові вакансії за вашим пошуком: ${s}. Подайте заявку через Triad Vision — ми перевіримо оголошення та умови для вас.`,
+    digestIntroListings: (s) => `Нові вакансії за вашим пошуком: ${s}. Оголошення взято з інших сайтів — відгукнутися можна в оригінальному оголошенні.`,
     apply: 'Подати заявку через Triad Vision',
+    original: 'Відкрити оригінальне оголошення',
     allResults: 'Усі результати',
     via: (s) => `джерело: ${s}`,
     manage: 'Налаштувати сповіщення',

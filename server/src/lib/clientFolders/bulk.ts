@@ -5,7 +5,7 @@ import { caseRowInScope } from '../access/resolve.js';
 import { loadAccess } from '../access/store.js';
 import type { AccessUser } from '../access/types.js';
 import { PROCESSING_STAGES, effectiveStage, moveStage } from '../caseProcessing/index.js';
-import type { CaseResult } from './logic.js';
+import { bulkAssignee, type CaseResult } from './logic.js';
 
 /**
  * Bulk runner of the client folder actions: every case is tried on its own (one failure never stops the rest)
@@ -70,6 +70,7 @@ export const bulkMoveStage = async (user: AccessUser & { firstName: string; last
     const from = effectiveStage(c?.processingStage, c?.status);
     // Already there: nothing to do unless a new next admin or a note comes along (an empty assignee keeps the current one).
     if (from === input.stage && !input.note && (!input.assigneeId || input.assigneeId === c?.processingAssigneeId)) return { skipped: true };
-    await moveStage(caseId, user, { stage: input.stage, assigneeId: input.assigneeId ?? null, note: input.note ?? null, origin: 'drive' });
+    const assigneeId = bulkAssignee({ from, to: input.stage, requested: input.assigneeId, current: c?.processingAssigneeId });
+    await moveStage(caseId, user, { stage: input.stage, assigneeId, note: input.note ?? null, origin: 'drive' });
     return {};
   });

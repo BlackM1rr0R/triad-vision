@@ -315,7 +315,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('reports', '/admin/reports', FileBarChart2, 'finance', { adminOnly: true }),
   a('overview', '/admin/overview', PieChart, 'finance'), // analytics landing: trend, KPIs, funnel, cases that need a look, goal
   a('analytics', '/admin/analytics', BarChart3, 'finance'),
-  a('quarterlyReport', '/admin/quarterly-report', FileBarChart2, 'finance', { adminOnly: true }), // quarterly labour mobility report PDF (aggregates k ≥ 3; STAFF read, ADMIN+ publish)
+  a('quarterlyReport', '/admin/quarterly-report', FileBarChart2, 'finance'), // quarterly labour mobility report PDF (aggregates k ≥ 3; STAFF read-only, ADMIN+ publish)
   a('yearReview', '/admin/year-review', CalendarHeart, 'finance'), // year in review: cases, professions, cities, records (per-staff ADMIN+)
   a('bizAnalytics', '/admin/business-analytics', ChartNoAxesCombined, 'finance', { adminOnly: true }), // stage times, partner performance, client funnel (management)
   a('weeklyReports', '/admin/weekly-reports', FileBarChart2, 'finance', { superOnly: true }),
@@ -335,7 +335,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('waitingRoom', '/admin/waiting-room', Hourglass, 'site', { module: 'waitingRoom' }),
   a('preCourse', '/admin/course', GraduationCap, 'clients'), // pre-departure course for candidates: builder (ADMIN+), progress report (STAFF+)
   a('caseForms', '/admin/case-forms', ListChecks, 'site'),
-  a('contractTemplates', '/admin/contract-templates', FileText, 'site', { adminOnly: true }),
+  a('contractTemplates', '/admin/contract-templates', FileText, 'site'), // STAFF read (GET is STAFF+, the page hides editing below ADMIN)
   a('siteTools', '/admin/site-tools', Wand2, 'site'),
   a('cityCosts', '/admin/city-costs', Banknote, 'site', { adminOnly: true }), // first-month budget: city cost table (ADMIN+)
   a('dataFreshness', '/admin/data-freshness', CalendarClock, 'site', { adminOnly: true }), // data freshness registry: yearly figures, review dates (ADMIN+)
@@ -356,7 +356,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('history', '/admin/history', History, 'system', { adminOnly: true }),
   a('storage', '/admin/storage', HardDrive, 'system', { adminOnly: true }),
   a('automation', '/admin/automation', Workflow, 'system', { adminOnly: true }),
-  a('integrations', '/admin/integrations', Plug, 'system', { adminOnly: true }),
+  a('integrations', '/admin/integrations', Plug, 'system'), // STAFF: own calendar feed + API docs; API keys / webhooks ADMIN+ (page and server)
   a('ai', '/admin/ai', Sparkles, 'system', { superOnly: true, module: 'aiAssistant' }),
   a('agents', '/admin/agents', Handshake, 'system', { adminOnly: true, module: 'agents' }),
   a('oversight', '/admin/oversight', Eye, 'system', { superOnly: true }),

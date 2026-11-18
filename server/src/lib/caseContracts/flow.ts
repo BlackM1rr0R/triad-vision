@@ -28,6 +28,8 @@ export const DRIVE_FOLDER: Record<Step, string> = { LABOUR: 'Əmək müqaviləsi
 /** Case statuses in which step 1 is the case's contract step (moves the case to CONTRACT_SENT / CONTRACT_SIGNED). */
 export const CONTRACT_STEP_STATUSES: CaseStatus[] = ['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'];
 const CLOSED: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
+/** Statuses in which an already approved Əmək müqaviləsi may be sent again (the case still waits for its contract). */
+export const LABOUR_RESEND_STATUSES: CaseStatus[] = ['DOCUMENTS_REVIEW', 'CONTRACT_SENT'];
 
 export type StepState =
   | 'NOT_SENT'
@@ -85,7 +87,11 @@ export const stepState = (r: RequestLite | null, now = new Date()): StepState =>
  */
 export const sendBlockReason = (step: Step, states: Record<Step, StepState>, caseStatus: CaseStatus): string | null => {
   if (CLOSED.includes(caseStatus)) return 'CASE_CLOSED';
-  if (states[step] === 'APPROVED') return 'ALREADY_APPROVED';
+  // Step 1 sent before the contract step would never become the case contract (its approval could not move the case).
+  if (step === 'LABOUR' && caseStatus === 'DOCUMENTS_PENDING') return 'NOT_CONTRACT_STEP';
+  // An Əmək müqaviləsi approved outside this contract step (sent early, or before a reopen) did not move the case:
+  // while the case is back at the contract step a new version may be sent, else the case would be stuck.
+  if (states[step] === 'APPROVED' && !(step === 'LABOUR' && LABOUR_RESEND_STATUSES.includes(caseStatus))) return 'ALREADY_APPROVED';
   if (step === 'WORK' && states.LABOUR !== 'APPROVED') return 'LABOUR_NOT_APPROVED';
   return null;
 };
@@ -111,3 +117,36 @@ export const canApprove = (state: StepState) => state === 'SIGNED';
 
 /** "Əmək müqaviləsi – TV-2026-0012 (imzalanmış).pdf" (drive file of the signed copy). */
 export const signedFileName = (step: Step, caseNumber: string) => `${DRIVE_FOLDER[step]} – ${caseNumber} (imzalanmış).pdf`;
+
+// ─── Whose turn is the case contract? ─────────────────────────────────
+
+/**
+ * Who has to act on the case contract while the case is CONTRACT_SENT:
+ *   CLIENT  the client signs (legacy upload without e-sign request, or the request's current turn includes the client)
+ *   TRIAD   Triad Vision (or another party) signs before the client — the client is not invited yet
+ *   STAFF   the request is expired / declined / cancelled / completed without moving the case: staff send a new version
+ * null: no open contract (none, or already signed).
+ */
+export type ContractTurn = 'CLIENT' | 'TRIAD' | 'STAFF';
+
+export interface ContractRequestLite {
+  status: string;
+  order: string;
+  expiresAt: Date | null;
+  signers: SignerLite[];
+}
+
+export const caseContractTurn = (
+  contract: { signedAt: Date | null; signatureRequestId: string | null } | null,
+  request: ContractRequestLite | null,
+  now = new Date(),
+): ContractTurn | null => {
+  if (!contract || contract.signedAt) return null;
+  if (!contract.signatureRequestId) return 'CLIENT';
+  if (!request || request.status !== 'SENT' || (request.expiresAt && request.expiresAt.getTime() <= now.getTime())) return 'STAFF';
+  const open = request.signers.filter(isOpen);
+  if (!open.length) return 'STAFF';
+  const min = Math.min(...open.map((s) => s.order));
+  const turn = request.order === 'PARALLEL' ? open : open.filter((s) => s.order === min);
+  return turn.some((s) => s.role === 'CANDIDATE') ? 'CLIENT' : 'TRIAD';
+};

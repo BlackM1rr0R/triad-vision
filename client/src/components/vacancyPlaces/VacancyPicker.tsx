@@ -17,6 +17,8 @@ export interface VacancyOption {
   title: L10n;
   city: string | null;
   employmentType?: string;
+  /** Visa category the vacancy belongs to (GET /api/vacancies/options). */
+  visaCategoryId?: string | null;
   positions: number;
   filled?: number;
   free?: number;

@@ -5,6 +5,14 @@ import type { L10n, L10nList } from './types';
 const DATE_LOCALE: Record<SiteLocale, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU', tr: 'tr-TR', uk: 'uk-UA' };
 
 /**
+ * Calendar dates are read in one fixed zone (the office's), not the machine's: the SSR service runs in UTC and
+ * the browser in the visitor's zone, so "24 Oct" on the server could become "25 Oct" while hydrating (React #418,
+ * QA PUB-3). A caller's own timeZone wins.
+ */
+export const DATE_TIME_ZONE = 'Asia/Baku';
+export const dateOptions = (opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormatOptions => ({ timeZone: DATE_TIME_ZONE, ...opts });
+
+/**
  * Helpers bound to the current UI language for reading CMS content stored as { az, de, en, ru }.
  * `locale` is the content language: Turkish and Ukrainian visitors read the English CMS texts (dates and
  * numbers still use their own locale).
@@ -19,7 +27,7 @@ export const useL10n = () => {
   const trList = (v: L10nList | null | undefined) => (v ? v[locale] ?? v.az ?? [] : []);
   // A value the server masked ("••••", Access Center › sensitive fields) is shown as it is instead of throwing.
   const date = (iso: string | Date, opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }) =>
-    typeof iso === 'string' && iso.includes('•') ? iso : new Intl.DateTimeFormat(dateLocale, opts).format(new Date(iso));
+    typeof iso === 'string' && iso.includes('•') ? iso : new Intl.DateTimeFormat(dateLocale, dateOptions(opts)).format(new Date(iso));
   const dateTime = (iso: string | Date) =>
     new Intl.DateTimeFormat(dateLocale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 

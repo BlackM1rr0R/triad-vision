@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Heart, Landmark, Link2, MapPin, Search, Send } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Heart, Landmark, Link2, MapPin, Search, Send, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -116,7 +116,8 @@ export default function GermanyJobs() {
   useEffect(() => setForm(search), [search]);
 
   // "Apply via Triad Vision" link of a job alert e-mail (?apply=<id>&at&ac&al&au): opens the apply form for that
-  // listing once, then the listing parameters leave the URL (browser only, after hydration).
+  // listing once, then the listing parameters leave the URL (browser only, after hydration). With applying switched
+  // off, the same listing is shown as a card with its original link instead (older e-mails still carry the link).
   useEffect(() => {
     const fromMail = applyFromParams(params);
     if (!APPLY_PARAMS.some((k) => params.has(k))) return;
@@ -268,6 +269,41 @@ export default function GermanyJobs() {
           </datalist>
         </form>
       </PageHero>
+
+      {listing && config.data && !canApply && listing.provider !== 'link' && (
+        <section className="section-sm" aria-labelledby="gj-mail-listing-h">
+          <div className="container-x">
+            <div className="card relative rounded-2xl p-5">
+              <button type="button" aria-label={t('common.close')} onClick={() => setListing(null)} className="absolute top-3 right-3 grid size-10 place-items-center rounded-full text-muted hover:bg-sunken">
+                <X className="size-4" aria-hidden />
+              </button>
+              <span className="badge bg-sunken text-muted">{t('gj.card.externalNote')}</span>
+              <h2 id="gj-mail-listing-h" className="mt-3 pr-10 font-display text-lg leading-snug font-semibold break-words text-ink">
+                {listing.title}
+              </h2>
+              {(listing.company || listing.location) && (
+                <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+                  {listing.company && (
+                    <span className="inline-flex items-center gap-1">
+                      <Building2 className="size-3.5" aria-hidden /> {listing.company}
+                    </span>
+                  )}
+                  {listing.location && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" aria-hidden /> {listing.location}
+                    </span>
+                  )}
+                </p>
+              )}
+              <a href={listing.url} target="_blank" rel="nofollow noopener noreferrer" className={buttonClass({ variant: 'secondary', className: 'mt-4' })}>
+                {t('gj.card.original')} <ExternalLink className="size-3.5" aria-hidden />
+                <span className="sr-only">{t('gj.card.newTab')}</span>
+              </a>
+              <ExternalApplyOff className="mt-4 border-t border-line pt-4" />
+            </div>
+          </div>
+        </section>
+      )}
 
       {enabled && (
         <section id="gj-results" className="section-sm scroll-mt-24 bg-sunken" aria-labelledby="gj-results-h">

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Building2, Calculator, Info, Scale } from 'lucide-react';
@@ -33,7 +33,9 @@ const loadCompare = (): string[] => {
 export default function CitiesGuide() {
   const { t } = useTranslation();
   usePageTitle(t('citiesPage.metaTitle'));
-  const [compare, setCompareState] = useState<string[]>(loadCompare);
+  // Stored comparison: read after mount, so the hydrating render matches the server markup (empty list).
+  const [compare, setCompareState] = useState<string[]>([]);
+  useEffect(() => setCompareState(loadCompare()), []);
   const [calcCity, setCalcCity] = useState('berlin');
   const calcRef = useRef<HTMLElement>(null);
 

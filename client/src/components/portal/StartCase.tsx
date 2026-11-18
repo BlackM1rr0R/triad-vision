@@ -17,6 +17,7 @@ import { vacancyFolders } from '@/i18n/vacancyFolders';
 import { toast } from 'sonner';
 import { isFull, placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
 import { VacancyOnlyPicker, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
+import { orderForVisa, preselectForVisa } from '@/components/vacancyPlaces/visaPreference'; // ?visa= from the calculator
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: "Uyğun vakansiya açılanda xəbər ver"
 
 registerCopy(vacancyFolders);
@@ -48,17 +49,6 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const visaId = useId();
   const [visaType, setVisaType] = useState<VisaTypeKey | ''>('');
   const [visaCategoryId, setVisaCategoryId] = useState('');
-  // Visa chosen before registering (calculator → /register?visa=<slug>): preselect it once.
-  const [prefill, setPrefill] = useState(rememberedVisa);
-  if (prefill && content?.visaCategories?.length) {
-    const cat = content.visaCategories.find((v) => v.slug === prefill);
-    setPrefill('');
-    forgetVisa();
-    if (cat) {
-      setVisaType(cat.slug === 'ausbildung' ? 'AUSBILDUNG' : 'WORK');
-      setVisaCategoryId(cat.id);
-    }
-  }
   const [busy, setBusy] = useState(false);
   const [vacancyId, setVacancyId] = useState('');
   const vacancyFieldId = useId();
@@ -73,7 +63,26 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
     enabled: withJob,
     staleTime: 60_000,
   });
+  // Visa chosen before registering (calculator → /register?visa=<slug>), applied once per visit; it is kept (7 days,
+  // lib/referralCookie) until a case was started. Free choice: preselects the kind and sector. Vacancies only: the
+  // vacancies of that visa come first, and the only one with a free place is preselected.
+  const [prefill, setPrefill] = useState(rememberedVisa);
+  const [visaPrefCategory, setVisaPrefCategory] = useState('');
+  if (prefill && content?.visaCategories?.length && policy && (!onlyVacancies || vacancies)) {
+    const cat = content.visaCategories.find((v) => v.slug === prefill);
+    setPrefill('');
+    if (!cat) forgetVisa();
+    else if (onlyVacancies) {
+      setVisaPrefCategory(cat.id);
+      const pick = preselectForVisa(vacancies ?? [], cat.id, isFull);
+      if (pick) setVacancyId(pick);
+    } else {
+      setVisaType(cat.slug === 'ausbildung' ? 'AUSBILDUNG' : 'WORK');
+      setVisaCategoryId(cat.id);
+    }
+  }
   const openVacancies = (vacancies ?? []).filter((v) => !isFull(v));
+  const orderedVacancies = orderForVisa(vacancies ?? [], visaPrefCategory, isFull);
   const optionLabel = useVacancyOptionLabel();
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -105,6 +114,7 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
               visaCategoryId: visaCategoryId || null,
             },
       );
+      forgetVisa(); // the remembered calculator choice is used up
       await refresh();
       navigate(`/account/cases/${res.data.case.id}`);
     } catch (err) {
@@ -168,7 +178,7 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
           {onlyVacancies ? (
             <VacancyOnlyPicker
               id={vacancyFieldId}
-              vacancies={vacancies ?? []}
+              vacancies={orderedVacancies}
               loading={vacanciesLoading}
               hasOpen={openVacancies.length > 0}
               value={vacancyId}

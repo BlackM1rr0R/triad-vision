@@ -32,6 +32,7 @@ import { GermanyDayCard } from '@/components/portal/GermanyDayCard'; // visa app
 import { BadgesPanel } from '@/components/portal/BadgesPanel'; // private achievements (compact)
 import { ReadinessCard } from '@/components/readiness/Readiness'; // Germany readiness score 0–100 + the next step with the biggest gain
 import { FutureLetterCta, ReadyHomeCard } from '@/components/ready/ReadyCards'; // Germany Ready points + weekly challenge; letter to my future self
+import { opensMoreArea } from './portal/homeAnchors'; // #permits lives in the folded "More" area before the arrival
 
 registerCopy(pagesAccount);
 registerCopy(pagesPortalUx);
@@ -84,7 +85,12 @@ function StageTools({ tools, ctx, badge, allBadge }: { tools: PortalToolKey[]; c
 /** "More": the cards that used to crowd the home (progress, journey map, readiness …), folded away and mounted on demand. */
 function MoreArea({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const { hash } = useLocation();
+  // A link to a card inside (permit reminder → /account#permits) opens the area, so the anchor exists to scroll to.
+  const [open, setOpen] = useState(() => opensMoreArea(hash));
+  useEffect(() => {
+    if (opensMoreArea(hash)) setOpen(true);
+  }, [hash]);
   const id = useId();
   return (
     <section className="rounded-3xl border border-line bg-card" data-tour="portal-more">

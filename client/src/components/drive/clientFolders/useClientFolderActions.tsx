@@ -5,12 +5,13 @@ import clsx from 'clsx';
 import { ArrowDownWideNarrow, Filter, Handshake, PenLine, SendHorizontal, UserMinus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { PROCESSING_STAGES, STAGE_TONE, stageLabel, type ProcessingStage } from '@/components/caseProcessing/api';
+import { PROCESSING_STAGES, STAGE_TONE, stageLabel } from '@/components/caseProcessing/api';
 import { TONE_CLASS } from '@/components/ui/status';
 import type { MenuEntry } from '../ContextMenu';
 import type { ToolAction } from '../Toolbar';
 import type { DriveItem } from '../types';
 import { targetOf, targetsOf, type BulkResponse, type FolderTarget } from './api';
+import { applyStageFilter, stageKey, type StageFilter } from './stageFilter';
 import { BulkStageDialog, PartnerPickerDialog, RemovePartnerDialog, ResultDialog, SendReadyDialog } from './Dialogs';
 
 /**
@@ -27,12 +28,7 @@ import { BulkStageDialog, PartnerPickerDialog, RemovePartnerDialog, ResultDialog
  * case scope per case); the menu greys out what the own permission matrix (GET /admin/me/permissions) refuses.
  */
 
-type StageFilter = ProcessingStage | 'NONE';
 type DialogState = { kind: 'partner' | 'remove' | 'stage' | 'send'; targets: FolderTarget[] } | null;
-
-/** Order of the "sort by status" view: the open work first. */
-const STAGE_ORDER: Record<string, number> = { WRITTEN: 0, IN_PROGRESS: 1, DONE: 2, REFUSED: 3, NONE: 4 };
-const stageKey = (i: DriveItem) => (i.kind === 'FOLDER' && i.caseId ? (i.caseInfo?.processing?.stage ?? 'NONE') : null);
 
 const usePerms = () => {
   const { user } = useAuth();
@@ -116,25 +112,7 @@ export const useClientFolderActions = () => {
   };
 
   /** Status filter + sort, applied after the drive's own sort (only client folders carry a stage). */
-  const filterItems = useCallback(
-    (items: DriveItem[]) => {
-      let out = items;
-      if (filter.length) out = out.filter((i) => {
-        const k = stageKey(i);
-        return k !== null && filter.includes(k as StageFilter);
-      });
-      if (byStage) {
-        out = [...out].sort((a, b) => {
-          const ka = stageKey(a);
-          const kb = stageKey(b);
-          if (ka === null || kb === null) return ka === kb ? 0 : ka === null ? 1 : -1;
-          return STAGE_ORDER[ka] - STAGE_ORDER[kb];
-        });
-      }
-      return out;
-    },
-    [filter, byStage],
-  );
+  const filterItems = useCallback((items: DriveItem[]) => applyStageFilter(items, filter, byStage), [filter, byStage]);
 
   /** Bar above the listing when it holds client folders: one chip per status (with counts) + sort by status. */
   const filterBar = (items: DriveItem[]): ReactNode => {

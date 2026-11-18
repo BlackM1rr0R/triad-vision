@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { ContractKind, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
-import { HttpError, badRequest, notFound, parse } from '../../lib/http.js';
+import { badRequest, notFound, parse } from '../../lib/http.js';
 import { requireMinRole } from '../../middleware/auth.js';
 import { INPUT_KEYS, PLACEHOLDERS, renderContract, usedKeys } from '../../lib/contracts/render.js';
 import { asContractLang, contractValues, loadContractCase, type ContractCase } from '../../lib/contracts/values.js';
@@ -200,11 +200,6 @@ const defaultSigners = async (c: ContractCase, req: Request): Promise<SignerInpu
 /** Kinds sent only through the two-step case contracts (Əmək müqaviləsi → İş müqaviləsi), never from here. */
 const TWO_STEP_KINDS: ContractKind[] = ['LABOUR', 'WORK', 'AUSBILDUNG'];
 
-/** Case statuses in which a service contract becomes the case's contract step (like the e-sign prefill). */
-const CONTRACT_STEP = ['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'];
-/** Errors from the case flow that mean "this case cannot take a contract right now". */
-const CONTRACT_REFUSALS = ['REQUIRED_DOCUMENTS_NOT_ACCEPTED', 'INVALID_TRANSITION'];
-
 adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
   const body = parse(sendSchema, req.body ?? {});
   const { t, c, lang, values, rendered } = await renderFor(req, String(req.params.id), body.caseId, body.inputs);
@@ -244,15 +239,11 @@ adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
     return created;
   };
 
-  let caseContract = t.kind === 'SERVICE' && CONTRACT_STEP.includes(c.status); // the only kind sent from here
-  let created;
-  try {
-    created = await createAndSend(caseContract);
-  } catch (err) {
-    if (!caseContract || !(err instanceof HttpError) || !CONTRACT_REFUSALS.includes(err.code)) throw err;
-    caseContract = false; // the case cannot take its contract now: send as an ordinary signature request
-    created = await createAndSend(false);
-  }
+  // Never the case contract: the case's contract step is the Əmək müqaviləsi of the two-step flow (lib/caseContracts).
+  // Binding a service contract would move the case, take over Contract.signatureRequestId and cancel the open
+  // Əmək müqaviləsi ("Superseded by a newer contract").
+  const caseContract = false;
+  const created = await createAndSend(caseContract);
   void audit(req, 'contractTemplate.send', t.id, { caseId: c.id, signatureRequestId: created.id, caseContract, missing: rendered.missing });
   res.status(201).json({ signatureRequestId: created.id, caseContract, missing: rendered.missing });
 });

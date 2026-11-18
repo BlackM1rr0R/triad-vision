@@ -8,6 +8,7 @@ import { FINAL_STATUSES } from '../lib/caseFlow.js';
 import { preferredChannel, sendSms, sendWhatsApp } from '../lib/messaging/outbound.js';
 import { clientsWithTrackedPassport } from '../lib/expiry/index.js';
 import { clientsInPermitCare } from '../lib/permits/service.js';
+import { loadContractTurns } from '../lib/caseContracts/turn.js'; // contract reminders only on the client's turn
 
 /**
  * Appointment, missing-document, passport-expiry, contract-signature and staff-SLA reminders,
@@ -265,8 +266,12 @@ export const runContractReminders = async (now = new Date()) => {
     where: { status: 'CONTRACT_SENT', contract: { signedAt: null } },
     include: { client: true, contract: true },
   });
+  // Only the client's turn: while Triad Vision signs first (the e-sign job reminds that signer) or a new version
+  // is due, the client has nothing to sign.
+  const turns = await loadContractTurns(cases, now);
   for (const c of cases) {
     if (!c.contract) continue;
+    if (turns.get(c.id) !== 'CLIENT') continue;
     // Waiting since the contract was (re)sent or a signature was sent back for re-signing.
     const entered = await prisma.caseEvent.findFirst({
       where: { caseId: c.id, toStatus: 'CONTRACT_SENT' },

@@ -15,6 +15,7 @@ import { ScoreRing } from '@/components/jobs/MatchMeter';
 import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE } from '@/components/jobs/types';
 import { Empty, Loading, Section } from '@/components/company/shared';
+import { CompanyGate, useCompanyAccess } from '@/components/company/access'; // New / Edit / Cancel need createRequests
 import { RequestForm } from './RequestForm';
 import { RequestProgressBar } from './RequestProgressBar';
 import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
@@ -64,6 +65,7 @@ const Requirements = ({ r }: { r: EmployerRequest }) => {
 const RequestList = () => {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: KEY, queryFn: async () => (await api.get<{ items: EmployerRequest[] }>('/company/requests')).data.items, retry: false });
+  const canEdit = useCompanyAccess().canDo('editRequests');
   if (q.isLoading) return <Loading />;
   if (q.isError && errorCode(q.error) === 'COMPANY_NOT_APPROVED') return <NotApproved />;
   const items = q.data ?? [];
@@ -72,17 +74,21 @@ const RequestList = () => {
       title={t('requests.company.title')}
       icon={ClipboardList}
       actions={
-        <Link to="/company/requests/new" className="btn-primary btn-sm">
-          <Plus className="size-4" aria-hidden /> {t('requests.company.new')}
-        </Link>
+        canEdit ? (
+          <Link to="/company/requests/new" className="btn-primary btn-sm">
+            <Plus className="size-4" aria-hidden /> {t('requests.company.new')}
+          </Link>
+        ) : undefined
       }
     >
       <p className="-mt-2 mb-5 text-sm text-muted">{t('requests.company.subtitle')}</p>
       {items.length === 0 ? (
         <Empty icon={ClipboardList} title={t('requests.company.empty')} text={t('requests.company.emptyText')}>
-          <Link to="/company/requests/new" className="btn-primary btn-sm">
-            <Plus className="size-4" aria-hidden /> {t('requests.company.new')}
-          </Link>
+          {canEdit && (
+            <Link to="/company/requests/new" className="btn-primary btn-sm">
+              <Plus className="size-4" aria-hidden /> {t('requests.company.new')}
+            </Link>
+          )}
         </Empty>
       ) : (
         <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -177,6 +183,7 @@ const CandidateCard = ({ item, vacancyId }: { item: EmployerRequestCandidate; va
   const L = useJobLabels();
   const c = item.candidate;
   const skillVideos = useEmployerSkillVideos(); // approved + consented skill videos (one shared query)
+  const canDecide = useCompanyAccess().canDo('viewCandidates'); // the link opens /company/candidates (viewCandidatePool)
   return (
     <li className="flex min-w-0 flex-col rounded-2xl border border-line bg-card p-4">
       <div className="flex items-start gap-3">
@@ -208,7 +215,7 @@ const CandidateCard = ({ item, vacancyId }: { item: EmployerRequestCandidate; va
         )}
       </ul>
       <EmployerSkillVideos applicationId={item.id} videos={skillVideos.data?.get(item.id)} />
-      {['PROPOSED', 'INTERVIEW'].includes(item.status) && vacancyId && (
+      {['PROPOSED', 'INTERVIEW'].includes(item.status) && vacancyId && canDecide && (
         <Link to={`/company/candidates?vacancyId=${vacancyId}`} className="btn-primary btn-sm mt-4 self-start">
           {t('requests.company.decide')}
         </Link>
@@ -223,6 +230,7 @@ const RequestDetail = () => {
   const L = useJobLabels();
   const qc = useQueryClient();
   const q = useRequest(id);
+  const canEdit = useCompanyAccess().canDo('editRequests');
   const [confirm, setConfirm] = useState(false);
   const [reason, setReason] = useState('');
   const cancel = useMutation({
@@ -251,12 +259,12 @@ const RequestDetail = () => {
         actions={
           <>
             <StatusBadge status={r.status} />
-            {r.status === 'OPEN' && (
+            {r.status === 'OPEN' && canEdit && (
               <Link to={`/company/requests/${r.id}/edit`} className="btn-ghost btn-sm">
                 <Pencil className="size-4" aria-hidden /> {t('requests.company.edit')}
               </Link>
             )}
-            {(r.status === 'OPEN' || r.status === 'IN_PROGRESS') && (
+            {(r.status === 'OPEN' || r.status === 'IN_PROGRESS') && canEdit && (
               <button type="button" className="btn-ghost btn-sm text-red-700" onClick={() => setConfirm(true)}>
                 <XCircle className="size-4" aria-hidden /> {t('requests.company.cancel')}
               </button>
@@ -331,9 +339,9 @@ const RequestDetail = () => {
 export const CompanyRequests = () => (
   <Routes>
     <Route index element={<RequestList />} />
-    <Route path="new" element={<NewRequest />} />
+    <Route path="new" element={<CompanyGate all={['createRequests']}><NewRequest /></CompanyGate>} />
     <Route path=":id" element={<RequestDetail />} />
-    <Route path=":id/edit" element={<EditRequest />} />
+    <Route path=":id/edit" element={<CompanyGate all={['createRequests']}><EditRequest /></CompanyGate>} />
     <Route path="*" element={<Navigate to="/company/requests" replace />} />
   </Routes>
 );
