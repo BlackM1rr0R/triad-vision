@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
-import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import { AnimatePresence, m as motion, useScroll, useSpring } from 'framer-motion';
 import { LogoMark } from '../ui/Logo';
 import { smoothScrollTo, startSmoothScroll, stopSmoothScroll } from '@/lib/smoothScroll';
 import { usePrefs } from '@/lib/prefs';

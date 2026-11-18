@@ -6,7 +6,7 @@ import { ToolViewTracker } from '../analytics/ToolViewTracker';
 import { SeoManager } from '@/lib/usePageTitle';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
+import { AnimatePresence, m as motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 import { Header, LIGHT_TOP } from './Header';
 import { RouteErrorBoundary } from '../ui/RouteErrorBoundary';

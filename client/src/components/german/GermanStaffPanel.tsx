@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { GraduationCap, Maximize2 } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesFamilyLanguage } from '@/i18n/pagesFamilyLanguage';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { pagesGermanVocab } from '@/i18n/pagesGermanVocab';
 import { useApiError } from '@/components/portal/useApiError';
 import { Modal } from '@/components/admin/Modal';
@@ -15,7 +15,7 @@ import { GermanProgressBoard, LevelProgress } from './GermanProgressBoard';
 import { ActivityBars } from './VocabTrainer';
 import { levelLabel, PROFILE_LEVELS } from './types';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesFamilyLanguage);
 registerCopy(pagesGermanVocab);
 

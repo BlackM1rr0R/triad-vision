@@ -9,15 +9,15 @@ import { buttonClass } from '@/components/ui/Button';
 import { Success } from '@/components/illustrations';
 import { CURRENCIES, fmtMoney, useCostConfig, type Money } from '@/components/marketing/api';
 import { costInput, resolveCostChoices, useCostEstimate } from '@/lib/calculators/cost';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { leadContext, trackLead } from '@/lib/leadVisitor';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const HERO = 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=2000&q=70';
 

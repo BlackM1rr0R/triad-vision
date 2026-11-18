@@ -41,9 +41,9 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { adminCopy } from '@/i18n/admin';
-import { driveCopy } from '@/i18n/pagesDrive';
+import driveCopy from '@/i18n/pagesDrive?lazy-copy';
 import { docCreateCopy } from '@/i18n/pagesDocCreate';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -102,7 +102,7 @@ const DocEditor = lazy(() => import('@/components/docCreate/DocEditor'));
 const TextConvertDialog = lazy(() => import('@/components/docCreate/TextConvertDialog'));
 
 registerCopy(adminCopy);
-registerCopy(driveCopy);
+registerLazyCopy(driveCopy); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(docCreateCopy);
 
 const BASE = '/workspace/drive';

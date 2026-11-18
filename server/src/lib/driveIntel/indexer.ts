@@ -60,11 +60,6 @@ export const indexNode = async (nodeId: string) => {
   return indexCandidate(c);
 };
 
-/** Marks a node dirty so the next run indexes it again. */
-export const queueIndex = async (nodeId: string) => {
-  await prisma.$executeRaw`UPDATE DriveNode SET textIndexedAt = NULL WHERE id = ${nodeId}`;
-};
-
 /** One indexer run: up to `limit` files that need it, newest changes first. Returns how many were processed. */
 export const runDriveIndex = async (limit = INDEX_BATCH) => {
   const rows = await prisma.$queryRaw<{ id: string }[]>`

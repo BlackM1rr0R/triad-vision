@@ -23,7 +23,6 @@ fs.mkdirSync(chatDir, { recursive: true });
 fs.mkdirSync(chatIncomingDir, { recursive: true });
 
 const KEY = /^[a-f0-9]{32}$/;
-export const isChatKey = (key: string) => KEY.test(key);
 export const newChatKey = () => crypto.randomBytes(16).toString('hex');
 
 export const chatFilePath = (key: string) => {

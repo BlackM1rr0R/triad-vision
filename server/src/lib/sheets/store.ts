@@ -34,11 +34,6 @@ export const readStoredFile = async (row: { storageKey: string }) => {
   return buf;
 };
 
-export const readCurrent = async (nodeId: string) => {
-  const row = await currentRow(nodeId);
-  return { row, buf: await readStoredFile(row) };
-};
-
 /** Writes bytes into the drive store under a fresh key. */
 export const storeBuffer = async (buf: Buffer) => {
   const key = newStorageKey();

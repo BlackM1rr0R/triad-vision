@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Bell, Camera, Lock, MessageCircle, PenLine, Phone, ShieldCheck } from 'lucide-react';
 import { RouteFlags } from '@/components/ui/Flag';
 import { useSiteContent } from '@/lib/content';

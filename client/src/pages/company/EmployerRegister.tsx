@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Building2, CheckCircle2, ShieldCheck, Ticket, UserRound } from 'lucide-react';
 import clsx from 'clsx';
@@ -12,8 +12,8 @@ import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { isStaffRole, isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type User } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { cookieConsentCopy } from '@/i18n/cookieConsent'; // AGB link label
 import { Spinner } from '@/components/ui/Spinner';
 import { RouteFlags } from '@/components/ui/Flag';
@@ -23,7 +23,7 @@ import { Employer } from '@/components/illustrations';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(cookieConsentCopy);
 
 const Field = ({ id, label, children, className }: { id: string; label: string; children: ReactNode; className?: string }) => (

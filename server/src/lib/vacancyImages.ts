@@ -48,9 +48,6 @@ export const vacancyImagesOf = (value: unknown): VacancyImage[] => {
   return out;
 };
 
-/** URL of a width variant ("/uploads/vacancies/<hex>-480.webp"). */
-export const variantUrl = (url: string, width: number) => url.replace(/\.webp$/, `-${width}.webp`);
-
 /** multer (memory, one `file`) with readable error codes (lib/publicImages.ts). */
 export const singleVacancyImage = singleRasterImage;
 

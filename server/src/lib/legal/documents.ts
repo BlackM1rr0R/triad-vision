@@ -150,7 +150,11 @@ export interface PendingAcceptance {
  * logged before the id was stored). A version published without the flag never blocks anyone.
  */
 export const pendingAcceptances = async (userId: string): Promise<PendingAcceptance[]> => {
-  const docs = await prisma.legalDocument.findMany({ where: { kind: { in: [...ACCEPT_KINDS] }, status: 'PUBLISHED', requiresReacceptance: true } });
+  // No `body`: the full legal text in every language is never needed here (this runs on every portal home load).
+  const docs = await prisma.legalDocument.findMany({
+    where: { kind: { in: [...ACCEPT_KINDS] }, status: 'PUBLISHED', requiresReacceptance: true },
+    select: { id: true, kind: true, version: true, title: true, changeSummary: true, effectiveAt: true, publishedAt: true },
+  });
   if (!docs.length) return [];
   const accepted = await prisma.consentRecord.findMany({
     where: { userId, granted: true, type: { in: docs.map((d) => CONSENT_TYPE_FOR_KIND[d.kind as LegalKind]) } },

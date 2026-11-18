@@ -1,6 +1,6 @@
 import { RouteFlags } from '../ui/Flag';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Handshake as HandshakeIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { QuizCta } from '../publicAi/QuizCta';

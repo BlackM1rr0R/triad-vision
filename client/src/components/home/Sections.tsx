@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import { m as motion, useScroll, useSpring } from 'framer-motion';
 import {
   ArrowRight,
   ArrowUpRight,

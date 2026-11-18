@@ -145,14 +145,16 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
         : [{ publishedAt: 'desc' }, { createdAt: 'desc' }];
 
   // Full vacancies stay on the board but come after the ones with free places (same order inside each group).
-  const ordered = await prisma.vacancy.findMany({ where, orderBy, take: 2000, select: { id: true, positions: true, filledAdjustment: true } });
+  const ORDERED_CAP = 2000;
+  const ordered = await prisma.vacancy.findMany({ where, orderBy, take: ORDERED_CAP, select: { id: true, positions: true, filledAdjustment: true } });
   const places = await placesFor(ordered);
   const pageIds = fullLast(ordered, (v) => (places.get(v.id)?.free ?? 0) <= 0)
     .slice((q.page - 1) * q.pageSize, q.page * q.pageSize)
     .map((v) => v.id);
   const [rows, total, sectors, cities] = await Promise.all([
     prisma.vacancy.findMany({ where: { id: { in: pageIds } }, include: publicInclude }),
-    prisma.vacancy.count({ where }),
+    // Below the cap the list above already holds every match: no second run of the same filter.
+    ordered.length < ORDERED_CAP ? Promise.resolve(ordered.length) : prisma.vacancy.count({ where }),
     prisma.vacancy.groupBy({ by: ['sector'], where: openVacancyWhere(), _count: { _all: true } }),
     prisma.vacancy.groupBy({ by: ['city'], where: openVacancyWhere(), _count: { _all: true }, orderBy: { _count: { city: 'desc' } }, take: 30 }),
   ]);

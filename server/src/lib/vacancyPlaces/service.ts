@@ -39,12 +39,6 @@ export const placesFor = async (vacancies: Countable[], db: Db = prisma): Promis
   return new Map(vacancies.map((v) => [v.id, computePlaces(v, counts.get(v.id) ?? 0)]));
 };
 
-/** The items with `filled` and `free` next to their `positions`. */
-export const withPlaces = async <T extends Countable>(items: T[], db: Db = prisma): Promise<(T & Places)[]> => {
-  const map = await placesFor(items, db);
-  return items.map((v) => ({ ...v, ...(map.get(v.id) ?? computePlaces(v, 0)) }));
-};
-
 /** Locks the vacancy row (first statement of the transaction); 404 when there is none. */
 const lockVacancy = async (tx: Prisma.TransactionClient, by: { id: string } | { slug: string }): Promise<string> => {
   const rows =

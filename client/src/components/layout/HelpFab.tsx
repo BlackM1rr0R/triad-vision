@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Accessibility, ArrowUp, Bug, ChevronRight, LifeBuoy, MessageCircleQuestion, Phone, PhoneCall, Route, Sparkles } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Spinner } from '../ui/Spinner';

@@ -1,6 +1,7 @@
 import { lazy, StrictMode, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MotionConfig, PresenceContext } from 'framer-motion';
+import { LazyMotion, MotionConfig, PresenceContext } from 'framer-motion';
+import { loadDomAnimation } from './lib/motionFeatures';
 import { Toaster } from 'sonner';
 import { SuccessCheck } from './components/ui/SuccessCheck';
 import App from './App';
@@ -56,8 +57,10 @@ const MotionHydrationGate = ({ children }: { children: ReactNode }) => (
 const Shell = () => {
   const { noMotion, visualAlerts } = usePrefs();
   const theme = useResolvedTheme();
+  // Slim `m` components everywhere (imported as `m as motion`, lib/motionFeatures.ts): their animation features
+  // come from here, for the whole tree (toasts, dialogs and pages alike).
   return (
-    <>
+    <LazyMotion features={loadDomAnimation}>
       {/* Users who disabled animations in their OS get opacity-only motion: less work, no jank.
           "Stop animations" in the accessibility widget forces the same for everyone. */}
       <MotionConfig reducedMotion={noMotion ? 'always' : 'user'}>
@@ -72,7 +75,7 @@ const Shell = () => {
       {/* Promise-based confirmations (confirmDialog / useConfirm): replaces window.confirm everywhere. */}
       <ConfirmHost />
       <LateExtras />
-    </>
+    </LazyMotion>
   );
 };
 

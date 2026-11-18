@@ -33,8 +33,8 @@ import { vacancyImages } from '@/components/jobs/images';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { ACCEPT as DOC_ACCEPT, prepareFile } from '@/components/portal/FileDrop';
 import { isStaffRole } from '@/lib/types';
-import i18n, { currentSiteLocale, registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import i18n, { currentSiteLocale, registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SalaryEstimate } from '@/components/tools/SalaryEstimate';
 import { CompareToggle } from '@/components/jobs/CompareToggle';
@@ -61,7 +61,7 @@ import { sceneForProfession } from '@/lib/workScenes/meta';
 import { FullNotice, PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // free places, "Yer qalmayıb"
 import { isFull, placesErrorText } from '@/components/vacancyPlaces/api';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesPortalExtras); // px.apply.*, px.scan.*
 
 const HERO = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=2000&q=70';

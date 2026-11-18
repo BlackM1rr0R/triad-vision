@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import clsx from 'clsx';
 import { Download, Share2, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';

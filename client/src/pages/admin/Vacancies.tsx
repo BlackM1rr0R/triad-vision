@@ -11,8 +11,8 @@ import { hasMinRole } from '@/lib/types';
 import { useL10n } from '@/lib/l10n';
 import { useSiteContent } from '@/lib/content';
 import type { L10n } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { Drawer } from '@/components/admin/Drawer';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -48,7 +48,7 @@ import {
   type VacancyStatus,
 } from '@/components/jobs/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesStaffPower);
 
 const STATUSES: VacancyStatus[] = ['PENDING', 'OPEN', 'DRAFT', 'CLOSED'];

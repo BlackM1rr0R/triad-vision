@@ -19,7 +19,6 @@ import { asQuoteLocale, quoteTexts, staffQuoteTexts } from './texts.js';
  */
 
 const HOUR = 60 * 60 * 1000;
-const DAY = 24 * HOUR;
 export const OPEN_STATUSES: QuoteStatus[] = ['SENT', 'VIEWED'];
 export const COMPANY_LINK = '/company/quotes';
 export const adminLink = (id: string) => `/admin/quotes?id=${id}`;

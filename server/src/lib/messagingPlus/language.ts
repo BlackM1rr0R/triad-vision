@@ -70,5 +70,3 @@ export const findContactDetails = (text: string): ContactKind[] => {
   if (numbers.some(looksLikePhone)) kinds.add('PHONE');
   return [...kinds];
 };
-
-export const hasContactDetails = (text: string) => findContactDetails(text).length > 0;

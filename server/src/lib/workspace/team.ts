@@ -1,4 +1,4 @@
-import type { LeaveStatus, LeaveType, Prisma, Role } from '@prisma/client';
+import type { LeaveType, Prisma, Role } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { subscriberCount } from '../messaging/realtime.js';
 
@@ -160,5 +160,3 @@ export const leaveBalance = async (userId: string, now = new Date()) => {
   }
   return { year, used, pending };
 };
-
-export const isLeaveStatus = (s: string): s is LeaveStatus => (LEAVE_STATUSES as readonly string[]).includes(s);

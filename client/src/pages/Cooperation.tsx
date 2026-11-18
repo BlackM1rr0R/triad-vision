@@ -11,12 +11,12 @@ import { InquiryForm } from '@/components/InquiryForm';
 import { Accordion, useCopy } from '@/components/about/shared';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
-import { registerCopy } from '@/i18n';
-import { pagesCompany } from '@/i18n/pagesCompany';
+import { registerLazyCopy } from '@/i18n';
+import pagesCompany from '@/i18n/pagesCompany?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { BookingCta } from '@/components/booking/BookingCta';
 
-registerCopy(pagesCompany);
+registerLazyCopy(pagesCompany); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /* ───────────────────────── Checklist (ticks kept in this browser only) ───────────────────────── */
 const STORE_KEY = 'tv_coop_checklist';

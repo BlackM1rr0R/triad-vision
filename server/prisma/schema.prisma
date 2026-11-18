@@ -208,6 +208,7 @@ model User {
   @@index([companyId])
   @@index([mergedIntoId])
   @@index([ownerPartnerId])
+  @@index([role, isActive]) // perf (migration 20261129100000_perf_indexes)
 }
 
 /// Server-side login session. The JWT only carries the session id, so a session can be revoked
@@ -226,6 +227,7 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 /// Security-relevant actions (user management, permissions, document changes, session revocations).
@@ -498,6 +500,8 @@ model Case {
   @@index([processingAssigneeId])
   @@index([embassyAuthorityId])
   @@index([abhAuthorityId])
+  @@index([status, updatedAt]) // perf (migration 20261129100000_perf_indexes)
+  @@index([decisionAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 model DocumentRequirement {
@@ -546,6 +550,8 @@ model Document {
   reviewMarks      Json?
 
   @@index([caseId, stage])
+  @@index([ocrAt, createdAt]) // perf (migration 20261129100000_perf_indexes)
+  @@index([expiresAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 model Contract {
@@ -578,6 +584,7 @@ model CaseEvent {
 
   @@index([caseId, createdAt])
   @@index([createdAt])
+  @@index([caseId, toStatus, createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 model CaseMessage {
@@ -613,6 +620,7 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+  @@index([userId, createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 model EmailLog {
@@ -1331,6 +1339,7 @@ model DriveNode {
   @@index([contentHash])
   @@index([workflowStage])
   @@index([workflowCaseId])
+  @@index([kind, deletedAt, updatedAt, textIndexedAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 /// Access to a node (and, by inheritance, everything below it) for one user OR every user of a role.
@@ -1500,6 +1509,7 @@ model OutboundMessage {
   @@index([userId, createdAt])
   @@index([caseId])
   @@index([status, createdAt])
+  @@index([createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 /// Admin-edited override of a notification text (title/body per type and locale). Missing rows fall back to code.
@@ -1689,6 +1699,7 @@ model InterviewInvite {
 
   @@index([candidateId, status])
   @@index([companyId, status])
+  @@index([status, createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 // ─── Internal knowledge base ───────────────────────────────────────────
@@ -2218,6 +2229,8 @@ model Poll {
   closedAt  DateTime?
   createdAt DateTime     @default(now())
   options   PollOption[]
+
+  @@index([closedAt, closesAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 model PollOption {
@@ -3798,6 +3811,7 @@ model DocumentInsight {
   @@index([caseId, status])
   @@index([folderId, status])
   @@index([sha256])
+  @@index([status, createdAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 // ─── Quotes (Angebote) for German employers ──────────────────────────
@@ -4354,6 +4368,7 @@ model CampaignRecipient {
   @@index([userId])
   @@index([providerId])
   @@index([status, lastAttemptAt])
+  @@index([channel, status, updatedAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 // ─── Client process: ball-in-court, client tasks, office visits (lib/clientProcess) ───
@@ -4934,6 +4949,7 @@ model DocumentAccessLog {
 
   @@index([clientId, lastAt])
   @@index([actorId, documentId, action, lastAt])
+  @@index([lastAt]) // perf (migration 20261129100000_perf_indexes)
 }
 
 // ─── Phone calls, callback requests, AI → human live chat (stream: calls_livechat) ───

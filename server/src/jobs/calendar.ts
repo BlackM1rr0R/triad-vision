@@ -21,16 +21,19 @@ export const runEventReminders = async (now = new Date()) => {
       startsAt: { lte: new Date(now.getTime() + MAX_LEAD_MS) },
       OR: [{ rrule: null, startsAt: { gt: now } }, { rrule: { not: null } }],
     },
-    include: eventInclude,
+    // Only what the timing needs: owner / attendees / case are loaded for the (few) events actually due this minute.
+    select: { id: true, startsAt: true, endsAt: true, rrule: true, reminderMinutes: true },
     take: 2000,
   });
   let sent = 0;
-  for (const e of events) {
+  for (const lite of events) {
     // 0 = "at the start": we still need a window, so remind within the minute before.
-    const lead = Math.max(e.reminderMinutes ?? 0, 1) * MIN;
-    const occurrences = expandOccurrences(e.startsAt, e.endsAt, e.rrule, now, new Date(now.getTime() + lead + 1));
-    for (const o of occurrences) {
-      if (o.start.getTime() <= now.getTime()) continue;
+    const lead = Math.max(lite.reminderMinutes ?? 0, 1) * MIN;
+    const due = expandOccurrences(lite.startsAt, lite.endsAt, lite.rrule, now, new Date(now.getTime() + lead + 1)).filter((o) => o.start.getTime() > now.getTime());
+    if (!due.length) continue;
+    const e = await prisma.calendarEvent.findUnique({ where: { id: lite.id }, include: eventInclude });
+    if (!e) continue; // deleted meanwhile
+    for (const o of due) {
       if (!(await claimReminder(`event-reminder:${e.id}:${o.start.toISOString()}`, now))) continue;
       const recipients = [...new Set([e.ownerId, ...e.attendees.filter((a) => a.status === 'ACCEPTED').map((a) => a.userId)])];
       await notifyReminder(e, o.start, o.end, recipients);

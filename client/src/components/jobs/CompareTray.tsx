@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { ArrowRight, GitCompareArrows, X } from 'lucide-react';
 import clsx from 'clsx';
 import { registerCopy } from '@/i18n';

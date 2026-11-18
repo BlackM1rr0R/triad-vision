@@ -1,4 +1,5 @@
 import { createElement, lazy, useState, type ComponentProps, type ComponentType } from 'react';
+import { copyReady } from '@/i18n';
 
 /*
  * React.lazy for route pages, with two additions for the server-rendered first paint (lib/ssr.ts):
@@ -22,10 +23,12 @@ export const lazyRoute = <T extends ComponentType<any>>(id: string, factory: () 
   let pending: Promise<{ default: T }> | null = null;
   const load = () =>
     (pending ??= factory().then(
-      (m) => {
-        loaded = m.default;
-        return m;
-      },
+      // The page's split copy (registerLazyCopy in the page and its imports) is in before it renders.
+      (m) =>
+        copyReady().then(() => {
+          loaded = m.default;
+          return m;
+        }),
       (err: unknown) => {
         pending = null; // a failed chunk request may be retried (RouteErrorBoundary)
         throw err;

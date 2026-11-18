@@ -48,16 +48,16 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { DocChecklist } from '@/components/tools/DocChecklist';
-import { currentSiteLocale, registerCopy } from '@/i18n';
+import { currentSiteLocale, registerLazyCopy } from '@/i18n';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
-import { pagesTools } from '@/i18n/pagesTools';
+import pagesTools from '@/i18n/pagesTools?lazy-copy';
 import { useL10n } from '@/lib/l10n';
 import { smoothScrollTo } from '@/lib/smoothScroll';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { findProfession, LINKS, PROFESSIONS, type Profession, type ProfessionIcon } from '@/lib/anerkennung/data';
 import { PathLink, useGuides } from '@/components/guides/shared';
 
-registerCopy(pagesTools);
+registerLazyCopy(pagesTools); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'] as const;
 

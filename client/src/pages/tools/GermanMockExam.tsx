@@ -13,8 +13,8 @@ import { GlossaryChips } from '@/components/glossary/GlossaryChips';
 import { PartView, type ExamApi } from '@/components/germanExam/Parts';
 import { useScriptSpeech } from '@/components/germanExam/useScriptSpeech';
 import { downloadResultCard } from '@/components/games/shareCard';
-import { registerCopy } from '@/i18n';
-import { pagesMockExam } from '@/i18n/pagesMockExam';
+import { registerLazyCopy } from '@/i18n';
+import pagesMockExam from '@/i18n/pagesMockExam?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { mmss } from '@/lib/games/common';
 import { useReadyReport } from '@/lib/readyProgress/sync'; // Germany Ready: results of signed-in clients
@@ -24,7 +24,7 @@ import { examOutcome, grade, moduleResult, secondsLeft, type ModuleResult } from
 import { findSet, setsOf } from '@/lib/germanExam/sets';
 import type { ExamLevel, ExamModule, ExamSet, ModuleKey } from '@/lib/germanExam/types';
 
-registerCopy(pagesMockExam);
+registerLazyCopy(pagesMockExam); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const MODULE_ICON: Record<ModuleKey, LucideIcon> = { hoeren: Ear, lesen: BookOpen, schreiben: PenLine, sprechen: Mic };
 const MODULE_DE: Record<ModuleKey, string> = { hoeren: 'Hören', lesen: 'Lesen', schreiben: 'Schreiben', sprechen: 'Sprechen' };

@@ -9,8 +9,8 @@ import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { hasMinRole, type L10n } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { ICON_NAMES, Icon, hasIcon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -22,7 +22,7 @@ import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/
 import { Tabs } from '@/components/ui/Tabs';
 import { FORECAST_STEPS, GERMAN_LEVELS, type AdminForecastRow, type ForecastOverride, type ForecastRanges, type ForecastStepKey, type ForecastUnit, type GermanQuestionAdmin, type LanguageCourse, type OnboardingItem } from '@/components/journey/types';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 type Tab = 'forecast' | 'onboarding' | 'questions' | 'courses';
 const TABS: { key: Tab; icon: typeof Compass }[] = [

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useSiteContent } from '@/lib/content';

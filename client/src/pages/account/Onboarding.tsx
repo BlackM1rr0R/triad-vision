@@ -11,8 +11,8 @@ import { optimistic } from '@/lib/optimistic';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { Icon, hasIcon } from '@/components/ui/Icon';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ProgressRing } from '@/components/portal/ProgressRing';
@@ -22,7 +22,7 @@ import type { OnboardingProgress, OnboardingResponse, OnboardingRow } from '@/co
 import { Germany } from '@/components/illustrations';
 import { FutureLetterCta } from '@/components/ready/ReadyCards'; // letter to my future self invitation
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const DueHint = ({ row }: { row: OnboardingRow }) => {
   const { t } = useTranslation();

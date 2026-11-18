@@ -17,7 +17,6 @@ import { brandify } from '../brand/index.js'; // white-label name + domain on th
 
 export const CARD_FORMATS = { post: { w: 1080, h: 1350 }, story: { w: 1080, h: 1920 }, square: { w: 1080, h: 1080 } } as const;
 export type CardFormat = keyof typeof CARD_FORMATS;
-export const isCardFormat = (v: unknown): v is CardFormat => typeof v === 'string' && Object.prototype.hasOwnProperty.call(CARD_FORMATS, v);
 
 export interface CardInput {
   format: CardFormat;

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Briefcase, FileSignature, GraduationCap, HeartPulse, Info, Languages, School, ShieldCheck, Sparkles, Wallet } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHero } from '@/components/layout/PageHero';
@@ -12,12 +12,12 @@ import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { useEuro } from '@/components/visa/utils';
 import { useSiteContent } from '@/lib/content';
-import { currentSiteLocale, registerCopy } from '@/i18n';
+import { currentSiteLocale, registerLazyCopy } from '@/i18n';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
-import { pagesVisa } from '@/i18n/pagesVisa';
+import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesVisa);
+registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /** Indicative gross monthly trainee pay per training year (EUR). Labelled as indicative on the page. */
 const PAY: { key: string; values: [number, number, number] }[] = [

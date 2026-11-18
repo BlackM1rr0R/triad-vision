@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { L10n } from '../ai/features/caseAi/texts.js';
-import { dmy, isoDay, normaliseTarget, targetDef, TARGET_KEYS, type TargetDef } from './targets.js';
+import { dmy, isoDay, normaliseTarget, targetDef, type TargetDef } from './targets.js';
 
 /**
  * Smart questionnaires ("Ağıllı anketlər"): the field model of a form template, validation of the client's
@@ -221,5 +221,3 @@ export const valueForTarget = (f: FormField, answers: Record<string, unknown>): 
   const value = normaliseTarget(def, raw);
   return value === null ? null : { def, value };
 };
-
-export const KNOWN_TARGETS = TARGET_KEYS;

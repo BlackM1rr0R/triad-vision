@@ -4,14 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/Spinner';
 import { LandingRenderer } from '@/components/landing/LandingRenderer';
 import type { PublicLanding } from '@/components/marketing/api';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { api } from '@/lib/api';
 import { leadVisitorId } from '@/lib/leadVisitor';
 import { usePageTitle } from '@/lib/usePageTitle';
 import NotFound from '../NotFound';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /**
  * Public landing page /l/:slug: sections from the builder (Admin → Lendinq səhifələri). The view is

@@ -4,13 +4,13 @@ import clsx from 'clsx';
 import { Check, Compass } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { PanelBodySkeleton } from '@/components/admin/case/TabSkeleton';
 import { Panel } from '@/components/admin/ui';
 import type { OnboardingResponse } from './types';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /** Staff view of a client's post-arrival checklist (approved cases). */
 export const OnboardingAdminPanel = ({ caseId }: { caseId: string }) => {

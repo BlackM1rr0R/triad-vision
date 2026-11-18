@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Counter } from '../motion';
 import { Icon } from '../ui/Icon';
 import { useSiteContent } from '@/lib/content';

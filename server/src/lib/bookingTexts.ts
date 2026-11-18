@@ -29,9 +29,6 @@ const CITY: Record<BookingLocale, { baku: string; berlin: string }> = {
 export const formatSlot = (start: Date, locale: BookingLocale) =>
   `${fmt(start, locale, 'Asia/Baku', true)} (${CITY[locale].baku}, GMT+4)\n${fmt(start, locale, 'Europe/Berlin', true)} (${CITY[locale].berlin})`;
 
-export const formatSlotShort = (start: Date, locale: BookingLocale) =>
-  `${fmt(start, locale, 'Asia/Baku', true)} (${CITY[locale].baku}) / ${fmt(start, locale, 'Europe/Berlin', false)} (${CITY[locale].berlin})`;
-
 export const TOPIC_LABEL: Record<BookingLocale, Record<string, string>> = {
   az: { candidate: 'Namizəd (Almaniyada iş)', company: 'Şirkət (işçi axtarışı)', other: 'Digər sual' },
   de: { candidate: 'Bewerber (Arbeit in Deutschland)', company: 'Unternehmen (Personalsuche)', other: 'Sonstiges' },

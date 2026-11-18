@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { AlertTriangle, ArrowLeft, Ban, Briefcase, FolderOpen, Hourglass, LayoutList, MessageCircle, MessageSquareWarning, MoreHorizontal, Sparkles, UserRound, Users } from 'lucide-react';

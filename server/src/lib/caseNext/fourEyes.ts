@@ -3,7 +3,7 @@ import type { EmbassyPackageApproval, Locale, Prisma, Role } from '@prisma/clien
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { hasMinRole } from '../../middleware/auth.js';
-import { badRequest, conflict, forbidden, HttpError, notFound } from '../http.js';
+import { badRequest, conflict, forbidden, notFound } from '../http.js';
 import { invalidateMyWork } from '../myWork.js';
 import { notifyUser } from '../notifications.js';
 import { packagePreview } from './embassyPackage.js';
@@ -271,5 +271,3 @@ export const reviewQueue = async (viewerId: string, take = 50) => {
       return { ...serialize(r, who), case: { id: c.id, number: c.number, status: c.status, appointmentAt: c.appointmentAt, client: fullName(c.client) } };
     });
 };
-
-export const isFourEyesError = (err: unknown) => err instanceof HttpError && (err.code === 'FOUR_EYES_REQUIRED' || err.code === 'FOUR_EYES_PACKAGE_CHANGED');

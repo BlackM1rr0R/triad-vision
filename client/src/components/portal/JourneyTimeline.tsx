@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { Check, FileCheck2, GraduationCap, Landmark, MapPin, Minus, PenLine, Plane, Stamp, X } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';

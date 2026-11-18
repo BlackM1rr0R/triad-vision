@@ -8,6 +8,7 @@ import { extra } from './extra';
 import { uiCopy } from './ui';
 import { EXTRA_LOCALES, SITE_LOCALES, initialLocaleRedirect, pathLanguageDetector, type ExtraLocale, type SiteLocale } from '@/lib/siteLocale';
 import { brandVars, onBrandChange } from '@/lib/brand';
+import { isHydrating } from '@/lib/ssr';
 
 /** Content languages: every CMS text, e-mail and stored user locale exists in these four. */
 export const LOCALES = ['az', 'de', 'en', 'ru'] as const;
@@ -124,6 +125,7 @@ const loadCore = (l: Locale): Promise<void> => {
  */
 export const preloadAllLanguages = () => {
   LOCALES.forEach((l) => void loadCore(l));
+  LOCALES.forEach((l) => void loadLazyCopies(l));
 };
 
 const pendingExtra: Partial<Record<ExtraLocale, Promise<void>>> = {};
@@ -136,7 +138,7 @@ const isExtra = (lng: string): lng is ExtraLocale => (EXTRA_LOCALES as readonly 
  */
 export const loadSiteLanguage = (lng: string): Promise<void> => {
   const l = siteLocaleOf(lng);
-  const core = loadCore(toContentLocale(l));
+  const core = Promise.all([loadCore(toContentLocale(l)), loadLazyCopies(l)]).then(() => undefined);
   if (!isExtra(l)) return core;
   pendingExtra[l] ??= (l === 'tr' ? import('./site/tr') : import('./site/uk'))
     .then((m) => {
@@ -200,3 +202,124 @@ export const registerCopy = (bundle: Record<Locale, object> & Partial<Record<Ext
     if (copy) i18n.addResourceBundle(l, 'translation', copy, true, false);
   });
 };
+
+// ─── Page copy split per language (vite/lazyCopy.ts) ─────────
+
+/**
+ * `import copy from '@/i18n/pagesXxx?lazy-copy'`: one loader per language of the module, and the languages that
+ * have every key of the az copy (their fallback is then never read, so the az chunk is not needed for them).
+ */
+export type CopyLoaders = Partial<Record<SiteLocale, () => Promise<object>>> & { complete?: readonly string[] };
+
+const lazyCopies: CopyLoaders[] = [];
+const lazyLoaded = new WeakMap<CopyLoaders, Map<SiteLocale, Promise<void>>>();
+let addQueue: Promise<void> = Promise.resolve();
+
+/** A language and the fallbacks i18next may read for it (fallbackLng above); az is skipped where never read. */
+const copyChain = (copy: CopyLoaders, l: SiteLocale): SiteLocale[] => {
+  const withAz = (x: SiteLocale): SiteLocale[] => (copy.complete?.includes(x) ? [x] : [x, 'az']);
+  if (l === 'az') return ['az'];
+  return isExtra(l) ? [l, ...withAz('en')] : withAz(l);
+};
+
+/** Loads one module's copy of a language and its fallbacks; true when something had to be fetched. */
+const loadCopyChain = (copy: CopyLoaders, l: SiteLocale): { started: boolean; done: Promise<void> } => {
+  let map = lazyLoaded.get(copy);
+  if (!map) lazyLoaded.set(copy, (map = new Map()));
+  let started = false;
+  const done = copyChain(copy, l).map((x) => {
+    const load = copy[x];
+    if (!load) return Promise.resolve();
+    let p = map.get(x);
+    if (!p) {
+      started = true;
+      const fetched = load();
+      // Fetched in parallel, added in the order they were asked for (as registerCopy calls run in module order):
+      // the same deep, no-overwrite merge, so a key two modules share keeps the same winner.
+      p = addQueue = addQueue.then(() =>
+        fetched.then(
+          (c) => {
+            i18n.addResourceBundle(x, 'translation', c, true, false);
+          },
+          (err: unknown) => {
+            map.delete(x);
+            console.warn('[i18n] could not load page copy', x, err);
+          },
+        ),
+      );
+      map.set(x, p);
+    }
+    return p;
+  });
+  return { started, done: Promise.all(done).then(() => undefined) };
+};
+
+/** Every split page copy registered so far, in a language (before switching to it, see loadSiteLanguage). */
+const loadLazyCopies = (l: SiteLocale): Promise<void> => Promise.all(lazyCopies.map((c) => loadCopyChain(c, l).done)).then(() => undefined);
+
+const whenInitialized = () =>
+  i18n.isInitialized ? Promise.resolve() : new Promise<void>((resolve) => i18n.on('initialized', () => resolve()));
+
+const pendingCopies = new Set<Promise<void>>();
+const awaitedCopies = new WeakSet<Promise<void>>();
+
+/** Renders the translated texts again (after the hydration: an update then would discard server markup). */
+const rerenderTexts = () => {
+  if (import.meta.env.SSR) return;
+  if (isHydrating()) {
+    window.setTimeout(rerenderTexts, 250);
+    return;
+  }
+  startTransition(() => {
+    i18n.emit('languageChanged', i18n.language);
+  });
+};
+
+/**
+ * registerCopy for a module split per language: called at the top of the module like registerCopy, it loads only
+ * the copy of the current language (and the fallbacks i18next may read). Route pages wait for it before they
+ * render (lib/lazyRoute.tsx awaits copyReady() after importing the page chunk, which ran the registrations of the
+ * page and everything it imports), so the page — and the server render — shows its copy from the first paint.
+ * Copy that nothing waited for (a chunk loaded some other way) re-renders the texts once it is in. Other languages
+ * follow when the UI switches to them (loadSiteLanguage) or, for getFixedT, once the page is idle
+ * (preloadAllLanguages) — as with the main copy.
+ */
+export const registerLazyCopy = (...copies: CopyLoaders[]): Promise<void> => {
+  copies.forEach((c) => {
+    if (!lazyCopies.includes(c)) lazyCopies.push(c);
+  });
+  let fetched = false;
+  const p = whenInitialized().then(() => {
+    const loads = copies.map((c) => loadCopyChain(c, siteLocaleOf(i18n.language)));
+    fetched = loads.some((r) => r.started);
+    return Promise.all(loads.map((r) => r.done)).then(() => undefined);
+  });
+  pendingCopies.add(p);
+  void p.then(() => {
+    pendingCopies.delete(p);
+    if (fetched && !awaitedCopies.has(p)) rerenderTexts();
+  });
+  return p;
+};
+
+/** Resolves once every split page copy registered so far is loaded (lib/lazyRoute.tsx, before a page renders). */
+export const copyReady = async (): Promise<void> => {
+  while (pendingCopies.size) {
+    const list = [...pendingCopies];
+    list.forEach((p) => awaitedCopies.add(p));
+    await Promise.all(list);
+  }
+};
+
+// A language change that did not go through loadSiteLanguage (i18n.changeLanguage elsewhere): fetch what is
+// missing and render again once it is there (like loadCore).
+i18n.on('languageChanged', (lng) => {
+  const l = siteLocaleOf(lng);
+  const loads = lazyCopies.map((c) => loadCopyChain(c, l)).filter((r) => r.started);
+  if (!loads.length) return;
+  void Promise.all(loads.map((r) => r.done)).then(() => {
+    startTransition(() => {
+      i18n.emit('languageChanged', i18n.language);
+    });
+  });
+});

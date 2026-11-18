@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Wallet } from 'lucide-react';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /** Call-out linking to /cost-calculator (visa list and visa detail pages; `visa` preselects the category). */
 export const CostCalculatorTeaser = ({ visa }: { visa?: string }) => {

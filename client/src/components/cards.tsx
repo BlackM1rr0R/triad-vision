@@ -1,29 +1,33 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, LazyMotion, m as motion } from 'framer-motion';
+import { loadDomMax } from '@/lib/motionFeatures';
 import { ArrowRight, Calendar, Plus, Quote } from 'lucide-react';
 import clsx from 'clsx';
 import { Icon } from './ui/Icon';
 import { useL10n } from '@/lib/l10n';
 import { sized, srcSet } from '@/lib/img';
 import { useMorphSource } from '@/lib/viewTransition';
-import type { Faq, Partner, PostSummary, Service, Testimonial, VisaCategory, VisaSample } from '@/lib/types';
+import type { Faq, Partner, PostSummary, ServiceSummary, Testimonial, VisaCategorySummary, VisaSample } from '@/lib/types';
+import { usePrefetchDetail } from '@/lib/content';
 import { AuthorAvatar } from '@/components/ui/AuthorAvatar';
 
 /** Friendly tints for icon chips (index.css), rotated across a set of cards. */
 const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
 
-export const VisaCard = ({ visa }: { visa: VisaCategory }) => {
+export const VisaCard = ({ visa }: { visa: VisaCategorySummary }) => {
   const { t } = useTranslation();
   const { tr, trList } = useL10n();
   // The image box and title morph into the detail page's hero (lib/viewTransition.ts).
   const morph = useMorphSource('visa', visa.slug);
+  const prefetch = usePrefetchDetail('visa', visa.slug);
   return (
     <div className="h-full">
       <Link
         ref={morph.ref}
         onClick={morph.onClick}
+        {...prefetch}
         to={`/visas/${visa.slug}`}
         className="card card-interactive group flex h-full flex-col overflow-hidden rounded-3xl"
       >
@@ -59,17 +63,19 @@ export const VisaCard = ({ visa }: { visa: VisaCategory }) => {
   );
 };
 
-export const ServiceCard = ({ service, index }: { service: Service; index: number }) => {
+export const ServiceCard = ({ service, index }: { service: ServiceSummary; index: number }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const audience = service.audience === 'company' ? t('svc.forCompany') : service.audience === 'candidate' ? t('svc.forCandidate') : t('svc.forAll');
   const morph = useMorphSource('service', service.slug);
+  const prefetch = usePrefetchDetail('service', service.slug);
   return (
     <div className="h-full">
       <Link
         ref={morph.ref}
         onClick={morph.onClick}
         {...morph.part('card')}
+        {...prefetch}
         to={`/services/${service.slug}`}
         className="card card-interactive card-pad group relative flex h-full flex-col"
       >
@@ -206,7 +212,9 @@ export const PostCard = ({ post, priority = false }: { post: PostSummary; priori
 export const FaqList = ({ items }: { items: Faq[] }) => {
   const { tr } = useL10n();
   const [open, setOpen] = useState<string | null>(items[0]?.id ?? null);
+  // `layout` (the card resizing as an answer opens) needs framer-motion's layout feature: loaded with the list.
   return (
+    <LazyMotion features={loadDomMax}>
     <div className="space-y-3">
       {items.map((f) => {
         const isOpen = open === f.id;
@@ -241,5 +249,6 @@ export const FaqList = ({ items }: { items: Faq[] }) => {
         );
       })}
     </div>
+    </LazyMotion>
   );
 };

@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Compass } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { useOnboarding } from './api';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /** Compact "first steps in Germany" card for the dashboard (approved clients only). */
 export const OnboardingCard = () => {

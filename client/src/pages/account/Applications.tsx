@@ -7,8 +7,8 @@ import clsx from 'clsx';
 import { ArrowRight, MapPin, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/portal/ConfirmDialog';
 import { fmtDate } from '@/components/admin/labels';
@@ -20,7 +20,7 @@ import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThre
 import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
 import { Handshake } from '@/components/illustrations';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 interface MyApplication {
   id: string;

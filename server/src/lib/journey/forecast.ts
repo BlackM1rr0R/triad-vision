@@ -339,10 +339,6 @@ export const forecastForCase = async (caseId: string): Promise<Forecast> => {
 export const DEFAULT_TRAVEL_RANGE: [number, number] = [14, 42];
 let travelCache: { at: number; range: StepRange } | null = null;
 
-export const clearTravelCache = () => {
-  travelCache = null;
-};
-
 /**
  * Decision → arrival (days) over the most recent approved cases with a recorded arrival: p25–p75 around
  * the median like the steps, else DEFAULT_TRAVEL_RANGE. Cached for CACHE_TTL_MS.

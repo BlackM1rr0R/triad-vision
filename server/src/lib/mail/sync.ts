@@ -56,9 +56,6 @@ const withAccountLock = <T>(accountId: string, fn: () => Promise<T>): Promise<T>
   return p;
 };
 
-/** true while a full sync or a folder sync of the account runs or waits for its turn. */
-export const isAccountBusy = (accountId: string) => accountLocks.has(accountId);
-
 /** Syncs the account; a second call while a sync runs joins the running one. */
 export const syncAccount = (accountId: string): Promise<SyncResult> => {
   const inFlight = running.get(accountId);

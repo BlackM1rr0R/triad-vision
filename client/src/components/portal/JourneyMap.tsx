@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import clsx from 'clsx';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { m as motion, useReducedMotion, type Variants } from 'framer-motion';
 import { cityCoords, makeProjection, type LngLat } from '@/components/about/geo';
 import { GERMAN_STATES } from '@/components/growth/germanyStates';
 import { COUNTRY_SHAPES, DE_CENTRE, ORIGIN_MAP_BOUNDS, arc, inRing, pointsAlongArc } from '@/components/growth/originMapShapes';

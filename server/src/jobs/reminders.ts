@@ -139,8 +139,8 @@ export const runMissingDocsReminders = async (now = new Date()) => {
   const cases = await prisma.case.findMany({
     where: { status: { in: ['DOCUMENTS_PENDING', 'EMBASSY_DOCUMENTS'] } },
     include: {
-      client: true,
-      assignedStaff: true,
+      client: { select: { locale: true, firstName: true, lastName: true } },
+      assignedStaff: { select: { id: true, locale: true, isActive: true } },
       requirements: { where: { required: true }, orderBy: { sortOrder: 'asc' }, include: { documents: { select: { status: true } } } },
     },
   });
@@ -200,12 +200,21 @@ export const runPassportReminders = async (now = new Date()) => {
   const tracked = await clientsWithTrackedPassport(users.map((u) => u.id));
   // After the visa (approved case, nothing open) the passport belongs to the permit reminders (lib/permits).
   const inCare = await clientsInPermitCare(users.map((u) => u.id));
+  const keyOf = (u: (typeof users)[number]) => {
+    const level = passportLevel(u.passportExpiry!, now);
+    return level ? { level, key: `passport:${u.id}:${u.passportExpiry!.toISOString().slice(0, 10)}:${level}` } : null;
+  };
+  // Expired passports stay in the result run after run: skip the keys already sent in one query instead of a failing
+  // INSERT per user every 15 minutes (claimReminder below still guards against a parallel run).
+  const keys = users.filter((u) => !tracked.has(u.id) && !inCare.has(u.id)).flatMap((u) => keyOf(u)?.key ?? []);
+  const done = keys.length ? new Set((await prisma.reminderLog.findMany({ where: { key: { in: keys } }, select: { key: true } })).map((r) => r.key)) : new Set<string>();
   for (const u of users) {
     if (tracked.has(u.id) || inCare.has(u.id)) continue;
     const expiry = u.passportExpiry!;
-    const level = passportLevel(expiry, now);
-    if (!level) continue;
-    const key = `passport:${u.id}:${expiry.toISOString().slice(0, 10)}:${level}`;
+    const k = keyOf(u);
+    if (!k) continue;
+    const { level, key } = k;
+    if (done.has(key)) continue;
     if (!(await claimReminder(key, now))) continue;
     const tx = textsFor(u.locale);
     const { title, body } = tx.passport({ level, date: formatDay(expiry, u.locale) });

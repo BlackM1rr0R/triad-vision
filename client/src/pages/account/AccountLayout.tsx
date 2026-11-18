@@ -11,11 +11,11 @@ import { profileCompleteness } from '@/components/portal/profileFields';
 import { ProgressRing } from '@/components/portal/ProgressRing';
 import { usePortalNav } from '@/components/portal/usePortalNav';
 import { ALL_TOOLS_ICON, TOOL_ICON, stageLabel, toolLabel } from '@/components/portal/portalToolMeta';
-import { registerCopy } from '@/i18n';
-import { pagesAccount } from '@/i18n/pagesAccount';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesAccount from '@/i18n/pagesAccount?lazy-copy';
 import { VerifyBanner } from '@/components/auth/VerifyBanner';
-import { pagesJobs } from '@/i18n/pagesJobs';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { pagesSign } from '@/i18n/pagesSign';
 import AiLauncher from '@/components/ai/AiLauncher';
 import { BottomNavPortal } from '@/components/nav/BottomNavPortal';
@@ -30,10 +30,8 @@ import { NotificationBell } from '@/components/notifications/center/Notification
 import { PageHelpButton } from '@/components/pageHelp/PageHelpButton'; // page help "?" (what is this page)
 import { ApprovedCelebration } from './portal/ApprovedCelebration'; // visa approved: one-time celebration screen
 
-registerCopy(pagesAccount);
+registerLazyCopy(pagesAccount, pagesJobs, pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesSign);
-registerCopy(pagesJobs);
-registerCopy(pagesJourney);
 registerCopy(pagesPortalUx);
 registerCopy(pagesPortalNav);
 registerCopy(pagesWaitingRoom);

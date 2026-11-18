@@ -2,16 +2,16 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowRight, Route } from 'lucide-react';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesJourneyMap } from '@/i18n/pagesJourneyMap';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import type { NextStep } from './usePortalNav';
 import { buildMilestones, nextMilestone, type Milestone } from './journey';
 import { JourneyMap } from './JourneyMap';
 import { JourneyTimeline, useMilestoneDate } from './JourneyTimeline';
 
 registerCopy(pagesJourneyMap);
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /**
  * "Your journey" (portal home and case overview): home city → German city with six milestones

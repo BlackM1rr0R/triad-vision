@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowRight, MapPin, ShieldCheck } from 'lucide-react';
 import { cityCoords, makeProjection } from '@/components/about/geo';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import type { OriginCountry, PublicOrigins } from '@/components/marketing/api';
 import { COUNTRY_LABELS as LABELS, COUNTRY_SHAPES, DE_CENTRE, ORIGIN_MAP_BOUNDS, arc } from './originMapShapes';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const proj = makeProjection(ORIGIN_MAP_BOUNDS, 900, 10);
 

@@ -220,8 +220,6 @@ export const SETUP_ITEMS: SetupItem[] = [
   },
 ];
 
-export const SETUP_ITEM_IDS = SETUP_ITEMS.map((i) => i.id);
-
 export type SetupState = 'done' | 'notNeeded' | 'open';
 export interface SetupSignal {
   ok: boolean;

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { brotliCompressSync, constants as zlibConstants } from 'node:zlib';
 import path from 'node:path';
+import { lazyCopy, lazyCopyComplete } from './vite/lazyCopy';
 
 /**
  * Stamps public/sw.js with a hash of the emitted file names, so every deployment ships a changed service
@@ -110,9 +111,9 @@ const shellPreloads = (): Plugin => ({
       const cyrillic = font(/onest-cyrillic-wght-normal-[\w-]+\.woff2$/);
 
       // Static import closure of a chunk (what the browser needs before the module can run).
-      const chunks = new Map<string, { imports: string[]; facade?: string | null; isEntry: boolean }>();
+      const chunks = new Map<string, { imports: string[]; dynamicImports: string[]; facade?: string | null; isEntry: boolean }>();
       for (const [name, out] of Object.entries(bundle)) {
-        if (out.type === 'chunk') chunks.set(name, { imports: out.imports, facade: out.facadeModuleId, isEntry: out.isEntry });
+        if (out.type === 'chunk') chunks.set(name, { imports: out.imports, dynamicImports: out.dynamicImports, facade: out.facadeModuleId, isEntry: out.isEntry });
       }
       const closure = (start: string[]) => {
         const seen = new Set<string>();
@@ -150,7 +151,34 @@ const shellPreloads = (): Plugin => ({
         .filter((b) => b.links);
       const langBlock = langBranches.map((b, i) => tv(`${i === 0 ? 'if' : 'else if'} eq $lang "${b.lang}"`) + b.links).join('') + (langBranches.length ? tv('end') : '');
 
-      const branches = PRELOAD_ROUTES.map((r) => ({ cond: r.prefix ? `hasPrefix "${r.path}" $tvPath` : `eq $tvPath "${r.path}"`, links: routeLinks(r.module) })).filter((b) => b.links);
+      // Page copy split per language (vite/lazyCopy.ts) that the route's chunks load before the page renders: the
+      // chunk of the URL's language, plus the fallbacks i18next reads for it (copyChain in src/i18n/index.ts).
+      const routeCopyLinks = (module: string) => {
+        const chunk = [...chunks.entries()].find(([, c]) => c.facade?.replace(/\\/g, '/') === `${src}/${module}`)?.[0];
+        if (!chunk) return '';
+        const byFile = new Map<string, Map<string, string>>();
+        for (const f of closure([chunk])) {
+          for (const d of chunks.get(f)!.dynamicImports) {
+            const m = chunks.get(d)?.facade?.replace(/\\/g, '/').match(/^(.*)\?copy-lang=(\w+)$/);
+            if (m) byFile.set(m[1], (byFile.get(m[1]) ?? new Map<string, string>()).set(m[2], d));
+          }
+        }
+        if (!byFile.size) return '';
+        const linksFor = (lang: string) => {
+          const files = new Set<string>();
+          for (const [file, map] of byFile) {
+            const complete = lazyCopyComplete.get(file) ?? [];
+            const withAz = (x: string) => (complete.includes(x) ? [x] : [x, 'az']);
+            const chain = lang === 'az' ? ['az'] : lang === 'tr' || lang === 'uk' ? [lang, ...withAz('en')] : withAz(lang);
+            for (const l of chain) if (map.has(l)) closure([map.get(l)!]).forEach((x) => !inEntry.has(x) && files.add(x));
+          }
+          return [...files].map((f) => `<link rel="modulepreload" crossorigin href="/${f}">`).join('');
+        };
+        const langs = ['az', 'de', 'en', 'ru', 'tr', 'uk'];
+        return langs.map((l, i) => tv(`${i === 0 ? 'if' : 'else if'} eq $lang "${l}"`) + linksFor(l)).join('') + tv('end');
+      };
+
+      const branches = PRELOAD_ROUTES.map((r) => ({ cond: r.prefix ? `hasPrefix "${r.path}" $tvPath` : `eq $tvPath "${r.path}"`, links: routeLinks(r.module) + routeCopyLinks(r.module) })).filter((b) => b.links);
 
       const block = [
         latin,
@@ -164,7 +192,7 @@ const shellPreloads = (): Plugin => ({
         // JS is still downloading. use-credentials = the same request the axios client (withCredentials) makes.
         // Not needed when the page came server-rendered: its data is in the page (client/index.html, $ssr).
         tv('if not (or (hasPrefix "/admin" $tvPath) (hasPrefix "/workspace" $tvPath) (eq (len $ssr) 2))') +
-          '<link rel="preload" as="fetch" href="/api/public/content" crossorigin="use-credentials">' +
+          '<link rel="preload" as="fetch" href="/api/public/content?fields=shell" crossorigin="use-credentials">' +
           tv('end'),
       ].join('\n    ');
       return html.replace('</head>', `    ${block}\n  </head>`);
@@ -172,10 +200,32 @@ const shellPreloads = (): Plugin => ({
   },
 });
 
+/**
+ * Chunks the entry statically imports (always loaded before any dynamic import can run). Recorded before Vite
+ * writes the dependency lists of the dynamic imports (__vite__mapDeps), which then leave them out: the entry
+ * listed react / data / i18n / itself for every one of its ~400 lazy routes.
+ */
+const entryChunks = new Set<string>();
+const recordEntryChunks = (): Plugin => ({
+  name: 'tv-entry-chunks',
+  apply: 'build',
+  generateBundle(_opts, bundle) {
+    entryChunks.clear();
+    const stack = Object.values(bundle).flatMap((c) => (c.type === 'chunk' && c.isEntry ? [c.fileName] : []));
+    while (stack.length) {
+      const f = stack.pop()!;
+      const c = bundle[f];
+      if (entryChunks.has(f) || !c || c.type !== 'chunk') continue;
+      entryChunks.add(f);
+      stack.push(...c.imports);
+    }
+  },
+});
+
 export default defineConfig(({ isSsrBuild }) => ({
   // SSR build (npm run build:ssr → dist-ssr/entry-server.js for client/ssr/server.mjs): one self-contained
   // Node module (every dependency bundled), none of the browser-build plugins.
-  plugins: isSsrBuild ? [react(), tailwindcss()] : [react(), tailwindcss(), swBuildStamp(), shellPreloads(), brotliAssets()],
+  plugins: isSsrBuild ? [lazyCopy(), react(), tailwindcss()] : [lazyCopy(), react(), tailwindcss(), swBuildStamp(), recordEntryChunks(), shellPreloads(), brotliAssets()],
   ssr: { noExternal: true, target: 'node' },
   // Dependencies are bundled: pick their production builds at build time (React's dev build is ~3× slower).
   define: isSsrBuild ? { 'process.env.NODE_ENV': JSON.stringify('production') } : undefined,
@@ -208,12 +258,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     ? { target: 'node22', outDir: 'dist-ssr', emptyOutDir: true, copyPublicDir: false, minify: false, sourcemap: false }
     : {
         target: 'es2022',
+        modulePreload: { resolveDependencies: (_file, deps) => deps.filter((d) => !entryChunks.has(d)) },
         rollupOptions: {
           output: {
             // Only libraries every page needs go in shared chunks.
             manualChunks: {
               react: ['react', 'react-dom', 'react-dom/client', 'react-router-dom', 'scheduler'],
-              motion: ['framer-motion'],
               data: ['axios', '@tanstack/react-query'],
               i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
             },

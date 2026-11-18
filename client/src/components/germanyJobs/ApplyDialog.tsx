@@ -2,9 +2,9 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ExternalLink, FileText, Send, X } from 'lucide-react';
-import i18n, { currentSiteLocale, registerCopy } from '@/i18n';
+import i18n, { currentSiteLocale, registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesExternalApps } from '@/i18n/pagesExternalApps';
 import { useLebenslaufVersions } from '@/components/cv/LebenslaufVersions'; // "attach my Lebenslauf" for signed-in clients
 import { fmtDate } from '@/components/admin/labels';
@@ -19,7 +19,7 @@ import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { useJobLabels } from '@/components/jobs/labels';
 import { GERMAN_LEVELS } from '@/components/jobs/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGermanyJobs);
 registerCopy(pagesExternalApps);
 

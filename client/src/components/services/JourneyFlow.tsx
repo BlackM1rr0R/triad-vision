@@ -1,10 +1,10 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Icon } from '@/components/ui/Icon';
 import { useL10n } from '@/lib/l10n';
-import type { Service } from '@/lib/types';
+import type { ServiceSummary } from '@/lib/types';
 import { servicePhase } from '@/components/visa/utils';
 
 const PHASE_ICONS = ['UserSearch', 'FileCheck2', 'Stamp', 'Plane'];
@@ -36,7 +36,7 @@ const Arrow = ({ index }: { index: number }) => (
 );
 
 /** The four journey stages with the services that belong to each. */
-export const JourneyFlow = ({ services }: { services: Service[] }) => {
+export const JourneyFlow = ({ services }: { services: ServiceSummary[] }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const phases = t('servicesPage.journey.phases', { returnObjects: true }) as {

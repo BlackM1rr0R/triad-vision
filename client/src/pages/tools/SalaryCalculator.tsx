@@ -11,8 +11,8 @@ import { SalaryArticle } from '@/components/tools/SalaryArticle';
 import { SalaryBreakdown } from '@/components/tools/SalaryBreakdown';
 import { useMoney } from '@/components/tools/format';
 import { AznEquivalent } from '@/components/tools/AznEquivalent';
-import { registerCopy } from '@/i18n';
-import { pagesTools } from '@/i18n/pagesTools';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesTools from '@/i18n/pagesTools?lazy-copy';
 import { pagesMoneyHome } from '@/i18n/pagesMoneyHome';
 import { usePageTitle } from '@/lib/usePageTitle';
 import {
@@ -30,7 +30,7 @@ import {
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { EmailResult } from '@/components/tools/EmailResult';
 
-registerCopy(pagesTools);
+registerLazyCopy(pagesTools); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesMoneyHome);
 
 const HERO = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=2000&q=70';

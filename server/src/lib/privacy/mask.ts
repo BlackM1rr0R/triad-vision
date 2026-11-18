@@ -65,7 +65,6 @@ const KEY_GROUP = new Map<string, MaskGroup>(Object.entries(GROUP_KEYS).flatMap(
 const REF_EXCLUDED = new Set(['passport']);
 
 export const groupOfField = (field: string): MaskGroup | undefined => KEY_GROUP.get(field);
-export const fieldsOfGroup = (g: MaskGroup) => GROUP_KEYS[g];
 
 export const MASK_CHAR = '•';
 export const isMasked = (v: unknown) => typeof v === 'string' && v.includes(MASK_CHAR);
@@ -321,9 +320,6 @@ export const maskAnyWith = <T>(groups: Set<MaskGroup>, field: string, value: T, 
 /** One value for one viewer: masked when the viewer's policy masks (or hides) the field's group. */
 export const maskFor = async (viewer: Viewer, field: string, value: string | null | undefined) => maskWith(policyGroups(await policyForViewer(viewer)), field, value);
 
-/** Whether the viewer sees any group masked (lets exports skip the work). */
-export const masksAnything = async (viewer: Viewer) => policyGroups(await policyForViewer(viewer)).size > 0;
-
 const REF_KEYS = ['field', 'key', 'source', 'name'];
 const MAX_DEPTH = 40;
 
@@ -510,9 +506,6 @@ export const maskResponses = async (req: Request, res: Response, next: NextFunct
 
 /** Groups masked (or hidden) for the current request (set by maskResponses; empty when nothing is masked). */
 export const requestMaskGroups = (res: Response): Set<MaskGroup> => (res.locals.maskGroups as Set<MaskGroup> | undefined) ?? new Set();
-
-/** The full policy of the current request (masked + hidden groups). */
-export const requestMaskPolicy = (res: Response): MaskPolicy => (res.locals.maskPolicy as MaskPolicy | undefined) ?? EMPTY_POLICY;
 
 /** Groups masked (or hidden) for a viewer, without a response at hand (exports built outside the JSON path). */
 export const maskGroupsForViewer = async (viewer: Viewer) => policyGroups(await policyForViewer(viewer));

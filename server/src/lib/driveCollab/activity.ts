@@ -76,11 +76,6 @@ export const logDriveActivity = async (input: DriveActivityInput) => {
   }
 };
 
-/** Records several actions (bulk operations: one row per item). Never throws. */
-export const logDriveActivities = async (inputs: DriveActivityInput[]) => {
-  for (const i of inputs) await logDriveActivity(i);
-};
-
 /**
  * For the spreadsheet editor: a saved workbook is a new version of the file. Call after a successful
  * save (`version` = the version just written).

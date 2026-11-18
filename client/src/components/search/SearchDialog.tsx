@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, History, Search, Sparkles, X } from 'lucide-react';
 import clsx from 'clsx';
 import { Spinner } from '@/components/ui/Spinner';

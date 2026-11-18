@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ArrowRight, BookOpen, CheckCircle2, CircleAlert, ClipboardList, MessageCircle, RotateCcw, Send, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { Icon } from '@/components/ui/Icon';
 import { useL10n } from '@/lib/l10n';
-import type { VisaCategory } from '@/lib/types';
+import type { VisaCategorySummary } from '@/lib/types';
 import { ReadinessGauge } from './ReadinessGauge';
 import type { ChecklistItem, QuizResult as Result } from './scoring';
 import { sized } from '@/lib/img';
@@ -32,7 +32,7 @@ export const QuizResult = ({
   onRestart,
 }: {
   result: Result;
-  visas: VisaCategory[];
+  visas: VisaCategorySummary[];
   onRestart: () => void;
 }) => {
   const { t } = useTranslation();

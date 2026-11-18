@@ -28,8 +28,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { hasMinRole, type CaseStatus, type L10n } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesPartnerRecords } from '@/i18n/pagesPartnerRecords';
 import { Badge, Button, Tabs, useTabParam, type TabItem } from '@/components/ui';
 import { ErrorBlock, KpiCell, KpiStrip, LoadingBlock, Panel, SegmentBar } from '@/components/admin/ui';
@@ -49,7 +49,7 @@ import { ActivityTimeline } from '@/components/partnerRecords/ActivityTimeline';
 import { CompletenessBar, LegalDataForm, LegalDataView, legalFormOf, legalPayload, type Completeness, type LegalFormValue } from '@/components/partnerRecords/LegalDataForm';
 import { daysTone, moneyLabel, recordsError, type PartnerContract } from '@/components/partnerRecords/api';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesPartnerRecords);
 
 /**

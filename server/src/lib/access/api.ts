@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { Prisma } from '@prisma/client';
-import { canWith, scopeWhere, withCaseScope } from './resolve.js';
+import { canWith, scopeWhere } from './resolve.js';
 import { loadAccess } from './store.js';
 import { assertCasesInScope } from './guard.js';
 import type { AccessUser, Action, Area } from './types.js';
@@ -22,9 +22,6 @@ export const caseScopeWhere = async (user: AccessUser | null | undefined): Promi
   if (user.role === 'SUPER_ADMIN') return {};
   return scopeWhere(await loadAccess(user));
 };
-
-/** Convenience for list queries: the query's own filter AND the user's case scope. */
-export const scopedCaseWhere = async (user: AccessUser | null | undefined, where: Prisma.CaseWhereInput = {}) => withCaseScope(where, await caseScopeWhere(user));
 
 /** True when the user sees every case (no list filtering needed). */
 export const hasFullCaseScope = async (user: AccessUser | null | undefined) => {

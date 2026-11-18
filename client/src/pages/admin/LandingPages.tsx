@@ -11,14 +11,14 @@ import { EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/adm
 import { fmtRelative } from '@/components/admin/labels';
 import { LandingEditor } from '@/components/landing/LandingEditor';
 import type { LandingRow } from '@/components/marketing/api';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 interface ListResponse {
   pages: LandingRow[];

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react';
 import { useMotionOK } from '@/components/motion';

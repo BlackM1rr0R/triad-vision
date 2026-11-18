@@ -21,6 +21,12 @@ export const ensureEarlyEmbassyRequirements = async (caseId: string): Promise<bo
     // Cheap pre-check without a lock (most calls: wrong status or rows already there).
     const quick = await prisma.case.findUnique({ where: { id: caseId }, select: { status: true, _count: { select: { requirements: { where: { stage: 'EMBASSY' } } } } } });
     if (!quick || !EARLY_EMBASSY_STATUSES.includes(quick.status) || quick._count.requirements > 0) return false;
+    // DOCUMENTS_REVIEW is only "open" once every required initial document is accepted: the common waiting state
+    // (still under review) must not take a row lock on every portal read. Re-checked under the lock below.
+    if (quick.status === 'DOCUMENTS_REVIEW') {
+      const initial = await prisma.documentRequirement.findMany({ where: { caseId, stage: 'INITIAL' }, select: { required: true, documents: { select: { status: true } } } });
+      if (!earlyEmbassyOpen(quick.status, initial)) return false;
+    }
     return await prisma.$transaction(
       async (tx) => {
         const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM \`Case\` WHERE id = ${caseId} FOR UPDATE`;

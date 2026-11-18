@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { prisma } from '../../../db.js';
-import { MAX_NAME, pickFreeName, safeUploadName, splitExt } from '../names.js';
+import { MAX_NAME, safeUploadName, splitExt } from '../names.js';
 import { readSetting, writeSetting } from './flags.js';
 
 /**
@@ -127,6 +127,3 @@ export const autoNameFor = async (c: CaseNaming, opts: { typ?: string | null; da
   const typ = opts.typ?.trim() || baseNameOf(opts.originalName);
   return buildAutoName(s.pattern, { Nachname: c.lastName, Vorname: c.firstName, Typ: typ, Datum: dayOf(opts.date), Fallnummer: c.number }, ext.toLowerCase());
 };
-
-/** A free variant of `name` among `taken` (lower-cased names, updated). */
-export const freeIn = (taken: Set<string>, name: string) => pickFreeName(taken, name, true);

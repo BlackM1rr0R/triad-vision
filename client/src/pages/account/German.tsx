@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { STATUS_TONES, toneClasses } from '@/components/ui/status';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -11,8 +11,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { OptionCard } from '@/components/quiz/OptionCard';
@@ -29,7 +29,7 @@ import { BadgesPanel } from '@/components/portal/BadgesPanel'; // German badges:
 import { GERMAN_LEVELS, type CertificateState, type EstimatedLevel, type GermanQuestion, type GermanTestResult, type LanguageCourse } from '@/components/journey/types';
 import { Learning } from '@/components/illustrations';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const LEVEL_TONE: Record<string, string> = { none: 'bg-line text-muted', A1: 'bg-info-bg text-info-fg', A2: 'bg-sunken text-link', B1: 'bg-accent-bg text-accent-fg', B2: 'bg-success-bg text-success-fg', C1: 'bg-warning-bg text-warning-fg', C2: 'bg-warning-bg text-warning-fg' };

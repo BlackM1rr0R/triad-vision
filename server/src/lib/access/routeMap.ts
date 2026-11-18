@@ -278,10 +278,3 @@ export const classifyRoute = (method: string, rawPath: string, query?: Record<st
   }
   return matchRules(OTHER_RULES, method, path, query) ?? null;
 };
-
-/** For the Access Center ("which routes does this area cover"): the admin router segments per area. */
-export const adminSegmentsByArea = (): Record<string, string[]> => {
-  const out: Record<string, string[]> = {};
-  for (const [s, t] of Object.entries(ADMIN_SEGMENTS)) (out[t] ??= []).push(s);
-  return out;
-};

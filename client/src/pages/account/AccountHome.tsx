@@ -10,8 +10,8 @@ import { StartCase } from '@/components/portal/StartCase';
 import { useHashScroll, useOverview } from '@/components/portal/useOverview';
 import { usePortalNav } from '@/components/portal/usePortalNav';
 import { CLIENT_TOUR, useAutoStartTour } from '@/components/onboarding';
-import { registerCopy } from '@/i18n';
-import { pagesAccount } from '@/i18n/pagesAccount';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesAccount from '@/i18n/pagesAccount?lazy-copy';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesPortalStage } from '@/i18n/pagesPortalStage';
@@ -34,7 +34,7 @@ import { ReadinessCard } from '@/components/readiness/Readiness'; // Germany rea
 import { FutureLetterCta, ReadyHomeCard } from '@/components/ready/ReadyCards'; // Germany Ready points + weekly challenge; letter to my future self
 import { opensMoreArea } from './portal/homeAnchors'; // #permits lives in the folded "More" area before the arrival
 
-registerCopy(pagesAccount);
+registerLazyCopy(pagesAccount); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesPortalUx);
 registerCopy(pagesPortalNav);
 registerCopy(pagesPortalStage);

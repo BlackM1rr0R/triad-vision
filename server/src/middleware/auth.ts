@@ -138,6 +138,18 @@ const isAuthPath = (url: string) => {
 /** How often `lastSeenAt` is written back (every request would be a needless write per call). */
 const TOUCH_INTERVAL_MS = 60 * 1000;
 
+const SESSION_USER_SELECT = {
+  id: true,
+  role: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  locale: true,
+  isActive: true,
+  totpEnabledAt: true,
+  emailOtpEnabledAt: true,
+} as const;
+
 /**
  * Attaches req.user/req.session when a valid, live session token is present. Never rejects by
  * itself; `requireAuth` turns a failure into a 401 with a specific code.
@@ -159,7 +171,8 @@ export const loadUser = async (req: Request, _res: Response, next: NextFunction)
   }
 
   try {
-    const session = await prisma.session.findUnique({ where: { id: payload.sid }, include: { user: true } });
+    // Runs on every authenticated request: only the user columns the checks below read (no Text / Json profile fields).
+    const session = await prisma.session.findUnique({ where: { id: payload.sid }, include: { user: { select: SESSION_USER_SELECT } } });
     const now = Date.now();
     if (!session || session.userId !== payload.sub) {
       req.authFailure = 'INVALID_TOKEN';

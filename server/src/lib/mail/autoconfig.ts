@@ -199,6 +199,13 @@ const getXml = async (url: string, deps: DiscoveryDeps, checkHost: boolean): Pro
 const cache = new Map<string, { at: number; hit: { source: DiscoverySource; xml: string } | null }>();
 const CACHE_MS = 60 * 60 * 1000;
 export const resetAutoconfigCache = () => cache.clear();
+/** Bounded: at most this many domains are remembered (oldest dropped first). */
+const CACHE_MAX = 500;
+const remember = (domain: string, hit: { source: DiscoverySource; xml: string } | null) => {
+  cache.delete(domain);
+  cache.set(domain, { at: Date.now(), hit });
+  while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value!);
+};
 
 /** Remote lookup (domain autoconfig, then ISPDB) for a domain that is neither ours nor a known provider. */
 const remoteSettings = async (email: string, domain: string, deps: DiscoveryDeps): Promise<DiscoveredSettings | null> => {
@@ -216,11 +223,11 @@ const remoteSettings = async (email: string, domain: string, deps: DiscoveryDeps
     const xml = await getXml(t.url, deps, t.checkHost);
     const value = xml ? build({ source: t.source, xml }) : null;
     if (xml && value) {
-      cache.set(domain, { at: Date.now(), hit: { source: t.source, xml } });
+      remember(domain, { source: t.source, xml });
       return value;
     }
   }
-  cache.set(domain, { at: Date.now(), hit: null });
+  remember(domain, null);
   return null;
 };
 

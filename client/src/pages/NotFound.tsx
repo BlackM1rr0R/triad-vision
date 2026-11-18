@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Lost } from '@/components/illustrations';

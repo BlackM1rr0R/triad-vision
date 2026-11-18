@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 
 /** Circular percent indicator (SVG). Animates once on mount, never continuously. */
 export const ProgressRing = ({

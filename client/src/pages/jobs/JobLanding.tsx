@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { currentSiteLocale, registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { currentSiteLocale, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { PageHero, PageHeroSkeleton } from '@/components/layout/PageHero';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { buttonClass } from '@/components/ui/Button';
@@ -17,7 +17,7 @@ import NotFound from '../NotFound';
 import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
 import { sceneForProfession } from '@/lib/workScenes/meta';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const HERO = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2000&q=70';
 

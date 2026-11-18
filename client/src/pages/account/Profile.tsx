@@ -27,7 +27,7 @@ import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { isStrongPassword, PASSWORD_MAX, PASSWORD_MIN, type User, type UserSession } from '@/lib/types';
-import { LOCALES, type Locale } from '@/i18n';
+import { LOCALES, type Locale, registerLazyCopy } from '@/i18n';
 import { Flag } from '@/components/ui/Flag';
 import { Spinner } from '@/components/ui/Spinner';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -55,7 +55,7 @@ import {
 } from '@/components/portal/profileFields';
 import { registerCopy } from '@/i18n';
 import { campaignConsentCopy } from '@/i18n/pagesCampaigns';
-import { pagesAccount } from '@/i18n/pagesAccount';
+import pagesAccount from '@/i18n/pagesAccount?lazy-copy';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { pagesMessaging } from '@/i18n/pagesMessaging';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -68,7 +68,7 @@ import { MyJobAlerts } from '@/components/jobs/MyJobAlerts';
 import { CandidatePoolPanel } from '@/components/pool/CandidatePoolPanel'; // anonymous candidate pool opt-in
 import { NameChecker } from '@/components/nameCheck/NameChecker'; // name spelling: Azerbaijani → passport MRZ / German forms
 
-registerCopy(pagesAccount);
+registerLazyCopy(pagesAccount); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGrowth);
 registerCopy(pagesMessaging);
 registerCopy(campaignConsentCopy);

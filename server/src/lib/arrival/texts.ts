@@ -143,9 +143,6 @@ const HOUSING: Record<Locale, Record<HousingStatus, string>> = {
 };
 export const housingLabel = (s: HousingStatus, locale: Locale) => (HOUSING[locale] ?? HOUSING.az)[s];
 
-const PICKUP_CONFIRMED: Record<Locale, string> = { az: 'Təsdiqləndi', de: 'Bestätigt', en: 'Confirmed', ru: 'Подтверждена' };
-export const pickupConfirmedLabel = (locale: Locale) => PICKUP_CONFIRMED[locale] ?? PICKUP_CONFIRMED.az;
-
 const TZ_LABEL: Record<Locale, string> = { az: 'Almaniya vaxtı', de: 'deutsche Zeit', en: 'German time', ru: 'время в Германии' };
 const intlLocale: Record<Locale, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' };
 

@@ -4,7 +4,7 @@ import { ArrowRight, Check, Minus, X } from 'lucide-react';
 import clsx from 'clsx';
 import { Icon } from '@/components/ui/Icon';
 import { useL10n } from '@/lib/l10n';
-import type { VisaCategory } from '@/lib/types';
+import type { VisaCategorySummary } from '@/lib/types';
 import { hasProcessing, hasSalary, isTrainee, useEuro } from './utils';
 
 export const FamilyBadge = ({ value, className }: { value: boolean | null | undefined; className?: string }) => {
@@ -29,12 +29,12 @@ export const FamilyBadge = ({ value, className }: { value: boolean | null | unde
 };
 
 /** Visa comparison: a real table from lg up, stacked cards on phones. */
-export const ComparisonTable = ({ visas }: { visas: VisaCategory[] }) => {
+export const ComparisonTable = ({ visas }: { visas: VisaCategorySummary[] }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const { range } = useEuro();
-  const salary = (v: VisaCategory) => (hasSalary(v) ? `${range(v.salaryMin, v.salaryMax)}${isTrainee(v) ? '*' : ''}` : t('visaDetail.facts.na'));
-  const weeks = (v: VisaCategory) =>
+  const salary = (v: VisaCategorySummary) => (hasSalary(v) ? `${range(v.salaryMin, v.salaryMax)}${isTrainee(v) ? '*' : ''}` : t('visaDetail.facts.na'));
+  const weeks = (v: VisaCategorySummary) =>
     hasProcessing(v)
       ? t('visaDetail.facts.weeks', {
           min: v.processingMin,

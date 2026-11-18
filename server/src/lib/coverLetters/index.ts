@@ -45,8 +45,6 @@ export const listCoverTemplates = async (): Promise<CoverTemplateView[]> => {
   });
 };
 
-export const getCoverTemplate = async (jobType: CoverJobType) => (await listCoverTemplates()).find((t) => t.jobType === jobType)!;
-
 type ApplicationForLetter = {
   userId: string | null;
   listingTitle: string | null;

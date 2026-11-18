@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cached, clearCache } from '../../src/lib/cache.js';
+import { CACHE_MAX_ENTRIES, cacheSize, cached, clearCache } from '../../src/lib/cache.js';
 
 const TTL = 5 * 60 * 1000;
 
@@ -78,5 +78,27 @@ describe('clearCache', () => {
     clearCache();
     expect(await cached('a', a)).toBe(2);
     expect(await cached('b', b)).toBe('y');
+  });
+});
+
+describe('size cap', () => {
+  it('never keeps more than CACHE_MAX_ENTRIES keys and drops the oldest first', async () => {
+    for (let i = 0; i < CACHE_MAX_ENTRIES + 50; i++) await cached(`k${i}`, async () => i);
+    expect(cacheSize()).toBe(CACHE_MAX_ENTRIES);
+    const oldest = vi.fn().mockResolvedValue('reloaded');
+    expect(await cached('k0', oldest)).toBe('reloaded'); // evicted → loaded again
+    const newest = vi.fn().mockResolvedValue('nope');
+    expect(await cached(`k${CACHE_MAX_ENTRIES + 49}`, newest)).toBe(CACHE_MAX_ENTRIES + 49); // still cached
+    expect(newest).not.toHaveBeenCalled();
+  });
+
+  it('drops expired entries before fresh ones', async () => {
+    await cached('stale', async () => 's');
+    vi.advanceTimersByTime(TTL);
+    for (let i = 0; i < CACHE_MAX_ENTRIES; i++) await cached(`f${i}`, async () => i);
+    expect(cacheSize()).toBe(CACHE_MAX_ENTRIES);
+    const f0 = vi.fn().mockResolvedValue('x');
+    expect(await cached('f0', f0)).toBe(0); // the stale key made room, f0 survived
+    expect(f0).not.toHaveBeenCalled();
   });
 });

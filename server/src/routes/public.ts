@@ -8,6 +8,7 @@ import { notifyStaff } from '../lib/notifications.js';
 // seed markers…), so only the keys the public site actually reads are served here.
 const PUBLIC_SETTING_KEYS = ['contact', 'social', 'legal', 'privacy'];
 import { cached } from '../lib/cache.js';
+import { toContentShell } from '../lib/contentShell.js';
 
 import { onInquiryCreated } from '../lib/assignment/inquiry.js';
 import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
@@ -24,8 +25,13 @@ publicRouter.use((_req, res, next) => {
   next();
 });
 
-publicRouter.get('/content', async (_req, res) => {
+publicRouter.get('/content', async (req, res) => {
   publicCache(res);
+  // ?fields=shell: the website's light variant without the long visa / service texts (lib/contentShell.ts).
+  if (req.query.fields === 'shell') {
+    res.json(await cached('content:shell', async () => toContentShell(await cached('content', loadContent))));
+    return;
+  }
   res.json(await cached('content', loadContent));
 });
 

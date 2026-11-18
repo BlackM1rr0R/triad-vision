@@ -16,12 +16,12 @@ import {
   TeamSection,
 } from '@/components/about/AboutSections';
 import { useSiteContent } from '@/lib/content';
-import { registerCopy } from '@/i18n';
-import { pagesCompany } from '@/i18n/pagesCompany';
+import { registerLazyCopy } from '@/i18n';
+import pagesCompany from '@/i18n/pagesCompany?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { LiveNumbers } from '@/components/life/LiveNumbers';
 
-registerCopy(pagesCompany);
+registerLazyCopy(pagesCompany); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 export default function About() {
   const { t } = useTranslation();

@@ -1,13 +1,13 @@
 import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMoney } from '@/components/tools/format';
-import { registerCopy } from '@/i18n';
-import { pagesTools } from '@/i18n/pagesTools';
+import { registerLazyCopy } from '@/i18n';
+import pagesTools from '@/i18n/pagesTools?lazy-copy';
 import { calculateSalary, DEFAULT_INPUT, FEDERAL_STATES, sanitizeInput, STATE_NAMES, type FederalState, type TaxClass } from '@/lib/salary';
 import { trackToolUse } from '@/lib/toolAnalytics';
 import { EmbedLayout } from './EmbedLayout';
 
-registerCopy(pagesTools);
+registerLazyCopy(pagesTools); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const SLUG = 'salary-calculator';
 const num = (s: string) => Number(s.replace(',', '.'));

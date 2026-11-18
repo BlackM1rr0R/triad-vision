@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Accessibility, Ear, Eye, Minus, Monitor, Moon, Orbit, Pause, Play, Plus, RotateCcw, Square, Sun, Volume2, X } from 'lucide-react';
 import clsx from 'clsx';
 import { DEFAULT_PREFS, resetPrefs, setPrefs, usePrefs, type ColorMode, type FontScale, type LetterSpacing, type LineHeight, type Theme } from '@/lib/prefs';

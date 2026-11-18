@@ -1,7 +1,7 @@
 import { useId, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

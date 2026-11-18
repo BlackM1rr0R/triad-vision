@@ -7,8 +7,8 @@ import clsx from 'clsx';
 import { ArrowUpRight, Building2, GitCompareArrows, Plus, Share2, Trophy, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesJobCompare } from '@/i18n/pagesJobCompare';
 import { useL10n } from '@/lib/l10n';
 import { quickNetMonthly } from '@/lib/salary/calc';
@@ -21,7 +21,7 @@ import { useJobLabels } from '@/components/jobs/labels';
 import { COMPARE_MAX, compareActions, compareHref, costCityFor, slugsFromParam, useCompareList } from '@/components/jobs/compare';
 import type { PublicVacancy } from '@/components/jobs/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesJobCompare);
 
 type Range = readonly [number, number];

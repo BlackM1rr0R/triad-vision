@@ -7,10 +7,6 @@ import type { Locale, SignerRole } from '@prisma/client';
 
 const fmt: Record<Locale, string> = { az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' };
 
-/** "16 October 2026, 14:05 (UTC)" in the reader's language. */
-export const formatUtc = (d: Date, locale: Locale) =>
-  `${new Intl.DateTimeFormat(fmt[locale], { dateStyle: 'long', timeStyle: 'short', timeZone: 'UTC' }).format(d)} (UTC)`;
-
 export const formatDay = (d: Date, locale: Locale) => new Intl.DateTimeFormat(fmt[locale], { dateStyle: 'long', timeZone: 'Asia/Baku' }).format(d);
 
 export interface EsignCopy {

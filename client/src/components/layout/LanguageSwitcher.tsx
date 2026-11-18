@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as Rea
 import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { Check, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';

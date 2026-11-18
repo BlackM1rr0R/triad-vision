@@ -1,5 +1,4 @@
 import type { TaskPriority } from '@prisma/client';
-import { prisma } from '../../db.js';
 import { activeStaff, activityRow, createNumbered, taskKey } from '../tasks/core.js';
 import { notifyAssigned } from '../tasks/notify.js';
 

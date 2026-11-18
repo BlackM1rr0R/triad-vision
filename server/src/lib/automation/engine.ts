@@ -228,6 +228,13 @@ export const runAutomationQueue = async (opts: { limit?: number; now?: Date } = 
 export const runTimeTriggers = async (now = new Date()) => {
   const rules = await prisma.automationRule.findMany({ where: { enabled: true, triggerType: { in: TIME_TRIGGERS } } });
   let started = 0;
+  // Several rules often watch the same statuses: each activity / status-since scan runs once per job run.
+  const scans = new Map<string, Promise<Map<string, Date>>>();
+  const once = (key: string, load: () => Promise<Map<string, Date>>) => {
+    let p = scans.get(key);
+    if (!p) scans.set(key, (p = load()));
+    return p;
+  };
   for (const rule of rules) {
     const parsed = parseStoredRule(rule);
     if (!parsed) continue;
@@ -236,17 +243,21 @@ export const runTimeTriggers = async (now = new Date()) => {
       const threshold = now.getTime() - (t.type === 'CLIENT_INACTIVE' || t.type === 'STATUS_DURATION' ? t.days : 0) * 86_400_000;
       const hits: { caseId: string; key: string; payload: Record<string, unknown> }[] = [];
       if (t.type === 'CLIENT_INACTIVE') {
-        for (const [caseId, last] of await clientActivity({ statuses: t.statuses })) {
+        for (const [caseId, last] of await once(`activity:${JSON.stringify(t.statuses ?? null)}`, () => clientActivity({ statuses: t.statuses }))) {
           if (last.getTime() <= threshold) hits.push({ caseId, key: `idle:${last.toISOString()}`, payload: { days: t.days, lastActivityAt: last.toISOString() } });
         }
       } else if (t.type === 'STATUS_DURATION') {
-        for (const [caseId, since] of await statusSince({ status: t.status })) {
+        for (const [caseId, since] of await once(`since:${t.status}`, () => statusSince({ status: t.status }))) {
           if (since.getTime() <= threshold) hits.push({ caseId, key: `status:${t.status}:${since.toISOString()}`, payload: { days: t.days, status: t.status, since: since.toISOString() } });
         }
       }
-      for (const h of hits.slice(0, 500)) {
-        const key = `${rule.id}:case:${h.caseId}:${h.key}`.slice(0, 191);
-        if (await prisma.automationRun.count({ where: { idempotencyKey: key } })) continue;
+      const batch = hits.slice(0, 500).map((h) => ({ ...h, runKey: `${rule.id}:case:${h.caseId}:${h.key}`.slice(0, 191) }));
+      // Hits stay hits run after run: the keys already started are read in one query instead of a count per hit.
+      const alreadyRun = batch.length
+        ? new Set((await prisma.automationRun.findMany({ where: { idempotencyKey: { in: batch.map((b) => b.runKey) } }, select: { idempotencyKey: true } })).map((r) => r.idempotencyKey))
+        : new Set<string>();
+      for (const h of batch) {
+        if (alreadyRun.has(h.runKey)) continue;
         const ctx = await buildContext({ triggerType: rule.triggerType as TriggerType, entityType: 'case', entityId: h.caseId, caseId: h.caseId, payload: h.payload, occurredAt: now });
         if (!ctx) continue;
         if (await startRun(rule, ctx, { key: h.key }, now)) started += 1;

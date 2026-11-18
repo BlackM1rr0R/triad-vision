@@ -66,9 +66,6 @@ export const partnerContextOf = (req: Request): Promise<PartnerCtx> => {
   return p;
 };
 
-/** Shorthand used by the older sub-routers that only need the partner row. */
-export const partnerOfRequest = async (req: Request) => (await partnerContextOf(req)).partner;
-
 // ─── Checks (403 PARTNER_PERMISSION_DENIED; the portal hides what it may not use) ─────
 
 const denied = () => forbidden('PARTNER_PERMISSION_DENIED');

@@ -18,12 +18,12 @@ import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTease
 import { MIN_WAGE_MONTHLY, hasProcessing, hasSalary, isSeasonal, isTrainee, levelRank, useEuro } from '@/components/visa/utils';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
-import type { VisaCategory } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesVisa } from '@/i18n/pagesVisa';
+import type { VisaCategorySummary } from '@/lib/types';
+import { registerLazyCopy } from '@/i18n';
+import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesVisa);
+registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 type Filter = 'all' | 'basic' | 'advanced' | 'family' | 'longTerm' | 'seasonal';
 type Sort = 'recommended' | 'salary' | 'speed' | 'level';
@@ -31,7 +31,7 @@ type Sort = 'recommended' | 'salary' | 'speed' | 'level';
 const FILTERS: Filter[] = ['all', 'basic', 'advanced', 'family', 'longTerm', 'seasonal'];
 const SORTS: Sort[] = ['recommended', 'salary', 'speed', 'level'];
 
-const matches = (v: VisaCategory, f: Filter) => {
+const matches = (v: VisaCategorySummary, f: Filter) => {
   switch (f) {
     case 'basic':
       return levelRank(v.germanLevel) <= 1;
@@ -48,7 +48,7 @@ const matches = (v: VisaCategory, f: Filter) => {
   }
 };
 
-const sorter: Record<Sort, (a: VisaCategory, b: VisaCategory) => number> = {
+const sorter: Record<Sort, (a: VisaCategorySummary, b: VisaCategorySummary) => number> = {
   recommended: (a, b) => a.sortOrder - b.sortOrder,
   salary: (a, b) => (b.salaryMax ?? -1) - (a.salaryMax ?? -1),
   speed: (a, b) => (a.processingMax ?? 999) - (b.processingMax ?? 999),

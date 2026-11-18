@@ -43,7 +43,8 @@ adminInboxRouter.get('/', async (req, res) => {
   const rows = await prisma.caseMessage.findMany({
     // + the viewer's case scope (lib/access; every case by default)
     where: { createdAt: { gte: new Date(Date.now() - INBOX_WINDOW_DAYS * DAY) }, case: withCaseScope({ status: { notIn: FINAL_STATUSES }, ...mine }, await caseScopeWhere(me)) },
-    select: { caseId: true, createdAt: true, authorId: true, body: true, readAt: true, voiceId: true, case: { select: { clientId: true } } },
+    // No `body` here: only the newest message of the (at most INBOX_MAX_THREADS) threads shown needs its text.
+    select: { id: true, caseId: true, createdAt: true, authorId: true, readAt: true, voiceId: true, case: { select: { clientId: true } } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: SCAN,
   });
@@ -71,6 +72,10 @@ adminInboxRouter.get('/', async (req, res) => {
       })
     : [];
   const byId = new Map(cases.map((c) => [c.id, c]));
+  const latestIds = ids.map((id) => latest.get(id)?.id).filter((x): x is string => !!x);
+  const bodies = latestIds.length
+    ? new Map((await prisma.caseMessage.findMany({ where: { id: { in: latestIds } }, select: { id: true, body: true } })).map((m) => [m.id, m.body]))
+    : new Map<string, string>();
   res.json({
     scope: q.scope,
     counts: { awaiting: awaiting.length, unread: [...unread.values()].reduce((a, b) => a + b, 0) },
@@ -86,7 +91,7 @@ adminInboxRouter.get('/', async (req, res) => {
           status: c.status,
           client: c.client,
           assignedStaff: c.assignedStaff,
-          lastMessage: { excerpt: excerpt(m.body), at: m.createdAt, fromClient: fromClient(m), voice: !!m.voiceId },
+          lastMessage: { excerpt: excerpt(bodies.get(m.id) ?? ''), at: m.createdAt, fromClient: fromClient(m), voice: !!m.voiceId },
           awaitingReply: !!wait,
           since: wait?.since ?? null,
           waitingCount: wait?.count ?? 0,

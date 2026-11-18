@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import clsx from 'clsx';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, CalendarPlus, Download, ExternalLink, FileText, History, MapPin, PartyPopper, ShieldX } from 'lucide-react';
 import { fileUrl, formatBytes } from '@/lib/api';

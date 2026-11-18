@@ -9,9 +9,9 @@ import { buttonClass } from '@/components/ui/Button';
 import { Success } from '@/components/illustrations';
 import { EventBadge, EventMeta } from '@/components/growth/EventCard';
 import type { PublicEvent } from '@/components/growth/api';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { api, errorCode } from '@/lib/api';
 import { leadContext } from '@/lib/leadVisitor';
 import { useAuth } from '@/lib/auth';
@@ -21,7 +21,7 @@ import NotFound from '../NotFound';
 import { getBrand } from '@/lib/brand';
 
 registerCopy(pagesGrowthPlus);
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /** "20261020T140000Z" for Google Calendar links. */
 const gcalTime = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');

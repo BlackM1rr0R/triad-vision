@@ -94,8 +94,11 @@ export const clientRows = async () => {
       emailVerifiedAt: true,
       isActive: true,
       referredByAgent: { select: { code: true } },
+      _count: { select: { cases: true } },
+      // Only the latest case is shown (with its joins); the count column comes from _count.
       cases: {
         orderBy: { createdAt: 'desc' },
+        take: 1,
         select: {
           number: true,
           visaType: true,
@@ -129,7 +132,7 @@ export const clientRows = async () => {
       c?.visaCategory ? `${az(c.visaCategory.title)} (${c.visaCategory.visaLabel})` : '',
       c ? (STATUS_AZ[c.status] ?? c.status) : 'Müraciət yoxdur',
       c?.assignedStaff ? `${c.assignedStaff.firstName} ${c.assignedStaff.lastName}` : '',
-      u.cases.length,
+      u._count.cases,
       u.referredByAgent?.code ?? '',
       c?.partner?.name ?? '',
     ];

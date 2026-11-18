@@ -136,5 +136,3 @@ export const callbackWindows = (h: OfficeHours, now = new Date()) => {
     return { label, date: new Date(dayStart.getTime() + BAKU_OFFSET).toISOString().slice(0, 10), windows };
   });
 };
-
-export const hhmmBaku = (d: Date) => new Date(d.getTime() + BAKU_OFFSET).toISOString().slice(11, 16);

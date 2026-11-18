@@ -30,8 +30,6 @@ export const SHARED_ROOT_NAME = 'Gemeinsame Dokumente';
 /** Name of the shared root before the single-workspace layout (renamed once, see ensureSharedRoot). */
 export const OLD_SHARED_ROOT_NAME = 'Firmenlaufwerk';
 export const CASES_FOLDER_NAME = 'Anträge';
-/** @deprecated the cases area is the "Anträge" folder inside the shared root now. */
-export const CASES_ROOT_NAME = CASES_FOLDER_NAME;
 export const PARTNERS_FOLDER_NAME = 'Partner';
 export const STAFF_FOLDER_NAME = 'Mitarbeiter';
 /** The former "In Bearbeitung" section (removed; lib/drive/layout.ts cleans up old copies). */

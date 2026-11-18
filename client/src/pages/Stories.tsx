@@ -15,22 +15,22 @@ import { RouteFlags } from '@/components/ui/Flag';
 import { useCopy } from '@/components/about/shared';
 import { useSiteContent } from '@/lib/content';
 import { useL10n } from '@/lib/l10n';
-import type { VisaCategory, VisaSample } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesCompany } from '@/i18n/pagesCompany';
+import type { VisaCategorySummary, VisaSample } from '@/lib/types';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesCompany from '@/i18n/pagesCompany?lazy-copy';
 import { pagesGrowth } from '@/i18n/pagesGrowth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { api } from '@/lib/api';
 import { PlacementMapSection } from '@/components/growth/PlacementMap';
 import { StoriesMap } from '@/components/stories/StoriesMap';
 
-registerCopy(pagesCompany);
+registerLazyCopy(pagesCompany); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGrowth);
 
-const labelsOf = (v: VisaCategory) => v.visaLabel.split('/').map((s) => s.trim());
+const labelsOf = (v: VisaCategorySummary) => v.visaLabel.split('/').map((s) => s.trim());
 
 /* ───────────────────────── Gallery with filter + detail ───────────────────────── */
-const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategory[] }) => {
+const Gallery = ({ samples, visas }: { samples: VisaSample[]; visas: VisaCategorySummary[] }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const copy = useCopy();

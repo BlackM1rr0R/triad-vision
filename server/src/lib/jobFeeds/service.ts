@@ -80,13 +80,6 @@ export const feedInclude = {
 } satisfies Prisma.VacancyInclude;
 export type FeedVacancy = Prisma.VacancyGetPayload<{ include: typeof feedInclude }>;
 
-/** Live on the public board: OPEN, publication date reached, not past closesAt. */
-export const liveVacancyWhere = (now = new Date()): Prisma.VacancyWhereInput => ({
-  status: 'OPEN',
-  OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
-  AND: [{ OR: [{ closesAt: null }, { closesAt: { gt: now } }] }],
-});
-
 export const isLive = (v: { status: string; publishedAt: Date | null; closesAt: Date | null }, now = new Date()) =>
   v.status === 'OPEN' && (!v.publishedAt || v.publishedAt <= now) && (!v.closesAt || v.closesAt > now);
 

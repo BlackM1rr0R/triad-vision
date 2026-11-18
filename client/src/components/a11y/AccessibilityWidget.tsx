@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { Accessibility } from 'lucide-react';
 import { usePrefs, type Prefs } from '@/lib/prefs';
 import { setHoverReading, setLang, setRate } from './speech';

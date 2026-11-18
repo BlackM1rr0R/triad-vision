@@ -57,7 +57,6 @@ export const readStoredForm = async (key: string) => {
   }
 };
 const removeStored = (key: string | null | undefined) => (key ? fs.unlink(storedPath(key)).catch(() => undefined) : Promise.resolve());
-export const storedFormPath = storedPath;
 export const writeStoredForm = writeStored;
 export const removeStoredForm = removeStored;
 

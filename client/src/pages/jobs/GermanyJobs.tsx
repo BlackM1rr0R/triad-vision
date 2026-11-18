@@ -6,8 +6,8 @@ import clsx from 'clsx';
 import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Heart, Landmark, Link2, MapPin, Search, Send, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
 import { useL10n } from '@/lib/l10n';
 import {
@@ -45,7 +45,7 @@ import { ExternalApplyOff } from '@/components/vacancyPlaces/ExternalApplyOff'; 
 const loadApplyDialog = () => import('@/components/germanyJobs/ApplyDialog');
 const ApplyDialog = lazy(() => loadApplyDialog().then((m) => ({ default: m.ApplyDialog })));
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGermanyJobs);
 registerCopy(pagesGermanyJobAlerts);
 

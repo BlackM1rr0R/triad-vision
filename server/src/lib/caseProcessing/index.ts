@@ -55,7 +55,6 @@ export const canMoveStage = (from: ProcessingStage | null, to: ProcessingStage) 
 
 /** Visa refused: CaseStatus REJECTED, or marked "Ablehnung" by the team (an approved visa wins). */
 export const isRefused = (c: { status: CaseStatus; processingStage?: string | null }) => c.status === 'REJECTED' || (c.processingStage === 'REFUSED' && c.status !== 'APPROVED');
-export const refusedWhere: Prisma.CaseWhereInput = { OR: [{ status: 'REJECTED' }, { processingStage: 'REFUSED', status: { not: 'APPROVED' } }] };
 
 export type StageCounts = Record<ProcessingStage, number>;
 export const emptyStageCounts = (): StageCounts => ({ IN_PROGRESS: 0, WRITTEN: 0, DONE: 0, REFUSED: 0 });

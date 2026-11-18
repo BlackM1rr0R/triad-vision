@@ -9,8 +9,8 @@ import { buttonClass } from '@/components/ui/Button';
 import { RelatedGuides } from '@/components/guides/RelatedGuides';
 import { downloadBlob, filenameFrom } from '@/components/cv/types';
 import { Disclaimer, GlossaryLinks, NumField, Sources, ToolFaq, useFaq, useLng } from '@/components/tools/calc/CalcShared';
-import { registerCopy } from '@/i18n';
-import { pagesApartmentViewing } from '@/i18n/pagesApartmentViewing';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesApartmentViewing from '@/i18n/pagesApartmentViewing?lazy-copy';
 import { pagesGames } from '@/i18n/pagesGames';
 import { pagesGermanSimulator } from '@/i18n/pagesGermanSimulator';
 import { api } from '@/lib/api';
@@ -23,7 +23,7 @@ import { ATTACHMENT_KEYS, DEFAULT_DISCLOSURE, DISCLOSURE_AS_OF, DISCLOSURE_SOURC
 
 registerCopy(pagesGames);
 registerCopy(pagesGermanSimulator);
-registerCopy(pagesApartmentViewing);
+registerLazyCopy(pagesApartmentViewing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const PATH = '/apartment-viewing';
 const SCENE_ICON: Record<string, LucideIcon> = { viewing: House, flatScam: ShieldAlert };

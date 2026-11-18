@@ -14,20 +14,20 @@ import { CheckList, PrintableChecklist } from '@/components/visa/Checklist';
 import { FamilyBadge } from '@/components/visa/ComparisonTable';
 import { PageCta } from '@/components/visa/PageCta';
 import { MIN_WAGE_MONTHLY, hasProcessing, hasSalary, isTrainee, servicesForVisa, useEuro } from '@/components/visa/utils';
-import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
-import { useSiteContent } from '@/lib/content';
+import { useSiteContent, visaQuery } from '@/lib/content';
 import type { VisaCategory } from '@/lib/types';
+import { SkeletonText } from '@/components/ui/Skeleton';
 import NotFound from './NotFound';
 import { sized } from '@/lib/img';
-import { registerCopy } from '@/i18n';
-import { pagesVisa } from '@/i18n/pagesVisa';
+import { registerLazyCopy } from '@/i18n';
+import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { CalculatorTeaser } from '@/components/growth/CalculatorTeaser';
 import { CostCalculatorTeaser } from '@/components/marketing/CostCalculatorTeaser';
 import { BudgetTeaser } from '@/components/budget/BudgetTeaser';
 
-registerCopy(pagesVisa);
+registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const CHIPS = ['chip-soft', 'chip-sage', 'chip-sky', 'chip-peach'];
 
@@ -48,12 +48,14 @@ export default function VisaDetail() {
   const { tr, trList } = useL10n();
   const euro = useEuro();
   const { data: content } = useSiteContent();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['visa', slug],
-    queryFn: async () => (await api.get<{ visa: VisaCategory }>(`/public/visa/${slug}`)).data.visa,
-    // The site content already holds every published visa, so most visits render instantly.
-    placeholderData: () => content?.visaCategories.find((v) => v.slug === slug),
+  const { data, isLoading, isError, isPlaceholderData } = useQuery({
+    ...visaQuery(slug),
+    // The site content holds every published visa without its long texts, so most visits render the page at
+    // once and the texts (body, requirements, documents, FAQ) follow; cards prefetch them (usePrefetchDetail).
+    placeholderData: () => content?.visaCategories.find((v) => v.slug === slug) as VisaCategory | undefined,
   });
+  // Texts still loading (placeholder from the site content): skeleton lines instead of "nothing listed".
+  const textsPending = isPlaceholderData && data?.body === undefined;
   usePageTitle(data ? tr(data.title) : t('nav.visas'));
 
   if (isLoading) return <PageHeroSkeleton />;
@@ -158,6 +160,7 @@ export default function VisaDetail() {
               <Reveal y={24}>
                 <h2 className="font-display text-2xl font-semibold tracking-[-0.01em] text-ink sm:text-[1.75rem]">{t('visaDetail.overview')}</h2>
                 <div className="prose-tv mt-4 max-w-[70ch] text-base sm:text-lg">
+                  {textsPending && <SkeletonText lines={4} />}
                   {tr(data.body)
                     .split(/\n{2,}/)
                     .map((p) => (
@@ -168,11 +171,13 @@ export default function VisaDetail() {
             </div>
 
             <Block eyebrow={t('visaDetail.requirements.eyebrow')} title={t('visaDetail.requirements.title')} subtitle={t('visaDetail.requirements.subtitle')}>
-              {requirements.length ? <CheckList items={requirements} columns={2} /> : <p className="text-sm text-muted">{t('visaDetail.empty')}</p>}
+              {textsPending ? <SkeletonText lines={4} /> : requirements.length ? <CheckList items={requirements} columns={2} /> : <p className="text-sm text-muted">{t('visaDetail.empty')}</p>}
             </Block>
 
             <Block id="documents" eyebrow={t('visaDetail.documents.eyebrow')} title={t('visaDetail.documents.title')} subtitle={t('visaDetail.documents.subtitle')}>
-              {documents.length ? (
+              {textsPending ? (
+                <SkeletonText lines={4} />
+              ) : documents.length ? (
                 <PrintableChecklist
                   items={documents}
                   heading={`${t('visaDetail.documents.printHeading')}: ${tr(data.title)} (${data.visaLabel})`}

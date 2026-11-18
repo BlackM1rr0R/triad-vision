@@ -24,7 +24,6 @@ import {
 import { password, publicUser } from './auth.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { sendEmployerCv } from '../lib/cv/access.js';
-import { listWorkers, workerSummary, workersXlsx } from '../lib/requests/workers.js';
 import { singleVacancyImage, storeVacancyImage, vacancyImagesOf } from '../lib/vacancyImages.js';
 import { companyLogoOf, singleRasterImage, storePublicImage } from '../lib/publicImages.js';
 import { cleanupRemovedImages } from '../lib/publicImageRefs.js';

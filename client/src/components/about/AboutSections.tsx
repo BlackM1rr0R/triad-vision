@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 import { LogoMark } from '@/components/ui/Logo';
 import { sized, srcSet } from '@/lib/img';
 import { useL10n } from '@/lib/l10n';
-import type { Office, VisaCategory } from '@/lib/types';
+import type { Office, VisaCategorySummary } from '@/lib/types';
 import { Accordion, useCopy } from './shared';
 import { OfficeCard, PresenceMap } from './AboutVisuals';
 
@@ -463,7 +463,7 @@ export const LanguagesSection = () => {
 };
 
 /* ───────────────────────── Sectors (links to visa categories) ───────────────────────── */
-export const SectorsSection = ({ visas }: { visas: VisaCategory[] }) => {
+export const SectorsSection = ({ visas }: { visas: VisaCategorySummary[] }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   if (!visas.length) return null;

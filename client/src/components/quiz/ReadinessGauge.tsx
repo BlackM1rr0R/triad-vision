@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { animate, motion, useReducedMotion } from 'framer-motion';
+import { animate, m as motion, useReducedMotion } from 'framer-motion';
 
 const R = 52;
 const C = 2 * Math.PI * R;

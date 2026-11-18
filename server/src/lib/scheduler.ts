@@ -18,9 +18,29 @@ export const registerJob = (job: Job) => {
   jobs.push(job);
 };
 
+/** Gap between jobs that share the same nominal first-run delay. */
+export const FIRST_RUN_SPACING_MS = 7_000;
+const DEFAULT_FIRST_RUN_MS = 60_000;
+
+/**
+ * Pure: the actual first-run delay of each job. Jobs asking for the same delay (most use the 60 s default, several
+ * 3 / 4 / 5 min) are spread FIRST_RUN_SPACING_MS apart in registration order, so a deploy on the small server does not
+ * start a dozen scans in the same second. Later runs keep their interval from that first run, so they stay spread too.
+ */
+export const firstRunDelays = (list: Pick<Job, 'firstRunAfterMs'>[], spacingMs = FIRST_RUN_SPACING_MS): number[] => {
+  const seen = new Map<number, number>();
+  return list.map((job) => {
+    const base = job.firstRunAfterMs ?? DEFAULT_FIRST_RUN_MS;
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    return base + n * spacingMs;
+  });
+};
+
 export const startScheduler = () => {
   const timers: NodeJS.Timeout[] = [];
-  for (const job of jobs) {
+  const delays = firstRunDelays(jobs);
+  for (const [index, job] of jobs.entries()) {
     let running = false;
     const tick = async () => {
       if (running) return;
@@ -38,7 +58,7 @@ export const startScheduler = () => {
       const t = setInterval(() => void tick(), job.everyMs);
       t.unref();
       timers.push(t);
-    }, job.firstRunAfterMs ?? 60_000);
+    }, delays[index]);
     first.unref();
     timers.push(first);
   }

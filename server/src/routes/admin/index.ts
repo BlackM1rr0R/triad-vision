@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import { Prisma } from '@prisma/client';
-import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { requireMinRole } from '../../middleware/auth.js';
-import { parse } from '../../lib/http.js';
 import { clearCache } from '../../lib/cache.js';
 import { adminCasesRouter } from './cases.js';
 import { adminContentRouter, adminSettingsRouter, adminUploadRouter } from './content.js';
@@ -125,7 +123,6 @@ import { adminExternalApplicationsRouter } from './externalApplications.js'; // 
 import { adminCoverLetterTemplatesRouter } from './coverLetterTemplates.js'; // Anschreiben templates per job type
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
-import { audit } from '../../lib/audit.js';
 import { canWith, loadAccess, scopeWhere, withCaseScope } from '../../lib/access/index.js'; // staff permissions + case scope (dashboard)
 import { adminBulkRouter } from './bulk.js'; // bulk actions on cases / inquiries / candidates (per-item results, audited)
 import { adminReviewRouter } from './review.js'; // fast document review queue
@@ -210,9 +207,16 @@ adminRouter.get('/dashboard', async (req, res) => {
       SELECT COUNT(*) AS n FROM \`Case\` c
       JOIN CaseMessage m ON m.id = (SELECT id FROM CaseMessage WHERE caseId = c.id ORDER BY createdAt DESC, id DESC LIMIT 1)
       WHERE c.status NOT IN ('APPROVED','REJECTED','CANCELLED') AND m.authorId = c.clientId`,
-    prisma.case.findMany({ where: sc({ status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { not: null } }), select: { createdAt: true, decisionAt: true } }),
+    // Average time to decision over every decided case: summed in the database for the full scope (no row per case
+    // ever decided shipped to Node); a restricted scope keeps the Prisma where of the case scope.
+    scoped
+      ? prisma.case
+          .findMany({ where: sc({ status: { in: ['APPROVED', 'REJECTED'] }, decisionAt: { not: null } }), select: { createdAt: true, decisionAt: true } })
+          .then((rows) => ({ ms: rows.reduce((a, c) => a + (c.decisionAt!.getTime() - c.createdAt.getTime()), 0), n: rows.length }))
+      : prisma.$queryRaw<{ us: unknown; n: unknown }[]>`
+      SELECT SUM(TIMESTAMPDIFF(MICROSECOND, createdAt, decisionAt)) AS us, COUNT(*) AS n FROM \`Case\`
+      WHERE status IN ('APPROVED','REJECTED') AND decisionAt IS NOT NULL`.then((r) => ({ ms: Number(String(r[0]?.us ?? 0)) / 1000, n: Number(String(r[0]?.n ?? 0)) })),
   ]);
-  const decisionDays = decidedAll.map((c) => (c.decisionAt!.getTime() - c.createdAt.getTime()) / DAY);
   res.json({
     counts: Object.fromEntries(byStatus.map((b) => [b.status, b._count._all])),
     newInquiries,
@@ -227,7 +231,7 @@ adminRouter.get('/dashboard', async (req, res) => {
     inquiriesByStatus: Object.fromEntries(inquiriesByStatus.map((b) => [b.status, b._count._all])),
     myOpenCases: myOpen,
     unansweredClientMessages: Number(unansweredClientMessages[0]?.n ?? 0),
-    avgDaysToDecision: decisionDays.length ? Math.round((decisionDays.reduce((a, b) => a + b, 0) / decisionDays.length) * 10) / 10 : null,
+    avgDaysToDecision: decidedAll.n ? Math.round((decidedAll.ms / DAY / decidedAll.n) * 10) / 10 : null,
   });
 });
 

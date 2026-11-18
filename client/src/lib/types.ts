@@ -196,10 +196,15 @@ export interface SiteSettings {
   social?: Record<string, string>;
 }
 
+/** A visa category in the site content (GET /public/content?fields=shell): no long texts, see VisaDetail for those. */
+export type VisaCategorySummary = Omit<VisaCategory, 'body' | 'requirements' | 'documents' | 'faq'>;
+/** A service in the site content: no long texts (body, features, steps), see ServiceDetail for those. */
+export type ServiceSummary = Omit<Service, 'body' | 'features' | 'steps'>;
+
 export interface SiteContent {
   stats: Stat[];
-  visaCategories: VisaCategory[];
-  services: Service[];
+  visaCategories: VisaCategorySummary[];
+  services: ServiceSummary[];
   partners: Partner[];
   samples: VisaSample[];
   testimonials: Testimonial[];

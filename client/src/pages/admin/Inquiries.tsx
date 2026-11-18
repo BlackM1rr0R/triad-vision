@@ -21,8 +21,8 @@ import { Pagination } from '@/components/ui/Pagination';
 import { LEAD_LEVELS, useLeadScoring, type LeadLevel, type ScoreReason } from '@/components/marketing/api';
 import { LeadScoreBadge } from '@/components/marketing/LeadScore';
 import { LeadScoringSettingsDrawer } from '@/components/marketing/LeadScoringSettings';
-import { registerCopy } from '@/i18n';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { pagesAdminUx } from '@/i18n/pagesAdminUx';
 import { pagesInquiries } from '@/i18n/pagesInquiries';
 import { InquiryDetailBody, InquiryPresence, InquiryStatusCell } from '@/components/admin/split/InquiryDetail'; // inline status, presence
@@ -41,7 +41,7 @@ import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type Co
 import { useRowSelection } from '@/components/staffPower/selection';
 import { InquiriesBulkBar } from '@/components/staffPower/BulkBar';
 
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesAdminUx);
 registerCopy(pagesStaffPower);
 registerCopy(pagesInquiries);

@@ -4,7 +4,7 @@ import { formatInvoiceDate } from '../invoiceTexts.js';
 import { pdfMoney } from './currency.js';
 import type { BillingEntity } from './entities.js';
 import type { SellerInfo } from '../invoicePdf.js';
-import { computeClientTotals, isPassThrough, lineTotal, type ClientLine } from './math.js';
+import { computeClientTotals, lineTotal, type ClientLine } from './math.js';
 import { DE_PDF, secondaryPdfLabels, type BillingLocale, type PdfLabels } from './texts.js';
 import type { ClientBillingSettings } from './settings.js';
 

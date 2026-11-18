@@ -215,10 +215,13 @@ adminCasesRouter.get('/', async (req, res) => {
   }
   const DAY = 24 * 60 * 60 * 1000;
   // "Next step" chip per row: deterministic rules only (lib/caseNext), a fixed number of batched queries.
-  const nextSteps = await nextStepSummaries(items.map((c) => c.id), { statusSince });
-  // "Top kimdÉ™dir?" column: who acts next, batched (lib/clientProcess/ballInCourt).
-  const balls = await ballInCourtMany(items.map((c) => c.id)).catch(() => new Map());
-  const processing = await processingSummaries(items);
+  // "Top kimdÉ™dir?" column: who acts next, batched (lib/clientProcess/ballInCourt). The three decorations are
+  // independent reads: run side by side instead of one after the other.
+  const [nextSteps, balls, processing] = await Promise.all([
+    nextStepSummaries(items.map((c) => c.id), { statusSince }),
+    ballInCourtMany(items.map((c) => c.id)).catch(() => new Map()),
+    processingSummaries(items),
+  ]);
   res.json({
     items: items.map(({ events, _count, ...c }) => ({
       ...c,

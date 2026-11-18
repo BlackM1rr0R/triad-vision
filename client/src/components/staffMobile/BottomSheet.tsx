@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, m as motion, useReducedMotion } from 'framer-motion';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

@@ -14,17 +14,17 @@ import { StepsTimeline } from '@/components/services/StepsTimeline';
 import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { visasForService } from '@/components/visa/utils';
-import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
-import { useSiteContent } from '@/lib/content';
+import { serviceQuery, useSiteContent } from '@/lib/content';
 import type { Service } from '@/lib/types';
+import { SkeletonText } from '@/components/ui/Skeleton';
 import NotFound from './NotFound';
 import { sized } from '@/lib/img';
-import { registerCopy } from '@/i18n';
-import { pagesVisa } from '@/i18n/pagesVisa';
+import { registerLazyCopy } from '@/i18n';
+import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesVisa);
+registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const Heading = ({ eyebrow, title }: { eyebrow?: string; title: string }) => (
   <Reveal y={20}>
@@ -38,11 +38,13 @@ export default function ServiceDetail() {
   const { t, i18n } = useTranslation();
   const { tr, trList } = useL10n();
   const { data: content } = useSiteContent();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['service', slug],
-    queryFn: async () => (await api.get<{ service: Service }>(`/public/services/${slug}`)).data.service,
-    placeholderData: () => content?.services.find((s) => s.slug === slug),
+  const { data, isLoading, isError, isPlaceholderData } = useQuery({
+    ...serviceQuery(slug),
+    // The site content holds every service without its long texts (body, features, steps): the page renders at
+    // once and they follow; cards prefetch them (usePrefetchDetail).
+    placeholderData: () => content?.services.find((s) => s.slug === slug) as Service | undefined,
   });
+  const textsPending = isPlaceholderData && data?.body === undefined;
   usePageTitle(data ? tr(data.title) : t('nav.services'));
 
   if (isLoading) return <PageHeroSkeleton />;
@@ -107,6 +109,7 @@ export default function ServiceDetail() {
               <Heading title={t('serviceDetail.overview')} />
               <Reveal>
                 <div className="prose-tv -mt-2 max-w-[70ch] text-base sm:text-lg">
+                  {textsPending && <SkeletonText lines={4} />}
                   {tr(data.body)
                     .split(/\n{2,}/)
                     .map((p) => (

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { registerCopy } from '@/i18n';
+import { registerLazyCopy } from '@/i18n';
 import { api } from '@/lib/api';
 import type { L10n } from '@/lib/types';
 
@@ -16,7 +16,7 @@ export const useJobsCopy = (enabled: boolean) =>
   useQuery({
     queryKey: ['copy', 'pagesJobs'],
     queryFn: async () => {
-      registerCopy((await import('@/i18n/pagesJobs')).pagesJobs);
+      await registerLazyCopy((await import('@/i18n/pagesJobs?lazy-copy')).default);
       return true;
     },
     enabled,

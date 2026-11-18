@@ -26,9 +26,6 @@ export const loadClientUser = (id: string) =>
     },
   });
 
-/** Case ids of the client: their own cases (family sub-cases belong to the main applicant's account as well). */
-export const clientCaseIds = async (userId: string) => (await prisma.case.findMany({ where: { clientId: userId }, select: { id: true } })).map((c) => c.id);
-
 const tagContact = (userId: string) => prisma.contact.findFirst({ where: { userId, shared: true }, orderBy: { createdAt: 'asc' }, select: { id: true, tags: true } });
 
 export const clientTags = async (userId: string) => {

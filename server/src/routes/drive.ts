@@ -176,8 +176,11 @@ driveRouter.get('/nodes/:id/children', async (req, res) => {
     orderBy: [{ kind: 'asc' }, { name: 'asc' }],
     take: 20_000,
   });
-  const [folder] = await buildItems(ctx, [await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: itemSelect })]);
-  const items = await buildItems(ctx, rows);
+  // The folder and its children are decorated in one pass (one set of count / star / comment / case-link queries).
+  const folderRow = await prisma.driveNode.findUniqueOrThrow({ where: { id }, select: itemSelect });
+  const built = await buildItems(ctx, [folderRow, ...rows]);
+  const folder = built[0]?.id === id ? built[0] : undefined;
+  const items = folder ? built.slice(1) : built;
   res.json({ folder, ...breadcrumb(ctx, id), items });
 });
 

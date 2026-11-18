@@ -14,8 +14,6 @@ export interface ImpersonationContext {
 
 export const impersonationStore = new AsyncLocalStorage<ImpersonationContext>();
 
-/** The running impersonation, when the current code runs on behalf of an admin viewing a client. */
-export const currentImpersonation = () => impersonationStore.getStore();
 export const isImpersonating = () => !!impersonationStore.getStore();
 
 const WRITE_OPERATIONS = new Set([

@@ -8,8 +8,8 @@ import { Ban, Building2, CheckCircle2, ChevronLeft, ChevronRight, Mail, Maximize
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { Drawer } from '@/components/admin/Drawer';
@@ -33,7 +33,7 @@ import { CompletenessBar, LegalDataForm, legalFormOf, legalPayload, type Complet
 import { useAuth } from '@/lib/auth';
 import { hasMinRole } from '@/lib/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesStaffPower);
 
 const STATUSES: CompanyStatus[] = ['PENDING', 'ACTIVE', 'SUSPENDED'];

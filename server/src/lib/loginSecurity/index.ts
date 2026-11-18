@@ -70,9 +70,6 @@ export const loginPolicy = async (): Promise<PolicySnapshot> => {
   return inFlight;
 };
 
-/** The last loaded snapshot without waiting (for synchronous helpers such as the "who am I" flags). */
-export const cachedLoginPolicy = () => snapshot;
-
 /** Called after every change in the Access Center (and by tests). */
 export const invalidateLoginPolicy = () => {
   loadedAt = 0;
@@ -106,13 +103,6 @@ export const partnerContractAllowsLogin = async (user: { id: string; role: Role 
   if (!member) return true;
   const partner = await prisma.referralPartner.findUnique({ where: { id: member.partnerId }, select: { active: true, contractEnd: true } });
   return partner ? contractAllows(partner) : false;
-};
-
-/** Web idle timeout in minutes when the settings differ from the server configuration (the browser mirrors it), else null. */
-export const webIdleOverrideNow = (u: { id?: string; role: Role }) => {
-  if (!u.id) return null;
-  const minutes = Math.round(sessionLifetimeFor(u.role, u.id, 'web').idleMs / 60_000);
-  return minutes !== config.session.webIdleMinutes ? minutes : null;
 };
 
 /** The effective web idle timeout in minutes for this account (settings or the server configuration; 0 = off). */

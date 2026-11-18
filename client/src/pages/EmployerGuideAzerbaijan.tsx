@@ -10,15 +10,15 @@ import { Accordion } from '@/components/visa/Accordion';
 import { PageCta } from '@/components/visa/PageCta';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import { PathLink, useGuidePath } from '@/components/guides/shared';
-import { currentSiteLocale, registerCopy } from '@/i18n';
-import { pagesEmployerGuideAz } from '@/i18n/pagesEmployerGuideAz';
+import { currentSiteLocale, registerLazyCopy } from '@/i18n';
+import pagesEmployerGuideAz from '@/i18n/pagesEmployerGuideAz?lazy-copy';
 import { useBrand } from '@/lib/brand';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { HOLIDAY_YEARS, holidayDays, holidayRange, holidaysFor } from '@/lib/employerGuideAz/holidays';
 import { EtiquetteTeaser } from '@/components/etiquette/EtiquetteTeaser'; // workplace etiquette quiz to share with new staff
 import { NovruzTeaser } from '@/components/novruz/NovruzInfo'; // Novruz greeting card generator
 
-registerCopy(pagesEmployerGuideAz);
+registerLazyCopy(pagesEmployerGuideAz); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const AS_OF = '11.2026';
 const PUBLISHED = '2026-11-16';

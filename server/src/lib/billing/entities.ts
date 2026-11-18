@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import type { SellerInfo } from '../invoicePdf.js';
-import { CURRENCIES, asCurrency, currencySchema, type Currency } from './currency.js';
+import { asCurrency, currencySchema } from './currency.js';
 
 /**
  * Issuing entity of a client document (Setting `billingEntities`). Kept deliberately simple:
@@ -90,5 +90,3 @@ export const azSeller = (az: BillingEntitiesSettings['az']): SellerInfo => ({
   phone: az.phone,
   website: az.website,
 });
-
-export const supportedCurrencies = (): Currency[] => [...CURRENCIES];

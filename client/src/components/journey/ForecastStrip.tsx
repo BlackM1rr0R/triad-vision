@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { CalendarRange, Check, Info } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
-import { registerCopy } from '@/i18n';
-import { pagesJourney } from '@/i18n/pagesJourney';
+import { registerLazyCopy } from '@/i18n';
+import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { useForecast } from './api';
 import type { Forecast, ForecastStep } from './types';
 
-registerCopy(pagesJourney);
+registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 /**
  * Durations of two weeks or more read in weeks ("about 2–4 weeks"), shorter ones in days. A range that only crosses

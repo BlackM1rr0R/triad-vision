@@ -9,7 +9,6 @@ import {
   type BeneficiaryLike,
   type Currency,
   type EffectiveShare,
-  type StoredShare,
 } from './split.js';
 
 /**
@@ -307,12 +306,4 @@ export const totalsOf = (rows: RowDto[], bens: BeneficiaryLike[]): Totals => {
 export const projectsList = async () => {
   const g = await prisma.settlementEntry.groupBy({ by: ['project'], _count: { _all: true }, orderBy: { project: 'asc' } });
   return g.map((x) => ({ name: x.project, count: x._count._all }));
-};
-
-/** Sets one stored share (status / manual value) on the JSON. */
-export const withShare = (raw: unknown, id: string, next: StoredShare | null) => {
-  const s = { ...storedShares(raw) };
-  if (next == null) delete s[id];
-  else s[id] = next;
-  return s as Prisma.InputJsonValue;
 };

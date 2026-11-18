@@ -5,8 +5,8 @@ import clsx from 'clsx';
 import { Briefcase, Building2, ClipboardList, Clock3, FileSignature, FileText, Handshake, LayoutDashboard, Package, ShieldAlert, ShieldCheck, Users, Video, Workflow } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesSign } from '@/i18n/pagesSign';
 import { useJobLabels } from '@/components/jobs/labels';
 import { COMPANY_STATUS_TONE } from '@/components/jobs/types';
@@ -36,7 +36,7 @@ import { pagesConfigurator } from '@/i18n/pagesConfigurator';
 import { CompanyNovruzCard } from '@/components/novruz/CompanyNovruzCard'; // Novruz greeting cards for the own workers
 import { CompanyGate, useCompanyAccess, type CompanyPerm } from '@/components/company/access'; // employer roles (menu + page gates; the server enforces)
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesSign);
 registerCopy(pagesRequests);
 registerCopy(pagesQuotes);

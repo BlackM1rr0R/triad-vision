@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import type { DocStage } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { docFilePath } from '../drive/cases.js';
@@ -145,5 +144,3 @@ export const loadDriveSubject = async (nodeId: string): Promise<{ subject: Subje
     },
   };
 };
-
-export const readSubject = (s: Subject) => fs.readFile(s.path);

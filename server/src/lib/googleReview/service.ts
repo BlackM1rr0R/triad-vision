@@ -111,7 +111,6 @@ const verify = (token: string, scope: string) => {
 export const reviewToken = (userId: string) => `${userId}.${sig('google-review', userId)}`;
 /** The user id of a valid per-client token, else null. */
 export const userOfToken = (token: string) => verify(token, 'google-review');
-export const reviewLinkUrl = (token: string) => `${config.clientUrl}/r/review/${token}`;
 export const optOutUrl = (token: string) => `${config.clientUrl}/r/review/${token}/optout`;
 
 /** Per-invite token (rating page). "demo" = preview / test e-mails (the page shows a demo, nothing is stored). */

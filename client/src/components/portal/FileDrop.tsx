@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type DragEvent } from 'react';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { UploadCloud } from 'lucide-react';

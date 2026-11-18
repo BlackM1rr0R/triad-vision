@@ -4,7 +4,7 @@ import { Check, Minus } from 'lucide-react';
 import clsx from 'clsx';
 import { Icon } from '@/components/ui/Icon';
 import { useL10n } from '@/lib/l10n';
-import type { Service } from '@/lib/types';
+import type { ServiceSummary } from '@/lib/types';
 import { servicePhase } from '@/components/visa/utils';
 
 const Mark = ({ on, label }: { on: boolean; label: string }) => (
@@ -18,14 +18,14 @@ const Mark = ({ on, label }: { on: boolean; label: string }) => (
 );
 
 /** Which services are for companies vs. candidates, with stage and duration. Table from md up, cards below. */
-export const ServiceMatrix = ({ services }: { services: Service[] }) => {
+export const ServiceMatrix = ({ services }: { services: ServiceSummary[] }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const phases = t('servicesPage.journey.phases', { returnObjects: true }) as {
     title: string;
   }[];
-  const forCompany = (s: Service) => s.audience !== 'candidate';
-  const forCandidate = (s: Service) => s.audience !== 'company';
+  const forCompany = (s: ServiceSummary) => s.audience !== 'candidate';
+  const forCandidate = (s: ServiceSummary) => s.audience !== 'company';
   const inc = t('servicesPage.matrix.included');
   const exc = t('servicesPage.matrix.notIncluded');
   const col = (k: string) => t(`servicesPage.matrix.cols.${k}`);

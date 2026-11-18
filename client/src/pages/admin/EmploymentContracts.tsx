@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { FileSignature } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { fmtDate, fullName } from '@/components/admin/labels';
@@ -16,7 +16,7 @@ import type { EmploymentContract } from '@/components/placement/api';
 import type { CaseStatus } from '@/lib/types';
 
 registerCopy(pagesPlacement);
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const FILTERS = ['warnings', 'probation', 'all'] as const;
 type Filter = (typeof FILTERS)[number];

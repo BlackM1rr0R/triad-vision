@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from 'framer-motion';
+import { m as motion, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from 'framer-motion';
 import clsx from 'clsx';
 import { ArrowRight, FileCheck2, FileSignature, PlaneLanding, Stamp } from 'lucide-react';
 import { Link } from 'react-router-dom';

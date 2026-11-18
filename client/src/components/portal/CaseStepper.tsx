@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Ban, Check, X } from 'lucide-react';
 import { STATUS_STEP, STEP_KEYS } from '@/lib/caseStatus';

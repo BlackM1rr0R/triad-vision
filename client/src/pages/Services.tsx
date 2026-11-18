@@ -12,11 +12,11 @@ import { ServiceMatrix } from '@/components/services/ServiceMatrix';
 import { JourneyFlow } from '@/components/services/JourneyFlow';
 import { PageCta } from '@/components/visa/PageCta';
 import { useSiteContent } from '@/lib/content';
-import { registerCopy } from '@/i18n';
-import { pagesVisa } from '@/i18n/pagesVisa';
+import { registerLazyCopy } from '@/i18n';
+import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 
-registerCopy(pagesVisa);
+registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 type Filter = 'all' | 'company' | 'candidate';
 

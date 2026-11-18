@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { ArrowLeft, Briefcase, ChevronLeft, ChevronRight, ClipboardList, ExternalLink, Search, Send, Sparkles, StickyNote, Users } from 'lucide-react';
 import { api } from '@/lib/api';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { EmployerVotesList, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
 import { pagesRequests } from '@/i18n/pagesRequests';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
@@ -22,7 +22,7 @@ import { APPLICATION_STATUS_TONE, type ApplicationStatus } from '@/components/jo
 import { RequestProgressBar } from '@/components/requests/RequestProgressBar';
 import { REQUEST_STATUSES, REQUEST_STATUS_TONE, type RequestBase, type RequestStatus, type Suggestion } from '@/components/requests/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesRequests);
 
 const KEY = ['admin-candidate-requests'] as const;

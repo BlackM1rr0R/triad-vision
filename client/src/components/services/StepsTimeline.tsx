@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 
 /** Vertical, service-specific step timeline; the duration badge sits at the top of the line. */

@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import clsx from 'clsx';
 import { Camera, CheckCircle2, ChevronDown, Lightbulb, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';

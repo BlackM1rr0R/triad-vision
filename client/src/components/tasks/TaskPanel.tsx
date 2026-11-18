@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AlertCircle, ArrowUpRight, CheckSquare, Hand, Link as LinkIcon, MessageSquare, Paperclip, Pencil, RefreshCw, Trash2, X } from 'lucide-react';

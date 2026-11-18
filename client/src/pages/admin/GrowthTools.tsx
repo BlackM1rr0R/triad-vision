@@ -8,9 +8,9 @@ import { Chip, LoadingBlock, PageHead, Panel, Switch } from '@/components/admin/
 import { Tabs } from '@/components/ui/Tabs';
 import { L10nInput, emptyL10n } from '@/components/admin/L10nInput';
 import { useCalcConfig } from '@/components/growth/api';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { CostCalculatorSettings } from '@/components/marketing/CostCalculatorSettings';
 import { OriginAnalytics } from '@/components/marketing/OriginAnalytics';
 import {
@@ -33,7 +33,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
 
 registerCopy(pagesGrowthPlus);
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 type R = [number, number];
 interface CalcSettings {

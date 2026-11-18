@@ -8,10 +8,10 @@ import { BadgeCheck, ChevronLeft, ChevronRight, FolderPlus, Mail, Paperclip, Pho
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseStatus, L10n } from '@/lib/types';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { EmployerVotesList, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
 import { CvDownloadButton } from '@/components/cv/CvDownloadButton';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { Drawer } from '@/components/admin/Drawer';
 import { Modal } from '@/components/admin/Modal';
@@ -35,7 +35,7 @@ import { useRowSelection } from '@/components/staffPower/selection';
 import { CandidatesBulkBar } from '@/components/staffPower/BulkBar';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue'; // masked client address: reveal with a reason
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesStaffPower);
 
 const STAFF_APP_STATUSES: ApplicationStatus[] = ['NEW', 'SHORTLISTED', 'PROPOSED', 'INTERVIEW', 'ACCEPTED', 'REJECTED'];

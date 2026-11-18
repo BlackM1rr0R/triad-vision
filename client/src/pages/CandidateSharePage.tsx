@@ -7,9 +7,9 @@ import { CheckCircle2, Circle, Clapperboard, Clock3, FileDown, FileText, ShieldC
 import { api, errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesPlacement } from '@/i18n/pagesPlacement';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { Spinner } from '@/components/ui/Spinner';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Lost } from '@/components/illustrations';
@@ -20,7 +20,7 @@ import { MatchBars } from '@/components/placement/MatchBreakdown';
 import { placementError, type PublicShare, type ShareDecision } from '@/components/placement/api';
 
 registerCopy(pagesPlacement);
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 const DOC_ICON = { approved: CheckCircle2, inReview: Clock3, missing: Circle } as const;
 const DOC_TONE = { approved: 'text-success-fg', inReview: 'text-info-fg', missing: 'text-muted' } as const;

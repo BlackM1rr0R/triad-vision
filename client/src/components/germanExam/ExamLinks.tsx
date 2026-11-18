@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Gauge, GraduationCap, type LucideIcon } from 'lucide-react';
-import { registerCopy } from '@/i18n';
-import { pagesMockExam } from '@/i18n/pagesMockExam';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesMockExam from '@/i18n/pagesMockExam?lazy-copy';
 import { pagesLevelSelf } from '@/i18n/pagesLevelSelf';
 
-registerCopy(pagesMockExam);
+registerLazyCopy(pagesMockExam); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesLevelSelf);
 
 /** Cards to the mock exams and the level self-assessment (portal German page). */

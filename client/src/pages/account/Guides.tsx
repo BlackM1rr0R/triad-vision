@@ -2,13 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { QuickLinks, TipsCard } from '@/components/portal/Dashboard';
 import { useOverview } from '@/components/portal/useOverview';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesAccount } from '@/i18n/pagesAccount';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesAccount from '@/i18n/pagesAccount?lazy-copy';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { GermanTeaser } from './portal/SecondaryCards';
 import { BudgetLink } from '@/components/budget/BudgetTeaser';
 
-registerCopy(pagesAccount);
+registerLazyCopy(pagesAccount); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesPortalNav);
 
 /** /account/guides — Learn › Guides: tips for the current step, German progress and links to the public guides. */

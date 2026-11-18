@@ -135,8 +135,6 @@ const PLEASE: L = {
   ru: 'Пожалуйста, загрузите документ заново.',
 };
 
-export const qualityText = (code: QualityCode, locale: Locale) => QUALITY[code][locale];
-
 /**
  * The note on a document sent back with "Ask client to re-upload": the quality problems (and the wrong type
  * when the recogniser saw one), the photo tips and a request to upload again — in the client's language.

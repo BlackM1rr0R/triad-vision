@@ -10,13 +10,13 @@ import { PlacementMap } from '@/components/growth/PlacementMap';
 import { OriginFlowMap } from '@/components/growth/OriginFlowMap';
 import { usePlacementMap } from '@/components/growth/api';
 import { usePublicOrigins } from '@/components/marketing/api';
-import { registerCopy } from '@/i18n';
+import { registerCopy, registerLazyCopy } from '@/i18n';
 import { pagesGrowthPlus } from '@/i18n/pagesGrowthPlus';
-import { pagesMarketing } from '@/i18n/pagesMarketing';
+import pagesMarketing from '@/i18n/pagesMarketing?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 registerCopy(pagesGrowthPlus);
-registerCopy(pagesMarketing);
+registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
 export default function MapPage() {
   const { t } = useTranslation();

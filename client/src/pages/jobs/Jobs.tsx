@@ -6,8 +6,8 @@ import clsx from 'clsx';
 import { ArrowRight, Building2, ChevronLeft, ChevronRight, Globe2, Search, SlidersHorizontal, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { registerCopy } from '@/i18n';
-import { pagesJobs } from '@/i18n/pagesJobs';
+import { registerCopy, registerLazyCopy } from '@/i18n';
+import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
 import { pagesGermanyJobs } from '@/i18n/pagesGermanyJobs';
 import { PageHero } from '@/components/layout/PageHero';
 import { Spinner } from '@/components/ui/Spinner';
@@ -23,7 +23,7 @@ import { isFull } from '@/components/vacancyPlaces/api';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
 
-registerCopy(pagesJobs);
+registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGermanyJobs);
 
 const HERO = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=2000&q=70';

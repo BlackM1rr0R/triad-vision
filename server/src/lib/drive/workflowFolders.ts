@@ -28,7 +28,6 @@ import { ensureSharedRoot } from './roots.js';
 export const WORKFLOW_ROOT_NAME = 'Arbeitsablauf';
 export const WORKFLOW_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const satisfies readonly ProcessingStage[];
 export type WorkflowStage = (typeof WORKFLOW_STAGES)[number];
-export const isWorkflowStage = (v: unknown): v is WorkflowStage => typeof v === 'string' && (WORKFLOW_STAGES as readonly string[]).includes(v);
 
 export const STAGE_FOLDER_NAME: Record<WorkflowStage, string> = {
   WRITTEN: 'Schon geschrieben',
@@ -207,9 +206,6 @@ export const copyTargetOf = async (ctx: DriveAccessCtx, wf: WorkflowFolders, nod
   // The node itself is a client folder (not inside another one): copied as a whole into the stage.
   return { path: [], caseId: caseOf.get(chain[chain.length - 1]!.id) ?? null };
 };
-
-/** The folder names of copyTargetOf (for callers that only need the path). */
-export const copyPathOf = async (ctx: DriveAccessCtx, wf: WorkflowFolders, nodeId: string): Promise<string[]> => (await copyTargetOf(ctx, wf, nodeId)).path;
 
 /**
  * After a send: the folders between the stage folder and the old place that are empty now (no live content) go

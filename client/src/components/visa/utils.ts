@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Service, VisaCategory } from '@/lib/types';
+import type { ServiceSummary, VisaCategorySummary } from '@/lib/types';
 import { useL10n } from '@/lib/l10n';
 
 /**
@@ -16,13 +16,13 @@ export const levelRank = (level?: string | null) => {
   return m ? CEFR.indexOf(m[0]) : Number.POSITIVE_INFINITY;
 };
 
-export const isSeasonal = (v: VisaCategory) => /saison|season/i.test(v.visaLabel) || v.slug === 'landwirtschaft';
+export const isSeasonal = (v: VisaCategorySummary) => /saison|season/i.test(v.visaLabel) || v.slug === 'landwirtschaft';
 /** Trainee pay is not measured against the minimum wage (a minimum training allowance applies instead). */
-export const isTrainee = (v: VisaCategory) => v.slug === 'ausbildung';
+export const isTrainee = (v: VisaCategorySummary) => v.slug === 'ausbildung';
 
-export const hasSalary = (v: VisaCategory): v is VisaCategory & { salaryMin: number; salaryMax: number } =>
+export const hasSalary = <V extends VisaCategorySummary>(v: V): v is V & { salaryMin: number; salaryMax: number } =>
   typeof v.salaryMin === 'number' && typeof v.salaryMax === 'number' && v.salaryMax > 0;
-export const hasProcessing = (v: VisaCategory): v is VisaCategory & { processingMin: number; processingMax: number } =>
+export const hasProcessing = <V extends VisaCategorySummary>(v: V): v is V & { processingMin: number; processingMax: number } =>
   typeof v.processingMin === 'number' && typeof v.processingMax === 'number' && v.processingMax > 0;
 
 const NUM_LOCALE = {
@@ -61,13 +61,13 @@ const VISA_SERVICES: Record<string, string[]> = {
 };
 const DEFAULT_SERVICES = ['documents', 'visa-support', 'arrival-integration'];
 
-export const servicesForVisa = (visaSlug: string, services: Service[]) => {
+export const servicesForVisa = <S extends ServiceSummary>(visaSlug: string, services: S[]) => {
   const slugs = VISA_SERVICES[visaSlug] ?? DEFAULT_SERVICES;
-  return slugs.map((s) => services.find((x) => x.slug === s)).filter((x): x is Service => !!x);
+  return slugs.map((s) => services.find((x) => x.slug === s)).filter((x): x is S => !!x);
 };
 
 /** Visas in which a service is used, in the order of the visa list. */
-export const visasForService = (serviceSlug: string, visas: VisaCategory[]) => {
+export const visasForService = <V extends VisaCategorySummary>(serviceSlug: string, visas: V[]) => {
   const direct = visas.filter((v) => (VISA_SERVICES[v.slug] ?? DEFAULT_SERVICES).includes(serviceSlug));
   // Selection / HR services apply to every visa — show the first few instead of all.
   return direct.length ? direct : visas;
