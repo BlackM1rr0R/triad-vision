@@ -21,8 +21,10 @@ const viewing = (adminToken: string, imp: string) => {
  * Row count and latest updatedAt of every table, except the ones a view may write: its own bookkeeping
  * (ImpersonationSession / ImpersonationLog), the audit trail (checked separately: never the client as actor)
  * and Session (the admin's own lastSeenAt touch; the client's session is asserted untouched elsewhere).
+ * CityCost and Setting are process-wide shared caches (city-cost seed, CBAR rate, real-salary snapshot…) that the
+ * first visitor of an empty test database fills via outsideImpersonation — never data of the viewed client.
  */
-const MAY_CHANGE = new Set(['ImpersonationSession', 'ImpersonationLog', 'AuditLog', 'Session']);
+const MAY_CHANGE = new Set(['ImpersonationSession', 'ImpersonationLog', 'AuditLog', 'Session', 'CityCost', 'Setting']);
 const dbSnapshot = async () => {
   const out: Record<string, { count: number; updatedAt: number | null }> = {};
   for (const m of Prisma.dmmf.datamodel.models) {
