@@ -6,6 +6,8 @@ import { requirementsFor } from '../docsIntel/requirementTemplates.js';
 import { familyRequirementsFor } from '../family/requirements.js';
 import { stripAiFlag } from '../ai/translate.js';
 import { buildOverview } from './build.js';
+import { earlyEmbassyOpen } from '../earlyEmbassy/rules.js';
+import { ensureEarlyEmbassyRequirements } from '../earlyEmbassy/service.js'; // embassy rows while waiting for the contract
 
 /**
  * Loads one case of the client and builds the process overview (lib/docProgress/build.ts). Only the client's own
@@ -13,6 +15,10 @@ import { buildOverview } from './build.js';
  * the team workflow: no staff, no notes, no history, no review notes.
  */
 export const docProgressForClient = async (caseId: string, userId: string) => {
+  const owner = await prisma.case.findUnique({ where: { id: caseId }, select: { clientId: true } });
+  if (!owner || owner.clientId !== userId) throw notFound('CASE_NOT_FOUND');
+  // A case already waiting for the contract gets its embassy list now (idempotent; lib/earlyEmbassy).
+  await ensureEarlyEmbassyRequirements(caseId);
   const c = await prisma.case.findUnique({
     where: { id: caseId },
     select: {
@@ -35,6 +41,8 @@ export const docProgressForClient = async (caseId: string, userId: string) => {
   if (!c || c.clientId !== userId) throw notFound('CASE_NOT_FOUND');
 
   const forecast = await forecastForCase(c.id);
+  // Early embassy uploads (lib/earlyEmbassy): the case waits for the work contract.
+  const earlyEmbassy = earlyEmbassyOpen(c.status, c.requirements.filter((r) => r.stage === 'INITIAL'));
   const hasEmbassy = c.requirements.some((r) => r.stage === 'EMBASSY');
   // Before the embassy step the case has no EMBASSY rows yet: show the list it will get (same source as createRequirements).
   const preview =
@@ -54,7 +62,7 @@ export const docProgressForClient = async (caseId: string, userId: string) => {
     steps: forecast.steps,
     closedAt: c.closedAt,
     decisionAt: c.decisionAt,
-    requirements: c.requirements.map((r) => ({ ...r, title: stripAiFlag(r.title), uploadable: !!clientUploadStageFor(c.status, r) })),
+    requirements: c.requirements.map((r) => ({ ...r, title: stripAiFlag(r.title), uploadable: !!clientUploadStageFor(c.status, r, { earlyEmbassy }) })),
     embassyPreview: preview,
     processing: { stage: c.processingStage, at: c.processingStageAt },
   });

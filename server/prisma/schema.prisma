@@ -1314,6 +1314,12 @@ model DriveNode {
   contentHash        String?            @db.Char(64)
   /// Moved to the archive by the retention policy.
   archivedAt         DateTime?
+  /// "İş axını" copy (a folder directly below a stage folder of Arbeitsablauf): the case whose client folder it
+  /// mirrors (lib/drive/workflowLinks.ts). Plain id (no foreign key): the link outlives the case for the history.
+  workflowCaseId     String?
+  /// Set when the folder became a case's client folder; never cleared (also after the case is deleted), so a
+  /// left-behind client folder is still recognised as client data (partner drive isolation, lib/partnerAccess/drive.ts).
+  clientFolderAt     DateTime?
   tags               DriveNodeTag[]
   comments           DriveComment[]
   shareLinks         DriveShareLink[]
@@ -1324,6 +1330,7 @@ model DriveNode {
   @@index([name])
   @@index([contentHash])
   @@index([workflowStage])
+  @@index([workflowCaseId])
 }
 
 /// Access to a node (and, by inheritance, everything below it) for one user OR every user of a role.
@@ -5710,11 +5717,33 @@ model JobAlert {
   sentCount      Int       @default(0)
   unsubscribedAt DateTime?
   visitorId      String?   @db.VarChar(40)
+  /// Vacancy waitlist ("Uyğun vakansiya açılanda xəbər ver", lib/jobAlerts/waitlist.ts): one profession, optional city / region,
+  /// notified once per opened vacancy with free places instead of the daily digest.
+  waitlist       Boolean   @default(false)
+  city           String?   @db.VarChar(80)
+  /// Lead created for a visitor's waitlist sign-up (Inquiry id; plain id).
+  inquiryId      String?   @db.VarChar(40)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  notices        JobAlertNotice[]
 
   @@index([email])
   @@index([confirmedAt])
+  @@index([waitlist, confirmedAt])
+}
+
+/// Vacancy waitlist: one row per person (recipient = user id or e-mail) and vacancy they were told about — never twice.
+model JobAlertNotice {
+  id        String   @id @default(cuid())
+  alertId   String
+  alert     JobAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  vacancyId String   @db.VarChar(40)
+  recipient String   @db.VarChar(190)
+  sentAt    DateTime @default(now())
+
+  @@unique([recipient, vacancyId])
+  @@index([alertId])
+  @@index([vacancyId])
 }
 
 /// Downloadable guide (e-book) offered in exchange for an e-mail address.

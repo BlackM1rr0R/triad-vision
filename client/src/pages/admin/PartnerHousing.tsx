@@ -10,6 +10,8 @@ import { registerCopy } from '@/i18n';
 import { pagesHousing } from '@/i18n/pagesHousing';
 import { Badge, Button, ConfirmDialog, Drawer, EmptyState, Field, IconButton, Input, Modal, PageHeader, Select, Switch, Table, Tabs, TabPanel, Textarea, useTabParam } from '@/components/ui';
 import { ImageField } from '@/components/admin/ImageField';
+import { SensitiveValue, isMaskedValue } from '@/components/privacyTools/SensitiveValue'; // masked landlord address / contact: reveal with a reason
+import { dropMasked } from '@/lib/maskedInput';
 import { LISTING_TYPES, deadlineTone, fmtBerlin, fmtDay, priceLabel, useHousingError, type DeadlineState, type ListingType, type StaffListing } from '@/components/housing/api';
 
 registerCopy(pagesHousing);
@@ -108,7 +110,8 @@ const ListingModal = ({ listing, onClose }: { listing: StaffListing | null; onCl
         active: form.active,
         companyId: form.companyId || null,
       };
-      return listing ? (await api.patch(`/admin/housing/listings/${listing.id}`, body)).data : (await api.post('/admin/housing/listings', body)).data;
+      // Fields still masked (ADDRESS group) are left out: the stored landlord address / contact stays as it is.
+      return listing ? (await api.patch(`/admin/housing/listings/${listing.id}`, dropMasked(body))).data : (await api.post('/admin/housing/listings', body)).data;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: KEY });
@@ -117,11 +120,19 @@ const ListingModal = ({ listing, onClose }: { listing: StaffListing | null; onCl
     },
     onError,
   });
-  const f = (k: 'name' | 'city' | 'contactName' | 'contactPhone' | 'contactEmail' | 'address', max: number, required = false, type = 'text') => (
-    <Field label={t(`housing.page.fields.${k}`)} required={required}>
-      <Input type={type} required={required} maxLength={max} value={form[k]} onChange={(e) => set(k, e.target.value)} />
-    </Field>
-  );
+  const f = (k: 'name' | 'city' | 'contactName' | 'contactPhone' | 'contactEmail' | 'address', max: number, required = false, type = 'text') =>
+    listing && isMaskedValue(form[k]) ? (
+      // ADDRESS masked (Access Center): reveal with a reason; saving leaves the stored value as it is (not sent).
+      <div className="min-w-0">
+        <span className="label">{t(`housing.page.fields.${k}`)}</span>
+        <SensitiveValue value={form[k]} entity="partnerHousing" id={listing.id} field={k} className="input flex items-center" />
+        <p className="mt-1 text-[11px] text-muted">{t('privacyTools.sensitive.maskedEdit')}</p>
+      </div>
+    ) : (
+      <Field label={t(`housing.page.fields.${k}`)} required={required}>
+        <Input type={type} required={required} maxLength={max} value={form[k]} onChange={(e) => set(k, e.target.value)} />
+      </Field>
+    );
   return (
     <Modal
       open

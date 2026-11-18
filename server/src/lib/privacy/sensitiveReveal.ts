@@ -23,7 +23,7 @@ export type ExtraRevealEntity = (typeof EXTRA_REVEAL_ENTITIES)[number];
 
 export const EXTRA_REASON_MIN = 10;
 
-type Loaded = { found: boolean; value: string | null; caseId?: string | null };
+type Loaded = { found: boolean; value: string | null; caseId?: string | null; clientId?: string | null };
 
 const day = (d: Date | null | undefined) => (d ? d.toISOString().slice(0, 10) : null);
 const num = (v: { toString(): string } | number | null | undefined) => (v === null || v === undefined ? null : String(v));
@@ -62,7 +62,7 @@ export const EXTRA_REVEALERS: Record<ExtraRevealEntity, { group: ExtraMaskGroup;
     minRole: 'STAFF',
     load: async (id) => {
       const u = await prisma.user.findUnique({ where: { id }, select: { address: true } });
-      return { found: !!u, value: u?.address ?? null };
+      return { found: !!u, value: u?.address ?? null, clientId: id };
     },
   },
   arrivalPlan: {
@@ -126,5 +126,25 @@ export const inCaseScope = async (user: { id: string; role: Role }, caseId: stri
     return !!(await prisma.case.findFirst({ where: { AND: [{ id: caseId }, where] }, select: { id: true } }));
   } catch {
     return false; // the engine exists but its scope failed: fail closed for a reveal
+  }
+};
+
+/**
+ * Client-level data (no single case): visible when the staff member can see at least one case of that client.
+ * With scope ALL (empty where) every client is visible, as before.
+ */
+export const inClientScope = async (user: { id: string; role: Role }, clientId: string | null | undefined): Promise<boolean> => {
+  if (!clientId) return true;
+  scopeProbe ??= import(/* @vite-ignore */ ACCESS_SPEC)
+    .then((m: { caseScopeWhere?: unknown }) => (typeof m.caseScopeWhere === 'function' ? (m.caseScopeWhere as ScopeFn) : null))
+    .catch(() => null);
+  const fn = await scopeProbe;
+  if (!fn) return true;
+  try {
+    const where = await fn(user);
+    if (!where || !Object.keys(where).length) return true;
+    return !!(await prisma.case.findFirst({ where: { AND: [{ clientId }, where] }, select: { id: true } }));
+  } catch {
+    return false; // fail closed for a reveal
   }
 };

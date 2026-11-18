@@ -268,3 +268,25 @@ describe('Access Center guard rails', () => {
     expect((await admin.agent.get('/api/admin/access/staff/templates')).status).toBe(403);
   });
 });
+
+describe('client-level reveals respect case scope', () => {
+  it('ASSIGNED staff can reveal the address only of clients with an in-scope case', async () => {
+    const sup = await asSuperAdmin();
+    const staff = await asStaff();
+    const mine = await clientWithCase('Revealscopemine', staff.user.id);
+    const other = await clientWithCase('Revealscopeother');
+    await prisma.user.update({ where: { id: mine.client.user.id }, data: { address: 'Nizami küç. 1, Bakı' } });
+    await prisma.user.update({ where: { id: other.client.user.id }, data: { address: 'Füzuli küç. 2, Bakı' } });
+    const reveal = (id: string) => staff.agent.post('/api/admin/reveal').send({ entity: 'clientAddress', id, field: 'address', reason: 'Məktub göndərmək üçün ünvan lazımdır' });
+
+    // Scope ALL (default): both visible, as before.
+    expect((await reveal(other.client.user.id)).status).toBe(200);
+
+    expectStatus(await sup.agent.put(`/api/admin/access/scope/users/${staff.user.id}`).send({ caseScope: 'ASSIGNED' }), 200);
+    const ok = expectStatus(await reveal(mine.client.user.id), 200).body;
+    expect(ok.value).toBe('Nizami küç. 1, Bakı');
+    const denied = await reveal(other.client.user.id);
+    expect([403, 404]).toContain(denied.status);
+    expect(JSON.stringify(denied.body)).not.toContain('Füzuli');
+  });
+});

@@ -4,11 +4,12 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { badRequest, parse } from '../../lib/http.js';
 import { caseScopeWhere } from '../../lib/access/api.js';
-import { optionalCase, scoped, viaCase } from '../../lib/accessAudit/scope.js';
+import { optionalCase, scoped, viaCase, viaPersonCases } from '../../lib/accessAudit/scope.js';
 
 /**
  * Embassy / operations layer of the workspace calendar — mounted at /api/admin/ops-calendar (STAFF+ via the admin
- * router; every staff role sees every case, as in the cases list).
+ * router). Staff with a narrower case scope (lib/access: ASSIGNED / TEAM) see only items of cases in scope;
+ * interviews follow the candidate's cases (one without a case only for its organiser / creator).
  *
  *   GET /?from=&to=&staffId=me|none|<id>&types=embassy,interview,arrival,consultation
  *
@@ -78,7 +79,14 @@ adminOpsCalendarRouter.get('/', async (req, res) => {
       : [],
     want.has('interview')
       ? prisma.interview.findMany({
-          where: { startsAt: { gte: q.from, lt: q.to }, status: { in: ['PROPOSED', 'CONFIRMED', 'DONE'] }, ...(staffId ? { staffId: staffId === 'none' ? null : staffId } : {}) },
+          where: {
+            startsAt: { gte: q.from, lt: q.to },
+            status: { in: ['PROPOSED', 'CONFIRMED', 'DONE'] },
+            ...(staffId ? { staffId: staffId === 'none' ? null : staffId } : {}),
+            // Interviews belong to the candidate, not to a case: in scope when one of the candidate's cases is; a
+            // candidate without a case only for the interview's organiser / creator (ALL: no filter at all).
+            ...(Object.keys(scope).length ? { AND: [viaPersonCases(scope, 'candidate', [{ staffId: req.user!.id }, { createdById: req.user!.id }]) as Prisma.InterviewWhereInput] } : {}),
+          },
           select: { id: true, status: true, startsAt: true, endsAt: true, meetingUrl: true, candidate: staffSel, staff: staffSel, company: { select: { name: true } } },
           take: 500,
         })

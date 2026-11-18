@@ -73,7 +73,7 @@ familyRouter.delete('/members/:caseId', async (req, res) => {
   const m = await loadMemberCase(String(req.params.caseId));
   await accessible(m.id, req.user!);
   assertActor(req.user!, m.clientId);
-  await removeFamilyMember(m.parentCaseId, m.id);
+  await removeFamilyMember(m.parentCaseId, m.id, req.user!.id);
   await audit(req, 'FAMILY_MEMBER_REMOVED', `case:${m.id}`, { parentCaseId: m.parentCaseId });
   res.json({ ok: true, ...(await familyOverview(m.parentCaseId)) });
 });

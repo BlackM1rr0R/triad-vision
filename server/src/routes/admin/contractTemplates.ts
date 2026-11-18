@@ -15,8 +15,9 @@ import { metaOf } from '../../lib/esign/http.js';
 
 /**
  * Contract templates (Arbeitsvertrag, Ausbildungsvertrag, Dienstleistungsvertrag), mounted at
- * /api/admin/contract-templates. STAFF read and use them for their cases (preview / PDF / e-signature);
- * creating, editing and deleting templates is ADMIN+.
+ * /api/admin/contract-templates. STAFF read and use them for their cases (preview / PDF; e-signature only for
+ * service contracts — Əmək müqaviləsi and İş müqaviləsi go through the two-step /api/admin/case-contracts);
+ * creating, editing and deleting templates is ADMIN+. The employer is never offered as a signer.
  */
 export const adminContractTemplatesRouter = Router();
 
@@ -154,8 +155,13 @@ const fileNameOf = (name: string, number: string) =>
     .replace(/\s+/g, '-')
     .slice(0, 80) || 'Vertrag'}-${number}.pdf`;
 
-const partiesOf = (kind: ContractKind, values: Record<string, string>): [string, string] =>
-  kind === 'SERVICE' || kind === 'LABOUR' ? [values['triad.name'], values['client.fullName']] : [values['company.name'], values['client.fullName']];
+/**
+ * Signature lines of a case contract: always Triad Vision | client. The employer is never a signer of a client
+ * contract (owner's rule: Triad Vision handles everything); work / training contracts get the same lines as the
+ * two-step case contracts (lib/caseContracts), so their PDF renders with the LABOUR labels.
+ */
+const pdfKindOf = (kind: ContractKind): ContractKind => (kind === 'WORK' || kind === 'AUSBILDUNG' ? 'LABOUR' : kind);
+const partiesOf = (values: Record<string, string>): [string, string] => [values['triad.name'], values['client.fullName']];
 
 adminContractTemplatesRouter.post('/:id/preview', async (req, res) => {
   const body = parse(useSchema, req.body ?? {});
@@ -166,7 +172,7 @@ adminContractTemplatesRouter.post('/:id/preview', async (req, res) => {
 adminContractTemplatesRouter.post('/:id/pdf', async (req, res) => {
   const body = parse(useSchema, req.body ?? {});
   const { t, c, lang, values, rendered } = await renderFor(req, String(req.params.id), body.caseId, body.inputs);
-  const pdf = await renderContractPdf({ title: t.name, text: rendered.text, kind: t.kind, language: lang, parties: partiesOf(t.kind, values) });
+  const pdf = await renderContractPdf({ title: t.name, text: rendered.text, kind: pdfKindOf(t.kind), language: lang, parties: partiesOf(values) });
   void audit(req, 'contractTemplate.pdf', t.id, { caseId: c.id });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileNameOf(t.name, c.number))}`);
@@ -175,25 +181,24 @@ adminContractTemplatesRouter.post('/:id/pdf', async (req, res) => {
   res.send(pdf);
 });
 
-/** Client as CANDIDATE; the company contact for work / training contracts; the acting staff member for service contracts. */
-const defaultSigners = async (kind: ContractKind, c: ContractCase, req: Request): Promise<SignerInput[]> => {
+/**
+ * Client as CANDIDATE, then Triad Vision as STAFF (the configured authorised signatory, else the acting staff
+ * member). Only service contracts are sent from here, and the employer is never a signer of a client contract.
+ */
+const defaultSigners = async (c: ContractCase, req: Request): Promise<SignerInput[]> => {
   const signers: SignerInput[] = [
     { role: 'CANDIDATE', name: `${c.client.firstName} ${c.client.lastName}`.trim(), email: c.client.email, phone: c.client.phone, userId: c.client.id, locale: c.client.locale, order: 1 },
   ];
-  if ((kind === 'WORK' || kind === 'AUSBILDUNG') && c.company) {
-    const u = c.company.users[0];
-    if (u) signers.push({ role: 'COMPANY', name: `${u.firstName} ${u.lastName}`.trim(), email: u.email, phone: u.phone, userId: u.id, locale: u.locale, order: 2 });
-    else if (c.company.email) signers.push({ role: 'COMPANY', name: c.company.contactName?.trim() || c.company.name, email: c.company.email.toLowerCase(), phone: c.company.phone, locale: 'de', order: 2 });
-  }
-  if (kind === 'SERVICE') {
-    // Countersignature configured: the default authorised signatory signs for Triad Vision after the client.
-    const withCs = await withCountersigner(signers, 'CASE_CONTRACT');
-    if (withCs.length > signers.length) return withCs;
-    const me = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { id: true, firstName: true, lastName: true, email: true, locale: true } });
-    signers.push({ role: 'STAFF', name: `${me.firstName} ${me.lastName}`.trim(), email: me.email, userId: me.id, locale: me.locale, order: 2 });
-  }
+  // Countersignature configured: the default authorised signatory signs for Triad Vision after the client.
+  const withCs = await withCountersigner(signers, 'CASE_CONTRACT');
+  if (withCs.length > signers.length) return withCs;
+  const me = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { id: true, firstName: true, lastName: true, email: true, locale: true } });
+  signers.push({ role: 'STAFF', name: `${me.firstName} ${me.lastName}`.trim(), email: me.email, userId: me.id, locale: me.locale, order: 2 });
   return signers;
 };
+
+/** Kinds sent only through the two-step case contracts (Əmək müqaviləsi → İş müqaviləsi), never from here. */
+const TWO_STEP_KINDS: ContractKind[] = ['LABOUR', 'WORK', 'AUSBILDUNG'];
 
 /** Case statuses in which a service contract becomes the case's contract step (like the e-sign prefill). */
 const CONTRACT_STEP = ['DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED'];
@@ -204,10 +209,13 @@ adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
   const body = parse(sendSchema, req.body ?? {});
   const { t, c, lang, values, rendered } = await renderFor(req, String(req.params.id), body.caseId, body.inputs);
   if (!t.active) throw badRequest('TEMPLATE_INACTIVE');
-  // Əmək müqaviləsi: Triad Vision signs first, staff approve — only through /api/admin/case-contracts.
-  if (t.kind === 'LABOUR') throw badRequest('USE_CASE_CONTRACTS');
-  const pdf = await renderContractPdf({ title: t.name, text: rendered.text, kind: t.kind, language: lang, parties: partiesOf(t.kind, values) });
-  const signers = body.signers ?? (await defaultSigners(t.kind, c, req));
+  // Əmək müqaviləsi and İş müqaviləsi (work / training contracts): Triad Vision signs first, staff approve — only
+  // through /api/admin/case-contracts. Templates of these kinds can still be previewed and downloaded here.
+  if (TWO_STEP_KINDS.includes(t.kind)) throw badRequest('USE_CASE_CONTRACTS');
+  // No employer signer in a client contract (old requests with an employer party stay readable in the e-sign module).
+  if (body.signers?.some((s) => s.role === 'COMPANY')) throw badRequest('NO_EMPLOYER_SIGNER');
+  const pdf = await renderContractPdf({ title: t.name, text: rendered.text, kind: pdfKindOf(t.kind), language: lang, parties: partiesOf(values) });
+  const signers = body.signers ?? (await defaultSigners(c, req));
   const actor = actorOf(req);
   const meta = { ...metaOf(req), actorId: actor.id };
   const base = {
@@ -224,6 +232,8 @@ adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
   const createAndSend = async (caseContract: boolean) => {
     const created = await createRequest({ ...base, caseContract }, actor, meta);
     try {
+      // A client contract is never tied to the employer's company (it would show in the employer portal).
+      await prisma.signatureRequest.update({ where: { id: created.id }, data: { companyId: null } });
       await sendRequest(created.id, actor, meta);
     } catch (err) {
       // Nothing was sent: do not leave a draft behind.
@@ -234,7 +244,7 @@ adminContractTemplatesRouter.post('/:id/send', async (req, res) => {
     return created;
   };
 
-  let caseContract = t.kind === 'SERVICE' && CONTRACT_STEP.includes(c.status);
+  let caseContract = t.kind === 'SERVICE' && CONTRACT_STEP.includes(c.status); // the only kind sent from here
   let created;
   try {
     created = await createAndSend(caseContract);

@@ -8,6 +8,7 @@ import { conflict, notFound } from '../http.js';
 import { notifyUser } from '../notifications.js';
 import { effectiveStage } from '../caseProcessing/index.js';
 import { peekWorkflowFolders } from '../drive/workflowFolders.js';
+import { caseFoldersInStage } from '../drive/workflowLinks.js';
 import { storagePath } from '../drive/storage.js';
 import { newFiles, parseSentFiles, sendBlocker, type SentFile } from './logic.js';
 import { READY_DOCS_TEXT } from './texts.js';
@@ -17,7 +18,7 @@ import { READY_DOCS_TEXT } from './texts.js';
  *
  * Where finished documents live: the team copies / sends them through the "İş axını" stage folders of the drive
  * (lib/drive/workflowFolders) — "Gemeinsame Dokumente / Arbeitsablauf / Fertig / <client folder name> / …", the
- * client folder's name (Case.driveFolderId) being the link. Every file below that folder (a few levels deep) is
+ * case id on that folder (DriveNode.workflowCaseId; the client folder name for legacy copies) being the link. Every file below it (a few levels deep) is
  * copied into the private upload store as a case Document (stage OTHER, ACCEPTED, no requirement), which the client
  * portal lists under "Sizin üçün fayllar" (caseView.otherDocuments) and serves through /api/files/:id.
  *
@@ -40,27 +41,24 @@ export interface ReadyFileRow {
   updatedAt: Date;
 }
 
-const lower = (s: string) => s.toLocaleLowerCase('en');
-
-/** The case's folder below "Arbeitsablauf/Fertig" (by the client folder's name) and the files in it. */
-export const readyFilesOf = async (driveFolderId: string | null): Promise<{ folder: { id: string; name: string } | null; files: ReadyFileRow[] }> => {
-  if (!driveFolderId) return { folder: null, files: [] };
+/**
+ * The case's folder(s) below "Arbeitsablauf/Fertig" and the files in them: the folders linked to the case
+ * (DriveNode.workflowCaseId, set by "İş axınına kopyala") first; a legacy copy found by the client folder's name
+ * only when none is linked (and never one linked to another case — lib/drive/workflowLinks).
+ */
+export const readyFilesOf = async (caseId: string, driveFolderId: string | null): Promise<{ folder: { id: string; name: string } | null; files: ReadyFileRow[] }> => {
   const [wf, client] = await Promise.all([
     peekWorkflowFolders(),
-    prisma.driveNode.findFirst({ where: { id: driveFolderId, deletedAt: null }, select: { name: true } }),
+    driveFolderId ? prisma.driveNode.findFirst({ where: { id: driveFolderId, deletedAt: null }, select: { name: true } }) : null,
   ]);
-  if (!wf || !client) return { folder: null, files: [] };
-  const candidates = await prisma.driveNode.findMany({
-    where: { parentId: wf.stages.DONE, kind: 'FOLDER', deletedAt: null, name: client.name },
-    select: { id: true, name: true },
-    orderBy: { createdAt: 'asc' },
-  });
-  const folder = candidates.find((f) => lower(f.name) === lower(client.name)) ?? null;
+  if (!wf) return { folder: null, files: [] };
+  const folders = await caseFoldersInStage(wf.stages.DONE, caseId, client?.name ?? null);
+  const folder = folders[0] ? { id: folders[0].id, name: folders[0].name } : null;
   if (!folder) return { folder: null, files: [] };
 
-  const paths = new Map<string, string>([[folder.id, '']]);
+  const paths = new Map<string, string>(folders.map((f) => [f.id, '']));
   const files: ReadyFileRow[] = [];
-  let level = [folder.id];
+  let level = folders.map((f) => f.id);
   for (let depth = 0; depth < MAX_DEPTH && level.length && files.length < MAX_FILES; depth++) {
     const rows = await prisma.driveNode.findMany({
       where: { parentId: { in: level }, deletedAt: null },
@@ -98,7 +96,7 @@ export const readyDocsView = async (caseId: string) => {
   const c = await prisma.case.findUnique({ where: { id: caseId }, select: { id: true, number: true, status: true, processingStage: true, driveFolderId: true } });
   if (!c) throw notFound('CASE_NOT_FOUND');
   const [{ folder, files }, live, sends] = await Promise.all([
-    readyFilesOf(c.driveFolderId),
+    readyFilesOf(c.id, c.driveFolderId),
     liveSentFiles(caseId),
     prisma.caseReadyDocsSend.findMany({ where: { caseId }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, createdAt: true, actorId: true, fileCount: true, newCount: true, resend: true } }),
   ]);
@@ -133,7 +131,7 @@ export const sendReadyDocs = async (caseId: string, actor: { id: string }, opts:
     select: { id: true, number: true, status: true, processingStage: true, driveFolderId: true, client: { select: { id: true, firstName: true, locale: true } } },
   });
   if (!c) throw notFound('CASE_NOT_FOUND');
-  const { files } = await readyFilesOf(c.driveFolderId);
+  const { files } = await readyFilesOf(c.id, c.driveFolderId);
   const live = await liveSentFiles(caseId);
   const resend = !!opts.resend;
   const blocker = sendBlocker({ stage: effectiveStage(c.processingStage, c.status), fileCount: files.length, sentBefore: live.count > 0, resend });

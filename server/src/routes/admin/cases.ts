@@ -39,6 +39,7 @@ import { marksForStatus, reviewMarksSchema } from '../../lib/review/marks.js'; /
 import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from '../../lib/caseProcessing/index.js'; // Schon geschrieben → Fertig
 import { FINAL_PROCESS_STATUSES } from '../../lib/recognition/rules.js';
 import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js'; // case scope (ALL = every case, the default)
+import { ensureEarlyEmbassyRequirements } from '../../lib/earlyEmbassy/service.js'; // embassy list while waiting for the contract
 
 export const adminCasesRouter = Router();
 
@@ -422,6 +423,8 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
   if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
   if (body.status === 'REJECTED') await trashRejectedCopy(doc.id); // the incoming copy leaves the client folder (bin; back on accept)
   if (body.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // language certificate → profile German level (never throws)
+  // Last required initial document accepted in DOCUMENTS_REVIEW: the case waits for the contract → embassy list early (never throws).
+  if (body.status === 'ACCEPTED' && doc.stage === 'INITIAL') await ensureEarlyEmbassyRequirements(doc.caseId);
   await prisma.caseEvent.create({
     data: {
       caseId: doc.caseId,

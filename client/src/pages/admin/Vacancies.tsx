@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { fmtDate, fmtRelative, fullName } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { JobAlertStatsPanel } from '@/components/jobs/JobAlertStatsPanel';
+import { WaitlistStatsPanel } from '@/components/jobs/WaitlistStatsPanel'; // vacancy waitlist per profession + export
 import { VacancyForm, formFromVacancy, payloadFromForm, type VacancyFormState } from '@/components/company/VacancyForm';
 import { ScorePill } from '@/components/jobs/MatchMeter';
 import { MatchBreakdown } from '@/components/placement/MatchBreakdown';
@@ -697,6 +698,8 @@ export default function AdminVacancies() {
 
       {/* Candidate demand: active job alerts per profession. */}
       <JobAlertStatsPanel className="mt-8" />
+      {/* Candidate demand: "tell me when a matching vacancy opens" (vacancy waitlist) per profession, with export. */}
+      <WaitlistStatsPanel className="mt-6" />
 
       <VacancyDrawer key={openId ?? 'none'} id={openId} onClose={() => setParam('id', null)} />
     </div>

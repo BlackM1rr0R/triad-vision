@@ -11,6 +11,7 @@ import { syncCaseFolder } from './drive/caseFolders.js';
 import { notifyPartnerCaseStatus } from './partnerPortal/notify.js';
 import { syncSettlementsForCase } from './settlement/service.js';
 import { emitAutomationEvent } from './automation/events.js'; // automation rules: domain events (never throws)
+import { ensureEarlyEmbassyRequirements } from './earlyEmbassy/service.js'; // embassy list while waiting for the contract (never throws)
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -204,6 +205,8 @@ export const clientSubmitDocuments = async (caseId: string, clientId: string) =>
 
   const to: CaseStatus = stage === 'INITIAL' ? 'DOCUMENTS_REVIEW' : 'EMBASSY_REVIEW';
   await transition(caseId, [c.status], to, clientId, { eventType: 'DOCUMENTS_SUBMITTED', data: { staffNote: null } });
+  // Initial documents already accepted (e.g. uploaded by staff): the case now waits for the contract → embassy list early.
+  if (to === 'DOCUMENTS_REVIEW') await ensureEarlyEmbassyRequirements(caseId);
   await notifyStaff(
     `${c.number}: sənədlər yoxlamaya göndərildi`,
     stage === 'INITIAL'
@@ -280,6 +283,8 @@ export const staffSendContract = async (
       }
     },
   });
+  // The client now waits for the work contract: the embassy documents can be collected and uploaded early (idempotent).
+  await ensureEarlyEmbassyRequirements(caseId);
   if (opts.notify !== false) await after(caseId, 'CONTRACT_SENT');
 };
 

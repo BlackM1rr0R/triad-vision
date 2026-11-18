@@ -274,7 +274,7 @@ export const TeamStatus = ({ p, compact }: { p: ProcessingInfo | null; compact?:
   );
 };
 
-const ItemRow = ({ item, embassy }: { item: OverviewItem; embassy?: boolean }) => {
+const ItemRow = ({ item, embassy, uploadHref }: { item: OverviewItem; embassy?: boolean; uploadHref?: string }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   return (
@@ -286,7 +286,17 @@ const ItemRow = ({ item, embassy }: { item: OverviewItem; embassy?: boolean }) =
           {!item.required && <span className="text-muted"> · {t('dprog.optional')}</span>}
         </span>
       </span>
-      <DocStateChip state={STATE_OF[item.status]} className="shrink-0" />
+      <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <DocStateChip state={STATE_OF[item.status]} />
+        {/* Early embassy uploads (server lib/earlyEmbassy): a direct way to the upload of this document. */}
+        {uploadHref && item.uploadable && (item.status === 'MISSING' || item.status === 'REJECTED') && (
+          <Link to={uploadHref} className="btn-secondary min-h-10 px-3 text-sm" data-testid="embassy-upload-item">
+            <Upload className="size-4" aria-hidden />
+            {t('dprog.embassy.uploadOne')}
+            <span className="sr-only">: {tr(item.title) || item.key}</span>
+          </Link>
+        )}
+      </span>
     </li>
   );
 };
@@ -341,7 +351,7 @@ export const EmbassyCollectionCard = ({ o }: { o: DocProgressOverview }) => {
       </div>
       <ul className="mt-4 divide-y divide-line rounded-2xl bg-card px-4">
         {e.items.map((i, n) => (
-          <ItemRow key={i.id ?? `${i.key}-${n}`} item={i} embassy />
+          <ItemRow key={i.id ?? `${i.key}-${n}`} item={i} embassy uploadHref={e.uploadOpen ? caseHref(o.caseId, 'docs', '#docs-embassy') : undefined} />
         ))}
       </ul>
       {e.uploadOpen ? (

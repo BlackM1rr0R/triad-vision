@@ -77,6 +77,7 @@ const TemplateList = () => {
         }
       />
       <Disclaimer />
+      <p className="mb-4 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-muted">{t('contractTpl.twoStepNote')}</p>
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         <Chip active={!kind} onClick={() => setKind('')} count={data?.length}>
           {t('contractTpl.allKinds')}

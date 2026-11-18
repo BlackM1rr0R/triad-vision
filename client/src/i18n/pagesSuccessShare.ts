@@ -1,5 +1,5 @@
-// "Visa approved" share card: the client portal card + dialog (az/de/en/ru) and the public page
-// /success/:token (all six site languages). Registered with registerCopy(pagesSuccessShare).
+// "Visa approved" share card: the client portal card + dialog and the public page /success/:token,
+// all six site languages. Registered with registerCopy(pagesSuccessShare).
 const az = {
   successShare: {
     portal: {
@@ -74,7 +74,6 @@ const az = {
   },
 };
 type Copy = typeof az;
-type PageCopy = Copy['successShare']['page'];
 
 const de: Copy = {
   successShare: {
@@ -298,8 +297,49 @@ const ru: Copy = {
   },
 };
 
-const tr: { successShare: { page: PageCopy } } = {
+const tr: Copy = {
   successShare: {
+    portal: {
+      title: 'Tebrikler! Vizeniz onaylandı',
+      text: 'Büyük bir adım — Almanya yolculuğunuz başlıyor. İsterseniz başarınızı arkadaşlarınızla paylaşın.',
+      shareCta: 'Başarımı paylaş',
+      openCard: 'Paylaşım kartı',
+      active: 'Paylaşım bağlantısı etkin',
+      leads: 'Kartınızdan gelen başvurular: {{count}}',
+      dismiss: 'Gizle',
+      dialogTitle: 'Başarımı paylaş',
+      privacyNote: 'Soyadınız, pasaportunuz veya başvuru bilgileriniz kartta asla görünmez.',
+      nameLabel: 'Karttaki adınız',
+      nameFirst: 'Yalnızca ad ({{name}})',
+      nameInitials: 'Baş harfler ({{name}})',
+      referral: 'Davet kodumu ekle',
+      referralHint: 'Arkadaşlarınız kodunuzla kaydolduğunda bonus kazanırsınız.',
+      indexing: 'Google ve diğer arama motorları sayfayı gösterebilir',
+      indexingHint: 'Kapalıyken sayfayı yalnızca bağlantıya sahip olanlar görebilir.',
+      language: 'Kart dili',
+      consent: 'Kabul ediyorum: kart ve adımın (seçilen biçimde), vize türümün ve şehrimin yer aldığı sayfa bağlantıya sahip herkes tarafından görülebilir. Paylaşımı istediğim zaman iptal edebilirim.',
+      create: 'Kart oluştur',
+      save: 'Kaydet',
+      cancel: 'İptal',
+      formatLabel: 'Biçim',
+      formatPost: 'Gönderi (4:5)',
+      formatStory: 'Hikâye (9:16)',
+      previewAlt: 'Başarı kartının önizlemesi ({{format}})',
+      download: 'PNG indir',
+      share: 'Paylaş',
+      copy: 'Bağlantıyı kopyala',
+      copied: 'Bağlantı kopyalandı',
+      edit: 'Ayarları değiştir',
+      revoke: 'Paylaşımı iptal et',
+      revokeTitle: 'Paylaşım iptal edilsin mi?',
+      revokeText: 'Sayfa ve kart hemen çalışmayı durdurur. Daha önce indirilen veya paylaşılan görseller başkalarında kalabilir.',
+      revoked: 'Paylaşım iptal edildi',
+      created: 'Kartınız hazır',
+      shareText: 'Vizem onaylandı! Almanya yolculuğum {{brand}} ile başlıyor.',
+      linkLabel: 'Paylaşım bağlantısı',
+      error: 'Olmadı. Lütfen tekrar deneyin.',
+      close: 'Kapat',
+    },
     page: {
       kicker: 'Başarı hikâyesi',
       title: '{{name}} vizesini aldı!',
@@ -331,8 +371,49 @@ const tr: { successShare: { page: PageCopy } } = {
   },
 };
 
-const uk: { successShare: { page: PageCopy } } = {
+const uk: Copy = {
   successShare: {
+    portal: {
+      title: 'Вітаємо! Вашу візу схвалено',
+      text: 'Великий крок — ваш шлях до Німеччини починається. Якщо хочете, поділіться своїм успіхом із друзями.',
+      shareCta: 'Поділитися успіхом',
+      openCard: 'Картка для поширення',
+      active: 'Посилання для поширення активне',
+      leads: 'Звернень через вашу картку: {{count}}',
+      dismiss: 'Приховати',
+      dialogTitle: 'Поділитися успіхом',
+      privacyNote: 'Ваше прізвище, паспорт чи дані заявки ніколи не з’являються на картці.',
+      nameLabel: 'Ваше ім’я на картці',
+      nameFirst: 'Лише ім’я ({{name}})',
+      nameInitials: 'Ініціали ({{name}})',
+      referral: 'Додати мій реферальний код',
+      referralHint: 'Коли друзі зареєструються з вашим кодом, ви отримаєте бонус.',
+      indexing: 'Google та інші пошукові системи можуть показувати сторінку',
+      indexingHint: 'Якщо вимкнено, сторінку бачать лише ті, хто має посилання.',
+      language: 'Мова картки',
+      consent: 'Я погоджуюся: картку та сторінку з моїм ім’ям (у вибраній формі), типом візи та містом може побачити кожен, хто має посилання. Я можу будь-коли скасувати поширення.',
+      create: 'Створити картку',
+      save: 'Зберегти',
+      cancel: 'Скасувати',
+      formatLabel: 'Формат',
+      formatPost: 'Допис (4:5)',
+      formatStory: 'Сторіс (9:16)',
+      previewAlt: 'Попередній перегляд картки успіху ({{format}})',
+      download: 'Завантажити PNG',
+      share: 'Поділитися',
+      copy: 'Скопіювати посилання',
+      copied: 'Посилання скопійовано',
+      edit: 'Змінити налаштування',
+      revoke: 'Скасувати поширення',
+      revokeTitle: 'Скасувати поширення?',
+      revokeText: 'Сторінка й картка одразу перестануть працювати. Уже завантажені чи поширені зображення можуть залишитися в інших.',
+      revoked: 'Поширення скасовано',
+      created: 'Ваша картка готова',
+      shareText: 'Мою візу схвалено! Мій шлях до Німеччини починається з {{brand}}.',
+      linkLabel: 'Посилання для поширення',
+      error: 'Не вийшло. Спробуйте ще раз.',
+      close: 'Закрити',
+    },
     page: {
       kicker: 'Історія успіху',
       title: '{{name}} отримав(ла) візу!',

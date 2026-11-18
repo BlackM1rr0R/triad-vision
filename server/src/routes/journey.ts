@@ -63,7 +63,7 @@ journeyRouter.post('/cases/:id/family', requireMinRole('STAFF'), async (req, res
 });
 
 journeyRouter.delete('/cases/:id/family/:memberId', requireMinRole('STAFF'), async (req, res) => {
-  await removeFamilyMember(String(req.params.id), String(req.params.memberId));
+  await removeFamilyMember(String(req.params.id), String(req.params.memberId), req.user!.id);
   await audit(req, 'FAMILY_MEMBER_REMOVED', `case:${String(req.params.memberId)}`, { parentCaseId: String(req.params.id) });
   res.json({ ok: true, ...(await familyGroup(String(req.params.id))) });
 });

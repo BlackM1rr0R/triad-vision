@@ -199,6 +199,7 @@ const copy: SiteCopy<(typeof pagesLegal)['en']> = {
   verifyBanner: {
     title: 'Lütfen e-posta adresinizi doğrulayın',
     text: '{{email}} adresine bir bağlantı gönderdik. E-postanız doğrulandıktan sonra vize başvurusu başlatabilirsiniz.',
+    spamHint: 'E-postayı göremiyor musunuz? «Spam» veya «Promosyonlar» klasörüne bakın ve «Spam değil» olarak işaretleyin.',
     resend: 'Bağlantıyı yeniden gönder',
     sent: 'Yeni bir bağlantı gönderildi.',
     throttled: 'Lütfen bir dakika bekleyip tekrar deneyin.',

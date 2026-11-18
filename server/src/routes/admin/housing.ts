@@ -20,11 +20,17 @@ import {
 } from '../../lib/housing/core.js';
 import { housingPatchData, housingPatchSchema } from '../../lib/housing/input.js';
 import { sendVaultFile } from '../../lib/housing/files.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
+import { isFullScope, scoped, viaCase } from '../../lib/accessAudit/scope.js';
 
 /**
  * Staff side of housing + Anmeldung — mounted at /api/admin/housing (STAFF+ via the admin router):
  * the case card (progress, deadline, appointment, contract review, Anmeldung done), partner landlord
  * listings (ADMIN+ edits, STAFF+ reads / proposes / introduces) and the open Anmeldung deadlines.
+ *
+ * Case scope (lib/access, ASSIGNED / TEAM staff): /cases/:caseId and the propose body's caseId are checked by the
+ * access guard; the deadlines list, a listing's proposals and PATCH /proposals/:id follow the scope here (a
+ * proposal of a case outside it answers 404). Listings themselves are not case data. ALL: queries unchanged.
  */
 export const adminHousingRouter = Router();
 
@@ -127,9 +133,10 @@ adminHousingRouter.get('/cases/:caseId/files/:which', async (req, res) => {
 // ─── Anmeldung deadlines across cases ─────────────────────────────────
 
 /** GET /deadlines → approved cases with a move-in date and no Anmeldung yet, nearest deadline first. */
-adminHousingRouter.get('/deadlines', async (_req, res) => {
+adminHousingRouter.get('/deadlines', async (req, res) => {
+  const scope = await caseScopeWhere(req.user);
   const rows = await prisma.caseHousing.findMany({
-    where: { anmeldungDoneAt: null, moveInDate: { not: null }, case: { status: 'APPROVED' } },
+    where: { anmeldungDoneAt: null, moveInDate: { not: null }, case: scoped({ status: 'APPROVED' }, scope) },
     include: { case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } }, assignedStaff: { select: { id: true, firstName: true, lastName: true } } } } },
     orderBy: { moveInDate: 'asc' },
     take: 200,
@@ -222,7 +229,7 @@ adminHousingRouter.delete('/listings/:id', adminOnly, async (req, res) => {
 /** GET /listings/:id/proposals → who got this listing and what they answered. */
 adminHousingRouter.get('/listings/:id/proposals', async (req, res) => {
   const rows = await prisma.housingProposal.findMany({
-    where: { listingId: String(req.params.id) },
+    where: { listingId: String(req.params.id), ...viaCase(await caseScopeWhere(req.user)) },
     include: { case: { select: { id: true, number: true, client: { select: { firstName: true, lastName: true } } } } },
     orderBy: { createdAt: 'desc' },
   });
@@ -253,6 +260,9 @@ adminHousingRouter.patch('/proposals/:id', async (req, res) => {
   const body = parse(z.object({ introduced: z.boolean().optional(), withdrawn: z.boolean().optional(), note: z.string().trim().max(1000).nullable().optional() }), req.body ?? {});
   const p = await prisma.housingProposal.findUnique({ where: { id: String(req.params.id) }, include: { listing: true } });
   if (!p) throw notFound('PROPOSAL_NOT_FOUND');
+  // A proposal of a case outside the viewer's scope answers like a missing one.
+  const scope = await caseScopeWhere(req.user);
+  if (!isFullScope(scope) && !(await prisma.case.count({ where: scoped({ id: p.caseId }, scope) }))) throw notFound('PROPOSAL_NOT_FOUND');
   const c = await approvedCase(p.caseId);
   const data: Prisma.HousingProposalUpdateInput = {};
   if (body.note !== undefined) data.staffNote = body.note || null;

@@ -63,6 +63,7 @@ export const VerifyBanner = ({ className }: { className?: string }) => {
         <div className="min-w-0">
           <p className="font-semibold text-ink">{t('verifyBanner.title')}</p>
           <p className="mt-0.5 text-sm break-words text-muted">{t('verifyBanner.text', { email: user.email })}</p>
+          <p className="mt-1 text-xs break-words text-muted">{t('verifyBanner.spamHint')}</p>
         </div>
       </div>
       <ResendVerificationButton className="btn-primary btn-sm shrink-0 self-start sm:self-center" />

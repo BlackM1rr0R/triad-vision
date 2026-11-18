@@ -92,9 +92,14 @@ export const CompanyVacancies = ({ company }: { company: Company }) => {
               <li key={v.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link to={`/company/vacancies/${v.id}`} className="font-semibold break-words text-ink hover:text-link">
-                      {tr(v.title)}
-                    </Link>
+                    {can('manageVacancies') ? (
+                      <Link to={`/company/vacancies/${v.id}`} className="font-semibold break-words text-ink hover:text-link">
+                        {tr(v.title)}
+                      </Link>
+                    ) : (
+                      // No editor without manageVacancies: the title is plain text (the public page stays linked below).
+                      <span className="font-semibold break-words text-ink">{tr(v.title)}</span>
+                    )}
                     <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
                     {v.status === 'OPEN' && <PlacesBadge v={v} withTotal />}
                   </div>

@@ -73,6 +73,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Status dəyişikliyi, rədd edilən sənəd və qərar barədə müştəri avtomatik xəbərdar olur — səbəbləri aydın yazın.',
           'Daxili qeydləri müştəri görmür; «Mesajlar»dakı hər mesaj müştəriyə gedir.',
+          'Müqavilələr «Sənədlər» tabında iki addımlıdır: əvvəl Əmək müqaviləsi, təsdiqdən sonra İş müqaviləsi. Əvvəl Triad Vision, sonra müştəri imzalayır; işəgötürən imzalamır.',
         ],
       },
       ru: {
@@ -86,6 +87,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'О смене статуса, отклонённом документе и решении клиент узнаёт автоматически — пишите причины понятно.',
           'Внутренние заметки клиент не видит; каждое сообщение во вкладке «Сообщения» уходит клиенту.',
+          'Договоры во вкладке «Документы» идут в два шага: сначала Əmək müqaviləsi, после его одобрения İş müqaviləsi. Сначала подписывает Triad Vision, затем клиент; работодатель не подписывает.',
         ],
       },
       en: {
@@ -99,6 +101,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Status changes, rejected documents and decisions notify the client automatically — write reasons clearly.',
           'The client never sees internal notes; every message in “Messages” goes to the client.',
+          'Contracts on the “Documents” tab come in two steps: first the Əmək müqaviləsi, after its approval the İş müqaviləsi. Triad Vision signs first, then the client; the employer does not sign.',
         ],
       },
       de: {
@@ -112,6 +115,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Statuswechsel, abgelehnte Dokumente und Entscheidungen werden dem Kunden automatisch mitgeteilt — Gründe klar formulieren.',
           'Interne Notizen sieht der Kunde nicht; jede Nachricht unter „Nachrichten“ geht an den Kunden.',
+          'Verträge im Tab „Dokumente“ laufen in zwei Schritten: zuerst Əmək müqaviləsi, nach dessen Freigabe İş müqaviləsi. Zuerst unterschreibt Triad Vision, dann der Kunde; der Arbeitgeber unterschreibt nicht.',
         ],
       },
     },
@@ -627,6 +631,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Tərəflər imzadan əvvəl e-poçtla gələn kodla şəxsiyyətini təsdiqləyir.',
           'Bu, audit izi olan sadə elektron imzadır (eIDAS), ixtisaslı imza deyil.',
+          'Əmək müqaviləsi və İş müqaviləsi müraciətin iki addımlı müqavilələr panelindən göndərilir; müştəri müqavilələrində işəgötürən imzalayan deyil (köhnə sorğularda işəgötürən tərəfi görünə bilər).',
         ],
       },
       ru: {
@@ -640,6 +645,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Перед подписью стороны подтверждают личность кодом из e-mail.',
           'Это простая электронная подпись с журналом аудита (eIDAS), а не квалифицированная.',
+          'Əmək müqaviləsi и İş müqaviləsi отправляются из двухшагового блока договоров в заявке; работодатель не подписывает договоры клиента (в старых запросах сторона работодателя может быть видна).',
         ],
       },
       en: {
@@ -653,6 +659,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Parties confirm their identity with a code sent by email before signing.',
           'This is a simple electronic signature with an audit trail (eIDAS), not a qualified one.',
+          'Əmək müqaviləsi and İş müqaviləsi are sent from the case’s two-step contracts panel; the employer is never a signer of client contracts (older requests may still show an employer party).',
         ],
       },
       de: {
@@ -666,6 +673,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Parteien bestätigen ihre Identität vor der Unterschrift mit einem Code per E-Mail.',
           'Es handelt sich um eine einfache elektronische Signatur mit Prüfprotokoll (eIDAS), keine qualifizierte.',
+          'Əmək müqaviləsi und İş müqaviləsi werden über das zweistufige Vertragsfeld im Antrag gesendet; der Arbeitgeber unterschreibt keine Kundenverträge (ältere Anfragen können noch eine Arbeitgeber-Partei zeigen).',
         ],
       },
     },
@@ -741,6 +749,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Müraciət müqaviləsi yalnız ikinci imzadan sonra «imzalanıb» sayılır.',
           'Yalnız səlahiyyətli imzaçılar imzalaya bilər.',
+          'Əmək müqaviləsi və İş müqaviləsində Triad Vision əvvəl imzalayır — müraciətin iki addımlı müqavilələr panelində; işəgötürən imzalamır.',
         ],
       },
       ru: {
@@ -754,6 +763,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Договор по делу считается подписанным только после второй подписи.',
           'Подписывать могут только уполномоченные лица.',
+          'В Əmək müqaviləsi и İş müqaviləsi Triad Vision подписывает первой — в двухшаговом блоке договоров заявки; работодатель не подписывает.',
         ],
       },
       en: {
@@ -767,6 +777,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'A case contract counts as signed only after the countersignature.',
           'Only authorised signatories can countersign.',
+          'For the Əmək müqaviləsi and the İş müqaviləsi Triad Vision signs first — in the case’s two-step contracts panel; the employer does not sign.',
         ],
       },
       de: {
@@ -780,6 +791,7 @@ export const PAGES_CASES: PageHelpEntry[] = [
         tips: [
           'Ein Fallvertrag gilt erst nach der Gegenzeichnung als unterschrieben.',
           'Nur zeichnungsberechtigte Personen können gegenzeichnen.',
+          'Beim Əmək müqaviləsi und İş müqaviləsi unterschreibt Triad Vision zuerst – im zweistufigen Vertragsfeld des Antrags; der Arbeitgeber unterschreibt nicht.',
         ],
       },
     },
@@ -906,7 +918,8 @@ export const PAGES_CASES: PageHelpEntry[] = [
           'Lazım olsa «Bu növ və dil üçün standart» işarələyin və «Yadda saxla» basın.',
         ],
         tips: [
-          'Müraciət səhifəsində «Digər əməliyyatlar» → «Şablondan müqavilə» bu şablonlardan istifadə edir.',
+          'Əmək müqaviləsi və İş müqaviləsi (iş / Ausbildung) müraciətin «Sənədlər» tabındakı iki addımlı müqavilələr panelindən göndərilir: əvvəl Triad Vision, sonra müştəri imzalayır. İşəgötürən müştəri müqavilələrini imzalamır.',
+          'Müraciət səhifəsində «Digər əməliyyatlar» → «Şablondan müqavilə» önizləmə və PDF verir; oradan imzaya yalnız xidmət müqaviləsi göndərilir.',
           'Şablonları yalnız administrator dəyişə bilər; şablonlar hüquqi məsləhət deyil.',
         ],
       },
@@ -919,7 +932,8 @@ export const PAGES_CASES: PageHelpEntry[] = [
           'При необходимости отметьте «По умолчанию для этого вида и языка» и нажмите «Сохранить».',
         ],
         tips: [
-          'На странице заявки «Другие действия» → «Договор из шаблона» использует эти шаблоны.',
+          'Əmək müqaviləsi и İş müqaviləsi (работа / Ausbildung) отправляются из двухшагового блока договоров во вкладке «Документы» заявки: сначала подписывает Triad Vision, затем клиент. Работодатель договоры клиента не подписывает.',
+          'На странице заявки «Другие действия» → «Договор из шаблона» даёт предпросмотр и PDF; на подпись оттуда отправляется только договор услуг.',
           'Менять шаблоны может только администратор; шаблоны не являются юридической консультацией.',
         ],
       },
@@ -932,7 +946,8 @@ export const PAGES_CASES: PageHelpEntry[] = [
           'Tick “Default for this kind and language” if needed and click “Save”.',
         ],
         tips: [
-          'On the case page, “More actions” → “Contract from template” uses these templates.',
+          'Əmək müqaviləsi and İş müqaviləsi (work / training) are sent from the two-step contracts panel on the case’s “Documents” tab: Triad Vision signs first, then the client. The employer never signs client contracts.',
+          'On the case page, “More actions” → “Contract from template” gives a preview and the PDF; only service contracts are sent for signature from there.',
           'Only administrators can change templates; templates are not legal advice.',
         ],
       },
@@ -945,7 +960,8 @@ export const PAGES_CASES: PageHelpEntry[] = [
           'Setzen Sie bei Bedarf „Standard für diese Art und Sprache“ und klicken Sie „Speichern“.',
         ],
         tips: [
-          'Auf der Antragsseite nutzt „Weitere Aktionen“ → „Vertrag aus Vorlage“ diese Vorlagen.',
+          'Əmək müqaviləsi und İş müqaviləsi (Arbeit / Ausbildung) werden über das zweistufige Vertragsfeld im Tab „Dokumente“ des Antrags gesendet: zuerst unterschreibt Triad Vision, dann der Kunde. Der Arbeitgeber unterschreibt keine Kundenverträge.',
+          'Auf der Antragsseite liefert „Weitere Aktionen“ → „Vertrag aus Vorlage“ Vorschau und PDF; zur Signatur wird von dort nur der Dienstleistungsvertrag gesendet.',
           'Vorlagen ändern nur Administratoren; Vorlagen sind keine Rechtsberatung.',
         ],
       },

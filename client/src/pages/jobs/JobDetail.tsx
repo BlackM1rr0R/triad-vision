@@ -49,6 +49,7 @@ import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type ApplicationStatus, type Match, type PublicVacancy } from '@/components/jobs/types';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
+import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // full vacancy: "Uyğun vakansiya açılanda xəbər ver"
 import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // camera scan → PDF per document
 import { scanPagesToPdf } from '@/components/scanner/scanPdf';
 import { VaultApplyPicker } from '@/components/vault/VaultApplyPicker'; // documents from the vault instead of re-uploading
@@ -541,9 +542,9 @@ export default function JobDetail() {
               </Link>
             )}
 
-            {/* Job alert preselected with this vacancy's profession. */}
+            {/* Job alert preselected with this vacancy's profession; a full vacancy offers the vacancy waitlist instead. */}
             <div id="job-alert" className="scroll-mt-28">
-              <JobAlertForm profession={v.profession} />
+              {isFull(v) ? <WaitlistForm profession={v.profession} city={v.city} full /> : <JobAlertForm profession={v.profession} />}
             </div>
             <WorkSceneCard scene={sceneForProfession(v.profession)} />
           </div>

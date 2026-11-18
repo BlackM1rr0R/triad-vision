@@ -17,6 +17,7 @@ import { vacancyFolders } from '@/i18n/vacancyFolders';
 import { toast } from 'sonner';
 import { isFull, placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
 import { VacancyOnlyPicker, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
+import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: "Uyğun vakansiya açılanda xəbər ver"
 
 registerCopy(vacancyFolders);
 
@@ -239,6 +240,12 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
           </button>
         </form>
       </div>
+      {/* Only our vacancies can be chosen and none has a free place: the vacancy waitlist (outside the form above). */}
+      {onlyVacancies && !vacanciesLoading && openVacancies.length === 0 && (
+        <div className="border-t border-line p-6 sm:p-9" id="waitlist">
+          <WaitlistForm profession={defaultProfession} bare />
+        </div>
+      )}
     </section>
   );
 };

@@ -215,6 +215,7 @@ const az = {
   verifyBanner: {
     title: 'E-poçt ünvanınızı təsdiqləyin',
     text: '{{email}} ünvanına link göndərdik. Viza müraciətinə yalnız təsdiqdən sonra başlamaq olar.',
+    spamHint: 'Məktubu görmürsünüzsə, «Spam» və ya «Promotions» qovluğuna baxın və «Spam deyil» kimi işarələyin.',
     resend: 'Linki yenidən göndər',
     sent: 'Yeni link göndərildi.',
     throttled: 'Bir dəqiqə gözləyin və yenidən cəhd edin.',
@@ -563,6 +564,7 @@ const de: LegalCopy = {
   verifyBanner: {
     title: 'Bitte bestätigen Sie Ihre E-Mail-Adresse',
     text: 'Wir haben einen Link an {{email}} gesendet. Einen Visumantrag können Sie erst nach der Bestätigung starten.',
+    spamHint: 'Keine E-Mail erhalten? Bitte prüfen Sie den Spam-Ordner und markieren Sie die Nachricht als «Kein Spam».',
     resend: 'Link erneut senden',
     sent: 'Ein neuer Link wurde gesendet.',
     throttled: 'Bitte warten Sie eine Minute und versuchen Sie es erneut.',
@@ -909,6 +911,7 @@ const en: LegalCopy = {
   verifyBanner: {
     title: 'Please confirm your email address',
     text: 'We sent a link to {{email}}. You can start a visa application once your email is confirmed.',
+    spamHint: "Can't find the email? Check your Spam or Promotions folder and mark it as «Not spam».",
     resend: 'Resend link',
     sent: 'A new link has been sent.',
     throttled: 'Please wait a minute and try again.',
@@ -1255,6 +1258,7 @@ const ru: LegalCopy = {
   verifyBanner: {
     title: 'Подтвердите адрес электронной почты',
     text: 'Мы отправили ссылку на {{email}}. Начать оформление визы можно только после подтверждения.',
+    spamHint: 'Не видите письмо? Проверьте папку «Спам» или «Промоакции» и отметьте письмо как «Не спам».',
     resend: 'Отправить ссылку ещё раз',
     sent: 'Новая ссылка отправлена.',
     throttled: 'Подождите минуту и попробуйте снова.',

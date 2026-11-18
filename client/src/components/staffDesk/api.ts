@@ -32,6 +32,8 @@ export interface Client360 {
     birthDate: string | null;
     nationality: string | null;
     city: string | null;
+    /** Home address (ADDRESS group: may arrive masked — SensitiveValue reveals it). */
+    address?: string | null;
     profession: string | null;
     germanLevel: string | null;
     mergedIntoId: string | null;

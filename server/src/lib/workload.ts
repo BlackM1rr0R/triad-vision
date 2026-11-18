@@ -1,8 +1,9 @@
-import type { Role } from '@prisma/client';
+import type { Prisma, Role } from '@prisma/client';
 import { prisma } from '../db.js';
 import { FINAL_STATUSES } from './caseFlow.js';
 import { absences, ineligibility, readAssignmentConfig, readPrefs, staffLoads, targetOfCase, type IneligibleReason } from './assignment/index.js';
 import { OPEN_STATUSES as TASK_OPEN } from './tasks/core.js';
+import { scoped } from './accessAudit/scope.js';
 
 /**
  * Team workload board (Admin → Komanda → Yüklənmə, routes/admin/workload.ts): per active staff member the open cases,
@@ -54,7 +55,8 @@ const inc = (m: Map<string, number>, k: string | null | undefined, by = 1) => {
   if (k) m.set(k, (m.get(k) ?? 0) + by);
 };
 
-export const workloadBoard = async (opts: { role?: Role; now?: Date } = {}) => {
+/** `scope`: the viewer's case scope (lib/access; {} / undefined = every case) — only for the unassigned-cases count. */
+export const workloadBoard = async (opts: { role?: Role; now?: Date; scope?: Prisma.CaseWhereInput } = {}) => {
   const now = opts.now ?? new Date();
   const week = bakuWeekRange(now);
   const staff = await prisma.user.findMany({
@@ -86,7 +88,7 @@ export const workloadBoard = async (opts: { role?: Role; now?: Date } = {}) => {
       where: { status: { in: ['SUBMITTED', 'CONFIRMED', 'COMPLETED'] }, arrivalTime: { gte: week.from, lt: week.to } },
       select: { handledById: true, case: { select: { assignedStaffId: true } } },
     }),
-    prisma.case.count({ where: { ...openCase, assignedStaffId: null } }),
+    prisma.case.count({ where: scoped({ ...openCase, assignedStaffId: null }, opts.scope) }),
   ]);
 
   const loadBy = new Map(loads.map((l) => [l.id, l]));

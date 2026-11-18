@@ -17,6 +17,8 @@ import { pagesProfessionHubs } from '@/i18n/pagesProfessionHubs';
 import { pagesAudience } from '@/i18n/pagesAudience';
 import { pagesToolsHub } from '@/i18n/pagesToolsHub';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
+import { hubBySlug } from '@/lib/professionHubs';
 import { buildPlan, parsePlanParams, type Plan, type PlanInput, type PlanStep } from '@/lib/startPlan/rules';
 
 registerCopy(pagesStartHere);
@@ -82,7 +84,7 @@ const Vacancies = ({ hub }: { hub: NonNullable<Plan['hub']> }) => {
   const lng = currentSiteLocale();
   const { data, isLoading } = useQuery({
     queryKey: ['profession-hub-vacancies', hub, lng],
-    queryFn: async () => (await api.get<{ total: number; items: HubVacancy[] }>(`/profession-hubs/${encodeURIComponent(hub)}/vacancies`, { params: { lng } })).data,
+    queryFn: async () => (await api.get<{ total: number; withFreePlaces?: number; items: HubVacancy[] }>(`/profession-hubs/${encodeURIComponent(hub)}/vacancies`, { params: { lng } })).data,
     staleTime: 60_000,
   });
   const pay = (v: HubVacancy) => (v.salaryMin && v.salaryMax && v.salaryMin !== v.salaryMax ? `${euro(v.salaryMin)} – ${euro(v.salaryMax)}` : v.salaryMin || v.salaryMax ? euro((v.salaryMin || v.salaryMax)!) : null);
@@ -123,6 +125,8 @@ const Vacancies = ({ hub }: { hub: NonNullable<Plan['hub']> }) => {
       ) : (
         <p className="card card-pad mt-4 text-muted">{t('startHere.plan.jobsEmpty')}</p>
       )}
+      {/* No vacancy of the profession with a free place: the vacancy waitlist (server lib/jobAlerts/waitlist.ts). */}
+      {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-4" only={hubBySlug(hub)?.professions} full={data.items.length > 0} />}
       <Link to={`/for/${hub}`} className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         {t('startHere.plan.jobsAll')} <ArrowRight className="size-4" aria-hidden />
       </Link>

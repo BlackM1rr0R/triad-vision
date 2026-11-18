@@ -62,8 +62,8 @@ describe('GET /api/doc-progress/cases/:id', () => {
     expect(raw).not.toContain(admin.user.id);
     expect(raw).not.toContain(admin.user.lastName);
 
-    // Waiting for the contract: the embassy list is shown as information, upload opens with the embassy step.
-    expect(o.embassyCollection).toMatchObject({ uploadOpen: false, preview: true });
+    // Waiting for the contract: the case already has its embassy rows and the client may upload them early (lib/earlyEmbassy).
+    expect(o.embassyCollection).toMatchObject({ uploadOpen: true, preview: false });
     expect(o.embassyCollection!.items.length).toBeGreaterThan(0);
 
     // Visa refused by the team ("Ablehnung") is visible as such.

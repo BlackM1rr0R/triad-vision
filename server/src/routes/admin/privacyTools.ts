@@ -15,7 +15,7 @@ import {
   startImpersonation,
 } from '../../lib/privacy/impersonation.js';
 import { DEFAULT_MASKING, loadMaskingSettings, MASK_GROUPS, maskingSettingsSchema, saveMaskingSettings, groupOfField, policyForViewer } from '../../lib/privacy/mask.js';
-import { EXTRA_REASON_MIN, EXTRA_REVEALERS, extraRevealGroup, inCaseScope, type ExtraRevealEntity } from '../../lib/privacy/sensitiveReveal.js';
+import { EXTRA_REASON_MIN, EXTRA_REVEALERS, extraRevealGroup, inCaseScope, inClientScope, type ExtraRevealEntity } from '../../lib/privacy/sensitiveReveal.js';
 import { loadInvoiceSettings } from './invoices.js';
 
 /**
@@ -227,6 +227,7 @@ adminSensitiveRouter.post('/reveal', revealLimiter, async (req, res) => {
     const loaded = await xspec.load(body.id, body.field);
     if (!loaded.found) throw notFound();
     if (!(await inCaseScope(req.user!, loaded.caseId))) throw notFound();
+    if (!(await inClientScope(req.user!, loaded.clientId))) throw notFound();
     await audit(req, 'SENSITIVE_REVEALED', `${body.entity}:${body.id}`, { entity: body.entity, id: body.id, field: body.field, group: extraGroup, reason: body.reason });
     res.json({ entity: body.entity, id: body.id, field: body.field, value: loaded.value, visibleForSec: 60 });
     return;

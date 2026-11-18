@@ -10,7 +10,7 @@ import { statusLabel } from '@/components/admin/labels';
 import { STATUS_TONE } from '@/lib/caseStatus';
 import type { CaseStatus } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
-import { PARTNERS_KEY, partnerError, useAssignPartner, usePartnerOptions, type Partner } from '@/components/partners/api';
+import { PARTNERS_KEY, partnerError, usePartnerOptions, type Partner } from '@/components/partners/api';
 import { DeletePartnerDialog } from '@/components/partners/DeletePartnerDialog';
 import { AddClientsDialog } from '@/components/partners/AddClientsDialog'; // hides already linked applications
 import { PartnerFormDialog } from '@/components/partners/PartnerForm';
@@ -23,7 +23,7 @@ import { ReadinessIndicator } from './org/Readiness';
 import type { DriveItem } from './types';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 import { PartnerPickerDialog, RemovePartnerDialog } from './clientFolders/Dialogs'; // change / remove the partner of an open client folder
-import { targetOf } from './clientFolders/api';
+import { reasonOf, refreshAfter, requestError, setPartner, targetOf } from './clientFolders/api'; // the client-folder partner endpoint: owner history, case event, audit, notification
 
 /** German names of the application types (the same names the drive folders carry). */
 const VISA_TYPE_DE: Record<string, string> = {
@@ -282,7 +282,19 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
   const { t } = useTranslation();
   const refresh = useRefreshDrive();
   const partners = usePartnerOptions();
-  const assign = useAssignPartner();
+  const qc = useQueryClient();
+  // Same endpoint as the folder actions (POST /admin/client-folders/partner): history is identical everywhere.
+  const assign = useMutation({
+    mutationFn: (partnerId: string) => setPartner([folder.caseId!], partnerId),
+    onSuccess: (r) => {
+      const res = r.results[0];
+      if (res && !res.ok) toast.error(reasonOf(res.error));
+      else toast.success(t('drive.partner.assigned', { count: 1 }));
+      refreshAfter(qc);
+      refresh();
+    },
+    onError: (err) => toast.error(requestError(err)),
+  });
   const { user } = useAuth();
   const [partnerInfo, setPartnerInfo] = useState(false);
   const [partnerEdit, setPartnerEdit] = useState<'change' | 'remove' | null>(null);
@@ -326,18 +338,7 @@ export const ClientFolderHeader = ({ folder }: { folder: DriveItem }) => {
             className="input min-h-7 w-auto max-w-[12rem] !py-0.5 pr-7 pl-2 text-xs"
             value=""
             disabled={assign.isPending || !partners.data}
-            onChange={(e) =>
-              e.target.value &&
-              assign.mutate(
-                { caseIds: [folder.caseId!], partnerId: e.target.value },
-                {
-                  onSuccess: () => {
-                    toast.success(t('drive.partner.assigned', { count: 1 }));
-                    refresh();
-                  },
-                },
-              )
-            }
+            onChange={(e) => e.target.value && assign.mutate(e.target.value)}
           >
             <option value="">{t('drive.partner.assignPartner')}</option>
             {(partners.data ?? [])

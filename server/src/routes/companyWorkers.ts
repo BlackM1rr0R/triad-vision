@@ -8,6 +8,8 @@ import { audit } from '../lib/audit.js';
 import { STEP_COUNT, workersXlsx } from '../lib/requests/workers.js';
 import { buildPanel, employerDocumentFile, panelSummary, workerDetail } from '../lib/employerWorkers/panel.js';
 import { workersCsv } from '../lib/employerWorkers/csv.js';
+import { workerExportPolicy } from '../lib/companyAccess/workerExport.js';
+import type { MemberAccess } from '../lib/companyAccess/service.js';
 import { pickLoc } from '../lib/employerWorkers/texts.js';
 import { sendPdf } from '../lib/esign/http.js';
 import { storedPath } from '../lib/esign/service.js';
@@ -42,6 +44,8 @@ companyWorkersRouter.use(async (req, res, next) => {
 });
 
 const co = (res: { locals: Record<string, unknown> }) => res.locals.company as Company;
+/** Restricted employer members export only the columns / open items they may see (set by lib/companyAccess/guard.ts). */
+const exportPolicy = (res: { locals: Record<string, unknown> }) => workerExportPolicy(res.locals.companyAccess as MemberAccess | undefined);
 const ID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 const langOf = (req: { query: Record<string, unknown>; get: (h: string) => string | undefined }) => pickLoc(req.query.lang) ?? pickLoc(req.get('X-Locale')) ?? 'de';
 
@@ -53,7 +57,7 @@ companyWorkersRouter.get('/', async (req, res) => {
 
 /** The worker panel as an Excel sheet (stage fields of the earlier panel). */
 companyWorkersRouter.get('/export.xlsx', async (req, res) => {
-  const buf = workersXlsx(await buildPanel(co(res).id), langOf(req));
+  const buf = workersXlsx(await buildPanel(co(res).id), langOf(req), exportPolicy(res));
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="workers-${new Date().toISOString().slice(0, 10)}.xlsx"`);
   res.send(buf);
@@ -61,7 +65,7 @@ companyWorkersRouter.get('/export.xlsx', async (req, res) => {
 
 /** The full panel (phase, dates, check-ins, risk, open items, next action) as CSV. */
 companyWorkersRouter.get('/export.csv', async (req, res) => {
-  const csv = workersCsv(await buildPanel(co(res).id), langOf(req));
+  const csv = workersCsv(await buildPanel(co(res).id), langOf(req), exportPolicy(res));
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="workers-${new Date().toISOString().slice(0, 10)}.csv"`);
   res.send(csv);

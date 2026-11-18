@@ -1,6 +1,6 @@
 // Client portal moments: the one-time "visa approved" celebration screen (pages/account/portal/ApprovedCelebration)
 // and the per-requirement document state chips (components/portal/CaseDocuments). Same keys in every language;
-// tr / uk fall back to English like the rest of the portal copy.
+// includes tr / uk.
 
 const az = {
   pmom: {
@@ -136,4 +136,70 @@ const ru: Copy = {
   },
 };
 
-export const pagesPortalMoments: { az: Copy; de: Copy; en: Copy; ru: Copy } = { az, de, en, ru };
+const tr: Copy = {
+  pmom: {
+    approved: {
+      eyebrow: 'Tebrikler!',
+      title: 'Vizeniz onaylandı',
+      text: '{{number}} numaralı başvurunuz başarıyla tamamlandı. Almanya yolu açık — şimdi varışınızı hazırlayalım.',
+      nextTitle: 'Varışınız için sonraki adımlar',
+      steps: {
+        arrival: { title: 'Varışınızı planlayın', text: 'Uçuşunuzu ve karşılanmaya ihtiyacınız olup olmadığını bize bildirin.' },
+        housing: { title: 'Konut', text: 'İlk haftalarınız için birlikte bir yer bulalım.' },
+        onboarding: { title: 'Almanya’daki ilk günleriniz', text: 'Anmeldung, banka hesabı, sigorta — kontrol listeniz.' },
+        german: { title: 'Almanca', text: 'Günlük yaşam için Almancanızı geliştirin.' },
+      },
+      inviteTitle: 'Bir arkadaşınız da Almanya’da çalışmak mı istiyor?',
+      inviteText: 'Onu davet edin — tavsiye programımız ikinize de kazandırır.',
+      invite: 'Arkadaşını davet et',
+      plan: 'Varışımı planla',
+      close: 'Kapat',
+    },
+    docState: {
+      label: 'Belge durumu',
+      waiting: 'Yükleme bekleniyor',
+      review: 'İnceleniyor',
+      accepted: 'Kabul edildi',
+      rejected: 'Kabul edilmedi',
+    },
+    rejectedNoReason: 'Ekip bu dosyayı kabul etmedi. Lütfen yenisini yükleyin.',
+    reasonLabel: 'Neden',
+    reupload: 'Yeniden yükle',
+    replaceOnly: 'Kabul edilmeyen belgeyi yeniden yükleyin. Diğer belgeler bu aşamada değişmez.',
+  },
+};
+
+const uk: Copy = {
+  pmom: {
+    approved: {
+      eyebrow: 'Вітаємо!',
+      title: 'Вашу візу схвалено',
+      text: 'Вашу заявку {{number}} успішно завершено. Дорога до Німеччини відкрита — підготуймо ваш приїзд.',
+      nextTitle: 'Наступні кроки до приїзду',
+      steps: {
+        arrival: { title: 'Сплануйте приїзд', text: 'Повідомте нам рейс і чи потрібна зустріч в аеропорту.' },
+        housing: { title: 'Житло', text: 'Разом знайдемо житло на перші тижні.' },
+        onboarding: { title: 'Перші дні в Німеччині', text: 'Реєстрація (Anmeldung), банківський рахунок, страховка — ваш чек-лист.' },
+        german: { title: 'Німецька мова', text: 'Підтягніть німецьку для повсякденного життя.' },
+      },
+      inviteTitle: 'Друг теж хоче працювати в Німеччині?',
+      inviteText: 'Запросіть його — наша реферальна програма вигідна вам обом.',
+      invite: 'Запросити друга',
+      plan: 'Спланувати приїзд',
+      close: 'Закрити',
+    },
+    docState: {
+      label: 'Статус документа',
+      waiting: 'Очікує завантаження',
+      review: 'На перевірці',
+      accepted: 'Прийнято',
+      rejected: 'Відхилено',
+    },
+    rejectedNoReason: 'Команда не прийняла цей файл. Будь ласка, завантажте новий.',
+    reasonLabel: 'Причина',
+    reupload: 'Завантажити знову',
+    replaceOnly: 'Завантажте відхилений документ знову. Інші документи на цьому етапі не змінюються.',
+  },
+};
+
+export const pagesPortalMoments: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; uk: Copy } = { az, de, en, ru, tr, uk };

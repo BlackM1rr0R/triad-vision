@@ -10,6 +10,7 @@ import { hashStored } from './org/hash.js';
 import { autoNameFor, caseNaming, requirementTitle } from './org/naming.js';
 import { applyTemplateToCaseFolder } from './org/templates.js';
 import { ensureTypeFolder, typeOfRequirement } from './typeFolders.js';
+import { markClientFolder, syncWorkflowFolderNames } from './workflowLinks.js';
 
 /**
  * Real client folders in the shared workspace. Every case gets one folder ("Vorname Nachname · Pass-Nr.
@@ -135,7 +136,7 @@ const canonical = async (c: CaseRow): Promise<{ parentId: string; base: string }
 const createFolder = async (c: CaseRow) => {
   const { parentId, base } = await canonical(c);
   const name = await uniqueName(parentId, base, c.number);
-  const created = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name, parentId }, select: { id: true } });
+  const created = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name, parentId, clientFolderAt: new Date() }, select: { id: true } });
   await prisma.case.update({ where: { id: c.id }, data: { driveFolderId: created.id } });
   // Sub-folders of the best matching folder template (lib/drive/org/templates.ts); never fails the folder.
   await applyTemplateToCaseFolder(c, created.id);
@@ -168,16 +169,21 @@ export async function syncCaseFolder(caseId: string): Promise<void> {
       await createFolder(c);
       return;
     }
+    await markClientFolder(folder.id); // a folder linked by hand (or before the mark existed) is a client folder for good
     // An archived client folder (moved to "Archiv/<Jahr>" by the retention policy) stays where it is; only its name follows.
     if (folder.archivedAt && folder.parentId) {
       const name = await uniqueName(folder.parentId, c.parentCaseId ? (await canonical(c)).base : clientFolderBaseName(c), c.number, folder.id);
-      if (folder.name !== name) await prisma.driveNode.update({ where: { id: folder.id }, data: { name } });
+      if (folder.name !== name) {
+        await prisma.driveNode.update({ where: { id: folder.id }, data: { name } });
+        await syncWorkflowFolderNames(c.id, name, folder.name); // the "İş axını" copies follow (lib/drive/workflowLinks)
+      }
       return;
     }
     const { parentId, base } = await canonical(c);
     const name = await uniqueName(parentId, base, c.number, folder.id);
     if (folder.parentId !== parentId || folder.name !== name) {
       await prisma.driveNode.update({ where: { id: folder.id }, data: { parentId, name } });
+      if (folder.name !== name) await syncWorkflowFolderNames(c.id, name, folder.name);
     }
   }).catch((err) => console.error(`[drive] client folder of case ${caseId} could not be synced`, err));
 }

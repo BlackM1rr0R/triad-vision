@@ -85,7 +85,8 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
     where: { id: caseId },
     omit: opts.forStaff ? undefined : CLIENT_HIDDEN_CASE_FIELDS,
     include: {
-      client: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, locale: true } },
+      // The home address only for staff (ADDRESS group: masked by policy, revealed with a reason in the case aside).
+      client: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, locale: true, address: opts.forStaff } },
       assignedStaff: { select: { id: true, firstName: true, lastName: true } },
       visaCategory: { select: { id: true, slug: true, title: true, visaLabel: true } },
       requirements: {

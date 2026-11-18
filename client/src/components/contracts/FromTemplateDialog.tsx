@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, CheckCircle2, Download, FileSignature, FileText, Send } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileSignature, FileText, Info, Send } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesContracts } from '@/i18n/pagesContracts';
@@ -12,7 +12,8 @@ import { Modal } from '@/components/admin/Modal';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { toastError } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
-import { BLANK, CASE_CONTRACT_KINDS, placeholderLabelKey, usePlaceholders, type ContractTemplate, type Preview } from './shared';
+import { goToCaseSection } from '@/components/admin/case/sections';
+import { BLANK, CASE_CONTRACT_KINDS, TWO_STEP_KINDS, placeholderLabelKey, usePlaceholders, type ContractTemplate, type Preview } from './shared';
 
 registerCopy(pagesContracts);
 
@@ -49,7 +50,9 @@ const useDebounced = <T,>(value: T, ms: number) => {
 
 /**
  * "Create contract from template": pick a template, fill the input placeholders, see a live preview with
- * blanks highlighted, then download the PDF or send it for e-signature (through the e-sign module).
+ * blanks highlighted, then download the PDF or send it for e-signature (through the e-sign module). Only service
+ * contracts are sent from here (client + Triad Vision); work / training contracts lead to the two-step contracts
+ * panel (components/caseContracts). The employer is never a signer of a client contract.
  */
 export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open: boolean; onClose: () => void; caseId: string; caseNumber: string }) => {
   const { t } = useTranslation();
@@ -123,7 +126,12 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
   };
 
   const missing = preview.data?.missing ?? [];
-  const recipients = template?.kind === 'SERVICE' ? t('contractTpl.dialog.sendConfirmStaff') : t('contractTpl.dialog.sendConfirmCompany');
+  // Work / training contracts (İş müqaviləsi) go through the two-step contracts panel; only service contracts are sent here.
+  const twoStep = !!template && TWO_STEP_KINDS.includes(template.kind);
+  const openTwoStep = () => {
+    onClose();
+    goToCaseSection('case-contract');
+  };
 
   return (
     <>
@@ -142,9 +150,15 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
             <button type="button" className="btn-secondary btn-sm" disabled={!template || downloading} onClick={() => void download()}>
               {downloading ? <Spinner className="size-3.5" /> : <Download className="size-3.5" />} {t('contractTpl.dialog.download')}
             </button>
-            <button type="button" className="btn-primary btn-sm" disabled={!template || sending || !!sentId} onClick={() => setConfirming(true)}>
-              <Send className="size-3.5" /> {t('contractTpl.dialog.send')}
-            </button>
+            {twoStep ? (
+              <button type="button" className="btn-primary btn-sm" onClick={openTwoStep}>
+                <FileSignature className="size-3.5" /> {t('contractTpl.dialog.openTwoStep')}
+              </button>
+            ) : (
+              <button type="button" className="btn-primary btn-sm" disabled={!template || sending || !!sentId} onClick={() => setConfirming(true)}>
+                <Send className="size-3.5" /> {t('contractTpl.dialog.send')}
+              </button>
+            )}
           </>
         }
       >
@@ -186,6 +200,12 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
                 ))}
               </select>
             </div>
+
+            {twoStep && (
+              <p className="flex items-start gap-2 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info-fg" role="note">
+                <Info className="mt-0.5 size-4 shrink-0" aria-hidden /> {t('contractTpl.dialog.twoStepHint')}
+              </p>
+            )}
 
             {inputDefs.length > 0 && (
               <fieldset>
@@ -247,7 +267,7 @@ export const FromTemplateDialog = ({ open, onClose, caseId, caseNumber }: { open
         confirmLabel={t('contractTpl.dialog.send')}
         message={
           <>
-            {t('contractTpl.dialog.sendConfirm', { company: recipients })}
+            {t('contractTpl.dialog.sendConfirm', { company: t('contractTpl.dialog.sendConfirmStaff') })}
             {missing.length > 0 && <span className="mt-2 block text-warning-fg">{t('contractTpl.dialog.missingWarn')}</span>}
           </>
         }

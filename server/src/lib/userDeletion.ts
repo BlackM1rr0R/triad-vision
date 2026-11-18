@@ -9,6 +9,7 @@ import { removeMailStored } from './mail/storage.js';
 import { ensureSharedRoot } from './drive/roots.js';
 import { pickFreeName, safeUploadName } from './drive/names.js';
 import { purgeNodes } from './drive/trash.js';
+import { retireClientFolders } from './drive/workflowLinks.js';
 import { deleteCourseData } from './course/service.js';
 import { eraseInquiries } from './privacy/inquiries.js';
 import { LEBENSLAUF_SUBDIR, lebenslaufKeysOf } from './cv/versions.js';
@@ -296,8 +297,10 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   const clientFolders = ownCaseRows.map((c) => c.driveFolderId).filter((id): id is string => !!id);
   if (clientFolders.length) {
     const existing = (await prisma.driveNode.findMany({ where: { id: { in: clientFolders } }, select: { id: true } })).map((n) => n.id);
-    const r = await purgeNodes(existing).catch((err) => {
+    const r = await purgeNodes(existing).catch(async (err) => {
       console.error('[user-delete] could not remove client folders from the drive', err);
+      // Never left behind as ordinary folders: recycle bin (staff only), marked as client data (lib/drive/workflowLinks).
+      await retireClientFolders(existing, actorId).catch(() => undefined);
       return { nodes: 0, bytes: 0 };
     });
     bytes += r.bytes;

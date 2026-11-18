@@ -44,3 +44,16 @@ export const filterByCaseIds = <T extends { caseId?: string | null }>(rows: T[],
 /** Clients (role CLIENT) only when they have a case in scope; every other account unchanged. */
 export const clientUsersInScope = (scope: Prisma.CaseWhereInput | null | undefined): Prisma.UserWhereInput =>
   isFullScope(scope) ? {} : { OR: [{ role: { not: 'CLIENT' } }, { cases: { some: scope! } }] };
+
+/**
+ * Records that belong to a person (candidate / client) rather than to a case — interviews, housing proposals …:
+ * visible when one of the person's cases is in scope; a person without any case only to `ownerOr` (the record's
+ * owner / organiser, e.g. `[{ staffId: me }, { createdById: me }]`), who also keeps seeing their own records.
+ * {} for the full scope, so the query stays as it was.
+ */
+export const viaPersonCases = (
+  scope: Prisma.CaseWhereInput | null | undefined,
+  relation: string,
+  ownerOr: Record<string, unknown>[] = [],
+): Record<string, unknown> =>
+  isFullScope(scope) ? {} : { OR: [{ [relation]: { cases: { some: scope! } } }, ...ownerOr] };

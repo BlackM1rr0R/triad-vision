@@ -69,6 +69,9 @@ export const fieldsOfGroup = (g: MaskGroup) => GROUP_KEYS[g];
 
 export const MASK_CHAR = '•';
 export const isMasked = (v: unknown) => typeof v === 'string' && v.includes(MASK_CHAR);
+const isMaskedValue = isMasked;
+/** A value that is only a mask as this module writes them: "••••", "•••• 3456", "A•••". */
+export const isPureMask = (v: unknown) => typeof v === 'string' && /^\S?•{3,}( \S{1,12})?$/u.test(v.trim());
 
 /**
  * Whether a string under a sensitive key really is a value (and not a label such as 'Pass-Nr.'):
@@ -445,8 +448,11 @@ export const maskDeep = async (viewer: Viewer, body: unknown) => walk(await poli
  * treated as "not changed"); { field, value } change lists lose the masked entries.
  * `extra`: also the keys of the new groups (address, names of family members, salary …).
  */
-export const stripMaskedInput = (body: unknown, depth = 0, extra = false): unknown => {
+export const stripMaskedInput = (body: unknown, depth = 0, extra = false, pureOnly = false): unknown => {
   if (depth > MAX_DEPTH || body === null || typeof body !== 'object') return body;
+  // `pureOnly`: only values that are nothing but a mask ("••••", "•••• 3456", "A•••") — used before the viewer's
+  // policy is known, so a real text with a bullet in it is never dropped.
+  const isMasked = pureOnly ? isPureMask : isMaskedValue;
   const sensitiveKey = (k: string) => KEY_GROUP.has(k) || (extra && EXTRA_INPUT_KEYS.has(k));
   const sensitiveRef = (ref: unknown) => typeof ref === 'string' && (!!groupOfField(ref) || (extra && EXTRA_INPUT_KEYS.has(ref.split('.').pop() ?? '')));
   if (Array.isArray(body)) {
@@ -456,14 +462,14 @@ export const stripMaskedInput = (body: unknown, depth = 0, extra = false): unkno
         const o = v as Record<string, unknown>;
         return !(isMasked(o.value) && REF_KEYS.some((rk) => sensitiveRef(o[rk])));
       })
-      .map((v) => stripMaskedInput(v, depth + 1, extra));
+      .map((v) => stripMaskedInput(v, depth + 1, extra, pureOnly));
   }
   const obj = body as Record<string, unknown>;
   // { key: 'passportNumber', value: '•••• 3456' } → the value is dropped (the stored / proposed one is used)
   if (isMasked(obj.value) && REF_KEYS.some((rk) => sensitiveRef(obj[rk]))) delete obj.value;
   for (const [k, v] of Object.entries(obj)) {
     if (isMasked(v) && sensitiveKey(k)) delete obj[k];
-    else if (v && typeof v === 'object') obj[k] = stripMaskedInput(v, depth + 1, extra);
+    else if (v && typeof v === 'object') obj[k] = stripMaskedInput(v, depth + 1, extra, pureOnly);
   }
   return obj;
 };
@@ -483,6 +489,9 @@ export const maskResponses = async (req: Request, res: Response, next: NextFunct
   if (!viewer || (viewer.role !== 'STAFF' && viewer.role !== 'ADMIN')) return next();
   // While an admin views a client's portal the client's own pages are masked for the admin too.
   if (!req.impersonator && UNMASKED_PATHS.some((re) => re.test(req.originalUrl))) return next();
+  // Masked values sent back are dropped whatever today's policy is: a form loaded while a group was masked and
+  // saved after the super admin switched it off must not overwrite the stored value with "••••" either.
+  if (req.body && typeof req.body === 'object') stripMaskedInput(req.body, 0, !isExtraExcludedPath(req.originalUrl), true);
   let policy: MaskPolicy;
   try {
     policy = await policyForViewer(viewer);

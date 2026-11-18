@@ -4,6 +4,8 @@ import { prisma } from '../../db.js';
 import { notFound, parse } from '../../lib/http.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { assignSuggestions, workloadBoard } from '../../lib/workload.js';
+import { caseScopeWhere } from '../../lib/access/api.js';
+import { scoped } from '../../lib/accessAudit/scope.js';
 
 /**
  * Team workload board — mounted at /api/admin/workload (STAFF+ via the admin router).
@@ -13,13 +15,17 @@ import { assignSuggestions, workloadBoard } from '../../lib/workload.js';
  *   GET /suggest?caseId=                 who to assign: eligible staff by weighted load (lib/workload). Every staff
  *                                        role may assign a case, so every role gets the suggestion; the load
  *                                        numbers of colleagues are only included for ADMIN+.
+ *
+ * Case scope (lib/access, ASSIGNED / TEAM staff): staff capacity is not case data, so the per-person counts stay
+ * as they are; what points at cases follows the scope — the "unassigned open cases" count only counts cases in
+ * scope, and /suggest answers 404 for a case outside it. With the default scope (ALL) nothing changes.
  */
 export const adminWorkloadRouter = Router();
 
 adminWorkloadRouter.get('/', async (req, res) => {
   const q = parse(z.object({ role: z.enum(['STAFF', 'ADMIN', 'SUPER_ADMIN']).optional() }), req.query);
   const admin = hasMinRole(req.user!.role, 'ADMIN');
-  const board = await workloadBoard({ role: admin ? q.role : undefined });
+  const board = await workloadBoard({ role: admin ? q.role : undefined, scope: await caseScopeWhere(req.user) });
   if (admin) {
     res.json({ scope: 'team', ...board });
     return;
@@ -30,7 +36,8 @@ adminWorkloadRouter.get('/', async (req, res) => {
 
 adminWorkloadRouter.get('/suggest', async (req, res) => {
   const q = parse(z.object({ caseId: z.string().trim().min(1).max(40).optional() }), req.query);
-  if (q.caseId && !(await prisma.case.count({ where: { id: q.caseId } }))) throw notFound('CASE_NOT_FOUND');
+  // A case outside the viewer's scope answers like a missing one.
+  if (q.caseId && !(await prisma.case.count({ where: scoped({ id: q.caseId }, await caseScopeWhere(req.user)) }))) throw notFound('CASE_NOT_FOUND');
   const { suggested, staff } = await assignSuggestions(q.caseId ?? null);
   const admin = hasMinRole(req.user!.role, 'ADMIN');
   const strip = <T extends { open: number; weighted: number; capacityPct: number }>(s: T) => (admin ? s : { ...s, open: undefined, weighted: undefined, capacityPct: undefined });

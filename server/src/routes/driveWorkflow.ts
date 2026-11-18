@@ -14,7 +14,7 @@ import {
   WORKFLOW_STAGES,
   assertCanSend,
   assertNotWorkflowFolder,
-  copyPathOf,
+  copyTargetOf,
   ensurePath,
   ensureWorkflowFolders,
   placeOf,
@@ -23,6 +23,7 @@ import {
 } from '../lib/drive/workflowFolders.js';
 import { logDriveActivity } from '../lib/driveCollab/activity.js';
 import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
+import { linkStageFolder, stageFolderCase } from '../lib/drive/workflowLinks.js';
 
 /**
  * "İş axını" stage folders of the drive (lib/drive/workflowFolders), mounted inside the drive router (STAFF+):
@@ -83,10 +84,12 @@ driveWorkflowRouter.post('/workflow/copy', async (req, res) => {
   const results = await batch(ids, async (id) => {
     assertNotWorkflowFolder(wf, id);
     await requireNode(ctx, id, 'VIEW');
-    const path = await copyPathOf(ctx, wf, id);
-    const parentId = await ensurePath(stageId, path, me);
+    // The case link (DriveNode.workflowCaseId) goes on the client folder's copy below the stage (lib/drive/workflowLinks).
+    const { path, caseId } = await copyTargetOf(ctx, wf, id);
+    const parentId = await ensurePath(stageId, path, me, { caseId });
     if (!takenBy.has(parentId)) takenBy.set(parentId, await siblingNames(parentId));
     const r = await copyNodeInto(ctx, me, id, { id: parentId, space: stageFolder.space, ownerId: stageFolder.ownerId }, takenBy.get(parentId)!);
+    if (caseId && r.newId && !path.length && r.node.kind === 'FOLDER') await linkStageFolder(r.newId, caseId);
     await audit(req, 'DRIVE_WORKFLOW_COPIED', `drive:${id}`, { name: r.node.name, stage, to: parentId, copyId: r.newId, nodes: r.nodes });
     await logDriveActivity({ nodeId: r.newId, folderId: parentId, actorId: me, action: 'COPY', name: r.name, meta: { sourceId: id, fromId: r.node.parentId, toId: parentId, toName: STAGE_FOLDER_NAME[stage], kind: r.node.kind, workflow: stage } });
     return { name: r.name, stage, folderId: parentId };
@@ -110,7 +113,12 @@ driveWorkflowRouter.post('/workflow/send', async (req, res) => {
     assertCanSend(place.stage, stage as WorkflowStage);
     await assertNotLockedByOther(id, me);
     if (node.kind === 'FOLDER') await assertNoFinalInside(id);
-    const parentId = await ensurePath(targetStageId, place.path.map((n) => n.name), me);
+    const parentId = await ensurePath(
+      targetStageId,
+      place.path.map((n) => n.name),
+      me,
+      { caseId: await stageFolderCase(place.path[0]?.id) }, // the case's folder in the next stage, linked like its source
+    );
     const name = pickFreeName(await siblingNames(parentId), node.name, node.kind === 'FILE');
     await prisma.driveNode.update({ where: { id }, data: { parentId, name } });
     await pruneEmpty(place.path, me);

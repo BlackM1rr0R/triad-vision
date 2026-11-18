@@ -2,6 +2,7 @@ import type { ArrivalStatus, CaseStatus, VisaType } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { anonymisedProfile, anonymisedProfileSelect } from '../vacancies.js';
 import { buildXlsx, type Cell } from '../xlsx.js';
+import { FULL_EXPORT, pickColumns, type WorkerExportPolicy } from '../companyAccess/workerExport.js';
 
 /**
  * Employer worker tracking panel: every case placed with the company, with its stage, key dates, planned
@@ -212,7 +213,11 @@ const pick = (v: unknown, l: Loc) => {
   return o[l] || o.de || o.en || o.az || '';
 };
 
-export const workersXlsx = (items: WorkerRow[], locale: Loc) => {
+const WIDTHS = [22, 22, 26, 18, 12, 22, 12, 12, 18, 12, 14, 18, 16, 18];
+/** Column order of HEADERS; `need` = what a restricted employer member must be allowed to see (lib/companyAccess/workerExport). */
+const XLSX_COLUMNS: { need?: 'documents' | 'contracts' }[] = WIDTHS.map((_, i) => (i === 10 ? { need: 'documents' } : {})); // 10 = visa valid from
+
+export const workersXlsx = (items: WorkerRow[], locale: Loc, policy: WorkerExportPolicy = FULL_EXPORT) => {
   const rows: Cell[][] = items.map((w) => [
     w.name,
     w.profession,
@@ -230,5 +235,6 @@ export const workersXlsx = (items: WorkerRow[], locale: Loc) => {
     dateTime(w.nextInterview?.startsAt),
   ]);
   const sheet = { de: 'Mitarbeiter', en: 'Workers', az: 'İşçilər', ru: 'Сотрудники' }[locale];
-  return buildXlsx(sheet, HEADERS[locale], rows, [22, 22, 26, 18, 12, 22, 12, 12, 18, 12, 14, 18, 16, 18]);
+  const out = pickColumns(XLSX_COLUMNS, policy, HEADERS[locale], rows);
+  return buildXlsx(sheet, out.headers, out.rows, out.keep.map((i) => WIDTHS[i]));
 };

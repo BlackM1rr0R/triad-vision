@@ -37,11 +37,13 @@ import { marksOf } from '@/components/review/marks';
 import { OfflineToggle } from '@/components/offline/OfflineToggle'; // "Oflayn saxla" (PWA cache, own device)
 import { TONE_CLASS } from '@/components/ui/status';
 import { requirementState, type RequirementState } from './requirementState';
-import { clientUploadMode } from '@/lib/docReplace'; // a new file in place of a rejected one, also after hand-in
+import { clientUploadMode, embassyUploadsEarly } from '@/lib/docReplace'; // a new file in place of a rejected one, also after hand-in; early embassy uploads
 import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments'; // requirement state chips, rejected without a reason
+import { pagesDocProgress } from '@/i18n/pagesDocProgress'; // dprog.embassy.earlyHint
 
 registerCopy(pagesPortalMoments);
+registerCopy(pagesDocProgress);
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -425,8 +427,11 @@ export const CaseDocuments = ({
   if (!reqs.length) return null;
 
   const open = UPLOAD_STAGE[data.status] === stage;
+  // Embassy documents while the client waits for the work contract: upload (and remove own pending files) now,
+  // the hand-in follows in EMBASSY_DOCUMENTS (server lib/earlyEmbassy).
+  const early = !open && stage === 'EMBASSY' && embassyUploadsEarly(data.status, data.requirements);
   // Upload step closed, but the team rejected a document here: it can be uploaded again (lib/docReplace).
-  const replaceable = !open && reqs.some((r) => clientUploadMode(data.status, r) === 'replace');
+  const replaceable = !open && !early && reqs.some((r) => clientUploadMode(data.status, r) === 'replace');
   const required = reqs.filter((r) => r.required);
   const missing = required.filter((r) => !isSatisfied(r));
   const doneCount = required.length - missing.length;
@@ -470,6 +475,10 @@ export const CaseDocuments = ({
           </h3>
           {open ? (
             <p className="mt-1 text-xs text-muted">{t('portal.docs.formats')}</p>
+          ) : early ? (
+            <p className="mt-1 text-sm text-ink" data-testid="docs-embassy-early">
+              {t('dprog.embassy.earlyHint')}
+            </p>
           ) : replaceable ? (
             // After hand-in: only the rejected documents can be uploaded again.
             <p className="mt-1 flex items-start gap-1.5 text-sm font-medium text-danger-fg" data-testid="docs-replace-only">
@@ -505,7 +514,7 @@ export const CaseDocuments = ({
 
       <ul className="mt-4 space-y-3">
         {reqs.map((r) => (
-          <RequirementCard key={r.id} req={r} caseId={data.id} open={open} caseStatus={data.status} onChanged={onChanged} onDelete={setToDelete} />
+          <RequirementCard key={r.id} req={r} caseId={data.id} open={open || early} caseStatus={data.status} onChanged={onChanged} onDelete={setToDelete} />
         ))}
       </ul>
 

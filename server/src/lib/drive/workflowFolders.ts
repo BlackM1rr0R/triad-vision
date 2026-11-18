@@ -139,37 +139,77 @@ export const assertCanSend = (from: WorkflowStage, to: WorkflowStage) => {
 /**
  * The folder path `names` below `parentId` ("mkdir -p"): an existing folder of the same name is reused, a
  * missing one created (next to a file of that name it gets " (2)"). Returns the innermost folder id.
+ *
+ * With `caseId` (the path starts at a client folder's copy directly below a stage folder) the first folder is the
+ * case's own: a folder linked to the case (DriveNode.workflowCaseId) wins over the name; a same-named folder linked
+ * to another case is never reused (a new " (2)" one is made); the folder used or made is linked to the case.
  */
-export const ensurePath = async (parentId: string, names: string[], actorId: string) => {
+export const ensurePath = async (parentId: string, names: string[], actorId: string, opts: { caseId?: string | null } = {}) => {
   let cur = parentId;
-  for (const name of names) {
+  for (const [i, name] of names.entries()) {
+    const caseId = i === 0 ? (opts.caseId ?? null) : null;
+    if (caseId) {
+      const linked = await prisma.driveNode.findFirst({ where: { parentId: cur, kind: 'FOLDER', deletedAt: null, workflowCaseId: caseId }, select: { id: true }, orderBy: { createdAt: 'asc' } });
+      if (linked) {
+        cur = linked.id;
+        continue;
+      }
+    }
     const hit = await findSibling(cur, name);
     if (hit?.kind === 'FOLDER') {
-      cur = hit.id;
-      continue;
+      if (!caseId) {
+        cur = hit.id;
+        continue;
+      }
+      const link = (await prisma.driveNode.findUnique({ where: { id: hit.id }, select: { workflowCaseId: true } }))?.workflowCaseId ?? null;
+      if (!link || link === caseId) {
+        if (!link) await prisma.driveNode.update({ where: { id: hit.id }, data: { workflowCaseId: caseId } });
+        cur = hit.id;
+        continue;
+      }
     }
     const free = hit ? await freeNameIn(cur, name, false) : name;
-    cur = (await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: free, parentId: cur, createdById: actorId }, select: { id: true } })).id;
+    cur = (await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: free, parentId: cur, createdById: actorId, workflowCaseId: caseId }, select: { id: true } })).id;
   }
   return cur;
 };
 
+export interface CopyTarget {
+  /** Folder names below the stage folder, outermost first. */
+  path: string[];
+  /** The case whose client folder the path (or, with an empty path, the copied folder itself) mirrors. */
+  caseId: string | null;
+}
+
 /**
- * Where a copy of the node goes below a stage folder (folder names, outermost first): an item already in a stage
- * keeps its path below the stage; an item inside a client folder (Case.driveFolderId) goes below that client
- * folder's name (and the folders between); anything else straight into the stage.
+ * Where a copy of the node goes below a stage folder: an item already in a stage keeps its path below the stage (and
+ * the case link of its top folder); an item inside a client folder (Case.driveFolderId) goes below that client
+ * folder's name (and the folders between); a client folder itself goes straight into the stage (its copy becomes the
+ * case's stage folder); anything else straight into the stage, without a case.
  */
-export const copyPathOf = async (ctx: DriveAccessCtx, wf: WorkflowFolders, nodeId: string): Promise<string[]> => {
+export const copyTargetOf = async (ctx: DriveAccessCtx, wf: WorkflowFolders, nodeId: string): Promise<CopyTarget> => {
   const inStage = placeOf(ctx, wf, nodeId);
-  if (inStage) return inStage.path.map((n) => n.name);
-  const ancestors = ctx.chain(nodeId).slice(0, -1);
-  if (!ancestors.length) return [];
-  const cases = await prisma.case.findMany({ where: { driveFolderId: { in: ancestors.map((n) => n.id) } }, select: { driveFolderId: true } });
-  if (!cases.length) return [];
-  const clientIds = new Set(cases.map((c) => c.driveFolderId));
-  for (let i = ancestors.length - 1; i >= 0; i--) if (clientIds.has(ancestors[i]!.id)) return ancestors.slice(i).map((n) => n.name);
-  return [];
+  if (inStage) {
+    const top = inStage.path[0]?.id ?? nodeId;
+    const caseId = (await prisma.driveNode.findUnique({ where: { id: top }, select: { workflowCaseId: true } }))?.workflowCaseId ?? null;
+    return { path: inStage.path.map((n) => n.name), caseId };
+  }
+  const chain = ctx.chain(nodeId);
+  if (!chain.length) return { path: [], caseId: null };
+  const cases = await prisma.case.findMany({ where: { driveFolderId: { in: chain.map((n) => n.id) } }, select: { id: true, driveFolderId: true } });
+  if (!cases.length) return { path: [], caseId: null };
+  const caseOf = new Map(cases.map((c) => [c.driveFolderId!, c.id]));
+  const ancestors = chain.slice(0, -1);
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const caseId = caseOf.get(ancestors[i]!.id);
+    if (caseId) return { path: ancestors.slice(i).map((n) => n.name), caseId };
+  }
+  // The node itself is a client folder (not inside another one): copied as a whole into the stage.
+  return { path: [], caseId: caseOf.get(chain[chain.length - 1]!.id) ?? null };
 };
+
+/** The folder names of copyTargetOf (for callers that only need the path). */
+export const copyPathOf = async (ctx: DriveAccessCtx, wf: WorkflowFolders, nodeId: string): Promise<string[]> => (await copyTargetOf(ctx, wf, nodeId)).path;
 
 /**
  * After a send: the folders between the stage folder and the old place that are empty now (no live content) go

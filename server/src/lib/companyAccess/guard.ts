@@ -13,7 +13,8 @@ import { hasAllPerms, type CompanyPerms } from './permissions.js';
  * Restricted members get:
  *   - 403 COMPANY_PERMISSION_REQUIRED on endpoints whose permission they lack (rules.ts; unmapped → refused),
  *   - salary figures removed from JSON responses and ignored in request bodies without `viewSalaries`,
- *   - worker documents cut from the worker drawer without `viewPersonalDocuments` / `viewContracts`,
+ *   - worker documents cut from the worker drawer without `viewPersonalDocuments` / `viewContracts`; the same open
+ *     items cut from the pipeline blockers and the workers CSV / Excel export (lib/companyAccess/workerExport.ts),
  *   - only the signature requests they may see in /api/signatures/my.
  */
 
@@ -78,6 +79,30 @@ export const trimWorkerItems = (body: unknown, perms: CompanyPerms): unknown => 
   return out;
 };
 
+/** Pipeline blocker codes that stand for an open item of the worker panel (same permission as the item). */
+const BLOCKER_ITEM: Record<string, string> = { SIGN_DOCUMENT: 'SIGNATURE', CONTRACT_UNSIGNED: 'SIGNATURE', COMPLETE_FORM: 'FORM' };
+
+/**
+ * Candidate pipeline of a restricted member: blockers for documents / forms (titles, sign links) only with the
+ * permission the worker panel asks for the same open item; the summary counts follow.
+ */
+export const trimPipelineBlockers = (body: unknown, perms: CompanyPerms): unknown => {
+  const b = body as { cards?: { blockers?: { code?: string }[] }[]; summary?: Record<string, unknown> } | null;
+  if (!b || typeof b !== 'object' || !Array.isArray(b.cards)) return body;
+  const cards = b.cards.map((c) =>
+    Array.isArray(c.blockers) ? { ...c, blockers: c.blockers.filter((x) => !BLOCKER_ITEM[String(x.code)] || itemAllowed({ kind: BLOCKER_ITEM[String(x.code)] }, perms, false)) } : c,
+  );
+  const out: Record<string, unknown> = { ...b, cards };
+  if (b.summary && typeof b.summary === 'object') {
+    out.summary = {
+      ...b.summary,
+      withBlockers: cards.filter((c) => (c.blockers?.length ?? 0) > 0).length,
+      blockers: cards.reduce((a, c) => a + (c.blockers?.length ?? 0), 0),
+    };
+  }
+  return out;
+};
+
 export const companyAccessGuard = async (req: Request, res: Response, next: NextFunction) => {
   if (req.user?.role !== 'COMPANY' || req.method === 'OPTIONS') return next();
   const path = apiPathOf(req);
@@ -126,6 +151,7 @@ export const companyAccessGuard = async (req: Request, res: Response, next: Next
       transformJson(res, redactSalaries);
     }
     if (req.method === 'GET' && workersPath.test(path)) transformJson(res, (body) => trimWorkerItems(body, perms));
+    if (req.method === 'GET' && /^\/company\/pipeline\/?$/i.test(path)) transformJson(res, (body) => trimPipelineBlockers(body, perms));
     // Dashboard: the "awaiting your decision" candidate cards only with candidate access.
     if (req.method === 'GET' && /^\/company\/dashboard\/?$/i.test(path) && !perms.viewCandidatePool) {
       transformJson(res, (body) => (body && typeof body === 'object' ? { ...(body as Record<string, unknown>), awaitingDecision: [] } : body));

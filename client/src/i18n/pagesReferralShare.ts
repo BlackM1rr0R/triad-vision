@@ -308,4 +308,123 @@ const ru: Copy = {
   },
 };
 
-export const pagesReferralShare = { az, de, en, ru };
+/** Turkish / Ukrainian: the client and public parts (the admin editors fall back to English). */
+type SiteShare = { rs: Omit<Copy['rs'], 'admin'> };
+
+const tr: SiteShare = {
+  rs: {
+    share: {
+      title: 'Hazır mesajlar',
+      text: 'Arkadaşınızın mesleğini seçin — bağlantınızı içeren mesaj hazır.',
+      profession: 'Meslek',
+      copy: 'Mesajı kopyala',
+      copied: 'Kopyalandı',
+    },
+    card: {
+      title: 'Yazdırılabilir QR kartvizit',
+      text: 'Bağlantınız, QR kodunuz ve adınızın yer aldığı bir kart (PDF).',
+      single: 'Tek kart',
+      sheet: 'A4 sayfa (10 kart)',
+    },
+    landing: {
+      title: 'Kişisel sayfanız',
+      text: 'Arkadaşlarınız için kendi sayfanız: kısa bir söz, isterseniz bir fotoğraf ve "Kayıt ol" düğmesi. Yalnızca siz açtığınızda görünür; arama motorlarında gösterilmez.',
+      enabled: 'Sayfayı göster',
+      slug: 'Sayfa adresi',
+      slugHint: 'Harf, rakam ve tire; 3–40 karakter.',
+      quote: 'Kısa söz',
+      quotePlaceholder: 'Triad Vision ile Almanya’ya gittim.',
+      photo: 'Fotoğraf (isteğe bağlı)',
+      photoUpload: 'Fotoğraf yükle',
+      photoRemove: 'Fotoğrafı kaldır',
+      photoHint: 'Fotoğraf yalnızca sayfa açıkken gösterilir. Sayfada yalnızca adınız görünür.',
+      save: 'Kaydet',
+      saved: 'Kaydedildi',
+      open: 'Sayfayı aç',
+      errors: {
+        INVALID_SLUG: 'Bu adrese izin verilmiyor: yalnızca harf, rakam ve tire (3–40).',
+        SLUG_TAKEN: 'Bu adres zaten alınmış.',
+        SLUG_REQUIRED: 'Önce bir adres seçin.',
+        INVALID_IMAGE: 'Görsel okunamadı.',
+        IMAGE_TOO_LARGE: 'Görsel çok büyük (en fazla 8 MB).',
+      },
+    },
+    terms: {
+      link: 'Program koşulları',
+      title: '"Arkadaşını davet et" programı koşulları',
+      current: 'Geçerli ödül kuralı',
+      updated: 'Güncellendi: {{date}}',
+      off: 'Program şu anda etkin değil.',
+    },
+    receipt: 'Makbuz (PDF)',
+    page: {
+      title: '{{name}} sizi davet ediyor',
+      defaultQuote: 'Triad Vision ile Almanya’ya gittim.',
+      cta: 'Kayıt ol',
+      code: 'Davet kodu: {{code}}',
+      how: 'Kaydolun, ücretsiz danışmanlık alın ve Almanya’da işe giden yolunuza başlayın.',
+      notFound: 'Bu sayfa mevcut değil veya kapatılmış.',
+      home: 'Ana sayfa',
+    },
+  },
+};
+
+const uk: SiteShare = {
+  rs: {
+    share: {
+      title: 'Готові повідомлення',
+      text: 'Виберіть професію друга — повідомлення з вашим посиланням готове.',
+      profession: 'Професія',
+      copy: 'Скопіювати повідомлення',
+      copied: 'Скопійовано',
+    },
+    card: {
+      title: 'QR-візитка для друку',
+      text: 'Картка з вашим посиланням, QR-кодом та ім’ям (PDF).',
+      single: 'Одна картка',
+      sheet: 'Аркуш A4 (10 карток)',
+    },
+    landing: {
+      title: 'Ваша особиста сторінка',
+      text: 'Ваша власна сторінка для друзів: коротка цитата, за бажанням фото та кнопка «Зареєструватися». Видима лише тоді, коли ви її ввімкнете; не показується в пошукових системах.',
+      enabled: 'Показувати сторінку',
+      slug: 'Адреса сторінки',
+      slugHint: 'Літери, цифри й дефіси, 3–40 символів.',
+      quote: 'Коротка цитата',
+      quotePlaceholder: 'Я поїхав(-ла) до Німеччини з Triad Vision.',
+      photo: 'Фото (необов’язково)',
+      photoUpload: 'Завантажити фото',
+      photoRemove: 'Видалити фото',
+      photoHint: 'Фото показується лише тоді, коли сторінку ввімкнено. На сторінці видно лише ваше ім’я.',
+      save: 'Зберегти',
+      saved: 'Збережено',
+      open: 'Відкрити сторінку',
+      errors: {
+        INVALID_SLUG: 'Така адреса недопустима: лише літери, цифри й дефіси (3–40).',
+        SLUG_TAKEN: 'Ця адреса вже зайнята.',
+        SLUG_REQUIRED: 'Спершу виберіть адресу.',
+        INVALID_IMAGE: 'Не вдалося прочитати зображення.',
+        IMAGE_TOO_LARGE: 'Зображення завелике (макс. 8 МБ).',
+      },
+    },
+    terms: {
+      link: 'Умови програми',
+      title: 'Умови програми «Запроси друга»',
+      current: 'Чинне правило винагороди',
+      updated: 'Оновлено: {{date}}',
+      off: 'Наразі програма неактивна.',
+    },
+    receipt: 'Квитанція (PDF)',
+    page: {
+      title: '{{name}} запрошує вас',
+      defaultQuote: 'Я поїхав(-ла) до Німеччини з Triad Vision.',
+      cta: 'Зареєструватися',
+      code: 'Реферальний код: {{code}}',
+      how: 'Зареєструйтеся, отримайте безкоштовну консультацію та почніть свій шлях до роботи в Німеччині.',
+      notFound: 'Ця сторінка не існує або закрита.',
+      home: 'На головну',
+    },
+  },
+};
+
+export const pagesReferralShare = { az, de, en, ru, tr, uk };

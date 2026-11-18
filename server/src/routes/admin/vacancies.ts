@@ -6,6 +6,7 @@ import { badRequest, conflict, forbidden, notFound, parse } from '../../lib/http
 import { audit } from '../../lib/audit.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { onVacancyPublished } from '../../lib/jobAlerts/service.js';
+import { adminVacancyWaitlistRouter } from './vacancyWaitlist.js'; // "notify me when a matching vacancy opens": demand + export
 import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
@@ -169,6 +170,9 @@ adminVacanciesRouter.put('/policy', requireMinRole('ADMIN'), async (req, res) =>
   res.json({ policy });
 });
 
+// Vacancy waitlist: demand per profession + CSV export (routes/admin/vacancyWaitlist.ts); before /:id.
+adminVacanciesRouter.use('/waitlist', adminVacancyWaitlistRouter);
+
 adminVacanciesRouter.get('/:id', async (req, res) => {
   const vacancy = await prisma.vacancy.findUnique({
     where: { id: req.params.id },
@@ -267,6 +271,8 @@ adminVacanciesRouter.patch('/:id', async (req, res) => {
     if (before.status === 'PENDING') await notifyVacancyReviewed(vacancy, true);
     await emitWebhook('vacancy.published', { id: vacancy.id, slug: vacancy.slug, publishedAt: vacancy.publishedAt?.toISOString() ?? null }, vacancy.companyId);
     onVacancyPublished(); // job alert digests (background)
+  } else if (vacancy.status === 'OPEN' && (vacancy.positions > before.positions || vacancy.filledAdjustment < before.filledAdjustment)) {
+    onVacancyPublished(); // places freed up: the vacancy waitlist may be told (lib/jobAlerts/waitlist.ts; digests unaffected)
   }
   res.json({ vacancy });
 });

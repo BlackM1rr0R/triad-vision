@@ -13,6 +13,7 @@ import { copyIntoStore, removeStored, storagePath } from '../../drive/storage.js
 import { restoreSubtree, softDelete } from '../../drive/trash.js';
 import { createFileIn, readNodeBuffer } from '../../drive/files.js';
 import { ensureCaseFolder } from '../../drive/caseFolders.js';
+import { followClientFolderRename } from '../../drive/workflowLinks.js';
 import { STAGE_FOLDER } from '../../drive/cases.js';
 import { logDriveActivity } from '../../driveCollab/activity.js';
 import { assertNotLockedByOther } from '../../driveCollab/lock.js';
@@ -105,6 +106,7 @@ export const renameNode = async (ai: AiToolContext, id: string, rawName: string)
   await assertNotLockedByOther(id, ai.user.id);
   await prisma.driveNode.update({ where: { id }, data: { name } });
   await audit(actorReq(ai), 'DRIVE_RENAMED', `drive:${id}`, { from: node.name, to: name, ...via });
+  if (node.kind === 'FOLDER') await followClientFolderRename(id, node.name, name);
   await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: ai.user.id, action: 'RENAME', name, meta: { from: node.name, to: name, kind: node.kind, ...via } });
   return { id, name, from: node.name, renamed: true };
 };

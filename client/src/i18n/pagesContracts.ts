@@ -18,6 +18,7 @@ const az = {
     editTitle: 'Şablonu redaktə et',
     newTitle: 'Yeni şablon',
     readOnly: 'Şablonları yalnız administrator dəyişə bilər.',
+    twoStepNote: 'Əmək müqaviləsi və İş müqaviləsi (iş / Ausbildung) şablonları müraciətin iki addımlı müqavilələr panelindən göndərilir. Müştəri müqavilələrini işəgötürən imzalamır — hər şeyi Triad Vision həll edir.',
     fields: {
       name: 'Ad',
       kind: 'Növ',
@@ -74,6 +75,8 @@ const az = {
       sentCaseContract: 'Müqavilə bu müraciətin müqaviləsi kimi göndərildi',
       openSignature: 'İmza sorğusunu aç',
       missingWarn: 'Bəzi sahələr boşdur və PDF-də “________” kimi görünəcək.',
+      twoStepHint: 'İş və Ausbildung müqavilələri (İş müqaviləsi) imzaya iki addımlı paneldən göndərilir: əvvəl Əmək müqaviləsi, sonra İş müqaviləsi. Əvvəl Triad Vision, sonra müştəri imzalayır; işəgötürən imzalamır. Burada yalnız önizləmə və PDF endirmə mümkündür.',
+      openTwoStep: 'İki addımlı müqavilələrə keç',
     },
   },
 };
@@ -96,6 +99,7 @@ const de: typeof az = {
     editTitle: 'Vorlage bearbeiten',
     newTitle: 'Neue Vorlage',
     readOnly: 'Vorlagen können nur Administratoren ändern.',
+    twoStepNote: 'Vorlagen für Əmək müqaviləsi und İş müqaviləsi (Arbeit / Ausbildung) werden über das zweistufige Vertragsfeld im Antrag gesendet. Der Arbeitgeber unterschreibt keine Kundenverträge – das übernimmt alles Triad Vision.',
     fields: {
       name: 'Name',
       kind: 'Art',
@@ -152,6 +156,8 @@ const de: typeof az = {
       sentCaseContract: 'Als Vertrag dieses Antrags gesendet',
       openSignature: 'Signaturanfrage öffnen',
       missingWarn: 'Einige Felder sind leer und erscheinen im PDF als „________“.',
+      twoStepHint: 'Arbeits- und Ausbildungsverträge (İş müqaviləsi) werden über das zweistufige Vertragsfeld zur Signatur gesendet: zuerst Əmək müqaviləsi, dann İş müqaviləsi. Zuerst unterschreibt Triad Vision, dann der Kunde; der Arbeitgeber unterschreibt nicht. Hier nur Vorschau und PDF-Download.',
+      openTwoStep: 'Zu den zweistufigen Verträgen',
     },
   },
 };
@@ -174,6 +180,7 @@ const en: typeof az = {
     editTitle: 'Edit template',
     newTitle: 'New template',
     readOnly: 'Only administrators can change templates.',
+    twoStepNote: 'Əmək müqaviləsi and İş müqaviləsi (work / training) templates are sent from the case’s two-step contracts panel. The employer does not sign client contracts — Triad Vision handles everything.',
     fields: {
       name: 'Name',
       kind: 'Kind',
@@ -230,6 +237,8 @@ const en: typeof az = {
       sentCaseContract: 'Sent as this case’s contract',
       openSignature: 'Open signature request',
       missingWarn: 'Some fields are empty and will appear as “________” in the PDF.',
+      twoStepHint: 'Work and training contracts (İş müqaviləsi) are sent for signature from the two-step contracts panel: first the Əmək müqaviləsi, then the İş müqaviləsi. Triad Vision signs first, then the client; the employer does not sign. Here you can only preview and download the PDF.',
+      openTwoStep: 'Go to the two-step contracts',
     },
   },
 };
@@ -252,6 +261,7 @@ const ru: typeof az = {
     editTitle: 'Редактировать шаблон',
     newTitle: 'Новый шаблон',
     readOnly: 'Изменять шаблоны могут только администраторы.',
+    twoStepNote: 'Шаблоны Əmək müqaviləsi и İş müqaviləsi (работа / Ausbildung) отправляются из двухшагового блока договоров в заявке. Работодатель не подписывает договоры клиента — всё делает Triad Vision.',
     fields: {
       name: 'Название',
       kind: 'Вид',
@@ -308,6 +318,8 @@ const ru: typeof az = {
       sentCaseContract: 'Отправлен как договор этой заявки',
       openSignature: 'Открыть запрос на подпись',
       missingWarn: 'Некоторые поля пусты и в PDF будут показаны как «________».',
+      twoStepHint: 'Трудовые и учебные договоры (İş müqaviləsi) отправляются на подпись из двухшагового блока договоров: сначала Əmək müqaviləsi, затем İş müqaviləsi. Сначала подписывает Triad Vision, затем клиент; работодатель не подписывает. Здесь можно только посмотреть и скачать PDF.',
+      openTwoStep: 'К двухшаговым договорам',
     },
   },
 };

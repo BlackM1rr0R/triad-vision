@@ -1,7 +1,7 @@
 // Stage-based client portal: stage names, the tools catalogue (lib/portalTools.ts), the "All tools" page
 // (/account/all), the calm portal home ("Do this now" hero, "More" area), the new next-step kinds and the
-// updated client tour. Registered with registerCopy(pagesPortalStage). tr / uk fall back to en like the rest
-// of the portal.
+// updated client tour. Registered with registerCopy(pagesPortalStage). Includes tr / uk (portal visitors
+// who chose those languages on the public site).
 
 const az = {
   pstage: {
@@ -423,4 +423,214 @@ const ru: typeof az = {
   },
 };
 
-export const pagesPortalStage = { az, de, en, ru };
+const tr: typeof az = {
+  pstage: {
+    stage: {
+      EXPLORING: { title: 'Tanışma', text: 'Henüz başvurunuz yok — işe ve dile hazırlanın.' },
+      APPLYING: { title: 'Başvuru', text: 'Belgeler, Almanca ve mülakata hazırlık.' },
+      DEPARTURE: { title: 'Vize onaylandı — yolculuğa hazırlık', text: 'Varışınızı planlayın ve yolculuğa hazırlanın.' },
+      IN_GERMANY: { title: 'Almanya’da', text: 'İlk haftalar, maaş, resmî işler ve günlük yaşam.' },
+      CLOSED: { title: 'Başvuru kapandı', text: 'Yeni fırsatlar arayın — biz hâlâ yanınızdayız.' },
+    },
+    nav: {
+      label: 'Portal menüsü',
+      home: 'Ana sayfa',
+      all: 'Tüm araçlar',
+      allBadge: 'Diğer bölümlerde yeni: {{count}}',
+    },
+    groups: {
+      application: 'Başvuru ve belgeler',
+      prepare: 'Öğrenme ve hazırlık',
+      jobs: 'İş arama',
+      departure: 'Yolculuğa hazırlık',
+      germany: 'Almanya’da yaşam',
+      account: 'Hesap',
+    },
+    tools: {
+      cases: { t: 'Başvurum', d: 'Başvurunuzun ilerleyişi ve geçmişi' },
+      documents: { t: 'Belgeler', d: 'Belgeleri yükleyin ve durumlarını görün' },
+      checklist: { t: 'Belge listesi', d: 'Vize türünüz için gereken tüm belgeler, açıklamalı' },
+      signatures: { t: 'İmzalanacaklar', d: 'Sözleşmeyi ve belgeleri çevrim içi imzalayın' },
+      payments: { t: 'Ödemeler', d: 'Faturalar ve ödeme bilgileri' },
+      messages: { t: 'Mesajlar', d: 'Danışmanınızla yazışın' },
+      family: { t: 'Aile', d: 'Aile üyeleri için başvurular' },
+      german: { t: 'Almanca', d: 'Kartlar, oyunlar ve günlük alıştırma' },
+      germanyReady: { t: 'Germany Ready', d: 'Alıştırma puanları ve haftanın görevi' },
+      interviewPrep: { t: 'Mülakata hazırlık', d: 'Büyükelçilik ve işveren soruları, örnek cevaplarla' },
+      course: { t: 'Hazırlık kursu', d: 'Dersler, testler ve sertifika' },
+      waitingRoom: { t: 'Beklerken', d: 'Bekleme süresinde yapılacak faydalı şeyler' },
+      readiness: { t: 'Hazırlık puanı', d: 'Almanya’ya ne kadar hazırsınız (0–100)' },
+      badges: { t: 'Başarılar', d: 'Rozetleriniz' },
+      guides: { t: 'Rehberler', d: 'Bulunduğunuz aşama için faydalı okumalar' },
+      interviews: { t: 'İşveren mülakatları', d: 'Bir saat seçin ve mülakatlarınızı görün' },
+      jobs: { t: 'İş başvuruları', d: 'İlanlara yaptığınız başvurular' },
+      savedJobs: { t: 'Kaydedilen ilanlar', d: 'Almanya’da işler ve iş bildirimleri' },
+      externalJobs: { t: 'Harici ilanlar', d: 'Başka sitelerdeki ilanlara başvurular' },
+      cv: { t: 'Özgeçmiş (Lebenslauf)', d: 'Alman tarzı bir özgeçmiş hazırlayın' },
+      letters: { t: 'Ön yazılar', d: 'Anschreiben şablonları' },
+      arrivalPrep: { t: 'Varışa hazırlık', d: 'Uçuştan ilk haftalara kadar tek listede' },
+      arrivalPlan: { t: 'Varış planı', d: 'Uçuş, karşılama ve konaklama' },
+      arrivalCard: { t: 'Varış kartı', d: 'Adresler ve numaralar — çevrim dışı da' },
+      housing: { t: 'Konut ve Anmeldung', d: 'Ev arama ve adres kaydı' },
+      budget: { t: 'İlk ay bütçesi', d: 'Kişisel masraf tahmininiz' },
+      futureLetter: { t: 'Gelecekteki bana mektup', d: 'Bir yıl sonra okunacak bir mektup' },
+      pocketGuide: { t: 'Cep rehberi', d: 'Yazdırılabilir kişisel Almanya rehberi (PDF)' },
+      emergencyWallpaper: { t: 'Acil durum duvar kâğıdı', d: 'Kilit ekranınız için önemli numaralar' },
+      visaStory: { t: 'Vize hikâyeniz', d: 'Yolculuğunuz slaytlarda' },
+      onboarding: { t: 'İlk adımlar', d: 'Almanya’daki ilk 30 gününüz için kontrol listesi' },
+      payslip: { t: 'Maaş bordrosu açıklaması', d: 'Gehaltsabrechnung satır satır' },
+      letterExplain: { t: 'Mektubu açıkla', d: 'Resmî Almanca mektupları anlayın' },
+      rateAlerts: { t: 'Kur bildirimleri', d: 'EUR → AZN istediğiniz kura ulaştığında' },
+      vault: { t: 'Belge kasası', d: 'Önemli belgelerin kopyaları tek yerde' },
+      ruleChanges: { t: 'Kural değişiklikleri', d: 'Sizi etkileyen yeni kurallar' },
+      residenceCard: { t: 'Oturma izni kartı', d: 'eAT kartı açıklaması, süreler' },
+      profile: { t: 'Profil', d: 'Kişisel bilgiler ve bildirim ayarları' },
+      notifications: { t: 'Bildirimler', d: 'Tüm yenilikler' },
+      privacy: { t: 'Gizlilik ve hukuk', d: 'Verileriniz ve onaylarınız' },
+      referral: { t: 'Arkadaşını davet et', d: 'Bizi tanıdıklarınıza önerin' },
+    },
+    all: {
+      title: 'Tüm araçlar',
+      intro: 'Portalın tüm bölümleri tek yerde. Aşamanız için en önemli olanlar işaretlidir.',
+      search: 'Arama: ör. özgeçmiş, Anmeldung, maaş…',
+      searchLabel: 'Araçlarda ara',
+      clear: 'Temizle',
+      results: 'Bulunan: {{count}}',
+      empty: 'Hiçbir şey bulunamadı. Başka bir kelime deneyin.',
+      featured: 'Aşamanız için',
+      public: 'Web sitesinde açılır',
+    },
+    home: {
+      eyebrow: 'Şimdi bunu yapın',
+      forStage: 'Bu aşama için',
+      allTools: 'Tüm araçlar',
+      more: 'Daha fazla',
+      moreText: 'İlerleme, yolculuk haritası, hazırlık puanı, başarılar ve daha fazlası.',
+      less: 'Gizle',
+    },
+  },
+  pnav: {
+    next: {
+      kind: {
+        PREP_INTERVIEW: { title: 'Mülakatınıza hazırlanın', text: 'Randevunuz: {{date}}. Sık sorulan sorulara Almanca cevap vermeyi alıştırın.', action: 'Alıştırmaya başla' },
+        ARRIVAL_PREP: { title: 'Yolculuğa hazırlanın', text: 'Vizeniz onaylandı! Uçuştan ilk haftalara kadar her şey tek listede.', action: 'Listeyi aç' },
+      },
+    },
+  },
+  pux: {
+    tour: {
+      client: {
+        stageNav: { title: 'Aşamanıza göre menü', text: 'Yalnızca şu an ihtiyacınız olanlar. Bir sonraki aşamaya geçtikçe menü değişir.' },
+        all: { title: 'Tüm araçlar', text: 'Geri kalan her şey — Almanca oyunları, özgeçmiş, rehberler, ayarlar — burada, aramayla birlikte.' },
+        more: { title: 'Daha fazla', text: 'İlerleme, yolculuk haritası ve diğer kartlar burada — ihtiyacınız olduğunda açın.' },
+      },
+    },
+  },
+};
+
+const uk: typeof az = {
+  pstage: {
+    stage: {
+      EXPLORING: { title: 'Знайомство', text: 'Заявки поки немає — готуйтеся до роботи та мови.' },
+      APPLYING: { title: 'Заявка', text: 'Документи, німецька та підготовка до співбесіди.' },
+      DEPARTURE: { title: 'Візу схвалено — підготовка до поїздки', text: 'Сплануйте приїзд і підготуйтеся до дороги.' },
+      IN_GERMANY: { title: 'У Німеччині', text: 'Перші тижні, зарплата, документи й побут.' },
+      CLOSED: { title: 'Заявку закрито', text: 'Шукайте нові можливості — ми й надалі поруч.' },
+    },
+    nav: {
+      label: 'Меню порталу',
+      home: 'Головна',
+      all: 'Усі можливості',
+      allBadge: 'Нове в інших розділах: {{count}}',
+    },
+    groups: {
+      application: 'Заявка та документи',
+      prepare: 'Навчання та підготовка',
+      jobs: 'Пошук роботи',
+      departure: 'Підготовка до поїздки',
+      germany: 'Життя в Німеччині',
+      account: 'Обліковий запис',
+    },
+    tools: {
+      cases: { t: 'Моя заявка', d: 'Перебіг та історія заявки' },
+      documents: { t: 'Документи', d: 'Завантажуйте документи й стежте за статусом' },
+      checklist: { t: 'Перелік документів', d: 'Усі документи для вашого типу візи, з поясненнями' },
+      signatures: { t: 'На підпис', d: 'Підпишіть договір і документи онлайн' },
+      payments: { t: 'Оплата', d: 'Рахунки та платіжні дані' },
+      messages: { t: 'Повідомлення', d: 'Чат із вашим менеджером' },
+      family: { t: 'Сім’я', d: 'Заявки для членів сім’ї' },
+      german: { t: 'Німецька', d: 'Картки, ігри та щоденна практика' },
+      germanyReady: { t: 'Germany Ready', d: 'Бали за практику та завдання тижня' },
+      interviewPrep: { t: 'Підготовка до співбесіди', d: 'Запитання посольства й роботодавця, зразки відповідей' },
+      course: { t: 'Підготовчий курс', d: 'Уроки, тести та сертифікат' },
+      waitingRoom: { t: 'Поки ви чекаєте', d: 'Корисні справи на час очікування' },
+      readiness: { t: 'Індекс готовності', d: 'Наскільки ви готові до Німеччини (0–100)' },
+      badges: { t: 'Досягнення', d: 'Ваші значки' },
+      guides: { t: 'Гіди', d: 'Корисне для вашого етапу' },
+      interviews: { t: 'Співбесіди з роботодавцем', d: 'Оберіть час і переглядайте зустрічі' },
+      jobs: { t: 'Відгуки на вакансії', d: 'Ваші відгуки' },
+      savedJobs: { t: 'Збережені вакансії', d: 'Робота в Німеччині та сповіщення про вакансії' },
+      externalJobs: { t: 'Зовнішні вакансії', d: 'Відгуки на вакансії з інших сайтів' },
+      cv: { t: 'Резюме (Lebenslauf)', d: 'Резюме в німецькому форматі' },
+      letters: { t: 'Мотиваційні листи', d: 'Шаблони Anschreiben' },
+      arrivalPrep: { t: 'Підготовка до приїзду', d: 'Від перельоту до перших тижнів в одному списку' },
+      arrivalPlan: { t: 'План приїзду', d: 'Рейс, зустріч і житло' },
+      arrivalCard: { t: 'Картка приїзду', d: 'Адреси та номери — і без інтернету' },
+      housing: { t: 'Житло та Anmeldung', d: 'Пошук квартири та реєстрація' },
+      budget: { t: 'Бюджет першого місяця', d: 'Особистий розрахунок витрат' },
+      futureLetter: { t: 'Лист собі в майбутнє', d: 'Лист, який ви прочитаєте через рік' },
+      pocketGuide: { t: 'Кишеньковий гід', d: 'Особистий гід Німеччиною для друку (PDF)' },
+      emergencyWallpaper: { t: 'Екстрені шпалери', d: 'Важливі номери на екран блокування' },
+      visaStory: { t: 'Ваша візова історія', d: 'Ваш шлях у слайдах' },
+      onboarding: { t: 'Перші кроки', d: 'Чек-лист на перші 30 днів у Німеччині' },
+      payslip: { t: 'Розрахунковий лист', d: 'Gehaltsabrechnung рядок за рядком' },
+      letterExplain: { t: 'Пояснити лист', d: 'Зрозуміти офіційний німецький лист' },
+      rateAlerts: { t: 'Сповіщення про курс', d: 'Коли EUR → AZN досягне потрібного курсу' },
+      vault: { t: 'Сейф документів', d: 'Копії важливих документів в одному місці' },
+      ruleChanges: { t: 'Зміни правил', d: 'Нові правила, що стосуються вас' },
+      residenceCard: { t: 'Картка посвідки на проживання', d: 'Картка eAT з поясненнями, строки' },
+      profile: { t: 'Профіль', d: 'Особисті дані та сповіщення' },
+      notifications: { t: 'Сповіщення', d: 'Усе нове' },
+      privacy: { t: 'Конфіденційність', d: 'Ваші дані та згоди' },
+      referral: { t: 'Запросити друга', d: 'Порекомендуйте нас знайомим' },
+    },
+    all: {
+      title: 'Усі можливості',
+      intro: 'Усі розділи порталу в одному місці. Найважливіше для вашого етапу позначено.',
+      search: 'Пошук: напр. резюме, Anmeldung, зарплата…',
+      searchLabel: 'Пошук розділів',
+      clear: 'Очистити',
+      results: 'Знайдено: {{count}}',
+      empty: 'Нічого не знайдено. Спробуйте інше слово.',
+      featured: 'Для вашого етапу',
+      public: 'Відкривається на сайті',
+    },
+    home: {
+      eyebrow: 'Зробіть зараз',
+      forStage: 'Для цього етапу',
+      allTools: 'Усі можливості',
+      more: 'Ще',
+      moreText: 'Перебіг заявки, карта шляху, індекс готовності, досягнення тощо.',
+      less: 'Сховати',
+    },
+  },
+  pnav: {
+    next: {
+      kind: {
+        PREP_INTERVIEW: { title: 'Підготуйтеся до співбесіди', text: 'Ваша зустріч: {{date}}. Потренуйтеся відповідати на поширені запитання німецькою.', action: 'Почати тренування' },
+        ARRIVAL_PREP: { title: 'Підготуйтеся до поїздки', text: 'Візу схвалено! Від перельоту до перших тижнів — усе в одному списку.', action: 'Відкрити список' },
+      },
+    },
+  },
+  pux: {
+    tour: {
+      client: {
+        stageNav: { title: 'Меню вашого етапу', text: 'Тут лише те, що потрібно зараз. З кожним етапом меню змінюється.' },
+        all: { title: 'Усі можливості', text: 'Усе інше — ігри з німецької, резюме, гіди, налаштування — тут, із пошуком.' },
+        more: { title: 'Ще', text: 'Перебіг заявки, карта шляху та інші картки — відкривайте, коли потрібно.' },
+      },
+    },
+  },
+};
+
+export const pagesPortalStage = { az, de, en, ru, tr, uk };

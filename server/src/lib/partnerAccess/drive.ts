@@ -1,12 +1,14 @@
 import { prisma } from '../../db.js';
 import { badRequest, notFound } from '../http.js';
 import { syncPartnerFolder } from '../drive/caseFolders.js';
+import { isClientDataFolder } from '../drive/workflowLinkRules.js';
 
 /**
  * The partner's own Drive folder ("Gemeinsame Dokumente/Partner/<partner name>", lib/drive/caseFolders.ts) as the
  * partner portal sees it. Isolation rules (every request):
  *   - only the partner's folder and what lies below it — any other node is 404 (looks exactly like a missing one);
- *   - client folders (a case's drive folder) and everything inside them, and copies of case documents anywhere, are
+ *   - client folders (a case's drive folder, or one that ever was — DriveNode.clientFolderAt, so a folder left behind
+ *     after its case was deleted stays hidden) and everything inside them, and copies of case documents anywhere, are
  *     NEVER shown here: client documents are reached only through the case view and its document permission;
  *   - nodes in the bin are invisible.
  * The staff drive API (/api/drive, STAFF+) is not reachable for partners at all.
@@ -26,11 +28,19 @@ export interface PartnerDriveNode {
 /** The partner's folder id (created when missing, like the admin page does). Null when the drive failed. */
 export const partnerDriveRoot = (partnerId: string) => syncPartnerFolder(partnerId);
 
-/** Ids among `ids` that are client (case) folders. */
+/**
+ * Ids among `ids` that are client data folders: a current client (case) folder, a folder that ever was one
+ * (DriveNode.clientFolderAt — also after its case was deleted) or an "İş axını" copy of one (workflowCaseId).
+ */
 const caseFolderIds = async (ids: string[]) => {
   if (!ids.length) return new Set<string>();
-  const rows = await prisma.case.findMany({ where: { driveFolderId: { in: ids } }, select: { driveFolderId: true } });
-  return new Set(rows.map((r) => r.driveFolderId!).filter(Boolean));
+  const [cases, marked] = await Promise.all([
+    prisma.case.findMany({ where: { driveFolderId: { in: ids } }, select: { driveFolderId: true } }),
+    prisma.driveNode.findMany({ where: { id: { in: ids }, OR: [{ clientFolderAt: { not: null } }, { workflowCaseId: { not: null } }] }, select: { id: true, clientFolderAt: true, workflowCaseId: true } }),
+  ]);
+  const current = new Set(cases.map((r) => r.driveFolderId!).filter(Boolean));
+  for (const n of marked) if (isClientDataFolder(n, current)) current.add(n.id);
+  return current;
 };
 
 /**

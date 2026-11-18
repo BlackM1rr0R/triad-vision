@@ -15,9 +15,9 @@ import { PROCESSING_COPY, processingLabel, type L10n } from './texts.js';
  *     Ablehnung) as an informational label — the German word plus a translation — with nothing else of it (no staff
  *     names, no notes, no history);
  *   - "Səfirlik üçün sənədlərin toplanması": while the client waits for the work contract (contract step, or initial
- *     documents all accepted and in review), the embassy list is shown early. Uploads follow the existing rules
- *     (lib/clientUploadTarget: EMBASSY only in EMBASSY_DOCUMENTS, or a replacement of a rejected file), so before
- *     that step the list is information only ("upload opens soon").
+ *     documents all accepted and in review), the embassy list is shown early. Since 2026-11 the case already has its
+ *     EMBASSY requirement rows in that state and the client may upload them (lib/earlyEmbassy, lib/clientUploadTarget);
+ *     the preview ("upload opens soon") is only left for a case whose rows could not be created yet.
  */
 
 export const OVERVIEW_STEPS = ['documents', 'contract', 'embassyDocs', 'appointment', 'decision', 'result'] as const;

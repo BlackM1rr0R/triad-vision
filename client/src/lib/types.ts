@@ -301,7 +301,7 @@ export interface CaseDetail extends CaseSummary {
   visaValidFrom: string | null;
   visaValidTo: string | null;
   cancelReason: string | null;
-  client: { id: string; firstName: string; lastName: string; email: string; phone: string | null; locale: string };
+  client: { id: string; firstName: string; lastName: string; email: string; phone: string | null; locale: string; address?: string | null };
   assignedStaff: { id: string; firstName: string; lastName: string } | null;
   visaCategory: { id: string; slug: string; title: L10n; visaLabel: string } | null;
   requirements: Requirement[];

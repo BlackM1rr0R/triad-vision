@@ -25,7 +25,8 @@ import { caseParentFor, vacancyProfession } from '../lib/drive/vacancyFolders.js
 import { assertApplicable } from '../lib/vacancyPlaces/service.js'; // our open vacancies with a free place only
 import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
-import { notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
+import { notifyEarlyEmbassyUpload, notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
+import { earlyEmbassyOpenFor, ensureEarlyEmbassyRequirements } from '../lib/earlyEmbassy/service.js'; // embassy documents while waiting for the contract
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -90,6 +91,7 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
 
 casesRouter.get('/:id', async (req, res) => {
   await ownCase(req.params.id, req.user!.id);
+  await ensureEarlyEmbassyRequirements(req.params.id); // older cases already waiting for the contract get their embassy list (idempotent)
   res.json({ case: await loadCaseDetail(req.params.id, { forStaff: false }) });
 });
 
@@ -127,6 +129,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away: "<client>/Reisepass" … (never throws)
     if (target.replacement) await notifyReplacement(c, requirement, doc.originalName);
+    if (target.early) await notifyEarlyEmbassyUpload(c, requirement, doc.originalName); // no hand-in follows yet: staff are told
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
     const checks = await checkCaseDocument(doc.id);
     // Smart uploads: scan quality (blur, darkness, glare, cut-off) for instant feedback; never throws.
@@ -146,8 +149,10 @@ casesRouter.delete('/:id/documents/:docId', async (req, res) => {
   const c = await ownCase(req.params.id, req.user!.id);
   const doc = await prisma.document.findUnique({ where: { id: req.params.docId } });
   if (!doc || doc.caseId !== c.id) throw notFound('DOCUMENT_NOT_FOUND');
-  // Clients may only remove their own not-yet-reviewed uploads while the upload step is open.
-  if (CLIENT_UPLOAD_STAGE[c.status] !== doc.stage || doc.uploadedById !== req.user!.id || doc.status === 'ACCEPTED') {
+  // Clients may only remove their own not-yet-reviewed uploads while the upload step is open (or, for embassy
+  // documents, while they are collected early — lib/earlyEmbassy).
+  const stageOpen = CLIENT_UPLOAD_STAGE[c.status] === doc.stage || (doc.stage === 'EMBASSY' && (await earlyEmbassyOpenFor(c)));
+  if (!stageOpen || doc.uploadedById !== req.user!.id || doc.status === 'ACCEPTED') {
     throw conflict('DELETE_NOT_ALLOWED');
   }
   await prisma.document.delete({ where: { id: doc.id } });

@@ -20,7 +20,8 @@ describe('GET /api/profession-hubs/:slug/vacancies', () => {
     const res = await anon().get('/api/profession-hubs/truck-driver/vacancies?lng=en').expect(200);
     expect(res.body.total).toBe(2);
     expect(res.body.items.map((i: { title: string }) => i.title)).toEqual(['Bus driver', 'LKW-Fahrer CE']);
-    expect(Object.keys(res.body.items[0]).sort()).toEqual(['city', 'employmentType', 'publishedAt', 'salaryMax', 'salaryMin', 'slug', 'title']);
+    expect(Object.keys(res.body.items[0]).sort()).toEqual(['city', 'employmentType', 'free', 'publishedAt', 'salaryMax', 'salaryMin', 'slug', 'title']);
+    expect(res.body.withFreePlaces).toBe(2); // free places (the page offers the vacancy waitlist at 0)
 
     const cook = await anon().get('/api/profession-hubs/cook/vacancies').expect(200);
     expect(cook.body.total).toBe(1);

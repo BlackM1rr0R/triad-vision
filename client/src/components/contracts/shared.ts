@@ -7,6 +7,11 @@ export type ContractKind = 'WORK' | 'AUSBILDUNG' | 'SERVICE' | 'EMPLOYER' | 'PAR
 export const CONTRACT_KINDS: ContractKind[] = ['LABOUR', 'WORK', 'AUSBILDUNG', 'SERVICE', 'EMPLOYER', 'PARTNER'];
 /** Kinds used for a case (the case-contract dialog); EMPLOYER / PARTNER are generated in the partner records. */
 export const CASE_CONTRACT_KINDS: ContractKind[] = ['WORK', 'AUSBILDUNG', 'SERVICE'];
+/**
+ * Kinds sent for signature only from the two-step contracts panel (Əmək müqaviləsi → İş müqaviləsi; Triad Vision
+ * signs first, no employer signer). The generic "from template" dialog still previews / downloads WORK and AUSBILDUNG.
+ */
+export const TWO_STEP_KINDS: ContractKind[] = ['LABOUR', 'WORK', 'AUSBILDUNG'];
 export const CONTRACT_LANGS = ['de', 'en', 'az', 'ru'] as const;
 
 export interface ContractTemplate {

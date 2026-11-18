@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Building2, FileText, Info, Mail, MessageCircle, Pencil, Phone, ShieldX, UserRound, Users } from 'lucide-react';
+import { Building2, FileText, Info, Mail, MapPin, MessageCircle, Pencil, Phone, ShieldX, UserRound, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { CaseDetail } from '@/lib/types';
@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { CallButton } from '@/components/calls/CallButton';
 import { CasePartnerSelect } from '@/components/partners/CasePartnerSelect';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
+import { SensitiveValue } from '@/components/privacyTools/SensitiveValue'; // masked client address: reveal with a reason
 import { actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRelative, fullName, toastError, waLink } from '../labels';
 import type { CaseStats, StaffMember } from '../types';
 import { DefRow } from '../ui';
@@ -72,6 +73,14 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
           </Link>
         </p>
         <p className="mt-0.5 text-xs text-muted uppercase">{t('admin.case.header.language', { value: client.locale })}</p>
+        {client.address && (
+          // ADDRESS group (Access Center): may arrive masked — the eye button reveals it with a reason.
+          <p className="mt-1 flex min-w-0 items-start gap-1 text-xs text-ink/80">
+            <MapPin className="mt-1.5 size-3.5 shrink-0 text-muted" aria-hidden />
+            <span className="sr-only">{t('privacyTools.sensitive.fields.address')}: </span>
+            <SensitiveValue value={client.address} entity="clientAddress" id={client.id} field="address" className="min-w-0 break-words" />
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           <a href={`mailto:${client.email}`} className={linkChip}>
             <Mail className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{client.email}</span>

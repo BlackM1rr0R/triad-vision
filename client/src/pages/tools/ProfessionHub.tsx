@@ -19,6 +19,7 @@ import { pagesProfessionHubs } from '@/i18n/pagesProfessionHubs';
 import { pagesWorkScenes } from '@/i18n/pagesWorkScenes';
 import { pagesAudience } from '@/i18n/pagesAudience';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
 import { SCENE_META } from '@/lib/workScenes/meta';
 import type { SceneId, WorkScene } from '@/lib/workScenes/types';
 import { HUB_SALARY_AS_OF, HUB_SALARY_SOURCES, germanyJobsLink, hubBySlug, salaryMid, type ProfessionHub as Hub } from '@/lib/professionHubs';
@@ -46,13 +47,14 @@ interface HubVacancy {
   salaryMax: number | null;
   employmentType: string;
   publishedAt: string | null;
+  free?: number;
 }
 
 const useHubVacancies = (slug: string) => {
   const lng = currentSiteLocale();
   return useQuery({
     queryKey: ['profession-hub-vacancies', slug, lng],
-    queryFn: async () => (await api.get<{ total: number; items: HubVacancy[] }>(`/profession-hubs/${encodeURIComponent(slug)}/vacancies`, { params: { lng } })).data,
+    queryFn: async () => (await api.get<{ total: number; withFreePlaces?: number; items: HubVacancy[] }>(`/profession-hubs/${encodeURIComponent(slug)}/vacancies`, { params: { lng } })).data,
     staleTime: 60_000,
   });
 };
@@ -136,6 +138,8 @@ const Vacancies = ({ hub }: { hub: Hub }) => {
         ) : (
           <p className="card card-pad text-muted">{t('profHub.jobsEmpty')}</p>
         )}
+        {/* No vacancy of the hub with a free place: "Uyğun vakansiya açılanda xəbər ver" (server lib/jobAlerts/waitlist.ts). */}
+        {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-5" only={hub.professions} full={data.items.length > 0} />}
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/jobs" className={buttonClass({ variant: 'outline' })}>
             <Briefcase className="size-4" aria-hidden /> {t('profHub.jobsAll')}

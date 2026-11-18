@@ -18,6 +18,8 @@ import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { ComparableJobCard } from '@/components/jobs/CompareToggle';
 import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
+import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
+import { isFull } from '@/components/vacancyPlaces/api';
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
 
@@ -64,6 +66,8 @@ export default function Jobs() {
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const activeFilters = FILTER_KEYS.filter((k) => k !== 'sort' && k !== 'search' && params.get(k)).length;
+  // Nothing to apply for (no results, or every listed vacancy is full): offer the vacancy waitlist.
+  const noFreePlace = !!data && (data.items.length === 0 || (page === 1 && data.items.every((v) => isFull(v))));
 
   const reset = () => {
     setSearchInput('');
@@ -217,6 +221,7 @@ export default function Jobs() {
                 />
               </div>
             ) : !data?.items.length ? (
+              <>
               <div className="card rounded-3xl">
                 <EmptyState
                   size="lg"
@@ -237,8 +242,12 @@ export default function Jobs() {
                   }
                 />
               </div>
+              {/* No vacancy at all: the vacancy waitlist right under the empty state. */}
+              <WaitlistForm className="mt-6" city={params.get('city')} />
+              </>
             ) : (
               <>
+                {noFreePlace && <WaitlistForm className="mb-6" full city={params.get('city')} />}
                 <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
                   {data.items.map((v) => (
                     <ComparableJobCard key={v.id} v={v} />

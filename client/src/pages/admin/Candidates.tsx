@@ -33,6 +33,7 @@ import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
 import { ColumnChooser, SettingsTable, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import { useRowSelection } from '@/components/staffPower/selection';
 import { CandidatesBulkBar } from '@/components/staffPower/BulkBar';
+import { SensitiveValue } from '@/components/privacyTools/SensitiveValue'; // masked client address: reveal with a reason
 
 registerCopy(pagesJobs);
 registerCopy(pagesStaffPower);
@@ -344,6 +345,9 @@ const CandidateDrawer = ({ id, onClose, onAdd }: { id: string | null; onClose: (
               <DefRow label={t('placement.recognition.label')}>{data.recognitionStatus ? t(`placement.recognition.status.${data.recognitionStatus}`) : '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.licence')}>{data.drivingLicence ?? '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.city')}>{data.city ?? '—'}</DefRow>
+              <DefRow label={t('privacyTools.sensitive.fields.address')}>
+                <SensitiveValue value={data.address} entity="clientAddress" id={data.id} field="address" />
+              </DefRow>
               <DefRow label={t('jobsArea.profile.birthDate')}>{data.birthDate ? fmtDate(data.birthDate) : '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.nationality')}>{data.nationality ?? '—'}</DefRow>
               <DefRow label={t('jobsArea.profile.registered')}>{fmtDate(data.createdAt)}</DefRow>

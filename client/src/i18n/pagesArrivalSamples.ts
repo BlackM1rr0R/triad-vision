@@ -360,4 +360,184 @@ const ru: typeof az = {
   },
 };
 
-export const pagesArrivalSamples = { az, de, en, ru };
+const tr: typeof az = {
+  asample: {
+    open: 'Örnek form',
+    title: 'Örnek: {{form}}',
+    notOfficial: 'Bu RESMÎ BİR FORM DEĞİLDİR — yalnızca basitleştirilmiş bir örnektir. Gerçek form şehre / bankaya / sağlık sigortasına göre biraz farklı görünebilir.',
+    modeSample: 'Örnek ({{name}})',
+    modeMine: 'Kendi bilgilerimle',
+    mineHint: 'Bilinen bilgileriniz (ad, doğum tarihi, uyruk) dolduruldu; boş alanları kendiniz tamamlayın. Yazdırın ve yanınıza alın.',
+    empty: 'kendiniz doldurun',
+    print: 'Yazdır',
+    explain: 'Açıklama',
+    bringTitle: 'Yanınıza alın',
+    sources: 'Kaynaklar ({{date}} itibarıyla)',
+    issuer: 'Veren kurum',
+    intro: {
+      anmeldung: 'Taşındıktan sonra 2 hafta içinde Bürgeramt’a (vatandaşlık ofisi) kaydolmanız gerekir. Ev sahibiniz size bir Wohnungsgeberbestätigung (ev sahibi onayı) vermek zorundadır. Kayıttan sonra bir Meldebescheinigung alırsınız; vergi numarası posta ile gelir.',
+      bankkonto: 'Maaşınız için Alman IBAN’ı gerekir. Bankalar genellikle vizeli pasaportu ve Meldebescheinigung’u ister; bazıları görüntülü kimlik doğrulamayla çevrim içi hesap açar. AB’de yasal olarak ikamet eden herkesin temel hesap (Basiskonto) hakkı vardır.',
+      krankenversicherung: 'Bir yasal sağlık sigortası seçin ve işvereninize bildirin. İşe başladıktan sonra 2 hafta içinde seçmezseniz, işveren sizi birine kaydeder.',
+      'steuer-id': 'Başvuru gerekmez: kayıttan (Anmeldung) sonra Federal Merkez Vergi Dairesi (BZSt) 11 haneli vergi numaranızı mektupla gönderir — genellikle birkaç hafta içinde (tahmin). Numarayı işvereninize verin; o olmadan gelir vergisi VI. vergi sınıfından (en yüksek) kesilmek zorundadır.',
+    },
+    common: {
+      lastName: 'Soyadınız, pasaporttaki Latin yazımıyla (ör. MAMMADOV, “Məmmədov” değil). Emin değilseniz pasaportun altındaki makinece okunabilir satırlara bakın.',
+      firstName: 'Adınız pasaporttaki gibi; birden fazla adınız varsa hepsi.',
+      birthDate: 'Doğum tarihi GG.AA.YYYY biçiminde (14.03.1994).',
+      birthPlace: 'Doğum yeri ve ülkesi — Almanca: “Aserbaidschan”.',
+      nationality: 'Uyruk Almanca: “aserbaidschanisch”.',
+      address: 'Almanya’daki adresiniz (kayıtlı olduğunuz yer): sokak, numara, posta kodu, şehir.',
+    },
+    fields: {
+      anmeldung: {
+        moveIn: 'Taşındığınız gün — 2 hafta buradan itibaren sayılır.',
+        newAddress: 'Yeni dairenin tam adresi, kat veya “links/rechts” (sol/sağ) gibi ekler dahil.',
+        kind: 'Almanya’da tek konutunuz varsa: “alleinige Wohnung” (tek konut).',
+        previous: 'Yurt dışından geliyorsanız ülkeyi yazın: “Ausland: Aserbaidschan”.',
+        sex: 'Cinsiyet: männlich (erkek), weiblich (kadın), divers.',
+        marital: 'Medeni durum: ledig (bekâr), verheiratet (evli), geschieden (boşanmış), verwitwet (dul). Evliyseniz evlilik tarihi ve yeri sorulur.',
+        religion: 'Yalnızca kilise vergisi için önemlidir. Müslümanlar ve bir dini topluluğa üye olmayanlar boş bırakır / “—” yazar.',
+        passport: 'Pasaport bilgileriniz: tür (Reisepass), seri numarası, veren makam, veriliş tarihi, geçerlilik tarihi — hepsi pasaportta yazılıdır.',
+        signature: 'Tarih ve imza. Bazı şehirlerde formu memur doldurur, siz yalnızca kontrol edip imzalarsınız.',
+      },
+      bankkonto: {
+        contact: 'Alman cep telefonu numarası ve e-posta — banka SMS kodlarını ve mektupları oraya gönderir.',
+        job: 'Mesleğiniz ve işvereniniz (iş sözleşmesindeki gibi).',
+        taxId: '11 haneli vergi numarası. Henüz gelmediyse: “wird nachgereicht” (sonradan verilecek).',
+        taxResidence: 'Vergi mukimi olduğunuz yer — Almanya’da yaşıyor ve çalışıyorsanız: Deutschland.',
+        fatca: 'ABD vatandaşı / ABD vergi mükellefi değilseniz: “nein”.',
+        account: 'Normal vadesiz hesap: Girokonto. Banka reddederse temel hesap (Basiskonto) isteyebilirsiniz.',
+        id: 'Kimlik kontrolü: vizeli pasaport (veya oturma izni kartı).',
+      },
+      krankenversicherung: {
+        pension: 'Emeklilik sigortası numarası — yoksa boş bırakın; sigorta sizin için talep eder.',
+        employer: 'İşverenin adı ve adresi (iş sözleşmesinden).',
+        since: 'İlk iş günü — sigorta o gün başlar.',
+        previous: 'Daha önce Almanya’da sigortalı değilseniz: “nicht in Deutschland versichert”.',
+        family: 'Geliri olmayan eş ve çocuklar ücretsiz sigortalanabilir (aile sigortası) — ayrı form.',
+        photo: 'Elektronik sağlık kartı (eGK) için vesikalık fotoğraf — genellikle sigortanın uygulamasına yüklenir.',
+      },
+      'steuer-id': {
+        idnr: '11 haneli kişisel vergi numaranız — hiç değişmez. Bu örnekteki numara uydurmadır.',
+        address: 'Mektup kayıtlı adresinize gelir — posta kutusunda adınızın yazdığından emin olun.',
+      },
+    },
+    bring: {
+      anmeldung: {
+        passport: 'Vizeli pasaport',
+        landlord: 'Ev sahibinin Wohnungsgeberbestätigung’u (imzalı)',
+        contract: 'Kira sözleşmesi (bazı şehirler ister)',
+        family: 'Aileyle geliyorsanız: evlilik / doğum belgeleri (şehre bağlı)',
+      },
+      bankkonto: {
+        passport: 'Vizeli pasaport',
+        registration: 'Meldebescheinigung (kayıt belgesi)',
+        contract: 'İş sözleşmesi (bazı bankalar ister)',
+        phone: 'Alman cep telefonu numarası ve e-posta',
+      },
+      krankenversicherung: {
+        passport: 'Pasaport',
+        contract: 'İş sözleşmesi (işveren ve başlangıç tarihi)',
+        photo: 'Dijital vesikalık fotoğraf',
+        registration: 'Almanya’daki adres / Meldebescheinigung',
+      },
+      'steuer-id': {
+        keep: 'Mektubu iyi saklayın — numara ömür boyu aynı kalır.',
+        employer: 'Vergi numarasını ve doğum tarihinizi işvereninize verin.',
+        lost: 'Kaybettiyseniz: BZSt’nin çevrim içi formuyla yeni mektup isteyin (telefonla verilmez).',
+      },
+    },
+  },
+};
+
+const uk: typeof az = {
+  asample: {
+    open: 'Зразок форми',
+    title: 'Зразок: {{form}}',
+    notOfficial: 'Це НЕ ОФІЦІЙНА ФОРМА — лише спрощений зразок. Справжня форма може дещо відрізнятися залежно від міста / банку / лікарняної каси.',
+    modeSample: 'Зразок ({{name}})',
+    modeMine: 'З моїми даними',
+    mineHint: 'Відомі нам дані (ім’я, дата народження, громадянство) вже заповнено; решту полів заповніть самі. Роздрукуйте й візьміть із собою.',
+    empty: 'заповніть самі',
+    print: 'Друкувати',
+    explain: 'Пояснення',
+    bringTitle: 'Візьміть із собою',
+    sources: 'Джерела (станом на {{date}})',
+    issuer: 'Видає',
+    intro: {
+      anmeldung: 'Протягом 2 тижнів після заселення ви маєте зареєструватися в Bürgeramt (громадянському бюро). Орендодавець зобов’язаний видати вам Wohnungsgeberbestätigung (підтвердження орендодавця). Після реєстрації ви отримаєте Meldebescheinigung, а податковий номер прийде поштою.',
+      bankkonto: 'Для зарплати потрібен німецький IBAN. Банки зазвичай просять паспорт із візою та Meldebescheinigung; деякі відкривають рахунок онлайн із відеоідентифікацією. Кожен, хто легально проживає в ЄС, має право на базовий рахунок (Basiskonto).',
+      krankenversicherung: 'Оберіть державну лікарняну касу й повідомте роботодавця. Якщо ви не оберете її протягом 2 тижнів від початку роботи, роботодавець зареєструє вас у якійсь сам.',
+      'steuer-id': 'Подавати заяву не треба: після реєстрації (Anmeldung) Федеральне центральне податкове управління (BZSt) надішле вам листом 11-значний податковий номер — зазвичай протягом кількох тижнів (оцінка). Передайте його роботодавцю; без нього податок на зарплату утримуватимуть за VI податковим класом (найвищим).',
+    },
+    common: {
+      lastName: 'Прізвище латиницею, як у паспорті (напр. MAMMADOV, а не «Məmmədov»). Якщо не впевнені, подивіться на машинозчитувані рядки внизу паспорта.',
+      firstName: 'Ім’я, як у паспорті; якщо їх кілька — усі.',
+      birthDate: 'Дата народження у форматі ДД.ММ.РРРР (14.03.1994).',
+      birthPlace: 'Місто й країна народження — німецькою: «Aserbaidschan».',
+      nationality: 'Громадянство німецькою: «aserbaidschanisch».',
+      address: 'Ваша адреса в Німеччині (де ви зареєстровані): вулиця, номер, поштовий індекс, місто.',
+    },
+    fields: {
+      anmeldung: {
+        moveIn: 'День заселення — 2 тижні рахуються від нього.',
+        newAddress: 'Повна адреса нового житла, зокрема поверх або «links/rechts» (ліворуч/праворуч).',
+        kind: 'Лише одне житло в Німеччині: «alleinige Wohnung» (єдине місце проживання).',
+        previous: 'Якщо ви приїжджаєте з-за кордону, вкажіть країну: «Ausland: Aserbaidschan».',
+        sex: 'Стать: männlich (чоловіча), weiblich (жіноча), divers.',
+        marital: 'Сімейний стан: ledig (неодружений/незаміжня), verheiratet (одружений/заміжня), geschieden (розлучений), verwitwet (вдівець/вдова). Якщо ви в шлюбі, запитають дату й місце укладення шлюбу.',
+        religion: 'Важливо лише для церковного податку. Мусульмани та люди без релігійної громади залишають поле порожнім / «—».',
+        passport: 'Дані паспорта: тип (Reisepass), серійний номер, орган видачі, дата видачі, дійсний до — усе надруковано в паспорті.',
+        signature: 'Дата й підпис. У деяких містах форму заповнює службовець, а ви лише перевіряєте й підписуєте.',
+      },
+      bankkonto: {
+        contact: 'Німецький мобільний номер і e-mail — банк надсилатиме туди SMS-коди та листи.',
+        job: 'Ваша професія та роботодавець (як у трудовому договорі).',
+        taxId: '11-значний податковий номер. Якщо він ще не прийшов: «wird nachgereicht» (буде надано пізніше).',
+        taxResidence: 'Де ви є податковим резидентом — якщо живете й працюєте в Німеччині: Deutschland.',
+        fatca: 'Не громадянин США / не платник податків у США: «nein».',
+        account: 'Звичайний поточний рахунок: Girokonto. Якщо банк відмовить, можна попросити базовий рахунок (Basiskonto).',
+        id: 'Перевірка особи: паспорт із візою (або картка дозволу на проживання).',
+      },
+      krankenversicherung: {
+        pension: 'Номер пенсійного страхування — якщо його немає, залиште порожнім; каса сама його запросить.',
+        employer: 'Назва та адреса роботодавця (з трудового договору).',
+        since: 'Перший робочий день — з нього починається страхування.',
+        previous: 'Раніше не були застраховані в Німеччині: «nicht in Deutschland versichert».',
+        family: 'Чоловіка/дружину та дітей без доходу можна застрахувати безкоштовно (сімейне страхування) — окрема форма.',
+        photo: 'Фото на паспорт для електронної медичної картки (eGK) — зазвичай завантажується в застосунку каси.',
+      },
+      'steuer-id': {
+        idnr: 'Ваш 11-значний особистий податковий номер — він ніколи не змінюється. Номер у цьому зразку вигаданий.',
+        address: 'Лист прийде на адресу реєстрації — переконайтеся, що ваше ім’я є на поштовій скриньці.',
+      },
+    },
+    bring: {
+      anmeldung: {
+        passport: 'Паспорт із візою',
+        landlord: 'Wohnungsgeberbestätigung від орендодавця (з підписом)',
+        contract: 'Договір оренди (деякі міста просять)',
+        family: 'Якщо приїжджаєте з родиною: свідоцтва про шлюб / народження (залежить від міста)',
+      },
+      bankkonto: {
+        passport: 'Паспорт із візою',
+        registration: 'Meldebescheinigung (довідка про реєстрацію)',
+        contract: 'Трудовий договір (деякі банки просять)',
+        phone: 'Німецький мобільний номер і e-mail',
+      },
+      krankenversicherung: {
+        passport: 'Паспорт',
+        contract: 'Трудовий договір (роботодавець і дата початку)',
+        photo: 'Цифрове фото на паспорт',
+        registration: 'Адреса в Німеччині / Meldebescheinigung',
+      },
+      'steuer-id': {
+        keep: 'Бережіть лист — номер залишається тим самим довічно.',
+        employer: 'Передайте податковий номер і дату народження роботодавцю.',
+        lost: 'Загубили: замовте новий лист через онлайн-форму BZSt (телефоном номер не повідомляють).',
+      },
+    },
+  },
+};
+
+export const pagesArrivalSamples = { az, de, en, ru, tr, uk };

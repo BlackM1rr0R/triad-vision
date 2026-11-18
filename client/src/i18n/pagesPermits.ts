@@ -181,5 +181,98 @@ const ru: typeof az = {
   },
 };
 
-export const pagesPermits = { az, de, en, ru };
+const tr: typeof az = {
+  permits: {
+    items: { residence: 'Oturma izni', blueCard: 'AB Mavi Kart', passport: 'Pasaport', insurance: 'Sağlık sigortası' },
+    tone: { ok: 'Geçerli', soon: 'Süresi yakında doluyor', urgent: 'Hemen yenileyin', expired: 'Süresi doldu' },
+    daysLeft_one: '{{count}} gün kaldı',
+    daysLeft_other: '{{count}} gün kaldı',
+    until: '{{date}} tarihine kadar',
+    portal: {
+      title: 'Belgelerimin geçerlilik süreleri',
+      intro: 'Almanya’daki oturma izniniz, pasaportunuz ve sağlık sigortanız. Süreleri dolmadan 90, 60 ve 30 gün önce size hatırlatırız.',
+      profile: 'Pasaport tarihini profilinizde değiştirin',
+    },
+    admin: {
+      title: 'Süre hatırlatmaları',
+      kind: 'Oturma izni türü',
+      kinds: { RESIDENCE_PERMIT: 'Oturma izni (Aufenthaltserlaubnis)', EU_BLUE_CARD: 'AB Mavi Kart' },
+      insurance: 'Sağlık sigortası bitiş tarihi',
+      passport: 'Pasaportun bitiş tarihi (müşteri profili)',
+      save: 'Kaydet',
+      saved: 'Kaydedildi',
+      titleDateHint: 'Oturma izninin bitiş tarihi yukarıdaki “Uzatma” kartına girilir.',
+      inactive: 'Hatırlatmalar yalnızca onaylanmış (APPROVED) başvurular için gönderilir.',
+      off: 'Hatırlatmalar ayarlarda kapatılmış.',
+      passportByCase: 'Açık bir başvuru var — pasaport o başvurunun hatırlatmalarıyla takip ediliyor.',
+      none: 'Henüz tarih girilmedi.',
+      reminded: 'Gönderildi: {{list}}',
+      remindedNone: 'Henüz hatırlatma gönderilmedi',
+      expiredNotice: 'süre doldu bildirimi',
+      next: 'Sonraki: {{date}}',
+      windows: 'Hatırlatmalar: {{list}} gün önce',
+    },
+    settings: {
+      title: 'Süre hatırlatmaları (Almanya’da)',
+      intro: 'Oturma izni, Mavi Kart, pasaport ve sağlık sigortasının süresi dolmadan kaç gün önce müşteriye ve sorumlu çalışana hatırlatma yapılacağı. Virgülle ayırın: 90, 60, 30.',
+      enabled: 'Hatırlatmalar açık',
+      staffEmail: 'Sorumlu çalışana da e-posta gönder',
+      windowsLabel: '{{item}} — gün',
+      invalid: 'Her satırda 1 ile 365 arasında 1–6 sayı olmalı',
+      save: 'Kaydet',
+      saved: 'Ayarlar kaydedildi',
+      passportHint: 'Yeni pasaport aylar sürer — 180 gün önerilir.',
+    },
+  },
+};
+
+// Untyped like the plural sets of other modules: Ukrainian adds `_few` / `_many`.
+const uk = {
+  permits: {
+    items: { residence: 'Дозвіл на проживання', blueCard: 'Блакитна карта ЄС', passport: 'Паспорт', insurance: 'Медичне страхування' },
+    tone: { ok: 'Дійсний', soon: 'Скоро закінчується', urgent: 'Терміново продовжте', expired: 'Строк минув' },
+    daysLeft_one: 'залишився {{count}} день',
+    daysLeft_few: 'залишилося {{count}} дні',
+    daysLeft_many: 'залишилося {{count}} днів',
+    daysLeft_other: 'залишилося {{count}} дня',
+    until: 'до {{date}}',
+    portal: {
+      title: 'Строки моїх документів',
+      intro: 'Ваш дозвіл на проживання, паспорт і медичне страхування в Німеччині. Ми нагадаємо за 90, 60 і 30 днів до закінчення строку.',
+      profile: 'Змінити дату паспорта в профілі',
+    },
+    admin: {
+      title: 'Нагадування про строки',
+      kind: 'Вид дозволу на перебування',
+      kinds: { RESIDENCE_PERMIT: 'Дозвіл на проживання (Aufenthaltserlaubnis)', EU_BLUE_CARD: 'Блакитна карта ЄС' },
+      insurance: 'Страхування закінчується',
+      passport: 'Строк паспорта закінчується (профіль клієнта)',
+      save: 'Зберегти',
+      saved: 'Збережено',
+      titleDateHint: 'Дату закінчення дозволу на проживання вводять вище, у картці «Продовження».',
+      inactive: 'Нагадування надсилаються лише за схваленими (APPROVED) заявками.',
+      off: 'Нагадування вимкнено в налаштуваннях.',
+      passportByCase: 'Є відкрита заявка — паспорт відстежується її нагадуваннями.',
+      none: 'Дати ще не введено.',
+      reminded: 'Надіслано: {{list}}',
+      remindedNone: 'Нагадувань ще не було',
+      expiredNotice: 'повідомлення про закінчення строку',
+      next: 'Наступне: {{date}}',
+      windows: 'Нагадування: за {{list}} дн.',
+    },
+    settings: {
+      title: 'Нагадування про строки (у Німеччині)',
+      intro: 'За скільки днів до закінчення дозволу на проживання, Блакитної карти, паспорта й страхування нагадувати клієнтові та відповідальному співробітникові. Через кому: 90, 60, 30.',
+      enabled: 'Нагадування ввімкнено',
+      staffEmail: 'Також надсилати e-mail відповідальному співробітникові',
+      windowsLabel: '{{item}} — дні',
+      invalid: 'У кожному рядку 1–6 чисел від 1 до 365',
+      save: 'Зберегти',
+      saved: 'Налаштування збережено',
+      passportHint: 'Новий паспорт оформлюють місяцями — рекомендовано 180 днів.',
+    },
+  },
+};
+
+export const pagesPermits = { az, de, en, ru, tr, uk };
 export default pagesPermits;

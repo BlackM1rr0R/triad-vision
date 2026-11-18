@@ -16,6 +16,8 @@ import {
   prefsData,
   professionOptions,
 } from '../lib/jobAlerts/service.js';
+import { onWaitlistConfirmed, onWaitlistUnsubscribed } from '../lib/jobAlerts/waitlist.js';
+import { waitlistRouter } from './vacancyWaitlist.js'; // "tell me when a matching vacancy opens" (/api/job-alerts/waitlist)
 
 /**
  * Job alerts — mounted at /api/job-alerts (design: lib/jobAlerts/service.ts):
@@ -27,8 +29,10 @@ import {
  *   PATCH  /manage    { token, … } change professions / level / kinds / language
  *   POST   /unsubscribe { token } stop all mail; POST /resume { token } undoes it (deleted after 30 days)
  *   GET    /mine, POST /mine, PATCH /mine/:id, DELETE /mine/:id   signed-in clients (no double opt-in)
+ *   /waitlist/…                   vacancy waitlist (routes/vacancyWaitlist.ts; same confirm / manage / unsubscribe links)
  */
 export const jobAlertsRouter = Router();
+jobAlertsRouter.use('/waitlist', waitlistRouter);
 
 const createLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 6 });
 const tokenLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 40 });
@@ -77,6 +81,7 @@ jobAlertsRouter.post('/confirm', tokenLimiter, async (req, res) => {
   const alert = await findByToken(body.token);
   if (!alert) throw notFound('ALERT_NOT_FOUND');
   const updated = alert.confirmedAt ? alert : await prisma.jobAlert.update({ where: { id: alert.id }, data: { confirmedAt: new Date(), unsubscribedAt: null } });
+  if (!alert.confirmedAt) await onWaitlistConfirmed(updated, req); // waitlist: consent log, lead note, first run (no-op for job alerts)
   res.json({ alert: alertView(updated, { maskedEmail: true }) });
 });
 
@@ -100,6 +105,7 @@ jobAlertsRouter.post('/unsubscribe', tokenLimiter, async (req, res) => {
   const alert = await findByToken(body.token);
   if (!alert) throw notFound('ALERT_NOT_FOUND');
   const updated = alert.unsubscribedAt ? alert : await prisma.jobAlert.update({ where: { id: alert.id }, data: { unsubscribedAt: new Date() } });
+  if (!alert.unsubscribedAt) await onWaitlistUnsubscribed(updated, req); // waitlist: consent withdrawal logged (no-op for job alerts)
   res.json({ alert: alertView(updated, { maskedEmail: true }) });
 });
 
@@ -120,7 +126,7 @@ const requireClient: RequestHandler = (req, _res, next) => {
 
 jobAlertsRouter.get('/mine', requireAuth, requireClient, async (req, res) => {
   const [items, user] = await Promise.all([
-    prisma.jobAlert.findMany({ where: { userId: req.user!.id, unsubscribedAt: null }, orderBy: { createdAt: 'desc' } }),
+    prisma.jobAlert.findMany({ where: { userId: req.user!.id, unsubscribedAt: null, waitlist: false }, orderBy: { createdAt: 'desc' } }), // waitlist: GET /waitlist/mine
     prisma.user.findUnique({ where: { id: req.user!.id }, select: { profession: true, germanLevel: true, emailNotifications: true } }),
   ]);
   res.json({

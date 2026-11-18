@@ -13,6 +13,7 @@ import { ScorePill } from '@/components/jobs/MatchMeter';
 import type { AnonProfile } from '@/components/jobs/types';
 import { Employer, SearchEmpty } from '@/components/illustrations';
 import { Empty, Kpi, Loading, Section } from './shared';
+import { useCompanyAccess } from './access';
 import { NovruzBanner } from '@/components/novruz/NovruzInfo'; // Novruz reminder, 1–21 March
 
 interface Dashboard {
@@ -26,6 +27,7 @@ interface Dashboard {
 export const CompanyDashboard = () => {
   const { t } = useTranslation();
   const { tr } = useL10n();
+  const { can } = useCompanyAccess(); // cosmetic: the server refuses what the member may not do
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-dashboard'],
     queryFn: async () => (await api.get<Dashboard>('/company/dashboard')).data,
@@ -109,12 +111,16 @@ export const CompanyDashboard = () => {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link to="/company/vacancies/new" className={buttonClass({ variant: 'primary', size: 'md' })}>
-          <Plus className="size-4" /> {t('jobsArea.portal.vacancies.new')}
-        </Link>
-        <Link to="/company/workers" className={buttonClass({ variant: 'outline', size: 'md' })}>
-          {t('jobsArea.portal.nav.workers')} <ArrowRight className="size-4" />
-        </Link>
+        {can('manageVacancies') && (
+          <Link to="/company/vacancies/new" className={buttonClass({ variant: 'primary', size: 'md' })}>
+            <Plus className="size-4" /> {t('jobsArea.portal.vacancies.new')}
+          </Link>
+        )}
+        {can('viewWorkers') && (
+          <Link to="/company/workers" className={buttonClass({ variant: 'outline', size: 'md' })}>
+            {t('jobsArea.portal.nav.workers')} <ArrowRight className="size-4" />
+          </Link>
+        )}
       </div>
     </div>
   );

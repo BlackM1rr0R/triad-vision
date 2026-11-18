@@ -179,7 +179,8 @@ export default function CompanyApp() {
                 <Route index element={<CompanyDashboard />} />
                 <Route path="vacancies" element={<CompanyVacancies company={company} />} />
                 <Route path="vacancies/new" element={<CompanyGate all={['manageVacancies']}><CompanyVacancyEditor company={company} /></CompanyGate>} />
-                <Route path="vacancies/:id" element={<CompanyVacancyEditor company={company} />} />
+                {/* The editor only with manageVacancies (the server refuses saves anyway): others see the no-access notice. */}
+                <Route path="vacancies/:id" element={<CompanyGate all={['manageVacancies']}><CompanyVacancyEditor company={company} /></CompanyGate>} />
                 <Route path="candidates/*" element={<CompanyGate all={['viewCandidatePool']}><CompanyCandidatesArea /></CompanyGate>} />
                 <Route path="requests/*" element={<CompanyGate any={['viewPipeline', 'createRequests']}><CompanyRequests /></CompanyGate>} />
                 <Route path="pipeline" element={<CompanyGate all={['viewPipeline']}><CompanyPipeline /></CompanyGate>} />

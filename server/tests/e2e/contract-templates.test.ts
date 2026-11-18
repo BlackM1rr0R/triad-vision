@@ -140,7 +140,9 @@ describe('preview and PDF', () => {
     const text = await cvPdfText(buf);
     expect(text).toContain('Şəhla Əliyeva-Güləliyeva');
     expect(text).toContain('Spedition Müller GmbH');
-    expect(text).toContain('Arbeitnehmer/in');
+    // Signature lines Triad Vision | client, as in the two-step contracts: no employer line.
+    expect(text).toContain('Kunde/Kundin');
+    expect(text).not.toContain('Arbeitgeber');
     expect(text).toContain('________'); // startDate missing
     expect(text).not.toContain('interne Notiz');
   });
@@ -149,20 +151,34 @@ describe('preview and PDF', () => {
 describe('send for e-signature', () => {
   const signersOf = (requestId: string) => prisma.signatureSigner.findMany({ where: { requestId }, orderBy: { order: 'asc' } });
 
-  it('work contract: client as CANDIDATE and the company contact as COMPANY', async () => {
+  it('work / training contracts are not sent here (two-step case contracts) and nobody can add the employer as signer', async () => {
     const { company, user } = await makeCompany();
-    const { client, c } = await makeCase({ companyId: company.id });
-    const { t } = await createTemplate();
+    const { c } = await makeCase({ companyId: company.id });
+    const { t: work } = await createTemplate();
+    const { t: training } = await createTemplate({ kind: 'AUSBILDUNG', name: 'Ausbildungsvertrag' });
+    const { t: service } = await createTemplate({ kind: 'SERVICE', name: 'Dienstleistungsvertrag' });
     const staff = await asStaff();
-    const res = expectStatus(await staff.agent.post(`${BASE}/${t.id}/send`).send({ caseId: c.id, inputs: { salary: '2.900 €', startDate: '2026-12-01' } }), 201).body;
+    for (const t of [work, training]) {
+      expect(expectStatus(await staff.agent.post(`${BASE}/${t.id}/send`).send({ caseId: c.id, inputs: { salary: '2.900 €' } }), 400).body.error).toBe('USE_CASE_CONTRACTS');
+    }
+    const employer = { role: 'COMPANY', name: 'Jürgen Müller', email: user.email, userId: user.id };
+    expect(expectStatus(await staff.agent.post(`${BASE}/${service.id}/send`).send({ caseId: c.id, signers: [employer] }), 400).body.error).toBe('NO_EMPLOYER_SIGNER');
+    expect(await prisma.signatureRequest.count()).toBe(0);
+  });
+
+  it('service contract of a case with an employer: client and Triad Vision only, not tied to the company', async () => {
+    const { company } = await makeCompany();
+    const { client, c } = await makeCase({ companyId: company.id });
+    const { t } = await createTemplate({ kind: 'SERVICE', name: 'Dienstleistungsvertrag' });
+    const staff = await asStaff();
+    const res = expectStatus(await staff.agent.post(`${BASE}/${t.id}/send`).send({ caseId: c.id, inputs: {} }), 201).body;
     expect(res.caseContract).toBe(false);
     const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: res.signatureRequestId } });
-    expect(r).toMatchObject({ status: 'SENT', caseId: c.id, companyId: company.id, isCaseContract: false, createdById: staff.user.id });
+    expect(r).toMatchObject({ status: 'SENT', caseId: c.id, companyId: null, isCaseContract: false, createdById: staff.user.id });
     expect(r.title).toContain(c.number);
-    const signers = await signersOf(r.id);
-    expect(signers.map((s) => [s.role, s.userId])).toEqual([
+    expect((await signersOf(r.id)).map((s) => [s.role, s.userId])).toEqual([
       ['CANDIDATE', client.user.id],
-      ['COMPANY', user.id],
+      ['STAFF', staff.user.id],
     ]);
     await vi.waitFor(async () => expect(await prisma.auditLog.count({ where: { action: 'contractTemplate.send' } })).toBe(1));
   });
@@ -199,7 +215,7 @@ describe('send for e-signature', () => {
 
   it('explicit signers override the defaults; inactive templates cannot be sent', async () => {
     const { c } = await makeCase();
-    const { admin, t } = await createTemplate();
+    const { admin, t } = await createTemplate({ kind: 'SERVICE', name: 'Dienstleistungsvertrag' });
     const staff = await asStaff();
     const res = expectStatus(
       await staff.agent.post(`${BASE}/${t.id}/send`).send({ caseId: c.id, signers: [{ role: 'OTHER', name: 'Notar Schmidt', email: 'notar@example.com' }] }),

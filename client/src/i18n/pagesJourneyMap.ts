@@ -1,5 +1,5 @@
 // Client portal journey map (components/portal/JourneyCard): origin city → German destination with six
-// milestones. Registered with registerCopy(pagesJourneyMap) by the journey components; tr / uk fall back to English.
+// milestones. Registered with registerCopy(pagesJourneyMap) by the journey components; all six languages.
 const az = {
   jmap: {
     title: 'Sizin yolunuz',
@@ -150,4 +150,78 @@ const ru: Copy = {
   },
 };
 
-export const pagesJourneyMap: { az: Copy; de: Copy; en: Copy; ru: Copy } = { az, de, en, ru };
+const tr: Copy = {
+  jmap: {
+    title: 'Yolculuğunuz',
+    route: '{{from}} → {{to}}',
+    homeFallback: 'Şehriniz',
+    germany: 'Almanya',
+    mapLabel: '{{from}} şehrinden {{to}} şehrine rota. {{status}}',
+    listLabel: 'Yolculuğunuzun aşamaları',
+    currentIs: 'Şu anki aşama: {{step}}',
+    allDone: 'Tüm aşamalar tamamlandı',
+    stopped: 'Başvuru kapatıldı',
+    milestones: {
+      documents: 'Belgeler',
+      recognition: 'Denklik',
+      contract: 'Sözleşme',
+      embassy: 'Büyükelçilik',
+      decision: 'Karar',
+      travel: 'Yolculuk',
+      arrival: 'Almanya’ya varış',
+    },
+    status: { done: 'Tamamlandı', current: 'Şimdi', upcoming: 'Sırada', skipped: 'Gerekli değil' },
+    doneOn: '{{date}}',
+    expected: 'Beklenen: {{date}}',
+    expectedRange: 'Beklenen: {{from}} – {{to}}',
+    planned: 'Planlanan: {{date}}',
+    appointment: 'Randevu: {{date}}',
+    appointmentAt: 'Randevu: {{date}}, {{place}}',
+    rejected: 'Başvuru reddedildi',
+    approved: 'Vize onaylandı',
+    estimateNote: 'Tarihler, benzer başvurulara dayanan bir tahmindir.',
+    submitted: 'Gönderildi: {{date}}',
+    recognitionRejected: 'Denklik verilmedi',
+    nowLabel: 'Şimdi',
+    nextLabel: 'Sonraki adım',
+  },
+};
+
+const uk: Copy = {
+  jmap: {
+    title: 'Ваш шлях',
+    route: '{{from}} → {{to}}',
+    homeFallback: 'Ваше місто',
+    germany: 'Німеччина',
+    mapLabel: 'Маршрут з {{from}} до {{to}}. {{status}}',
+    listLabel: 'Етапи вашого шляху',
+    currentIs: 'Поточний етап: {{step}}',
+    allDone: 'Усі етапи пройдено',
+    stopped: 'Заявку закрито',
+    milestones: {
+      documents: 'Документи',
+      recognition: 'Визнання диплома',
+      contract: 'Договір',
+      embassy: 'Посольство',
+      decision: 'Рішення',
+      travel: 'Поїздка',
+      arrival: 'Прибуття до Німеччини',
+    },
+    status: { done: 'Готово', current: 'Зараз', upcoming: 'Далі', skipped: 'Не потрібно' },
+    doneOn: '{{date}}',
+    expected: 'Очікується: {{date}}',
+    expectedRange: 'Очікується: {{from}} – {{to}}',
+    planned: 'Заплановано: {{date}}',
+    appointment: 'Термін: {{date}}',
+    appointmentAt: 'Термін: {{date}}, {{place}}',
+    rejected: 'У заявці відмовлено',
+    approved: 'Візу схвалено',
+    estimateNote: 'Дати — орієнтовний прогноз на основі схожих заявок.',
+    submitted: 'Подано: {{date}}',
+    recognitionRejected: 'Не визнано',
+    nowLabel: 'Зараз',
+    nextLabel: 'Наступний крок',
+  },
+};
+
+export const pagesJourneyMap: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; uk: Copy } = { az, de, en, ru, tr, uk };

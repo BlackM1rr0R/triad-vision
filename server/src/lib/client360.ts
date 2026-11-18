@@ -19,7 +19,7 @@ export const loadClientUser = (id: string) =>
     where: { id },
     select: {
       id: true, role: true, email: true, phone: true, firstName: true, lastName: true, locale: true, isActive: true, createdAt: true,
-      birthDate: true, nationality: true, city: true, profession: true, germanLevel: true, mergedIntoId: true,
+      birthDate: true, nationality: true, city: true, address: true, profession: true, germanLevel: true, mergedIntoId: true,
       whatsappOptIn: true, marketingOptIn: true,
       ownerPartner: { select: { id: true, name: true } },
       referredByAgent: { select: { id: true, code: true, user: { select: { firstName: true, lastName: true } } } },

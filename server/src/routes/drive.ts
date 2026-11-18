@@ -35,6 +35,7 @@ import { driveWorkflowRouter } from './driveWorkflow.js';
 import { copyNodeInto } from '../lib/drive/copy.js';
 import { logDriveDocumentAccess } from '../lib/privacy/accessLog.js'; // client access log
 import { prepareDriveFile, publicQuality, scheduleUploadAnalysis } from '../lib/uploadAi/index.js';
+import { followClientFolderRename } from '../lib/drive/workflowLinks.js'; // workflow copies follow a client folder rename
 
 /**
  * Team drive (/api/drive): ONE shared workspace ("Gemeinsame Dokumente") where every staff member works —
@@ -541,6 +542,7 @@ driveRouter.patch('/nodes/:id', async (req, res) => {
     await assertNotLockedByOther(id, req.user!.id);
     await prisma.driveNode.update({ where: { id }, data: { name } });
     await audit(req, 'DRIVE_RENAMED', `drive:${id}`, { from: node.name, to: name });
+    if (node.kind === 'FOLDER') await followClientFolderRename(id, node.name, name); // a client folder's "İş axını" copies follow
     await logDriveActivity({ nodeId: id, folderId: node.parentId, actorId: req.user!.id, action: 'RENAME', name, meta: { from: node.name, to: name, kind: node.kind } });
   }
   if (body.color !== undefined) {

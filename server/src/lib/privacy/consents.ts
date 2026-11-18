@@ -21,6 +21,7 @@ export const CONSENT_TYPES = [
   'CANDIDATE_POOL', // anonymous profile in the employer candidate pool (lib/pool; switched in the profile)
   'READINESS_PROFILE', // employers may see the readiness profile card (lib/readyProgress; default off, privacy centre)
   'RATE_ALERT', // EUR → AZN rate alert e-mails (lib/rateAlerts): double opt-in / portal, withdrawal on unsubscribe
+  'VACANCY_WAITLIST', // "tell me when a matching vacancy opens" (lib/jobAlerts/waitlist.ts): double opt-in, withdrawal on unsubscribe
   // Cookie banner: COOKIES = any optional category allowed; the categories are logged next to it.
   'COOKIES',
   'COOKIES_ANALYTICS',

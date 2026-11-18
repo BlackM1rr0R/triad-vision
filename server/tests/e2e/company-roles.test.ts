@@ -230,3 +230,38 @@ describe('Access Center › Employers (SUPER_ADMIN)', () => {
     expect((await sa.agent.patch(`/api/admin/access/employers/members/${viewer.user.id}`).send({ role: 'VIEWER', overrides: { bogus: true } })).status).toBe(400);
   });
 });
+
+describe('workers export of restricted roles (lib/companyAccess/workerExport)', () => {
+  const header = (csv: string) => csv.replace(/^﻿/, '').split('\r\n')[0].split(';');
+  const openItems = (csv: string) => {
+    const [head, row] = csv.replace(/^﻿/, '').split('\r\n').map((l) => l.split(';'));
+    return row[head.indexOf('Offene Punkte')];
+  };
+
+  it('VIEWER: no document / contract columns, colleagues’ contracts not counted; owner and HR get the full sheet', async () => {
+    const { owner, members } = await setup(['VIEWER', 'HR']);
+    const [viewer, hr] = members;
+    const cand = await asCandidate();
+    const kase = await prisma.case.create({ data: { number: uniq('TV-'), clientId: cand.user.id, profession: 'Koch', companyId: owner.company.id } });
+    await sentContract(owner.company.id, kase.id, owner.user.id, 'Arbeitsvertrag Koch');
+
+    const full = await owner.agent.get('/api/company/workers/export.csv?lang=de');
+    expect(full.status).toBe(200);
+    expect(header(full.text)).toContain('Visum/Aufenthaltstitel gültig bis');
+    expect(header(full.text)).toContain('Ende Probezeit');
+    expect(openItems(full.text)).toBe('1');
+    const hrCsv = await hr.agent.get('/api/company/workers/export.csv?lang=de');
+    expect(header(hrCsv.text)).toEqual(header(full.text));
+
+    const cut = await viewer.agent.get('/api/company/workers/export.csv?lang=de');
+    expect(cut.status).toBe(200);
+    expect(header(cut.text)).not.toContain('Visum/Aufenthaltstitel gültig bis');
+    expect(header(cut.text)).not.toContain('Ende Probezeit');
+    expect(header(cut.text)).toHaveLength(header(full.text).length - 2);
+    expect(openItems(cut.text)).toBe('0');
+    expect(cut.text).not.toContain('Arbeitsvertrag Koch');
+
+    const xlsx = await viewer.agent.get('/api/company/workers/export.xlsx?lang=de');
+    expect(xlsx.status).toBe(200);
+  });
+});

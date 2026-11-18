@@ -2,6 +2,7 @@ import type { CaseStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { createCase } from '../caseFlow.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
+import { retireClientFolders } from '../drive/workflowLinks.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { documentSummary, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 import { createProfile, serializeProfile, type CreateMemberInput } from '../family/members.js';
@@ -144,9 +145,11 @@ export const addFamilyMember = async (
 const REMOVABLE: CaseStatus[] = ['DOCUMENTS_PENDING'];
 
 /** Removes a member case that was created by mistake (only while nothing happened in it yet). */
-export const removeFamilyMember = async (mainCaseId: string, memberId: string) => {
-  const member = await prisma.case.findUnique({ where: { id: memberId }, select: { id: true, parentCaseId: true, status: true, _count: { select: { documents: true } } } });
+export const removeFamilyMember = async (mainCaseId: string, memberId: string, actorId: string | null = null) => {
+  const member = await prisma.case.findUnique({ where: { id: memberId }, select: { id: true, parentCaseId: true, status: true, driveFolderId: true, _count: { select: { documents: true } } } });
   if (!member || member.parentCaseId !== mainCaseId) throw notFound('CASE_NOT_FOUND');
   if (!REMOVABLE.includes(member.status) || member._count.documents > 0) throw conflict('MEMBER_CASE_IN_PROGRESS');
   await prisma.case.delete({ where: { id: member.id } });
+  // The member's client folder must not stay behind as an ordinary folder: recycle bin (staff only), marked as client data.
+  await retireClientFolders([member.driveFolderId], actorId);
 };

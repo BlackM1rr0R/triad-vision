@@ -40,6 +40,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Tabs, TabPanel, useTabParam } from '@/components/ui/Tabs';
 import { CallButton } from '@/components/calls/CallButton';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
+import { SensitiveValue } from '@/components/privacyTools/SensitiveValue'; // masked client address: reveal with a reason
 import { fmtMoney } from '@/components/billing/api';
 import { TIMELINE_TYPES, client360Key, saveClientTags, useClient360, useClientTimeline, type Client360, type TimelineEntry, type TimelineType } from '@/components/staffDesk/api';
 
@@ -151,6 +152,11 @@ const Header = ({ data }: { data: Client360 }) => {
               <span className="rounded bg-sunken px-1.5 py-0.5 font-mono uppercase">{u.locale}</span>
               {u.profession && <span>{u.profession}</span>}
               {u.city && <span>· {u.city}</span>}
+              {u.address && (
+                <span className="inline-flex items-center gap-1">
+                  · <SensitiveValue value={u.address} entity="clientAddress" id={u.id} field="address" />
+                </span>
+              )}
               {u.birthDate && <span>· {fmtDate(u.birthDate)}</span>}
               <span>· {t('sd.c360.since', { date: fmtDate(u.createdAt) })}</span>
               <span>· {u.lastSeenAt ? t('sd.c360.lastSeen', { when: fmtRelative(u.lastSeenAt) }) : t('sd.c360.neverSeen')}</span>

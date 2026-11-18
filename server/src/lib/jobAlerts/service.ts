@@ -25,6 +25,8 @@ import { ALERT_MAIL, PROFESSION_LABELS, professionLabel } from './texts.js';
  *    its kind (work / Ausbildung / seasonal) is one of the alert's kinds, when any are set.
  *  - Digest: at most one e-mail per alert per day, listing the vacancies published since the last digest
  *    (or the confirmation). Triggered when a vacancy is published, plus a periodic safety-net job.
+ *  - Vacancy waitlist (waitlist = true, lib/jobAlerts/waitlist.ts): "tell me when a matching vacancy opens" — one
+ *    profession + optional city, told once per vacancy with free places instead of the digest; not counted here.
  */
 
 export const JOB_KINDS = ['work', 'ausbildung', 'seasonal'] as const;
@@ -137,7 +139,7 @@ const digestHtml = (jobs: DigestJob[], lng: SeoLocale) => {
 
 export const createPublicAlert = async (input: { email: string; prefs: AlertPrefs; visitorId?: string | null }) => {
   const lng = siteLocale(input.prefs.lng);
-  const active = await prisma.jobAlert.count({ where: { email: input.email, unsubscribedAt: null } });
+  const active = await prisma.jobAlert.count({ where: { email: input.email, unsubscribedAt: null, waitlist: false } });
   if (active >= MAX_ALERTS_PER_EMAIL) return { ok: false as const, code: 'TOO_MANY_ALERTS' };
   const { alert, token } = await createWithToken({
     email: input.email,
@@ -152,7 +154,7 @@ export const createPublicAlert = async (input: { email: string; prefs: AlertPref
 };
 
 export const createAccountAlert = async (user: { id: string; email: string; locale: string }, prefs: AlertPrefs) => {
-  const active = await prisma.jobAlert.count({ where: { userId: user.id, unsubscribedAt: null } });
+  const active = await prisma.jobAlert.count({ where: { userId: user.id, unsubscribedAt: null, waitlist: false } });
   if (active >= MAX_ALERTS_PER_EMAIL) return { ok: false as const, code: 'TOO_MANY_ALERTS' };
   const { alert } = await createWithToken({
     email: user.email,
@@ -184,6 +186,9 @@ export const alertView = (a: JobAlert, opts: { maskedEmail?: boolean } = {}) => 
   kinds: stringList(a.visaTypes),
   confirmed: !!a.confirmedAt,
   unsubscribed: !!a.unsubscribedAt,
+  /** Vacancy waitlist entry (one profession, optional city; lib/jobAlerts/waitlist.ts). */
+  waitlist: a.waitlist,
+  city: a.city,
   lastSentAt: a.lastSentAt,
   sentCount: a.sentCount,
   createdAt: a.createdAt,
@@ -209,7 +214,7 @@ export const professionOptions = (lng: SeoLocale) =>
 export const runJobAlertDigests = async (now = new Date()) => {
   const dueBefore = new Date(now.getTime() - DAY);
   const alerts = await prisma.jobAlert.findMany({
-    where: { confirmedAt: { not: null }, unsubscribedAt: null, OR: [{ lastSentAt: null }, { lastSentAt: { lte: dueBefore } }] },
+    where: { confirmedAt: { not: null }, unsubscribedAt: null, waitlist: false, OR: [{ lastSentAt: null }, { lastSentAt: { lte: dueBefore } }] },
     take: 2000,
   });
   if (!alerts.length) return 0;
@@ -252,8 +257,12 @@ export const runJobAlertDigests = async (now = new Date()) => {
 let running: Promise<unknown> | null = null;
 let again = false;
 
-/** Publish hook: runs the digests in the background (coalesced; never throws). */
+/**
+ * Publish hook: runs the digests in the background (coalesced; never throws). Also called when an open vacancy gets
+ * more places: the vacancy waitlist is told about open vacancies with free places (lib/jobAlerts/waitlist.ts).
+ */
 export const onVacancyPublished = () => {
+  void import('./waitlist.js').then((m) => m.runWaitlistNoticesSoon()).catch(() => undefined); // lazy: waitlist imports this module
   if (running) {
     again = true;
     return;
@@ -278,8 +287,8 @@ export const purgeJobAlerts = async (now = new Date()) => {
 
 /** Active (confirmed, subscribed) alerts per profession key, for the admin vacancies / analytics area. */
 export const alertStats = async () => {
-  const rows = await prisma.jobAlert.findMany({ where: { confirmedAt: { not: null }, unsubscribedAt: null }, select: { professions: true, userId: true } });
-  const pending = await prisma.jobAlert.count({ where: { confirmedAt: null } });
+  const rows = await prisma.jobAlert.findMany({ where: { confirmedAt: { not: null }, unsubscribedAt: null, waitlist: false }, select: { professions: true, userId: true } });
+  const pending = await prisma.jobAlert.count({ where: { confirmedAt: null, waitlist: false } });
   const counts = new Map<string, number>();
   for (const r of rows) for (const p of new Set(stringList(r.professions))) counts.set(p, (counts.get(p) ?? 0) + 1);
   return {
