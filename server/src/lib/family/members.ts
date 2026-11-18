@@ -5,6 +5,7 @@ import { FINAL_STATUSES } from '../caseFlow.js';
 import { syncCaseFolder } from '../drive/caseFolders.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { isMasked } from '../privacy/mask.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { FAMILY_EVENT, parseMemberInfo, type Relation } from '../journey/family.js';
 import { documentSummary, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
@@ -110,6 +111,28 @@ export const serializeProfile = (p: FamilyMember) => ({
 });
 export type SerializedProfile = ReturnType<typeof serializeProfile>;
 
+const transientProfile = (d: Pick<FamilyMember, 'mainCaseId' | 'memberCaseId' | 'relation' | 'firstName' | 'lastName' | 'birthDate' | 'email' | 'createdById'>): FamilyMember => {
+  const now = new Date();
+  return {
+    id: `transient-${d.memberCaseId}`,
+    ...d,
+    birthPlace: null,
+    sex: null,
+    nationality: null,
+    passportNumber: null,
+    passportIssuedAt: null,
+    passportExpiresAt: null,
+    joinsWhen: 'WITH_MAIN',
+    plannedEntryAt: null,
+    germanExempt: false,
+    germanExemptNote: null,
+    notes: null,
+    docsCopiedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
 /** The FamilyMember row of a member case, created from the legacy FAMILY_MEMBER event when missing. */
 export const ensureProfile = async (memberCaseId: string): Promise<FamilyMember | null> => {
   const existing = await prisma.familyMember.findUnique({ where: { memberCaseId } });
@@ -121,19 +144,20 @@ export const ensureProfile = async (memberCaseId: string): Promise<FamilyMember 
   if (!c?.parentCaseId) return null;
   const info = parseMemberInfo(c.events[0]?.note);
   const relation = (info?.relation ?? (c.relation as Relation | null) ?? 'spouse') as Relation;
+  const data = {
+    mainCaseId: c.parentCaseId,
+    memberCaseId: c.id,
+    relation: RELATION_ENUM[relation] ?? 'OTHER',
+    firstName: info?.firstName || '—',
+    lastName: info?.lastName || '—',
+    birthDate: info?.birthDate ? new Date(`${info.birthDate}T00:00:00.000Z`) : null,
+    email: info?.email ?? null,
+    createdById: c.events[0]?.actorId ?? null,
+  };
+  // "View as client" never writes: the same profile, built in memory (not stored).
+  if (isImpersonating()) return transientProfile(data);
   try {
-    return await prisma.familyMember.create({
-      data: {
-        mainCaseId: c.parentCaseId,
-        memberCaseId: c.id,
-        relation: RELATION_ENUM[relation] ?? 'OTHER',
-        firstName: info?.firstName || '—',
-        lastName: info?.lastName || '—',
-        birthDate: info?.birthDate ? new Date(`${info.birthDate}T00:00:00.000Z`) : null,
-        email: info?.email ?? null,
-        createdById: c.events[0]?.actorId ?? null,
-      },
-    });
+    return await prisma.familyMember.create({ data });
   } catch (err) {
     if ((err as { code?: string }).code === 'P2002') return prisma.familyMember.findUnique({ where: { memberCaseId } });
     throw err;

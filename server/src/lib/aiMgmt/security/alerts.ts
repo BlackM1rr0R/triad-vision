@@ -2,6 +2,7 @@ import type { Locale, Prisma, SecurityAlert } from '@prisma/client';
 import { config } from '../../../config.js';
 import { prisma } from '../../../db.js';
 import { onAudit } from '../../audit.js';
+import { outsideImpersonation } from '../../privacy/impersonationContext.js';
 import { notifyUser } from '../../notifications.js';
 import { aiComplete, CHEAP_MODEL } from '../../ai/complete.js';
 import { LOCALE_NAMES } from '../../aiStaff/texts.js';
@@ -228,7 +229,8 @@ onAudit((action) => {
   if (!rules) return;
   rules.forEach((r) => pending.add(r));
   if (!timer) {
-    timer = setTimeout(fire, 500);
+    // An audit from a "view as client" request must not hand its read-only context to the scan (alert rows).
+    timer = outsideImpersonation(() => setTimeout(fire, 500));
     timer.unref?.();
   }
 });

@@ -3,6 +3,7 @@ import type { ArrivalCertificate, Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { conflict } from '../http.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * "Welcome to Germany" arrival certificate (client portal → Arrival).
@@ -105,6 +106,8 @@ export const clientCertificates = async (userId: string): Promise<ClientCertific
   for (const c of cases) {
     const existing = await prisma.arrivalCertificate.findUnique({ where: { caseId: c.id } });
     if (!existing && !hasArrived(c)) continue;
+    // "View as client" never issues one (number + code are random and permanent): only issued certificates are shown.
+    if (!existing && isImpersonating()) continue;
     const cert = existing ?? (await issue(userId, c));
     out.push(clientView(cert, c));
   }

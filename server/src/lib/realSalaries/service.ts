@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
+import { outsideImpersonation } from '../privacy/impersonationContext.js';
 import { bakuParts } from '../reports/dates.js';
 import { canonicalProfession } from '../matching.js';
 import { activeCityCosts, matchCity } from '../budget/cities.js';
@@ -144,7 +145,8 @@ const latestSnapshot = async (): Promise<PublicSalaryData | null> => {
 export const publicRealSalaries = async (): Promise<PublicSalaryData> => {
   if (cache) return cache;
   if (!inflight) {
-    inflight = (async () => (await latestSnapshot()) ?? (await recomputeRealSalaries()))()
+    // Shared by every visitor (public data): never built inside a "view as client" request's read-only context.
+    inflight = outsideImpersonation(async () => (await latestSnapshot()) ?? (await recomputeRealSalaries()))
       .then((v) => {
         cache = v;
         return v;

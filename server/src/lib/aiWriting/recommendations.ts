@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import type { Locale } from '@prisma/client';
 import { prisma } from '../../db.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { aiComplete, CHEAP_MODEL } from '../ai/complete.js';
 import { pickL10n } from '../jobsNotifications.js';
 import { matchCandidate, type MatchGap } from '../matching.js';
@@ -120,7 +121,8 @@ export const recommendationsFor = async (userId: string, locale: Locale, opts: {
 
   let tip: string | null = null;
   let ai = false;
-  if (items.length) {
+  // "View as client": the matches only — no AI call on the client's behalf (cost, usage rows).
+  if (items.length && !isImpersonating()) {
     const facts = [
       `Candidate: profession ${clip(user.profession, 80) || '—'}, experience ${user.experienceYears ?? '—'} years, German ${user.germanLevel || 'none'}, education ${user.education || '—'}, licence ${clip(user.drivingLicence, 30) || '—'}`,
       ...items.map(
@@ -138,6 +140,7 @@ export const recommendationsFor = async (userId: string, locale: Locale, opts: {
   }
 
   const value: Recommendations = { items, tip, ai, generatedAt: new Date().toISOString() };
+  if (isImpersonating()) return value; // not cached: the client's own visit gets the AI version
   cache.set(userId, { at: Date.now(), ttl: ai || !items.length ? TTL_MS : FALLBACK_TTL_MS, hash, locale, value });
   if (cache.size > 5000) cache.delete(cache.keys().next().value!);
   return value;

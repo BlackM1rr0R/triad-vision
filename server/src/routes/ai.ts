@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import type { AiScope, Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
+import { isImpersonating } from '../lib/privacy/impersonationContext.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { HttpError, limiter, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
@@ -167,7 +168,7 @@ aiRouter.post('/conversations', async (req, res) => {
 
 aiRouter.get('/conversations/:id', async (req, res) => {
   const conv = await ownConversation(req, String(req.params.id));
-  await expireStaleActions(conv.id);
+  if (!isImpersonating()) await expireStaleActions(conv.id); // "view as client" is read-only
   await ensureToolsLoaded();
   const [messages, actions] = await Promise.all([
     prisma.aiMessage.findMany({ where: { conversationId: conv.id, role: { in: ['user', 'assistant'] } }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: 500 }),

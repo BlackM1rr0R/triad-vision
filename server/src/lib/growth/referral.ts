@@ -4,6 +4,7 @@ import type { Locale, Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { notifyUser } from '../notifications.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { GROWTH_SETTING_KEYS, readSetting } from './settings.js';
 import { campaignMultiplier, caseOpenedBonus, dueTiers, friendDiscount, mainReward, scaled } from './referralRules.js';
 
@@ -115,6 +116,13 @@ export const ensureReferralCode = async (userId: string) => {
   }
   throw new Error('REFERRAL_CODE_EXHAUSTED');
 };
+
+/**
+ * The code a portal page shows: created on first use while the programme is on, except under "view as client"
+ * (read-only: an existing code or null, the code is created on the client's own first visit).
+ */
+export const referralCodeForView = (userId: string, enabled: boolean) =>
+  enabled && !isImpersonating() ? ensureReferralCode(userId) : prisma.clientReferralCode.findUnique({ where: { userId } });
 
 const digits = (s: string | null | undefined) => (s ?? '').replace(/\D/g, '');
 const samePhone = (a: string | null | undefined, b: string | null | undefined) => {

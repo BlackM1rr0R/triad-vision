@@ -2,6 +2,7 @@ import type { CityCost } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { cached, clearCache } from '../cache.js';
+import { outsideImpersonation } from '../privacy/impersonationContext.js';
 import { FEDERAL_STATES, type FederalState, type Range } from './params.js';
 
 /**
@@ -162,7 +163,7 @@ export const ensureCityCosts = async () => {
 /** Active rows in display order (cached; every admin write clears the cache). */
 export const activeCityCosts = () =>
   cached('budget:cities', async () => {
-    await ensureCityCosts();
+    await outsideImpersonation(ensureCityCosts); // one-time global seed, not the viewed user's data
     return prisma.cityCost.findMany({ where: { active: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
   });
 

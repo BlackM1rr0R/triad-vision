@@ -204,11 +204,16 @@ const LOGOUT_PATH = '/api/auth/logout';
  *  - /api/documents/cases/:id/packet?store=1: stores the generated embassy packet as a case document
  *  - /api/share/*, /api/sign/*, /api/surveys/*: external links (access logs, "viewed" markers, survey opens)
  *  - /api/track/*: page-view analytics; /api/o/*, /api/c/*, /api/unsubscribe/*: campaign opens / clicks
+ *  - /api/candidate-share/*: the employer's no-login candidate link (view counter, CV download audit)
+ *  - /api/r/review/*: Google review invite links (first-open marker, click counters)
+ *  - /api/auth/verify-email: consumes the e-mail verification token and marks the address verified
  */
 const BLOCKED_GETS: ((req: Request) => boolean)[] = [
   (req) => /^\/api\/privacy\/export\/?$/.test(req.path),
   (req) => /^\/api\/documents\/cases\/[^/]+\/packet\/?$/.test(req.path) && req.query.store === '1',
-  (req) => /^\/api\/(share|sign|surveys|track|o|c|unsubscribe)(\/|$)/.test(req.path),
+  (req) => /^\/api\/(share|sign|surveys|track|o|c|unsubscribe|candidate-share)(\/|$)/.test(req.path),
+  (req) => /^\/api\/r\/review(\/|$)/.test(req.path),
+  (req) => /^\/api\/auth\/verify-email\/?$/.test(req.path),
 ];
 
 const readOnly = (code = 'IMPERSONATION_READ_ONLY') => new HttpError(403, code);

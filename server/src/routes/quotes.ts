@@ -15,6 +15,7 @@ import {
   expireIfDue,
   loadQuote,
   markViewed,
+  withDerivedExpiry,
   pdfName,
   renderQuotePdf,
   sha256,
@@ -61,7 +62,7 @@ quotePublicRouter.get('/:token', async (req, res) => {
   let q = await byToken(String(req.params.token));
   await expireIfDue(q);
   await markViewed(q, linkMeta(req));
-  q = await loadQuote(q.id);
+  q = withDerivedExpiry(await loadQuote(q.id));
   res.json({ quote: await customerView(q) });
 });
 
@@ -136,7 +137,7 @@ companyQuotesRouter.get('/:id', async (req, res) => {
   const { q, userName } = await ownQuote(req);
   await expireIfDue(q);
   await markViewed(q, portalMeta(req, userName));
-  res.json({ quote: { id: q.id, ...(await customerView(await loadQuote(q.id))) } });
+  res.json({ quote: { id: q.id, ...(await customerView(withDerivedExpiry(await loadQuote(q.id)))) } });
 });
 
 companyQuotesRouter.get('/:id/pdf', async (req, res) => {

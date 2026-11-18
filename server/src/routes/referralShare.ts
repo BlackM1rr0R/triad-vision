@@ -5,7 +5,7 @@ import type { Locale } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
 import { badRequest, conflict, limiter, notFound, parse } from '../lib/http.js';
-import { ensureReferralCode, getReferralSettings, maskedName, referralLink } from '../lib/growth/referral.js';
+import { ensureReferralCode, getReferralSettings, maskedName, referralCodeForView, referralLink } from '../lib/growth/referral.js';
 import { config } from '../config.js';
 import {
   fillTemplate,
@@ -42,7 +42,7 @@ const landingView = (c: { slug: string | null; landingEnabled: boolean; landingQ
 
 referralShareRouter.get('/referral/share', client, async (req, res) => {
   const settings = await getReferralSettings();
-  const code = settings.enabled ? await ensureReferralCode(req.user!.id) : await prisma.clientReferralCode.findUnique({ where: { userId: req.user!.id } });
+  const code = await referralCodeForView(req.user!.id, settings.enabled);
   const landing = landingView(code);
   // Share the personal page when it is on, else the plain sign-up link.
   const link = code ? (landing.enabled && landing.url ? landing.url : referralLink(code.code)) : null;
@@ -106,7 +106,8 @@ referralShareRouter.get('/referral/card.pdf', client, async (req, res) => {
   const q = parse(z.object({ layout: z.enum(['single', 'sheet']).default('sheet'), lang: z.enum(LOCALES).optional() }), req.query);
   const settings = await getReferralSettings();
   if (!settings.enabled) throw notFound('REFERRAL_DISABLED');
-  const code = await ensureReferralCode(req.user!.id);
+  const code = await referralCodeForView(req.user!.id, true);
+  if (!code) throw notFound('REFERRAL_CODE_MISSING'); // only under "view as client" before the client's first visit
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id }, select: { firstName: true, lastName: true, locale: true } });
   const link = code.landingEnabled && code.slug ? `${config.clientUrl}/r/${code.slug}` : referralLink(code.code);
   const pdf = await referralCardPdf({ name: `${user.firstName} ${user.lastName}`.trim(), link, code: code.code, locale: q.lang ?? user.locale, layout: q.layout });

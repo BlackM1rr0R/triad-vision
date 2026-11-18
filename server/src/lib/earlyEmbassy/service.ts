@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { createRequirements } from '../docsIntel/requirementTemplates.js';
 import { EARLY_EMBASSY_STATUSES, earlyEmbassyOpen } from './rules.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
  * Early embassy documents (rules in ./rules.ts): creates a case's EMBASSY requirement rows as soon as it waits for the
@@ -17,6 +18,8 @@ import { EARLY_EMBASSY_STATUSES, earlyEmbassyOpen } from './rules.js';
  * when the client opens the case or the overview (older cases already waiting). Never throws.
  */
 export const ensureEarlyEmbassyRequirements = async (caseId: string): Promise<boolean> => {
+  // "View as client" is read-only: no rows (and no row lock); the list appears on the client's own next visit.
+  if (isImpersonating()) return false;
   try {
     // Cheap pre-check without a lock (most calls: wrong status or rows already there).
     const quick = await prisma.case.findUnique({ where: { id: caseId }, select: { status: true, _count: { select: { requirements: { where: { stage: 'EMBASSY' } } } } } });

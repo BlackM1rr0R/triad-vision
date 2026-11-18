@@ -373,6 +373,7 @@ const loadSigner = async (signerId: string) => {
 /** Marks a running request as expired when its deadline passed (lazy check on access). */
 export const expireIfDue = async (r: Pick<SignatureRequest, 'id' | 'status' | 'expiresAt'>, now = new Date()) => {
   if (!isExpired(r, now)) return false;
+  if (isImpersonating()) return true; // "view as client": expired in memory only (signerView shows EXPIRED)
   const { count } = await prisma.signatureRequest.updateMany({ where: { id: r.id, status: 'SENT' }, data: { status: 'EXPIRED' } });
   if (count) {
     await logEvent(r.id, 'EXPIRED');
@@ -707,8 +708,10 @@ const afterCompletion = async (r: RequestWithSigners, built: { pdf: Buffer; sha2
 /** What a signer sees: names and statuses of the other parties only (no emails / IPs). */
 export const signerView = async (signerId: string, auth: { method: 'token' | 'portal'; verified: boolean }) => {
   const { s, r } = await loadSigner(signerId);
-  await expireIfDue(r);
-  const fresh = (await loadFull(r.id))!;
+  const expired = await expireIfDue(r);
+  const loaded = (await loadFull(r.id))!;
+  // Under "view as client" the expiry is not stored: the same status, derived in memory.
+  const fresh = expired && loaded.status === 'SENT' ? { ...loaded, status: 'EXPIRED' as const } : loaded;
   const me = fresh.signers.find((x) => x.id === s.id)!;
   const turn = currentTurn(fresh.signers, fresh.order);
   const [caseRow, company] = await Promise.all([

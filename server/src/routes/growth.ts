@@ -9,7 +9,8 @@ import { calculatorCategories, DOC_STATES, estimate, getCalculatorSettings, INPU
 import { publicMap } from '../lib/growth/map.js';
 import { eventIcs, leadForRegistrant, mailRegistrant, registrationIdOf } from '../lib/growth/events.js';
 import { asEventLocale } from '../lib/growth/eventTexts.js';
-import { ensureReferralCode, getReferralSettings, maskedName, referralLink, syncReferrals } from '../lib/growth/referral.js';
+import { getReferralSettings, maskedName, referralCodeForView, referralLink, syncReferrals } from '../lib/growth/referral.js';
+import { isImpersonating } from '../lib/privacy/impersonationContext.js';
 import { campaignActive, caseOpenedBonus, friendDiscount, nextTier } from '../lib/growth/referralRules.js';
 import { referralShareRouter } from './referralShare.js';
 import { attachLeadContext, utmSchema, visitorIdSchema } from '../lib/marketing/leadScoring.js';
@@ -356,9 +357,10 @@ growthRouter.post('/cost-calculator/offer', offerLimiter, async (req, res) => {
 growthRouter.get('/referral', requireRole('CLIENT'), async (req, res) => {
   const userId = req.user!.id;
   const settings = await getReferralSettings();
-  await syncReferrals({ referrerId: userId });
+  // Stage / reward sync persists; "view as client" shows the stored state (the 30-minute referral-sync job and the client's own visit sync it).
+  if (!isImpersonating()) await syncReferrals({ referrerId: userId });
   const [code, referrals, ledger] = await Promise.all([
-    settings.enabled ? ensureReferralCode(userId) : prisma.clientReferralCode.findUnique({ where: { userId } }),
+    referralCodeForView(userId, settings.enabled),
     prisma.clientReferral.findMany({
       where: { referrerId: userId },
       orderBy: { createdAt: 'desc' },

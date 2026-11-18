@@ -5,6 +5,7 @@ import { config } from '../../config.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { renderEmail, sendMail } from '../mailer.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { open, seal } from '../secretBox.js';
 import { formatEur, formatInvoiceDate } from '../invoiceTexts.js';
 import { createDraftInvoice, loadInvoiceSettings } from '../../routes/admin/invoices.js';
@@ -262,6 +263,7 @@ export const sendQuote = async (id: string, opts: { to?: string | null; locale?:
 /** SENT/VIEWED quotes past their validity become EXPIRED (the creator is told). Returns true when it expired now. */
 export const expireIfDue = async (q: QuoteWithCompany, now = new Date()) => {
   if (!OPEN_STATUSES.includes(q.status) || !isPastValidity(q, now)) return false;
+  if (isImpersonating()) return true; // "view as employer": expired in memory only (withDerivedExpiry)
   const r = await prisma.quote.updateMany({ where: { id: q.id, status: { in: OPEN_STATUSES } }, data: { status: 'EXPIRED', expiredAt: now } });
   if (!r.count) return false;
   await logQuoteEvent(q.id, 'EXPIRED');
@@ -270,9 +272,13 @@ export const expireIfDue = async (q: QuoteWithCompany, now = new Date()) => {
   return true;
 };
 
+/** The status a reader sees: an open quote past its validity is EXPIRED even before expireIfDue stored it. */
+export const withDerivedExpiry = <T extends QuoteWithCompany>(q: T, now = new Date()): T =>
+  OPEN_STATUSES.includes(q.status) && isPastValidity(q, now) ? { ...q, status: 'EXPIRED' as QuoteStatus } : q;
+
 /** First open by the employer: SENT → VIEWED (the creator gets an in-app note). */
 export const markViewed = async (q: QuoteWithCompany, m: EventMeta) => {
-  if (q.status !== 'SENT') return;
+  if (q.status !== 'SENT' || isImpersonating()) return; // an admin viewing the portal is not the employer
   const r = await prisma.quote.updateMany({ where: { id: q.id, status: 'SENT' }, data: { status: 'VIEWED', viewedAt: new Date() } });
   if (!r.count) return;
   await logQuoteEvent(q.id, 'VIEWED', m);

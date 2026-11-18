@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
+import { outsideImpersonation } from '../privacy/impersonationContext.js';
 
 /**
  * Official EUR → AZN rate of the Central Bank of Azerbaijan (CBAR), for the "Life in Germany" simulator.
@@ -104,7 +105,8 @@ let inflight: Promise<EurAzn | null> | null = null;
 
 /** One CBAR request (concurrent callers share it); stores the result, falls back to `stored` on failure. */
 const refresh = (stored: CbarRate | null, now: Date): Promise<EurAzn | null> => {
-  inflight ??= (async () => {
+  // Process-wide rate cache shared by every visitor: never refreshed inside a "view as client" read-only context.
+  inflight ??= outsideImpersonation(async () => {
     let value: EurAzn | null;
     try {
       const parsed = parseCbarXml(await fetcher(cbarUrl(now)));
@@ -120,7 +122,7 @@ const refresh = (stored: CbarRate | null, now: Date): Promise<EurAzn | null> => 
     }
     memo = { at: Date.now(), value };
     return value;
-  })().finally(() => {
+  }).finally(() => {
     inflight = null;
   });
   return inflight;

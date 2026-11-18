@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { app, asAdmin, asClient, asStaff, asSuperAdmin, ORIGIN } from '../helpers/api';
@@ -14,6 +15,26 @@ const viewing = (adminToken: string, imp: string) => {
   const call = (method: Method) => (url: string) =>
     request(app)[method](url).set('Cookie', `tv_session=${adminToken}; tv_imp=${imp}`).set('Origin', ORIGIN);
   return { get: call('get'), post: call('post'), put: call('put'), patch: call('patch'), delete: call('delete'), head: call('head') };
+};
+
+/**
+ * Row count and latest updatedAt of every table, except the ones a view may write: its own bookkeeping
+ * (ImpersonationSession / ImpersonationLog), the audit trail (checked separately: never the client as actor)
+ * and Session (the admin's own lastSeenAt touch; the client's session is asserted untouched elsewhere).
+ */
+const MAY_CHANGE = new Set(['ImpersonationSession', 'ImpersonationLog', 'AuditLog', 'Session']);
+const dbSnapshot = async () => {
+  const out: Record<string, { count: number; updatedAt: number | null }> = {};
+  for (const m of Prisma.dmmf.datamodel.models) {
+    if (MAY_CHANGE.has(m.name)) continue;
+    const delegate = (prisma as unknown as Record<string, { count: () => Promise<number>; aggregate: (a: unknown) => Promise<{ _max: Record<string, Date | null> }> }>)[m.name[0].toLowerCase() + m.name.slice(1)];
+    const hasUpdatedAt = m.fields.some((f) => f.name === 'updatedAt' && f.type === 'DateTime');
+    out[m.name] = {
+      count: await delegate.count(),
+      updatedAt: hasUpdatedAt ? ((await delegate.aggregate({ _max: { updatedAt: true } }))._max.updatedAt?.getTime() ?? null) : null,
+    };
+  }
+  return out;
 };
 
 const impCookie = (res: request.Response) => {
@@ -228,11 +249,93 @@ describe('view as client (impersonation)', () => {
     const employer = await asCompany();
     const emp = await start(admin, employer.user.id);
     const empBad: string[] = [];
-    for (const url of ['/api/company/me', '/api/company/dashboard', '/api/company/vacancies', '/api/company/candidates', '/api/company/workers', '/api/company/requests', '/api/company/invoices']) {
+    const empBefore = await dbSnapshot();
+    for (const url of ['/api/company/me', '/api/company/dashboard', '/api/company/vacancies', '/api/company/candidates', '/api/company/workers', '/api/company/requests', '/api/company/invoices', '/api/company/quotes', '/api/company/pool', '/api/company/avv', '/api/company/forms', '/api/company/access/me', '/api/company/team', '/api/company/reports', '/api/company/pipeline']) {
       const res = await emp.as.get(url);
       if (res.status >= 500 || res.body?.error === 'IMPERSONATION_READ_ONLY') empBad.push(`${url} → ${res.status} ${res.body?.error ?? ''}`);
     }
     expect(empBad).toEqual([]);
+    await settle();
+    expect(await dbSnapshot()).toEqual(empBefore);
+  });
+
+  it('every client portal GET answers while viewing and the database stays exactly as it was (write guard on)', async () => {
+    const admin = await asAdmin();
+    const client = await asClient();
+    const c = await createCaseVia(client.agent);
+    const staff = await asStaff();
+    await prisma.caseMessage.create({ data: { caseId: c.id, authorId: staff.user.id, body: 'Unread staff message' } });
+    await prisma.notification.create({ data: { userId: client.user.id, type: 'INFO', title: 't', body: 'b' } });
+    const { as } = await start(admin, client.user.id);
+    await settle();
+
+    const before = await dbSnapshot();
+    const id = c.id;
+    // What the client portal (/account/*) calls: layout, home cards, case page, tools (client/src/pages/account/**).
+    const urls = [
+      '/api/auth/me', '/api/auth/sessions', '/api/auth/email-change', '/api/auth/2fa/status',
+      `/api/account/overview`, `/api/account/overview?case=${id}`, `/api/account/next-step`, `/api/account/next-step?case=${id}`, '/api/account/passport',
+      '/api/account/permits', '/api/account/readiness', '/api/account/ready', '/api/account/ready/summary', '/api/account/future-letter',
+      '/api/account/success-share', '/api/account/rule-changes', '/api/account/candidate-pool', '/api/account/arrival-certificate', `/api/account/billing?case=${id}`,
+      `/api/account/plus/family`, `/api/account/plus/countdowns?case=${id}`, `/api/account/plus/doc-checklist?case=${id}`, `/api/account/plus/arrival-prep?case=${id}`, '/api/account/plus/offline-pack',
+      `/api/account/germany/day?case=${id}`, '/api/account/germany/badges', `/api/account/germany/arrival-card?case=${id}`,
+      `/api/account/case-contracts/cases/${id}`, `/api/account/recognition/cases/${id}`, `/api/account/authorities/cases/${id}`, `/api/account/visa-story/${id}`,
+      '/api/cases', `/api/cases/${id}`, `/api/cases/${id}/messages`, `/api/doc-progress/cases/${id}`, `/api/family/cases/${id}`,
+      `/api/journey/cases/${id}/family`, `/api/journey/cases/${id}/forecast`, '/api/journey/onboarding', '/api/journey/german/status', '/api/journey/german/courses', '/api/journey/german/test',
+      `/api/documents/cases/${id}/intel`, `/api/upload-ai/cases/${id}`, `/api/originals/my/cases/${id}`,
+      `/api/client-data/cases/${id}/tasks`, `/api/client-data/cases/${id}/confirmation`, '/api/client-data/guides?keys=PASSPORT',
+      `/api/client-process/tasks?caseId=${id}`, '/api/client-process/office/slots', `/api/client-process/office/visits?caseId=${id}`,
+      '/api/notifications', '/api/notifications/summary', '/api/notifications?limit=20&unread=1', `/api/signatures/my?caseId=${id}`, '/api/signatures/my',
+      '/api/course', '/api/tours', '/api/legal/me/pending', '/api/external-applications', '/api/partner-sharing', '/api/waiting-room',
+      '/api/german/me', '/api/german/vocab', '/api/interviews/mine', '/api/interview-calendar/invites', '/api/interview-prep', '/api/calendar/token',
+      '/api/cv', '/api/cv/lebenslauf', '/api/cv/letters', '/api/cv/letters/options', '/api/vault', `/api/vault/suggestions?caseId=${id}`,
+      '/api/arrival', '/api/housing', '/api/growth/referral', '/api/growth/referral/share', '/api/rate-alerts/mine', '/api/budget/me', '/api/budget/config',
+      '/api/germany-jobs/alerts/mine', '/api/germany-jobs/saved', '/api/job-alerts/mine', '/api/job-alerts/waitlist/mine', '/api/vacancies/my/applications', '/api/vacancies/policy', '/api/vacancies/options',
+      '/api/intro-video', '/api/skill-videos', '/api/messaging/preferences', '/api/messaging-plus/preferences', '/api/messaging-plus/threads',
+      '/api/privacy', '/api/privacy/access-log', '/api/ai/status', '/api/ai/conversations?scope=CLIENT', '/api/ai-writing/recommendations', '/api/ai-docs/letters',
+      '/api/callback/slots', '/api/site/status/mine', '/api/account/export', '/api/public/content?fields=shell', '/api/legal/cookies',
+    ];
+    const bad: string[] = [];
+    let ok = 0;
+    for (const url of urls) {
+      const res = await as.get(url);
+      if (res.status >= 500 || res.body?.error === 'IMPERSONATION_READ_ONLY') bad.push(`${url} → ${res.status} ${res.body?.error ?? ''}`);
+      if (res.status === 200) ok++;
+    }
+    expect(bad).toEqual([]);
+    // Nearly everything is plain 200 (a few answer 403/404 by design for this fresh client, e.g. referral off).
+    expect(ok).toBeGreaterThan(urls.length * 0.8);
+    for (const url of ['/api/auth/me', '/api/account/overview', '/api/cases', `/api/cases/${id}`, `/api/doc-progress/cases/${id}`, `/api/family/cases/${id}`, '/api/account/candidate-pool', '/api/account/arrival-certificate', '/api/germany-jobs/saved', '/api/cv', '/api/housing', '/api/arrival']) {
+      expect((await as.get(url)).status, url).toBe(200);
+    }
+    await settle();
+
+    expect(await dbSnapshot()).toEqual(before);
+    expect(await prisma.auditLog.count({ where: { actorId: client.user.id } })).toBe(0);
+  });
+
+  it('derives lazy state in memory instead of storing it (expired signature request stays SENT in the database)', async () => {
+    const admin = await asAdmin();
+    const client = await asClient();
+    const req = await prisma.signatureRequest.create({
+      data: { title: 'Old contract', status: 'SENT', originalName: 'x.pdf', originalKey: `imp-exp-${Date.now()}.pdf`, originalSha256: 'b'.repeat(64), originalSize: 10, originalPages: 1, createdById: admin.user.id, expiresAt: new Date(Date.now() - 60_000) },
+    });
+    const signer = await prisma.signatureSigner.create({ data: { requestId: req.id, role: 'CANDIDATE', userId: client.user.id, name: 'C', email: client.user.email, order: 1 } });
+    const events = await prisma.signatureEvent.count({ where: { requestId: req.id } });
+    const { as } = await start(admin, client.user.id);
+
+    const view = await as.get(`/api/signatures/my/${signer.id}`);
+    expect(view.status).toBe(200);
+    expect(view.body.request.status).toBe('EXPIRED');
+    expect(view.body.me.myTurn).toBe(false);
+    await settle();
+    expect((await prisma.signatureRequest.findUniqueOrThrow({ where: { id: req.id } })).status).toBe('SENT');
+    expect(await prisma.signatureEvent.count({ where: { requestId: req.id } })).toBe(events);
+
+    // The client's own visit stores it as before.
+    const own = await client.agent.get(`/api/signatures/my/${signer.id}`);
+    expect(own.body.request.status).toBe('EXPIRED');
+    expect((await prisma.signatureRequest.findUniqueOrThrow({ where: { id: req.id } })).status).toBe('EXPIRED');
   });
 
   it('keeps staff-only routes closed while viewing', async () => {

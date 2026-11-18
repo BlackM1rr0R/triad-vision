@@ -19,6 +19,7 @@ import {
 import { issueSignOtp, maskEmail, signSessionValid, verifySignOtp, SIGN_SESSION_TTL_MS } from '../lib/esign/otp.js';
 import { esignText } from '../lib/esign/texts.js';
 import { metaOf, sendPdf } from '../lib/esign/http.js';
+import { isImpersonating } from '../lib/privacy/impersonationContext.js';
 import { maskPhone, smsConfigured } from '../lib/messaging/providers.js';
 import { sendSecretSms } from '../lib/messaging/outbound.js';
 
@@ -171,7 +172,7 @@ const serveSignerDocument = async (req: Request, res: Response, signerId: string
   const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: requestId } });
   const useFinal = r.status === 'COMPLETED' && !!r.finalKey;
   if (!useFinal && r.status !== 'SENT') throw conflict('REQUEST_NOT_ACTIVE');
-  await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), signerId, note: useFinal ? 'final' : 'original' });
+  if (!isImpersonating()) await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), signerId, note: useFinal ? 'final' : 'original' });
   const base = r.originalName.replace(/\.pdf$/i, '');
   sendPdf(res, useFinal ? r.finalKey! : r.originalKey, useFinal ? `${base}-signed.pdf` : r.originalName, !!req.query.download);
 };

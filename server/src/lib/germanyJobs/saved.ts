@@ -2,6 +2,7 @@ import type { SavedGermanyJob } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { arbeitnowHas } from './arbeitnow.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { PROVIDER_IDS, httpUrl } from './common.js';
 
 /**
@@ -101,6 +102,7 @@ export const listSaved = async (userId: string, now = new Date()) => {
     }
     return savedView(r, status);
   });
+  if (isImpersonating()) return items; // "view as client": the same statuses, not stored
   if (goneIds.length) await prisma.savedGermanyJob.updateMany({ where: { id: { in: goneIds } }, data: { goneAt: now } });
   if (backIds.length) await prisma.savedGermanyJob.updateMany({ where: { id: { in: backIds } }, data: { goneAt: null } });
   return items;

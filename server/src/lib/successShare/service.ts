@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { escapeHtml } from '../seo.js';
-import { ensureReferralCode, getReferralSettings } from '../growth/referral.js';
+import { getReferralSettings, referralCodeForView } from '../growth/referral.js';
 import { clearSuccessCardCache, type CardFormat, type CardInput } from './card.js';
 import { CARD_LOCALES, CARD_TEXTS, PAGE_HEAD, PAGE_LOCALES, asCardLocale, type CardLocale, type PageLocale } from './texts.js';
 
@@ -136,7 +136,7 @@ export interface ShareView {
 const referralCodeFor = async (record: ShareRecord) => {
   if (!record.showReferral) return null;
   if (!(await getReferralSettings()).enabled) return null;
-  return (await ensureReferralCode(record.userId)).code;
+  return (await referralCodeForView(record.userId, true))?.code ?? null; // no code is created under "view as client"
 };
 
 /** Public view of a share, or null when it does not exist (revoked), the case is no longer approved or the account is gone. */

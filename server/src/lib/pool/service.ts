@@ -1,7 +1,8 @@
 import type { Request } from 'express';
-import type { Locale, PoolInterestStatus } from '@prisma/client';
+import type { CandidatePoolProfile, Locale, PoolInterestStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { HttpError } from '../http.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
 import { recordConsent } from '../privacy/consents.js';
 import { POOL_CONSENT_VERSION, POOL_DAILY_DETAIL_LIMIT, POOL_DAILY_SEARCH_LIMIT } from './constants.js';
@@ -13,6 +14,33 @@ const DAY = 24 * 60 * 60 * 1000;
 export const ensurePoolProfile = async (userId: string) => {
   const existing = await prisma.candidatePoolProfile.findUnique({ where: { userId } });
   if (existing) return existing;
+  // "View as client" never writes: an unsaved, opted-out profile (the code is assigned on the client's own first visit).
+  if (isImpersonating()) {
+    const now = new Date();
+    return {
+      id: `transient-${userId}`,
+      userId,
+      code: 'TV-K-····',
+      consentAt: null,
+      consentVersion: null,
+      withdrawnAt: null,
+      professions: null,
+      languages: null,
+      regions: null,
+      earliestStart: null,
+      availability: null,
+      skills: null,
+      track: 'JOB',
+      staffReady: false,
+      hidden: false,
+      hiddenReason: null,
+      summary: null,
+      staffUpdatedById: null,
+      staffUpdatedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    } satisfies CandidatePoolProfile;
+  }
   for (let i = 0; i < 40; i++) {
     const code = randomPoolCode(i < 20 ? 4 : 5);
     if (await prisma.candidatePoolProfile.findUnique({ where: { code }, select: { id: true } })) continue;
@@ -56,11 +84,13 @@ export const setPoolConsent = async (req: Request, userId: string, email: string
  * staff once (the request that hits it) and answers 429 POOL_DAILY_LIMIT from then on for 24 h.
  */
 export const logPoolView = async (input: { companyId: string; companyName: string; userId: string; kind: 'SEARCH' | 'DETAIL'; profileId?: string; results?: number }) => {
+  // "View as employer": nothing is logged and the company's daily cap is not used up (the cap is still enforced).
+  const readOnly = isImpersonating();
   const limit = input.kind === 'DETAIL' ? POOL_DAILY_DETAIL_LIMIT : POOL_DAILY_SEARCH_LIMIT;
   const since = new Date(Date.now() - DAY);
   const count = await prisma.candidatePoolView.count({ where: { companyId: input.companyId, kind: input.kind, createdAt: { gte: since } } });
   if (count >= limit) {
-    if (count === limit) {
+    if (count === limit && !readOnly) {
       // One marker row above the cap, so the notification is sent once.
       await prisma.candidatePoolView.create({ data: { companyId: input.companyId, userId: input.userId, kind: input.kind, results: 0 } });
       await notifyStaff(
@@ -71,6 +101,7 @@ export const logPoolView = async (input: { companyId: string; companyName: strin
     }
     throw new HttpError(429, 'POOL_DAILY_LIMIT');
   }
+  if (readOnly) return;
   await prisma.candidatePoolView.create({
     data: { companyId: input.companyId, userId: input.userId, kind: input.kind, profileId: input.profileId ?? null, results: input.results ?? 0 },
   });

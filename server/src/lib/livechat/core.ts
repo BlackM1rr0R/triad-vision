@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import type { LiveChat, LiveChatMessage } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
+import { outsideImpersonation } from '../privacy/impersonationContext.js';
 import { publish, subscriberCount } from '../messaging/realtime.js';
 import { STAFF_ROLES } from '../workspace/team.js';
 import { getOfficeHours, isOpen, nextOpening } from '../calls/hours.js';
@@ -132,7 +133,9 @@ export const publishQueue = async (chatId: string, change: 'new' | 'accepted' | 
 };
 
 /** WAITING chats past the accept timeout (offline chats: past OFFLINE_TTL_MS) → MISSED (visitor gets the contact form). Returns the expired ids. */
-export const expireWaiting = async (now = new Date()) => {
+export const expireWaiting = (now = new Date()) => outsideImpersonation(() => expireWaitingNow(now)); // global upkeep (anyone's chats), not the viewer's data
+
+const expireWaitingNow = async (now: Date) => {
   const stale = await prisma.liveChat.findMany({
     where: {
       status: 'WAITING',

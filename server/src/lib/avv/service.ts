@@ -3,6 +3,7 @@ import type { AvvAgreement, Locale, Prisma, Role } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { notifyStaff, notifyUser } from '../notifications.js';
+import { isImpersonating } from '../privacy/impersonationContext.js';
 import { getRetentionSettings, legalSchema, privacySchema } from '../legalSettings.js';
 import { renderContractPdf } from '../contracts/pdf.js';
 import { getCountersignSettings } from '../esign/countersign.js';
@@ -88,8 +89,15 @@ export const syncAvv = async (a: AvvAgreement) => {
   if (a.status !== 'SENT' || !a.signatureRequestId) return a;
   const r = await prisma.signatureRequest.findUnique({ where: { id: a.signatureRequestId }, select: { status: true, completedAt: true } });
   if (!r) return a;
-  if (r.status === 'COMPLETED') return prisma.avvAgreement.update({ where: { id: a.id }, data: { status: 'COMPLETED', completedAt: r.completedAt ?? new Date() } });
-  if (r.status === 'CANCELLED' || r.status === 'EXPIRED' || r.status === 'DECLINED') return prisma.avvAgreement.update({ where: { id: a.id }, data: { status: 'CANCELLED' } });
+  // "View as employer" is read-only: the same synced status, in memory.
+  const readOnly = isImpersonating();
+  if (r.status === 'COMPLETED') {
+    const data = { status: 'COMPLETED' as const, completedAt: r.completedAt ?? new Date() };
+    return readOnly ? { ...a, ...data } : prisma.avvAgreement.update({ where: { id: a.id }, data });
+  }
+  if (r.status === 'CANCELLED' || r.status === 'EXPIRED' || r.status === 'DECLINED') {
+    return readOnly ? { ...a, status: 'CANCELLED' as const } : prisma.avvAgreement.update({ where: { id: a.id }, data: { status: 'CANCELLED' } });
+  }
   return a;
 };
 

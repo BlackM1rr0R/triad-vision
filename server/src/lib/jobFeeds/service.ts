@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import type { JobChannelStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
+import { outsideImpersonation } from '../privacy/impersonationContext.js';
 import { open, seal } from '../secretBox.js';
 import { escapeHtml, siteOrigin } from '../seo.js';
 import { SITE_NAME } from '../seoCatalogue.js';
@@ -453,7 +454,8 @@ export const getFeedXml = async (channel: FeedChannel): Promise<{ xml: string; c
   if (hit && Date.now() - hit.at < FEED_TTL_MS) return { xml: hit.xml, cached: true };
   const pending = inflight.get(channel);
   if (pending) return { xml: await pending, cached: true };
-  const p = buildFeed(channel)
+  // Shared feed cache (feed stats, channel state): never built inside a "view as client" read-only context.
+  const p = outsideImpersonation(() => buildFeed(channel))
     .then((r) => {
       feedCache.set(channel, { at: Date.now(), xml: r.xml });
       return r.xml;
