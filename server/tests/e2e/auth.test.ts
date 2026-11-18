@@ -73,6 +73,8 @@ describe('POST /api/auth/register', () => {
       emailVerified: false,
       twoFactorEnabled: false,
       twoFactorRequired: false,
+      // effective web idle timeout (Access Center / SESSION_IDLE_MINUTES), mirrored by the browser
+      sessionIdleMinutes: expect.any(Number),
       emailOtpEnabled: false,
     });
     expect(res.body.user.passwordHash).toBeUndefined();

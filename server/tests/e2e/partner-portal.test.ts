@@ -182,8 +182,10 @@ describe('partner portal: dashboard, commissions and notifications', () => {
     expectStatus(await act(admin.agent, c.id, { action: 'DECIDE', decision: 'APPROVED' }), 200);
     const approved = await waitFor(() => prisma.notification.findFirst({ where: { userId: p.user.id, type: 'PARTNER_CASE_APPROVED' } }));
     expect(approved.title).toBe('Visa approved: Rəşad Həsənov');
-    // No message for steps that do not concern the partner (e.g. lodged at the embassy).
-    expect(await prisma.notification.count({ where: { userId: p.user.id } })).toBe(2);
+    // The assignment itself is announced (PARTNER_NEW_CASE, history-keeping assign); no message for steps that do not
+    // concern the partner (e.g. lodged at the embassy).
+    expect(await prisma.notification.count({ where: { userId: p.user.id, type: 'PARTNER_NEW_CASE' } })).toBe(1);
+    expect(await prisma.notification.count({ where: { userId: p.user.id } })).toBe(3);
 
     // Commission created on assign (default 100.00), then paid → partner notified.
     const row = await prisma.partnerCommission.findFirstOrThrow({ where: { partnerId: p.partner.id, caseId: c.id } });

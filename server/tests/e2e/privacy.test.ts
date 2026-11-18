@@ -132,7 +132,8 @@ describe('GET /api/privacy/export', () => {
     const acc = expectStatus(await c.agent.get('/api/account/export'), 200);
     const accData = typeof acc.body === 'object' && Object.keys(acc.body).length ? acc.body : JSON.parse(acc.text);
     expect(accData.consents).toHaveLength(1);
-    expect(accData.privacyRequests).toHaveLength(1);
+    // The account export is recorded too (a second completed EXPORT request).
+    expect(accData.privacyRequests).toHaveLength(2);
   });
 });
 
