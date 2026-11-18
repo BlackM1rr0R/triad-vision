@@ -40,7 +40,7 @@ describe('vacancy waitlist', () => {
     await runWaitlistNotices();
     await noticeFor('wait@test.local', hamburg.id);
     const mail = await waitFor(() => prisma.emailLog.findFirst({ where: { to: 'wait@test.local', subject: { startsWith: 'Passende Stelle frei' } } }));
-    expect(mail.subject).toBe('Passende Stelle frei: LKW-Fahrer');
+    expect(mail.subject).toBe('Passende Stelle frei: LKW-Fahrer de');
 
     // Another city, a higher German level and a full vacancy are not announced.
     const munich = await createVacancy({ slug: 'wait-muc', city: 'München' });
