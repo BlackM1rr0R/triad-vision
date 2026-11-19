@@ -236,10 +236,11 @@ describe('GET /__seo/status (crawler status code of the HTML shell)', () => {
     expect(res.headers['content-type']).toMatch(/^text\/plain/);
     expect(res.headers['x-robots-tag']).toBe('noindex');
     expect(res.text).toBe('');
-    for (const p of ['/', '/de', '/ru/about', '/jobs', `/jobs/${open.slug}`, `/en/jobs/${open.slug}`, '/admin/cases', '/account', '/sign/abc', '/success/tok']) {
+    // Deactivated (closed after publication) and expired vacancies stay reachable (200, noindex — owner decision).
+    for (const p of ['/', '/de', '/ru/about', '/jobs', `/jobs/${open.slug}`, `/en/jobs/${open.slug}`, `/jobs/${expired.slug}`, `/de/jobs/${closed.slug}`, '/admin/cases', '/account', '/sign/abc', '/success/tok']) {
       expect((await status(p)).text, p).toBe('');
     }
-    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/visas/hidden-visa', '/jobs/nonexistent', `/jobs/${expired.slug}`, `/de/jobs/${closed.slug}`, '/de/xx/yy']) {
+    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/visas/hidden-visa', '/jobs/nonexistent', '/de/xx/yy']) {
       expect((await status(p)).text, p).toBe('404');
     }
   });

@@ -16,7 +16,11 @@ import { deutschlandticketAt } from '../../src/lib/budget/params.js';
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const BULLETIN = fs.readFileSync(path.join(here, '..', 'unit', 'fixtures', 'cbar-2026-11-13.xml'), 'utf8');
+// The stored bulletin is dated 13.11.2026; re-date it to today (Baku) so the rate is never "stale" just because
+// the test runs later (stale after 5 days). Rates stay the same.
+const todayBaku = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Baku', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date()).replace(/\//g, '.');
+const todayIso = todayBaku.split('.').reverse().join('-');
+const BULLETIN = fs.readFileSync(path.join(here, '..', 'unit', 'fixtures', 'cbar-2026-11-13.xml'), 'utf8').replace(/13\.11\.2026/g, todayBaku);
 
 let calls: string[] = [];
 const fakeCbar = (xml: string | Error = BULLETIN) =>
@@ -38,10 +42,10 @@ describe('CBAR rate', () => {
   it('fetches once per Baku day, stores the rate with its bulletin date and reuses it', async () => {
     fakeCbar();
     const a = await anon().get('/api/life/rate').expect(200);
-    expect(a.body.rate).toMatchObject({ rate: 1.8805, date: '2026-11-13', source: 'CBAR' });
+    expect(a.body.rate).toMatchObject({ rate: 1.8805, date: todayIso, source: 'CBAR' });
     expect(calls).toEqual([`https://www.cbar.az/currencies/${bakuDay().cbar}.xml`]);
     const row = await prisma.setting.findUnique({ where: { key: CBAR_SETTING_KEY } });
-    expect(row?.value).toMatchObject({ rate: 1.8805, date: '2026-11-13' });
+    expect(row?.value).toMatchObject({ rate: 1.8805, date: todayIso });
 
     // a new process (memo cleared) the same day: the stored rate, no second request
     fakeCbar();
