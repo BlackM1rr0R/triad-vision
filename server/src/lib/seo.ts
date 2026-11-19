@@ -1,3 +1,4 @@
+import { deactivatedVacancyWhere } from './vacancyActive.js';
 import { prisma } from '../db.js';
 import { config } from '../config.js';
 import { cached } from './cache.js';
@@ -383,8 +384,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     candidateCatalogue: await getCatalogue().catch(() => null),
-    // Deactivated vacancies (CLOSED after publication): their pages stay reachable (lib/vacancyActive.ts).
-    closedJobs: await prisma.vacancy.findMany({ where: { status: 'CLOSED', publishedAt: { not: null } }, orderBy: { updatedAt: 'desc' }, take: 2000, select: { slug: true, title: true, description: true, city: true } }),
+    // Deactivated vacancies (CLOSED after publication, or OPEN past their closing date): their pages stay reachable (lib/vacancyActive.ts).
+    closedJobs: await prisma.vacancy.findMany({ where: deactivatedVacancyWhere(now), orderBy: { updatedAt: 'desc' }, take: 2000, select: { slug: true, title: true, description: true, city: true } }),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
   };
