@@ -4,7 +4,7 @@
 in `tests/visual/baseline/`. It runs in CI ("Typecheck & build" job, step "Visual regression test")
 after the client build, and a failure blocks the deploy.
 
-**Shots (16):** home (desktop light/dark, mobile; includes the visa-type and service grids), login,
+**Shots (16):** home (desktop light/dark, mobile; includes the vacancy section, with one deactivated card, and the service grid), login,
 register, `/jobs`, client portal `/account`, admin cases list (light/dark), admin case page, workspace
 Drive grid (light/dark). Desktop is 1366x900, mobile 390x844. Public and portal pages are captured full
 length (up to 4000 px); admin and workspace screens are captured at viewport size. The list is `SHOTS` in

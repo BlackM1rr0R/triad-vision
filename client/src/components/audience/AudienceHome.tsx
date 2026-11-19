@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { AusbildungSection, NewsSection, PartnersSection, ProcessSection, SamplesSection, VisaSection, WhySection } from '../home/Sections';
+import { AusbildungSection, NewsSection, PartnersSection, ProcessSection, SamplesSection, WhySection } from '../home/Sections';
+import { HomeVacanciesSection } from '../vacancyActive/HomeVacancies'; // real vacancies, the visa cards when there are none
 import { CalculatorTeaser } from '../growth/CalculatorTeaser';
 import {
   AudienceCta,
@@ -42,7 +43,7 @@ export default function AudienceHome({ audience }: { audience: Audience }) {
   return (
     <>
       <WorkerQuickLinks />
-      <VisaSection />
+      <HomeVacanciesSection />
       <CalculatorTeaser />
       <AudienceServices audience="worker" />
       <div id="process" className="scroll-mt-20">

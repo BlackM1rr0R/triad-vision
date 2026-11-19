@@ -15,9 +15,10 @@ import {
   ServicesSection,
   SamplesSection,
   TestimonialsSection,
-  VisaSection,
   WhySection,
 } from '@/components/home/Sections';
+// Real vacancies (same source as /jobs; deactivated ones after the open ones); the visa cards when there are none.
+import { HomeVacanciesSection } from '@/components/vacancyActive/HomeVacancies';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { AUDIENCE_PATH, useAudience, type Audience } from '@/lib/audience';
 import { smoothScrollTo } from '@/lib/smoothScroll';
@@ -78,7 +79,7 @@ const AudienceBar = ({ audience, onChoose }: { audience: Audience; onChoose: (a:
 /** First visit (or "show everything"): both audiences, as the home page always was. */
 const NeutralHome = () => (
   <>
-    <VisaSection />
+    <HomeVacanciesSection />
     <Suspense fallback={null}>
       <CalculatorTeaser />
     </Suspense>

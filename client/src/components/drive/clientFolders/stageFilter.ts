@@ -32,3 +32,11 @@ export const applyStageFilter = (items: DriveItem[], filter: readonly StageFilte
   }
   return out;
 };
+
+/**
+ * "Schon geschrieben" quick action: the client folders of a selection that can still be marked WRITTEN (client folders
+ * with case info that are not WRITTEN yet). Anything else in the selection (files, other folders) is left out; the
+ * server's move rules still apply per case (e.g. Fertig → Schon geschrieben is refused and shown in the summary).
+ */
+export const writtenEligible = (items: readonly DriveItem[]): DriveItem[] =>
+  items.filter((i) => i.kind === 'FOLDER' && !!i.caseId && !!i.caseInfo && i.caseInfo.processing?.stage !== 'WRITTEN');

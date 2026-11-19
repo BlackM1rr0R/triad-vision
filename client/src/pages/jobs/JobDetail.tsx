@@ -60,6 +60,7 @@ import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // intera
 import { sceneForProfession } from '@/lib/workScenes/meta';
 import { FullNotice, PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // free places, "Yer qalmayıb"
 import { isFull, placesErrorText } from '@/components/vacancyPlaces/api';
+import { DeactivatedBadge, DeactivatedNotice, isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated: visible, applications closed
 
 registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesPortalExtras); // px.apply.*, px.scan.*
@@ -170,6 +171,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     },
   });
 
+  // Deactivated by staff / expired: visible, but nobody can apply (server: 409 VACANCY_CLOSED).
+  if (isDeactivated(v)) return <DeactivatedNotice alertAnchor="job-alert" />;
   // No free place: the vacancy stays visible, but nobody can apply (server: 409 VACANCY_FULL).
   if (!user && isFull(v)) return <FullNotice alertAnchor="job-alert" />;
   if (!user) {
@@ -456,7 +459,7 @@ export default function JobDetail() {
               <Euro className="size-4 text-muted" aria-hidden /> {salary}
             </span>
           )}
-          <PlacesBadge v={v} className="rounded-full px-3 py-1.5 text-sm" />
+          {isDeactivated(v) ? <DeactivatedBadge long className="rounded-full px-3 py-1.5 text-sm" /> : <PlacesBadge v={v} className="rounded-full px-3 py-1.5 text-sm" />}
         </div>
       </PageHero>
 
@@ -544,7 +547,7 @@ export default function JobDetail() {
 
             {/* Job alert preselected with this vacancy's profession; a full vacancy offers the vacancy waitlist instead. */}
             <div id="job-alert" className="scroll-mt-28">
-              {isFull(v) ? <WaitlistForm profession={v.profession} city={v.city} full /> : <JobAlertForm profession={v.profession} />}
+              {isFull(v) || isDeactivated(v) ? <WaitlistForm profession={v.profession} city={v.city} full={!isDeactivated(v)} /> : <JobAlertForm profession={v.profession} />}
             </div>
             <WorkSceneCard scene={sceneForProfession(v.profession)} />
           </div>

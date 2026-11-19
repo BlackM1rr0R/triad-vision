@@ -15,8 +15,8 @@ import { Traveller } from '@/components/illustrations';
 import { registerCopy } from '@/i18n';
 import { vacancyFolders } from '@/i18n/vacancyFolders';
 import { toast } from 'sonner';
-import { isFull, placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
-import { VacancyOnlyPicker, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
+import { placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
+import { VacancyOnlyPicker, unavailableOption, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
 import { orderForVisa, preselectForVisa } from '@/components/vacancyPlaces/visaPreference'; // ?visa= from the calculator
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: "Uyğun vakansiya açılanda xəbər ver"
 
@@ -59,7 +59,8 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   const withJob = onlyVacancies || (!!visaType && JOB_TYPES.includes(visaType));
   const { data: vacancies, isLoading: vacanciesLoading } = useQuery({
     queryKey: ['vacancy-options'],
-    queryFn: async () => (await api.get<{ items: VacancyOption[] }>('/vacancies/options')).data.items,
+    // closed=1: deactivated vacancies are listed last, flagged and not selectable (server lib/vacancyActive.ts).
+    queryFn: async () => (await api.get<{ items: VacancyOption[] }>('/vacancies/options', { params: { closed: 1 } })).data.items,
     enabled: withJob,
     staleTime: 60_000,
   });
@@ -74,15 +75,15 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
     if (!cat) forgetVisa();
     else if (onlyVacancies) {
       setVisaPrefCategory(cat.id);
-      const pick = preselectForVisa(vacancies ?? [], cat.id, isFull);
+      const pick = preselectForVisa(vacancies ?? [], cat.id, unavailableOption);
       if (pick) setVacancyId(pick);
     } else {
       setVisaType(cat.slug === 'ausbildung' ? 'AUSBILDUNG' : 'WORK');
       setVisaCategoryId(cat.id);
     }
   }
-  const openVacancies = (vacancies ?? []).filter((v) => !isFull(v));
-  const orderedVacancies = orderForVisa(vacancies ?? [], visaPrefCategory, isFull);
+  const openVacancies = (vacancies ?? []).filter((v) => !unavailableOption(v));
+  const orderedVacancies = orderForVisa(vacancies ?? [], visaPrefCategory, unavailableOption);
   const optionLabel = useVacancyOptionLabel();
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -235,7 +236,7 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
                   <select id={vacancyFieldId} className="input" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)}>
                     <option value="">{t('vacFolders.position.notSure')}</option>
                     {vacancies.map((v) => (
-                      <option key={v.id} value={v.id} disabled={isFull(v)}>
+                      <option key={v.id} value={v.id} disabled={unavailableOption(v)}>
                         {optionLabel(v)}
                       </option>
                     ))}

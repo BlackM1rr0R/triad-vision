@@ -353,6 +353,7 @@ const vacancy = (i, slug, az, de, sector, city, level, min, max, type, visa) => 
   companyName: null,
   companyLogo: null, // employer logo (only with companyName); none, so the cards render the same every run
   visaCategory: visa === null ? null : visaRef(visa),
+  active: true, // false: deactivated by staff / expired (server lib/vacancyActive.ts)
 });
 const vacancies = [
   vacancy(1, 'lkw-fahrer-hamburg', 'LKW sürücüsü (CE)', 'LKW-Fahrer (CE)', 'logistics', 'Hamburg', 'A2', 2800, 3400, 'FULL_TIME', 0),
@@ -362,6 +363,8 @@ const vacancies = [
   vacancy(5, 'erntehelfer-bayern', 'Mövsümi kənd təsərrüfatı işçisi', 'Erntehelfer', 'agriculture', 'Bayern', 'none', 2100, 2300, 'SEASONAL', null),
   vacancy(6, 'ausbildung-pflege', 'Ausbildung: tibb bacısı', 'Ausbildung Pflege', 'healthcare', 'Stuttgart', 'B1', 1200, 1400, 'AUSBILDUNG', 4),
 ];
+// ?closed=1 (the /jobs board and the home vacancy section): one deactivated vacancy after the open ones.
+const deactivated = { ...vacancy(7, 'kuryer-berlin', 'Kuryer sürücüsü', 'Kurierfahrer', 'courier', 'Berlin', 'A1', 2400, 2700, 'FULL_TIME', null), active: false };
 const facet = (key) => Object.entries(vacancies.reduce((a, v) => ({ ...a, [v[key]]: (a[v[key]] ?? 0) + 1 }), {})).map(([value, count]) => ({ value, count }));
 
 // Saved filter tabs of the cases list: the defaults every staff member gets (lib/staffUi DEFAULT_VIEWS), already added.
@@ -401,7 +404,14 @@ const ROUTES = [
   ['GET', '/api/admin/me/whats-new', { items: [], unread: 0, latest: null, seen: null }],
 
   // public
-  ['GET', '/api/vacancies', { items: vacancies, total: vacancies.length, page: 1, pageSize: 12, facets: { sectors: facet('sector'), cities: facet('city') } }],
+  [
+    'GET',
+    '/api/vacancies',
+    ({ query }) => {
+      const items = query?.get?.('closed') === '1' ? [...vacancies, deactivated] : vacancies;
+      return { items, total: items.length, openTotal: vacancies.length, page: 1, pageSize: Number(query?.get?.('pageSize')) || 12, facets: { sectors: facet('sector'), cities: facet('city') } };
+    },
+  ],
   ['GET', '/api/job-alerts/options', { professions: [], germanLevels: ['none', 'A1', 'A2', 'B1', 'B2'], kinds: ['work', 'ausbildung', 'seasonal'], suggested: null }],
   // home: globe / placement map (aggregates ≥ 3 per city) and the Baku ↔ Berlin weather
   [

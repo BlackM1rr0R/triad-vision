@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 import { ArrowRight, BadgeEuro, Briefcase, CalendarCheck, ExternalLink, Gauge, GraduationCap, HardHat, Info, MapPin, Search, UserPlus } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { ToolCard } from '@/components/audience/AudienceSections';
@@ -20,6 +21,7 @@ import { pagesWorkScenes } from '@/i18n/pagesWorkScenes';
 import { pagesAudience } from '@/i18n/pagesAudience';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
+import { DeactivatedBadge, isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated ones after the open ones
 import { SCENE_META } from '@/lib/workScenes/meta';
 import type { SceneId, WorkScene } from '@/lib/workScenes/types';
 import { HUB_SALARY_AS_OF, HUB_SALARY_SOURCES, germanyJobsLink, hubBySlug, salaryMid, type ProfessionHub as Hub } from '@/lib/professionHubs';
@@ -48,6 +50,8 @@ interface HubVacancy {
   employmentType: string;
   publishedAt: string | null;
   free?: number;
+  /** false: deactivated / expired (listed after the open ones, no apply; server lib/vacancyActive.ts). */
+  active?: boolean;
 }
 
 const useHubVacancies = (slug: string) => {
@@ -115,7 +119,8 @@ const Vacancies = ({ hub }: { hub: Hub }) => {
             <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {data.items.map((v) => (
                 <li key={v.slug}>
-                  <Link to={`/jobs/${v.slug}`} className="card card-interactive block h-full p-5">
+                  <Link to={`/jobs/${v.slug}`} className={clsx('card card-interactive block h-full p-5', isDeactivated(v) && 'opacity-80')}>
+                    {isDeactivated(v) && <DeactivatedBadge long className="mb-2" />}
                     <p className="font-display font-semibold text-ink">{v.title}</p>
                     <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
                       {v.city && (
@@ -139,7 +144,7 @@ const Vacancies = ({ hub }: { hub: Hub }) => {
           <p className="card card-pad text-muted">{t('profHub.jobsEmpty')}</p>
         )}
         {/* No vacancy of the hub with a free place: "Uyğun vakansiya açılanda xəbər ver" (server lib/jobAlerts/waitlist.ts). */}
-        {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-5" only={hub.professions} full={data.items.length > 0} />}
+        {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-5" only={hub.professions} full={data.items.some((v) => !isDeactivated(v))} />}
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/jobs" className={buttonClass({ variant: 'outline' })}>
             <Briefcase className="size-4" aria-hidden /> {t('profHub.jobsAll')}

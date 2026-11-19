@@ -20,6 +20,7 @@ import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
 import { isFull } from '@/components/vacancyPlaces/api';
+import { isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated vacancies: after the open ones, no apply
 import { useJobLabels } from '@/components/jobs/labels';
 import { EMPLOYMENT_TYPES, GERMAN_LEVELS, SECTORS, type VacancyList } from '@/components/jobs/types';
 
@@ -60,14 +61,17 @@ export default function Jobs() {
   const query = Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) || undefined]));
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['jobs', query, page],
-    queryFn: async () => (await api.get<VacancyList>('/vacancies', { params: { ...query, page, pageSize: PAGE_SIZE } })).data,
+    // closed=1: deactivated / expired vacancies stay listed after the open ones (server lib/vacancyActive.ts).
+    queryFn: async () => (await api.get<VacancyList>('/vacancies', { params: { ...query, page, pageSize: PAGE_SIZE, closed: 1 } })).data,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const activeFilters = FILTER_KEYS.filter((k) => k !== 'sort' && k !== 'search' && params.get(k)).length;
   // Nothing to apply for (no results, or every listed vacancy is full): offer the vacancy waitlist.
-  const noFreePlace = !!data && (data.items.length === 0 || (page === 1 && data.items.every((v) => isFull(v))));
+  const noFreePlace = !!data && (data.items.length === 0 || (page === 1 && data.items.every((v) => isFull(v) || isDeactivated(v))));
+  const openItems = data?.items.filter((v) => !isDeactivated(v)) ?? [];
+  const offItems = data?.items.filter(isDeactivated) ?? [];
 
   const reset = () => {
     setSearchInput('');
@@ -185,7 +189,7 @@ export default function Jobs() {
           <div className="min-w-0">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-sm text-muted" aria-live="polite">
-                {data ? t('jobsArea.board.results', { count: data.total }) : ' '}
+                {data ? t('jobsArea.board.results', { count: data.openTotal ?? data.total }) : ' '}
                 {isFetching && !isLoading && <Spinner className="size-3.5 text-primary" />}
               </p>
               <div className="flex items-center gap-2">
@@ -248,11 +252,23 @@ export default function Jobs() {
             ) : (
               <>
                 {noFreePlace && <WaitlistForm className="mb-6" full city={params.get('city')} />}
-                <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
-                  {data.items.map((v) => (
-                    <ComparableJobCard key={v.id} v={v} />
-                  ))}
-                </div>
+                {openItems.length > 0 && (
+                  <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
+                    {openItems.map((v) => (
+                      <ComparableJobCard key={v.id} v={v} />
+                    ))}
+                  </div>
+                )}
+                {offItems.length > 0 && (
+                  <>
+                    <h2 className={clsx('mb-4 font-display text-lg font-semibold text-muted', openItems.length > 0 && 'mt-10')}>{t('vacActive.closedHeading')}</h2>
+                    <div className={clsx('grid-cards cards-balanced grid-cols-1 [--cols:1] md:[--cols:2] 2xl:[--cols:3]', isFetching && 'opacity-70 transition-opacity')}>
+                      {offItems.map((v) => (
+                        <ComparableJobCard key={v.id} v={v} />
+                      ))}
+                    </div>
+                  </>
+                )}
                 {pages > 1 && (
                   <nav className="mt-8 flex items-center justify-center gap-2" aria-label={t('jobsArea.board.pagination')}>
                     <button type="button" className={buttonClass({ variant: 'secondary' })} disabled={page <= 1} onClick={() => set('page', String(page - 1))} aria-label={t('jobsArea.common.prev')}>

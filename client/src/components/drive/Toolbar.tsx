@@ -48,6 +48,8 @@ export interface ToolAction {
   danger?: boolean;
   /** Shown as an icon button in the command bar (others go into "More"). */
   primary?: boolean;
+  /** Prominent: a text button with its label (also on small screens), before the icon buttons. */
+  labelled?: boolean;
 }
 
 const IconBtn = ({ label, onClick, disabled, children, active }: { label: string; onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void; disabled?: boolean; children: ReactNode; active?: boolean }) => (
@@ -298,7 +300,15 @@ export const Toolbar = (p: ToolbarProps) => {
         {p.selectionCount > 0 && (
           <>
             <span className="mx-1 hidden h-6 w-px bg-line sm:block" />
-            {primary.map((a) => (
+            {primary
+              .filter((a) => a.labelled)
+              .map((a) => (
+                <button key={a.id} type="button" onClick={a.onClick} title={a.label} className="btn-primary btn-sm mr-1 shrink-0 !gap-1.5 !rounded-lg !px-2.5 !shadow-none">
+                  <a.icon className="size-4" aria-hidden />
+                  <span className="max-w-[11rem] truncate">{a.label}</span>
+                </button>
+              ))}
+            {primary.filter((a) => !a.labelled).map((a) => (
               <span key={a.id} className="hidden sm:contents">
                 <IconBtn label={a.label} onClick={a.onClick}>
                   <a.icon className={clsx('size-[18px]', a.danger && 'text-danger-fg')} />

@@ -32,6 +32,10 @@ const az = {
       bulkHint: 'Hər qovluq üçün adi qaydalar keçərlidir: məsələn, Fertig olan qovluq birbaşa Schon geschrieben-ə qayıda bilməz. Artıq orada olanlar ötürülür.',
       working: '{{name}} işləyir',
       notInFlow: 'İş axınında deyil',
+      quick: 'Schon geschrieben',
+      quickConfirm: 'Schon geschrieben et',
+      quickMore: 'Növbəti admin və ya qeyd əlavə et',
+      quickSkipped: '{{count}} seçilmiş element ötürülür: artıq Schon geschrieben-dədir və ya müştəri qovluğu deyil.',
     },
     send: {
       action: 'Müştəriyə göndər',
@@ -124,6 +128,10 @@ const de: typeof az = {
       bulkHint: 'Für jeden Ordner gelten die üblichen Regeln: Ein Ordner in Fertig kann z. B. nicht direkt zurück nach Schon geschrieben. Ordner, die schon dort sind, werden übersprungen.',
       working: '{{name}} bearbeitet',
       notInFlow: 'Nicht im Arbeitsablauf',
+      quick: 'Schon geschrieben',
+      quickConfirm: 'Schon geschrieben setzen',
+      quickMore: 'Nächsten Admin oder Notiz hinzufügen',
+      quickSkipped: '{{count}} ausgewählte Elemente werden übersprungen: bereits „Schon geschrieben“ oder kein Kundenordner.',
     },
     send: {
       action: 'An den Kunden senden',
@@ -216,6 +224,10 @@ const en: typeof az = {
       bulkHint: 'The usual rules apply to each folder: a folder in Fertig, for example, cannot go straight back to Schon geschrieben. Folders already there are skipped.',
       working: '{{name}} is working on it',
       notInFlow: 'Not in the workflow',
+      quick: 'Schon geschrieben',
+      quickConfirm: 'Mark as Schon geschrieben',
+      quickMore: 'Add the next admin or a note',
+      quickSkipped: '{{count}} selected items are skipped: already “Schon geschrieben” or not a client folder.',
     },
     send: {
       action: 'Send to client',
@@ -308,6 +320,10 @@ const ru: typeof az = {
       bulkHint: 'Для каждой папки действуют обычные правила: например, папка в Fertig не может сразу вернуться в Schon geschrieben. Папки, которые уже там, пропускаются.',
       working: 'В работе у: {{name}}',
       notInFlow: 'Не в рабочем процессе',
+      quick: 'Schon geschrieben',
+      quickConfirm: 'Отметить Schon geschrieben',
+      quickMore: 'Добавить следующего админа или заметку',
+      quickSkipped: 'Пропускаются выбранные элементы ({{count}}): уже «Schon geschrieben» или не папка клиента.',
     },
     send: {
       action: 'Отправить клиенту',

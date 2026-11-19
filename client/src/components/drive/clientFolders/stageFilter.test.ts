@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DriveItem } from '../types';
-import { applyStageFilter, stageKey } from './stageFilter';
+import { applyStageFilter, stageKey, writtenEligible } from './stageFilter';
 
 const base: DriveItem = {
   id: 'x',
@@ -45,5 +45,22 @@ describe('drive client folders: status filter', () => {
   it('sorts by stage with non-client items last', () => {
     const items = [clientFolder('a', 'REFUSED'), plainFolder('p'), clientFolder('b', 'WRITTEN'), clientFolder('c', 'DONE')];
     expect(applyStageFilter(items, [], true).map((i) => i.id)).toEqual(['b', 'c', 'a', 'p']);
+  });
+});
+
+describe('drive client folders: "Schon geschrieben" quick action', () => {
+  it('keeps only client folders that are not WRITTEN yet', () => {
+    const items = [clientFolder('a', 'WRITTEN'), clientFolder('b', 'IN_PROGRESS'), clientFolder('c'), clientFolder('d', 'DONE'), file('f'), plainFolder('p')];
+    expect(writtenEligible(items).map((i) => i.id)).toEqual(['b', 'c', 'd']);
+  });
+
+  it('is empty when every selected client folder is already WRITTEN or nothing is a client folder', () => {
+    expect(writtenEligible([clientFolder('a', 'WRITTEN'), clientFolder('b', 'WRITTEN')])).toEqual([]);
+    expect(writtenEligible([file('f'), plainFolder('p')])).toEqual([]);
+    expect(writtenEligible([])).toEqual([]);
+  });
+
+  it('ignores a case-linked folder without case info (not a client folder target)', () => {
+    expect(writtenEligible([{ ...base, id: 'x', caseId: 'c-x' }])).toEqual([]);
   });
 });

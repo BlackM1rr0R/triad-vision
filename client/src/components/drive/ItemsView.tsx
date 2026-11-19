@@ -12,6 +12,7 @@ import { endItemDrag, startItemDrag, useDropTarget, type PickedFile } from './dn
 import { useHoverPeek } from './QuickPreview'; // hover peek card for images / PDFs (mouse only)
 // Client folders: stage / partner / "sent to client" chips and the "⋯" action button (components/drive/clientFolders).
 import { ClientFolderChips } from './clientFolders/Chips';
+import { writtenEligible } from './clientFolders/stageFilter'; // "Schon geschrieben" quick hover action
 import { ItemIcon, extLabel, fileTone } from './fileIcons';
 import { displayName, typeLabel } from './labels';
 import { can, type DriveItem } from './types';
@@ -106,6 +107,25 @@ const MoreButton = ({ item, onMenu, label, className }: { item: DriveItem; onMen
     </button>
   ) : null;
 
+/** Client folders not WRITTEN yet: quick "Schon geschrieben" (hover / focus, always on touch); opens the small confirm dialog. */
+const QuickWrittenButton = ({ item, onQuick, label, className }: { item: DriveItem; onQuick?: (item: DriveItem) => void; label: string; className?: string }) =>
+  onQuick && writtenEligible([item]).length ? (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onQuick(item);
+      }}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      className={clsx('grid size-7 shrink-0 place-items-center rounded-md text-muted hover:bg-primary/[0.08] hover:text-link focus-visible:opacity-100 dark:hover:bg-white/10', className)}
+    >
+      <PenLine className="size-4" aria-hidden />
+    </button>
+  ) : null;
+
 export interface ItemsViewProps {
   items: DriveItem[];
   view: ViewMode;
@@ -125,6 +145,8 @@ export interface ItemsViewProps {
   onItems: (items: DriveItem[], targetId: string, copy: boolean) => void;
   /** Items the user may drag (move/copy). */
   canDrag: (item: DriveItem) => boolean;
+  /** Client folders: quick "Schon geschrieben" hover action (undefined = not offered, e.g. without cases:edit). */
+  onQuickWritten?: (item: DriveItem) => void;
 }
 
 const PAGE = 240;
@@ -374,6 +396,7 @@ const Tile = memo(function Tile({ item, p, click, toggle, context, dragStart, t,
         className={clsx('absolute top-2 left-2 z-10 transition-opacity', selected || p.selected.size > 0 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
       />
       <MoreButton item={item} onMenu={context} label={t('clientFolders.more')} className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
+      <QuickWrittenButton item={item} onQuick={p.onQuickWritten} label={t('clientFolders.stage.markWritten')} className="absolute top-1 right-8 z-10 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
       {/* fixed-height icon box: the name below always stays visible (line-clamp-2), whatever the column width */}
       <div className="relative grid h-[68px] w-full shrink-0 place-items-center">
         {thumb ? (
@@ -577,7 +600,8 @@ const Row = memo(function Row({ item, p, click, toggle, context, dragStart, t, h
           </span>
         )}
         {isClientFolder(item) && <ClientFolderChips item={item} className="min-w-0 flex-nowrap overflow-hidden" />}
-        <MoreButton item={item} onMenu={context} label={t('clientFolders.more')} className="ml-auto opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
+        <QuickWrittenButton item={item} onQuick={p.onQuickWritten} label={t('clientFolders.stage.markWritten')} className="ml-auto opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100" />
+        <MoreButton item={item} onMenu={context} label={t('clientFolders.more')} className={clsx(!(p.onQuickWritten && writtenEligible([item]).length) && 'ml-auto', 'opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100')} />
       </div>
       {p.mode === 'folder' && (
         <>

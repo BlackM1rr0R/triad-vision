@@ -74,7 +74,7 @@ describe('GET /api/vacancies (public board)', () => {
 });
 
 describe('GET /api/vacancies/:slug', () => {
-  it('returns open vacancies with their visa category and 404s for closed, draft or expired ones', async () => {
+  it('returns open vacancies with their visa category, deactivated / expired ones flagged, and 404s for drafts', async () => {
     const visa = await prisma.visaCategory.create({
       data: { slug: 'skilled', icon: 'Truck', image: 'x', visaLabel: '§18b', title: { az: 'V', de: 'V', en: 'V', ru: 'V' }, summary: {}, items: {}, body: {} },
     });
@@ -85,7 +85,10 @@ describe('GET /api/vacancies/:slug', () => {
     const res = await anon().get('/api/vacancies/live');
     expect(res.status).toBe(200);
     expect(res.body.vacancy.visaCategory).toEqual({ slug: 'skilled', title: { az: 'V', de: 'V', en: 'V', ru: 'V' }, visaLabel: '§18b' });
-    for (const slug of ['old', 'shut', 'wip', 'missing']) expect((await anon().get(`/api/vacancies/${slug}`)).status).toBe(404);
+    expect(res.body.vacancy.active).toBe(true);
+    // Deactivated (closed after publication) and expired ones stay visible, applications closed (lib/vacancyActive.ts).
+    for (const slug of ['old', 'shut']) expect((await anon().get(`/api/vacancies/${slug}`)).body.vacancy.active, slug).toBe(false);
+    for (const slug of ['wip', 'missing']) expect((await anon().get(`/api/vacancies/${slug}`)).status).toBe(404);
   });
 
   it('gives a signed-in candidate their match score and gaps', async () => {

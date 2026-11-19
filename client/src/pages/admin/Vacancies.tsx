@@ -34,6 +34,7 @@ import { ApplicationFolder, NewVacancyFolder, VacancyFolderPanel, folderPayload,
 import type { FolderInfo } from '@/components/vacancyFolders/FolderPicker';
 import { useListNav } from '@/components/shortcuts/useListNav'; // J / K / Enter / E / '/' / Esc
 import { ApplicationPolicyPanel, VacancyPlacesPanel } from '@/components/vacancyPlaces/AdminPanels'; // free places + application rules
+import { ActiveToggle, BulkActiveBar, PolicyNote, SelectBox } from '@/components/vacancyActive/AdminActive'; // per-vacancy + bulk "Aktiv / Deaktiv"
 import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge';
 import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views + table settings
 import { SavedViewsMenu } from '@/components/staffPower/SavedViews';
@@ -348,6 +349,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
           <Panel title={t('jobsArea.admin.vacancies.review')}>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className={clsx('badge', VACANCY_STATUS_TONE[v.status])}>{L.vacancyStatus(v.status)}</span>
+              <ActiveToggle v={v} />
               {v.company ? (
                 <Link to={`/admin/companies?id=${v.company.id}`} className="font-semibold text-link hover:underline">
                   {v.company.name}
@@ -510,6 +512,15 @@ export default function AdminVacancies() {
     placeholderData: keepPreviousData,
   });
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  // Rows picked for the bulk "Aktiv / Deaktiv" (components/vacancyActive/AdminActive.tsx).
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
+  const pick = (id: string, on: boolean) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   // Per-user table settings (list or table view; columns: order, visibility, width).
   const columnDefs = useMemo<ColumnDef[]>(
     () => [
@@ -557,7 +568,8 @@ export default function AdminVacancies() {
         }
       />
       {/* "Clients can only apply to active vacancies" / external listings (lib/vacancyPlaces). */}
-      <ApplicationPolicyPanel className="mb-6" />
+      <ApplicationPolicyPanel className="mb-2" />
+      <PolicyNote className="mb-6" />
       <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
         <label className="relative flex-1">
           <span className="sr-only">{t('admin.common.search')}</span>
@@ -590,6 +602,7 @@ export default function AdminVacancies() {
         </div>
       </div>
 
+      <BulkActiveBar ids={[...picked]} onClear={() => setPicked(new Set())} onSelectAll={data?.items.length ? () => setPicked(new Set(data.items.map((v) => v.id))) : undefined} />
       {isLoading ? (
         <LoadingBlock />
       ) : error ? (
@@ -610,13 +623,15 @@ export default function AdminVacancies() {
           cells={{
             title: (v) => (
               <span className="flex flex-wrap items-center gap-1.5">
+                <SelectBox checked={picked.has(v.id)} onChange={(on) => pick(v.id, on)} label={`${t('vacActive.admin.select')}: ${L.title(v.title)}`} />
                 <span className="font-semibold break-words text-ink">{L.title(v.title)}</span>
                 {v.status === 'OPEN' && <PlacesBadge v={v} />}
               </span>
             ),
             status: (v) => (
-              <span onClick={(e) => e.stopPropagation()}>
+              <span onClick={(e) => e.stopPropagation()} className="inline-flex flex-wrap items-center gap-1.5">
                 <VacancyStatusCell id={v.id} status={v.status} />
+                <ActiveToggle v={v} />
               </span>
             ),
             company: (v) => <span className="text-ink/80">{v.company?.name ?? t('jobsArea.admin.vacancies.noCompany')}</span>,
@@ -652,6 +667,7 @@ export default function AdminVacancies() {
               >
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2">
+                    <SelectBox checked={picked.has(v.id)} onChange={(on) => pick(v.id, on)} label={`${t('vacActive.admin.select')}: ${L.title(v.title)}`} />
                     <button
                       type="button"
                       onClick={(e) => {
@@ -663,6 +679,7 @@ export default function AdminVacancies() {
                       {L.title(v.title)}
                     </button>
                     <VacancyStatusCell id={v.id} status={v.status} />
+                    <ActiveToggle v={v} />
                     {v.status === 'OPEN' && <PlacesBadge v={v} withTotal />}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-muted">

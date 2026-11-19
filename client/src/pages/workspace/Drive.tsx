@@ -1170,6 +1170,7 @@ export default function WorkspaceDrive() {
                             onFiles={onFiles}
                             onItems={onItems}
                             canDrag={(i) => loc.kind !== 'trash' && (can(i.myAccess, 'EDIT') && unprotected(i) ? true : can(i.myAccess, i.kind === 'FILE' ? 'DOWNLOAD' : 'EXPORT'))}
+                            onQuickWritten={loc.kind === 'trash' ? undefined : cf.quickWritten}
                           />
                         </div>
                       </>

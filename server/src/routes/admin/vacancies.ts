@@ -7,6 +7,7 @@ import { audit } from '../../lib/audit.js';
 import { emitWebhook } from '../../lib/ops/webhooks.js';
 import { onVacancyPublished } from '../../lib/jobAlerts/service.js';
 import { adminVacancyWaitlistRouter } from './vacancyWaitlist.js'; // "notify me when a matching vacancy opens": demand + export
+import { adminVacancyActiveRouter } from './vacancyActive.js'; // per-vacancy + bulk "Aktiv / Deaktiv" (lib/vacancyActive.ts)
 import { notifyVacancyReviewed } from '../../lib/jobsNotifications.js';
 import { matchCandidate } from '../../lib/matching.js';
 import { fillL10n, staffVacancyInput, staffVacancyPatch, uniqueSlug, vacancyData } from '../../lib/vacancies.js';
@@ -172,6 +173,8 @@ adminVacanciesRouter.put('/policy', requireMinRole('ADMIN'), async (req, res) =>
 
 // Vacancy waitlist: demand per profession + CSV export (routes/admin/vacancyWaitlist.ts); before /:id.
 adminVacanciesRouter.use('/waitlist', adminVacancyWaitlistRouter);
+// Aktiv / Deaktiv: POST /active (bulk) and /:id/active; before /:id.
+adminVacanciesRouter.use(adminVacancyActiveRouter);
 
 adminVacanciesRouter.get('/:id', async (req, res) => {
   const vacancy = await prisma.vacancy.findUnique({

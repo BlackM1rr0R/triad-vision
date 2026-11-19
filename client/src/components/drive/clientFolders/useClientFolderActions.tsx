@@ -11,7 +11,7 @@ import type { MenuEntry } from '../ContextMenu';
 import type { ToolAction } from '../Toolbar';
 import type { DriveItem } from '../types';
 import { targetOf, targetsOf, type BulkResponse, type FolderTarget } from './api';
-import { applyStageFilter, stageKey, type StageFilter } from './stageFilter';
+import { applyStageFilter, stageKey, writtenEligible, type StageFilter } from './stageFilter';
 import { BulkStageDialog, PartnerPickerDialog, RemovePartnerDialog, ResultDialog, SendReadyDialog } from './Dialogs';
 
 /**
@@ -22,13 +22,15 @@ import { BulkStageDialog, PartnerPickerDialog, RemovePartnerDialog, ResultDialog
  *    (Fertig folders; re-send asks first) — and the same as toolbar actions of a selection;
  *  - the status filter bar above the listing (Schon geschrieben · In Bearbeitung · Fertig · Ablehnung · not in the
  *    workflow, counts) and "sort by status";
- *  - the result summary of every bulk action (n succeeded / failures with the reason).
+ *  - the result summary of every bulk action (n succeeded / failures with the reason);
+ *  - "Schon geschrieben": a prominent labelled toolbar button for the selected client folders not WRITTEN yet (one
+ *    confirm; next admin / note optional, folded away) and the same quick action on a client folder tile / row (hover).
  *
  * Drive.tsx only wires the pieces in. Permissions are the server's (partners:edit, cases:edit, documents:edit +
  * case scope per case); the menu greys out what the own permission matrix (GET /admin/me/permissions) refuses.
  */
 
-type DialogState = { kind: 'partner' | 'remove' | 'stage' | 'send'; targets: FolderTarget[] } | null;
+type DialogState = { kind: 'partner' | 'remove' | 'stage' | 'send' | 'quick'; targets: FolderTarget[]; skipped?: number } | null;
 
 const usePerms = () => {
   const { user } = useAuth();
@@ -51,7 +53,10 @@ export const useClientFolderActions = () => {
   const [filter, setFilter] = useState<StageFilter[]>([]);
   const [byStage, setByStage] = useState(false);
 
-  const open = useCallback((kind: NonNullable<DialogState>['kind'], targets: FolderTarget[]) => targets.length && setDialog({ kind, targets }), []);
+  const open = useCallback(
+    (kind: NonNullable<DialogState>['kind'], targets: FolderTarget[], skipped = 0) => targets.length && setDialog({ kind, targets, skipped }),
+    [],
+  );
   /** Failures (or several folders) show the summary; a clean single action only toasts. */
   const onResult = useCallback((r: BulkResponse) => {
     if (r.summary.failed || r.summary.total > 1) setResult(r);
@@ -98,12 +103,27 @@ export const useClientFolderActions = () => {
 
   /** Toolbar buttons of a selection of client folders (the menu has the rest). */
   const toolActions = (list: DriveItem[]): ToolAction[] => {
+    // "Schon geschrieben": every selected client folder not WRITTEN yet (also in a mixed selection; the rest is skipped
+    // and counted in the dialog). Hidden when none is eligible or without cases:edit.
+    const eligible = targetsOf(writtenEligible(list));
+    const quick: ToolAction[] =
+      eligible.length && can('cases', 'edit')
+        ? [
+            {
+              id: 'cf-quick-written',
+              icon: PenLine,
+              label: eligible.length > 1 ? `${t('clientFolders.stage.quick')} (${eligible.length})` : t('clientFolders.stage.quick'),
+              onClick: () => open('quick', eligible, list.length - eligible.length),
+              primary: true,
+              labelled: true,
+            },
+          ]
+        : [];
     const targets = targetsOf(list);
-    if (!targets.length || targets.length !== list.length) return [];
-    const out: ToolAction[] = [];
+    if (!targets.length || targets.length !== list.length) return quick;
+    const out: ToolAction[] = [...quick];
     const done = targets.filter((x) => x.stage === 'DONE');
     if (done.length && can('documents', 'edit')) out.push({ id: 'cf-send', icon: SendHorizontal, label: t('clientFolders.send.action'), onClick: () => open('send', done), primary: true });
-    if (targets.length > 1 && can('cases', 'edit')) out.push({ id: 'cf-written', icon: PenLine, label: t('clientFolders.stage.markWritten'), onClick: () => open('stage', targets), primary: true });
     if (can('partners', 'edit')) {
       const any = targets.some((x) => x.partner);
       out.push({ id: 'cf-partner', icon: Handshake, label: t(any ? 'clientFolders.partner.change' : 'clientFolders.partner.assign'), onClick: () => open('partner', targets), primary: targets.length > 1 });
@@ -175,6 +195,7 @@ export const useClientFolderActions = () => {
         {dialog?.kind === 'partner' && <PartnerPickerDialog targets={dialog.targets} onClose={() => setDialog(null)} onResult={onResult} />}
         {dialog?.kind === 'remove' && <RemovePartnerDialog targets={dialog.targets} onClose={() => setDialog(null)} onResult={onResult} />}
         {dialog?.kind === 'stage' && <BulkStageDialog targets={dialog.targets} onClose={() => setDialog(null)} onResult={onResult} />}
+        {dialog?.kind === 'quick' && <BulkStageDialog quick skipped={dialog.skipped} targets={dialog.targets} onClose={() => setDialog(null)} onResult={onResult} />}
         {dialog?.kind === 'send' && <SendReadyDialog targets={dialog.targets} onClose={() => setDialog(null)} onResult={onResult} />}
         {result && <ResultDialog result={result} onClose={() => setResult(null)} />}
       </>
@@ -182,5 +203,13 @@ export const useClientFolderActions = () => {
     [dialog, result, onResult],
   );
 
-  return { menuEntries, toolActions, filterItems, filterBar, dialogs, isClientFolder: (i: DriveItem) => !!targetOf(i) };
+  /** Hover action of one client folder tile / row (not WRITTEN yet; cases:edit): the same quick "Schon geschrieben". */
+  const quickWritten = can('cases', 'edit')
+    ? (item: DriveItem) => {
+        const targets = targetsOf(writtenEligible([item]));
+        if (targets.length) open('quick', targets);
+      }
+    : undefined;
+
+  return { menuEntries, toolActions, filterItems, filterBar, dialogs, quickWritten, isClientFolder: (i: DriveItem) => !!targetOf(i) };
 };

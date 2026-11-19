@@ -269,6 +269,8 @@ export interface SeoData {
   packages?: { slug: string; tier: string; title: unknown; summary: unknown; features: unknown; priceCents: number; currency: string; updatedAt: Date }[];
   /** Published study programmes (/study, /study/:slug, lib/study/seo.ts). Optional for older fixtures. */
   study?: StudySeoRow[];
+  /** Vacancies staff deactivated after publication (lib/vacancyActive.ts): page 200 but noindex, no JobPosting. Optional for older fixtures. */
+  closedJobs?: { slug: string; title: unknown; description: unknown; city: string | null }[];
   /** Anonymous candidate catalogue (/kandidaten, lib/candidateCatalogue): profession counts of the k-anonymous groups. Optional. */
   candidateCatalogue?: { professions: { profession: string; count: number }[]; total: number } | null;
 }
@@ -381,6 +383,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     candidateCatalogue: await getCatalogue().catch(() => null),
+    // Deactivated vacancies (CLOSED after publication): their pages stay reachable (lib/vacancyActive.ts).
+    closedJobs: await prisma.vacancy.findMany({ where: { status: 'CLOSED', publishedAt: { not: null } }, orderBy: { updatedAt: 'desc' }, take: 2000, select: { slug: true, title: true, description: true, city: true } }),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
     rating: count >= 3 && rating._avg.rating != null ? { count, average: Math.round(rating._avg.rating * 10) / 10 } : null,
   };
@@ -392,6 +396,15 @@ export const getSeoData = () => cached('seo:data', loadSeoData);
 export const liveJobs = (data: SeoData) => {
   const now = Date.now();
   return data.jobs.filter((j) => !j.closesAt || j.closesAt.getTime() > now);
+};
+
+/**
+ * A deactivated vacancy (staff closed it after publication) or an expired one: its page stays reachable (200) so
+ * links do not break, but it is noindex, has no JobPosting and is left out of the sitemap (lib/vacancyActive.ts).
+ */
+export const deactivatedJob = (data: SeoData, slug: string) => {
+  const now = Date.now();
+  return data.jobs.find((j) => j.slug === slug && j.closesAt && j.closesAt.getTime() <= now) ?? data.closedJobs?.find((j) => j.slug === slug) ?? null;
 };
 
 /** Indexable CMS items (the editor can mark a single item noindex). */
@@ -1386,7 +1399,23 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
 
   // jobs
   const job = liveJobs(data).find((j) => j.slug === slug);
-  if (!job) return generic;
+  if (!job) {
+    const off = deactivatedJob(data, slug);
+    if (!off) return generic;
+    const offName = collapse(pick(off.title, lng));
+    return {
+      ...cmsLanguages(off.title, path, lng),
+      title: pageTitle(off.city ? `${offName} — ${off.city}` : offName),
+      description: padDescription(pick(off.description, lng) || textIn(STATIC_PAGES['/jobs'].description, lng), DESCRIPTION_TAIL.jobs[contentLocale(off.title, lng)]),
+      index: false, // deactivated / expired: visible, applications closed, not in search results
+      image: null,
+      ogCard: null, // the generated job cards are for live vacancies only
+      ogType: 'website',
+      crumbs: crumbsFor(offName),
+      jsonLd: [],
+      extraMeta: [],
+    };
+  }
   const name = collapse(pick(job.title, lng));
   const where = job.city ? `${name} — ${job.city}` : name;
   return {
@@ -1457,7 +1486,7 @@ export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
           : section === 'news'
             ? data.posts.some((p) => p.slug === slug)
             : section === 'jobs'
-              ? liveJobs(data).some((j) => j.slug === slug)
+              ? liveJobs(data).some((j) => j.slug === slug) || !!deactivatedJob(data, slug)
               : section === 'events'
                 ? (data.events ?? []).some((e) => e.slug === slug && e.endsAt.getTime() > now)
                 : section === 'guides'

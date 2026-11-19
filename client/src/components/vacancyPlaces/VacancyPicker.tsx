@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { registerCopy } from '@/i18n';
 import { pagesVacancyPlaces } from '@/i18n/pagesVacancyPlaces';
 import { isFull } from './api';
+import { isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated: listed last, never selectable
 
 registerCopy(pagesVacancyPlaces);
 
@@ -22,7 +23,12 @@ export interface VacancyOption {
   positions: number;
   filled?: number;
   free?: number;
+  /** false: deactivated by staff / expired (GET /api/vacancies/options?closed=1, listed last; never selectable). */
+  active?: boolean;
 }
+
+/** Full or deactivated: listed, but cannot be picked. */
+export const unavailableOption = (v: VacancyOption) => isFull(v) || isDeactivated(v);
 
 /** "Fahrer · Hamburg · 3 boş yer" / "Fahrer · Hamburg — yer qalmayıb". */
 export const useVacancyOptionLabel = () => {
@@ -30,6 +36,7 @@ export const useVacancyOptionLabel = () => {
   const { tr } = useL10n();
   return (v: VacancyOption) => {
     const base = `${tr(v.title)}${v.city ? ` · ${v.city}` : ''}`;
+    if (isDeactivated(v)) return t('vacActive.closedOption', { title: base });
     if (isFull(v)) return t('vacPlaces.start.fullOption', { title: base });
     return v.free !== undefined ? `${base} · ${t('vacPlaces.left', { count: v.free })}` : base;
   };
@@ -77,7 +84,7 @@ export const VacancyOnlyPicker = ({
       <select id={id} className="input" value={value} required onChange={(e) => onChange(e.target.value)} aria-describedby={`${id}-hint`}>
         <option value="">{t('vacPlaces.start.choose')}</option>
         {vacancies.map((v) => (
-          <option key={v.id} value={v.id} disabled={isFull(v)}>
+          <option key={v.id} value={v.id} disabled={unavailableOption(v)}>
             {label(v)}
           </option>
         ))}

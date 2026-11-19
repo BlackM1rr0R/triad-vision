@@ -3,7 +3,7 @@ import { anon } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { uniq } from '../helpers/factories';
 
-/** Profession hubs (/for/:slug): open vacancies of the hub's canonical professions (routes/professionHubs.ts). */
+/** Profession hubs (/for/:slug): open (then deactivated) vacancies of the hub's canonical professions (routes/professionHubs.ts). */
 
 const l10n = (s: string) => ({ az: s, de: s, en: s, ru: s });
 const vacancy = (title: string, o: Record<string, unknown> = {}) =>
@@ -17,10 +17,19 @@ describe('GET /api/profession-hubs/:slug/vacancies', () => {
     await vacancy('LKW-Fahrer', { status: 'CLOSED' });
     await vacancy('Kurier', { profession: 'Kurierfahrer', closesAt: new Date(Date.now() - 1000) });
 
+    await vacancy('LKW-Fahrer Entwurf', { status: 'DRAFT', publishedAt: null });
+    await vacancy('LKW-Fahrer geprüft', { status: 'PENDING', publishedAt: null });
+
     const res = await anon().get('/api/profession-hubs/truck-driver/vacancies?lng=en').expect(200);
     expect(res.body.total).toBe(2);
-    expect(res.body.items.map((i: { title: string }) => i.title)).toEqual(['Bus driver', 'LKW-Fahrer CE']);
-    expect(Object.keys(res.body.items[0]).sort()).toEqual(['city', 'employmentType', 'free', 'publishedAt', 'salaryMax', 'salaryMin', 'slug', 'title']);
+    const items = res.body.items as { title: string; active: boolean }[];
+    // Open ones first; deactivated (CLOSED after publication) ones after them, flagged; drafts / pending never.
+    expect(items.slice(0, 2).map((i) => i.title)).toEqual(['Bus driver', 'LKW-Fahrer CE']);
+    expect(items.slice(0, 2).every((i) => i.active)).toBe(true);
+    expect(items.find((i) => i.title === 'LKW-Fahrer')?.active).toBe(false);
+    expect(items.slice(2).every((i) => !i.active)).toBe(true);
+    expect(items.some((i) => /Entwurf|geprüft/.test(i.title))).toBe(false);
+    expect(Object.keys(res.body.items[0]).sort()).toEqual(['active', 'city', 'employmentType', 'free', 'publishedAt', 'salaryMax', 'salaryMin', 'slug', 'title']);
     expect(res.body.withFreePlaces).toBe(2); // free places (the page offers the vacancy waitlist at 0)
 
     const cook = await anon().get('/api/profession-hubs/cook/vacancies').expect(200);

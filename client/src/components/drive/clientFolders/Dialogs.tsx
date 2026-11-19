@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { CheckCircle2, FileText, Handshake, Search, SendHorizontal, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronDown, FileText, Handshake, PenLine, Search, SendHorizontal, XCircle } from 'lucide-react';
 import { Modal } from '@/components/admin/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime } from '@/components/admin/labels';
@@ -180,12 +180,28 @@ export const RemovePartnerDialog = ({ targets, onClose, onResult }: { targets: F
 // ─── Bulk stage ───────────────────────────────────────────────────────
 
 /** "Schon geschrieben kimi işarələ" for one or several folders: next admin + note, the server's move rules per case. */
-export const BulkStageDialog = ({ targets, onClose, onResult }: { targets: FolderTarget[]; onClose: () => void; onResult: (r: BulkResponse) => void }) => {
+export const BulkStageDialog = ({
+  targets,
+  onClose,
+  onResult,
+  quick,
+  skipped = 0,
+}: {
+  targets: FolderTarget[];
+  onClose: () => void;
+  onResult: (r: BulkResponse) => void;
+  /** The toolbar / tile "Schon geschrieben" quick action: one confirm button; next admin + note folded away (default none). */
+  quick?: boolean;
+  /** Selected items left out (already WRITTEN, not a client folder). */
+  skipped?: number;
+}) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const staff = useStaffOptions();
   const [assigneeId, setAssigneeId] = useState('');
   const [note, setNote] = useState('');
+  const [more, setMore] = useState(!quick);
+  const submitRef = useRef<HTMLButtonElement>(null);
   const { busy, run } = useRun(onResult);
   const formId = 'cf-stage';
   return (
@@ -195,13 +211,15 @@ export const BulkStageDialog = ({ targets, onClose, onResult }: { targets: Folde
       title={t('clientFolders.stage.bulkTitle')}
       description={<TargetsLine targets={targets} />}
       busy={busy}
+      size={quick ? 'sm' : undefined}
+      initialFocus={quick ? submitRef : undefined}
       footer={
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('clientFolders.cancel')}
           </button>
-          <button type="submit" form={formId} className="btn-primary btn-sm" disabled={busy}>
-            {busy && <Spinner className="size-3.5" />} {t('driveProcessing.dialog.send')}
+          <button ref={submitRef} type="submit" form={formId} className="btn-primary btn-sm" disabled={busy}>
+            {busy ? <Spinner className="size-3.5" /> : quick && <PenLine className="size-3.5" aria-hidden />} {t(quick ? 'clientFolders.stage.quickConfirm' : 'driveProcessing.dialog.send')}
           </button>
         </div>
       }
@@ -224,23 +242,32 @@ export const BulkStageDialog = ({ targets, onClose, onResult }: { targets: Folde
             ))}
           </ul>
         )}
-        <label className="block">
-          <span className="label">{t('driveProcessing.dialog.nextAdmin')}</span>
-          <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
-            <option value="">{t('driveProcessing.dialog.nobody')}</option>
-            {(staff.data ?? [])
-              .filter((s) => s.id !== user?.id)
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {`${s.firstName} ${s.lastName}`.trim()}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="label">{t('driveProcessing.dialog.noteOptional')}</span>
-          <textarea className="input min-h-16" maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('driveProcessing.dialog.notePh')} />
-        </label>
+        {skipped > 0 && <p className="text-xs text-muted">{t('clientFolders.stage.quickSkipped', { count: skipped })}</p>}
+        {more ? (
+          <>
+            <label className="block">
+              <span className="label">{t('driveProcessing.dialog.nextAdmin')}</span>
+              <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+                <option value="">{t('driveProcessing.dialog.nobody')}</option>
+                {(staff.data ?? [])
+                  .filter((s) => s.id !== user?.id)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {`${s.firstName} ${s.lastName}`.trim()}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="label">{t('driveProcessing.dialog.noteOptional')}</span>
+              <textarea className="input min-h-16" maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('driveProcessing.dialog.notePh')} />
+            </label>
+          </>
+        ) : (
+          <button type="button" className="inline-flex items-center gap-1 text-xs font-medium text-link hover:underline" aria-expanded={false} onClick={() => setMore(true)}>
+            <ChevronDown className="size-3.5" aria-hidden /> {t('clientFolders.stage.quickMore')}
+          </button>
+        )}
         <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('clientFolders.stage.bulkHint')}</p>
       </form>
     </Modal>

@@ -669,13 +669,14 @@ describe('HTTP status for crawlers (pageStatus)', () => {
   });
 
   it('answers 404 for unknown paths and for missing, closed or past content', () => {
-    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/jobs/nonexistent', '/jobs/expired', '/events/past', '/de/news/nope', '/guides/nope', '/ebook/nope', '/l/nope', '/de/xx/yy', '/fr/visas', '/about/extra', '/Visas', '/visas/lkw/more']) {
+    for (const p of ['/this-does-not-exist', '/visas/nonexistent', '/jobs/nonexistent', '/events/past', '/de/news/nope', '/guides/nope', '/ebook/nope', '/l/nope', '/de/xx/yy', '/fr/visas', '/about/extra', '/Visas', '/visas/lkw/more']) {
       expect(pageStatus(p, data), p).toBe(404);
     }
   });
 
   it("answers 200 for existing content, also when it is noindex or another language's guide slug", () => {
-    for (const p of ['/visas/lkw', '/de/services/recruiting', '/ru/news/law', '/jobs/open', '/uk/events/soon', '/guides/almaniya-imkan-karti', '/de/guides/almaniya-imkan-karti']) {
+    // Expired / deactivated vacancies keep their page (200, noindex; lib/vacancyActive.ts) so links do not break.
+    for (const p of ['/visas/lkw', '/de/services/recruiting', '/ru/news/law', '/jobs/open', '/jobs/expired', '/uk/events/soon', '/guides/almaniya-imkan-karti', '/de/guides/almaniya-imkan-karti']) {
       expect(pageStatus(p, data), p).toBe(200);
     }
   });

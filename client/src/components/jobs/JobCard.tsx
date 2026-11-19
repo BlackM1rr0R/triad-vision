@@ -9,6 +9,7 @@ import { useMorphSource } from '@/lib/viewTransition';
 import { vacancyImageSrcSet, vacancyImages } from './images';
 import { CompanyLogo } from './CompanyLogo';
 import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // "3 boş yer" / "Yer qalmayıb"
+import { DeactivatedBadge, isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // "Deaktiv — müraciət qəbul olunmur"
 
 /** Vacancy card on the public board. */
 export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string }) => {
@@ -18,6 +19,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
   // The card grows into the vacancy page's hero and its title moves into the hero title (lib/viewTransition.ts).
   const morph = useMorphSource('job', v.slug);
   const cover = vacancyImages(v)[0];
+  const off = isDeactivated(v);
   return (
     <Link
       ref={morph.ref}
@@ -26,6 +28,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
       to={`/jobs/${v.slug}`}
       className={clsx(
         'group card card-interactive flex h-full flex-col rounded-3xl p-5 sm:p-6',
+        off && 'opacity-80 grayscale-[35%]',
         className,
       )}
     >
@@ -51,7 +54,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
           <div className="flex flex-wrap items-center gap-1.5">
             {v.sector && <span className="badge chip-sky">{L.sector(v.sector)}</span>}
             <span className="badge bg-sunken text-muted">{L.employmentType(v.employmentType)}</span>
-            <PlacesBadge v={v} />
+            {off ? <DeactivatedBadge long /> : <PlacesBadge v={v} />}
           </div>
           <h3 {...morph.part('title')} className="mt-3 w-fit font-display text-lg leading-snug font-semibold break-words text-ink group-hover:text-link">
             {L.title(v.title)}

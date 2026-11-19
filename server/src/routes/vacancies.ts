@@ -27,6 +27,7 @@ import { jobLandingTexts, jobLandings, landingOfJob, relatedLandings, type JobLa
 import { assertApplicable, placesFor, withApplicableVacancy } from '../lib/vacancyPlaces/service.js'; // free places + race-safe apply
 import { computePlaces, fullLast, type Places } from '../lib/vacancyPlaces/places.js';
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js';
+import { DEACTIVATED_LIST_CAP, deactivatedVacancyWhere, isPubliclyVisible } from '../lib/vacancyActive.js'; // deactivated: listed after the open ones, no apply
 
 // Public vacancy board + candidate applications — mounted at /api/vacancies
 export const vacanciesRouter = Router();
@@ -39,11 +40,18 @@ const publicInclude = {
   visaCategory: { select: { slug: true, title: true, visaLabel: true, germanLevel: true } },
 } as const;
 
-/** Public shape plus the free places (positions / filled / free, lib/vacancyPlaces). */
+/**
+ * Public shape plus the free places (positions / filled / free, lib/vacancyPlaces) and `active` (false: deactivated
+ * by staff or expired — shown with a "Deaktiv" badge, applications closed; lib/vacancyActive.ts).
+ */
 const publicWithPlaces = (v: Parameters<typeof publicVacancy>[0], places: Places | undefined) => ({
   ...publicVacancy(v),
   ...(places ?? computePlaces(v, 0)),
+  active: isOpen(v),
 });
+
+/** `?closed=1`: deactivated vacancies are appended after the open ones. */
+const closedFlag = z.enum(['0', '1', 'true', 'false']).optional().transform((v) => v === '1' || v === 'true');
 
 /** Only candidates use the board's personal features; employers and staff have their own tools. */
 export const requireCandidate: RequestHandler = (req, _res, next) => {
@@ -113,10 +121,11 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
       sort: z.enum(SORTS).default('newest'),
       page: z.coerce.number().int().min(1).max(500).default(1),
       pageSize: z.coerce.number().int().min(1).max(48).default(12),
+      closed: closedFlag,
     }),
     req.query,
   );
-  const and: Prisma.VacancyWhereInput[] = [openVacancyWhere()];
+  const and: Prisma.VacancyWhereInput[] = [];
   if (q.sector) and.push({ sector: q.sector });
   if (q.city) and.push({ city: { contains: q.city } });
   if (q.employmentType) and.push({ employmentType: q.employmentType });
@@ -136,7 +145,7 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
       ],
     });
   }
-  const where: Prisma.VacancyWhereInput = { AND: and };
+  const where: Prisma.VacancyWhereInput = { AND: [openVacancyWhere(), ...and] };
   const orderBy: Prisma.VacancyOrderByWithRelationInput[] =
     q.sort === 'salary'
       ? [{ salaryMax: { sort: 'desc', nulls: 'last' } }, { salaryMin: { sort: 'desc', nulls: 'last' } }, { publishedAt: 'desc' }]
@@ -148,10 +157,15 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
   const ORDERED_CAP = 2000;
   const ordered = await prisma.vacancy.findMany({ where, orderBy, take: ORDERED_CAP, select: { id: true, positions: true, filledAdjustment: true } });
   const places = await placesFor(ordered);
-  const pageIds = fullLast(ordered, (v) => (places.get(v.id)?.free ?? 0) <= 0)
-    .slice((q.page - 1) * q.pageSize, q.page * q.pageSize)
-    .map((v) => v.id);
-  const [rows, total, sectors, cities] = await Promise.all([
+  // Deactivated / expired ones (same filters) after all open ones, most recently changed first (lib/vacancyActive.ts).
+  const closed = q.closed
+    ? await prisma.vacancy.findMany({ where: { AND: [deactivatedVacancyWhere(), ...and] }, orderBy: [{ updatedAt: 'desc' }], take: DEACTIVATED_LIST_CAP, select: { id: true, positions: true, filledAdjustment: true } })
+    : [];
+  const pageList = [...fullLast(ordered, (v) => (places.get(v.id)?.free ?? 0) <= 0), ...closed].slice((q.page - 1) * q.pageSize, q.page * q.pageSize);
+  const pageIds = pageList.map((v) => v.id);
+  const closedOnPage = pageList.filter((v) => !places.has(v.id));
+  if (closedOnPage.length) for (const [id, p] of await placesFor(closedOnPage)) places.set(id, p);
+  const [rows, openTotal, sectors, cities] = await Promise.all([
     prisma.vacancy.findMany({ where: { id: { in: pageIds } }, include: publicInclude }),
     // Below the cap the list above already holds every match: no second run of the same filter.
     ordered.length < ORDERED_CAP ? Promise.resolve(ordered.length) : prisma.vacancy.count({ where }),
@@ -163,7 +177,8 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=30');
   res.json({
     items: items.map((v) => publicWithPlaces(v, places.get(v.id))),
-    total,
+    total: openTotal + closed.length,
+    openTotal,
     page: q.page,
     pageSize: q.pageSize,
     facets: {
@@ -177,17 +192,18 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
  * Open vacancies for pickers (the client's "start application": the target job is one of our vacancies), with their
  * free places; full ones are listed last (shown, but not selectable).
  */
-vacanciesRouter.get('/options', publicLimiter, async (_req, res) => {
-  const rows = await prisma.vacancy.findMany({
-    where: openVacancyWhere(),
-    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-    take: 300,
-    select: { id: true, slug: true, title: true, city: true, profession: true, visaCategoryId: true, employmentType: true, positions: true, filledAdjustment: true },
-  });
-  const places = await placesFor(rows);
-  const items = rows.map(({ filledAdjustment: _adj, ...v }) => ({ ...v, ...(places.get(v.id) ?? computePlaces(v, 0)) }));
+vacanciesRouter.get('/options', publicLimiter, async (req, res) => {
+  const q = parse(z.object({ closed: closedFlag }), req.query);
+  const select = { id: true, slug: true, title: true, city: true, profession: true, visaCategoryId: true, employmentType: true, positions: true, filledAdjustment: true } as const;
+  const [rows, closedRows] = await Promise.all([
+    prisma.vacancy.findMany({ where: openVacancyWhere(), orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }], take: 300, select }),
+    // `?closed=1`: deactivated ones last, flagged `active: false` (shown, never selectable; lib/vacancyActive.ts).
+    q.closed ? prisma.vacancy.findMany({ where: deactivatedVacancyWhere(), orderBy: [{ updatedAt: 'desc' }], take: 100, select }) : Promise.resolve([]),
+  ]);
+  const places = await placesFor([...rows, ...closedRows]);
+  const shape = (active: boolean) => ({ filledAdjustment: _adj, ...v }: (typeof rows)[number]) => ({ ...v, ...(places.get(v.id) ?? computePlaces(v, 0)), active });
   res.setHeader('Cache-Control', 'public, max-age=30');
-  res.json({ items: fullLast(items, (v) => v.free <= 0) });
+  res.json({ items: [...fullLast(rows.map(shape(true)), (v) => v.free <= 0), ...closedRows.map(shape(false))] });
 });
 
 /**
@@ -238,14 +254,15 @@ const landingLinkOf = async (v: { city: string | null; profession: string | null
   return own ? { path: own.path, label: Object.fromEntries(SEO_LOCALES.map((l) => [l, jobLandingTexts(own, l, null).linkLabel])) } : null;
 };
 
-const loadOpen = async (slug: string) => {
+/** Open or deactivated (drafts, pending and never-published ones: 404; lib/vacancyActive.ts). */
+const loadVisible = async (slug: string) => {
   const v = await prisma.vacancy.findUnique({ where: { slug }, include: publicInclude });
-  if (!v || !isOpen(v)) throw notFound('VACANCY_NOT_FOUND');
+  if (!v || !isPubliclyVisible(v)) throw notFound('VACANCY_NOT_FOUND');
   return v;
 };
 
 vacanciesRouter.get('/:slug', publicLimiter, async (req, res) => {
-  const v = await loadOpen(String(req.params.slug));
+  const v = await loadVisible(String(req.params.slug));
   res.setHeader('Cache-Control', 'public, max-age=30');
   const places = await placesFor([v]);
   res.json({ vacancy: { ...publicWithPlaces(v, places.get(v.id)), landing: await landingLinkOf(v) } });
@@ -253,7 +270,7 @@ vacanciesRouter.get('/:slug', publicLimiter, async (req, res) => {
 
 /** The signed-in candidate's view of a vacancy: match score, gaps and their application (if any). */
 vacanciesRouter.get('/:slug/me', requireAuth, requireCandidate, async (req, res) => {
-  const v = await loadOpen(String(req.params.slug));
+  const v = await loadVisible(String(req.params.slug));
   const [user, application] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } }),
     prisma.vacancyApplication.findUnique({

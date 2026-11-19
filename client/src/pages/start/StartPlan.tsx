@@ -75,6 +75,8 @@ interface HubVacancy {
   city: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  /** false: deactivated (server lib/vacancyActive.ts); the plan only shows open ones. */
+  active?: boolean;
 }
 
 /** Current vacancies of the profession hub (same API as /for/<slug>). */
@@ -100,9 +102,9 @@ const Vacancies = ({ hub }: { hub: NonNullable<Plan['hub']> }) => {
             <div key={i} className="card h-24 animate-pulse" />
           ))}
         </div>
-      ) : data?.items.length ? (
+      ) : data?.items.some((v) => v.active !== false) ? (
         <ul className="mt-4 grid gap-3 md:grid-cols-3">
-          {data.items.slice(0, 3).map((v) => (
+          {data.items.filter((v) => v.active !== false).slice(0, 3).map((v) => (
             <li key={v.slug}>
               <Link to={`/jobs/${v.slug}`} className="card card-interactive block h-full p-4">
                 <p className="font-semibold text-ink">{v.title}</p>
@@ -126,7 +128,7 @@ const Vacancies = ({ hub }: { hub: NonNullable<Plan['hub']> }) => {
         <p className="card card-pad mt-4 text-muted">{t('startHere.plan.jobsEmpty')}</p>
       )}
       {/* No vacancy of the profession with a free place: the vacancy waitlist (server lib/jobAlerts/waitlist.ts). */}
-      {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-4" only={hubBySlug(hub)?.professions} full={data.items.length > 0} />}
+      {data && (data.withFreePlaces ?? data.items.length) === 0 && <WaitlistForm className="mt-4" only={hubBySlug(hub)?.professions} full={data.items.some((v) => v.active !== false)} />}
       <Link to={`/for/${hub}`} className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-link hover:underline">
         {t('startHere.plan.jobsAll')} <ArrowRight className="size-4" aria-hidden />
       </Link>

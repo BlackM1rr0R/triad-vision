@@ -43,6 +43,8 @@ export interface PublicVacancy {
   visaCategory: { slug: string; title: L10n; visaLabel: string } | null;
   /** Cover (first) + gallery photos; re-encoded WebP with -480 / -960 width variants (server lib/vacancyImages.ts). */
   images?: VacancyImage[] | null;
+  /** false: deactivated by staff or expired — listed after the open ones, no apply (server lib/vacancyActive.ts). Optional for older payloads. */
+  active?: boolean;
   /** GET /api/vacancies/:slug only: its profession × city page (/jobs/in/:city/:profession), link text per language. */
   landing?: { path: string; label: Partial<Record<string, string>> } | null;
 }
@@ -63,6 +65,8 @@ export interface VacancyImage {
 export interface VacancyList {
   items: PublicVacancy[];
   total: number;
+  /** Open ones among `total` (the rest are deactivated, only with ?closed=1). */
+  openTotal?: number;
   page: number;
   pageSize: number;
   facets: { sectors: { value: Sector; count: number }[]; cities: { value: string; count: number }[] };
