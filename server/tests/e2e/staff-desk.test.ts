@@ -4,6 +4,7 @@ import { prisma } from '../helpers/db';
 import { act, createCaseVia, expectStatus } from '../helpers/workflow';
 import { asCompany } from './vacancies.fixtures';
 import { cleanOps, inHours } from './ops.fixtures';
+import { bakuWeekRange } from '../../src/lib/workload'; // this week's appointment (not 'in an hour': Sunday night that is next week)
 
 /** Staff desk round: client 360°, team workload board, embassy calendar layer, canned replies. */
 
@@ -76,7 +77,7 @@ describe('workload board', () => {
     const c1 = await createCaseVia(client.agent);
     const c2 = await createCaseVia((await asClient()).agent);
     await prisma.case.updateMany({ where: { id: { in: [c1.id, c2.id] } }, data: { assignedStaffId: busy.user.id } });
-    await prisma.case.update({ where: { id: c1.id }, data: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: new Date(Date.now() + 60 * 60 * 1000), appointmentPlace: 'Botschaft' } });
+    await prisma.case.update({ where: { id: c1.id }, data: { status: 'APPOINTMENT_SCHEDULED', appointmentAt: new Date(bakuWeekRange().from.getTime() + 60 * 60 * 1000), appointmentPlace: 'Botschaft' } });
     await prisma.caseMessage.create({ data: { caseId: c1.id, authorId: busy.user.id, body: 'Salam', createdAt: new Date(Date.now() - 2 * DAY) } });
     await prisma.caseMessage.create({ data: { caseId: c1.id, authorId: client.user.id, body: 'Sualım var' } });
     await prisma.task.create({ data: { number: 1, title: 'Gecikən', dueAt: new Date(Date.now() - DAY), createdById: admin.user.id, assignees: { create: { userId: busy.user.id } } } });
