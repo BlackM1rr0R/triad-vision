@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { SUBMIT_DOCS_EVENT } from '@/components/portal/submitDocsEvent';
 import { useMotionValueEvent, useScroll } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -22,6 +23,7 @@ export function NextUpCard({ next, variant = 'hero', caseLink, tour }: { next: N
   const { t } = useTranslation();
   const { hero, items, loading } = next;
   const compact = variant === 'compact';
+  const location = useLocation();
 
   if (loading && !hero) {
     return (
@@ -99,6 +101,15 @@ export function NextUpCard({ next, variant = 'hero', caseLink, tour }: { next: N
         {client ? (
           <Link
             to={hero.to}
+            onClick={(e) => {
+              // Already on the target page (the sticky bar on the case page): a link to itself does nothing, so
+              // scroll to the section and, for "submit", open the submit confirmation directly.
+              const url = new URL(hero.to, window.location.origin);
+              if (url.pathname !== location.pathname) return;
+              e.preventDefault();
+              if (url.hash) document.getElementById(decodeURIComponent(url.hash.slice(1)))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              if (hero.reason === 'SUBMIT_DOCS') window.dispatchEvent(new Event(SUBMIT_DOCS_EVENT));
+            }}
             title={compact ? hero.action : undefined}
             // Phones, sticky bar: an arrow button so the sentence keeps the width (the label stays for screen readers).
             className={buttonClass({ size: compact ? 'sm' : 'lg', className: clsx('shrink-0', compact ? 'min-h-10 max-sm:size-10 max-sm:px-0' : 'w-full sm:w-auto') })}

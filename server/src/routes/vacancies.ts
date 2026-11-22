@@ -19,7 +19,7 @@ import {
   openVacancyWhere,
   publicVacancy,
 } from '../lib/vacancies.js';
-import { caseParentFor, syncApplicationFolder, vacancyProfession } from '../lib/drive/vacancyFolders.js';
+import { caseParentFor, syncApplicationFolder, vacancyProfession, visaCategoryIdForVacancy } from '../lib/drive/vacancyFolders.js';
 import { createCase, FINAL_STATUSES } from '../lib/caseFlow.js'; // applying = starting the client's one visa application (case)
 import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
 import { recordApiAttribution } from '../lib/publicApi/keys.js'; // partner API apply links (tv_src cookie)
@@ -345,15 +345,13 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     if (linked) await audit(req, 'APPLICATION_VAULT_DOCS_LINKED', `application:${application.id}`, { vaultIds: picked.map((d) => d.id) });
     const sentDocs = [...(uploads?.documents ?? []), ...picked];
     // The visa application (case) for this vacancy: the uploads above join it (lib/applicationUploads on case creation).
-    // The applicant folder first: the client folder of the case goes inside it (caseParentFor).
-    await syncApplicationFolder(application.id, { summary: true });
     let caseId: string | null = null;
     let caseNumber: string | null = null;
     try {
       const created = await createCase(user.id, {
         profession: vacancyProfession(v),
         visaType: visaTypeOfVacancy(v),
-        visaCategoryId: v.visaCategoryId ?? null,
+        visaCategoryId: await visaCategoryIdForVacancy(v.id), // vacancy's category, else its sector's (logistics → §19c)
         vacancyId: v.id,
         driveParentId: await caseParentFor({ vacancyId: v.id, userId: user.id }),
         // One staff notice per application (the vacancy one below, with the match score and the case number).
@@ -370,7 +368,7 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
       caseId = (await activeMainCase(user.id))?.id ?? null;
     }
     // The applicant's folder in the vacancy's drive folder: summary, CV, the files sent (lib/drive/vacancyFolders.ts).
-    // (applicant folder already synced above, before the case was created)
+    await syncApplicationFolder(application.id, { summary: true }); // inside the case's client folder in Anträge
     // Came through a partner's public-API apply link (cookie tv_src): attribution for the partner's usage stats.
     void recordApiAttribution(req, application.id, v.id);
     await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);

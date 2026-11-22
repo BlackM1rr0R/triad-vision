@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { DocStatusBadge } from './StatusBadge';
 import { FileDrop } from './FileDrop';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useApiError } from './useApiError';
+import { SUBMIT_DOCS_EVENT } from './submitDocsEvent';
 import { celebrate } from '@/components/motion/celebrate';
 // Document vault + automatic checks: client-side check before upload, "choose from my vault", server check result.
 import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
@@ -436,6 +437,15 @@ export const CaseDocuments = ({
   const missing = required.filter((r) => !isSatisfied(r));
   const doneCount = required.length - missing.length;
   const pct = required.length ? Math.round((doneCount / required.length) * 100) : 100;
+
+  // The "Yoxlamaya göndər" button of the next-step bar on the same page (NextUpCard) opens the same confirmation.
+  const canSubmit = open && missing.length === 0 && !submitting;
+  useEffect(() => {
+    if (!canSubmit) return;
+    const onSubmitDocs = () => setConfirmSubmit(true);
+    window.addEventListener(SUBMIT_DOCS_EVENT, onSubmitDocs);
+    return () => window.removeEventListener(SUBMIT_DOCS_EVENT, onSubmitDocs);
+  }, [canSubmit]);
 
   const submit = async () => {
     setSubmitting(true);

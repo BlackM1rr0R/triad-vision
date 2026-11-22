@@ -13,6 +13,18 @@ type Agent = Awaited<ReturnType<typeof asStaff>>['agent'];
 const children = async (agent: Agent, id: string) =>
   (await agent.get(`/api/drive/nodes/${encodeURIComponent(id)}/children`)).body as { items: { id: string; name: string; kind: string; size: number | null }[]; path: { id: string; name: string }[] };
 
+/** Names of the folders above a node, root first ("Gemeinsame Dokumente", "Anträge", …). */
+const ancestors = async (id: string) => {
+  const names: string[] = [];
+  let cur = (await prisma.driveNode.findUniqueOrThrow({ where: { id } })).parentId;
+  while (cur) {
+    const n = await prisma.driveNode.findUniqueOrThrow({ where: { id: cur } });
+    names.unshift(n.name);
+    cur = n.parentId;
+  }
+  return names;
+};
+
 const sharedRoot = async (agent: Agent) => (await agent.get('/api/drive/roots')).body.shared.id as string;
 
 beforeEach(cleanJobs);
@@ -48,9 +60,15 @@ describe('vacancy ↔ drive folder', () => {
     expect((await agent.put(`/api/admin/vacancies/${old.id}/folder`).send({ newFolder: { name: '???' } })).status).toBe(400);
   });
 
-  it('collects a public application in a per-applicant folder: summary, files (hard-linked), case folder inside', async () => {
+  it('applying puts the client folder in Anträge (category from the sector) and the application folder inside it', async () => {
     const staff = await asStaff();
-    const v = await createVacancy();
+    // No category on the vacancy: its sector (logistics) picks §19c LKW-Fahrer.
+    await prisma.visaCategory.upsert({
+      where: { slug: 'lkw-fahrer' },
+      update: {},
+      create: { slug: 'lkw-fahrer', icon: 'Truck', image: '', visaLabel: '§19c', title: { de: 'LKW-Fahrer', az: 'LKW sürücüsü' }, summary: {}, items: {}, body: {} },
+    });
+    const v = await createVacancy({ visaCategoryId: null, sector: 'logistics' });
     const folder = (await staff.agent.put(`/api/admin/vacancies/${v.id}/folder`).send({ newFolder: { name: 'LKW Hamburg' } })).body.folder;
     const cand = await asCandidate({ firstName: 'Ali', lastName: 'Məmmədov' });
 
@@ -67,10 +85,14 @@ describe('vacancy ↔ drive folder', () => {
       expect((await prisma.vacancyApplication.findUniqueOrThrow({ where: { id: res.body.application.id } })).driveFolderId).toBeTruthy();
     });
     const app = await prisma.vacancyApplication.findUniqueOrThrow({ where: { id: res.body.application.id } });
-    const inVacancy = await children(staff.agent, folder.id);
     const day = app.createdAt.toISOString().slice(0, 10);
-    expect(inVacancy.items).toEqual([expect.objectContaining({ id: app.driveFolderId, name: `Məmmədov Ali – ${day}`, kind: 'FOLDER' })]);
-    // Applying also started the case (one active application): its client folder sits in the applicant folder too.
+    // Nothing lands in the vacancy folder any more: every visa application lives in Anträge.
+    expect((await children(staff.agent, folder.id)).items).toEqual([]);
+    const c = await prisma.case.findUniqueOrThrow({ where: { id: res.body.caseId } });
+    expect(c).toMatchObject({ vacancyId: v.id, driveParentId: null, profession: 'LKW-Fahrer' });
+    expect(await ancestors(c.driveFolderId!)).toEqual(['Gemeinsame Dokumente', 'Anträge', 'Arbeitsvisum', '§19c · LKW-Fahrer']);
+    const appNode = await prisma.driveNode.findUniqueOrThrow({ where: { id: app.driveFolderId! } });
+    expect(appNode).toMatchObject({ parentId: c.driveFolderId, name: `Bewerbung – LKW-Fahrer de – Hamburg – ${day}` });
     const files = (await children(staff.agent, app.driveFolderId!)).items.filter((i) => i.kind === 'FILE').map((i) => i.name).sort();
     expect(files).toEqual(['Bewerbung.pdf', 'Lebenslauf – cv.pdf', 'Reisepass – pass.pdf']);
 
@@ -82,27 +104,20 @@ describe('vacancy ↔ drive folder', () => {
 
     // Detail shows the applicant folder on the application.
     const detail = (await staff.agent.get(`/api/admin/vacancies/${v.id}`)).body.vacancy;
-    expect(detail.applications[0].folder).toMatchObject({ id: app.driveFolderId, path: `Gemeinsame Dokumente / Stellenangebote / LKW Hamburg / Məmmədov Ali – ${day}` });
+    expect(detail.applications[0].folder).toMatchObject({ id: app.driveFolderId, path: expect.stringContaining('Anträge / Arbeitsvisum / §19c · LKW-Fahrer / ') });
 
     // Re-running the sync does not duplicate anything.
     await staff.agent.put(`/api/admin/vacancies/applications/${app.id}/folder`).send({ folderId: null });
     await waitForVacancyFolders();
     expect((await children(staff.agent, app.driveFolderId!)).items.filter((i) => i.kind === 'FILE')).toHaveLength(3);
 
-    // Accepted → "open case": the case from the application, its client folder inside the applicant folder.
+    // Accepted → "open case" links the case applying already started.
     await prisma.vacancyApplication.update({ where: { id: app.id }, data: { status: 'ACCEPTED' } });
     // Applying already started the case (one active application): "open case" links that same case.
     const kase = await staff.agent.post(`/api/admin/candidates/applications/${app.id}/case`).send({});
     expect(kase.status, JSON.stringify(kase.body)).toBe(200);
     expect(kase.body).toMatchObject({ created: false, case: { id: res.body.caseId } });
-    await vi.waitFor(async () => {
-      expect((await prisma.case.findUniqueOrThrow({ where: { id: kase.body.case.id } })).driveFolderId).toBeTruthy();
-    });
-    const c = await prisma.case.findUniqueOrThrow({ where: { id: kase.body.case.id } });
-    expect(c).toMatchObject({ vacancyId: v.id, driveParentId: app.driveFolderId, profession: 'LKW-Fahrer' });
-    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: c.driveFolderId! } })).parentId).toBe(app.driveFolderId);
     const caseView = (await staff.agent.get(`/api/admin/cases/${c.id}`)).body.case;
-    expect(caseView.driveFolders.parent).toMatchObject({ id: app.driveFolderId });
     expect(caseView.driveFolders.folder).toMatchObject({ id: c.driveFolderId });
     // The client never sees the internal placement.
     expect((await cand.agent.get(`/api/cases/${c.id}`)).body.case.driveParentId).toBeUndefined();
@@ -114,18 +129,20 @@ describe('vacancy ↔ drive folder', () => {
     const cand = await asCandidate({ firstName: 'Nigar', lastName: 'Əliyeva' });
     const applied = await cand.agent.post(`/api/vacancies/${v.slug}/apply`).send({ message: 'Hi' });
     expect(applied.status).toBe(201);
-    await waitForVacancyFolders();
-    // No folder for the vacancy: nothing was created.
-    expect((await prisma.vacancyApplication.findUniqueOrThrow({ where: { id: applied.body.application.id } })).driveFolderId).toBeNull();
-
-    const vf = (await staff.agent.put(`/api/admin/vacancies/${v.id}/folder`).send({ newFolder: {} })).body.folder;
-    expect(vf.name).toBe('LKW-Fahrer de – Hamburg'); // fixture title: l10n('LKW-Fahrer') = "LKW-Fahrer de"
     await vi.waitFor(async () => {
       await waitForVacancyFolders();
       expect((await prisma.vacancyApplication.findUniqueOrThrow({ where: { id: applied.body.application.id } })).driveFolderId).toBeTruthy();
     });
+    // Applying opened the case: the application folder sits in its client folder, even without a vacancy folder.
     const appFolder = (await prisma.vacancyApplication.findUniqueOrThrow({ where: { id: applied.body.application.id } })).driveFolderId!;
-    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: appFolder } })).parentId).toBe(vf.id);
+    const kase = await prisma.case.findUniqueOrThrow({ where: { id: applied.body.caseId } });
+    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: appFolder } })).parentId).toBe(kase.driveFolderId);
+
+    // Linking a vacancy folder later leaves it there (the client folder wins over the vacancy folder).
+    const vf = (await staff.agent.put(`/api/admin/vacancies/${v.id}/folder`).send({ newFolder: {} })).body.folder;
+    expect(vf.name).toBe('LKW-Fahrer de – Hamburg'); // fixture title: l10n('LKW-Fahrer') = "LKW-Fahrer de"
+    await waitForVacancyFolders();
+    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: appFolder } })).parentId).toBe(kase.driveFolderId);
 
     // Override: the applicant folder moves (same folder, files kept).
     const shared = await sharedRoot(staff.agent);
@@ -133,7 +150,7 @@ describe('vacancy ↔ drive folder', () => {
     const put = await staff.agent.put(`/api/admin/vacancies/applications/${applied.body.application.id}/folder`).send({ folderId: other });
     expect(put.status, JSON.stringify(put.body)).toBe(200);
     expect(put.body.targetFolder).toMatchObject({ id: other });
-    expect(put.body.folder).toMatchObject({ id: appFolder, path: expect.stringContaining('Sonderfälle / Əliyeva Nigar') });
+    expect(put.body.folder).toMatchObject({ id: appFolder, path: expect.stringContaining('Sonderfälle / Bewerbung – ') });
     expect((await children(staff.agent, appFolder)).items.map((i) => i.name)).toEqual(['Bewerbung.pdf']);
 
     // Staff add another candidate with a folder override right away.
@@ -148,7 +165,7 @@ describe('vacancy ↔ drive folder', () => {
     expect(names.some((n) => n.startsWith('Quliyev Rəşad – '))).toBe(true);
   });
 
-  it('new applications pick the profession from our vacancies; the client folder lands in the vacancy folder', async () => {
+  it('new applications pick the profession from our vacancies; the client folder lands in Anträge, not the vacancy folder', async () => {
     const su = await asSuperAdmin();
     const v = await createVacancy({ profession: null, title: { az: 'Aşpaz', de: 'Koch', en: 'Cook', ru: 'Повар' } });
     const vf = (await su.agent.put(`/api/admin/vacancies/${v.id}/folder`).send({ newFolder: { name: 'Köche' } })).body.folder;
@@ -163,24 +180,28 @@ describe('vacancy ↔ drive folder', () => {
     expect((await cand.agent.post('/api/cases').send({ visaType: 'WORK', vacancyId: closed.id })).body.error).toBe('VACANCY_CLOSED'); // 409 (lib/vacancyPlaces)
     const res = await cand.agent.post('/api/cases').send({ visaType: 'WORK', vacancyId: v.id, profession: 'free text is ignored' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(res.body.case).toMatchObject({ profession: 'Koch', vacancyId: v.id, driveParentId: vf.id });
+    expect(res.body.case).toMatchObject({ profession: 'Koch', vacancyId: v.id, driveParentId: null });
     await vi.waitFor(async () => {
       const c = await prisma.case.findUniqueOrThrow({ where: { id: res.body.case.id } });
       expect(c.driveFolderId).toBeTruthy();
-      expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: c.driveFolderId! } })).parentId).toBe(vf.id);
+      expect((await ancestors(c.driveFolderId!)).slice(0, 3)).toEqual(['Gemeinsame Dokumente', 'Anträge', 'Arbeitsvisum']);
     });
+    expect((await children(su.agent, vf.id)).items).toEqual([]);
 
     // Without a vacancy: the old behaviour (profile profession, Anträge).
     const other = await asCandidate({ profession: 'Kuryer' });
     const plain = await other.agent.post('/api/cases').send({ visaType: 'WORK' });
     expect(plain.body.case).toMatchObject({ profession: 'Kuryer', vacancyId: null, driveParentId: null });
 
-    // Admin: changing the vacancy sets the profession and moves the client folder; an override wins; null = default place.
+    // Admin: changing the vacancy sets the profession, the folder stays in Anträge; a staff override moves it; null = default place.
     const v2 = await createVacancy({ title: { az: 'Sürücü', de: 'Fahrer', en: 'Driver', ru: 'Водитель' }, profession: 'Berufskraftfahrer' });
     const v2f = (await su.agent.put(`/api/admin/vacancies/${v2.id}/folder`).send({ newFolder: {} })).body.folder;
     const patched = await su.agent.patch(`/api/admin/cases/${plain.body.case.id}`).send({ vacancyId: v2.id });
     expect(patched.status, JSON.stringify(patched.body)).toBe(200);
-    expect(patched.body.case).toMatchObject({ profession: 'Berufskraftfahrer', driveParentId: v2f.id });
+    expect(patched.body.case).toMatchObject({ profession: 'Berufskraftfahrer', driveParentId: null });
+    const moved = await su.agent.patch(`/api/admin/cases/${plain.body.case.id}`).send({ driveParentId: v2f.id });
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(moved.body.case).toMatchObject({ driveParentId: v2f.id });
     await vi.waitFor(async () => {
       const c = await prisma.case.findUniqueOrThrow({ where: { id: plain.body.case.id } });
       expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: c.driveFolderId! } })).parentId).toBe(v2f.id);

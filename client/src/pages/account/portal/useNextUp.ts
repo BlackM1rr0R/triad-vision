@@ -196,7 +196,7 @@ export const useNextUp = (caseId: string | null | undefined) => {
 
   // The hero: the ball answer when it is the client's move, else the most urgent concrete item.
   type Hero =
-    | { kind: 'client'; title: string; overdue: boolean; to: string; action: string; icon: LucideIcon }
+    | { kind: 'client'; title: string; overdue: boolean; to: string; action: string; icon: LucideIcon; reason?: BallReason }
     | { kind: 'wait'; side: 'TEAM' | 'EMBASSY' | 'NONE'; title: string };
   let hero: Hero | null = null;
   if (c && caseId && ball?.side === 'CLIENT') {
@@ -207,6 +207,7 @@ export const useNextUp = (caseId: string | null | undefined) => {
       to: reasonHref(caseId, c.status, ball.reason),
       action: t(`pux.next.action.${ball.reason}`, { defaultValue: t('pux.next.open') }),
       icon: REASON_ICON[ball.reason] ?? ListChecks,
+      reason: ball.reason,
     };
   } else if (items.length) {
     const first = items[0];

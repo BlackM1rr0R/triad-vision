@@ -21,7 +21,7 @@ import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric ph
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
-import { caseParentFor, vacancyProfession } from '../lib/drive/vacancyFolders.js';
+import { caseParentFor, vacancyProfession, visaCategoryIdForVacancy } from '../lib/drive/vacancyFolders.js';
 import { assertApplicable } from '../lib/vacancyPlaces/service.js'; // our open vacancies with a free place only
 import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
@@ -82,8 +82,8 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   const created = await createCase(req.user!.id, {
     profession,
     visaType: onlyVacancies && vacancy ? visaTypeOfVacancy(vacancy) : body.visaType,
-    visaCategoryId: onlyVacancies ? (vacancy?.visaCategoryId ?? null) : (body.visaCategoryId ?? vacancy?.visaCategoryId ?? null),
-    // The client folder goes into the vacancy's drive folder (or the client's applicant folder there).
+    visaCategoryId: onlyVacancies ? (vacancy ? await visaCategoryIdForVacancy(vacancy.id) : null) : (body.visaCategoryId ?? (vacancy ? await visaCategoryIdForVacancy(vacancy.id) : null)),
+    // The client folder goes into Anträge/<Visumart>/<Kategorie> (caseParentFor: only a staff override changes that).
     ...(vacancy ? { vacancyId: vacancy.id, driveParentId: await caseParentFor({ vacancyId: vacancy.id, userId: req.user!.id }) } : {}),
   });
   res.status(201).json({ case: created });

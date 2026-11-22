@@ -164,6 +164,7 @@ export const PartnersOverview = ({ items, onOpen }: { items: DriveItem[]; onOpen
                       {p.name}
                     </button>
                     <p className="truncate text-xs text-muted">{p.phone || p.email || '—'}</p>
+                    {p.betriebsnummer && <p className="truncate font-mono text-xs tabular-nums text-muted" title="Betriebsnummer">Betriebsnummer {p.betriebsnummer}</p>}
                   </div>
                   {!p.active && <span className="shrink-0 rounded bg-surface px-1.5 py-px text-[10px] font-semibold text-muted">{t('drive.partner.inactive')}</span>}
                 </div>

@@ -12,6 +12,7 @@ import { saveFileVersion, storeBuffer } from './files.js';
 import { checkName, cleanName, findSibling, freeNameIn, safeUploadName } from './names.js';
 import { hashBuffer, hashFile } from './org/hash.js';
 import { ensureSharedRoot } from './roots.js';
+import { ensureCaseFolder } from './caseFolders.js';
 import { newStorageKey, removeStored, storagePath } from './storage.js';
 import { VAULT_KIND_TYPE } from './typeFolders.js';
 
@@ -23,7 +24,11 @@ import { VAULT_KIND_TYPE } from './typeFolders.js';
  *      ├─ Bewerbung.pdf                                            application summary (re-written as a new version on re-apply)
  *      ├─ Lebenslauf.pdf                                           the candidate's CV from the CV builder (when they made one)
  *      ├─ Reisepass – scan.pdf, …                                  the files sent with the application (vault uploads / picks)
- *      └─ <Vorname Nachname · Pass-Nr. …>                          the client folder of the case, once a case is opened from it
+ *
+ * Since applying opens the client's visa application (case), the client folder lives in Anträge like every case
+ * (Anträge/<Visumart>/<Kategorie>/…, the category from the vacancy, else from its sector — visaCategoryIdForVacancy)
+ * and the applicant folder ("Bewerbung – <vacancy> – YYYY-MM-DD") goes INSIDE the client folder. The vacancy folder
+ * only collects applications without a case (older ones). A staff override still wins.
  *
  * Application files are placed as HARD LINKS of the vault file where the file system allows it (same bytes, no
  * second copy on disk; drive files are never changed in place — new versions get new keys), else copied.
@@ -171,20 +176,52 @@ export const folderInfo = async (id: string | null | undefined) => (id ? ((await
 // ─── Where a case's client folder goes ───────────────────────────────
 
 /**
- * Parent folder for the client folder of a case opened for a vacancy: an explicit (already checked) override,
- * else the applicant's folder of that vacancy (so everything of the applicant stays together), else the vacancy
- * folder. Null = the usual place (Anträge / Partner).
+ * Parent folder for the client folder of a case opened for a vacancy: only an explicit (already checked) staff
+ * override. Null = the usual place (Anträge/<Visumart>/<Kategorie> or Partner/<name>, lib/drive/caseFolders.ts) —
+ * every visa application lands in Anträge, whichever vacancy it came from.
  */
-export const caseParentFor = async (input: { vacancyId?: string | null; userId?: string | null; override?: string | null }) => {
-  if (input.override) return input.override;
-  if (!input.vacancyId) return null;
-  if (input.userId) {
-    const app = await prisma.vacancyApplication.findUnique({ where: { vacancyId_userId: { vacancyId: input.vacancyId, userId: input.userId } }, select: { driveFolderId: true } });
-    const own = await liveFolderId(app?.driveFolderId);
-    if (own) return own;
+export const caseParentFor = async (input: { vacancyId?: string | null; userId?: string | null; override?: string | null }) =>
+  input.override ?? null;
+
+/** Visa category of a vacancy's sector when the vacancy has none set (seed slugs, lib/vacancies SECTORS). */
+const SECTOR_CATEGORY: Record<string, string> = {
+  logistics: 'lkw-fahrer',
+  courier: 'kurierfahrer',
+  industry: 'industrie-technik',
+  construction: 'bau-handwerk',
+  hospitality: 'gastronomie-hotel',
+  healthcare: 'pflege-gesundheit',
+  agriculture: 'landwirtschaft',
+};
+
+/**
+ * Visa category for a case opened from a vacancy: the vacancy's own category, else the one of its sector
+ * (a logistics vacancy → §19c LKW-Fahrer), so the client folder lands in the right Anträge sub-folder.
+ */
+export const visaCategoryIdForVacancy = async (vacancyId: string): Promise<string | null> => {
+  const v = await prisma.vacancy.findUnique({ where: { id: vacancyId }, select: { visaCategoryId: true, sector: true, employmentType: true } });
+  if (!v) return null;
+  if (v.visaCategoryId) return v.visaCategoryId;
+  const slug = v.employmentType === 'AUSBILDUNG' ? 'ausbildung' : v.sector ? SECTOR_CATEGORY[v.sector] : undefined;
+  if (!slug) return null;
+  return (await prisma.visaCategory.findUnique({ where: { slug }, select: { id: true } }))?.id ?? null;
+};
+
+/** The live client folder of the client's case opened for this vacancy (newest main case), if any. */
+const caseFolderOf = async (vacancyId: string, userId: string) => {
+  const c = await prisma.case.findFirst({ where: { vacancyId, clientId: userId, parentCaseId: null }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+  // Created right away when the case's own (fire-and-forget) folder sync has not run yet.
+  return c ? liveFolderId(await ensureCaseFolder(c.id)) : null;
+};
+
+/** Is `id` the folder `ancestorId` or somewhere below it? */
+const isInside = async (id: string, ancestorId: string) => {
+  let cur: string | null = id;
+  for (let i = 0; cur && i < 64; i++) {
+    if (cur === ancestorId) return true;
+    cur = (await prisma.driveNode.findUnique({ where: { id: cur }, select: { parentId: true } }))?.parentId ?? null;
   }
-  const v = await prisma.vacancy.findUnique({ where: { id: input.vacancyId }, select: { driveFolderId: true } });
-  return liveFolderId(v?.driveFolderId);
+  return false;
 };
 
 // ─── Applicant folder ────────────────────────────────────────────────
@@ -330,12 +367,18 @@ const placeFiles = async (a: AppRow, folderId: string) => {
 const syncInner = async (applicationId: string, opts: { summary?: boolean }) => {
   const a = await loadApp(applicationId);
   if (!a) return null;
-  const targetId = (await liveFolderId(a.targetFolderId)) ?? (await liveFolderId(a.vacancy.driveFolderId));
+  // Staff override, else the client folder of the case (Anträge), else the vacancy's folder (applications without a case).
+  const override = await liveFolderId(a.targetFolderId);
+  const clientFolder = override ? null : await caseFolderOf(a.vacancy.id, a.userId);
+  const targetId = override ?? clientFolder ?? (await liveFolderId(a.vacancy.driveFolderId));
   if (!targetId) return null; // no folder chosen for this vacancy / application: nothing is created
   let folderId = await liveFolderId(a.driveFolderId);
+  // An older layout had the client folder INSIDE the applicant folder: never move a folder into its own child.
+  if (folderId && (await isInside(targetId, folderId))) folderId = null;
   let fresh = false;
   if (!folderId) {
-    const name = await freeNameIn(targetId, cleanName(`${a.user.lastName} ${a.user.firstName} – ${day(a.createdAt)}`, 'Bewerber'), false);
+    const base = clientFolder ? `Bewerbung – ${vacancyFolderName(a.vacancy)} – ${day(a.createdAt)}` : `${a.user.lastName} ${a.user.firstName} – ${day(a.createdAt)}`;
+    const name = await freeNameIn(targetId, cleanName(base, 'Bewerbung'), false);
     folderId = (await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name, parentId: targetId }, select: { id: true } })).id;
     await prisma.vacancyApplication.update({ where: { id: a.id }, data: { driveFolderId: folderId } });
     fresh = true;
