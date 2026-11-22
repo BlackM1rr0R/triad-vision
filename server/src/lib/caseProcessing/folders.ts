@@ -5,6 +5,8 @@ import { DriveAccessCtx } from '../drive/access.js';
 import { allows } from '../drive/levels.js';
 import { maskGroupsForViewer } from '../privacy/mask.js';
 import { scoped } from '../accessAudit/scope.js';
+import { lastSentAt } from '../clientFolders/sent.js';
+import { peekWorkflowFolders } from '../drive/workflowFolders.js';
 import { effectiveStage, emptyStageCounts, OPEN_STAGES, PROCESSING_SELECT, PROCESSING_STAGES, processingSummaries, type ProcessingStage } from './index.js';
 
 /**
@@ -25,6 +27,12 @@ export const foldersQuery = z.object({
     .optional()
     .transform((v) => v === '1' || v === 'true'),
   search: z.string().trim().max(120).optional(),
+  /** Filters of the stage list (Fertig view): employer, group (the folder the client folder lies in), hand-over date range, sent to the client. */
+  company: z.string().trim().min(1).max(40).optional(),
+  group: z.string().trim().min(1).max(40).optional(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  sent: z.enum(['sent', 'unsent']).optional(),
 });
 
 const LIMIT = 100;
@@ -88,7 +96,7 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
   const [candidates, waiting] = await Promise.all([
     prisma.case.findMany({
       where: { AND: [base, { processingStage: { not: null } }] },
-      select: { id: true, driveFolderId: true, status: true, processingStage: true, processingStageAt: true, updatedAt: true },
+      select: { id: true, driveFolderId: true, companyId: true, status: true, processingStage: true, processingStageAt: true, updatedAt: true },
     }),
     prisma.case.findMany({ where: scoped({ driveFolderId: { not: null }, processingAssigneeId: viewer.id, processingStage: { in: OPEN_STAGES } }, scope), select: { driveFolderId: true } }),
   ]);
@@ -110,6 +118,23 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
   }
   const waitingForMe = waiting.filter((r) => canOpen(r.driveFolderId!)).length;
 
+  // Fertig: documents copied straight into the Fertig folder belong to the list too (they can be sent to the client
+  // from here) although the case itself is not in the stage — listed, not counted.
+  if (stage === 'DONE') {
+    const wf = await peekWorkflowFolders();
+    const linked = wf ? await prisma.driveNode.findMany({ where: { parentId: wf.stages.DONE, kind: 'FOLDER', deletedAt: null, workflowCaseId: { not: null } }, select: { workflowCaseId: true } }) : [];
+    const have = new Set(inStage.map((r) => r.id));
+    const ids = [...new Set(linked.map((l) => l.workflowCaseId!))].filter((id) => !have.has(id));
+    if (ids.length) {
+      const extra = await prisma.case.findMany({
+        where: { AND: [base, { id: { in: ids } }, { OR: [{ processingStage: null }, { processingStage: { not: 'DONE' } }] }] },
+        select: { id: true, driveFolderId: true, companyId: true, status: true, processingStage: true, processingStageAt: true, updatedAt: true },
+      });
+      await ctx.load(extra.map((r) => r.driveFolderId!));
+      for (const r of extra) if (canOpen(r.driveFolderId!)) inStage.push(r);
+    }
+  }
+
   // Newest hand-over first (cases never moved last), then the last change.
   inStage.sort(
     (a, b) =>
@@ -117,7 +142,31 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
       (b.processingStageAt?.getTime() ?? 0) - (a.processingStageAt?.getTime() ?? 0) ||
       b.updatedAt.getTime() - a.updatedAt.getTime(),
   );
-  const pageIds = inStage.slice(0, LIMIT).map((r) => r.id);
+  // Filter options come from the whole stage (before the filters), the filters narrow the list.
+  const groupOf = (r: (typeof inStage)[number]) => ctx.nodes.get(r.driveFolderId!)?.parentId ?? null;
+  const companyIds = [...new Set(inStage.map((r) => r.companyId).filter((x): x is string => !!x))];
+  const companyRows = companyIds.length ? await prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true } }) : [];
+  const companyName = new Map(companyRows.map((c) => [c.id, c.name]));
+  const groupIds = [...new Set(inStage.map(groupOf).filter((x): x is string => !!x))];
+  const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+  const options = {
+    companies: companyIds.map((id) => ({ id, name: companyName.get(id) ?? id })).sort(byName),
+    groups: groupIds.map((id) => ({ id, name: ctx.nodes.get(id)?.name ?? id })).sort(byName),
+  };
+  const sentAt = q.sent || stage === 'DONE' ? await lastSentAt(inStage.map((r) => r.id)) : new Map<string, Date>();
+  const dayStart = (d: string) => new Date(`${d}T00:00:00.000Z`).getTime();
+  const from = q.from ? dayStart(q.from) : null;
+  const to = q.to ? dayStart(q.to) + 24 * 3600 * 1000 : null;
+  const filtered = inStage.filter((r) => {
+    if (q.company && r.companyId !== q.company) return false;
+    if (q.group && groupOf(r) !== q.group) return false;
+    const at = r.processingStageAt?.getTime() ?? r.updatedAt.getTime();
+    if ((from !== null && at < from) || (to !== null && at >= to)) return false;
+    if (q.sent === 'sent' && !sentAt.has(r.id)) return false;
+    if (q.sent === 'unsent' && sentAt.has(r.id)) return false;
+    return true;
+  });
+  const pageIds = filtered.slice(0, LIMIT).map((r) => r.id);
   const order = new Map(pageIds.map((id, i) => [id, i]));
   const rows = (
     await prisma.case.findMany({
@@ -127,6 +176,7 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
         number: true,
         visaType: true,
         driveFolderId: true,
+        companyId: true,
         ...PROCESSING_SELECT,
         client: { select: { firstName: true, lastName: true } },
         visaCategory: { select: { id: true, title: true, visaLabel: true } },
@@ -141,7 +191,8 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
     stage,
     counts,
     waitingForMe,
-    total: counts[stage],
+    total: filtered.length,
+    options,
     limit: LIMIT,
     items: rows.map((r) => ({
       caseId: r.id,
@@ -155,6 +206,12 @@ export const processingFolders = async (q: z.infer<typeof foldersQuery>, viewer:
       status: r.status,
       processing: summaries.get(r.id)!,
       lastNote: r.processingMoves[0]?.note ?? null,
+      company: r.companyId ? { id: r.companyId, name: companyName.get(r.companyId) ?? '' } : null,
+      group: (() => {
+        const g = ctx.nodes.get(r.driveFolderId!)?.parentId;
+        return g ? { id: g, name: ctx.nodes.get(g)?.name ?? '' } : null;
+      })(),
+      readySentAt: sentAt.get(r.id) ?? null,
       fileCount: files.get(r.driveFolderId!) ?? 0,
     })),
   };

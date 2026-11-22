@@ -53,12 +53,11 @@ export const newFiles = <F extends ReadyFile>(files: F[], sent: SentFile[]) => {
 };
 
 /**
- * Whether "Müştəriyə göndər" may run: the case must be Fertig, have files, and — once sent — needs an explicit
+ * Whether "Müştəriyə göndər" may run: the case must have files in the Fertig folder (sent DIRECTLY from there, no stage move needed), and — once sent — needs an explicit
  * re-send (the UI asks first). A re-send without any new or replaced file is refused (READY_DOCS_NOTHING_NEW): it
  * would copy nothing but still tell the client "N documents are ready". Returns the error code, or null.
  */
-export const sendBlocker = (p: { stage: string | null; fileCount: number; sentBefore: boolean; resend: boolean; newCount?: number }) => {
-  if (p.stage !== 'DONE') return 'READY_DOCS_NOT_DONE';
+export const sendBlocker = (p: { stage?: string | null; fileCount: number; sentBefore: boolean; resend: boolean; newCount?: number }) => {
   if (p.fileCount === 0) return 'READY_DOCS_NO_FILES';
   if (p.sentBefore && !p.resend) return 'READY_DOCS_ALREADY_SENT';
   if (p.sentBefore && p.newCount === 0) return 'READY_DOCS_NOTHING_NEW';

@@ -256,20 +256,21 @@ describe('3 · client / application uploads land in type folders and on the requ
       201,
     ).body;
     expect(res.documents.map((d: { kind: string }) => d.kind)).toEqual(['PASSPORT', 'CV', 'OTHER']);
-    expect(res.attachedCaseId).toBeNull();
+    // Applying starts the case (one active application): the documents are attached to it right away.
+    expect(res.caseId).toBeTruthy();
+    expect(res.attachedCaseId).toBe(res.caseId);
     expect(await prisma.vacancyApplication.count({ where: { userId: user.id, message: 'Hallo' } })).toBe(1);
 
-    // Staff see them on the candidate before a case exists.
+    // Staff see them on the candidate.
     const staff = await asStaff();
     const cand = expectStatus(await staff.agent.get(`/api/admin/candidates/${user.id}`), 200).body.candidate;
     expect(cand.applicationDocuments).toHaveLength(3);
-    expect(cand.applicationDocuments.every((d: { attachedCaseId: string | null }) => d.attachedCaseId === null)).toBe(true);
     const file = await staff.agent.get(`/api/admin/candidates/${user.id}/application-documents/${cand.applicationDocuments[0].id}`);
     expect(file.status).toBe(200);
     expect(file.headers['content-type']).toContain('application/pdf');
 
-    // The client opens a case: passport + CV go onto their requirements and into the type folders.
-    const c = await createCaseVia(agent);
+    // The case started by applying: passport + CV go onto their requirements and into the type folders.
+    const c = { id: res.caseId as string };
     const docs = await waitFor(async () => {
       const rows = await prisma.document.findMany({ where: { caseId: c.id, vaultDocumentId: { not: null } }, include: { requirement: true } });
       return rows.length === 2 ? rows : null;
@@ -293,13 +294,13 @@ describe('3 · client / application uploads land in type folders and on the requ
     expect(after.applicationDocuments.every((d: { attachedCaseId: string | null }) => d.attachedCaseId === c.id)).toBe(true);
   });
 
-  it('application while a case is open: attached right away', async () => {
+  it('application starts the case and attaches its documents right away', async () => {
     const v = await createVacancy({ slug: 'lkw-docs-2' });
     const { agent } = await asCandidate();
-    const c = await createCaseVia(agent);
     const res = expectStatus(await agent.post(`/api/vacancies/${v.slug}/apply`).field('kinds', 'DIPLOMA').attach('files', await makePdf('d'), { filename: 'diplom.pdf', ...PDF }), 201).body;
+    const c = { id: res.caseId as string };
     expect(res.attachedCaseId).toBe(c.id);
-    const doc = await prisma.document.findFirstOrThrow({ where: { caseId: c.id, vaultDocumentId: { not: null } }, include: { requirement: true } });
+    const doc = await waitFor(() => prisma.document.findFirst({ where: { caseId: c.id, vaultDocumentId: { not: null } }, include: { requirement: true } }), 10_000);
     expect(doc.requirement?.key).toBe('DIPLOMA');
     const node = await waitFor(() => prisma.driveNode.findUnique({ where: { documentId: doc.id }, include: { parent: true } }), 8000);
     expect(['Diplom', 'Abschlüsse & Zeugnisse']).toContain(node.parent!.name);

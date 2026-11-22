@@ -52,7 +52,7 @@ export type NextAction =
   | 'WAIT_DECISION'
   | 'NONE';
 
-/** `contractTurn`: in CONTRACT_SENT the client only signs when it is their turn (two-step contracts: Triad Vision signs first). */
+/** `contractTurn`: in CONTRACT_SENT the client only signs when it is their turn (old flow: Triad Vision first; V2: the client first); in CONTRACT_SIGNED (V2) the İş müqaviləsi. */
 export const nextActionOf = (s: CaseStatus, missingRequired: number, contractTurn?: ContractTurn | null): NextAction => {
   switch (s) {
     case 'DOCUMENTS_PENDING':
@@ -64,7 +64,8 @@ export const nextActionOf = (s: CaseStatus, missingRequired: number, contractTur
     case 'CONTRACT_SENT':
       return contractTurn && contractTurn !== 'CLIENT' ? 'WAIT_CONTRACT_CHECK' : 'SIGN_CONTRACT';
     case 'CONTRACT_SIGNED':
-      return 'WAIT_CONTRACT_CHECK';
+      // V2: İş müqaviləsi documents waiting for the client's signature (lib/caseContracts/turn).
+      return contractTurn === 'CLIENT' ? 'SIGN_CONTRACT' : 'WAIT_CONTRACT_CHECK';
     case 'APPOINTMENT_SCHEDULED':
       return 'ATTEND_APPOINTMENT';
     case 'DECISION_PENDING':

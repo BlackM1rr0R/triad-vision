@@ -1,20 +1,20 @@
-// Team document workflow of a case (Schon geschrieben → In Bearbeitung → Fertig, Ablehnung — the German stage
+// Team document workflow of a case (Schon geschrieben → In Bearbeitung → Fertig, "Geri qaytar" — the German stage
 // names stay in every language because the team uses them), visa kinds and the "rədd" counter in the partner
 // area, the refusal report by partner / employer company and the matching partner-portal bits.
 // Registered with registerCopy(pagesCaseProcessing) by components/caseProcessing/api.ts and the partner pages.
 
-const STAGES = { IN_PROGRESS: 'In Bearbeitung', WRITTEN: 'Schon geschrieben', DONE: 'Fertig', REFUSED: 'Ablehnung' };
+const STAGES = { IN_PROGRESS: 'In Bearbeitung', WRITTEN: 'Schon geschrieben', DONE: 'Fertig', RETURNED: 'Zurückgegeben' };
 
 const az = {
   caseProcessing: {
     title: 'Sənəd işi (komanda)',
-    subtitle: 'Yazılmış sənədlər «Schon geschrieben»-ə düşür; üzərində işləyən admin özü «In Bearbeitung»-a göndərir, bitəndə «Fertig» və ya «Ablehnung».',
+    subtitle: 'Yazılmış sənədlər «Schon geschrieben»-ə düşür; üzərində işləyən admin özü «In Bearbeitung»-a göndərir, bitəndə «Fertig».',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'üzərində işlənir',
       WRITTEN: 'yazılıb, «In Bearbeitung»-a göndərilməyi gözləyir',
       DONE: 'hazırdır, tamamlanıb',
-      REFUSED: 'imtina (rədd)',
+      RETURNED: 'geri qaytarılıb, iş axınından çıxıb',
     },
     none: 'Mərhələ yoxdur',
     column: 'Sənəd işi',
@@ -47,7 +47,6 @@ const az = {
     openFolder: 'Qovluğu aç',
     showAll: 'Hamısını göstər ({{count}})',
     showLess: 'Az göstər',
-    refusedNote: 'Viza imtinası partnyor statistikasında «rədd» kimi sayılır.',
     board: {
       toggle: 'Lövhə',
       list: 'Siyahı',
@@ -59,7 +58,7 @@ const az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Heç nə dəyişmədi — başqa mərhələ, əməkdaş və ya qeyd seçin.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Seçilən əməkdaş tapılmadı.',
     },
   },
@@ -94,7 +93,7 @@ const az = {
       noCompany: 'Şirkətsiz',
       total: 'Cəmi',
       empty: 'Bu dövrdə müraciət yoxdur.',
-      rateHint: 'Rədd faizi = rədd / (viza + rədd). Rədd: status «İmtina» və ya komanda «Ablehnung» qeyd edib.',
+      rateHint: 'Rədd faizi = rədd / (viza + rədd). Rədd: status «İmtina».',
       companiesOfPartner: 'Bu partnyorun müştəriləri — işəgötürən şirkətlər üzrə',
     },
   },
@@ -111,7 +110,7 @@ const az = {
     labels: { event: { PROCESSING_STAGE: 'Sənəd işi: mərhələ dəyişdi', PARTNER_CHANGED: 'Partnyor dəyişdi', READY_DOCS_SENT: 'Hazır sənədlər müştəriyə göndərildi' } },
     errors: {
       PROCESSING_UNCHANGED: 'Heç nə dəyişmədi — başqa mərhələ, əməkdaş və ya qeyd seçin.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig (və ya Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Seçilən əməkdaş tapılmadı.',
     },
   },
@@ -120,13 +119,13 @@ const az = {
 const de: typeof az = {
   caseProcessing: {
     title: 'Dokumentenarbeit (Team)',
-    subtitle: 'Geschriebene Unterlagen kommen nach „Schon geschrieben“; wer daran arbeitet, schickt sie selbst nach „In Bearbeitung“, danach „Fertig“ oder „Ablehnung“.',
+    subtitle: 'Geschriebene Unterlagen kommen nach „Schon geschrieben“; wer daran arbeitet, schickt sie selbst nach „In Bearbeitung“, danach „Fertig“.',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'wird bearbeitet',
       WRITTEN: 'geschrieben, wartet auf „In Bearbeitung“',
       DONE: 'erledigt',
-      REFUSED: 'Visum abgelehnt',
+      RETURNED: 'zurückgegeben, nicht mehr im Arbeitsablauf',
     },
     none: 'Keine Stufe',
     column: 'Dokumentenarbeit',
@@ -159,7 +158,6 @@ const de: typeof az = {
     openFolder: 'Ordner öffnen',
     showAll: 'Alle anzeigen ({{count}})',
     showLess: 'Weniger anzeigen',
-    refusedNote: 'Eine Visum-Ablehnung zählt in der Partnerstatistik als „Ablehnung“.',
     board: {
       toggle: 'Board',
       list: 'Liste',
@@ -171,7 +169,7 @@ const de: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Nichts geändert — andere Stufe, Person oder Notiz wählen.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Die gewählte Person wurde nicht gefunden.',
     },
   },
@@ -206,7 +204,7 @@ const de: typeof az = {
       noCompany: 'Ohne Arbeitgeber',
       total: 'Summe',
       empty: 'Keine Fälle in diesem Zeitraum.',
-      rateHint: 'Quote = Ablehnungen / (Visa + Ablehnungen). Ablehnung: Status „Abgelehnt“ oder vom Team als „Ablehnung“ markiert.',
+      rateHint: 'Quote = Ablehnungen / (Visa + Ablehnungen). Ablehnung: Status „Abgelehnt“.',
       companiesOfPartner: 'Kunden dieses Partners — nach Arbeitgeber',
     },
   },
@@ -223,7 +221,7 @@ const de: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Dokumentenarbeit: Stufe geändert', PARTNER_CHANGED: 'Partner geändert', READY_DOCS_SENT: 'Fertige Dokumente an den Kunden gesendet' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nichts geändert — andere Stufe, Person oder Notiz wählen.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig (oder Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Die gewählte Person wurde nicht gefunden.',
     },
   },
@@ -232,13 +230,13 @@ const de: typeof az = {
 const en: typeof az = {
   caseProcessing: {
     title: 'Document work (team)',
-    subtitle: 'Written documents land in "Schon geschrieben"; whoever works on them sends them to "In Bearbeitung" themselves, then "Fertig" or "Ablehnung".',
+    subtitle: 'Written documents land in "Schon geschrieben"; whoever works on them sends them to "In Bearbeitung" themselves, then "Fertig".',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'being worked on',
       WRITTEN: 'written, waiting to go to "In Bearbeitung"',
       DONE: 'done',
-      REFUSED: 'visa refused',
+      RETURNED: 'returned, no longer in the workflow',
     },
     none: 'No stage',
     column: 'Document work',
@@ -271,7 +269,6 @@ const en: typeof az = {
     openFolder: 'Open folder',
     showAll: 'Show all ({{count}})',
     showLess: 'Show less',
-    refusedNote: 'A visa refusal counts as "Ablehnung" in the partner statistics.',
     board: {
       toggle: 'Board',
       list: 'List',
@@ -283,7 +280,7 @@ const en: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Nothing changed — pick another stage, colleague or note.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'The chosen colleague was not found.',
     },
   },
@@ -318,7 +315,7 @@ const en: typeof az = {
       noCompany: 'No company',
       total: 'Total',
       empty: 'No cases in this period.',
-      rateHint: 'Refusal rate = refusals / (visas + refusals). Refused: status "Rejected" or marked "Ablehnung" by the team.',
+      rateHint: 'Refusal rate = refusals / (visas + refusals). Refused: status "Rejected".',
       companiesOfPartner: 'This partner’s clients — by employer company',
     },
   },
@@ -335,7 +332,7 @@ const en: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Document work: stage changed', PARTNER_CHANGED: 'Partner changed', READY_DOCS_SENT: 'Finished documents sent to the client' } },
     errors: {
       PROCESSING_UNCHANGED: 'Nothing changed — pick another stage, colleague or note.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig (or Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'The chosen colleague was not found.',
     },
   },
@@ -344,13 +341,13 @@ const en: typeof az = {
 const ru: typeof az = {
   caseProcessing: {
     title: 'Работа с документами (команда)',
-    subtitle: 'Написанные документы попадают в «Schon geschrieben»; кто над ними работает, сам отправляет их в «In Bearbeitung», затем «Fertig» или «Ablehnung».',
+    subtitle: 'Написанные документы попадают в «Schon geschrieben»; кто над ними работает, сам отправляет их в «In Bearbeitung», затем «Fertig».',
     stages: STAGES,
     hints: {
       IN_PROGRESS: 'в работе',
       WRITTEN: 'написано, ждёт отправки в «In Bearbeitung»',
       DONE: 'готово',
-      REFUSED: 'отказ в визе',
+      RETURNED: 'возвращено, больше не в процессе',
     },
     none: 'Нет этапа',
     column: 'Работа с документами',
@@ -383,7 +380,6 @@ const ru: typeof az = {
     openFolder: 'Открыть папку',
     showAll: 'Показать все ({{count}})',
     showLess: 'Свернуть',
-    refusedNote: 'Отказ в визе учитывается в статистике партнёров как «Ablehnung».',
     board: {
       toggle: 'Доска',
       list: 'Список',
@@ -395,7 +391,7 @@ const ru: typeof az = {
     },
     errors: {
       PROCESSING_UNCHANGED: 'Ничего не изменилось — выберите другой этап, сотрудника или заметку.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Выбранный сотрудник не найден.',
     },
   },
@@ -430,7 +426,7 @@ const ru: typeof az = {
       noCompany: 'Без компании',
       total: 'Итого',
       empty: 'В этом периоде дел нет.',
-      rateHint: 'Доля отказов = отказы / (визы + отказы). Отказ: статус «Отказ» или отметка команды «Ablehnung».',
+      rateHint: 'Доля отказов = отказы / (визы + отказы). Отказ: статус «Отказ».',
       companiesOfPartner: 'Клиенты этого партнёра — по работодателям',
     },
   },
@@ -447,7 +443,7 @@ const ru: typeof az = {
     labels: { event: { PROCESSING_STAGE: 'Работа с документами: этап изменён', PARTNER_CHANGED: 'Партнёр изменён', READY_DOCS_SENT: 'Готовые документы отправлены клиенту' } },
     errors: {
       PROCESSING_UNCHANGED: 'Ничего не изменилось — выберите другой этап, сотрудника или заметку.',
-      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig (или Ablehnung).',
+      PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig.',
       INVALID_ASSIGNEE: 'Выбранный сотрудник не найден.',
     },
   },

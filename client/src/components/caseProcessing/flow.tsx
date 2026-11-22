@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { api, errorCode } from '@/lib/api';
 import { DRIVE_DRAG_TYPE, draggingItems, endItemDrag } from '@/components/drive/dnd';
 import type { DriveItem } from '@/components/drive/types';
+import { returnToClient, reasonOf } from '@/components/drive/clientFolders/api';
 import { canMoveStage, isProcessingStage, postClaim, postMove, processingKey, refreshProcessing, stageLabel, type ProcessingStage } from './api';
 
 /**
@@ -19,8 +20,9 @@ import { canMoveStage, isProcessingStage, postClaim, postMove, processingKey, re
  * strip, context menu, drag & drop onto a stage) and the board of the cases list:
  *
  *   (not in the workflow) → "Schon geschrieben-ə göndər" / "In Bearbeitung-a göndər" · Schon geschrieben →
- *   "Götür" (claim), "In Bearbeitung-a göndər" · In Bearbeitung → "Fertig-ə göndər", "Ablehnung" (note
- *   required), "Geri qaytar" (back to Schon geschrieben) · Fertig / Ablehnung → "In Bearbeitung-a göndər" (reopen).
+ *   "Götür" (claim), "In Bearbeitung-a göndər" · In Bearbeitung → "Fertig-ə göndər", back to Schon geschrieben ·
+ *   Fertig → "In Bearbeitung-a göndər" (reopen) · every stage → "Geri qaytar" (the documents go back to the client folder,
+ *   the case leaves the workflow).
  *
  * Everything goes through the caseProcessing endpoints, so the case card, the board and the drive show the
  * same Case.processingStage.
@@ -37,21 +39,22 @@ export interface FlowTarget {
   closed?: boolean;
 }
 
-export type FlowKind = 'send' | 'work' | 'finish' | 'back' | 'refuse';
+export type FlowKind = 'send' | 'work' | 'finish' | 'back' | 'return';
 export type FlowAction = FlowKind | 'claim';
 
-export const KIND_STAGE: Record<FlowKind, ProcessingStage> = { send: 'WRITTEN', work: 'IN_PROGRESS', finish: 'DONE', back: 'WRITTEN', refuse: 'REFUSED' };
-export const STAGE_KIND: Record<ProcessingStage, FlowKind> = { WRITTEN: 'send', IN_PROGRESS: 'work', DONE: 'finish', REFUSED: 'refuse' };
+/** The stage a kind moves to; "return" (Geri qaytar) leaves the workflow, so it has none. */
+export const KIND_STAGE: Record<Exclude<FlowKind, 'return'>, ProcessingStage> = { send: 'WRITTEN', work: 'IN_PROGRESS', finish: 'DONE', back: 'WRITTEN' };
+export const STAGE_KIND: Record<ProcessingStage, FlowKind> = { WRITTEN: 'send', IN_PROGRESS: 'work', DONE: 'finish' };
 
 /**
- * The buttons a stage offers — the way is Schon geschrieben → In Bearbeitung → Fertig / Ablehnung (the server
- * enforces it). Nothing goes to In Bearbeitung by itself: an admin sends it there.
+ * The buttons a stage offers — the way is Schon geschrieben → In Bearbeitung → Fertig, "Geri qaytar" from every
+ * stage (the server enforces it). Nothing goes to In Bearbeitung by itself: an admin sends it there.
  */
 export const flowActions = (stage: ProcessingStage | null, assigneeId: string | null, myId: string | undefined, closed = false): FlowAction[] => {
   if (!stage) return closed ? [] : ['send', 'work'];
-  if (stage === 'WRITTEN') return [...(assigneeId !== myId ? (['claim'] as const) : []), 'work'];
-  if (stage === 'IN_PROGRESS') return ['finish', 'refuse', 'back'];
-  return ['work']; // Fertig / Ablehnung: reopen
+  if (stage === 'WRITTEN') return [...(assigneeId !== myId ? (['claim'] as const) : []), 'work', 'return'];
+  if (stage === 'IN_PROGRESS') return ['finish', 'back', 'return'];
+  return ['work', 'return']; // Fertig: reopen
 };
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'REJECTED', 'CANCELLED']);
@@ -156,8 +159,8 @@ const useStaffName = () => {
 };
 
 /**
- * Send / finish / send back / refuse one or more cases: the next admin (send, back), the note (required for
- * Ablehnung) and a soft warning when a colleague works on one of them.
+ * Send / finish / send back / return (Geri qaytar) one or more cases: the next admin (send, back), an optional note
+ * and a soft warning when a colleague works on one of them.
  */
 export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTarget[]; kind: FlowKind; origin: 'case' | 'drive'; onClose: () => void }) => {
   const { t } = useTranslation();
@@ -172,8 +175,9 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
   /** Cases still to move: after a partial failure only the failed ones stay (with their error). */
   const [items, setItems] = useState(targets);
   const [failures, setFailures] = useState<Record<string, string>>({});
-  const stage = KIND_STAGE[kind];
-  const needNote = kind === 'refuse';
+  const isReturn = kind === 'return';
+  const stage = isReturn ? null : KIND_STAGE[kind];
+  const needNote = false;
   const withAssignee = kind === 'send' || kind === 'back' || kind === 'work';
   const others = items.filter((x) => x.assigneeId && x.assigneeId !== user?.id);
   const formId = `flow-${kind}`;
@@ -184,12 +188,34 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
       return;
     }
     setBusy(true);
+    if (isReturn) {
+      try {
+        const r = await returnToClient(items.map((x) => x.caseId), note.trim() || null);
+        const bad = r.results.filter((x) => !x.ok);
+        const ok = r.results.length - bad.length;
+        if (ok) refreshProcessing(qc);
+        if (!bad.length) {
+          toast.success(t('driveProcessing.toasts.returned', { count: ok }));
+          onClose();
+        } else {
+          if (ok) toast.warning(t('driveProcessing.toasts.returnPartial', { ok, total: items.length }));
+          else toast.error(reasonOf(bad[0]!.error));
+          setItems((cur) => cur.filter((x) => bad.some((b) => b.caseId === x.caseId)));
+          setFailures(Object.fromEntries(bad.map((b) => [b.caseId, reasonOf(b.error)])));
+        }
+      } catch (e) {
+        toast.error(errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     // Every case is tried (one refused move must not stop the rest); the failed ones stay in the dialog.
     let ok = 0;
     const failed: Record<string, string> = {};
     for (const x of items) {
       try {
-        const view = await postMove(x.caseId, { stage, assigneeId: withAssignee ? assigneeId || null : null, note: note.trim() || null, origin });
+        const view = await postMove(x.caseId, { stage: stage!, assigneeId: withAssignee ? assigneeId || null : null, note: note.trim() || null, origin });
         qc.setQueryData(processingKey(x.caseId), view);
         ok++;
       } catch (e) {
@@ -200,13 +226,13 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
     if (ok) refreshProcessing(qc);
     const failedCount = Object.keys(failed).length;
     if (!failedCount) {
-      toast.success(t('driveProcessing.toasts.moved', { count: ok, stage: stageLabel(stage) }));
+      toast.success(t('driveProcessing.toasts.moved', { count: ok, stage: stageLabel(stage!) }));
       onClose();
       return;
     }
-    if (ok) toast.warning(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage) }));
+    if (ok) toast.warning(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage!) }));
     else if (failedCount === 1) toast.error(Object.values(failed)[0]);
-    else toast.error(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage) }));
+    else toast.error(t('driveProcessing.toasts.partial', { ok, total: items.length, stage: stageLabel(stage!) }));
     setItems((cur) => cur.filter((x) => failed[x.caseId]));
     setFailures(failed);
   };
@@ -222,8 +248,8 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
           <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={busy}>
             {t('driveProcessing.dialog.cancel')}
           </button>
-          <button type="submit" form={formId} className={kind === 'refuse' ? 'btn-danger btn-sm' : 'btn-primary btn-sm'} disabled={busy}>
-            {busy && <Spinner className="size-3.5" />} {t('driveProcessing.dialog.send')}
+          <button type="submit" form={formId} className={isReturn ? 'btn-danger btn-sm' : 'btn-primary btn-sm'} disabled={busy}>
+            {busy && <Spinner className="size-3.5" />} {t(isReturn ? 'driveProcessing.dialog.returnConfirm' : 'driveProcessing.dialog.send')}
           </button>
         </div>
       }
@@ -296,7 +322,7 @@ export const FlowDialog = ({ targets, kind, origin, onClose }: { targets: FlowTa
           />
           {missingNote && <span className="mt-1 block text-xs text-danger-fg">{t('driveProcessing.dialog.noteRequired')}</span>}
         </label>
-        {kind === 'refuse' && <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('caseProcessing.refusedNote')}</p>}
+        {isReturn && <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('driveProcessing.dialog.returnNote')}</p>}
       </form>
     </Modal>
   );
@@ -356,7 +382,7 @@ export const useFlowActions = (origin: 'case' | 'drive') => {
   const act = (action: FlowAction, targets: FlowTarget[]) => {
     if (!targets.length) return;
     if (action === 'claim') claimFlow.claim(targets[0]);
-    else setOpen({ kind: action, targets: targets.filter((x) => x.stage !== KIND_STAGE[action]) });
+    else setOpen({ kind: action, targets: action === 'return' ? targets.filter((x) => x.stage) : targets.filter((x) => x.stage !== KIND_STAGE[action]) });
   };
   const dialogs = (
     <>

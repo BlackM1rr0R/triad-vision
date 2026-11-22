@@ -111,7 +111,7 @@ describe('client folders: bulk "Schon geschrieben"', () => {
     const b = await clientCase(staff.agent, { firstName: 'Banu' });
     const d = await clientCase(staff.agent, { firstName: 'Dunya' });
     const w = await clientCase(staff.agent, { firstName: 'Vüsal' });
-    // Fertig cannot go back to Schon geschrieben (only In Bearbeitung / Ablehnung); one is already there
+    // Fertig cannot go back to Schon geschrieben (only In Bearbeitung); one is already there
     await prisma.case.update({ where: { id: d.c.id }, data: { processingStage: 'DONE' } });
     await prisma.case.update({ where: { id: w.c.id }, data: { processingStage: 'WRITTEN' } });
 
@@ -140,18 +140,19 @@ describe('client folders: Fertig → client portal', () => {
     const { c, folder } = await clientCase(staff.agent, { clientId: client.user.id });
     const send = (body: Record<string, unknown>) => staff.agent.post('/api/admin/client-folders/ready-docs/send').send({ cases: [c.id], ...body });
 
-    // not Fertig yet
-    expect(expectStatus(await send({}), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NOT_DONE' });
+    // nothing in the Fertig folder yet
+    expect(expectStatus(await send({}), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NO_FILES' });
 
     // the finished documents: client folder → "İş axını" Fertig (Arbeitsablauf/Fertig/<client folder>/…)
     const sub = await mkdir(staff.agent, folder.id, 'Hazır');
     const f1 = await upload(staff.agent, sub.id, 'Arbeitsvertrag.pdf');
     const f2 = await upload(staff.agent, folder.id, 'Anschreiben.pdf');
     expectStatus(await staff.agent.post('/api/drive/workflow/copy').send({ ids: [f1.id, f2.id], stage: 'DONE' }), 200);
-    await prisma.case.update({ where: { id: c.id }, data: { processingStage: 'DONE' } });
+    // No stage move needed: the Fertig documents are sent DIRECTLY (the case stays outside the workflow).
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).processingStage).toBeNull();
 
     const view = expectStatus(await staff.agent.get(`/api/admin/client-folders/cases/${c.id}/ready-docs`), 200).body;
-    expect(view).toMatchObject({ stage: 'DONE', newCount: 2, sends: [] });
+    expect(view).toMatchObject({ stage: null, newCount: 2, sends: [] });
     expect(view.folder.name).toBe(folder.name);
     expect(view.files.map((f: { name: string; path: string; sent: boolean }) => [f.name, f.path, f.sent]).sort()).toEqual(
       [
@@ -160,8 +161,22 @@ describe('client folders: Fertig → client portal', () => {
       ].sort(),
     );
 
+    // The Fertig list shows the case (not sent yet) and filters by sent state / date range / employer.
+    const fertig = (q: Record<string, string> = {}) => staff.agent.get('/api/admin/case-processing/folders').query({ stage: 'DONE', ...q });
+    expect(expectStatus(await fertig(), 200).body.items).toMatchObject([{ caseId: c.id, readySentAt: null }]);
+    expect(expectStatus(await fertig({ sent: 'sent' }), 200).body.items).toHaveLength(0);
+
     const r = expectStatus(await send({}), 200).body;
     expect(r.summary).toEqual({ total: 1, succeeded: 1, skipped: 0, failed: 0 });
+    // "Müştəriyə göndərildi" with its date is persisted (CaseReadyDocsSend) and filterable.
+    const sentRows = expectStatus(await fertig({ sent: 'sent' }), 200).body.items;
+    expect(sentRows).toHaveLength(1);
+    expect(sentRows[0].readySentAt).toEqual(expect.any(String));
+    expect(expectStatus(await fertig({ sent: 'unsent' }), 200).body.items).toHaveLength(0);
+    const today = new Date().toISOString().slice(0, 10);
+    expect(expectStatus(await fertig({ from: today, to: today }), 200).body.items).toHaveLength(1);
+    expect(expectStatus(await fertig({ to: '2000-01-01' }), 200).body.items).toHaveLength(0);
+    expect(expectStatus(await fertig({ company: 'nope' }), 200).body.items).toHaveLength(0);
     // the client sees them in the portal ("Sizin üçün fayllar") and can open them
     const detail = expectStatus(await client.agent.get(`/api/cases/${c.id}`), 200).body.case;
     const names = detail.otherDocuments.map((d: { originalName: string }) => d.originalName).sort();

@@ -409,7 +409,15 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
     }
   }
 
-  if (f.status === 'CONTRACT_SIGNED') {
+  // V2 (lib/caseContracts/turn): after the Əmək müqaviləsi the İş müqaviləsi — the client signs, then staff approve it
+  // in the contract panel (the "Confirm contract" transition is refused while it is open).
+  if (f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'CLIENT' && f.daysInStatus >= 3) {
+    add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign)] });
+  }
+  if (f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'STAFF') {
+    add({ code: 'CONFIRM_CONTRACT', priority: slow ? 90 : 85, tone: slow ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+  }
+  if (f.status === 'CONTRACT_SIGNED' && !f.contractTurn) {
     const signedDays = f.contract?.signedAt ? Math.max(0, Math.floor((now.getTime() - f.contract.signedAt.getTime()) / DAY)) : f.daysInStatus;
     add({ code: 'CONFIRM_CONTRACT', priority: slow ? 90 : 85, tone: slow ? 'urgent' : 'action', params: { days: signedDays }, actions: [transition(f, 'CONFIRM_CONTRACT', { action: 'CONFIRM_CONTRACT' }), { id: 'OPEN_ACTIONS', kind: 'scroll', target: 'case-actions' }] });
   }

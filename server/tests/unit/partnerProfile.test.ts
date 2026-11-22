@@ -203,11 +203,11 @@ describe('partner legal data', () => {
     expect(schema.parse({ vatId: '', betriebsnummer: '' })).toMatchObject({ vatId: null, betriebsnummer: null });
   });
 
-  it('checks Germany-only rules on the merged values', () => {
+  it('checks the German PLZ on the merged values (the Betriebsnummer is not tied to the country)', () => {
     expect(isGermany(' Deutschland ')).toBe(true);
     expect(isGermany('Almaniya')).toBe(true);
     expect(isGermany('Azərbaycan')).toBe(false);
-    expect(legalCrossError({ country: 'Azərbaycan', betriebsnummer: '12345678' })).toBe('BETRIEBSNUMMER_GERMANY_ONLY');
+    expect(legalCrossError({ country: 'Azərbaycan', betriebsnummer: '12345678' })).toBeNull();
     expect(legalCrossError({ country: null, betriebsnummer: '12345678' })).toBeNull();
     expect(legalCrossError({ country: 'Germany', postalCode: '8080' })).toBe('INVALID_POSTAL_CODE');
     expect(legalCrossError({ country: 'Azərbaycan', postalCode: 'AZ1000' })).toBeNull();

@@ -18,7 +18,7 @@ export interface InterviewInvite {
   id: string;
   status: 'OPEN' | 'BOOKED' | 'CANCELLED';
   minutes: number;
-  company: { id: string; name: string };
+  company: { id: string; name: string } | null;
   interview: { id: string; startsAt: string } | null;
   canMove: boolean;
   reschedulesLeft: number;
@@ -76,7 +76,7 @@ export const InviteCard = ({ invite, index }: { invite: InterviewInvite; index?:
 
   return (
     <Card index={index}>
-      <Text variant="title">{moving ? t('m.ivcal.changeTitle') : t('m.ivcal.from', { company: invite.company.name })}</Text>
+      <Text variant="title">{moving ? t('m.ivcal.changeTitle') : invite.company ? t('m.ivcal.from', { company: invite.company.name }) : t('m.ivcal.fromEmployer')}</Text>
       <Text variant="small">
         {t('m.ivcal.minutes', { count: invite.minutes })}
         {moving ? ` · ${t('m.ivcal.movesLeft', { count: invite.reschedulesLeft })}` : ''}

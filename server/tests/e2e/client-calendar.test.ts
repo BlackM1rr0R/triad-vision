@@ -74,7 +74,9 @@ describe('client calendar feed', () => {
     expect(text).toContain(`URL:http://localhost:5173/account/cases/${c.id}`);
 
     expect(text).toContain(`UID:client-interview-${interview.id}@triad-vision.de`);
-    expect(text).toContain(`SUMMARY:Job interview: ${company.company.name}`);
+    // The employer is named only after the İş müqaviləsi is approved (lib/caseContracts/employerVisibility).
+    expect(text).toContain('SUMMARY:Job interview');
+    expect(text).not.toContain(company.company.name);
     expect(text).toContain('URL:http://localhost:5173/account/interviews');
 
     expect(text).toContain(`UID:client-arrival-${arrival.id}@triad-vision.de`);

@@ -31,7 +31,7 @@ const upload = async (a: Agent, parentId: string, filename: string) =>
   expectStatus(await a.post(`/api/drive/nodes/${parentId}/files`).attach('file', await makePdf(filename), { filename, contentType: 'application/pdf' }), 201).body.item as { id: string; name: string };
 const stages = async (a: Agent) => {
   const r = expectStatus(await a.get('/api/drive/workflow/folders'), 200).body as { stages: { stage: string; id: string }[] };
-  return Object.fromEntries(r.stages.map((s) => [s.stage, s.id])) as Record<'WRITTEN' | 'IN_PROGRESS' | 'DONE' | 'REFUSED', string>;
+  return Object.fromEntries(r.stages.map((s) => [s.stage, s.id])) as Record<'WRITTEN' | 'IN_PROGRESS' | 'DONE', string>;
 };
 
 const clientCase = async (a: Agent, name = uniq('Ali Həsənov · ')) => {

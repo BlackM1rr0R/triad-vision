@@ -1,4 +1,7 @@
-import type { ProcessingStage } from '../caseProcessing/index.js';
+import type { ProcessingStage as TeamStage } from '../caseProcessing/index.js';
+
+/** What the client sees: the team workflow stages plus "Ablehnung" for a refused visa (CaseStatus REJECTED; no longer a team stage). */
+export type ProcessingStage = TeamStage | 'REFUSED';
 
 /**
  * Client-facing words for the team's document workflow (lib/caseProcessing: Schon geschrieben → In Bearbeitung →

@@ -1,5 +1,6 @@
 import type { CaseStatus, DocStage, DocStatus, Prisma, VisaType } from '@prisma/client';
 import { prisma } from '../../../db.js';
+import { revealedCompanyIdsForClient } from '../../caseContracts/employerVisibility.js';
 import { OPEN_STATUSES, isPastDue } from '../../billing/math.js';
 import { getTool } from '../registry.js';
 import type { AiToolContext } from '../types.js';
@@ -129,7 +130,7 @@ export const loadClientFacts = async (userId: string, now = new Date()): Promise
       where: { candidateId: userId, startsAt: { gte: new Date(now.getTime() - 86_400_000) }, status: { in: ['PROPOSED', 'CONFIRMED'] } },
       orderBy: { startsAt: 'asc' },
       take: 5,
-      select: { startsAt: true, endsAt: true, status: true, meetingUrl: true, company: { select: { name: true } } },
+      select: { startsAt: true, endsAt: true, status: true, meetingUrl: true, companyId: true, company: { select: { name: true } } },
     }),
     prisma.germanExam.findMany({
       where: { userId, status: { in: ['PLANNED', 'REGISTERED', 'TAKEN'] } },
@@ -157,6 +158,7 @@ export const loadClientFacts = async (userId: string, now = new Date()): Promise
     console.error('[ai] client next step for grounding failed:', (err as Error).message);
   }
 
+  const revealedEmployers = await revealedCompanyIdsForClient(userId);
   return {
     now,
     user: { firstName: user.firstName, germanLevel: user.germanLevel, passportExpiry: user.passportExpiry },
@@ -180,7 +182,7 @@ export const loadClientFacts = async (userId: string, now = new Date()): Promise
       requirements: c.requirements.map((r) => ({ stage: r.stage, title: r.title, required: r.required, latest: r.documents[0] ? { status: r.documents[0].status, reviewNote: r.documents[0].reviewNote } : null })),
     })),
     next,
-    interviews: interviews.map((i) => ({ startsAt: i.startsAt, endsAt: i.endsAt, status: i.status, employer: i.company?.name ?? null, online: !!i.meetingUrl })),
+    interviews: interviews.map((i) => ({ startsAt: i.startsAt, endsAt: i.endsAt, status: i.status, employer: i.companyId && revealedEmployers.has(i.companyId) ? (i.company?.name ?? null) : null, online: !!i.meetingUrl })),
     exams: exams.map((e) => ({ provider: e.provider, level: e.level, examDate: e.examDate, location: e.location, registrationDeadline: e.registrationDeadline, status: e.status, passed: e.passed })),
     invoices: invoices.map((i) => ({ number: i.number, openCents: i.grossCents - i.paidCents, currency: i.currency, dueDate: i.dueDate, overdue: i.status === 'OVERDUE' || isPastDue(i.dueDate, now) })),
     unreadMessages,

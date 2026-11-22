@@ -13,6 +13,8 @@ import { openInvoicesOf } from '../billing/service.js';
 import { isPastDue } from '../billing/math.js';
 import { recognitionClientAction } from '../recognition/service.js';
 import { portalStageOf } from './portalStage.js';
+import { loadContractTurns } from '../caseContracts/turn.js'; // whose turn the case contract is (status line)
+import { buildStatusLine } from './statusLine.js'; // plain status line of the cabinet (stage + what is required)
 import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
 import { documentSummary, profileCompleteness, progressPercent, STATUS_STEP, STEP_COUNT } from '../../routes/account.js';
 
@@ -317,7 +319,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
       : Promise.resolve([]),
     prisma.signatureSigner.findMany({
       where: { userId, status: { in: ['PENDING', 'VIEWED'] }, request: { status: 'SENT' } },
-      include: { request: { select: { title: true, order: true, expiresAt: true, status: true, isCaseContract: true, caseId: true, signers: { select: { id: true, order: true, status: true } } } } },
+      include: { request: { select: { title: true, order: true, expiresAt: true, status: true, isCaseContract: true, contractKind: true, caseId: true, signers: { select: { id: true, order: true, status: true } } } } },
       take: 50,
     }),
     caseIds.length
@@ -364,6 +366,8 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     if (r.expiresAt && r.expiresAt <= now) return false;
     // The case contract is the SIGN_CONTRACT card while the case waits for it.
     if (r.isCaseContract && open && r.caseId === open.id && open.status === 'CONTRACT_SENT') return false;
+    // V2 İş müqaviləsi documents are the SIGN_CONTRACT card after the Əmək müqaviləsi.
+    if (r.contractKind && open && r.caseId === open.id && open.status === 'CONTRACT_SIGNED' && ball?.items.some((b) => b.side === 'CLIENT' && b.reason === 'SIGN_CONTRACT')) return false;
     return currentTurn(r.signers, r.order).some((x) => x.id === s.id);
   });
 
@@ -399,6 +403,21 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     question: questionOf(lastMessage, userId, open?.id ?? null),
   };
   const { actionCount, ...picked } = pickNextStep(facts);
+  // Status line (stage + whether / what the client has to do): same actions, plus the contract turn.
+  const contractRow = open && (open.status === 'CONTRACT_SENT' || open.status === 'CONTRACT_SIGNED')
+    ? await prisma.case.findUnique({ where: { id: open.id }, select: { id: true, status: true, contract: { select: { signedAt: true, signatureRequestId: true } } } })
+    : null;
+  const contractTurn = contractRow ? ((await loadContractTurns([contractRow], now)).get(contractRow.id) ?? null) : null;
+  const workSigned = open?.status === 'CONTRACT_SIGNED' && contractTurn === 'STAFF' ? (await import('../caseContracts/service.js').then((m) => m.workStateOf(open.id))) === 'SIGNED' : false;
+  const statusLine = buildStatusLine({
+    now,
+    primary: open ? { id: open.id, status: open.status, appointmentAt: open.appointmentAt } : primary ? { id: primary.id, status: primary.status, appointmentAt: null } : null,
+    actions: [picked.primary, ...picked.secondary, ...picked.more].filter((x): x is NextAction => !!x),
+    pendingDocs: requirements.reduce((n, r) => n + r.documents.filter((d) => d.status === 'PENDING').length, 0),
+    hasEmployer: !!open?.company,
+    contractTurn,
+    workSigned,
+  });
   // Stage-based portal (lib/account/portalStage): the same facts decide which tools the portal features.
   const docKinds: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT'];
   const portal = portalStageOf(cases, arrived, {
@@ -478,6 +497,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
         })
       : null,
     ...picked,
+    statusLine,
     portal,
     counts: {
       actions: actionCount,

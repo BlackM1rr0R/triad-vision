@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import type { Interview, InterviewStatus, Locale, Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
+import { revealedCompanyIdsForClient } from '../caseContracts/employerVisibility.js';
 import { buildIcs } from '../ics.js';
 import { renderEmail, sendMail } from '../mailer.js';
 import { notifyUser } from '../notifications.js';
@@ -37,7 +38,7 @@ const anonymised = (u: { firstName: string; lastName: string }) =>
   `${u.firstName.trim()}${u.lastName.trim() ? ` ${u.lastName.trim()[0].toUpperCase()}.` : ''}`;
 
 /** Full view for staff; the employer and the candidate see a reduced one (no e-mail, anonymised name for employers). */
-export const interviewView = (i: InterviewFull, audience: 'staff' | 'company' | 'candidate') => ({
+export const interviewView = (i: InterviewFull, audience: 'staff' | 'company' | 'candidate', hideEmployer = false) => ({
   id: i.id,
   status: i.status,
   startsAt: i.startsAt,
@@ -46,7 +47,7 @@ export const interviewView = (i: InterviewFull, audience: 'staff' | 'company' | 
   notes: i.notes,
   createdAt: i.createdAt,
   updatedAt: i.updatedAt,
-  company: i.company,
+  company: hideEmployer ? null : i.company,
   application: i.application ? { id: i.application.id, status: i.application.status, vacancy: i.application.vacancy } : null,
   candidate:
     audience === 'company'
@@ -57,6 +58,17 @@ export const interviewView = (i: InterviewFull, audience: 'staff' | 'company' | 
   /** Set when the candidate picked the time from the employer's free slots (routes/interviewCalendar.ts). */
   inviteId: i.invite?.id ?? null,
 });
+
+/**
+ * Owner's rule: a candidate (client) does not see the employer's name until the İş müqaviləsi of a case with that employer
+ * is approved. Returns a predicate "hide the employer of this interview from this viewer" (one query per distinct candidate).
+ */
+export const employerHiddenFrom = async (items: InterviewFull[], audience: 'staff' | 'company' | 'candidate') => {
+  if (audience !== 'candidate') return () => false;
+  const revealed = new Map<string, Set<string>>();
+  for (const id of new Set(items.filter((i) => i.companyId).map((i) => i.candidateId))) revealed.set(id, await revealedCompanyIdsForClient(id));
+  return (i: InterviewFull) => !!i.companyId && !revealed.get(i.candidateId)?.has(i.companyId);
+};
 
 /** Payload for partner webhooks (no personal data beyond what the employer already sees). */
 export const interviewWebhookPayload = (i: InterviewFull) => ({
@@ -180,18 +192,18 @@ const l10n = (v: unknown, locale: Locale) => {
   return o[locale] || o.az || o.en || o.de || '';
 };
 
-export const interviewCtx = (i: InterviewFull, locale: Locale, audience: 'staff' | 'company' | 'candidate', notes?: string | null): Ctx => ({
+export const interviewCtx = (i: InterviewFull, locale: Locale, audience: 'staff' | 'company' | 'candidate', notes?: string | null, hideEmployer = false): Ctx => ({
   when: formatSlot(i.startsAt, asBookingLocale(locale)),
-  company: i.company?.name ?? '',
+  company: hideEmployer ? '' : (i.company?.name ?? ''),
   candidate: audience === 'company' ? anonymised(i.candidate) : `${i.candidate.firstName} ${i.candidate.lastName}`.trim(),
   vacancy: l10n(i.application?.vacancy.title, locale),
   meetingUrl: i.status === 'CANCELLED' ? '' : (i.meetingUrl ?? ''),
   notes: notes ?? i.notes ?? '',
 });
 
-export const interviewIcs = (i: InterviewFull, locale: Locale, cancelled = i.status === 'CANCELLED') => {
+export const interviewIcs = (i: InterviewFull, locale: Locale, cancelled = i.status === 'CANCELLED', hideEmployer = false) => {
   const t = interviewTexts[locale];
-  const c = interviewCtx(i, locale, 'candidate');
+  const c = interviewCtx(i, locale, 'candidate', undefined, hideEmployer);
   return buildIcs({
     uid: `interview-${i.id}@triad-vision.de`,
     start: i.startsAt,
@@ -215,20 +227,21 @@ const STAFF_LINK = '/admin/interviews';
 /** Mails that carry the calendar invite (.ics): every change of the time or the status. */
 const ICS_KINDS: InterviewMail[] = ['scheduled', 'confirmed', 'cancelled', 'rescheduled', 'booked', 'moved'];
 
-const icsAttachment = (i: InterviewFull, locale: Locale, kind: InterviewMail) => [
-  { filename: 'triad-vision-interview.ics', content: interviewIcs(i, locale, kind === 'cancelled'), contentType: 'text/calendar; charset=utf-8' },
+const icsAttachment = (i: InterviewFull, locale: Locale, kind: InterviewMail, hideEmployer = false) => [
+  { filename: 'triad-vision-interview.ics', content: interviewIcs(i, locale, kind === 'cancelled', hideEmployer), contentType: 'text/calendar; charset=utf-8' },
 ];
 
 /** In-app + push through notifyUser; the e-mail is sent here so the .ics can be attached. */
 export const notifyCandidate = async (i: InterviewFull, kind: InterviewMail, notes?: string | null) => {
   const u = i.candidate;
   const t = interviewTexts[u.locale];
-  const msg = t[kind](interviewCtx(i, u.locale, 'candidate', notes));
+  const hideEmployer = (await employerHiddenFrom([i], 'candidate'))(i);
+  const msg = t[kind](interviewCtx(i, u.locale, 'candidate', notes, hideEmployer));
   await notifyUser(u.id, { type: `INTERVIEW_${kind.toUpperCase()}`, title: msg.title, body: msg.body, link: CANDIDATE_LINK, email: false, ctaLabel: t.cta });
   if (u.emailNotifications === false) return;
   const withIcs = ICS_KINDS.includes(kind);
   const html = renderEmail(msg.title, msg.body, { label: t.cta, url: `${config.clientUrl}${CANDIDATE_LINK}` });
-  void sendMail(u.email, `Triad Vision · ${msg.title}`, html, withIcs ? icsAttachment(i, u.locale, kind) : undefined);
+  void sendMail(u.email, `Triad Vision · ${msg.title}`, html, withIcs ? icsAttachment(i, u.locale, kind, hideEmployer) : undefined);
 };
 
 /** Every active employer user of the interview's company, in their own language (time changes with the .ics). */

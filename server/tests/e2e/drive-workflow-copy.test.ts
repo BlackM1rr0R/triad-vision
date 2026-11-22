@@ -7,8 +7,9 @@ import { expectStatus } from '../helpers/workflow';
 
 /**
  * "İş axını" stage folders of the drive (lib/drive/workflowFolders, routes/driveWorkflow): "İş axınına kopyala"
- * to Schon geschrieben / Fertig / Ablehnung (recursive, folder structure kept, name clashes → "name (2)"), and
- * the way through Schon geschrieben → In Bearbeitung → Fertig / Ablehnung with the path below the stage kept.
+ * to Schon geschrieben / Fertig (recursive, folder structure kept, name clashes → "name (2)"), the way through
+ * Schon geschrieben → In Bearbeitung → Fertig with the path below the stage kept, and "Geri qaytar" (documents back
+ * in the client folder, case out of the workflow). The old Ablehnung stage no longer exists.
  */
 
 type Stage = { stage: string; id: string; name: string; count: number };
@@ -33,15 +34,15 @@ const clientFolder = async (a: Agent) => {
   const r = await roots(a);
   const { user } = await createClient({ firstName: 'Aysel', lastName: 'Məmmədova' });
   const folder = await mkdir(a, r.cases.id, uniq('Aysel Məmmədova · '));
-  await prisma.case.create({ data: { number: uniq('TV-'), clientId: user.id, profession: 'Sürücü', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', driveFolderId: folder.id } });
+  const kase = await prisma.case.create({ data: { number: uniq('TV-'), clientId: user.id, profession: 'Sürücü', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', driveFolderId: folder.id } });
   const pass = await mkdir(a, folder.id, 'Reisepass');
   const passPdf = await upload(a, pass.id, 'Pass.pdf', 'pass page');
   const antrag = await upload(a, folder.id, 'Antrag.pdf', 'antrag');
-  return { folder, pass, passPdf, antrag };
+  return { folder, pass, passPdf, antrag, caseId: kase.id };
 };
 
 describe('drive: İş axını stage folders (copy, send on)', () => {
-  it('sets up Arbeitsablauf with the four protected stage folders once', async () => {
+  it('sets up Arbeitsablauf with the three protected stage folders once', async () => {
     const staff = await asStaff();
     const { shared } = await roots(staff.agent);
     const wf = await wfFolders(staff.agent);
@@ -49,11 +50,10 @@ describe('drive: İş axını stage folders (copy, send on)', () => {
       ['WRITTEN', 'Schon geschrieben', 0],
       ['IN_PROGRESS', 'In Bearbeitung', 0],
       ['DONE', 'Fertig', 0],
-      ['REFUSED', 'Ablehnung', 0],
     ]);
     const root = await prisma.driveNode.findUniqueOrThrow({ where: { id: wf.root.id } });
     expect(root).toMatchObject({ parentId: shared.id, name: 'Arbeitsablauf', system: true });
-    expect(await prisma.driveNode.count({ where: { parentId: wf.root.id, system: true, deletedAt: null } })).toBe(4);
+    expect(await prisma.driveNode.count({ where: { parentId: wf.root.id, system: true, deletedAt: null } })).toBe(3);
     // Idempotent: the same folders again.
     expect((await wfFolders(staff.agent)).stages.map((s) => s.id)).toEqual(wf.stages.map((s) => s.id));
     // Protected like the sections: staff can neither rename nor delete them.
@@ -104,17 +104,17 @@ describe('drive: İş axını stage folders (copy, send on)', () => {
     expect((await children(doneClient.id)).map((n) => n.name).sort()).toEqual([antrag.name, 'Reisepass'].sort());
     expect(await prisma.driveNode.count({ where: { parentId: done, deletedAt: null } })).toBe(1);
 
-    // A folder that is no client folder goes straight into the stage; Ablehnung works too.
+    // A folder that is no client folder goes straight into the stage; the removed Ablehnung stage is refused.
     const { shared } = await roots(staff.agent);
     const misc = await mkdir(staff.agent, shared.id, 'Muster');
     await upload(staff.agent, misc.id, 'Muster.pdf');
-    expectStatus(await copy(staff.agent, [misc.id], 'REFUSED'), 200);
-    const refused = await stageId(staff.agent, 'REFUSED');
-    expect((await children(refused)).map((n) => n.name)).toEqual(['Muster']);
+    expect((await copy(staff.agent, [misc.id], 'REFUSED')).status).toBe(400);
+    expectStatus(await copy(staff.agent, [misc.id], 'WRITTEN'), 200);
+    expect((await children(await stageId(staff.agent, 'WRITTEN'))).map((n) => n.name)).toContain('Muster');
 
     // Counts per stage folder; audit and folder journal per item.
     const counts = Object.fromEntries((await wfFolders(staff.agent)).stages.map((s) => [s.stage, s.count]));
-    expect(counts).toEqual({ WRITTEN: 1, IN_PROGRESS: 0, DONE: 1, REFUSED: 1 });
+    expect(counts).toEqual({ WRITTEN: 2, IN_PROGRESS: 0, DONE: 1 });
     expect(await prisma.auditLog.count({ where: { action: 'DRIVE_WORKFLOW_COPIED' } })).toBe(5);
     expect(await prisma.driveActivity.count({ where: { action: 'COPY', folderId: donePass.id } })).toBe(2);
   });
@@ -144,10 +144,10 @@ describe('drive: İş axını stage folders (copy, send on)', () => {
     expect((await client.agent.get('/api/drive/workflow/folders')).status).toBe(403);
   });
 
-  it('sends on: Schon geschrieben → In Bearbeitung → Fertig / Ablehnung, keeping the path below the stage', async () => {
+  it('sends on: Schon geschrieben → In Bearbeitung → Fertig, keeping the path below the stage', async () => {
     const staff = await asStaff();
     const { folder, antrag, passPdf } = await clientFolder(staff.agent);
-    const [written, inProgress, done, refused] = await Promise.all(['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'].map((s) => stageId(staff.agent, s)));
+    const [written, inProgress, done] = await Promise.all(['WRITTEN', 'IN_PROGRESS', 'DONE'].map((s) => stageId(staff.agent, s)));
     expectStatus(await copy(staff.agent, [folder.id], 'WRITTEN'), 200);
     const wClient = await child(written, folder.name);
     const wPass = await child(wClient.id, 'Reisepass');
@@ -173,17 +173,16 @@ describe('drive: İş axını stage folders (copy, send on)', () => {
     expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: wClient.id } })).deletedAt).not.toBeNull();
     expect(await children(written)).toEqual([]);
 
-    // In Bearbeitung → Fertig (a part) and → Ablehnung (the rest), structure kept.
+    // In Bearbeitung → Fertig (a part), structure kept; Ablehnung does not exist any more.
     expectStatus(await send(staff.agent, [wPass.id], 'DONE'), 200);
     const dClient = await child(done, folder.name);
     expect((await children(dClient.id)).map((n) => n.name)).toEqual(['Reisepass']);
-    expectStatus(await send(staff.agent, [ipClient.id], 'REFUSED'), 200);
-    expect((await children(refused)).map((n) => n.name)).toEqual([folder.name]);
-    expect(await children(inProgress)).toEqual([]);
-    // Fertig / Ablehnung are the last stages.
+    expect((await send(staff.agent, [ipClient.id], 'REFUSED')).status).toBe(400);
+    expect((await children(inProgress)).map((n) => n.name)).toEqual([folder.name]);
+    // Fertig is the last stage.
     expect((await send(staff.agent, [dClient.id], 'IN_PROGRESS')).body.results[0].error).toBe('WORKFLOW_TRANSITION_NOT_ALLOWED');
 
-    expect(await prisma.auditLog.count({ where: { action: 'DRIVE_WORKFLOW_SENT' } })).toBe(4);
+    expect(await prisma.auditLog.count({ where: { action: 'DRIVE_WORKFLOW_SENT' } })).toBe(3);
     const moves = await prisma.driveActivity.findMany({ where: { action: 'MOVE', nodeId: wPass.id }, orderBy: { createdAt: 'asc' } });
     expect(moves.map((m) => (m.meta as { workflow: { from: string; to: string } }).workflow)).toEqual([
       { from: 'WRITTEN', to: 'IN_PROGRESS' },
@@ -192,6 +191,39 @@ describe('drive: İş axını stage folders (copy, send on)', () => {
     // A plain "Köçür" (move) still lets an admin put anything anywhere.
     expectStatus(await staff.agent.post('/api/drive/move').send({ ids: [dClient.id], targetId: written }), 200);
     expect((await children(written)).map((n) => n.name)).toEqual([folder.name]);
+  });
+
+  it('Geri qaytar: copies are removed, files the client folder lacks move back (same path), the case leaves the workflow', async () => {
+    const staff = await asStaff();
+    const { folder, pass, antrag, caseId } = await clientFolder(staff.agent);
+    const [written, inProgress] = await Promise.all(['WRITTEN', 'IN_PROGRESS'].map((s) => stageId(staff.agent, s)));
+    expectStatus(await copy(staff.agent, [folder.id], 'WRITTEN'), 200);
+    const wClient = await child(written, folder.name);
+    const wPass = await child(wClient.id, 'Reisepass');
+    // A file written in the workflow only (no original), in a sub-folder.
+    const extra = await upload(staff.agent, wPass.id, 'Übersetzung.pdf', 'translation');
+    // Part of the case goes on to In Bearbeitung before it is returned.
+    expectStatus(await send(staff.agent, [wPass.id], 'IN_PROGRESS'), 200);
+    await prisma.case.update({ where: { id: caseId }, data: { processingStage: 'IN_PROGRESS' } });
+
+    const ret = expectStatus(await staff.agent.post('/api/admin/client-folders/return').send({ cases: [caseId], note: 'Yanlış' }), 200).body;
+    expect(ret.summary).toMatchObject({ total: 1, succeeded: 1, failed: 0 });
+
+    // Case out of the workflow, audit-logged, history kept.
+    expect(await prisma.case.findUnique({ where: { id: caseId }, select: { processingStage: true } })).toEqual({ processingStage: null });
+    expect(await prisma.auditLog.count({ where: { action: 'CASE_WORKFLOW_RETURNED', target: `case:${caseId}` } })).toBe(1);
+    expect(await prisma.caseProcessingMove.count({ where: { caseId, toStage: 'RETURNED' } })).toBe(1);
+    // The copies are gone from every stage folder ...
+    expect(await children(written)).toEqual([]);
+    expect(await children(inProgress)).toEqual([]);
+    // ... the originals are untouched and the workflow-only file is back in the client folder at its path.
+    expect((await children(folder.id)).map((n) => n.name).sort()).toEqual([antrag.name, 'Reisepass'].sort());
+    const names = (await children(pass.id)).map((n) => n.name).sort();
+    expect(names).toContain(extra.name);
+    expect(names).toHaveLength(2);
+    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: extra.id } })).deletedAt).toBeNull();
+    // Idempotent: nothing left to return.
+    expect(expectStatus(await staff.agent.post('/api/admin/client-folders/return').send({ cases: [caseId] }), 200).body.results[0]).toMatchObject({ ok: false, error: 'NOT_IN_WORKFLOW' });
   });
 
   it('copies a bigger tree in one request (several levels, many files)', async () => {

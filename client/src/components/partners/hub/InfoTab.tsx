@@ -8,7 +8,6 @@ import { SensitiveValue } from '@/components/privacyTools/SensitiveValue';
 import { usePartnerFields, type Partner } from '../api';
 import type { PartnerOwnershipFields } from '../Ownership';
 import { ReadinessMeter } from './parts';
-import { isGermany } from './types';
 import { registerCopy } from '@/i18n';
 import { pagesPartnerQuota } from '@/i18n/pagesPartnerQuota';
 
@@ -62,6 +61,7 @@ export const InfoTab = ({ partner: p, canEdit, onEdit }: { partner: Partner & Pa
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title={t('partnerHub.info.general')} icon={company ? Building2 : UserRound}>
+          <Row label={t('partnerForm.f.betriebsnummer')} value={p.betriebsnummer && <span className="font-mono">{p.betriebsnummer}</span>} />
           <Row label={t('partnerForm.f.name')} value={p.name} missing={m('name')} />
           <Row label={t('partnerForm.f.partnerType')} value={t(`partnerForm.f.types.${p.partnerType ?? 'INDIVIDUAL'}`)} />
           {company && <Row label={t('partnerForm.f.companyName')} value={p.companyName} missing={m('companyName')} />}
@@ -118,7 +118,6 @@ export const InfoTab = ({ partner: p, canEdit, onEdit }: { partner: Partner & Pa
               <Row label={t('partnerForm.f.registerNumber')} value={p.registerNumber} missing={m('registerNumber')} />
               <Row label={t('partnerForm.f.registerCourt')} value={p.registerCourt} missing={m('registerCourt')} />
               <Row label={t('partnerForm.f.vatId')} value={p.vatId && <SensitiveValue value={p.vatId} entity="partner" id={p.id} field="vatId" className="font-mono" />} />
-              {(isGermany(p.country) || p.betriebsnummer) && <Row label={t('partnerForm.f.betriebsnummer')} value={p.betriebsnummer && <span className="font-mono">{p.betriebsnummer}</span>} />}
               <Row label={t('partnerForm.f.signatoryName')} value={p.signatoryName} missing={m('signatoryName')} />
               <Row label={t('partnerForm.f.signatoryRole')} value={p.signatoryRole} missing={m('signatoryRole')} />
             </>

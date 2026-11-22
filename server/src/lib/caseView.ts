@@ -125,7 +125,15 @@ export const loadCaseDetail = async (caseId: string, opts: { forStaff: boolean }
       signerUserAgent: opts.forStaff ? c.contract.signerUserAgent : undefined,
     },
     // Documents not tied to a requirement (contract, visa scan, other files uploaded by staff, embassy packages)
-    otherDocuments: c.documents.filter((d) => d.stage === 'VISA' || d.stage === 'OTHER' || d.stage === 'EMBASSY'),
+    // The client also gets every signed copy / contract version not shown in the contract card (İş müqaviləsi
+    // documents, other signed requests, earlier versions): all their documents can be opened (/api/files/:id).
+    otherDocuments: c.documents.filter(
+      (d) =>
+        d.stage === 'VISA' ||
+        d.stage === 'OTHER' ||
+        d.stage === 'EMBASSY' ||
+        (!opts.forStaff && (d.stage === 'CONTRACT' || d.stage === 'CONTRACT_SIGNED') && !docIds.includes(d.id)),
+    ),
     documents: undefined,
     // "Top kimdÉ™dir?": who must act next, ETA, time per side (lib/clientProcess/ballInCourt)
     ballInCourt: await ballInCourtFor(c.id),

@@ -13,27 +13,26 @@ registerCopy(pagesDriveProcessing); // "İş axını" of the documents section, 
 
 /**
  * Team document workflow of a case (server lib/caseProcessing): Schon geschrieben → In Bearbeitung → Fertig,
- * and Ablehnung. Nothing stored = not in the workflow (nothing lands in In Bearbeitung by itself). The German
+ * and "Geri qaytar" (back to the client folders, out of the workflow). Nothing stored = not in the workflow (nothing lands in In Bearbeitung by itself). The German
  * stage names are the labels in every language (the team uses them).
  */
-export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const;
+export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE'] as const;
 export type ProcessingStage = (typeof PROCESSING_STAGES)[number];
 export const isProcessingStage = (v: string | null | undefined): v is ProcessingStage => !!v && (PROCESSING_STAGES as readonly string[]).includes(v);
 
 /** Allowed moves, as enforced by the server (NEXT_STAGES in lib/caseProcessing); 'NONE' = not in the workflow yet. */
 export const NEXT_STAGES: Record<ProcessingStage | 'NONE', ProcessingStage[]> = {
-  NONE: ['WRITTEN', 'IN_PROGRESS', 'REFUSED'],
-  WRITTEN: ['IN_PROGRESS', 'REFUSED'],
-  IN_PROGRESS: ['DONE', 'REFUSED', 'WRITTEN'],
-  DONE: ['IN_PROGRESS', 'REFUSED'],
-  REFUSED: ['IN_PROGRESS'],
+  NONE: ['WRITTEN', 'IN_PROGRESS'],
+  WRITTEN: ['IN_PROGRESS'],
+  IN_PROGRESS: ['DONE', 'WRITTEN'],
+  DONE: ['IN_PROGRESS'],
 };
 export const canMoveStage = (from: ProcessingStage | null | undefined, to: ProcessingStage) => from === to || NEXT_STAGES[from ?? 'NONE'].includes(to);
 /** The obvious next step: (none) → Schon geschrieben → In Bearbeitung → Fertig. */
 export const nextStage = (s: ProcessingStage | null | undefined): ProcessingStage | null =>
   !s ? 'WRITTEN' : s === 'WRITTEN' ? 'IN_PROGRESS' : s === 'IN_PROGRESS' ? 'DONE' : null;
 
-export const STAGE_TONE: Record<ProcessingStage, BadgeTone> = { IN_PROGRESS: 'neutral', WRITTEN: 'info', DONE: 'success', REFUSED: 'danger' };
+export const STAGE_TONE: Record<ProcessingStage, BadgeTone> = { IN_PROGRESS: 'neutral', WRITTEN: 'info', DONE: 'success' };
 
 export interface Person {
   id: string;
@@ -53,7 +52,7 @@ export type StageCounts = Record<ProcessingStage, number>;
 export interface ProcessingMove {
   id: string;
   fromStage: ProcessingStage | null;
-  toStage: ProcessingStage;
+  toStage: ProcessingStage | 'RETURNED';
   by: Person | null;
   assignee: Person | null;
   note: string | null;
@@ -114,7 +113,7 @@ export interface BoardColumn {
   items: BoardItem[];
 }
 
-export const stageLabel = (s: ProcessingStage | null | undefined) => (s ? i18n.t(`caseProcessing.stages.${s}`) : i18n.t('caseProcessing.none'));
+export const stageLabel = (s: ProcessingStage | 'RETURNED' | null | undefined) => (s ? i18n.t(`caseProcessing.stages.${s}`) : i18n.t('caseProcessing.none'));
 
 export const processingKey = (caseId: string) => ['case-processing', caseId] as const;
 
@@ -188,6 +187,18 @@ export interface ProcessingFolder {
   processing: ProcessingSummary;
   lastNote: string | null;
   fileCount: number;
+  /** Employer of the case, the folder the client folder lies in ("group") and the last "Müştəriyə göndər". */
+  company: { id: string; name: string } | null;
+  group: { id: string; name: string } | null;
+  readySentAt: string | null;
+}
+
+export interface ProcessingFilters {
+  company?: string;
+  group?: string;
+  from?: string;
+  to?: string;
+  sent?: 'sent' | 'unsent';
 }
 
 export interface ProcessingFolders {
@@ -195,17 +206,19 @@ export interface ProcessingFolders {
   counts: StageCounts;
   waitingForMe: number;
   total: number;
+  /** Filter choices of the whole stage. */
+  options?: { companies: { id: string; name: string }[]; groups: { id: string; name: string }[] };
   limit: number;
   items: ProcessingFolder[];
 }
 
 /** GET /admin/case-processing/folders — counts per stage and the client folders of one stage. */
-export const useProcessingFolders = (p: { stage: ProcessingStage; mine?: boolean; search?: string }, enabled = true) =>
+export const useProcessingFolders = (p: { stage: ProcessingStage; mine?: boolean; search?: string } & ProcessingFilters, enabled = true) =>
   useQuery({
     // under the drive keys: the drive's refresh / invalidateDrive reloads it too
     queryKey: ['drive', 'processing-folders', p],
     queryFn: async () =>
-      (await api.get<ProcessingFolders>('/admin/case-processing/folders', { params: { stage: p.stage, mine: p.mine ? '1' : undefined, search: p.search || undefined } })).data,
+      (await api.get<ProcessingFolders>('/admin/case-processing/folders', { params: { stage: p.stage, mine: p.mine ? '1' : undefined, search: p.search || undefined, company: p.company || undefined, group: p.group || undefined, from: p.from || undefined, to: p.to || undefined, sent: p.sent || undefined } })).data,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
     enabled,

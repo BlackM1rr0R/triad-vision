@@ -73,9 +73,20 @@ export interface NextStep {
   more?: NextAction[];
   /** reason: the ball reason (e.g. TRIAD_SIGN_CONTRACT: Triad Vision signs the contract first). */
   waiting: { side: 'TEAM' | 'EMBASSY' | 'NONE'; expectedBy: string | null; reason?: string } | null;
+  /** Status line of the cabinet header (older servers: absent). */
+  statusLine?: StatusLineData;
   /** Stage-based portal (server: lib/account/portalStage.ts; older servers: absent). */
   portal?: PortalInfo;
   counts: { actions: number; unreadMessages: number; unreadNotifications: number; pendingSignatures: number; pendingLegal: number; openCheckIns: number; openInvoices?: number; hasBilling?: boolean };
+}
+
+/** Plain status line of the cabinet (server: lib/account/statusLine.ts): the stage and what the client has to do. */
+export interface StatusLineData {
+  stage: string;
+  required: boolean;
+  detail: string | L10n | null;
+  to: string | null;
+  action: { kind: NextKind; detail: string | L10n | null; to: string } | null;
 }
 
 /** The client's stage, the finer phase and the 4–7 tools the portal features now (decided on the server). */

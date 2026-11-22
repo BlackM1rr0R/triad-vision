@@ -5,7 +5,7 @@ import { prisma } from '../db.js';
 import { hasMinRole, requireAuth } from '../middleware/auth.js';
 import { badRequest, conflict, forbidden, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
-import { interviewInclude, interviewView, newMeetingUrl } from '../lib/ops/interviews.js';
+import { employerHiddenFrom, interviewInclude, interviewView, newMeetingUrl } from '../lib/ops/interviews.js';
 import { DAY_RE, TIME_RE, generateSlots, isBookable, slotView, validRule } from '../lib/ops/interviewSlots.js';
 import {
   SETTINGS_LIMITS,
@@ -13,6 +13,7 @@ import {
   hasAvailability,
   horizonEnd,
   inviteInclude,
+  inviteEmployerHidden,
   inviteView,
   loadRules,
   loadSettings,
@@ -174,7 +175,8 @@ interviewCalendarRouter.get('/invites', async (req, res) => {
   const settings = new Map<string, SchedulingSettings>();
   for (const id of new Set(items.map((i) => i.companyId))) settings.set(id, await loadSettings(id));
   const now = new Date();
-  res.json({ items: items.map((i) => inviteView(i, audience, settings.get(i.companyId)!, now)) });
+  const hidden = await inviteEmployerHidden(items, audience);
+  res.json({ items: items.map((i) => inviteView(i, audience, settings.get(i.companyId)!, now, hidden(i))) });
 });
 
 const inviteSchema = z.object({
@@ -307,5 +309,7 @@ interviewCalendarRouter.post('/invites/:id/book', async (req, res) => {
   await audit(req, current ? 'INTERVIEW_SLOT_MOVED' : 'INTERVIEW_SLOT_BOOKED', `interview:${interview.id}`, { inviteId: i.id, startsAt: startsAt.toISOString(), force });
   await broadcastBooking(interview, kind, req.user!.id, current ? 'interview.updated' : 'interview.scheduled');
   const fresh = await prisma.interviewInvite.findUniqueOrThrow({ where: { id: i.id }, include: inviteInclude });
-  res.status(current ? 200 : 201).json({ interview: interviewView(interview, audience), invite: inviteView(fresh as InviteFull, audience, s) });
+  const hideI = (await employerHiddenFrom([interview], audience))(interview);
+  const hideV = (await inviteEmployerHidden([fresh as InviteFull], audience))(fresh as InviteFull);
+  res.status(current ? 200 : 201).json({ interview: interviewView(interview, audience, hideI), invite: inviteView(fresh as InviteFull, audience, s, new Date(), hideV) });
 });

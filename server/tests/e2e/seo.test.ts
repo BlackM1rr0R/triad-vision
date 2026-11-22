@@ -178,9 +178,10 @@ describe('GET /api/seo/head', () => {
 
     const b = ld((await anon().get('/api/seo/head').query({ path: `/jobs/${shown.slug}` })).text);
     expect(b.find((x) => x['@type'] === 'JobPosting')).toMatchObject({
-      hiringOrganization: { name: 'SEO Co Logistik GmbH', sameAs: 'https://seo-co.example' },
+      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
       employmentType: ['FULL_TIME', 'OTHER'],
     });
+    expect(JSON.stringify(b)).not.toContain('SEO Co');
 
     const gone = await anon().get('/api/seo/head').query({ path: `/jobs/${expired.slug}` });
     expect(gone.text).toContain('content="noindex, nofollow"');
@@ -252,7 +253,7 @@ describe('GET /__seo/status (crawler status code of the HTML shell)', () => {
       const head = await anon().get('/__seo/head').query({ path });
       expect(head.text, path).toContain(`rel="canonical" href="${ORIGIN}${path}"`);
       const posting = ld(head.text).find((b) => b['@type'] === 'JobPosting');
-      expect(posting, path).toMatchObject({ title: `Driver ${lng}`, hiringOrganization: { name: 'SEO Co Logistik GmbH' }, url: `${ORIGIN}${path}` });
+      expect(posting, path).toMatchObject({ title: `Driver ${lng}`, hiringOrganization: { name: 'confidential' }, url: `${ORIGIN}${path}` });
       const body = await anon().get('/__seo/body').query({ path });
       expect(body.text, path).toContain(`<h1>Driver ${lng} — Hamburg</h1>`);
       expect(body.text, path).toContain(`Drive trucks ${lng}`);

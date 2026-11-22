@@ -1,7 +1,6 @@
 import type { CaseStatus, DocStatus, VisaType } from '@prisma/client';
-import type { ProcessingStage } from '../caseProcessing/index.js';
 import type { ForecastStep, StepKey } from '../journey/forecast.js';
-import { PROCESSING_COPY, processingLabel, type L10n } from './texts.js';
+import { PROCESSING_COPY, processingLabel, type L10n, type ProcessingStage } from './texts.js';
 
 /**
  * "Sənədlərimin vəziyyəti" — the client's process overview (pure, unit-tested in tests/unit/docProgress.test.ts):

@@ -10,11 +10,11 @@ import { fmtDateTime } from '@/components/admin/labels';
 import { PROCESSING_STAGES, STAGE_TONE, canMoveStage, nextStage, stageLabel, useMoveStage, type ProcessingStage, type ProcessingSummary } from './api';
 
 /** "Schon geschrieben" etc. as a small badge; the local explanation as the tooltip. */
-export const StageBadge = ({ stage, className }: { stage: ProcessingStage | null | undefined; className?: string }) => {
+export const StageBadge = ({ stage, className }: { stage: ProcessingStage | 'RETURNED' | null | undefined; className?: string }) => {
   const { t } = useTranslation();
   if (!stage) return <span className={clsx('text-xs text-muted', className)}>—</span>;
   return (
-    <span className={clsx('badge whitespace-nowrap', TONE_CLASS[STAGE_TONE[stage]], className)} title={t(`caseProcessing.hints.${stage}`)}>
+    <span className={clsx('badge whitespace-nowrap', TONE_CLASS[stage === 'RETURNED' ? 'neutral' : STAGE_TONE[stage]], className)} title={t(`caseProcessing.hints.${stage}`)}>
       {stageLabel(stage)}
     </span>
   );
@@ -85,7 +85,7 @@ export const MoveStageDialog = ({ caseId, open, onClose, current, initial }: { c
                 key={s}
                 className={clsx(
                   'flex min-h-11 items-start gap-2 rounded-lg border px-3 py-2 text-sm transition',
-                  // Schon geschrieben → In Bearbeitung → Fertig / Ablehnung: other moves are greyed out (the server refuses them).
+                  // Schon geschrieben → In Bearbeitung → Fertig: other moves are greyed out (the server refuses them).
                   !canMoveStage(current, s) ? 'cursor-not-allowed border-line opacity-50' : 'cursor-pointer',
                   stage === s ? 'border-primary bg-primary/[0.06] shadow-[inset_0_0_0_1px_var(--color-brand-600)]' : 'border-line hover:border-line-strong',
                 )}
@@ -120,7 +120,6 @@ export const MoveStageDialog = ({ caseId, open, onClose, current, initial }: { c
           <span className="label">{t('caseProcessing.note')}</span>
           <textarea className="input min-h-20" maxLength={2000} placeholder={t('caseProcessing.notePh')} value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
-        {stage === 'REFUSED' && <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('caseProcessing.refusedNote')}</p>}
       </form>
     </Modal>
   );

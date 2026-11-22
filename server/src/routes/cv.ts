@@ -16,6 +16,7 @@ import { renderLetterPdf } from '../lib/cv/letterPdf.js';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import { createLebenslaufVersion, lebenslaufFileName, lebenslaufPath, lebenslaufView } from '../lib/cv/versions.js';
+import { revealedCompanyIdsForClient } from '../lib/caseContracts/employerVisibility.js';
 
 /** CV builder and motivation letters — mounted at /api/cv (clients). */
 export const cvRouter = Router();
@@ -137,6 +138,7 @@ const readAnswers = (v: unknown): LetterAnswers => {
 /** Cases and vacancies the client may link a letter to. */
 cvRouter.get('/letters/options', async (req, res) => {
   const lang = (req.query.lang === 'en' ? 'en' : 'de') as LetterLang;
+  const revealed = await revealedCompanyIdsForClient(uid(req));
   const [cases, apps] = await Promise.all([
     prisma.case.findMany({
       where: { clientId: uid(req) },
@@ -148,7 +150,7 @@ cvRouter.get('/letters/options', async (req, res) => {
       where: { userId: uid(req) },
       orderBy: { createdAt: 'desc' },
       take: 30,
-      select: { id: true, status: true, vacancy: { select: { id: true, title: true, city: true, showCompany: true, company: { select: { name: true } } } } },
+      select: { id: true, status: true, vacancy: { select: { id: true, title: true, city: true, showCompany: true, companyId: true, company: { select: { name: true } } } } },
     }),
   ]);
   res.json({
@@ -159,7 +161,8 @@ cvRouter.get('/letters/options', async (req, res) => {
       vacancyId: a.vacancy.id,
       title: pickL10n(a.vacancy.title, lang),
       city: a.vacancy.city,
-      company: a.vacancy.showCompany ? (a.vacancy.company?.name ?? null) : null,
+      // Employer only once the İş müqaviləsi of a case with it is approved (lib/caseContracts/employerVisibility).
+      company: a.vacancy.showCompany && a.vacancy.companyId && revealed.has(a.vacancy.companyId) ? (a.vacancy.company?.name ?? null) : null,
     })),
   });
 });
@@ -187,10 +190,11 @@ const letterContext = async (userId: string, input: { kind: LetterKind; language
   if (vacancyId) {
     const v = await prisma.vacancy.findFirst({
       where: { id: vacancyId, OR: [{ applications: { some: { userId } } }, { cases: { some: { clientId: userId } } }, openVacancyWhere()] },
-      select: { title: true, city: true, showCompany: true, company: { select: { name: true } } },
+      select: { title: true, city: true, showCompany: true, companyId: true, company: { select: { name: true } } },
     });
     if (!v) throw notFound('VACANCY_NOT_FOUND');
-    vacancy = { title: pickL10n(v.title, input.language), city: v.city, company: v.showCompany ? (v.company?.name ?? null) : null };
+    const revealed = await revealedCompanyIdsForClient(userId);
+    vacancy = { title: pickL10n(v.title, input.language), city: v.city, company: v.showCompany && v.companyId && revealed.has(v.companyId) ? (v.company?.name ?? null) : null };
   }
   const ctx: LetterContext = {
     kind: input.kind,

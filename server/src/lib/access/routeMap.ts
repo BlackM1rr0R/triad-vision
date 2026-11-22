@@ -93,7 +93,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   authorities: 'cases',
   'four-eyes': 'cases',
   'case-processing': 'cases',
-  'client-folders': 'cases', // /client-folders/processing (bulk team workflow stage); partner / ready-docs above
+  'client-folders': 'cases', // /client-folders/processing (bulk team workflow stage) and /return ("Geri qaytar"); partner / ready-docs above
   arrivals: 'cases',
   'arrival-certificates': 'cases',
   housing: 'cases',

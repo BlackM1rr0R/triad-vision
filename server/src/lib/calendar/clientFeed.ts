@@ -1,3 +1,4 @@
+import { revealedCompanyIdsForClient } from '../caseContracts/employerVisibility.js';
 import type { Locale } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
@@ -47,7 +48,7 @@ export const clientFeedEvents = async (user: { id: string; locale: Locale }, now
     }),
     prisma.interview.findMany({
       where: { candidateId: user.id, status: { not: 'CANCELLED' }, startsAt: { gte: from, lte: to } },
-      select: { id: true, startsAt: true, endsAt: true, meetingUrl: true, updatedAt: true, company: { select: { name: true } }, application: { select: { vacancy: { select: { title: true } } } } },
+      select: { id: true, startsAt: true, endsAt: true, meetingUrl: true, updatedAt: true, companyId: true, company: { select: { name: true } }, application: { select: { vacancy: { select: { title: true } } } } },
     }),
     prisma.arrivalPlan.findMany({
       where: {
@@ -81,13 +82,14 @@ export const clientFeedEvents = async (user: { id: string; locale: Locale }, now
       stamp: c.updatedAt,
     });
   }
+  const revealed = await revealedCompanyIdsForClient(user.id);
   for (const i of interviews) {
     const vacancy = l10n(i.application?.vacancy.title, user.locale);
     events.push({
       uid: `client-interview-${i.id}@triad-vision.de`,
       start: i.startsAt,
       end: i.endsAt,
-      summary: `${L.interview}${i.company ? `: ${i.company.name}` : ''}`,
+      summary: `${L.interview}${i.company && i.companyId && revealed.has(i.companyId) ? `: ${i.company.name}` : ''}`,
       description: [vacancy, i.meetingUrl].filter(Boolean).join('\n') || undefined,
       location: i.meetingUrl ?? undefined,
       url: `${portal}/interviews`,

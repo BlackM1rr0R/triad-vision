@@ -253,6 +253,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   </span>
                 </div>
                 <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                  {p.betriebsnummer && <span className="font-mono tabular-nums">Betriebsnummer {p.betriebsnummer}</span>}
                   {p.phone && (
                     <span className="inline-flex items-center gap-1">
                       <Phone className="size-3" aria-hidden /> {p.phone}
@@ -319,6 +320,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
                           <span className="truncate">{p.name}</span>
                         </Link>
                         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
+                          {p.betriebsnummer && <span className="font-mono tabular-nums" title="Betriebsnummer">BNR {p.betriebsnummer}</span>}
                           {p.companyName && p.companyName !== p.name && <span className="truncate">{p.companyName}</span>}
                           {p.code && <span className="code-id">{p.code}</span>}
                           {!p.active && <span className="badge bg-sunken text-muted">{t('refPartners.inactive')}</span>}

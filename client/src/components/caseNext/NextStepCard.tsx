@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -40,8 +40,8 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
   const refreshCase = useCaseRefresh(c.id);
   // Re-evaluated whenever the case changes (status, documents, events).
   const version = `${c.status}:${c.events[0]?.id ?? ''}:${c.requirements.reduce((a, r) => a + r.documents.map((d) => d.status[0]).join(''), '')}:${c.messages.length}`;
-  const { data, isLoading } = useQuery({ queryKey: [...nextStepKey(c.id), version], queryFn: () => fetchNextStep(c.id), staleTime: 15_000 });
-  const ai = useQuery({ queryKey: nextStepAiKey(c.id, data ? `${data.status}:${data.steps.map((s) => `${s.code}${JSON.stringify(s.params)}`).join('|')}` : ''), queryFn: () => fetchNextStepAi(c.id), enabled: !!data && data.steps.length > 0, staleTime: 10 * 60_000, retry: false });
+  const { data, isLoading } = useQuery({ queryKey: [...nextStepKey(c.id), version], queryFn: () => fetchNextStep(c.id), staleTime: 15_000, placeholderData: keepPreviousData }); // keep the card while a changed case (new `version`) is re-evaluated: it must never vanish (the page would jump)
+  const ai = useQuery({ queryKey: nextStepAiKey(c.id, data ? `${data.status}:${data.steps.map((s) => `${s.code}${JSON.stringify(s.params)}`).join('|')}` : ''), queryFn: () => fetchNextStepAi(c.id), enabled: !!data && data.steps.length > 0, staleTime: 10 * 60_000, retry: false, placeholderData: keepPreviousData });
 
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ step: NextStep; action: Extract<NextAction, { kind: 'transition' }> } | null>(null);
@@ -115,7 +115,9 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
     }
   };
 
-  if (isLoading || !data) return null;
+  // The review panel lives outside the card's own loading state, so it never closes under the reviewer's hands.
+  const drawer = review ? <ReviewDrawer open onClose={() => setReview(null)} c={c} documentIds={review} onChanged={refresh} /> : null;
+  if (isLoading || !data) return drawer;
   const steps = data.steps;
   const visible = showAll ? [...steps, ...data.rest] : steps;
   // The AI draft can always be sent as a plain case message, also when the top step needs nothing from the client.
@@ -228,7 +230,7 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
         </div>
       )}
 
-      {review && <ReviewDrawer open onClose={() => setReview(null)} c={c} documentIds={review} onChanged={refresh} />}
+      {drawer}
       <ConfirmDialog
         open={!!confirm}
         onClose={() => setConfirm(null)}

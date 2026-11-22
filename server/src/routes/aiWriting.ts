@@ -1,3 +1,4 @@
+import { revealedCompanyIdsForClient } from '../lib/caseContracts/employerVisibility.js';
 import { Router, type Request } from 'express';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
@@ -57,7 +58,7 @@ const letterJob = async (userId: string, body: { vacancyId?: string; company?: s
   if (!body.vacancyId) return { job: { position: body.position!, company: body.company, city: body.city }, vacancyId: null };
   const v = await prisma.vacancy.findFirst({
     where: { id: body.vacancyId, OR: [openVacancyWhere(), { applications: { some: { userId } } }, { cases: { some: { clientId: userId } } }] },
-    select: { id: true, title: true, description: true, requirements: true, city: true, showCompany: true, company: { select: { name: true } } },
+    select: { id: true, title: true, description: true, requirements: true, city: true, showCompany: true, companyId: true, company: { select: { name: true } } },
   });
   if (!v) throw notFound('VACANCY_NOT_FOUND');
   const reqs = v.requirements && typeof v.requirements === 'object' ? ((v.requirements as Record<string, unknown>).de ?? (v.requirements as Record<string, unknown>).en) : null;
@@ -65,7 +66,7 @@ const letterJob = async (userId: string, body: { vacancyId?: string; company?: s
     vacancyId: v.id,
     job: {
       position: body.position || pickL10n(v.title, 'de'),
-      company: body.company || (v.showCompany ? (v.company?.name ?? null) : null),
+      company: body.company || (v.showCompany && v.companyId && (await revealedCompanyIdsForClient(userId)).has(v.companyId) ? (v.company?.name ?? null) : null),
       city: body.city || v.city,
       tasks: pickL10n(v.description, 'de'),
       requirements: Array.isArray(reqs) ? reqs.filter((x) => typeof x === 'string').join('; ') : null,

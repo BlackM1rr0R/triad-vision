@@ -75,8 +75,6 @@ export const recommendationsFor = async (userId: string, locale: Locale, opts: {
         slug: true,
         title: true,
         city: true,
-        showCompany: true,
-        company: { select: { name: true } },
         profession: true,
         germanLevel: true,
         minExperience: true,
@@ -107,7 +105,7 @@ export const recommendationsFor = async (userId: string, locale: Locale, opts: {
       slug: v.slug,
       title: pickL10n(v.title, locale),
       city: v.city,
-      company: v.showCompany ? (v.company?.name ?? null) : null,
+      company: null, // open vacancies are shown without the employer (owner's rule; see lib/caseContracts/employerVisibility)
       salaryMin: v.salaryMin,
       salaryMax: v.salaryMax,
       germanLevel: v.germanLevel,

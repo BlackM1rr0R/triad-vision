@@ -123,11 +123,15 @@ function CasePage({ data }: { data: CaseDetailResponse }) {
   );
   useEffect(() => () => cancelScroll.current?.(), []);
 
-  // Deep links: /admin/cases/:id#case-data (notifications, my-work, other pages).
+  // Deep links: /admin/cases/:id#case-data (notifications, my-work, other pages). Runs when the hash CHANGES only:
+  // `goTo` changes whenever the query string does (tab switches), and re-running then threw the page back to the
+  // hash section after every in-page action.
   const { hash } = useLocation();
+  const goToRef = useRef(goTo);
+  goToRef.current = goTo;
   useEffect(() => {
-    if (hash.length > 1) goTo(decodeURIComponent(hash.slice(1)));
-  }, [hash, goTo]);
+    if (hash.length > 1) goToRef.current(decodeURIComponent(hash.slice(1)));
+  }, [hash]);
 
   // ?thread=… opens the three-party thread, which lives in the messages panel.
   const [params] = useSearchParams();

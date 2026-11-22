@@ -151,6 +151,8 @@ export const nextAction = (
     case 'EMBASSY_REVIEW':
       return { kind: 'WAIT_REVIEW', owner: 'staff', anchor: docsAnchor };
     case 'CONTRACT_SIGNED':
+      // V2: the Əmək müqaviləsi is done and the İş müqaviləsi documents wait for the client's signature.
+      if (contractTurn === 'CLIENT') return { kind: 'SIGN_CONTRACT', owner: 'client', anchor: '#contract' };
       return { kind: 'WAIT_REVIEW', owner: 'staff', anchor: '#contract' };
     case 'APPOINTMENT_SCHEDULED':
       return { kind: 'PREPARE_APPOINTMENT', owner: 'client', anchor: '#appointment' };
@@ -242,7 +244,7 @@ accountRouter.get('/overview', async (req, res) => {
       step: STATUS_STEP[c.status],
       stepCount: STEP_COUNT,
       percent: progressPercent(c.status, docs),
-      turn: teamContract ? 'staff' : CLIENT_TURN.includes(c.status) ? 'client' : STAFF_TURN.includes(c.status) ? 'staff' : null,
+      turn: teamContract ? 'staff' : c.status === 'CONTRACT_SIGNED' && contractTurn === 'CLIENT' ? 'client' : CLIENT_TURN.includes(c.status) ? 'client' : STAFF_TURN.includes(c.status) ? 'staff' : null,
       nextAction: nextAction(c.status, docs, contractTurn),
       staffNote: c.staffNote,
       documents: docs,

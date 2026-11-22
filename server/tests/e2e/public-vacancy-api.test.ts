@@ -179,8 +179,10 @@ describe('public vacancy API: vacancies', () => {
     expect(row).toMatchObject({ keyId: key.id, partnerId: partner.id, vacancyId: v.id });
 
     // A forged / unknown source records nothing.
+    // (a second candidate: applying starts the case, and a client has one active application)
     const v2 = await createVacancy();
-    const res2 = await request(app).post(`/api/vacancies/${v2.slug}/apply`).set('Origin', ORIGIN).set('Cookie', `tv_session=${cand.token}; tv_src=tvp_zzzzzzzz`).send({});
+    const cand2 = await asCandidate();
+    const res2 = await request(app).post(`/api/vacancies/${v2.slug}/apply`).set('Origin', ORIGIN).set('Cookie', `tv_session=${cand2.token}; tv_src=tvp_zzzzzzzz`).send({});
     expectStatus(res2, 201);
     await new Promise((r) => setTimeout(r, 200));
     expect(await prisma.publicApiAttribution.count({ where: { applicationId: res2.body.application.id } })).toBe(0);

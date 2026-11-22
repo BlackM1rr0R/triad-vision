@@ -20,9 +20,9 @@ describe('client folders: ownership follows the case partner', () => {
 });
 
 describe('client folders: Fertig → client', () => {
-  it('blocks sends outside Fertig, without files and a second send without re-send', () => {
-    expect(sendBlocker({ stage: 'WRITTEN', fileCount: 2, sentBefore: false, resend: false })).toBe('READY_DOCS_NOT_DONE');
-    expect(sendBlocker({ stage: null, fileCount: 2, sentBefore: false, resend: false })).toBe('READY_DOCS_NOT_DONE');
+  it('sends directly from the Fertig folder whatever the stage; blocks without files and a second send without re-send', () => {
+    expect(sendBlocker({ stage: 'WRITTEN', fileCount: 2, sentBefore: false, resend: false })).toBeNull();
+    expect(sendBlocker({ stage: null, fileCount: 2, sentBefore: false, resend: false })).toBeNull();
     expect(sendBlocker({ stage: 'DONE', fileCount: 0, sentBefore: false, resend: false })).toBe('READY_DOCS_NO_FILES');
     expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: false })).toBe('READY_DOCS_ALREADY_SENT');
     expect(sendBlocker({ stage: 'DONE', fileCount: 2, sentBefore: true, resend: true })).toBeNull();
@@ -87,6 +87,7 @@ describe('client folders: results and permissions', () => {
   it('maps the endpoints to partners / cases / documents', () => {
     expect(classifyRoute('POST', '/admin/client-folders/partner')).toEqual({ area: 'partners', action: 'edit' });
     expect(classifyRoute('POST', '/admin/client-folders/processing')).toEqual({ area: 'cases', action: 'edit' });
+    expect(classifyRoute('POST', '/admin/client-folders/return')).toEqual({ area: 'cases', action: 'edit' });
     expect(classifyRoute('POST', '/admin/client-folders/ready-docs/send')).toEqual({ area: 'documents', action: 'edit' });
     expect(classifyRoute('GET', '/admin/client-folders/cases/ckabc123/ready-docs')).toEqual({ area: 'documents', action: 'view' });
   });

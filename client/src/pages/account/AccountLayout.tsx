@@ -28,7 +28,8 @@ import { FamilySwitcher } from '@/components/portal/FamilySwitcher'; // family m
 import { OfflineBadge } from '@/components/offline/OfflineBadge'; // "no internet — offline documents" strip
 import { NotificationBell } from '@/components/notifications/center/NotificationCenter'; // header bell: notification center panel
 import { PageHelpButton } from '@/components/pageHelp/PageHelpButton'; // page help "?" (what is this page)
-import { ApprovedCelebration } from './portal/ApprovedCelebration'; // visa approved: one-time celebration screen
+import { ApprovedCelebration } from './portal/ApprovedCelebration';
+import { StatusLine } from '@/components/portal/StatusLine'; // plain status line: stage + what is required from the client // visa approved: one-time celebration screen
 
 registerLazyCopy(pagesAccount, pagesJobs, pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesSign);
@@ -190,6 +191,9 @@ export default function AccountLayout() {
                 <TourRestartButton tourId={CLIENT_TOUR} className="min-h-11 rounded-lg text-muted hover:text-ink sm:min-h-8" />
               </p>
             )}
+
+            {/* What happens now and whether something is required from the client (lib/account/statusLine). */}
+            {isClient && <StatusLine className="clear-both mt-4" />}
 
             {isClient && <FamilySwitcher className="clear-both mt-4" />}
 

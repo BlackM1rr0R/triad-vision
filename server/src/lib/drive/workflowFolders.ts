@@ -7,15 +7,15 @@ import { ensureSharedRoot } from './roots.js';
 
 /**
  * "İş axını" as real folders of the drive: below the shared root one system folder "Arbeitsablauf" with the
- * four stage folders (German names, like every folder of the drive):
+ * three stage folders (German names, like every folder of the drive):
  *
- *   Gemeinsame Dokumente / Arbeitsablauf / Schon geschrieben · In Bearbeitung · Fertig · Ablehnung
+ *   Gemeinsame Dokumente / Arbeitsablauf / Schon geschrieben · In Bearbeitung · Fertig
  *
- * - "Kopyala → Schon geschrieben / Fertig / Ablehnung" copies files and folders there (recursive, structure kept).
+ * - "Kopyala → Schon geschrieben / Fertig" copies files and folders there (recursive, structure kept).
  *   An item that lives inside a client folder is copied below that client folder's name, an item that already
  *   lives in a stage keeps its path below the stage — so the stages stay folder-structured, never a flat list.
  * - Nothing lands in "In Bearbeitung" by itself: only an admin sends an item there from "Schon geschrieben".
- * - The way through: Schon geschrieben → In Bearbeitung → Fertig or Ablehnung (SEND_NEXT). A send moves the item
+ * - The way through: Schon geschrieben → In Bearbeitung → Fertig (SEND_NEXT). A send moves the item
  *   with its path below the stage (missing folders are created, existing ones reused); folders the move left
  *   empty in the old stage are removed. "Köçür" (plain move) still lets an admin put anything anywhere.
  *
@@ -26,30 +26,28 @@ import { ensureSharedRoot } from './roots.js';
  */
 
 export const WORKFLOW_ROOT_NAME = 'Arbeitsablauf';
-export const WORKFLOW_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const satisfies readonly ProcessingStage[];
+export const WORKFLOW_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE'] as const satisfies readonly ProcessingStage[];
 export type WorkflowStage = (typeof WORKFLOW_STAGES)[number];
 
 export const STAGE_FOLDER_NAME: Record<WorkflowStage, string> = {
   WRITTEN: 'Schon geschrieben',
   IN_PROGRESS: 'In Bearbeitung',
   DONE: 'Fertig',
-  REFUSED: 'Ablehnung',
 };
-const STAGE_COLOR: Record<WorkflowStage, string> = { WRITTEN: 'blue', IN_PROGRESS: 'amber', DONE: 'green', REFUSED: 'red' };
+const STAGE_COLOR: Record<WorkflowStage, string> = { WRITTEN: 'blue', IN_PROGRESS: 'amber', DONE: 'green' };
 
 /** Where "Kopyala" may copy to ("In Bearbeitung" only gets what an admin sends there from Schon geschrieben). */
-export const COPY_STAGES = ['WRITTEN', 'DONE', 'REFUSED'] as const satisfies readonly WorkflowStage[];
+export const COPY_STAGES = ['WRITTEN', 'DONE'] as const satisfies readonly WorkflowStage[];
 
 /** Where an item of a stage may be sent on. */
 export const SEND_NEXT: Record<WorkflowStage, WorkflowStage[]> = {
   WRITTEN: ['IN_PROGRESS'],
-  IN_PROGRESS: ['DONE', 'REFUSED'],
+  IN_PROGRESS: ['DONE'],
   DONE: [],
-  REFUSED: [],
 };
 
 const SETTING_KEY = 'drive.workflowFolders';
-type Stored = Partial<Record<WorkflowStage | 'root', string>>;
+type Stored = Partial<Record<WorkflowStage | 'root' | 'REFUSED', string>>; // REFUSED: the removed "Ablehnung" folder, kept to return its leftovers
 
 export interface WorkflowFolders {
   rootId: string;
@@ -93,11 +91,19 @@ export const ensureWorkflowFolders = (): Promise<WorkflowFolders> =>
     const next: Stored = {};
     next.root = (await liveChild(stored.root, sharedId)) ?? (await adoptOrCreate(sharedId, WORKFLOW_ROOT_NAME, 'teal'));
     for (const st of WORKFLOW_STAGES) next[st] = (await liveChild(stored[st], next.root)) ?? (await adoptOrCreate(next.root, STAGE_FOLDER_NAME[st], STAGE_COLOR[st]));
+    if (stored.REFUSED) next.REFUSED = stored.REFUSED;
     if (WORKFLOW_STAGES.some((st) => stored[st] !== next[st]) || stored.root !== next.root) {
       await prisma.setting.upsert({ where: { key: SETTING_KEY }, create: { key: SETTING_KEY, value: next }, update: { value: next } });
     }
     return { rootId: next.root, stages: Object.fromEntries(WORKFLOW_STAGES.map((st) => [st, next[st]!])) as Record<WorkflowStage, string> };
   });
+
+/** Ids of the legacy "Ablehnung" stage folder (removed stage; only its leftovers are returned and cleaned up by lib/drive/workflowReturn). */
+export const legacyRefusedFolderId = async (): Promise<string | null> => {
+  const row = await prisma.setting.findUnique({ where: { key: SETTING_KEY } });
+  const v = (row?.value && typeof row.value === 'object' ? row.value : {}) as Record<string, unknown>;
+  return typeof v.REFUSED === 'string' ? v.REFUSED : null;
+};
 
 /** The workflow folders if they were set up already (null otherwise); creates nothing. */
 export const peekWorkflowFolders = async (): Promise<WorkflowFolders | null> => {
@@ -143,7 +149,7 @@ export const assertCanSend = (from: WorkflowStage, to: WorkflowStage) => {
  * case's own: a folder linked to the case (DriveNode.workflowCaseId) wins over the name; a same-named folder linked
  * to another case is never reused (a new " (2)" one is made); the folder used or made is linked to the case.
  */
-export const ensurePath = async (parentId: string, names: string[], actorId: string, opts: { caseId?: string | null } = {}) => {
+export const ensurePath = async (parentId: string, names: string[], actorId: string | null, opts: { caseId?: string | null } = {}) => {
   let cur = parentId;
   for (const [i, name] of names.entries()) {
     const caseId = i === 0 ? (opts.caseId ?? null) : null;

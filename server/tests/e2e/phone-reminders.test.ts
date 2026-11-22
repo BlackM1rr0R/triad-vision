@@ -131,7 +131,8 @@ describe('runPhoneReminders', () => {
     expect(list.map((r) => r.templateKey).sort()).toEqual(['BOOKING_REMINDER', 'GERMAN_EXAM_REMINDER', 'INTERVIEW_REMINDER']);
     expect(list.every((r) => r.to === '+994501234567' && r.status === 'CONSOLE')).toBe(true);
     expect(list.find((r) => r.templateKey === 'GERMAN_EXAM_REMINDER')!.body).toContain('Goethe B1');
-    expect(list.find((r) => r.templateKey === 'INTERVIEW_REMINDER')!.body).toContain('Klinikum Test GmbH');
+    // The employer is not named before the İş müqaviləsi is approved (lib/caseContracts/employerVisibility).
+    expect(list.find((r) => r.templateKey === 'INTERVIEW_REMINDER')!.body).not.toContain('Klinikum Test GmbH');
     expect(list.find((r) => r.templateKey === 'BOOKING_REMINDER')!.body).toContain('https://meet.example/abc');
   });
 

@@ -82,7 +82,7 @@ publicApiRouter.get('/vacancies', async (req, res) => {
     total: matching.length,
     items: matching
       .slice(start, start + q.pageSize)
-      .map((v) => apiVacancy(publicVacancy(v), { lng: q.lng, siteUrl: config.clientUrl, partnerCode: key.partnerCode, keyPrefix: key.prefix })),
+      .map((v) => apiVacancy(publicVacancy(v, { withCompany: true }), { lng: q.lng, siteUrl: config.clientUrl, partnerCode: key.partnerCode, keyPrefix: key.prefix })),
   });
 });
 
@@ -91,5 +91,5 @@ publicApiRouter.get('/vacancies/:slug', async (req, res) => {
   const v = await prisma.vacancy.findFirst({ where: { AND: [openVacancyWhere(), { slug: String(req.params.slug).slice(0, 200) }] }, include });
   if (!v) throw notFound('VACANCY_NOT_FOUND');
   const key = req.publicApiKey!;
-  res.json({ apiVersion: API_VERSION, vacancy: apiVacancy(publicVacancy(v), { lng, siteUrl: config.clientUrl, partnerCode: key.partnerCode, keyPrefix: key.prefix }) });
+  res.json({ apiVersion: API_VERSION, vacancy: apiVacancy(publicVacancy(v, { withCompany: true }), { lng, siteUrl: config.clientUrl, partnerCode: key.partnerCode, keyPrefix: key.prefix }) });
 });

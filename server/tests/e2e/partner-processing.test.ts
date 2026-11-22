@@ -6,7 +6,7 @@ import { expectStatus } from '../helpers/workflow';
 
 /**
  * Partner area round: visa kinds per partner case (filter + counts), the "rədd" counter, the team document
- * workflow (In Bearbeitung → Schon geschrieben → Fertig, Ablehnung) with history, assignee notification and
+ * workflow (In Bearbeitung → Schon geschrieben → Fertig; "Ablehnung" was removed) with history, assignee notification and
  * "my work", and the refusal report by partner / employer company with CSV export.
  */
 
@@ -37,7 +37,7 @@ const workOf = async (agent: Agent) => {
   return (res.body.items as { kind: string; refs: Record<string, string>; note?: { key: string; params?: Record<string, string> } }[]).filter((i) => i.kind === 'processing');
 };
 
-describe('team document workflow (Schon geschrieben → In Bearbeitung → Fertig, Ablehnung)', () => {
+describe('team document workflow (Schon geschrieben → In Bearbeitung → Fertig)', () => {
   it('moves a case with a note and an assignee, notifies, shows it in my work and keeps the history', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev', locale: 'de' });
@@ -86,13 +86,13 @@ describe('team document workflow (Schon geschrieben → In Bearbeitung → Ferti
     const list = expectStatus(await checker.agent.get('/api/admin/cases?processing=WRITTEN'), 200).body;
     expect(list.items.map((x: { id: string }) => x.id)).toEqual([c.id]);
     expect(list.items[0].processing).toMatchObject({ stage: 'WRITTEN', assignee: { id: checker.user.id } });
-    expect(list.processingCounts).toMatchObject({ WRITTEN: 1, IN_PROGRESS: 0, DONE: 0, REFUSED: 0 });
+    expect(list.processingCounts).toMatchObject({ WRITTEN: 1, IN_PROGRESS: 0, DONE: 0 });
     expect(expectStatus(await checker.agent.get('/api/admin/cases?processingAssignee=me'), 200).body.total).toBe(1);
     expect(expectStatus(await writer.agent.get('/api/admin/cases?processingAssignee=me'), 200).body.total).toBe(0);
 
     // Board: one column per stage.
     const board = expectStatus(await writer.agent.get('/api/admin/case-processing/board'), 200).body.columns as { stage: string; total: number; items: { id: string; lastNote: string | null }[] }[];
-    expect(board.map((col) => col.stage)).toEqual(['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED']);
+    expect(board.map((col) => col.stage)).toEqual(['WRITTEN', 'IN_PROGRESS', 'DONE']);
     expect(board[0]).toMatchObject({ total: 1, items: [{ id: c.id, lastNote: 'Tərcümələr hazırdır' }] });
     expect(expectStatus(await checker.agent.get('/api/admin/case-processing/board?assignee=me'), 200).body.columns[0].total).toBe(1);
 
@@ -108,15 +108,16 @@ describe('team document workflow (Schon geschrieben → In Bearbeitung → Ferti
     expect(audit).toHaveLength(3);
   });
 
-  it('closed cases without a stage have none; Ablehnung counts as a refusal', async () => {
+  it('closed cases without a stage have none; the removed Ablehnung stage is refused, a rejected status counts as a refusal', async () => {
     const staff = await asStaff();
     const closed = await makeCase({ status: 'APPROVED' });
     expect(expectStatus(await staff.agent.get(`/api/admin/cases/${closed.id}/processing`), 200).body.processing.stage).toBeNull();
     const open = await makeCase();
-    const r = expectStatus(await move(staff.agent, open.id, { stage: 'REFUSED', note: 'Səfirlik imtina etdi' }), 200).body.processing;
-    expect(r).toMatchObject({ stage: 'REFUSED', refused: true });
+    expect((await move(staff.agent, open.id, { stage: 'REFUSED', note: 'Səfirlik imtina etdi' })).status).toBe(400);
+    const rejected = await makeCase({ status: 'REJECTED' });
+    expect(expectStatus(await staff.agent.get(`/api/admin/cases/${rejected.id}/processing`), 200).body.processing).toMatchObject({ stage: null, refused: true });
     const counts = expectStatus(await staff.agent.get('/api/admin/cases'), 200).body.processingCounts;
-    expect(counts).toMatchObject({ IN_PROGRESS: 0, REFUSED: 1 });
+    expect(counts).toMatchObject({ IN_PROGRESS: 0, WRITTEN: 0, DONE: 0 });
   });
 });
 
@@ -128,21 +129,20 @@ describe('partners: visa kinds, rədd counter, stages', () => {
     const a = await makeCase({ partnerId: partner.id, visaCategoryId: lkw.id });
     const b = await makeCase({ partnerId: partner.id, visaCategoryId: lkw.id, status: 'REJECTED' });
     const ausb = await makeCase({ partnerId: partner.id, visaType: 'AUSBILDUNG', status: 'APPROVED' });
-    const marked = await makeCase({ partnerId: partner.id, visaType: 'AUSBILDUNG' });
+    const marked = await makeCase({ partnerId: partner.id, visaType: 'AUSBILDUNG', status: 'REJECTED' });
     await makeCase({ partnerId: partner.id, status: 'CANCELLED' });
-    expectStatus(await move(admin.agent, marked.id, { stage: 'REFUSED' }), 200);
     expectStatus(await move(admin.agent, a.id, { stage: 'WRITTEN' }), 200);
 
     const list = expectStatus(await admin.agent.get('/api/admin/partners'), 200).body.items;
     expect(list[0].counts).toMatchObject({ clients: 5, activeCases: 1, approved: 1, rejected: 2, cancelled: 1, closedNegative: 2 });
-    expect(list[0].counts.stages).toEqual({ IN_PROGRESS: 0, WRITTEN: 1, DONE: 0, REFUSED: 1 });
+    expect(list[0].counts.stages).toEqual({ IN_PROGRESS: 0, WRITTEN: 1, DONE: 0 });
 
     const detail = expectStatus(await admin.agent.get(`/api/admin/partners/${partner.id}`), 200).body;
     const byId = new Map(detail.cases.map((c: { id: string }) => [c.id, c]));
     expect(byId.get(a.id)).toMatchObject({ visaKey: `cat:${lkw.id}`, visaCategory: { title: { de: 'LKW-Fahrer' } }, refused: false, processing: { stage: 'WRITTEN' } });
     expect(byId.get(b.id)).toMatchObject({ refused: true });
     expect(byId.get(ausb.id)).toMatchObject({ visaKey: 'type:AUSBILDUNG', visaCategory: null, refused: false });
-    expect(byId.get(marked.id)).toMatchObject({ refused: true, processing: { stage: 'REFUSED' } });
+    expect(byId.get(marked.id)).toMatchObject({ refused: true, processing: { stage: null } });
   });
 
   it('partner portal: visa filter with counts and the rejected KPI', async () => {

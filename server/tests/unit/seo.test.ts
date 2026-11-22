@@ -402,9 +402,9 @@ describe('JSON-LD builders', () => {
     expect((jobPostingLd(job({ city: 'Nowhere' }), 'en', 'u').jobLocation as { address: object }).address).not.toHaveProperty('addressRegion');
   });
 
-  it('names the employer when showCompany is set and maps employment types and salaries', () => {
+  it('never names the employer (even with showCompany) and maps employment types and salaries', () => {
     const shown = jobPostingLd(job({ showCompany: true, employmentType: 'SEASONAL', salaryMax: null, closesAt: null }), 'en', 'u');
-    expect(shown.hiringOrganization).toEqual({ '@type': 'Organization', name: 'Hidden GmbH', sameAs: 'https://hidden.example' });
+    expect(shown.hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
     expect(shown.employmentType).toBe('TEMPORARY');
     expect(shown.baseSalary).toMatchObject({ value: { value: 2800, unitText: 'MONTH' } });
     expect(shown.validThrough).toBeUndefined();

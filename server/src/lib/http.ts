@@ -10,6 +10,8 @@ export class HttpError extends Error {
     public status: number,
     public code: string,
     message?: string,
+    /** Extra fields of the JSON error body (e.g. { caseId } of ACTIVE_CASE_EXISTS). */
+    public details?: Record<string, unknown>,
   ) {
     super(message ?? code);
   }
@@ -18,7 +20,7 @@ export class HttpError extends Error {
 export const badRequest = (code: string, message?: string) => new HttpError(400, code, message);
 export const notFound = (code = 'NOT_FOUND') => new HttpError(404, code);
 export const forbidden = (code = 'FORBIDDEN') => new HttpError(403, code);
-export const conflict = (code: string, message?: string) => new HttpError(409, code, message);
+export const conflict = (code: string, message?: string, details?: Record<string, unknown>) => new HttpError(409, code, message, details);
 
 export const parse = <S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> => schema.parse(data);
 
@@ -64,7 +66,7 @@ export const errorHandler = (err: unknown, _req: Request, res: Response, next: N
     return;
   }
   if (err instanceof HttpError) {
-    res.status(err.status).json({ error: err.code, message: err.message });
+    res.status(err.status).json({ ...(err.details ?? {}), error: err.code, message: err.message });
     return;
   }
   if (err instanceof ZodError) {

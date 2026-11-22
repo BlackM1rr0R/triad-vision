@@ -10,6 +10,7 @@ import { renderEmail, sendMail } from '../mailer.js';
 import { notifyUser } from '../notifications.js';
 import { clientSignContract, staffSendContract } from '../caseFlow.js';
 import { buildFinalPdf } from './pdf.js';
+import { placementsSchema } from './placements.js';
 import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
 import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
@@ -606,6 +607,8 @@ export const completeRequest = async (id: string) => {
       completedAt,
       order: r.order,
       signers,
+      // Case contracts V2: signatures into the places marked on the uploaded PDF (else a signature page).
+      placements: r.placements ? (placementsSchema.safeParse(r.placements).data ?? null) : null,
       events: events.map((e) => {
         const signer = e.signerId ? byId.get(e.signerId) : undefined;
         const actor = e.actorId ? actors.get(e.actorId) : undefined;

@@ -233,10 +233,11 @@ describe('three-party thread', () => {
     expect(JSON.stringify(cand.body)).not.toContain('Becker'); // employer user's name
     expect(cand.body.messages.find((m: { side: string }) => m.side === 'COMPANY').authorName).toBeNull();
 
-    // Staff allow the company name.
+    // Staff allow the company name — but the candidate still does not see it before the İş müqaviləsi is approved.
     expect((await s.staff.agent.patch(`/api/messaging-plus/threads/${id}`).send({ showCompany: true })).status).toBe(200);
     const cand2 = await s.candidate.agent.get(`/api/messaging-plus/threads/${id}`);
-    expect(cand2.body.thread.companyName).toBe(s.employer.company.name);
+    expect(cand2.body.thread.companyName).toBeNull();
+    expect(JSON.stringify(cand2.body)).not.toContain(s.employer.company.name);
 
     // Staff see everybody by name.
     const st = await s.staff.agent.get(`/api/messaging-plus/threads/${id}`);

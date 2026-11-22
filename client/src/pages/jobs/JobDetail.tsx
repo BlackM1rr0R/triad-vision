@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -77,7 +77,23 @@ interface MeResponse {
   match: Match;
   application: { id: string; status: ApplicationStatus; createdAt: string } | null;
   emailVerified: boolean;
+  /** The client's running visa application (one at a time; older servers: absent). */
+  activeCase?: { id: string; number: string; vacancyId: string | null } | null;
 }
+
+/** "Sizin aktiv müraciətiniz var" + link to it: applying is refused while a case runs (server 409 ACTIVE_CASE_EXISTS). */
+const ActiveCaseNotice = ({ c }: { c: { id: string; number: string } }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="rounded-2xl border border-warning-border bg-warning-bg p-4 text-sm text-warning-fg" data-testid="active-case-notice">
+      <p className="font-semibold">{t('jobsArea.detail.activeCaseTitle')}</p>
+      <p className="mt-1 text-xs">{t('jobsArea.detail.activeCaseText', { number: c.number })}</p>
+      <Link to={`/account/cases/${c.id}`} className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-semibold hover:underline">
+        {t('jobsArea.detail.activeCaseCta')} <ArrowRight className="size-3.5" />
+      </Link>
+    </div>
+  );
+};
 
 const Fact = ({ icon: Icon, label, children }: { icon: typeof MapPin; label: string; children: ReactNode }) => (
   <div className="flex items-start gap-3 py-2.5">
@@ -95,6 +111,7 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const L = useJobLabels();
   const [message, setMessage] = useState('');
@@ -143,17 +160,31 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
       }
     },
     onSuccess: (res) => {
-      const sent = ((res.data as { documents?: unknown[] } | undefined)?.documents ?? []).length;
+      const body = res.data as { documents?: unknown[]; caseId?: string | null } | undefined;
+      const sent = (body?.documents ?? []).length;
       toast.success(sent ? `${t('jobsArea.detail.success')} ${t('jobsArea.detail.docsSent', { count: sent })}` : t('jobsArea.detail.success'));
       setDocs({});
       setVaultDocs([]);
       setOpen(false);
       void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
       void qc.invalidateQueries({ queryKey: ['my-applications'] });
+      void qc.invalidateQueries({ queryKey: ['account-overview'] });
+      // Applying started the visa application: straight to it (documents are the next step).
+      if (body?.caseId) {
+        toast.message(t('jobsArea.detail.caseStarted'));
+        navigate(`/account/cases/${body.caseId}`);
+      }
     },
     onError: (err) => {
       const code = errorCode(err);
       if (code === 'ALREADY_APPLIED') void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
+      if (code === 'ACTIVE_CASE_EXISTS') {
+        // The notice with the link to the running application replaces the form.
+        setOpen(false);
+        void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
+        toast.error(t('jobsArea.detail.activeCaseTitle'));
+        return;
+      }
       // The last place was just taken / the vacancy closed meanwhile: say so and reload the free places.
       const placesText = placesErrorText(t, err);
       if (placesText) {
@@ -232,6 +263,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
             {t('jobsArea.detail.myApplications')} <ArrowRight className="size-3.5" />
           </Link>
         </div>
+      ) : data?.activeCase ? (
+        <ActiveCaseNotice c={data.activeCase} />
       ) : isFull(v) ? (
         <FullNotice alertAnchor="job-alert" />
       ) : data && !data.emailVerified ? (

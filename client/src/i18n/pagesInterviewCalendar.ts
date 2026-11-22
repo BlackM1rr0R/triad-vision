@@ -59,6 +59,7 @@ const en = {
     book: 'Book',
     minutes: '{{count}} min',
     from_: 'Invitation from {{company}}',
+    fromEmployer: 'Invitation from an employer',
   },
   ops: {
     errors: {
@@ -137,6 +138,7 @@ const az: Copy = {
     book: 'Rezerv et',
     minutes: '{{count}} dəq',
     from_: '{{company}} şirkətindən dəvət',
+    fromEmployer: 'İşəgötürəndən dəvət',
   },
   ops: {
     errors: {
@@ -213,6 +215,7 @@ const de: Copy = {
     book: 'Buchen',
     minutes: '{{count}} Min.',
     from_: 'Einladung von {{company}}',
+    fromEmployer: 'Einladung von einem Arbeitgeber',
   },
   ops: {
     errors: {
@@ -289,6 +292,7 @@ const ru: Copy = {
     book: 'Забронировать',
     minutes: '{{count}} мин',
     from_: 'Приглашение от {{company}}',
+    fromEmployer: 'Приглашение от работодателя',
   },
   ops: {
     errors: {
@@ -365,6 +369,7 @@ const tr: Copy = {
     book: 'Rezerve et',
     minutes: '{{count}} dk',
     from_: '{{company}} şirketinden davet',
+    fromEmployer: 'Bir işverenden davet',
   },
   ops: {
     errors: {
@@ -441,6 +446,7 @@ const uk: Copy = {
     book: 'Забронювати',
     minutes: '{{count}} хв',
     from_: 'Запрошення від {{company}}',
+    fromEmployer: 'Запрошення від роботодавця',
   },
   ops: {
     errors: {

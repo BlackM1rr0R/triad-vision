@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { BadgeCheck, Clock, Download, FileSignature, Lock, PenTool } from 'lucide-react';
+import { BadgeCheck, Clock, Download, FileSignature, Lock, PenTool, Undo2 } from 'lucide-react';
 import { api, fileUrl } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { registerCopy } from '@/i18n';
 import { pagesCaseContracts } from '@/i18n/pagesCaseContracts';
 import type { CaseDetail } from '@/lib/types';
-import { clientKey, type ClientStep, type StepState } from './api';
+import { clientKey, type ClientDoc, type ClientStep, type StepState } from './api';
 
 registerCopy(pagesCaseContracts);
 
@@ -22,6 +22,7 @@ const TONE: Record<StepState, string> = {
   DECLINED: 'bg-danger-bg text-danger-fg',
   EXPIRED: 'bg-danger-bg text-danger-fg',
   CANCELLED: 'bg-sunken text-muted',
+  RETURNED: 'bg-danger-bg text-danger-fg',
 };
 
 const ICON: Record<StepState, typeof Clock> = {
@@ -33,6 +34,39 @@ const ICON: Record<StepState, typeof Clock> = {
   DECLINED: FileSignature,
   EXPIRED: Clock,
   CANCELLED: FileSignature,
+  RETURNED: Undo2,
+};
+
+/** V2 İş müqaviləsi: one document to sign (each has its own signing page and signed PDF). */
+const DocRow = ({ d }: { d: ClientDoc }) => {
+  const { t } = useTranslation();
+  const { date } = useL10n();
+  return (
+    <li className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-ink" title={d.title}>
+          {d.title}
+        </p>
+        <p className="text-xs text-muted">
+          {t(`caseContracts.portal.states.${d.state}`)}
+          {d.approvedAt ? ` · ${date(d.approvedAt)}` : d.clientSignedAt ? ` · ${date(d.clientSignedAt)}` : ''}
+        </p>
+        {d.returnReason && <p className="text-xs text-danger-fg">{t('caseContracts.v2.portalReturned', { reason: d.returnReason })}</p>}
+      </div>
+      {d.myTurn && d.signerId && (
+        <Link to={`/account/signatures/${d.signerId}`} className="btn-primary btn-sm w-full sm:w-auto">
+          <PenTool className="size-4" aria-hidden />
+          {t('caseContracts.portal.sign')}
+        </Link>
+      )}
+      {d.signedDocumentId && (
+        <a href={fileUrl(d.signedDocumentId)} target="_blank" rel="noreferrer" className="btn-ghost btn-sm w-full sm:w-auto">
+          <Download className="size-4" aria-hidden />
+          {t('caseContracts.portal.download')}
+        </a>
+      )}
+    </li>
+  );
 };
 
 const Row = ({ s }: { s: ClientStep }) => {
@@ -53,14 +87,25 @@ const Row = ({ s }: { s: ClientStep }) => {
           {s.step === 'WORK' && s.state === 'NOT_SENT' ? t('caseContracts.portal.workLater') : t(`caseContracts.portal.states.${s.state}`)}
           {s.approvedAt ? ` · ${date(s.approvedAt)}` : s.clientSignedAt ? ` · ${date(s.clientSignedAt)}` : ''}
         </p>
+        {s.returnReason && <p className="text-sm text-danger-fg">{t('caseContracts.v2.portalReturned', { reason: s.returnReason })}</p>}
+        {!!s.documents?.length && (
+          <div className="mt-2">
+            <p className="text-xs font-semibold text-muted">{t('caseContracts.v2.portalWorkDocs')}</p>
+            <ul className="divide-y divide-line">
+              {s.documents.map((d) => (
+                <DocRow key={d.id} d={d} />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
-      {s.myTurn && s.signerId && (
+      {s.myTurn && s.signerId && !s.documents?.length && (
         <Link to={`/account/signatures/${s.signerId}`} className="btn-primary btn-sm w-full sm:w-auto">
           <PenTool className="size-4" aria-hidden />
           {t('caseContracts.portal.sign')}
         </Link>
       )}
-      {s.signedDocumentId && (
+      {s.signedDocumentId && !s.documents?.length && (
         <a href={fileUrl(s.signedDocumentId, true)} className="btn-ghost btn-sm w-full sm:w-auto">
           <Download className="size-4" aria-hidden />
           {t('caseContracts.portal.download')}
@@ -92,7 +137,7 @@ export const ClientCaseContracts = ({ data, fallback }: { data: CaseDetail; fall
           <h3 id="case-contracts-title" className="type-card-title text-xl">
             {t('caseContracts.portal.title')}
           </h3>
-          <p className="mt-0.5 text-sm text-muted">{t('caseContracts.portal.intro')}</p>
+          <p className="mt-0.5 text-sm text-muted">{t(steps.some((s) => s.flow === 'V2') ? 'caseContracts.v2.portalIntro' : 'caseContracts.portal.intro')}</p>
         </div>
       </div>
       <ol className="divide-y divide-line">

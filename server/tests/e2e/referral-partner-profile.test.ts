@@ -62,9 +62,12 @@ describe('referral partner legal data: create, validation, audit diff', () => {
     expect((await admin.agent.patch(`/api/admin/partners/${cid}`).send({ betriebsnummer: '1234' })).body.issues?.[0]?.message).toBe('INVALID_BETRIEBSNUMMER');
     expect((await admin.agent.patch(`/api/admin/partners/${cid}`).send({ vatId: '12' })).body.issues?.[0]?.message).toBe('INVALID_VAT_ID');
     expect((await admin.agent.patch(`/api/admin/partners/${cid}`).send({ postalCode: '8080' })).body.error).toBe('INVALID_POSTAL_CODE');
-    expect((await admin.agent.patch(`/api/admin/partners/${pid}`).send({ betriebsnummer: '12345678' })).body.error).toBe('BETRIEBSNUMMER_GERMANY_ONLY');
-    expect((await admin.agent.post('/api/admin/partners').send({ name: 'Bad', country: 'Türkiyə', betriebsnummer: '12345678' })).body.error).toBe('BETRIEBSNUMMER_GERMANY_ONLY');
-    expect((await admin.agent.patch(`/api/admin/partners/${cid}`).send({ country: 'Azərbaycan' })).body.error).toBe('BETRIEBSNUMMER_GERMANY_ONLY');
+    // The Betriebsnummer is the first field of every partner: stored whatever the country (8 digits when given).
+    expectStatus(await admin.agent.patch(`/api/admin/partners/${pid}`).send({ betriebsnummer: '12345678' }), 200);
+    expectStatus(await admin.agent.post('/api/admin/partners').send({ name: 'Bad', country: 'Türkiyə', betriebsnummer: '12345678' }), 201);
+    expectStatus(await admin.agent.patch(`/api/admin/partners/${cid}`).send({ country: 'Azərbaycan' }), 200);
+    const found = expectStatus(await admin.agent.get('/api/admin/partners').query({ search: '12345678' }), 200).body.items;
+    expect(found.length).toBeGreaterThan(0);
 
     // Update → audit with before / after of the legal fields (target = the bare partner id, like every partner route).
     expectStatus(await admin.agent.patch(`/api/admin/partners/${cid}`).send({ registerNumber: 'HRB 99999', signatoryRole: 'Prokurist', iban: 'AZ21NABZ00000000137010001944' }), 200);

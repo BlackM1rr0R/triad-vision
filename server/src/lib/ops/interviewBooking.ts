@@ -2,6 +2,7 @@ import type { InterviewInviteStatus, Locale, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { notifyUser } from '../notifications.js';
 import { expandOccurrences } from '../calendar/rrule.js';
+import { revealedCompanyIdsForClient } from '../caseContracts/employerVisibility.js';
 import { emitWebhook } from './webhooks.js';
 import { interviewWebhookPayload, notifyCandidate, notifyCompany, notifyInterviewStaff, type InterviewFull } from './interviews.js';
 import type { AvailabilityRule, Interval } from './interviewSlots.js';
@@ -105,7 +106,7 @@ export const moveRules = (i: InviteFull, s: SchedulingSettings, now = new Date()
   return { canMove: inTime && reschedulesLeft > 0, canCancel: inTime, moveUntil, reschedulesLeft };
 };
 
-export const inviteView = (i: InviteFull, audience: 'staff' | 'company' | 'candidate', s: SchedulingSettings, now = new Date()) => {
+export const inviteView = (i: InviteFull, audience: 'staff' | 'company' | 'candidate', s: SchedulingSettings, now = new Date(), hideEmployer = false) => {
   const iv = liveInterview(i);
   return {
     id: i.id,
@@ -113,13 +114,21 @@ export const inviteView = (i: InviteFull, audience: 'staff' | 'company' | 'candi
     minutes: i.minutes,
     notes: i.notes,
     createdAt: i.createdAt,
-    company: i.company,
+    company: hideEmployer ? null : i.company,
     application: i.application ? { id: i.application.id, status: i.application.status, vacancy: i.application.vacancy } : null,
     candidate: { id: i.candidate.id, name: audience === 'company' ? anonymised(i.candidate) : `${i.candidate.firstName} ${i.candidate.lastName}`.trim(), profession: i.candidate.profession },
     interview: iv ? { id: iv.id, status: iv.status, startsAt: iv.startsAt, endsAt: iv.endsAt, meetingUrl: iv.meetingUrl } : null,
     reschedules: i.reschedules,
     ...moveRules(i, s, now),
   };
+};
+
+/** Candidates see the employer of an invite only after the İş müqaviləsi is approved (predicate; one query per candidate). */
+export const inviteEmployerHidden = async (items: InviteFull[], audience: 'staff' | 'company' | 'candidate') => {
+  if (audience !== 'candidate') return () => false;
+  const revealed = new Map<string, Set<string>>();
+  for (const id of new Set(items.map((i) => i.candidateId))) revealed.set(id, await revealedCompanyIdsForClient(id));
+  return (i: InviteFull) => !revealed.get(i.candidateId)?.has(i.companyId);
 };
 
 /** A cancelled / declined / deleted interview closes its invite (the candidate cannot re-book on their own). */
@@ -136,23 +145,23 @@ type Msg = { title: string; body: string };
 const INVITE_TEXTS: Record<Locale, { invited: (c: InviteCtx) => Msg; nudge: (c: InviteCtx) => Msg; cta: string }> = {
   az: {
     cta: 'Vaxt seç',
-    invited: (c) => ({ title: `Müsahibə vaxtını seçin: ${c.company}`, body: `${c.company} şirkəti sizinlə ${c.minutes} dəqiqəlik video müsahibə keçirmək istəyir. Kabinetinizdə şirkətin boş vaxtlarından sizə uyğun olanı seçin — vaxtlar Bakı və Almaniya vaxtı ilə göstərilir.` }),
-    nudge: (c) => ({ title: 'Xatırlatma: müsahibə vaxtını hələ seçməmisiniz', body: `${c.company} ilə müsahibə üçün kabinetinizdə vaxt seçməyi unutmayın.` }),
+    invited: (c) => ({ title: `Müsahibə vaxtını seçin${c.company ? `: ${c.company}` : ''}`, body: `${c.company ? `${c.company} şirkəti` : 'İşəgötürən'} sizinlə ${c.minutes} dəqiqəlik video müsahibə keçirmək istəyir. Kabinetinizdə şirkətin boş vaxtlarından sizə uyğun olanı seçin — vaxtlar Bakı və Almaniya vaxtı ilə göstərilir.` }),
+    nudge: (c) => ({ title: 'Xatırlatma: müsahibə vaxtını hələ seçməmisiniz', body: `${c.company ? `${c.company} ilə` : 'İşəgötürənlə'} müsahibə üçün kabinetinizdə vaxt seçməyi unutmayın.` }),
   },
   de: {
     cta: 'Termin wählen',
-    invited: (c) => ({ title: `Bitte wählen Sie einen Interviewtermin: ${c.company}`, body: `${c.company} möchte ein ${c.minutes}-minütiges Video-Vorstellungsgespräch mit Ihnen führen. Wählen Sie in Ihrem Konto einen freien Termin – die Zeiten werden in Baku- und deutscher Zeit angezeigt.` }),
-    nudge: (c) => ({ title: 'Erinnerung: Sie haben noch keinen Interviewtermin gewählt', body: `Bitte wählen Sie in Ihrem Konto einen Termin für das Vorstellungsgespräch mit ${c.company}.` }),
+    invited: (c) => ({ title: `Bitte wählen Sie einen Interviewtermin${c.company ? `: ${c.company}` : ''}`, body: `${c.company || 'Ein Arbeitgeber'} möchte ein ${c.minutes}-minütiges Video-Vorstellungsgespräch mit Ihnen führen. Wählen Sie in Ihrem Konto einen freien Termin – die Zeiten werden in Baku- und deutscher Zeit angezeigt.` }),
+    nudge: (c) => ({ title: 'Erinnerung: Sie haben noch keinen Interviewtermin gewählt', body: `Bitte wählen Sie in Ihrem Konto einen Termin für das Vorstellungsgespräch mit ${c.company || 'dem Arbeitgeber'}.` }),
   },
   en: {
     cta: 'Pick a time',
-    invited: (c) => ({ title: `Choose your interview time: ${c.company}`, body: `${c.company} would like a ${c.minutes}-minute video interview with you. Pick one of their free times in your account — times are shown in Baku and German time.` }),
-    nudge: (c) => ({ title: 'Reminder: you have not picked an interview time yet', body: `Please choose a time in your account for your interview with ${c.company}.` }),
+    invited: (c) => ({ title: `Choose your interview time${c.company ? `: ${c.company}` : ''}`, body: `${c.company || 'An employer'} would like a ${c.minutes}-minute video interview with you. Pick one of their free times in your account — times are shown in Baku and German time.` }),
+    nudge: (c) => ({ title: 'Reminder: you have not picked an interview time yet', body: `Please choose a time in your account for your interview with ${c.company || 'the employer'}.` }),
   },
   ru: {
     cta: 'Выбрать время',
-    invited: (c) => ({ title: `Выберите время собеседования: ${c.company}`, body: `${c.company} хочет провести с вами видеособеседование на ${c.minutes} минут. Выберите свободное время в личном кабинете — время указано по Баку и по Германии.` }),
-    nudge: (c) => ({ title: 'Напоминание: вы ещё не выбрали время собеседования', body: `Пожалуйста, выберите в личном кабинете время собеседования с ${c.company}.` }),
+    invited: (c) => ({ title: `Выберите время собеседования${c.company ? `: ${c.company}` : ''}`, body: `${c.company || 'Работодатель'} хочет провести с вами видеособеседование на ${c.minutes} минут. Выберите свободное время в личном кабинете — время указано по Баку и по Германии.` }),
+    nudge: (c) => ({ title: 'Напоминание: вы ещё не выбрали время собеседования', body: `Пожалуйста, выберите в личном кабинете время собеседования с ${c.company || 'работодателем'}.` }),
   },
 };
 
@@ -161,7 +170,9 @@ export const inviteTexts = INVITE_TEXTS;
 /** The candidate hears about a new invite (or gets the one-off nudge to pick a time). */
 export const notifyInvite = async (i: InviteFull, kind: 'invited' | 'nudge') => {
   const t = INVITE_TEXTS[i.candidate.locale];
-  const msg = t[kind]({ company: i.company.name, minutes: i.minutes });
+  // The employer is named only once the İş müqaviləsi is approved (lib/caseContracts/employerVisibility).
+  const hide = !(await revealedCompanyIdsForClient(i.candidate.id)).has(i.companyId);
+  const msg = t[kind]({ company: hide ? '' : i.company.name, minutes: i.minutes });
   await notifyUser(i.candidate.id, { type: kind === 'invited' ? 'INTERVIEW_INVITED' : 'INTERVIEW_INVITE_NUDGE', title: msg.title, body: msg.body, link: '/account/interviews', ctaLabel: t.cta });
 };
 

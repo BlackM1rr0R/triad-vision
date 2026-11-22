@@ -141,12 +141,12 @@ const bodyOf = (f: FormState, defs: PartnerFieldDef[], bankEditable: boolean) =>
   taxId: f.taxId,
   street: f.street,
   postalCode: f.postalCode,
-  // Company-only legal data is cleared for individuals; the Betriebsnummer exists only for German partners.
+  // Company-only legal data is cleared for individuals (the Betriebsnummer is the first field of every partner).
   legalForm: f.partnerType === 'COMPANY' ? f.legalForm : '',
   registerNumber: f.partnerType === 'COMPANY' ? f.registerNumber : '',
   registerCourt: f.partnerType === 'COMPANY' ? f.registerCourt : '',
   vatId: f.partnerType === 'COMPANY' ? f.vatId : '',
-  betriebsnummer: f.partnerType === 'COMPANY' && (isGermany(f.country) || !f.country.trim()) ? f.betriebsnummer : '',
+  betriebsnummer: f.betriebsnummer,
   signatoryName: f.partnerType === 'COMPANY' ? f.signatoryName : '',
   signatoryRole: f.partnerType === 'COMPANY' ? f.signatoryRole : '',
   ...(bankEditable ? { bankName: f.bankName, bankAccountHolder: f.bankAccountHolder, iban: f.iban, bic: f.bic } : {}),
@@ -342,7 +342,7 @@ export const PartnerFormDialog = ({
   const commissionInvalid = f.commission.trim() !== '' && toCents(f.commission) === null;
   const datesInvalid = !!f.contractStart && !!f.contractEnd && f.contractEnd < f.contractStart;
   const extraInvalid = f.extraFields.some((r) => !r.label.trim() && r.value.trim());
-  const betriebsnummerInvalid = f.partnerType === 'COMPANY' && f.betriebsnummer.trim() !== '' && !/^\d{8}$/.test(f.betriebsnummer.replace(/[\s.-]+/g, ''));
+  const betriebsnummerInvalid = f.betriebsnummer.trim() !== '' && !/^\d{8}$/.test(f.betriebsnummer.replace(/[\s.-]+/g, ''));
   const quotaInvalid = parseQuota(f.clientQuota) === undefined;
   const invalid = !f.name.trim() || commissionInvalid || datesInvalid || extraInvalid || betriebsnummerInvalid || quotaInvalid;
   // Which fields a partner contract is generated from (and which of them are still empty).
@@ -394,7 +394,6 @@ export const PartnerFormDialog = ({
           autoComplete={opts.autoComplete ?? 'off'}
           value={f[k] as string}
           onChange={(e) => set(k, e.target.value as never)}
-          data-autofocus={k === 'name' || undefined}
         />
       )}
     </Field>
@@ -474,6 +473,23 @@ export const PartnerFormDialog = ({
         </div>
         <div className="space-y-5">
           <Section id={`${uid}-basic`} icon={UserRound} title={t('partnerForm.sections.basic')}>
+            {/* Betriebsnummer: the FIRST field of the partner form (optional; 8 digits when given). */}
+            <Field label={t('partnerForm.f.betriebsnummer')} hint={betriebsnummerInvalid ? <span className="text-danger-fg">{t('partnerForm.errors.INVALID_BETRIEBSNUMMER')}</span> : t('partnerForm.f.betriebsnummerHint')}>
+              {(id) => (
+                <input
+                  id={id}
+                  className="input font-mono tabular-nums"
+                  inputMode="numeric"
+                  maxLength={20}
+                  autoComplete="off"
+                  placeholder="12345678"
+                  value={f.betriebsnummer}
+                  aria-invalid={betriebsnummerInvalid || undefined}
+                  data-autofocus
+                  onChange={(e) => set('betriebsnummer', e.target.value)}
+                />
+              )}
+            </Field>
             {text('name', t('partnerForm.f.name'), { max: 120, required: true, className: 'sm:col-span-2' })}
             <div role="radiogroup" aria-label={t('partnerForm.f.partnerType')} className="sm:col-span-2">
               <span className="label">{t('partnerForm.f.partnerType')}</span>
@@ -567,24 +583,6 @@ export const PartnerFormDialog = ({
                     </>
                   )}
                 </Field>
-                {/* The Betriebsnummer exists only for German partners (country Germany or not set yet). */}
-                {(german || (!f.country.trim() && !!f.betriebsnummer)) && (
-                  <Field label={t('partnerForm.f.betriebsnummer')} hint={betriebsnummerInvalid ? <span className="text-danger-fg">{t('partnerForm.errors.INVALID_BETRIEBSNUMMER')}</span> : t('partnerForm.f.betriebsnummerHint')}>
-                    {(id) => (
-                      <input
-                        id={id}
-                        className="input font-mono tabular-nums"
-                        inputMode="numeric"
-                        maxLength={20}
-                        autoComplete="off"
-                        placeholder="12345678"
-                        value={f.betriebsnummer}
-                        aria-invalid={betriebsnummerInvalid || undefined}
-                        onChange={(e) => set('betriebsnummer', e.target.value)}
-                      />
-                    )}
-                  </Field>
-                )}
                 {text('signatoryName', t('partnerForm.f.signatoryName'), { max: 160 })}
                 {text('signatoryRole', t('partnerForm.f.signatoryRole'), { max: 80, placeholder: t('partnerForm.f.signatoryRolePh') })}
               </>

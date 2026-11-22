@@ -6,6 +6,7 @@ import { bulkMoveStage, bulkStageSchema, caseList, runForCases } from '../../lib
 import { summarize } from '../../lib/clientFolders/logic.js';
 import { setCasePartner } from '../../lib/clientFolders/partner.js';
 import { readyDocsView, sendReadyDocs } from '../../lib/clientFolders/readyDocs.js';
+import { returnCaseFromWorkflow } from '../../lib/drive/workflowReturn.js';
 
 /**
  * Client folder actions of the documents section ("Sənədlər", drive) without opening the folder — mounted on the
@@ -15,6 +16,7 @@ import { readyDocsView, sendReadyDocs } from '../../lib/clientFolders/readyDocs.
  *
  *   POST /client-folders/partner              { cases, partnerId | null, note? }  set / change / remove the partner
  *   POST /client-folders/processing           { cases, stage, assigneeId?, note? } team workflow stage (bulk)
+ *   POST /client-folders/return               { cases, note? }  "Geri qaytar": out of the workflow, documents back in the client folder
  *   GET  /client-folders/cases/:caseId/ready-docs   the case's Fertig files (sent or not) and the sends so far
  *   POST /client-folders/ready-docs/send      { cases, resend? }  Fertig documents → the client's portal
  *
@@ -46,6 +48,17 @@ adminClientFoldersRouter.post('/processing', async (req, res) => {
   for (const r of results.filter((x) => x.ok && !x.skipped)) {
     await audit(req, 'CASE_PROCESSING_MOVED', `case:${r.caseId}`, { to: body.stage, assigneeId: body.assigneeId ?? null, origin: 'drive', bulk: true });
   }
+  res.json({ results, summary: summarize(results) });
+});
+
+adminClientFoldersRouter.post('/return', async (req, res) => {
+  const body = parse(z.object({ cases: caseList, note: z.string().trim().max(2000).nullish() }), req.body);
+  const me = req.user!;
+  const results = await runForCases(me, body.cases, async (caseId) => {
+    const r = await returnCaseFromWorkflow(caseId, me, { note: body.note ?? null });
+    await audit(req, 'CASE_WORKFLOW_RETURNED', `case:${caseId}`, { from: r.from, removedCopies: r.removed, movedBack: r.moved, origin: 'drive', ...(body.note ? { note: body.note } : {}) });
+    return {};
+  });
   res.json({ results, summary: summarize(results) });
 });
 

@@ -18,11 +18,11 @@ import { STAGE_ICON } from './icons';
 
 /**
  * The stage folders of "İş axını" in the drive (server lib/drive/workflowFolders): Gemeinsame Dokumente /
- * Arbeitsablauf / Schon geschrieben · In Bearbeitung · Fertig · Ablehnung.
+ * Arbeitsablauf / Schon geschrieben · In Bearbeitung · Fertig.
  *
  * - "İş axınına kopyala" (command bar, next to Yeni / Etiketlər / Köçür): copies the selected files and folders
- *   — recursively, with their folder structure — to Schon geschrieben, Fertig or Ablehnung.
- * - Inside a stage folder the selection can be sent on: Schon geschrieben → In Bearbeitung → Fertig / Ablehnung.
+ *   — recursively, with their folder structure — to Schon geschrieben or Fertig.
+ * - Inside a stage folder the selection can be sent on: Schon geschrieben → In Bearbeitung → Fertig.
  *   Nothing lands in In Bearbeitung by itself.
  * - StageTree: the folder tree of one stage for the İş axını view (expand / collapse, open in the drive).
  */
@@ -32,9 +32,9 @@ const folderHref = (id: string) => `${BASE}/f/${encodeURIComponent(id)}`;
 const itemHref = (i: Pick<DriveItem, 'id' | 'kind' | 'parentId'>) =>
   i.kind === 'FOLDER' || !i.parentId ? folderHref(i.id) : `${folderHref(i.parentId)}?item=${encodeURIComponent(i.id)}`;
 
-export const COPY_STAGES: ProcessingStage[] = ['WRITTEN', 'DONE', 'REFUSED'];
+export const COPY_STAGES: ProcessingStage[] = ['WRITTEN', 'DONE'];
 /** Where an item of a stage may be sent on (server SEND_NEXT). */
-export const SEND_NEXT: Record<ProcessingStage, ProcessingStage[]> = { WRITTEN: ['IN_PROGRESS'], IN_PROGRESS: ['DONE', 'REFUSED'], DONE: [], REFUSED: [] };
+export const SEND_NEXT: Record<ProcessingStage, ProcessingStage[]> = { WRITTEN: ['IN_PROGRESS'], IN_PROGRESS: ['DONE'], DONE: [] };
 
 export interface StageFolder {
   stage: ProcessingStage;
@@ -138,7 +138,6 @@ export const useStageFolders = ({ onOpen }: { onOpen: (href: string) => void }) 
       label: t(`driveProcessing.folders.sendTo.${to}`),
       onClick: () => void run('send', list, to),
       primary: true,
-      danger: to === 'REFUSED',
     }));
   };
 
@@ -150,7 +149,7 @@ export const useStageFolders = ({ onOpen }: { onOpen: (href: string) => void }) 
       out.push(
         { kind: 'heading', id: 'wf-send-h', label: t('driveProcessing.folders.inStage', { stage: stageLabel(st.stage) }) },
         ...SEND_NEXT[st.stage].map(
-          (to): MenuEntry => ({ id: `wf-send-${to}`, label: t(`driveProcessing.folders.sendTo.${to}`), icon: STAGE_ICON[to], danger: to === 'REFUSED', onSelect: () => void run('send', list, to) }),
+          (to): MenuEntry => ({ id: `wf-send-${to}`, label: t(`driveProcessing.folders.sendTo.${to}`), icon: STAGE_ICON[to], onSelect: () => void run('send', list, to) }),
         ),
       );
     }
@@ -260,7 +259,7 @@ const TreeRow = ({ item, depth, stage, onNavigate, onSend }: { item: DriveItem; 
           const Icon = STAGE_ICON[to];
           const label = t(`driveProcessing.folders.sendTo.${to}`);
           return depth === 0 ? (
-            <button key={to} type="button" onClick={() => onSend(item, to)} className={clsx('btn-sm shrink-0', to === 'REFUSED' ? 'btn-secondary text-danger-fg' : 'btn-secondary')} title={label}>
+            <button key={to} type="button" onClick={() => onSend(item, to)} className="btn-sm btn-secondary shrink-0" title={label}>
               <Icon className="size-3.5" aria-hidden /> <span className="hidden md:inline">{label}</span>
             </button>
           ) : (
@@ -268,7 +267,7 @@ const TreeRow = ({ item, depth, stage, onNavigate, onSend }: { item: DriveItem; 
               key={to}
               type="button"
               onClick={() => onSend(item, to)}
-              className={clsx('grid size-7 shrink-0 place-items-center rounded opacity-0 group-hover:opacity-100 hover:bg-card focus:opacity-100', to === 'REFUSED' ? 'text-danger-fg' : 'text-link')}
+              className="grid size-7 shrink-0 place-items-center rounded text-link opacity-0 group-hover:opacity-100 hover:bg-card focus:opacity-100"
               title={label}
               aria-label={`${item.name} — ${label}`}
             >

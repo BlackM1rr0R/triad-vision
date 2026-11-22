@@ -2355,6 +2355,17 @@ model SignatureRequest {
   approvedById    String?                @db.VarChar(191)
   /// Signed copy saved in the client's drive folder ("<client folder>/Əmək müqaviləsi" …).
   driveNodeId     String?                @db.VarChar(191)
+  /// Case contracts flow: null = old (template, Triad Vision signs first), "V2" = staff's own uploaded PDF, the
+  /// client signs first (Əmək müqaviləsi: then Triad Vision; İş müqaviləsi: client only, staff approve).
+  contractFlow    String?                @db.VarChar(8)
+  /// Where the signatures go on the original pages: [{ role: CANDIDATE|STAFF, page (1-based), x, y, w, h (PDF points,
+  /// bottom-left origin), field? (AcroForm field name) }]. Null = signature page appended (old behaviour).
+  placements      Json?
+  /// Staff sent the signed document back (V2): the request is CANCELLED with this reason (shown to the client).
+  returnedAt      DateTime?
+  returnReason    String?                @db.Text
+  /// A returned İş müqaviləsi document was replaced by a new upload or dropped (no longer blocks the approval).
+  supersededAt    DateTime?
   originalName    String                 @db.VarChar(255)
   originalKey     String                 @unique @db.VarChar(191)
   originalSha256  String                 @db.Char(64)

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf-lib';
 import type { SignatureEventType, SignerRole } from '@prisma/client';
 import { safeText } from '../pdfSign.js';
+import { stampSignatures, type Placement } from './placements.js';
 
 /**
  * Final PDF of a completed signature request: the original pages untouched, then a signature page
@@ -79,6 +80,8 @@ export interface FinalPdfInput {
   order: 'SEQUENTIAL' | 'PARALLEL';
   signers: PdfSigner[];
   events: PdfEvent[];
+  /** Signature places on the original pages (case contracts V2): signatures are stamped there, no signature page. */
+  placements?: Placement[] | null;
 }
 
 export const utc = (d: Date | null | undefined) => (d ? `${d.toISOString().replace('T', ' ').slice(0, 19)} UTC` : '-');
@@ -266,7 +269,12 @@ const addCertificate = async (pdf: PDFDocument, input: FinalPdfInput, signedCont
   w.row('Abgeschlossen / Completed', utc(input.completedAt));
   w.row('SHA-256 Original', input.originalSha256);
   w.row('SHA-256 signiert / signed', signedContentSha256);
-  w.text('("signiert" = Original + Unterschriftenseite / "signed" = original + signature page)', { size: 7.5, color: GREY, x: M + 150 });
+  w.text(
+    input.placements?.length
+      ? '("signiert" = Original mit den Unterschriften an den vorgesehenen Stellen / "signed" = original with the signatures in their places)'
+      : '("signiert" = Original + Unterschriftenseite / "signed" = original + signature page)',
+    { size: 7.5, color: GREY, x: M + 150 },
+  );
   w.text('Der SHA-256-Wert dieser finalen Datei wird bei Triad Vision gespeichert und in der Abschluss-E-Mail genannt. / The SHA-256 of this final file is stored by Triad Vision and stated in the completion email.', {
     size: 7.5,
     color: GREY,
@@ -318,7 +326,11 @@ const addCertificate = async (pdf: PDFDocument, input: FinalPdfInput, signedCont
 /** Builds the final PDF. `signedContentSha256` = hash of the original + signature page (before the certificate). */
 export const buildFinalPdf = async (input: FinalPdfInput) => {
   const doc = await PDFDocument.load(input.original);
-  const withSignatures = await addSignaturePages(doc, input);
+  let withSignatures: Buffer;
+  if (input.placements?.length) {
+    await stampSignatures(doc, input.signers, input.placements);
+    withSignatures = Buffer.from(await doc.save());
+  } else withSignatures = await addSignaturePages(doc, input);
   const signedContentSha256 = crypto.createHash('sha256').update(withSignatures).digest('hex');
   const doc2 = await PDFDocument.load(withSignatures);
   await addCertificate(doc2, input, signedContentSha256);

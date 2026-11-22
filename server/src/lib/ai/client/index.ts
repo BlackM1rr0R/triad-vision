@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CaseStatus, DocStage, Prisma, VisaType } from '@prisma/client';
+import { revealedCompanyIdsForClient } from '../../caseContracts/employerVisibility.js';
 import { prisma } from '../../../db.js';
 import type { AiTool, AiToolContext, AnyAiTool } from '../types.js';
 import { forecastForCase } from '../../journey/forecast.js';
@@ -199,6 +200,7 @@ const deadlines: AiTool<Record<string, never>> = {
   label: { az: 'Tarixlərinizə baxıram…', de: 'Ich sehe mir Ihre Termine an…', en: 'Checking your dates…', ru: 'Смотрю ваши сроки…' },
   run: async (_args, ctx) => {
     const uid = ctx.user.id;
+    const revealedEmployers = await revealedCompanyIdsForClient(uid);
     const now = new Date();
     const [cases, interviews, signers, translations, arrival] = await Promise.all([
       prisma.case.findMany({ where: { clientId: uid, appointmentAt: { not: null } }, select: { id: true, number: true, status: true, appointmentAt: true, appointmentPlace: true } }),
@@ -206,7 +208,7 @@ const deadlines: AiTool<Record<string, never>> = {
         where: { candidateId: uid, startsAt: { gte: new Date(now.getTime() - 86_400_000) }, status: { in: ['PROPOSED', 'CONFIRMED'] } },
         orderBy: { startsAt: 'asc' },
         take: 10,
-        select: { startsAt: true, endsAt: true, status: true, meetingUrl: true, company: { select: { name: true } } },
+        select: { startsAt: true, endsAt: true, status: true, meetingUrl: true, companyId: true, company: { select: { name: true } } },
       }),
       prisma.signatureSigner.findMany({
         where: { userId: uid, status: { in: ['PENDING', 'VIEWED'] }, request: { status: 'SENT' } },
@@ -229,7 +231,7 @@ const deadlines: AiTool<Record<string, never>> = {
       embassyAppointments: cases
         .filter((c) => c.appointmentAt && (c.appointmentAt >= new Date(now.getTime() - 86_400_000) || c.status === 'APPOINTMENT_SCHEDULED'))
         .map((c) => ({ caseNumber: c.number, at: when(c.appointmentAt), place: c.appointmentPlace, link: `/account/cases/${c.id}` })),
-      interviews: interviews.map((i) => ({ at: when(i.startsAt), until: when(i.endsAt), status: i.status, employer: i.company?.name ?? null, online: !!i.meetingUrl, link: '/account/interviews' })),
+      interviews: interviews.map((i) => ({ at: when(i.startsAt), until: when(i.endsAt), status: i.status, employer: i.companyId && revealedEmployers.has(i.companyId) ? (i.company?.name ?? null) : null, online: !!i.meetingUrl, link: '/account/interviews' })),
       waitingForSignature: signers.map((s) => ({ title: s.request.title, sentAt: day(s.invitedAt), expiresAt: day(s.request.expiresAt), link: `/account/signatures/${s.id}` })),
       translations: translations.map((t) => ({
         order: `TR-${String(t.number).padStart(4, '0')}`,

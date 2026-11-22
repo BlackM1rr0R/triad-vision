@@ -14,6 +14,7 @@ import { ContextMenu, type MenuEntry, type MenuPosition } from '@/components/dri
 import { PROCESSING_STAGES, STAGE_TONE, canMoveStage, stageLabel, type BoardColumn, type BoardItem, type ProcessingStage } from './api';
 import { STAGE_KIND, endCaseDrag, startCaseDrag, useFlowActions, useStageDrop, type FlowAction, type FlowTarget } from './flow';
 import { MoveStageDialog } from './parts';
+import { ACTION_ICON } from '@/components/drive/processing/icons';
 
 const targetOf = (c: BoardItem): FlowTarget => ({ caseId: c.id, name: fullName(c.client), number: c.number, stage: c.processing.stage, assigneeId: c.processing.assignee?.id ?? null });
 
@@ -136,8 +137,9 @@ export const ProcessingBoard = ({ partnerId, search, onShowStage }: { partnerId?
     for (const s of PROCESSING_STAGES) {
       if (s === c.processing.stage || !canMoveStage(c.processing.stage, s)) continue;
       const action: FlowAction = STAGE_KIND[s];
-      out.push({ id: `to-${s}`, label: stageLabel(s), hint: t(`caseProcessing.hints.${s}`), danger: s === 'REFUSED', onSelect: () => flow.act(action, [x]) });
+      out.push({ id: `to-${s}`, label: stageLabel(s), hint: t(`caseProcessing.hints.${s}`), onSelect: () => flow.act(action, [x]) });
     }
+    if (c.processing.stage) out.push({ id: 'return', label: t('driveProcessing.actions.return'), icon: ACTION_ICON.return, danger: true, onSelect: () => flow.act('return', [x]) });
     out.push({ kind: 'separator', id: 's' }, { id: 'full', label: t('caseProcessing.move'), onSelect: () => setMoving(c) });
     return out;
   };

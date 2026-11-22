@@ -32,15 +32,23 @@ const savePosition = (key: string) => {
   }
 };
 
-/** Scrolls to `y` once the page has grown tall enough (content loads asynchronously), giving up after 2 s. */
+/**
+ * Scrolls to `y` once the page has grown tall enough (content loads asynchronously). When it never gets tall enough
+ * (2 s), nothing is scrolled: clamping to `y` would throw the reader to the very bottom (the footer) of a page that
+ * is shorter now than when the position was saved (a form that starts at its first step again, collapsed lists).
+ * Also stops when the reader scrolls on their own meanwhile.
+ */
 const restoreTo = (y: number) => {
   const started = performance.now();
+  const startedAt = window.scrollY;
   const attempt = () => {
+    if (Math.abs(window.scrollY - startedAt) > 40) return; // the reader moved on: never fight them
     const max = document.documentElement.scrollHeight - window.innerHeight;
-    if (max >= y - 4 || performance.now() - started > 2000) {
+    if (max >= y - 4) {
       smoothScrollTo(y, { immediate: true });
       return;
     }
+    if (performance.now() - started > 2000) return;
     requestAnimationFrame(attempt);
   };
   requestAnimationFrame(attempt);
@@ -68,7 +76,8 @@ const scrollToHash = (hash: string) => {
 
 /**
  * Scroll behaviour like a classic website:
- * - clicking a link (PUSH/REPLACE) opens the new page at the top, or at the section named by its #hash;
+ * - clicking a link to another page (PUSH/REPLACE with a new path) opens it at the top, or at the section named by its #hash;
+ * - in-page actions that only rewrite the query string of the same page (REPLACE: tabs, filters, steps) never move the page;
  * - reload and back/forward (POP) return to where the user was on that page;
  * - inertial wheel scrolling (Lenis) on desktop pointers, native everywhere else.
  */
@@ -77,6 +86,7 @@ export const SmoothScroll = () => {
   const navType = useNavigationType();
   const { noMotion } = usePrefs();
   const lastPath = useRef<string | null>(null);
+  const lastHash = useRef('');
 
   // Inertial scrolling is itself motion: off while "stop animations" is on in the accessibility widget.
   useEffect(() => {
@@ -99,16 +109,20 @@ export const SmoothScroll = () => {
     if (navType === 'POP') {
       const y = readPositions()[`${location.key}:${location.pathname}`];
       if (y) restoreTo(y);
+      else if (location.hash.length > 1) scrollToHash(location.hash); // a URL opened with a #section
       else scrollToTop(true);
-    } else if (location.hash.length > 1) {
+    } else if (location.hash.length > 1 && (lastPath.current !== location.pathname || lastHash.current !== location.hash || navType === 'PUSH')) {
+      // (An in-page REPLACE that keeps the same #hash — a tab or filter changing the query — must not glide back to it.)
       // Link to a section (/for-workers#process, /cooperation#form): the page opens at the top, then glides
       // to the section once it has rendered (page chunks and content load asynchronously).
       if (lastPath.current !== location.pathname) scrollToTop(true);
       scrollToHash(location.hash);
-    } else {
-      scrollToTop(true);
+    } else if (lastPath.current !== location.pathname || navType === 'PUSH') {
+      scrollToTop(true); // a new page (or a clicked link): from the top
     }
+    // else: the same page with another query string (REPLACE): an in-page action, the position stays
     lastPath.current = location.pathname;
+    lastHash.current = location.hash;
     // Remember where we were on this entry when leaving it.
     // Entries opened by typing a URL all share the key "default", so the path is part of the key.
     const key = `${location.key}:${location.pathname}`;

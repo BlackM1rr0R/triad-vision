@@ -1,3 +1,4 @@
+import { revealedCompanyIdsForClient } from '../caseContracts/employerVisibility.js';
 import type { Locale, OutboundChannel, User } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { preferredChannel, sendSms, sendWhatsApp } from './outbound.js';
@@ -198,7 +199,7 @@ export const collectDue = async (now: Date, horizonMin: number, kinds: Record<Re
     kinds.INTERVIEW
       ? prisma.interview.findMany({
           where: { status: 'CONFIRMED', startsAt: range },
-          select: { id: true, startsAt: true, updatedAt: true, meetingUrl: true, company: { select: { name: true } }, candidate: recipient },
+          select: { id: true, startsAt: true, updatedAt: true, meetingUrl: true, companyId: true, company: { select: { name: true } }, candidate: recipient },
         })
       : [],
   ]);
@@ -213,8 +214,10 @@ export const collectDue = async (now: Date, horizonMin: number, kinds: Record<Re
     const user = b.user.phone ? b.user : { ...b.user, phone: b.phone };
     out.push({ kind: 'BOOKING', id: b.id, at: b.slot.startsAt, user, caseId: b.caseId, place: b.slot.kind === 'OFFICE' ? b.slot.location : b.meetingUrl, madeAt: b.createdAt });
   }
+  const revealed = new Map<string, Set<string>>(); // client → employers they may see (İş müqaviləsi approved)
   for (const i of interviews) {
-    out.push({ kind: 'INTERVIEW', id: i.id, at: i.startsAt, user: i.candidate, what: i.company?.name ?? null, place: i.meetingUrl, madeAt: i.updatedAt });
+    if (!revealed.has(i.candidate.id)) revealed.set(i.candidate.id, await revealedCompanyIdsForClient(i.candidate.id));
+    out.push({ kind: 'INTERVIEW', id: i.id, at: i.startsAt, user: i.candidate, what: (i.companyId && revealed.get(i.candidate.id)!.has(i.companyId)) ? (i.company?.name ?? null) : null, place: i.meetingUrl, madeAt: i.updatedAt });
   }
   return out;
 };

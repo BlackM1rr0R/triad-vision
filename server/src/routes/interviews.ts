@@ -12,6 +12,7 @@ import {
   broadcastInterview,
   interviewIcs,
   interviewInclude,
+  employerHiddenFrom,
   interviewView,
   loadInterview,
   newMeetingUrl,
@@ -99,14 +100,19 @@ interviewsRouter.get('/', async (req, res) => {
   else if (audience === 'candidate') where.candidateId = req.user!.id;
   else if (q.companyId) where.companyId = q.companyId;
   const items = await prisma.interview.findMany({ where, include: interviewInclude, orderBy: { startsAt: 'asc' }, take: 1000 });
-  res.json({ items: items.map((i) => interviewView(i, audience)) });
+  const hidden = await employerHiddenFrom(items, audience);
+  res.json({ items: items.map((i) => interviewView(i, audience, hidden(i))) });
 });
+
+/** One interview as the viewer sees it (the employer is hidden from a candidate until the İş müqaviləsi is approved). */
+const viewOf = async (i: InterviewFull, audience: Audience) => interviewView(i, audience, (await employerHiddenFrom([i], audience))(i));
 
 /** Candidate shortcut: upcoming first, then past. */
 interviewsRouter.get('/mine', async (req, res) => {
   const items = await prisma.interview.findMany({ where: { candidateId: req.user!.id }, include: interviewInclude, orderBy: { startsAt: 'asc' } });
   const now = Date.now();
-  const view = items.map((i) => interviewView(i, 'candidate'));
+  const hidden = await employerHiddenFrom(items, 'candidate');
+  const view = items.map((i) => interviewView(i, 'candidate', hidden(i)));
   res.json({
     upcoming: view.filter((i) => i.endsAt.getTime() >= now && i.status !== 'CANCELLED'),
     past: view.filter((i) => i.endsAt.getTime() < now || i.status === 'CANCELLED').reverse(),
@@ -137,14 +143,15 @@ interviewsRouter.get('/applicants', async (req, res) => {
 
 interviewsRouter.get('/:id', async (req, res) => {
   const { interview, audience } = await loadVisible(req);
-  res.json({ interview: interviewView(interview, audience) });
+  res.json({ interview: await viewOf(interview, audience) });
 });
 
 interviewsRouter.get('/:id/ics', async (req, res) => {
-  const { interview } = await loadVisible(req);
+  const { interview, audience } = await loadVisible(req);
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="triad-vision-interview.ics"');
-  res.send(interviewIcs(interview, req.user!.locale as 'az' | 'de' | 'en' | 'ru'));
+  const hide = (await employerHiddenFrom([interview], audience))(interview);
+  res.send(interviewIcs(interview, req.user!.locale as 'az' | 'de' | 'en' | 'ru', undefined, hide));
 });
 
 // ─── Create ─────────────────────────────────────────────────────────────
@@ -216,7 +223,7 @@ interviewsRouter.post('/', async (req, res) => {
   if (application) await prisma.vacancyApplication.updateMany({ where: { id: application.id, status: 'PROPOSED' }, data: { status: 'INTERVIEW' } });
   await audit(req, 'INTERVIEW_CREATED', `interview:${interview.id}`, { candidateId, companyId, applicationId: application?.id ?? null });
   await broadcastInterview(interview, 'scheduled', { actorId: req.user!.id, webhook: 'interview.scheduled' });
-  res.status(201).json({ interview: interviewView(interview, audience) });
+  res.status(201).json({ interview: await viewOf(interview, audience) });
 });
 
 // ─── Update ─────────────────────────────────────────────────────────────
@@ -276,7 +283,7 @@ interviewsRouter.patch('/:id', async (req, res) => {
   const { interview, kind } = await applyPatch(req, i, body, audience);
   if (kind === 'cancelled') await closeInviteOf(i.id);
   if (kind) await broadcastInterview(interview, kind, { actorId: req.user!.id, notes: kind === 'cancelled' ? body.reason : undefined, webhook: 'interview.updated' });
-  res.json({ interview: interviewView(interview, audience) });
+  res.json({ interview: await viewOf(interview, audience) });
 });
 
 interviewsRouter.delete('/:id', async (req, res) => {
@@ -302,7 +309,7 @@ interviewsRouter.post('/:id/confirm', async (req, res) => {
   const interview = await prisma.interview.update({ where: { id: i.id }, data: { status: 'CONFIRMED' }, include: interviewInclude });
   await audit(req, 'INTERVIEW_CONFIRMED', `interview:${i.id}`);
   await broadcastInterview(interview, 'confirmed', { actorId: req.user!.id, webhook: 'interview.updated' });
-  res.json({ interview: interviewView(interview, audience) });
+  res.json({ interview: await viewOf(interview, audience) });
 });
 
 interviewsRouter.post('/:id/decline', async (req, res) => {
@@ -319,7 +326,7 @@ interviewsRouter.post('/:id/decline', async (req, res) => {
   await closeInviteOf(i.id);
   await audit(req, 'INTERVIEW_DECLINED', `interview:${i.id}`, { reason: reason ?? null });
   await broadcastInterview(interview, 'declined', { actorId: req.user!.id, notes: reason, webhook: 'interview.updated' });
-  res.json({ interview: interviewView(interview, audience) });
+  res.json({ interview: await viewOf(interview, audience) });
 });
 
 // ─── Evaluations (lib/placement/evaluations.ts) ─────────────────────────

@@ -117,8 +117,9 @@ describe('journey: employer company with OWNER + HR + VIEWER', () => {
     await waitFor(() => prisma.notification.findFirst({ where: { userId: cands[0].user.id, type: 'APPLICATION_STATUS' } }));
 
     // ── 5. Staff open the visa case of the accepted candidate for this employer ─────────────────────────────────
-    const made = expectStatus(await staff.agent.post(`/api/admin/candidates/applications/${apps[0]}/case`).send({}), 201).body;
-    expect(made.created).toBe(true);
+    // Applying already started the case (one active application): staff link it to the employer (200, not created).
+    const made = expectStatus(await staff.agent.post(`/api/admin/candidates/applications/${apps[0]}/case`).send({}), 200).body;
+    expect(made.created).toBe(false);
     const caseId = made.case.id as string;
     expect(await prisma.case.findUniqueOrThrow({ where: { id: caseId } })).toMatchObject({ clientId: cands[0].user.id, companyId: owner.company.id, vacancyId: draft.id });
     // The employment contract as staff entered it (pay figures for the EzB pay step).

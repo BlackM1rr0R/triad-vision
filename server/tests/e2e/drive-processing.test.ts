@@ -34,7 +34,7 @@ const folders = async (a: Agent, query: Record<string, string> = {}) => expectSt
 const move = (a: Agent, caseId: string, body: Record<string, unknown>) => a.post(`/api/admin/cases/${caseId}/processing`).send(body);
 const claim = (a: Agent, caseId: string, body: Record<string, unknown> = {}) => a.post(`/api/admin/cases/${caseId}/processing/claim`).send(body);
 
-describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehnung)', () => {
+describe('documents section: team workflow (Schon geschrieben → Fertig, Geri qaytar)', () => {
   it('send from the drive, claim, finish — notifications link to the folder and the case card stays in sync', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev', locale: 'de' });
@@ -60,7 +60,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
 
     // İş axını → Schon geschrieben: the folder with client, sender, assignee and file count.
     const view = await folders(checker.agent, { stage: 'WRITTEN' });
-    expect(view.counts).toMatchObject({ WRITTEN: 1, DONE: 0, REFUSED: 0 });
+    expect(view.counts).toMatchObject({ WRITTEN: 1, DONE: 0 });
     expect(view.waitingForMe).toBe(1);
     expect(view.items).toHaveLength(1);
     expect(view.items[0]).toMatchObject({
@@ -125,7 +125,7 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     expect(afterList.caseInfo.processing).toEqual({ stage: 'DONE', assigneeId: null });
   });
 
-  it('claiming an unassigned "Schon geschrieben" case; on to In Bearbeitung; Ablehnung', async () => {
+  it('claiming an unassigned "Schon geschrieben" case; on to In Bearbeitung; the removed Ablehnung stage is refused; Geri qaytar', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev' });
     const r = await roots(writer.agent);
@@ -142,9 +142,19 @@ describe('documents section: team workflow (Schon geschrieben → Fertig, Ablehn
     const back = await folders(writer.agent, { stage: 'IN_PROGRESS', mine: '1' });
     expect(back.items.map((i: { caseId: string }) => i.caseId)).toEqual([c.id]);
 
-    // Ablehnung from the drive.
-    expectStatus(await move(writer.agent, c.id, { stage: 'REFUSED', note: 'Səfirlik imtina etdi', origin: 'drive' }), 200);
-    expect((await folders(writer.agent, { stage: 'REFUSED' })).items[0]).toMatchObject({ caseId: c.id, lastNote: 'Səfirlik imtina etdi' });
+    // Ablehnung is gone as a stage.
+    expectStatus(await move(writer.agent, c.id, { stage: 'REFUSED', note: 'x', origin: 'drive' }), 400);
+
+    // "Geri qaytar": out of the workflow (stage cleared, assignee cleared), the move is kept in the history.
+    const ret = expectStatus(await writer.agent.post('/api/admin/client-folders/return').send({ cases: [c.id], note: 'Yanlış göndərilib' }), 200).body;
+    expect(ret.summary).toMatchObject({ total: 1, succeeded: 1, failed: 0 });
+    const row = await prisma.case.findUnique({ where: { id: c.id }, select: { processingStage: true, processingAssigneeId: true } });
+    expect(row).toEqual({ processingStage: null, processingAssigneeId: null });
+    expect(await prisma.caseProcessingMove.findFirst({ where: { caseId: c.id, toStage: 'RETURNED' }, select: { fromStage: true, note: true } })).toEqual({ fromStage: 'IN_PROGRESS', note: 'Yanlış göndərilib' });
+    expect((await folders(writer.agent, { stage: 'IN_PROGRESS' })).items).toHaveLength(0);
+    // Not in the workflow any more: a second return is refused (idempotent, nothing changes).
+    const again = expectStatus(await writer.agent.post('/api/admin/client-folders/return').send({ cases: [c.id] }), 200).body;
+    expect(again.results[0]).toMatchObject({ ok: false, error: 'NOT_IN_WORKFLOW' });
   });
 
   it('two colleagues pressing "Götür" at the same moment: exactly one wins, one move row', async () => {

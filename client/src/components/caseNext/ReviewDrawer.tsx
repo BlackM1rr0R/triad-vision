@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -9,7 +10,7 @@ import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
 import { Drawer } from '@/components/admin/Drawer';
 import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime, toastError } from '@/components/admin/labels';
-import { DocIcon } from '@/components/admin/case/shared';
+import { DocIcon, caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
 
 const REASONS = ['blurry', 'incomplete', 'expired', 'wrong'] as const;
 
@@ -21,13 +22,23 @@ const REASON_TEXT: Record<string, Record<(typeof REASONS)[number], string>> = {
   ru: { blurry: 'Документ нечитаемый или размытый — пожалуйста, загрузите чёткую копию.', incomplete: 'Документ неполный — пожалуйста, загрузите все страницы.', expired: 'Срок действия документа истёк — пожалуйста, загрузите действующий.', wrong: 'Это не тот документ — пожалуйста, загрузите нужный.' },
 };
 
-/** Pending documents of a next-step "Review now" action: open, accept (one / all), reject with a one-click reason. */
+/**
+ * Pending documents of a next-step "Review now" action: open, accept (one / all), reject with a one-click reason.
+ *
+ * Every decision is applied IN PLACE: the case in the query cache gets the new document status at once (no refetch, so
+ * nothing on the page remounts or reflows and the scroll position stays), the list keeps its place and the focus moves
+ * on to the next pending document. The case is refreshed from the server once, when the panel closes.
+ */
 export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { open: boolean; onClose: () => void; c: CaseDetail; documentIds: string[]; onChanged: () => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const [busy, setBusy] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, 'ACCEPTED' | 'REJECTED'>>({});
+  const qc = useQueryClient();
+  const changed = useRef(false);
+  const itemRefs = useRef(new Map<string, HTMLLIElement>());
+  const [advanceTo, setAdvanceTo] = useState<string | null>(null);
 
   const rows: { doc: CaseDocument; req: Requirement }[] = c.requirements.flatMap((r) => r.documents.filter((d) => documentIds.includes(d.id)).map((doc) => ({ doc, req: r })));
   const left = rows.filter((r) => !done[r.doc.id] && r.doc.status === 'PENDING');
@@ -35,7 +46,29 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
 
   const review = async (docId: string, status: 'ACCEPTED' | 'REJECTED', note?: string) => {
     await api.post(`/admin/cases/${c.id}/documents/${docId}/review`, { status, note });
+    changed.current = true;
     setDone((d) => ({ ...d, [docId]: status }));
+    // Optimistic, in place: the document's status in the cached case (the server refresh follows on close).
+    qc.setQueryData<CaseDetailResponse>(caseKey(c.id), (old) =>
+      old ? { ...old, case: { ...old.case, requirements: old.case.requirements.map((r) => ({ ...r, documents: r.documents.map((d) => (d.id === docId ? { ...d, status } : d)) })) } } : old,
+    );
+  };
+
+  // After a decision the next pending document comes into view (inside the panel only) and takes the focus.
+  useEffect(() => {
+    if (!advanceTo) return;
+    const el = itemRefs.current.get(advanceTo);
+    el?.scrollIntoView({ block: 'nearest' });
+    el?.querySelector<HTMLElement>('button:not([disabled])')?.focus({ preventScroll: true });
+    setAdvanceTo(null);
+  }, [advanceTo]);
+
+  const close = () => {
+    onClose();
+    if (changed.current) {
+      changed.current = false;
+      onChanged();
+    }
   };
 
   const one = async (docId: string, status: 'ACCEPTED' | 'REJECTED', note?: string) => {
@@ -43,7 +76,8 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
     try {
       await review(docId, status, note);
       setRejecting(null);
-      onChanged();
+      const next = rows.find((r) => r.doc.id !== docId && !done[r.doc.id] && r.doc.status === 'PENDING');
+      if (next) setAdvanceTo(next.doc.id);
     } catch (err) {
       toastError(err);
     } finally {
@@ -56,11 +90,9 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
     try {
       for (const r of left) await review(r.doc.id, 'ACCEPTED');
       toast.success(t('caseNext.review.accepted'));
-      onChanged();
-      onClose();
+      close();
     } catch (err) {
       toastError(err);
-      onChanged();
     } finally {
       setBusy(null);
     }
@@ -69,7 +101,7 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
   return (
     <Drawer
       open={open}
-      onClose={onClose}
+      onClose={close}
       title={t('caseNext.review.title')}
       footer={
         <button type="button" className="btn-primary btn-sm" disabled={!left.length || !!busy} onClick={() => void acceptAll()}>
@@ -84,7 +116,14 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
           {rows.map(({ doc, req }) => {
             const state = done[doc.id] ?? (doc.status !== 'PENDING' ? doc.status : null);
             return (
-              <li key={doc.id} className={clsx('rounded-xl border border-line p-3 sm:p-4', state && 'opacity-70')}>
+              <li
+                key={doc.id}
+                ref={(el) => {
+                  if (el) itemRefs.current.set(doc.id, el);
+                  else itemRefs.current.delete(doc.id);
+                }}
+                className={clsx('rounded-xl border border-line p-3 sm:p-4', state && 'opacity-70')}
+              >
                 <div className="flex min-w-0 items-start gap-3">
                   <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sunken text-muted">
                     <DocIcon mime={doc.mimeType} className="size-4" />

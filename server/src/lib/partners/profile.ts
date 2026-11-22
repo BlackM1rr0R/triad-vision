@@ -204,11 +204,10 @@ export const contractDatesInvalid = (start: string | Date | null | undefined, en
 };
 
 /**
- * Checks across fields on the merged values of a create / update (null = fine): the Betriebsnummer exists
- * only for German partners and a German PLZ has 5 digits.
+ * Checks across fields on the merged values of a create / update (null = fine): a German PLZ has 5 digits (the Betriebsnummer, 8 digits
+ * when given, is the first field of every partner and not tied to the country).
  */
 export const legalCrossError = (m: { country?: string | null; betriebsnummer?: string | null; postalCode?: string | null }) => {
-  if (m.betriebsnummer && m.country && !isGermany(m.country)) return 'BETRIEBSNUMMER_GERMANY_ONLY';
   if (m.postalCode && isGermany(m.country) && !/^\d{5}$/.test(m.postalCode)) return 'INVALID_POSTAL_CODE';
   return null;
 };

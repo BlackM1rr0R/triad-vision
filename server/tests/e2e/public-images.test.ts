@@ -169,13 +169,14 @@ describe('company logo', () => {
 
     const shown = await createVacancy({ companyId: co.company.id, status: 'OPEN', publishedAt: new Date(Date.now() - 60_000), showCompany: true });
     const hidden = await createVacancy({ companyId: co.company.id, status: 'OPEN', publishedAt: new Date(Date.now() - 60_000), showCompany: false });
-    expect((await anon().get(`/api/vacancies/${shown.slug}`)).body.vacancy.companyLogo).toEqual(logo);
+    // Owner's rule: our public pages never show the employer (name / logo) — only the partner API does.
+    expect((await anon().get(`/api/vacancies/${shown.slug}`)).body.vacancy.companyLogo).toBeNull();
     expect((await anon().get(`/api/vacancies/${hidden.slug}`)).body.vacancy.companyLogo).toBeNull();
     const list = await anon().get('/api/vacancies');
-    expect(list.body.items.find((x: { id: string }) => x.id === shown.id).companyLogo).toEqual(logo);
+    expect(list.body.items.find((x: { id: string }) => x.id === shown.id).companyLogo).toBeNull();
 
     const head = (await anon().get('/api/seo/head').query({ path: `/jobs/${shown.slug}`, lng: 'de' })).text;
-    expect(ld(head).find((b) => b['@type'] === 'JobPosting').hiringOrganization.logo).toBe(`${ORIGIN}${logo.url}`);
+    expect(ld(head).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
     const hiddenHead = (await anon().get('/api/seo/head').query({ path: `/jobs/${hidden.slug}`, lng: 'de' })).text;
     // Hidden employer: "confidential" (Google's rule for agencies), never the employer's logo.
     expect(ld(hiddenHead).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });

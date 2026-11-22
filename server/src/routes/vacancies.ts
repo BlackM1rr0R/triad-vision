@@ -19,7 +19,9 @@ import {
   openVacancyWhere,
   publicVacancy,
 } from '../lib/vacancies.js';
-import { syncApplicationFolder } from '../lib/drive/vacancyFolders.js';
+import { caseParentFor, syncApplicationFolder, vacancyProfession } from '../lib/drive/vacancyFolders.js';
+import { createCase, FINAL_STATUSES } from '../lib/caseFlow.js'; // applying = starting the client's one visa application (case)
+import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
 import { recordApiAttribution } from '../lib/publicApi/keys.js'; // partner API apply links (tv_src cookie)
 import { getSeoData, jobRegion, liveJobs, parseLocale } from '../lib/seo.js';
 import { SEO_LOCALES } from '../lib/seoCatalogue.js';
@@ -141,7 +143,6 @@ vacanciesRouter.get('/', publicLimiter, async (req, res) => {
         { profession: { contains: q.search } },
         { city: { contains: q.search } },
         ...(['az', 'de', 'en', 'ru'] as const).map((l) => ({ title: { path: `$.${l}`, string_contains: q.search } })),
-        { showCompany: true, company: { name: { contains: q.search } } },
       ],
     });
   }
@@ -278,10 +279,24 @@ vacanciesRouter.get('/:slug/me', requireAuth, requireCandidate, async (req, res)
       select: { id: true, status: true, createdAt: true },
     }),
   ]);
-  res.json({ match: matchFor(user, v), application, emailVerified: !!user.emailVerifiedAt });
+  // One active application per client: while it runs, applying elsewhere is refused (the box links to it).
+  const activeCase = await activeMainCase(req.user!.id);
+  res.json({ match: matchFor(user, v), application, emailVerified: !!user.emailVerifiedAt, activeCase });
 });
 
+/** The client's running main application (case), if any: one active application per client (lib/caseFlow createCase). */
+const activeMainCase = (userId: string) =>
+  prisma.case.findFirst({
+    where: { clientId: userId, status: { notIn: FINAL_STATUSES }, parentCaseId: null },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, number: true, vacancyId: true },
+  });
+
 /**
+ * Applying to a vacancy starts the client's visa application (case) for it — no separate second application:
+ * while the client has an active case the server refuses (409 ACTIVE_CASE_EXISTS + caseId; after it ended — approved,
+ * refused or cancelled — they can apply again). The vacancy application row stays for the employer / staff pipeline.
+ *
  * Apply: JSON { message? } or multipart with optional documents — "files" (≤ 6, case-document rules) and one
  * "kinds" entry per file (PASSPORT | CV | DIPLOMA …). The files are kept as application uploads and attached to
  * the client's case (requirement + "<client folder>/<type folder>") now or once a case exists
@@ -296,6 +311,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     // (checked again under the vacancy's row lock when the application is written; lib/vacancyPlaces).
     const slug = String(req.params.slug);
     const { vacancy: v } = await assertApplicable({ slug });
+    const running = await activeMainCase(req.user!.id);
+    if (running) throw conflict('ACTIVE_CASE_EXISTS', undefined, { caseId: running.id, caseNumber: running.number });
     for (const f of files) await verifyUploadedFile(f); // invalid content: nothing is created
     // Documents picked from the vault instead of re-uploading: own + not expired, checked before anything is created.
     const vaultIds = parseVaultIds(req.body?.vaultIds ?? req.body?.['vaultIds[]']);
@@ -327,8 +344,26 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     const linked = picked.length ? await linkPickedVaultDocs(user.id, picked, { vacancyId: v.id, applicationId: application.id }) : null;
     if (linked) await audit(req, 'APPLICATION_VAULT_DOCS_LINKED', `application:${application.id}`, { vaultIds: picked.map((d) => d.id) });
     const sentDocs = [...(uploads?.documents ?? []), ...picked];
+    // The visa application (case) for this vacancy: the uploads above join it (lib/applicationUploads on case creation).
+    // The applicant folder first: the client folder of the case goes inside it (caseParentFor).
+    await syncApplicationFolder(application.id, { summary: true });
+    let caseId: string | null = null;
+    try {
+      const created = await createCase(user.id, {
+        profession: vacancyProfession(v),
+        visaType: visaTypeOfVacancy(v),
+        visaCategoryId: v.visaCategoryId ?? null,
+        vacancyId: v.id,
+        driveParentId: await caseParentFor({ vacancyId: v.id, userId: user.id }),
+      });
+      caseId = created.id;
+    } catch (err) {
+      // A parallel request created the case first: the application belongs to that one.
+      if ((err as { code?: string }).code !== 'ACTIVE_CASE_EXISTS') throw err;
+      caseId = (await activeMainCase(user.id))?.id ?? null;
+    }
     // The applicant's folder in the vacancy's drive folder: summary, CV, the files sent (lib/drive/vacancyFolders.ts).
-    void syncApplicationFolder(application.id, { summary: true });
+    // (applicant folder already synced above, before the case was created)
     // Came through a partner's public-API apply link (cookie tv_src): attribution for the partner's usage stats.
     void recordApiAttribution(req, application.id, v.id);
     await emitWebhook('application.created', { id: application.id, vacancyId: v.id, status: application.status, matchScore: application.matchScore, candidateId: user.id }, v.companyId);
@@ -342,7 +377,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     res.status(201).json({
       application: { id: application.id, status: application.status, matchScore: application.matchScore, createdAt: application.createdAt },
       documents: sentDocs.map((d) => ({ id: d.id, kind: d.kind, title: d.title, filename: d.filename })),
-      attachedCaseId: uploads?.caseId ?? linked?.caseId ?? null,
+      attachedCaseId: uploads?.caseId ?? linked?.caseId ?? caseId,
+      caseId,
     });
   } catch (err) {
     if (!stored) await discardUploads(files);

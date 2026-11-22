@@ -136,7 +136,7 @@ export default function AccountInterviews() {
             {openInvites.map((v) => (
               <li key={v.id} className="card flex flex-col gap-3 border-brand-200 p-4 sm:p-5">
                 <div>
-                  <p className="font-display text-base font-bold text-navy-900">{t('ivcal.from_', { company: v.company.name })}</p>
+                  <p className="font-display text-base font-bold text-navy-900">{v.company ? t('ivcal.from_', { company: v.company.name }) : t('ivcal.fromEmployer')}</p>
                   <p className="mt-0.5 text-xs text-muted">
                     {v.application ? `${tr(v.application.vacancy.title)} · ` : ''}{t('ivcal.minutes', { count: v.minutes })}
                   </p>

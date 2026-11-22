@@ -216,7 +216,7 @@ type VacancyWithRels = Vacancy & {
 };
 
 /** What the public board shows (also everything a JobPosting needs). Never internal notes or ids of people. */
-export const publicVacancy = (v: VacancyWithRels) => ({
+export const publicVacancy = (v: VacancyWithRels, opts: { withCompany?: boolean } = {}) => ({
   id: v.id,
   slug: v.slug,
   title: v.title,
@@ -237,9 +237,11 @@ export const publicVacancy = (v: VacancyWithRels) => ({
   employmentType: v.employmentType,
   datePosted: v.publishedAt,
   validThrough: v.closesAt,
-  companyName: v.showCompany && v.company ? v.company.name : null,
+  // Owner's rule: the employer is never named on our own public pages (clients see it only after the İş müqaviləsi is
+  // approved). Only the partner API (`withCompany`, its own explicit setting) still gets the vacancy's showCompany choice.
+  companyName: opts.withCompany && v.showCompany && v.company ? v.company.name : null,
   // Employer logo ({ url, w?, h? }, lib/publicImages.ts): only when the employer is shown at all.
-  companyLogo: v.showCompany && v.company ? companyLogoOf(v.company.logo) : null,
+  companyLogo: opts.withCompany && v.showCompany && v.company ? companyLogoOf(v.company.logo) : null,
   visaCategory: v.visaCategory ? { slug: v.visaCategory.slug, title: v.visaCategory.title, visaLabel: v.visaCategory.visaLabel } : null,
   images: vacancyImagesOf(v.images),
 });

@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle2, Circle, Download, ExternalLink, FileSignature, FolderOpen, Info, Lock, PenLine, Send } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Circle, Download, ExternalLink, FilePlus2, FileSignature, FolderOpen, Info, Lock, PenLine, Undo2, Upload, X } from 'lucide-react';
 import { api, fileUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
@@ -17,9 +17,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { fmtDateTime } from '@/components/admin/labels';
 import { useCaseRefresh } from '@/components/admin/case/shared';
 import { SignaturePad, type SignaturePadHandle } from '@/components/portal/SignaturePad';
-import { PreviewText } from '@/components/contracts/FromTemplateDialog';
-import { placeholderLabelKey, usePlaceholders, type Preview } from '@/components/contracts/shared';
-import { ccError, staffKey, type StaffOverview, type StaffStep, type Step, type StepState } from './api';
+import { ccError, staffKey, type StaffDoc, type StaffOverview, type StaffStep, type Step, type StepState } from './api';
+import { UploadDialog } from './UploadDialog'; // V2: staff's own PDF + signature places
 
 registerCopy(pagesCaseContracts);
 
@@ -32,6 +31,7 @@ export const STATE_TONE: Record<StepState, string> = {
   DECLINED: 'bg-danger-bg text-danger-fg',
   EXPIRED: 'bg-danger-bg text-danger-fg',
   CANCELLED: 'bg-sunken text-muted',
+  RETURNED: 'bg-danger-bg text-danger-fg',
 };
 
 const TimelineRow = ({ done, label, detail }: { done: boolean; label: string; detail?: string | null }) => (
@@ -51,9 +51,55 @@ const Hint = ({ tone, children }: { tone: 'info' | 'warning'; children: ReactNod
   </p>
 );
 
-const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () => void; onSign: () => void; onApprove: () => void }) => {
+/** One document of the V2 İş müqaviləsi set: state, open / signed PDF, return / replace / drop. */
+const DocRow = ({ d, onReturn, onReplace, onDrop }: { d: StaffDoc; onReturn: () => void; onReplace: () => void; onDrop: () => void }) => {
+  const { t } = useTranslation();
+  const canReturn = !d.returnedAt && (d.status === 'SENT' || (d.status === 'COMPLETED' && !d.approvedAt));
+  return (
+    <li className="flex flex-wrap items-center gap-2 py-2 text-xs">
+      <span className="min-w-0 flex-1 truncate font-semibold text-ink" title={d.originalName}>
+        {d.originalName}
+      </span>
+      <span className={clsx('badge', STATE_TONE[d.state])}>{t(`caseContracts.states.${d.state}`)}</span>
+      {d.returnReason && <span className="basis-full text-danger-fg">{t('caseContracts.v2.returnedReason', { reason: d.returnReason })}</span>}
+      <span className="flex basis-full flex-wrap gap-1">
+        <a href={d.finalDocumentId ? fileUrl(d.finalDocumentId) : `/api/admin/signatures/${d.id}/document`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+          <ExternalLink className="size-3.5" aria-hidden /> {d.finalDocumentId ? t('caseContracts.openSigned') : t('caseContracts.v2.open')}
+        </a>
+        {canReturn && (
+          <button type="button" className="btn-ghost btn-sm text-danger-fg" onClick={onReturn}>
+            <Undo2 className="size-3.5" aria-hidden /> {t('caseContracts.v2.return')}
+          </button>
+        )}
+        {d.returnedAt && (
+          <>
+            <button type="button" className="btn-secondary btn-sm" onClick={onReplace}>
+              <Upload className="size-3.5" aria-hidden /> {t('caseContracts.v2.replace')}
+            </button>
+            <button type="button" className="btn-ghost btn-sm" onClick={onDrop}>
+              <X className="size-3.5" aria-hidden /> {t('caseContracts.v2.drop')}
+            </button>
+          </>
+        )}
+      </span>
+    </li>
+  );
+};
+
+interface StepActions {
+  onUpload: () => void;
+  onSign: () => void;
+  onApprove: () => void;
+  onReturn: (doc?: StaffDoc) => void;
+  onReplace: (doc: StaffDoc) => void;
+  onDrop: (doc: StaffDoc) => void;
+}
+
+const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop }: { s: StaffStep } & StepActions) => {
   const { t } = useTranslation();
   const r = s.request;
+  const v2 = s.flow === 'V2';
+  const workSet = s.step === 'WORK' && v2;
   const name = t(`caseContracts.steps.${s.step}.name`);
   const blocked = s.blockedReason && s.state !== 'APPROVED' ? s.blockedReason : null;
   // An Əmək müqaviləsi approved outside the contract step (early / before a reopen): the server allows a new version.
@@ -71,13 +117,29 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
         <span className={clsx('badge', STATE_TONE[s.state])}>{t(`caseContracts.states.${s.state}`)}</span>
       </header>
 
-      {r && (
+      <p className="text-[11px] text-muted">{s.step === 'LABOUR' ? (r && !v2 ? t('caseContracts.v2.oldFlow') : t('caseContracts.v2.labourInfo')) : t('caseContracts.v2.workInfo')}</p>
+
+      {r && !workSet && (
         <ol className="space-y-1" aria-label={t('caseContracts.title')}>
           <TimelineRow done={!!r.sentAt} label={t('caseContracts.timeline.sent')} detail={r.sentAt ? fmtDateTime(r.sentAt) : null} />
-          <TimelineRow done={!!r.triad?.signedAt} label={t('caseContracts.timeline.triad')} detail={r.triad ? [r.triad.name, r.triad.signedAt ? fmtDateTime(r.triad.signedAt) : null].filter(Boolean).join(' · ') : null} />
-          <TimelineRow done={!!r.client?.signedAt} label={t('caseContracts.timeline.client')} detail={r.client ? [r.client.name, r.client.signedAt ? fmtDateTime(r.client.signedAt) : null].filter(Boolean).join(' · ') : null} />
+          {/* V2: the client signs first, then Triad Vision (old flow: the other way round). */}
+          {(v2 ? (['client', 'triad'] as const) : (['triad', 'client'] as const)).map((k) => {
+            const sg = r[k];
+            return <TimelineRow key={k} done={!!sg?.signedAt} label={t(`caseContracts.timeline.${k}`)} detail={sg ? [sg.name, sg.signedAt ? fmtDateTime(sg.signedAt) : null].filter(Boolean).join(' · ') : null} />;
+          })}
           <TimelineRow done={!!r.approvedAt} label={t('caseContracts.timeline.approved')} detail={r.approvedAt ? [r.approvedBy, fmtDateTime(r.approvedAt)].filter(Boolean).join(' · ') : null} />
         </ol>
+      )}
+      {r?.returnReason && !workSet && <Hint tone="warning">{t('caseContracts.v2.returnedReason', { reason: r.returnReason })}</Hint>}
+      {workSet && s.documents.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-muted">{t('caseContracts.v2.documents', { count: s.documents.length })}</p>
+          <ul className="divide-y divide-line">
+            {s.documents.map((d) => (
+              <DocRow key={d.id} d={d} onReturn={() => onReturn(d)} onReplace={() => onReplace(d)} onDrop={() => onDrop(d)} />
+            ))}
+          </ul>
+        </div>
       )}
       {r && r.others.length > 0 && <p className="text-[11px] text-muted">{t('caseContracts.otherParties', { names: r.others.map((o) => o.name).join(', ') })}</p>}
 
@@ -88,7 +150,12 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
       <div className="mt-auto flex flex-wrap items-center gap-2">
         {s.canTriadSign && (
           <button type="button" className="btn-primary btn-sm" onClick={onSign}>
-            <PenLine className="size-3.5" aria-hidden /> {t('caseContracts.triadSign')}
+            <PenLine className="size-3.5" aria-hidden /> {v2 ? t('caseContracts.v2.agreeSign') : t('caseContracts.triadSign')}
+          </button>
+        )}
+        {s.canReturn && s.step === 'LABOUR' && (
+          <button type="button" className="btn-ghost btn-sm text-danger-fg" onClick={() => onReturn()}>
+            <Undo2 className="size-3.5" aria-hidden /> {t('caseContracts.v2.return')}
           </button>
         )}
         {s.canApprove && (
@@ -96,12 +163,13 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
             <CheckCircle2 className="size-3.5" aria-hidden /> {t('caseContracts.approve')}
           </button>
         )}
-        {(s.state !== 'APPROVED' || resendApproved) && (
-          <button type="button" className={s.state === 'NOT_SENT' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} disabled={!!blocked} onClick={onSend}>
-            <Send className="size-3.5" aria-hidden /> {s.state === 'NOT_SENT' ? t('caseContracts.send') : t('caseContracts.resend')}
+        {(s.state !== 'APPROVED' || resendApproved) && !(workSet && s.documents.length >= 10) && (
+          <button type="button" className={s.state === 'NOT_SENT' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'} disabled={!!blocked} onClick={onUpload}>
+            {workSet ? <FilePlus2 className="size-3.5" aria-hidden /> : <Upload className="size-3.5" aria-hidden />}{' '}
+            {s.state === 'NOT_SENT' ? t('caseContracts.v2.upload') : workSet ? t('caseContracts.v2.uploadMore') : t('caseContracts.resend')}
           </button>
         )}
-        {r?.finalDocumentId && (
+        {r?.finalDocumentId && !workSet && (
           <a href={fileUrl(r.finalDocumentId)} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
             <Download className="size-3.5" aria-hidden /> {t('caseContracts.openSigned')}
           </a>
@@ -111,7 +179,7 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
             <FolderOpen className="size-3.5" aria-hidden /> {t('caseContracts.openDrive')}
           </Link>
         )}
-        {r && (
+        {r && !workSet && (
           <Link to={`/admin/signatures?open=${r.id}`} className="btn-ghost btn-sm">
             <ExternalLink className="size-3.5" aria-hidden /> {t('caseContracts.openRequest')}
           </Link>
@@ -122,124 +190,6 @@ const StepCard = ({ s, onSend, onSign, onApprove }: { s: StaffStep; onSend: () =
         {t('caseContracts.driveNote', { folder: s.driveFolder })}
       </p>
     </article>
-  );
-};
-
-/** Send dialog: template of the step, input fields found in the preview, live preview, optional note. */
-const SendDialog = ({ c, s, data, onClose, onSent }: { c: CaseDetail; s: StaffStep; data: StaffOverview; onClose: () => void; onSent: () => void }) => {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const { data: defs } = usePlaceholders();
-  const [templateId, setTemplateId] = useState(() => (s.templates.find((x) => x.isDefault) ?? s.templates[0])?.id ?? '');
-  const [inputs, setInputs] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState('');
-  const clean = useMemo(() => Object.fromEntries(Object.entries(inputs).filter(([, v]) => v.trim())), [inputs]);
-  const preview = useQuery({
-    queryKey: ['case-contracts', 'preview', templateId, c.id, clean],
-    queryFn: async () => (await api.post<Preview>(`/admin/contract-templates/${templateId}/preview`, { caseId: c.id, inputs: clean })).data,
-    enabled: !!templateId,
-    placeholderData: (prev) => prev,
-  });
-  const used = new Set((preview.data?.segments ?? []).flatMap((x) => ('key' in x ? [x.key] : [])));
-  const inputDefs = (defs ?? []).filter((d) => d.input && (used.has(d.key) || inputs[d.key]));
-  const send = useMutation({
-    mutationFn: async () => (await api.post<{ caseContract: boolean }>(`/admin/case-contracts/cases/${c.id}/send`, { step: s.step, templateId, inputs: clean, message: message.trim() || null })).data,
-    onSuccess: (res) => {
-      toast.success(res.caseContract ? t('caseContracts.sendDialog.sentCaseContract') : t('caseContracts.sendDialog.sent'));
-      onSent();
-    },
-    onError: (err) => toast.error(ccError(t, err)),
-  });
-  const name = t(`caseContracts.steps.${s.step}.name`);
-  const triad = data.triadSignatory ? (data.triadSignatory.id === user?.id ? t('caseContracts.sendDialog.you') : data.triadSignatory.name) : t('caseContracts.sendDialog.you');
-  const missing = preview.data?.missing ?? [];
-
-  return (
-    <Modal
-      open
-      onClose={() => !send.isPending && onClose()}
-      size="lg"
-      title={t('caseContracts.sendDialog.title', { name })}
-      description={t(`caseContracts.steps.${s.step}.what`)}
-      footer={
-        <>
-          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={send.isPending}>
-            {t('caseContracts.cancel')}
-          </button>
-          <button type="button" className="btn-primary btn-sm" disabled={!templateId || send.isPending} onClick={() => send.mutate()}>
-            {send.isPending ? <Spinner className="size-3.5" /> : <Send className="size-3.5" aria-hidden />} {t('caseContracts.send')}
-          </button>
-        </>
-      }
-    >
-      {!s.templates.length ? (
-        <p className="py-4 text-sm text-muted">
-          {t('caseContracts.sendDialog.noTemplates')}{' '}
-          <Link to="/admin/contract-templates" className="font-semibold text-link underline">
-            {t('caseContracts.sendDialog.templatesLink')}
-          </Link>
-        </p>
-      ) : (
-        <div className="grid gap-4">
-          <p className="flex items-start gap-2 rounded-lg bg-primary/[0.06] px-3 py-2 text-xs text-link">
-            <FileSignature className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            {t('caseContracts.sendDialog.order', { triad, client: `${c.client.firstName} ${c.client.lastName}`.trim() })}
-          </p>
-          <div>
-            <label htmlFor="cc-template" className="label">
-              {t('caseContracts.sendDialog.template')}
-            </label>
-            <select id="cc-template" className="input" value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-              {s.templates.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.name} · {x.language.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-          {inputDefs.length > 0 && (
-            <fieldset>
-              <legend className="label">{t('caseContracts.sendDialog.inputs')}</legend>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {inputDefs.map((d) => (
-                  <div key={d.key}>
-                    <label htmlFor={`cc-${d.key}`} className="mb-1 block text-xs text-muted">
-                      {t(placeholderLabelKey(d.key))}
-                    </label>
-                    <input
-                      id={`cc-${d.key}`}
-                      className="input"
-                      type={d.type === 'date' ? 'date' : d.type === 'number' ? 'number' : 'text'}
-                      maxLength={500}
-                      value={inputs[d.key] ?? ''}
-                      onChange={(e) => setInputs((v) => ({ ...v, [d.key]: e.target.value }))}
-                    />
-                  </div>
-                ))}
-              </div>
-            </fieldset>
-          )}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className="label mb-0">{t('caseContracts.sendDialog.preview')}</span>
-              {preview.isFetching && <Spinner className="size-3.5 text-link" />}
-            </div>
-            {preview.data ? <PreviewText preview={preview.data} /> : <div className="grid min-h-24 place-items-center rounded-lg border border-line text-link">{preview.error ? <span className="text-sm text-danger-fg">{ccError(t, preview.error)}</span> : <Spinner className="size-5" />}</div>}
-            {preview.data && (
-              <p className={clsx('mt-2 text-xs', missing.length ? 'text-warning-fg' : 'text-success-fg')}>
-                {missing.length ? t('caseContracts.sendDialog.missing', { keys: missing.map((k) => t(placeholderLabelKey(k), { defaultValue: k })).join(', ') }) : t('caseContracts.sendDialog.allFilled')}
-              </p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="cc-message" className="label">
-              {t('caseContracts.sendDialog.message')}
-            </label>
-            <textarea id="cc-message" className="input" rows={2} maxLength={4000} value={message} onChange={(e) => setMessage(e.target.value)} />
-          </div>
-        </div>
-      )}
-    </Modal>
   );
 };
 
@@ -313,6 +263,43 @@ const SignDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffSt
   );
 };
 
+/** V2: send a document back with a reason (the client sees it). */
+const ReturnDialog = ({ caseId, step, doc, onClose, onDone }: { caseId: string; step: Step; doc: StaffDoc | null; onClose: () => void; onDone: () => void }) => {
+  const { t } = useTranslation();
+  const [reason, setReason] = useState('');
+  const send = useMutation({
+    mutationFn: async () => (await api.post(`/admin/case-contracts/cases/${caseId}/return`, { step, requestId: doc?.id ?? null, reason: reason.trim() })).data,
+    onSuccess: () => {
+      toast.success(t('caseContracts.v2.returnDialog.done'));
+      onDone();
+    },
+    onError: (err) => toast.error(ccError(t, err)),
+  });
+  const name = doc ? doc.originalName : t(`caseContracts.steps.${step}.name`);
+  return (
+    <Modal
+      open
+      onClose={() => !send.isPending && onClose()}
+      title={t('caseContracts.v2.returnDialog.title', { name })}
+      footer={
+        <>
+          <button type="button" className="btn-secondary btn-sm" onClick={onClose} disabled={send.isPending}>
+            {t('caseContracts.cancel')}
+          </button>
+          <button type="button" className="btn-danger btn-sm" disabled={reason.trim().length < 3 || send.isPending} onClick={() => send.mutate()}>
+            {send.isPending && <Spinner className="size-3.5" />} {t('caseContracts.v2.return')}
+          </button>
+        </>
+      }
+    >
+      <label htmlFor="cc-return-reason" className="label">
+        {t('caseContracts.v2.returnDialog.reason')}
+      </label>
+      <textarea id="cc-return-reason" className="input" rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
+    </Modal>
+  );
+};
+
 /**
  * "Müqavilələr" on the case's documents tab: 1) Əmək müqaviləsi, 2) İş müqaviləsi (locked until 1 is approved).
  * Triad Vision signs first, then the client, then staff approve; the employer is not part of either contract.
@@ -323,7 +310,8 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
   const qc = useQueryClient();
   const refreshCase = useCaseRefresh(c.id);
   const q = useQuery({ queryKey: staffKey(c.id), queryFn: async () => (await api.get<StaffOverview>(`/admin/case-contracts/cases/${c.id}`)).data });
-  const [sending, setSending] = useState<Step | null>(null);
+  const [uploading, setUploading] = useState<{ step: Step; replacesId?: string } | null>(null);
+  const [returning, setReturning] = useState<{ step: Step; doc: StaffDoc | null } | null>(null);
   const [signing, setSigning] = useState<Step | null>(null);
   const [approving, setApproving] = useState<Step | null>(null);
   const refresh = async () => {
@@ -338,12 +326,16 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
     },
     onError: (err) => toast.error(ccError(t, err)),
   });
+  const drop = useMutation({
+    mutationFn: async (requestId: string) => (await api.post<StaffOverview>(`/admin/case-contracts/cases/${c.id}/drop`, { requestId })).data,
+    onSuccess: refresh,
+    onError: (err) => toast.error(ccError(t, err)),
+  });
 
   const data = q.data;
   const stepOf = (k: Step | null) => (k && data ? data.steps.find((x) => x.step === k) : undefined);
   const flowIds = new Set((data?.steps ?? []).map((x) => x.request?.id).filter(Boolean));
   const showLegacy = !!c.contract && !(c.contract.signatureRequestId && flowIds.has(c.contract.signatureRequestId));
-  const sendStep = stepOf(sending);
   const signStep = stepOf(signing);
   const approveStep = stepOf(approving);
 
@@ -359,7 +351,16 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {data.steps.map((s) => (
-            <StepCard key={s.step} s={s} onSend={() => setSending(s.step)} onSign={() => setSigning(s.step)} onApprove={() => setApproving(s.step)} />
+            <StepCard
+              key={s.step}
+              s={s}
+              onUpload={() => setUploading({ step: s.step })}
+              onSign={() => setSigning(s.step)}
+              onApprove={() => setApproving(s.step)}
+              onReturn={(doc) => setReturning({ step: s.step, doc: doc ?? null })}
+              onReplace={(doc) => setUploading({ step: s.step, replacesId: doc.id })}
+              onDrop={(doc) => drop.mutate(doc.id)}
+            />
           ))}
         </div>
       )}
@@ -369,19 +370,27 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
           <div className="mt-3">{legacy}</div>
         </details>
       )}
-      {sendStep && data && (
-        <SendDialog
-          c={c}
-          s={sendStep}
-          data={data}
-          onClose={() => setSending(null)}
-          onSent={async () => {
-            const step = sendStep.step;
-            setSending(null);
+      {uploading && (
+        <UploadDialog
+          caseId={c.id}
+          step={uploading.step}
+          replacesId={uploading.replacesId}
+          onClose={() => setUploading(null)}
+          onDone={async () => {
+            setUploading(null);
             await refresh();
-            // The sender usually signs for Triad Vision right away.
-            const fresh = qc.getQueryData<StaffOverview>(staffKey(c.id))?.steps.find((x) => x.step === step);
-            if (fresh?.canTriadSign) setSigning(step);
+          }}
+        />
+      )}
+      {returning && (
+        <ReturnDialog
+          caseId={c.id}
+          step={returning.step}
+          doc={returning.doc}
+          onClose={() => setReturning(null)}
+          onDone={async () => {
+            setReturning(null);
+            await refresh();
           }}
         />
       )}
@@ -408,6 +417,7 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
           <>
             {t('caseContracts.approveDialog.text')}
             {approveStep?.step === 'LABOUR' && <span className="mt-2 block">{t('caseContracts.approveDialog.labourNext')}</span>}
+            {approveStep?.step === 'WORK' && approveStep.flow === 'V2' && <span className="mt-2 block">{t('caseContracts.v2.approveWork')}</span>}
           </>
         }
       />

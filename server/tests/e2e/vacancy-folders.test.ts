@@ -90,8 +90,10 @@ describe('vacancy ↔ drive folder', () => {
 
     // Accepted → case opened from the application: the client folder goes inside the applicant folder.
     await prisma.vacancyApplication.update({ where: { id: app.id }, data: { status: 'ACCEPTED' } });
+    // Applying already started the case (one active application): "open case" links that same case.
     const kase = await staff.agent.post(`/api/admin/candidates/applications/${app.id}/case`).send({});
-    expect(kase.status, JSON.stringify(kase.body)).toBe(201);
+    expect(kase.status, JSON.stringify(kase.body)).toBe(200);
+    expect(kase.body).toMatchObject({ created: false, case: { id: res.body.caseId } });
     await vi.waitFor(async () => {
       expect((await prisma.case.findUniqueOrThrow({ where: { id: kase.body.case.id } })).driveFolderId).toBeTruthy();
     });

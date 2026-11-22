@@ -55,8 +55,8 @@ export const createCase = async (
 ) => {
   // One active case per client — except family-member cases, which are separate applications.
   if (!input.parentCaseId) {
-    const active = await prisma.case.count({ where: { clientId, status: { notIn: FINAL_STATUSES }, parentCaseId: null } });
-    if (active > 0) throw conflict('ACTIVE_CASE_EXISTS');
+    const active = await prisma.case.findFirst({ where: { clientId, status: { notIn: FINAL_STATUSES }, parentCaseId: null }, orderBy: { createdAt: 'desc' }, select: { id: true, number: true } });
+    if (active) throw conflict('ACTIVE_CASE_EXISTS', undefined, { caseId: active.id, caseNumber: active.number });
   }
 
   // Retry on the (rare) race where two cases get the same number.
@@ -345,6 +345,8 @@ export const staffRejectSignature = async (caseId: string, actorId: string, note
 };
 
 export const staffConfirmContract = async (caseId: string, actorId: string) => {
+  // Case contracts V2: the approved İş müqaviləsi moves the case on, not this button (lazy import: no cycle).
+  if (await import('./caseContracts/service.js').then((m) => m.workContractPending(caseId))) throw conflict('WORK_CONTRACT_PENDING');
   await transition(caseId, ['CONTRACT_SIGNED'], 'EMBASSY_DOCUMENTS', actorId, {
     eventType: 'CONTRACT_CONFIRMED',
     data: { staffNote: null },

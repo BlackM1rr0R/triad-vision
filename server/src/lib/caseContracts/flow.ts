@@ -6,9 +6,21 @@ import type { CaseStatus, ContractKind, Locale } from '@prisma/client';
  *   1. LABOUR — "Əmək müqaviləsi" between Triad Vision and the client.
  *   2. WORK   — "İş müqaviləsi" (work contract; WORK or AUSBILDUNG template). Only after step 1 is approved.
  *
- * Both are signed in the same order: Triad Vision's signatory first (STAFF, order 1), then the client (CANDIDATE,
- * order 2), then a staff member approves. The employer is never a party or signer of these two contracts.
+ * Old flow (contractFlow null, template PDF): Triad Vision's signatory first (STAFF, order 1), then the client
+ * (CANDIDATE, order 2), then a staff member approves.
+ *
+ * V2 (contractFlow "V2", the owner's flow for every new contract): staff upload their OWN PDF and mark the signature
+ * places (lib/esign/placements.ts).
+ *   LABOUR  one PDF; the client signs first (order 1), then Triad Vision (order 2) if it agrees — that signature
+ *           completes the request and approves it at once. Staff may instead send it back with a reason (RETURNED).
+ *   WORK    1–10 PDFs (one request each), only the client signs; staff review the whole set and approve it (no
+ *           Triad Vision signature) or send one document back with a reason. Approval = İş müqaviləsi approved: the
+ *           employer becomes visible to the client and the case moves on to the embassy documents.
+ * The employer is never a party or signer of these contracts.
  */
+
+export const FLOW_V2 = 'V2';
+export const MAX_WORK_DOCS = 10;
 
 export const STEPS = ['LABOUR', 'WORK'] as const;
 export type Step = (typeof STEPS)[number];
@@ -39,7 +51,8 @@ export type StepState =
   | 'APPROVED'
   | 'DECLINED'
   | 'EXPIRED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'RETURNED'; // V2: staff sent it back with a reason (a new version is due)
 
 export interface SignerLite {
   role: string;
@@ -48,6 +61,8 @@ export interface SignerLite {
 }
 export interface RequestLite {
   status: string;
+  order?: string;
+  returnedAt?: Date | null;
   createdAt: Date;
   approvedAt: Date | null;
   expiresAt: Date | null;
@@ -69,13 +84,20 @@ export const stepState = (r: RequestLite | null, now = new Date()): StepState =>
       return r.approvedAt ? 'APPROVED' : 'SIGNED';
     case 'SENT':
       if (r.expiresAt && r.expiresAt.getTime() <= now.getTime()) return 'EXPIRED';
-      return r.signers.some((s) => s.role === 'STAFF' && isOpen(s)) ? 'TRIAD_TO_SIGN' : 'CLIENT_TO_SIGN';
+    {
+      // Whoever's turn it is (old flow: Triad Vision first; V2: the client first).
+      const open = r.signers.filter(isOpen);
+      if (!open.length) return 'SIGNED';
+      const min = Math.min(...open.map((s) => s.order));
+      const turn = r.order === 'PARALLEL' ? open : open.filter((s) => s.order === min);
+      return turn.some((s) => s.role === 'CANDIDATE') ? 'CLIENT_TO_SIGN' : 'TRIAD_TO_SIGN';
+    }
     case 'DECLINED':
       return 'DECLINED';
     case 'EXPIRED':
       return 'EXPIRED';
     case 'CANCELLED':
-      return 'CANCELLED';
+      return r.returnedAt ? 'RETURNED' : 'CANCELLED';
     default:
       return 'NOT_SENT';
   }
@@ -115,8 +137,67 @@ export const triadFirstSigners = (triad: PartyInput, client: PartyInput) => [
 
 export const canApprove = (state: StepState) => state === 'SIGNED';
 
+/** V2 Əmək müqaviləsi signers: the client first, Triad Vision second. */
+export const clientFirstSigners = (client: PartyInput, triad: PartyInput) => [
+  { role: 'CANDIDATE' as const, ...client, order: 1 },
+  { role: 'STAFF' as const, ...triad, order: 2 },
+];
+
+// ─── V2 İş müqaviləsi: a set of documents ─────────────────────────────
+
+export interface WorkDocLite extends RequestLite {
+  contractFlow?: string | null;
+  supersededAt?: Date | null;
+}
+
+/**
+ * The documents that make up the İş müqaviləsi now: V2 requests that were sent and are not cancelled — plus the
+ * ones staff sent back that were not replaced / dropped yet (they block the approval).
+ */
+export const activeWorkSet = <R extends WorkDocLite>(rows: R[]): R[] =>
+  rows
+    .filter((r) => r.contractFlow === FLOW_V2 && r.status !== 'DRAFT' && (r.status !== 'CANCELLED' || (!!r.returnedAt && !r.supersededAt)))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+/** One state for the whole set (staff overview, client overview). */
+export const workSetState = (set: WorkDocLite[], now = new Date()): StepState => {
+  if (!set.length) return 'NOT_SENT';
+  const states = set.map((r) => stepState(r, now));
+  if (states.every((s) => s === 'APPROVED')) return 'APPROVED';
+  if (states.includes('CLIENT_TO_SIGN')) return 'CLIENT_TO_SIGN';
+  if (states.includes('RETURNED')) return 'RETURNED';
+  if (states.includes('DECLINED')) return 'DECLINED';
+  if (states.includes('EXPIRED')) return 'EXPIRED';
+  if (states.every((s) => s === 'SIGNED' || s === 'APPROVED')) return 'SIGNED';
+  return 'CANCELLED';
+};
+
+/** Why staff cannot approve the set now (null = they can): every document signed by the client, nothing sent back. */
+export const workApproveBlock = (set: WorkDocLite[], now = new Date()): string | null => {
+  if (!set.length) return 'NOTHING_TO_APPROVE';
+  const states = set.map((r) => stepState(r, now));
+  if (states.every((s) => s === 'APPROVED')) return 'ALREADY_APPROVED';
+  if (states.includes('RETURNED')) return 'DOCUMENT_RETURNED';
+  if (!states.every((s) => s === 'SIGNED' || s === 'APPROVED')) return 'NOT_FULLY_SIGNED';
+  return null;
+};
+
+/**
+ * Whose turn the V2 İş müqaviləsi is (case in CONTRACT_SIGNED = Əmək müqaviləsi done):
+ *   CLIENT  at least one document waits for the client's signature
+ *   STAFF   nothing uploaded yet, a document was sent back / expired / declined, or everything is signed (review)
+ *   null    approved
+ */
+export const workContractTurn = (set: WorkDocLite[], now = new Date()): ContractTurn | null => {
+  const state = workSetState(set, now);
+  if (state === 'APPROVED') return null;
+  if (state === 'CLIENT_TO_SIGN') return 'CLIENT';
+  return 'STAFF';
+};
+
 /** "Əmək müqaviləsi – TV-2026-0012 (imzalanmış).pdf" (drive file of the signed copy). */
-export const signedFileName = (step: Step, caseNumber: string) => `${DRIVE_FOLDER[step]} – ${caseNumber} (imzalanmış).pdf`;
+export const signedFileName = (step: Step, caseNumber: string, docTitle?: string | null) =>
+  `${DRIVE_FOLDER[step]}${docTitle ? ` – ${docTitle.replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80)}` : ''} – ${caseNumber} (imzalanmış).pdf`;
 
 // ─── Whose turn is the case contract? ─────────────────────────────────
 

@@ -45,7 +45,7 @@ export interface InterviewInvite {
   minutes: number;
   notes: string | null;
   createdAt: string;
-  company: { id: string; name: string };
+  company: { id: string; name: string } | null;
   application: { id: string; status: string; vacancy: { id: string; title: L10n; slug: string } } | null;
   candidate: { id: string; name: string; profession: string | null };
   interview: { id: string; status: string; startsAt: string; endsAt: string; meetingUrl: string | null } | null;

@@ -12,18 +12,20 @@ import { scoped } from '../accessAudit/scope.js';
  * client-facing CaseStatus, the drive board (DocWorkflowStage) and the four-eyes check of the embassy package:
  *
  *   Schon geschrieben (WRITTEN: documents written, waiting) → In Bearbeitung (IN_PROGRESS: an admin works on
- *   it — only cases somebody sent there explicitly) → Fertig (DONE) · Ablehnung (REFUSED: the visa was refused).
+ *   it — only cases somebody sent there explicitly) → Fertig (DONE). A case can be returned from any stage ("Geri qaytar", lib/drive/workflowReturn): its workflow
+ *   documents go back to the client folder and the case leaves the workflow. The old "Ablehnung" stage is gone (legacy
+ *   REFUSED values are returned by jobs/workflowReturnRefused).
  *
  * Nothing stored = the case is not in the workflow at all (new applications no longer land in "In Bearbeitung"
  * by default). The allowed moves are in NEXT_STAGES: Fertig only from In Bearbeitung, In Bearbeitung from
- * Schon geschrieben (or reopened from Fertig / Ablehnung), Ablehnung (a visa refusal) from any stage.
+ * Schon geschrieben (or reopened from Fertig).
  *
  * Every move is kept (CaseProcessingMove: from, to, who, when, note, next assignee); the optional assignee is
  * notified and sees the case in "my work" until they move it on. A case counts as refused for the partner
  * statistics when CaseStatus is REJECTED or the team marked it "Ablehnung" (unless the visa was approved).
  */
 
-export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'] as const; // in the order of the way through
+export const PROCESSING_STAGES = ['WRITTEN', 'IN_PROGRESS', 'DONE'] as const; // in the order of the way through
 export type ProcessingStage = (typeof PROCESSING_STAGES)[number];
 export const isStage = (v: unknown): v is ProcessingStage => typeof v === 'string' && (PROCESSING_STAGES as readonly string[]).includes(v);
 
@@ -40,16 +42,14 @@ export const effectiveStage = (stored: string | null | undefined, _status?: Case
 export const stageWhere = (stage: ProcessingStage): Prisma.CaseWhereInput => ({ processingStage: stage });
 
 /**
- * Allowed moves (key 'NONE' = not in the workflow yet): Schon geschrieben → In Bearbeitung → Fertig, and
- * Ablehnung (the visa was refused) from anywhere. In Bearbeitung → Schon geschrieben sends it back; Fertig /
- * Ablehnung → In Bearbeitung reopens. Staying in the same stage (new assignee or note) is always allowed.
+ * Allowed moves (key 'NONE' = not in the workflow yet): Schon geschrieben → In Bearbeitung → Fertig.
+ * In Bearbeitung → Schon geschrieben sends it back; Fertig → In Bearbeitung reopens. Leaving the workflow is "Geri qaytar". Staying in the same stage (new assignee or note) is always allowed.
  */
 export const NEXT_STAGES: Record<ProcessingStage | 'NONE', ProcessingStage[]> = {
-  NONE: ['WRITTEN', 'IN_PROGRESS', 'REFUSED'],
-  WRITTEN: ['IN_PROGRESS', 'REFUSED'],
-  IN_PROGRESS: ['DONE', 'REFUSED', 'WRITTEN'],
-  DONE: ['IN_PROGRESS', 'REFUSED'],
-  REFUSED: ['IN_PROGRESS'],
+  NONE: ['WRITTEN', 'IN_PROGRESS'],
+  WRITTEN: ['IN_PROGRESS'],
+  IN_PROGRESS: ['DONE', 'WRITTEN'],
+  DONE: ['IN_PROGRESS'],
 };
 export const canMoveStage = (from: ProcessingStage | null, to: ProcessingStage) => from === to || NEXT_STAGES[from ?? 'NONE'].includes(to);
 
@@ -57,7 +57,7 @@ export const canMoveStage = (from: ProcessingStage | null, to: ProcessingStage) 
 export const isRefused = (c: { status: CaseStatus; processingStage?: string | null }) => c.status === 'REJECTED' || (c.processingStage === 'REFUSED' && c.status !== 'APPROVED');
 
 export type StageCounts = Record<ProcessingStage, number>;
-export const emptyStageCounts = (): StageCounts => ({ IN_PROGRESS: 0, WRITTEN: 0, DONE: 0, REFUSED: 0 });
+export const emptyStageCounts = (): StageCounts => ({ IN_PROGRESS: 0, WRITTEN: 0, DONE: 0 });
 
 /** Stage counts of the cases matching `where` (one query). */
 export const stageCounts = async (where: Prisma.CaseWhereInput = {}): Promise<StageCounts> => {
@@ -165,7 +165,7 @@ export const moveStage = async (caseId: string, actor: { id: string; firstName: 
   }
   // Finished or refused: whoever moved it before and whoever wrote the documents (sent it to Schon geschrieben)
   // hear about it.
-  if (input.stage === 'DONE' || input.stage === 'REFUSED') {
+  if (input.stage === 'DONE') {
     const wrote = await prisma.caseProcessingMove.findFirst({
       where: { caseId, toStage: 'WRITTEN', OR: [{ fromStage: null }, { fromStage: { not: 'WRITTEN' } }] },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -197,7 +197,7 @@ export const claimSchema = z.object({
 /**
  * "Götür": the viewer takes the case of an open stage (usually "Schon geschrieben") — it becomes their
  * assignee, so colleagues see "X işləyir" and it shows in their "my work". Stage, sender and time stay as
- * they are (the sender still hears about Fertig / Ablehnung). Idempotent: claiming one's own case changes
+ * they are (the sender still hears about Fertig). Idempotent: claiming one's own case changes
  * nothing. A case a colleague claimed answers 409 PROCESSING_CLAIMED_BY_OTHER unless `force`.
  */
 export const claimCase = async (caseId: string, actor: { id: string; firstName: string; lastName: string }, input: z.infer<typeof claimSchema>) => {

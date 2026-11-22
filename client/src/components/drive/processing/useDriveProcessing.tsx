@@ -19,7 +19,7 @@ const BASE = '/workspace/drive';
 export const workflowHref = (stage: ProcessingStage, mine = false) => `${BASE}/workflow/${stage}${mine ? '?mine=1' : ''}`;
 
 /** Stages a client folder can be dropped on in the sidebar (only allowed moves are taken, see useStageDrop). */
-const DROP_STAGES: ProcessingStage[] = ['WRITTEN', 'IN_PROGRESS', 'DONE', 'REFUSED'];
+const DROP_STAGES: ProcessingStage[] = ['WRITTEN', 'IN_PROGRESS', 'DONE'];
 
 /** Parses /workspace/drive/workflow/<STAGE>[?mine=1]. */
 export const parseWorkflow = (rest: string[], params: URLSearchParams): DriveLocation => ({
@@ -155,7 +155,7 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     return [
       { kind: 'separator', id: 'proc-s' },
       { kind: 'heading', id: 'proc-h', label: x.stage ? `${t('driveProcessing.group')} · ${stageLabel(x.stage)}` : t('driveProcessing.group') },
-      ...acts.map((a): MenuEntry => ({ id: `proc-${a}`, label: actionLabel(a), icon: ACTION_ICON[a], danger: a === 'refuse', onSelect: () => flow.act(a, [x]) })),
+      ...acts.map((a): MenuEntry => ({ id: `proc-${a}`, label: actionLabel(a), icon: ACTION_ICON[a], danger: a === 'return', onSelect: () => flow.act(a, [x]) })),
     ];
   };
 
@@ -166,7 +166,7 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     const x = targetOfItem(list[0]);
     if (!x) return [];
     const [first] = actionsOf(x);
-    return first ? [{ id: `proc-${first}`, icon: ACTION_ICON[first], label: actionLabel(first), onClick: () => flow.act(first, [x]), primary: true, danger: first === 'refuse' }] : [];
+    return first ? [{ id: `proc-${first}`, icon: ACTION_ICON[first], label: actionLabel(first), onClick: () => flow.act(first, [x]), primary: true, danger: first === 'return' }] : [];
   };
 
   /** "İş axınına kopyala ▾" in the command bar, next to the selection actions. */

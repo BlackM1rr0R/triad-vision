@@ -10,6 +10,7 @@ import { detectLanguage, findContactDetails } from './language.js';
 import { EMPLOYER_LABEL, partyNotice, type PartyNotice } from './copy.js';
 import { removeVoiceFile, serializeVoice, transcriptionStatus, VOICE_SELECT } from './voice.js';
 import { cachedTranslations, needsTranslation, type MessageRef } from './translate.js';
+import { revealedCompanyIdsForClient } from '../caseContracts/employerVisibility.js';
 
 /**
  * Three-party thread: candidate + employer (company users) + Triad Vision staff, per vacancy application
@@ -58,13 +59,20 @@ export const sideOf = async (t: Pick<LoadedThread, 'candidateId' | 'companyId' |
   return null;
 };
 
+/**
+ * Owner's rule: the candidate (client) sees the employer of a thread only when staff allow it (showCompany) AND the
+ * İş müqaviləsi of a case with that employer is approved. Returns the thread with showCompany adjusted for the candidate.
+ */
+const candidateEmployerRule = async <T extends { showCompany: boolean; candidateId: string; companyId: string }>(t: T): Promise<T> =>
+  t.showCompany && !(await revealedCompanyIdsForClient(t.candidateId)).has(t.companyId) ? { ...t, showCompany: false } : t;
+
 /** Loads a thread the viewer takes part in (404 for everybody else — existence is not revealed). */
 export const loadThreadFor = async (threadId: string, viewer: Viewer) => {
   const t = await prisma.partyThread.findUnique({ where: { id: threadId }, include: THREAD_INCLUDE });
   if (!t) throw notFound('THREAD_NOT_FOUND');
   const side = await sideOf(t, viewer);
   if (!side) throw notFound('THREAD_NOT_FOUND');
-  return { thread: t, side };
+  return { thread: side === 'CANDIDATE' ? await candidateEmployerRule(t) : t, side };
 };
 
 // ─── Labels per viewer ────────────────────────────────────────────────
@@ -229,7 +237,7 @@ export const notifyParticipants = async (t: LoadedThread, kind: PartyNotice, rec
       update: {},
     });
     if (opts.throttle && member.notifiedAt && now.getTime() - member.notifiedAt.getTime() < NOTIFY_QUIET_MS && !(member.lastReadAt && member.lastReadAt > member.notifiedAt)) continue;
-    const { title, body } = partyNotice(kind, r.locale, { title: noticeTitle(t, r) });
+    const { title, body } = partyNotice(kind, r.locale, { title: noticeTitle(r.side === 'CANDIDATE' ? await candidateEmployerRule(t) : t, r) });
     await notifyUser(r.id, { type: `PARTY_${kind}`, title, body, link: linkFor(t, r.side) });
     // Only message notices count for the quiet period (an "opened" / "closed" notice never silences the next message).
     if (opts.throttle) await prisma.partyThreadMember.update({ where: { id: member.id }, data: { notifiedAt: now } });
@@ -451,7 +459,8 @@ export const listThreads = async (viewer: Viewer, opts: { status?: 'OPEN' | 'CLO
   const members = await prisma.partyThreadMember.findMany({ where: { userId: viewer.id, threadId: { in: threads.map((t) => t.id) } }, select: { threadId: true, lastReadAt: true } });
   const readAt = new Map(members.map((m) => [m.threadId, m.lastReadAt]));
   const out = [];
-  for (const t of threads) {
+  for (const row of threads) {
+    const t = side === 'CANDIDATE' ? await candidateEmployerRule(row) : row;
     const since = readAt.get(t.id);
     const visibleWhere: Prisma.PartyThreadMessageWhereInput =
       side === 'STAFF' ? { status: { not: 'DELETED' } } : { status: 'VISIBLE' };

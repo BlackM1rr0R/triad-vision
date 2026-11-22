@@ -296,8 +296,8 @@ describe('client documents', () => {
     expect(bad.body.error).toBe('VAULT_DOCUMENT_NOT_FOUND');
     expect(await prisma.vacancyApplication.count({ where: { userId: cand.user.id } })).toBe(0);
 
-    const c = await createCaseVia(cand.agent);
     const res = expectStatus(await cand.agent.post(`/api/vacancies/${v.slug}/apply`).send({ message: 'Hallo', vaultIds: [passport.id] }), 201).body;
+    const c = { id: res.caseId as string }; // applying starts the case (one active application)
     expect(res.documents.map((d: { id: string }) => d.id)).toEqual([passport.id]);
     expect(res.attachedCaseId).toBe(c.id);
     await waitForApplicationUploads();

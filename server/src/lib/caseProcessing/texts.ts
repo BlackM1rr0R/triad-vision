@@ -1,7 +1,7 @@
 import type { Locale } from '@prisma/client';
 
 /**
- * Staff notifications of the team document workflow ("Schon geschrieben" → "Fertig", "Ablehnung"), in the
+ * Staff notifications of the team document workflow ("Schon geschrieben" → "Fertig"), in the
  * recipient's language. The German stage names stay as they are in every language (the team uses them).
  */
 
@@ -9,7 +9,7 @@ export const STAGE_LABEL: Record<string, string> = {
   IN_PROGRESS: 'In Bearbeitung',
   WRITTEN: 'Schon geschrieben',
   DONE: 'Fertig',
-  REFUSED: 'Ablehnung',
+  RETURNED: 'Zurückgegeben', // "Geri qaytar": back in the client folder, out of the workflow
 };
 
 /** Nothing stored = not in the workflow ("—"); new cases are no longer "In Bearbeitung" by default. */

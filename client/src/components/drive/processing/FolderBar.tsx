@@ -59,7 +59,7 @@ export const ProcessingFolderBar = ({ target, folder, onAct }: { target: FlowTar
                 key={a}
                 type="button"
                 onClick={() => onAct(a, live)}
-                className={clsx('btn-sm', a === 'refuse' ? 'btn-secondary text-danger-fg' : i === 0 ? 'btn-primary' : 'btn-secondary')}
+                className={clsx('btn-sm', a === 'return' ? 'btn-secondary text-danger-fg' : i === 0 ? 'btn-primary' : 'btn-secondary')}
               >
                 <Icon className="size-3.5" aria-hidden /> {t(`driveProcessing.actions.${a}`)}
               </button>

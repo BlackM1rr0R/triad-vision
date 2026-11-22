@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { FileText, Folder, HelpCircle, Search, UserCheck } from 'lucide-react';
+import { FileText, Folder, HelpCircle, Search, SendHorizontal, UserCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
-import { fmtRelative } from '@/components/admin/labels';
+import { fmtDate, fmtRelative } from '@/components/admin/labels';
 import { ErrorBlock } from '@/components/admin/ui';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
-import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useProcessingFolders, type ProcessingFolder, type ProcessingStage, type StageCounts } from '@/components/caseProcessing/api';
+import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useProcessingFolders, type ProcessingFilters, type ProcessingFolder, type ProcessingStage, type StageCounts } from '@/components/caseProcessing/api';
+import { SendReadyDialog } from '../clientFolders/Dialogs';
+import type { FolderTarget } from '../clientFolders/api';
 import { endCaseDrag, flowActions, startCaseDrag, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
 import type { DriveItem } from '../types';
 import { ACTION_ICON, STAGE_ICON } from './icons';
@@ -59,7 +61,18 @@ const StageTab = ({
   );
 };
 
-const Row = ({ f, onNavigate, onAct }: { f: ProcessingFolder; onNavigate: (href: string) => void; onAct: (a: FlowAction, x: FlowTarget) => void }) => {
+const sendTargetOf = (f: ProcessingFolder): FolderTarget => ({
+  caseId: f.caseId,
+  folderId: f.folderId,
+  name: f.clientName,
+  number: f.number,
+  stage: f.processing.stage,
+  assigneeId: f.processing.assignee?.id ?? null,
+  partner: f.partner,
+  readySentAt: f.readySentAt,
+});
+
+const Row = ({ f, onNavigate, onAct, onSend }: { f: ProcessingFolder; onNavigate: (href: string) => void; onAct: (a: FlowAction, x: FlowTarget) => void; onSend?: (f: ProcessingFolder) => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const { user } = useAuth();
@@ -92,11 +105,17 @@ const Row = ({ f, onNavigate, onAct }: { f: ProcessingFolder; onNavigate: (href:
           <span className="mt-0.5 block truncate text-xs text-muted">
             {f.visaCategory ? tr(f.visaCategory.title) : t(`refPartners.visa.types.${f.visaType}`, { defaultValue: f.visaType })}
             {f.partner && ` · ${f.partner.name}`}
+            {onSend && f.company && ` · ${f.company.name}`}
             {' · '}
             <FileText className="inline size-3 align-[-1px]" aria-hidden /> {t('driveProcessing.files', { count: f.fileCount })}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
             {f.processing.by && f.processing.at && <span className="text-muted">{t('driveProcessing.sentBy', { name: f.processing.by.name, date: fmtRelative(f.processing.at) })}</span>}
+            {onSend && (
+              <span className={clsx('badge', f.readySentAt ? TONE_CLASS.success : TONE_CLASS.neutral)}>
+                {f.readySentAt ? t('driveProcessing.fertig.sentOn', { date: fmtDate(f.readySentAt) }) : t('driveProcessing.fertig.notSent')}
+              </span>
+            )}
             {(f.processing.stage === 'WRITTEN' || f.processing.assignee) && (
               <span className={clsx('badge', mine ? TONE_CLASS.info : f.processing.assignee ? TONE_CLASS.warning : TONE_CLASS.neutral)}>
                 {mine ? t('driveProcessing.you') : f.processing.assignee ? t('driveProcessing.takenBy', { name: f.processing.assignee.name }) : t('driveProcessing.unclaimed')}
@@ -110,17 +129,22 @@ const Row = ({ f, onNavigate, onAct }: { f: ProcessingFolder; onNavigate: (href:
           )}
         </span>
       </a>
-      {actions.length > 0 && (
+      {(actions.length > 0 || onSend) && (
         <div className="flex shrink-0 flex-wrap gap-1.5 pl-8 sm:pl-0">
+          {onSend && (
+            <button type="button" className="btn-primary btn-sm" onClick={() => onSend(f)}>
+              <SendHorizontal className="size-3.5" aria-hidden /> {t(f.readySentAt ? 'clientFolders.send.resendAction' : 'clientFolders.send.action')}
+            </button>
+          )}
           {actions.map((a, i) => {
             const Icon = ACTION_ICON[a];
             const label = t(`driveProcessing.actions.${a}`);
-            return i === 0 ? (
-              <button key={a} type="button" className={clsx('btn-sm', a === 'refuse' ? 'btn-secondary text-danger-fg' : 'btn-primary')} onClick={() => onAct(a, x)}>
+            return i === 0 && !onSend ? (
+              <button key={a} type="button" className={clsx('btn-sm', a === 'return' ? 'btn-secondary text-danger-fg' : 'btn-primary')} onClick={() => onAct(a, x)}>
                 <Icon className="size-3.5" aria-hidden /> {label}
               </button>
             ) : (
-              <button key={a} type="button" className={clsx('btn-secondary btn-sm !px-2', a === 'refuse' && 'text-danger-fg')} onClick={() => onAct(a, x)} title={label} aria-label={label}>
+              <button key={a} type="button" className={clsx('btn-secondary btn-sm !px-2', a === 'return' && 'text-danger-fg')} onClick={() => onAct(a, x)} title={label} aria-label={label}>
                 <Icon className="size-3.5" aria-hidden />
               </button>
             );
@@ -164,7 +188,13 @@ export const WorkflowView = ({
     const id = window.setTimeout(() => setSearch(input.trim()), 300);
     return () => window.clearTimeout(id);
   }, [input]);
-  const q = useProcessingFolders({ stage, mine, search });
+  const [filters, setFilters] = useState<ProcessingFilters>({});
+  const [sending, setSending] = useState<FolderTarget | null>(null);
+  const fertig = stage === 'DONE';
+  const active = fertig ? filters : {};
+  const q = useProcessingFolders({ stage, mine, search, ...active });
+  const setFilter = <K extends keyof ProcessingFilters>(k: K, v: ProcessingFilters[K] | '') => setFilters((cur) => ({ ...cur, [k]: v || undefined }));
+  const filtered = Object.values(active).some(Boolean);
   const counts: StageCounts | undefined = q.data?.counts;
   const items = q.data?.stage === stage ? q.data.items : [];
   const stageFolder = stageFolders?.find((f) => f.stage === stage);
@@ -192,6 +222,53 @@ export const WorkflowView = ({
           </label>
         </div>
         {help && <WorkflowHelp className="text-xs" />}
+        {fertig && (
+          <div className="flex flex-wrap items-end gap-2 text-xs" role="group" aria-label={t('driveProcessing.fertig.label')}>
+            <label className="block">
+              <span className="label !mb-0.5">{t('driveProcessing.fertig.company')}</span>
+              <select className="input !py-1 !text-xs" value={filters.company ?? ''} onChange={(e) => setFilter('company', e.target.value)}>
+                <option value="">{t('driveProcessing.fertig.companyAll')}</option>
+                {(q.data?.options?.companies ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="label !mb-0.5">{t('driveProcessing.fertig.group')}</span>
+              <select className="input !py-1 !text-xs" value={filters.group ?? ''} onChange={(e) => setFilter('group', e.target.value)}>
+                <option value="">{t('driveProcessing.fertig.groupAll')}</option>
+                {(q.data?.options?.groups ?? []).map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="label !mb-0.5">{t('driveProcessing.fertig.from')}</span>
+              <input type="date" className="input !py-1 !text-xs" value={filters.from ?? ''} max={filters.to || undefined} onChange={(e) => setFilter('from', e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="label !mb-0.5">{t('driveProcessing.fertig.to')}</span>
+              <input type="date" className="input !py-1 !text-xs" value={filters.to ?? ''} min={filters.from || undefined} onChange={(e) => setFilter('to', e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="label !mb-0.5">{t('driveProcessing.fertig.sent')}</span>
+              <select className="input !py-1 !text-xs" value={filters.sent ?? ''} onChange={(e) => setFilter('sent', e.target.value as 'sent' | 'unsent' | '')}>
+                <option value="">{t('driveProcessing.fertig.sentAll')}</option>
+                <option value="sent">{t('driveProcessing.fertig.sentYes')}</option>
+                <option value="unsent">{t('driveProcessing.fertig.sentNo')}</option>
+              </select>
+            </label>
+            {filtered && (
+              <button type="button" className="btn-secondary btn-sm" onClick={() => setFilters({})}>
+                {t('driveProcessing.fertig.clear')}
+              </button>
+            )}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label={t('driveProcessing.group')}>
           {PROCESSING_STAGES.map((s) => (
             <StageTab key={s} stage={s} active={s === stage} count={tabCount(s)} mine={mine} onNavigate={onNavigate} onDropTargets={onDropTargets} />
@@ -226,12 +303,12 @@ export const WorkflowView = ({
           ) : q.isError ? (
             <ErrorBlock error={q.error} onRetry={() => q.refetch()} />
           ) : items.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-muted">{mine ? t('driveProcessing.emptyMine') : t('driveProcessing.empty')}</p>
+            <p className="px-4 py-8 text-center text-sm text-muted">{mine ? t('driveProcessing.emptyMine') : filtered ? t('driveProcessing.fertig.noMatch') : t('driveProcessing.empty')}</p>
           ) : (
             <>
               <ul className="divide-y divide-line">
                 {items.map((f) => (
-                  <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} />
+                  <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} onSend={fertig ? (x) => setSending(sendTargetOf(x)) : undefined} />
                 ))}
               </ul>
               {q.data && q.data.total > items.length && <p className="px-4 py-3 text-center text-xs text-muted">{t('driveProcessing.limited', { shown: items.length, total: q.data.total })}</p>}
@@ -239,6 +316,7 @@ export const WorkflowView = ({
           )}
         </div>
       </div>
+      {sending && <SendReadyDialog targets={[sending]} onClose={() => setSending(null)} onResult={() => undefined} />}
     </div>
   );
 };

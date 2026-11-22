@@ -25,7 +25,6 @@ import { getCaseAiSettings } from './ai/features/caseAi/config.js';
 import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
 import { occupationByCode } from './jobFeeds/occupations.js';
 import { vacancyImagesOf } from './vacancyImages.js';
-import { companyLogoOf } from './publicImages.js';
 import { DEFAULT_CITY_COSTS, matchCity } from './budget/cities.js';
 import type { FederalState } from './budget/params.js';
 import type { CityCost } from '@prisma/client';
@@ -593,12 +592,6 @@ export const JOB_LABELS: Record<SeoLocale, { requirements: string; benefits: str
   uk: { requirements: 'Вимоги', benefits: 'Ми пропонуємо' },
 };
 
-/** Absolute URL of an employer logo (Company.logo JSON), or null. */
-const companyLogoUrl = (logo: unknown) => {
-  const l = companyLogoOf(logo);
-  return l ? absoluteImage(l.url) : null;
-};
-
 /** Absolute URLs of a vacancy's photos (cover first). */
 export const jobImageUrls = (job: { images?: unknown }) =>
   vacancyImagesOf(job.images)
@@ -627,15 +620,8 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
     textToHtml(pick(job.description, lng)) +
     listHtml(JOB_LABELS[lng].requirements, pickList(job.requirements, lng)) +
     listHtml(JOB_LABELS[lng].benefits, pickList(job.benefits, lng));
-  const hiringOrganization =
-    job.showCompany && job.company?.name
-      ? {
-          '@type': 'Organization',
-          name: job.company.name,
-          ...(isHttpUrl(job.company.website) ? { sameAs: job.company.website } : {}),
-          ...(companyLogoUrl(job.company.logo) ? { logo: companyLogoUrl(job.company.logo) } : {}),
-        }
-      : { '@type': 'Organization', name: 'confidential' };
+  // Owner's rule: the real employer is never named on our public pages (clients see it only after the İş müqaviləsi).
+  const hiringOrganization = { '@type': 'Organization', name: 'confidential' };
   const region = jobRegion(job.city);
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',

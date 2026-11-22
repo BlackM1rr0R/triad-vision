@@ -246,13 +246,17 @@ describe('motivation letters', () => {
     expect((await agent.get(`/api/cv/letters/${letter.id}`)).status).toBe(404);
   });
 
-  it('JOB letter uses the vacancy; company shown only when public', async () => {
+  it('JOB letter uses the vacancy; company shown only when public and the employer is revealed', async () => {
     const { agent, user } = await asCandidate();
     const employer = await asCompany();
     const v = await createVacancy({ companyId: employer.company.id, title: l10n('LKW-Fahrer'), showCompany: true });
     await prisma.vacancyApplication.create({ data: { vacancyId: v.id, userId: user.id, status: 'NEW' } });
     const opts = await agent.get('/api/cv/letters/options');
-    expect(opts.body.applications[0]).toMatchObject({ vacancyId: v.id, title: 'LKW-Fahrer de', company: employer.company.name });
+    // Hidden until the İş müqaviləsi is approved (or the case is past the contract stage).
+    expect(opts.body.applications[0]).toMatchObject({ vacancyId: v.id, title: 'LKW-Fahrer de', company: null });
+    await prisma.case.create({ data: { clientId: user.id, number: `TV-2026-${Math.floor(Math.random() * 9000 + 1000)}`, profession: 'LKW-Fahrer', companyId: employer.company.id, status: 'EMBASSY_DOCUMENTS' } });
+    const opts2 = await agent.get('/api/cv/letters/options');
+    expect(opts2.body.applications[0]).toMatchObject({ vacancyId: v.id, company: employer.company.name });
     const res = await agent.post('/api/cv/letters').send({ kind: 'JOB', vacancyId: v.id });
     expect(res.status).toBe(201);
     expect(res.body.letter.title).toBe('Bewerbung als LKW-Fahrer de in Hamburg');

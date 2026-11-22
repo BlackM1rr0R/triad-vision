@@ -25,6 +25,7 @@ import './clientsExcel.js'; // super admin's Excel of all clients
 import './surveys.js'; // satisfaction surveys after visa approval / case closure
 import './googleReviews.js'; // one Google review request per client after approval / arrival (low survey score → staff task)
 import './expiry.js'; // document expiry warnings (client, staff, daily admin digest)
+import './workflowReturnRefused.js'; // data migration: cases of the removed Ablehnung stage are returned to the client folders
 import './driveIndex.js'; // drive full-text index (text layer, DOCX, XLSX, OCR)
 import './aiBriefing.js'; // daily AI briefing e-mail for opted-in admins (08:00 Baku)
 import './originals.js'; // overdue physical originals (given out / apostille / courier) → assigned staff

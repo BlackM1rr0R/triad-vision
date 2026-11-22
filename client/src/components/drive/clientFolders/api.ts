@@ -78,6 +78,9 @@ export const setPartner = async (cases: string[], partnerId: string | null, note
 export const moveStages = async (cases: string[], stage: ProcessingStage, assigneeId: string | null, note: string | null) =>
   (await api.post<BulkResponse>('/admin/client-folders/processing', { cases, stage, assigneeId, note })).data;
 
+/** "Geri qaytar": the cases leave the workflow, their workflow documents go back to the client folders. */
+export const returnToClient = async (cases: string[], note: string | null) => (await api.post<BulkResponse>('/admin/client-folders/return', { cases, note })).data;
+
 export const sendReady = async (cases: string[], resend: boolean) => (await api.post<BulkResponse>('/admin/client-folders/ready-docs/send', { cases, resend })).data;
 
 export interface ReadyDocsView {

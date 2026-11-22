@@ -288,7 +288,7 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
   const { busy, run } = useRun(onResult);
   const data = view.data;
   const sentBefore = one ? !!data?.sends.length : targets.some((x) => x.readySentAt);
-  const blocked = one ? !data || data.stage !== 'DONE' || !data.files.length || (data.sends.length > 0 && (!resend || data.newCount === 0)) : false;
+  const blocked = one ? !data || !data.files.length || (data.sends.length > 0 && (!resend || data.newCount === 0)) : false;
   const last = data?.sends[0];
   return (
     <Modal
@@ -328,11 +328,6 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
           ) : data ? (
             <>
               <p className="text-muted">{t('clientFolders.send.explain', { folder: data.folder?.name ?? one.name })}</p>
-              {data.stage !== 'DONE' && (
-                <p className="rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg" role="alert">
-                  {t('clientFolders.send.notDone')} ({stageLabel(data.stage)})
-                </p>
-              )}
               {data.files.length === 0 ? (
                 <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('clientFolders.send.noFiles')}</p>
               ) : (

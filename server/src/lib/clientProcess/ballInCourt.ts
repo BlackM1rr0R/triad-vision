@@ -171,6 +171,9 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   // The case contract: the client signs only when it is their turn (two-step contracts: Triad Vision signs first).
   const contractTurn = f.status === 'CONTRACT_SENT' && f.contract && !f.contract.signedAt ? (f.contractTurn === undefined ? 'CLIENT' : f.contractTurn) : null;
   if (contractTurn === 'CLIENT') add('CLIENT', 'SIGN_CONTRACT', 1);
+  // V2: after the Əmək müqaviləsi the client signs the İş müqaviləsi documents (lib/caseContracts/turn).
+  const workTurn = f.status === 'CONTRACT_SIGNED' ? (f.contractTurn ?? null) : null;
+  if (workTurn === 'CLIENT') add('CLIENT', 'SIGN_CONTRACT', 1);
   const apptFuture = f.status === 'APPOINTMENT_SCHEDULED' && !!f.appointmentAt && f.appointmentAt > now;
   if (apptFuture) add('CLIENT', 'ATTEND_APPOINTMENT', 1, f.appointmentAt);
   // A case contract signed through the e-signature module is already counted as SIGN_CONTRACT.
@@ -181,7 +184,7 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   if (f.status === 'DOCUMENTS_REVIEW' || f.status === 'EMBASSY_REVIEW') add('TEAM', 'REVIEW_DOCS', Math.max(1, f.pendingDocs));
   if (contractTurn === 'TRIAD') add('TEAM', 'TRIAD_SIGN_CONTRACT', 1);
   if (contractTurn === 'STAFF') add('TEAM', 'RESEND_CONTRACT', 1);
-  if (f.status === 'CONTRACT_SIGNED') add('TEAM', 'CHECK_SIGNATURE', 1);
+  if (f.status === 'CONTRACT_SIGNED' && workTurn !== 'CLIENT') add('TEAM', 'CHECK_SIGNATURE', 1);
   if (f.status === 'APPOINTMENT_SCHEDULED' && !apptFuture) add('TEAM', 'LODGE_APPLICATION', 1);
   const unanswered = !!f.lastClientMsg && (!f.lastStaffMsg || f.lastClientMsg > f.lastStaffMsg);
   if (unanswered && STATUS_SIDE[f.status] !== 'NONE') add('TEAM', 'REPLY_MESSAGE', 1, new Date(f.lastClientMsg!.getTime() + 24 * HOUR));
@@ -197,7 +200,7 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   const days = Math.floor((now.getTime() - since.getTime()) / DAY);
 
   const teamContract = contractTurn === 'TRIAD' || contractTurn === 'STAFF';
-  const statusSide = teamContract ? 'TEAM' : sideAt(f.status, now.getTime(), f.appointmentAt);
+  const statusSide = teamContract ? 'TEAM' : workTurn === 'CLIENT' ? 'CLIENT' : sideAt(f.status, now.getTime(), f.appointmentAt);
   if (statusSide === 'NONE') {
     return {
       side: 'NONE',
@@ -269,7 +272,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
     prisma.clientTask.findMany({ where: { caseId: { in: ids }, status: 'OPEN' }, select: { caseId: true, dueAt: true } }),
     prisma.signatureSigner.findMany({
       where: { role: 'CANDIDATE', status: { in: ['PENDING', 'VIEWED'] }, invitedAt: { not: null }, request: { caseId: { in: ids }, status: 'SENT' } },
-      select: { userId: true, request: { select: { caseId: true, isCaseContract: true } } },
+      select: { userId: true, request: { select: { caseId: true, isCaseContract: true, contractKind: true } } },
     }),
   ]);
   const turns = await loadContractTurns(cases);
@@ -291,7 +294,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
       pendingDocs: c.documents.length,
       tasks: tasks.filter((t) => t.caseId === c.id),
       // The case contract is counted by SIGN_CONTRACT while the case waits for it.
-      pendingSignatures: signers.filter((s) => s.request.caseId === c.id && (!s.userId || s.userId === c.clientId) && !(s.request.isCaseContract && c.status === 'CONTRACT_SENT')).length,
+      pendingSignatures: signers.filter((s) => s.request.caseId === c.id && (!s.userId || s.userId === c.clientId) && !(s.request.isCaseContract && c.status === 'CONTRACT_SENT') && !(s.request.contractKind && c.status === 'CONTRACT_SIGNED' && turns.get(c.id) === 'CLIENT')).length,
       lastClientMsg: max(clientMsgs),
       lastStaffMsg: max(staffMsgs),
       statusEvents: events.filter((e) => e.caseId === c.id).map((e) => ({ toStatus: e.toStatus as CaseStatus, at: e.createdAt })),

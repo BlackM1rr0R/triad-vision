@@ -60,16 +60,18 @@ describe('GET /api/vacancies (public board)', () => {
     expect(page2.body.total).toBe(3);
   });
 
-  it('shows the employer name only when the company allows it', async () => {
+  it('never shows the employer name on the public board (even with showCompany) and does not search it', async () => {
     const company = await createCompany({ name: 'Nord Logistik GmbH' });
     await createVacancy({ slug: 'hidden', companyId: company.id, showCompany: false });
     await createVacancy({ slug: 'shown', companyId: company.id, showCompany: true });
     const hidden = await anon().get('/api/vacancies/hidden');
     expect(hidden.body.vacancy.companyName).toBeNull();
     expect(JSON.stringify(hidden.body)).not.toContain('Nord Logistik');
-    expect((await anon().get('/api/vacancies/shown')).body.vacancy.companyName).toBe('Nord Logistik GmbH');
-    // The hidden name is not searchable either.
-    expect((await anon().get('/api/vacancies?search=Nord')).body.items.map((v: { slug: string }) => v.slug)).toEqual(['shown']);
+    const shown = await anon().get('/api/vacancies/shown');
+    expect(shown.body.vacancy.companyName).toBeNull();
+    expect(JSON.stringify(shown.body)).not.toContain('Nord Logistik');
+    // The employer name is not searchable either.
+    expect((await anon().get('/api/vacancies?search=Nord')).body.items).toEqual([]);
   });
 });
 
@@ -130,6 +132,12 @@ describe('applying', () => {
     const n = await prisma.notification.findFirst({ where: { userId: admin.user.id, type: 'STAFF' } });
     expect(n?.body).toContain('100%');
 
+    // Applying starts the case (one active application): while it runs, a second apply is refused first.
+    const running = await agent.post(`/api/vacancies/${v.slug}/apply`).send({});
+    expect(running.status).toBe(409);
+    expect(running.body.error).toBe('ACTIVE_CASE_EXISTS');
+    // Once that case has ended, the duplicate check on the application itself applies.
+    await prisma.case.updateMany({ where: { clientId: user.id }, data: { status: 'CANCELLED' } });
     const dup = await agent.post(`/api/vacancies/${v.slug}/apply`).send({});
     expect(dup.status).toBe(409);
     expect(dup.body.error).toBe('ALREADY_APPLIED');
@@ -170,6 +178,8 @@ describe('applying', () => {
     const accepted = closedItem;
     expect((await agent.post(`/api/vacancies/my/applications/${accepted.id}/withdraw`)).status).toBe(409);
 
+    // Applying started a case (one active application): end it, then re-applying works.
+    await prisma.case.updateMany({ where: { clientId: user.id }, data: { status: 'CANCELLED' } });
     const again = await agent.post(`/api/vacancies/${v.slug}/apply`).send({});
     expect(again.status).toBe(201);
     expect(again.body.application.id).toBe(app.id);
