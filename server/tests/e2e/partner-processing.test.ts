@@ -134,7 +134,8 @@ describe('partners: visa kinds, rədd counter, stages', () => {
     expectStatus(await move(admin.agent, a.id, { stage: 'WRITTEN' }), 200);
 
     const list = expectStatus(await admin.agent.get('/api/admin/partners'), 200).body.items;
-    expect(list[0].counts).toMatchObject({ clients: 5, activeCases: 1, approved: 1, rejected: 2, cancelled: 1, closedNegative: 2 });
+    // closedNegative = closed REJECTED + CANCELLED (b, marked, the cancelled one); the Ablehnung stage no longer exists.
+    expect(list[0].counts).toMatchObject({ clients: 5, activeCases: 1, approved: 1, rejected: 2, cancelled: 1, closedNegative: 3 });
     expect(list[0].counts.stages).toEqual({ IN_PROGRESS: 0, WRITTEN: 1, DONE: 0 });
 
     const detail = expectStatus(await admin.agent.get(`/api/admin/partners/${partner.id}`), 200).body;

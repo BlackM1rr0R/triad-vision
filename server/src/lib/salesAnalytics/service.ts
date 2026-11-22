@@ -202,8 +202,8 @@ export const salesAnalytics = async (q: SalesQuery, now = new Date()) => {
   const inWin = (d: Date, w: typeof cur) => d >= w.start && d < w.end;
   const curPayments = money.payments.filter((p) => inWin(p.at, cur));
   const prevPayments = money.payments.filter((p) => inWin(p.at, prev));
-  const series = revenueByMonth(months, money.invoices, money.payments);
-  const prevSeries = revenueByMonth(prevMonths, money.invoices, money.payments);
+  const series = revenueByMonth(months, money.invoices, money.payments, cur);
+  const prevSeries = revenueByMonth(prevMonths, money.invoices, money.payments, prev);
   const invCur = sumIn(money.invoices, cur);
   const invPrev = sumIn(money.invoices, prev);
   const payCur = curPayments.reduce((a, p) => a + p.cents, 0);

@@ -70,7 +70,8 @@ describe('vacancy ↔ drive folder', () => {
     const inVacancy = await children(staff.agent, folder.id);
     const day = app.createdAt.toISOString().slice(0, 10);
     expect(inVacancy.items).toEqual([expect.objectContaining({ id: app.driveFolderId, name: `Məmmədov Ali – ${day}`, kind: 'FOLDER' })]);
-    const files = (await children(staff.agent, app.driveFolderId!)).items.map((i) => i.name).sort();
+    // Applying also started the case (one active application): its client folder sits in the applicant folder too.
+    const files = (await children(staff.agent, app.driveFolderId!)).items.filter((i) => i.kind === 'FILE').map((i) => i.name).sort();
     expect(files).toEqual(['Bewerbung.pdf', 'Lebenslauf – cv.pdf', 'Reisepass – pass.pdf']);
 
     // Same bytes as the vault file — a hard link, not a second copy (where the file system allows it).
@@ -86,9 +87,9 @@ describe('vacancy ↔ drive folder', () => {
     // Re-running the sync does not duplicate anything.
     await staff.agent.put(`/api/admin/vacancies/applications/${app.id}/folder`).send({ folderId: null });
     await waitForVacancyFolders();
-    expect((await children(staff.agent, app.driveFolderId!)).items).toHaveLength(3);
+    expect((await children(staff.agent, app.driveFolderId!)).items.filter((i) => i.kind === 'FILE')).toHaveLength(3);
 
-    // Accepted → case opened from the application: the client folder goes inside the applicant folder.
+    // Accepted → "open case": the case from the application, its client folder inside the applicant folder.
     await prisma.vacancyApplication.update({ where: { id: app.id }, data: { status: 'ACCEPTED' } });
     // Applying already started the case (one active application): "open case" links that same case.
     const kase = await staff.agent.post(`/api/admin/candidates/applications/${app.id}/case`).send({});

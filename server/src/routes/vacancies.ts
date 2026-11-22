@@ -6,7 +6,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireVerifiedEmail } from '../middleware/verified.js';
 import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
-import { notifyStaff } from '../lib/notifications.js';
+import { notifyClient, notifyStaff } from '../lib/notifications.js';
 import { emitWebhook } from '../lib/ops/webhooks.js';
 import { verifyUploadedFile } from '../middleware/upload.js';
 import { applicationUpload, discardUploads, linkPickedVaultDocs, MAX_APPLICATION_FILES, ownPickableVaultDocs, parseKinds, parseVaultIds, storeApplicationFiles } from '../lib/applicationUploads.js';
@@ -348,6 +348,7 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     // The applicant folder first: the client folder of the case goes inside it (caseParentFor).
     await syncApplicationFolder(application.id, { summary: true });
     let caseId: string | null = null;
+    let caseNumber: string | null = null;
     try {
       const created = await createCase(user.id, {
         profession: vacancyProfession(v),
@@ -355,8 +356,14 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
         visaCategoryId: v.visaCategoryId ?? null,
         vacancyId: v.id,
         driveParentId: await caseParentFor({ vacancyId: v.id, userId: user.id }),
+        // One staff notice per application (the vacancy one below, with the match score and the case number).
+        quiet: true,
       });
       caseId = created.id;
+      caseNumber = created.number;
+      await notifyClient(created.id, 'CASE_CREATED');
+      // Vault documents picked for the application join the new case (linking is idempotent per application / case).
+      if (picked.length) await linkPickedVaultDocs(user.id, picked, { vacancyId: v.id, applicationId: application.id });
     } catch (err) {
       // A parallel request created the case first: the application belongs to that one.
       if ((err as { code?: string }).code !== 'ACTIVE_CASE_EXISTS') throw err;
@@ -371,8 +378,8 @@ vacanciesRouter.post('/:slug/apply', applyLimiter, requireAuth, requireCandidate
     const docsLine = sentDocs.length ? `\n\nSənədlər: ${sentDocs.map((d) => d.title).join(', ')}` : '';
     await notifyStaff(
       `Yeni vakansiya müraciəti: ${title}`.slice(0, 180),
-      `${user.firstName} ${user.lastName} "${title}" vakansiyasına müraciət etdi.\n\nUyğunluq: ${score}%${message ? `\n\nMesaj: ${message}` : ''}${docsLine}`,
-      { link: `/admin/vacancies?id=${v.id}`, type: 'VACANCY_APPLICATION' },
+      `${user.firstName} ${user.lastName} "${title}" vakansiyasına müraciət etdi.\n\nUyğunluq: ${score}%${message ? `\n\nMesaj: ${message}` : ''}${docsLine}${caseNumber ? `\n\nMüraciət açıldı: ${caseNumber}` : ''}`,
+      { link: `/admin/vacancies?id=${v.id}`, type: 'VACANCY_APPLICATION', ...(caseId ? { caseId } : {}) },
     );
     res.status(201).json({
       application: { id: application.id, status: application.status, matchScore: application.matchScore, createdAt: application.createdAt },

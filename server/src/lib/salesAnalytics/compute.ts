@@ -73,15 +73,18 @@ export interface MoneyRow {
 }
 
 /** Paid revenue per month of `months` (company invoices and client payments apart). */
-export const revenueByMonth = (months: string[], invoices: MoneyRow[], payments: MoneyRow[]) => {
+/** `win`: only rows inside the period count (the first / last month of a period is often only partly in it). */
+export const revenueByMonth = (months: string[], invoices: MoneyRow[], payments: MoneyRow[], win?: { start: Date; end: Date }) => {
   const idx = new Map(months.map((m, i) => [m, i]));
   const inv = months.map(() => 0);
   const pay = months.map(() => 0);
   for (const r of invoices) {
+    if (win && !inWin(r.at, win)) continue;
     const i = idx.get(monthOf(r.at));
     if (i !== undefined) inv[i] += r.cents;
   }
   for (const r of payments) {
+    if (win && !inWin(r.at, win)) continue;
     const i = idx.get(monthOf(r.at));
     if (i !== undefined) pay[i] += r.cents;
   }

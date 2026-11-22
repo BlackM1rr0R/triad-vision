@@ -80,9 +80,7 @@ describe('journey: client folders in the documents section', () => {
     const f2 = await upload(murad.agent, folderA.id, 'Anschreiben.pdf');
     expectStatus(await murad.agent.post('/api/drive/workflow/copy').send({ ids: [f1.id, f2.id], stage: 'DONE' }), 200);
 
-    // Not Fertig yet: nothing can be sent to the client.
-    const tooEarly = expectStatus(await murad.agent.post('/api/admin/client-folders/ready-docs/send').send({ cases: [caseA.id] }), 200).body;
-    expect(tooEarly.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NOT_DONE' });
+    // (Sending no longer needs the Fertig stage: files in the Fertig folder can be sent directly — the send is in step 4.)
 
     const done = expectStatus(await processing(murad.agent, [caseA.id], 'DONE'), 200).body;
     expect(done.summary).toMatchObject({ succeeded: 1, failed: 0 });

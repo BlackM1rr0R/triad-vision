@@ -21,6 +21,8 @@ const db = vi.hoisted(() => {
     contract: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     documentRequirement: { findMany: vi.fn(), count: vi.fn(), createMany: vi.fn() },
     user: { findFirstOrThrow: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
+    // case contracts V2 (lib/caseContracts/service workContractPending): no contract requests by default
+    signatureRequest: { findMany: vi.fn(async () => []) },
     $transaction: vi.fn(),
     $queryRaw: vi.fn(),
   };
@@ -370,9 +372,9 @@ describe('createCase', () => {
   });
 
   it('refuses a second active case', async () => {
-    p.case.count.mockResolvedValue(1);
+    p.case.findFirst.mockResolvedValueOnce({ id: 'old1', number: 'TV-2026-0001' });
     await expectHttp(flow.createCase('client1', { profession: 'Driver' }), 409, 'ACTIVE_CASE_EXISTS');
-    expect(p.case.count).toHaveBeenCalledWith({ where: { clientId: 'client1', parentCaseId: null, status: { notIn: flow.FINAL_STATUSES } } });
+    expect(p.case.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { clientId: 'client1', status: { notIn: flow.FINAL_STATUSES }, parentCaseId: null } }));
     expect(p.case.create).not.toHaveBeenCalled();
   });
 
