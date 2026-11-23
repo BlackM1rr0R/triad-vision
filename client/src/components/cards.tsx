@@ -136,7 +136,7 @@ export const VisaSticker = ({ sample }: { sample: VisaSample }) => {
         </div>
         <div className="relative mt-2 flex gap-3">
           <div className="h-24 w-20 shrink-0 overflow-hidden rounded-sm bg-line-strong">
-            <img src={sized(sample.image, 200)} alt="" loading="lazy" decoding="async" className="size-full scale-125 object-cover blur-[6px] grayscale-[30%]" />
+            <img src={sized(sample.image, 200)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="size-full scale-125 object-cover blur-[6px] grayscale-[30%]" />
           </div>
           <div className="flex-1 space-y-1.5 pt-1">
             {[80, 60, 90, 50, 70, 40].map((w, i) => (

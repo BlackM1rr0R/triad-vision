@@ -274,7 +274,7 @@ describe('renderHead', () => {
   it('adds WebSite and the offices (ProfessionalService) on the home page', () => {
     const settings = { contact: { phone: '+994 1', hours: { en: 'Mon – Fri, 09:00 – 18:00' }, offices: [{ city: { az: 'Bakı', en: 'Baku' }, address: 'Nizami 96', lat: 40.3, lng: 49.8 }] } };
     const types = ldBlocks(renderHead('/en', null, emptyData({ settings }))).map((b) => b['@type']);
-    expect(types).toEqual(['Organization', 'WebSite', 'ProfessionalService']);
+    expect(types).toEqual(['Organization', 'WebSite', 'WebPage', 'ProfessionalService']);
   });
 
   it('marks private and unknown paths noindex without canonical or hreflang', () => {

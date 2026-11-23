@@ -157,6 +157,7 @@ const de: Messages = {
   ausbildung: {
     eyebrow: 'Weiterbildung',
     title: 'Berufsausbildung in Deutschland',
+    imageAlt: 'Berufsausbildung im Gesundheitswesen: Ausbildung in Deutschland',
     text: 'Neben der direkten Arbeitsvermittlung unterstützen wir auch bei der Berufsausbildung (Ausbildung) in Deutschland – in Medizin, Handwerk, Technik und weiteren Berufen.',
     pageTitle: 'Ausbildung und Weiterbildung',
     pageSubtitle: 'Lernen, verdienen und in Deutschland Karriere machen: die bezahlte duale Ausbildung.',

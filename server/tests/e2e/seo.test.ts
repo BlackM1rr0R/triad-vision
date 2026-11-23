@@ -52,6 +52,33 @@ describe('GET /robots.txt', () => {
   });
 });
 
+describe('GEO files for AI assistants', () => {
+  it('serves llms.txt, llms-full.txt and ai.txt as plain text', async () => {
+    await createVisaCategory({ slug: 'geo-visa' });
+    for (const path of ['/llms.txt', '/llms-full.txt', '/.well-known/ai.txt']) {
+      const res = await anon().get(path);
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/^text\/plain/);
+    }
+    expect((await anon().get('/llms.txt')).text).toContain('# Triad Vision');
+    expect((await anon().get('/.well-known/ai.txt')).text).toContain('Allow: /');
+  });
+
+  it('serves the /ai/*.json summaries and never names an employer', async () => {
+    await createJob();
+    const summary = await anon().get('/ai/summary.json');
+    expect(summary.status).toBe(200);
+    expect(summary.headers['content-type']).toMatch(/^application\/json/);
+    expect(summary.body.name).toBe('Triad Vision');
+    const service = await anon().get('/ai/service.json');
+    expect(service.body.limitations.join(' ')).toContain('apostille');
+    const faq = await anon().get('/ai/faq.json?lang=de');
+    expect(faq.body.inLanguage).toBe('de');
+    const llms = await anon().get('/llms.txt');
+    expect(llms.text).not.toContain('SEO Co');
+  });
+});
+
 describe('GET /sitemap.xml', () => {
   it('is an index of the child sitemaps', async () => {
     await createPost({ slug: 'news-1' });

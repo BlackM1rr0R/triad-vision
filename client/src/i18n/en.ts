@@ -157,6 +157,7 @@ const en: Messages = {
   ausbildung: {
     eyebrow: 'Weiterbildung',
     title: 'Vocational training in Germany',
+    imageAlt: 'Healthcare vocational training: Ausbildung opportunities in Germany',
     text: 'Besides direct employment, we also support vocational training (Ausbildung) opportunities in Germany in healthcare, crafts, engineering and other professions.',
     pageTitle: 'Ausbildung and Weiterbildung',
     pageSubtitle: 'Learn, earn and build a career in Germany: paid dual vocational training.',

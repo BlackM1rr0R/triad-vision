@@ -12,6 +12,7 @@ import {
   type OgKind,
   type SitemapGroup,
 } from '../lib/seo.js';
+import { buildFaq, buildService, buildSummary, getLlms, renderAiTxt } from '../lib/geo.js';
 import { getBody } from '../lib/seoBody.js';
 import { indexNowKey, KEY_PATH } from '../lib/indexNow.js';
 import { ogCardPng, ogCardText } from '../lib/ogImage.js';
@@ -28,6 +29,24 @@ seoRouter.get('/robots.txt', (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.send(renderRobots());
 });
+
+// GEO files for AI assistants (lib/geo.ts): llms.txt, ai.txt and the /ai/*.json summaries, generated from public data.
+const text = (res: Response, body: string, maxAge = 3600) => {
+  res.type('text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+  res.send(body);
+};
+const json = (res: Response, body: unknown, maxAge = 3600) => {
+  res.type('application/json; charset=utf-8');
+  res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+  res.send(brandify(JSON.stringify(body, null, 2)));
+};
+seoRouter.get('/llms.txt', async (_req, res) => text(res, brandify(await getLlms(false))));
+seoRouter.get('/llms-full.txt', async (_req, res) => text(res, brandify(await getLlms(true))));
+seoRouter.get('/.well-known/ai.txt', (_req, res) => text(res, renderAiTxt()));
+seoRouter.get('/ai/summary.json', async (_req, res) => json(res, buildSummary(await getSeoData())));
+seoRouter.get('/ai/service.json', async (_req, res) => json(res, buildService(await getSeoData())));
+seoRouter.get('/ai/faq.json', async (req, res) => json(res, buildFaq(await getSeoData(), parseLocale(req.query.lang) ?? 'en')));
 
 const xml = (res: Response, body: string, maxAge = 600) => {
   res.type('application/xml; charset=utf-8');

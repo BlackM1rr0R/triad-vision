@@ -399,7 +399,7 @@ export const AusbildungSection = () => {
               src={sized(ELIGIBILITY_IMG, 960)}
               srcSet={srcSet(ELIGIBILITY_IMG, [640, 960, 1280])}
               sizes="(min-width: 1024px) 50vw, 100vw"
-              alt=""
+              alt={t('ausbildung.imageAlt')}
               loading="lazy"
               decoding="async"
               className="absolute inset-0 size-full object-cover"

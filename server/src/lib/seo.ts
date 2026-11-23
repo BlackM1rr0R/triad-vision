@@ -949,6 +949,38 @@ export const guidesInLanguage = (data: SeoData, lng: SeoLocale) => {
   return [...own, ...all.filter((g) => g.locale === 'en' && !keys.has(g.key))];
 };
 
+const newest = (dates: (Date | null | undefined)[]) => {
+  const t = dates.filter((d): d is Date => d instanceof Date && !Number.isNaN(d.getTime())).map((d) => d.getTime());
+  return t.length ? new Date(Math.max(...t)) : null;
+};
+
+/** dateModified of a static page: the newest updatedAt of the content it lists (home: of all public content); null when it has none. */
+export const pageModified = (path: string, data: SeoData): Date | null => {
+  const visas = () => data.visas.map((v) => v.updatedAt);
+  const services = () => data.services.map((v) => v.updatedAt);
+  const posts = () => data.posts.map((v) => v.updatedAt);
+  const jobs = () => data.jobs.map((v) => v.updatedAt);
+  const guides = () => (data.guides ?? []).map((v) => v.updatedAt);
+  switch (path) {
+    case '/':
+      return newest([...visas(), ...services(), ...posts(), ...jobs(), ...guides()]);
+    case '/visas':
+      return newest(visas());
+    case '/services':
+    case '/for-workers':
+    case '/for-employers':
+      return newest(services());
+    case '/news':
+      return newest(posts());
+    case '/jobs':
+      return newest(jobs());
+    case '/guides':
+      return newest(guides());
+    default:
+      return null;
+  }
+};
+
 export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): ResolvedPage => {
   const origin = siteOrigin();
   const url = pageUrl(path, lng);
@@ -988,7 +1020,35 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
         url: `${origin}/`,
         inLanguage: SEO_LOCALES,
         publisher: { '@id': organizationId() },
+        // The real site search (/search?q=, the SPA's search page).
+        potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${origin}/search?q={search_term_string}` }, 'query-input': 'required name=search_term_string' },
       });
+    }
+    {
+      // Freshness + authorship: WebPage with dateModified from the newest relevant content row (no date when none applies).
+      const modified = pageModified(path, data);
+      resolved.jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: resolved.title,
+        description: resolved.description,
+        inLanguage: lng,
+        isPartOf: { '@id': `${origin}/#website` },
+        author: { '@id': organizationId() },
+        publisher: { '@id': organizationId() },
+        ...(modified ? { dateModified: modified.toISOString() } : {}),
+      });
+      if (modified) resolved.extraMeta.push(['article:modified_time', modified.toISOString()]);
+    }
+    if (path === '/' && data.faqs.length) {
+      // The home page's FAQ section shows the first five questions (components/home/Sections FaqSection).
+      const ld = faqPageLd(
+        data.faqs.slice(0, 5).map((f) => ({ q: collapse(pick(f.question, lng)), a: pick(f.answer, lng).trim() })).filter((f) => f.q && f.a),
+        lng,
+      );
+      if (ld) resolved.jsonLd.push(ld);
     }
     if (path === '/' || path === '/contact') resolved.jsonLd.push(...localBusinessLd(data, lng));
     if (path === '/faq' && data.faqs.length) {

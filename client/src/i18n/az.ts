@@ -155,6 +155,7 @@ const az = {
   ausbildung: {
     eyebrow: 'Weiterbildung',
     title: 'Almaniyada peşə təhsili',
+    imageAlt: 'Tibb sahəsində peşə təhsili: Almaniyada Ausbildung imkanları',
     text: 'Birbaşa işə düzəlməklə yanaşı, Almaniyada tibb, sənətkarlıq, texnika və digər peşələr üzrə peşə təhsili (Ausbildung) imkanlarında da dəstək göstəririk.',
     pageTitle: 'Ausbildung və Weiterbildung',
     pageSubtitle: 'Oxu, qazan və Almaniyada karyera qur: maaşlı dual peşə təhsili.',

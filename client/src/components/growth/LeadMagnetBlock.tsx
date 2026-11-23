@@ -59,7 +59,7 @@ export const usePublishedLeadMagnet = (slug: string) => {
 /** Cover image of an e-book, or a drawn cover with its title. */
 export const EbookCover = ({ magnet, className }: { magnet: Pick<PublicLeadMagnet, 'title' | 'coverUrl'>; className?: string }) =>
   magnet.coverUrl ? (
-    <img src={magnet.coverUrl} alt="" loading="lazy" decoding="async" className={clsx('aspect-[3/4] w-full rounded-xl object-cover shadow-[var(--tv-shadow-raised)]', className)} />
+    <img src={magnet.coverUrl} alt={magnet.title} loading="lazy" decoding="async" className={clsx('aspect-[3/4] w-full rounded-xl object-cover shadow-[var(--tv-shadow-raised)]', className)} />
   ) : (
     <div className={clsx('relative flex aspect-[3/4] w-full flex-col justify-between overflow-hidden rounded-xl bg-navy-900 p-5 text-white shadow-[var(--tv-shadow-raised)]', className)} aria-hidden>
       <span className="text-[10px] font-semibold tracking-[0.25em] text-white/70">{getBrand().name.toLocaleUpperCase('en')}</span>
