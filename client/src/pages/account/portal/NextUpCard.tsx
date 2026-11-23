@@ -104,10 +104,15 @@ export function NextUpCard({ next, variant = 'hero', caseLink, tour }: { next: N
             onClick={(e) => {
               // Already on the target page (the sticky bar on the case page): a link to itself does nothing, so
               // scroll to the section and, for "submit", open the submit confirmation directly.
+              // Another page or another tab of this page (e.g. "Müqaviləni imzala" from the Mesajlar tab): a normal navigation.
               const url = new URL(hero.to, window.location.origin);
               if (url.pathname !== location.pathname) return;
+              const tabOf = (search: string) => new URLSearchParams(search).get('tab') ?? 'overview';
+              if (tabOf(url.search) !== tabOf(location.search)) return;
+              const el = url.hash ? document.getElementById(decodeURIComponent(url.hash.slice(1))) : null;
+              if (url.hash && !el && hero.reason !== 'SUBMIT_DOCS') return; // section not rendered here: let the router go there
               e.preventDefault();
-              if (url.hash) document.getElementById(decodeURIComponent(url.hash.slice(1)))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               if (hero.reason === 'SUBMIT_DOCS') window.dispatchEvent(new Event(SUBMIT_DOCS_EVENT));
             }}
             title={compact ? hero.action : undefined}
