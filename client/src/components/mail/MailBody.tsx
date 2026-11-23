@@ -15,6 +15,9 @@ const CSP_REMOTE = "default-src 'none'; img-src 'self' data: blob: https: http:;
 
 const baseCss = (dark: boolean) => `
   :root { color-scheme: ${dark ? 'dark' : 'light'}; }
+  /* The frame is sized to the content: html/body must never take the frame's height (a "height: 100%" mail
+     would otherwise grow the frame, which grows the page, … without end). */
+  html, body { height: auto !important; min-height: 0 !important; overflow: hidden; }
   body { margin: 0; padding: 4px 2px 12px; font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: ${dark ? '#e6ecf7' : '#0b1f44'}; background: transparent; word-wrap: break-word; overflow-wrap: anywhere; }
   img { max-width: 100%; height: auto; }
   table { max-width: 100%; }
@@ -30,6 +33,7 @@ export const MailBody = ({ html, text, showImages, onShowImages }: { html: strin
   const { t } = useTranslation();
   const ref = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(120);
+  const heightRef = useRef(120);
   const dark = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
   const blocked = hasRemoteImages(html);
 
@@ -43,23 +47,40 @@ export const MailBody = ({ html, text, showImages, onShowImages }: { html: strin
     const frame = ref.current;
     if (!frame) return;
     let raf = 0;
+    const timers: number[] = [];
+    // Measure the CONTENT (the body's box), never documentElement.scrollHeight: that is at least the frame's
+    // own height, so "frame = scrollHeight + 8" grew by 8 px on every resize until the 20 000 px cap.
     const measure = () => {
-      const h = frame.contentDocument?.documentElement?.scrollHeight ?? frame.contentDocument?.body?.scrollHeight;
-      if (h && Math.abs(h - height) > 2) setHeight(Math.min(Math.max(h + 8, 80), 20000));
+      const body = frame.contentDocument?.body;
+      if (!body) return;
+      const style = frame.contentWindow?.getComputedStyle(body);
+      const margins = style ? parseFloat(style.marginTop) + parseFloat(style.marginBottom) : 0;
+      const h = Math.ceil(body.getBoundingClientRect().height + margins);
+      const next = Math.min(Math.max(h + 4, 80), 20000);
+      if (h > 0 && Math.abs(next - heightRef.current) > 2) {
+        heightRef.current = next;
+        setHeight(next);
+      }
     };
+    let ro: ResizeObserver | null = null;
     const onLoad = () => {
       measure();
       raf = requestAnimationFrame(measure);
-      window.setTimeout(measure, 300);
-      window.setTimeout(measure, 1200);
+      timers.push(window.setTimeout(measure, 300), window.setTimeout(measure, 1200)); // late images / fonts
+      // Content changes (images loading) and width changes of the reading pane re-measure; the frame's own
+      // height change does not feed back, because only the body box is observed.
+      ro?.disconnect();
+      const body = frame.contentDocument?.body;
+      ro = typeof ResizeObserver !== 'undefined' && body ? new ResizeObserver(measure) : null;
+      if (body) ro?.observe(body);
     };
     frame.addEventListener('load', onLoad);
-    const ro = new ResizeObserver(measure);
-    ro.observe(frame);
+    if (frame.contentDocument?.readyState === 'complete' && frame.contentDocument.body?.childNodes.length) onLoad();
     return () => {
       frame.removeEventListener('load', onLoad);
-      ro.disconnect();
+      ro?.disconnect();
       cancelAnimationFrame(raf);
+      timers.forEach((id) => window.clearTimeout(id));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doc]);
