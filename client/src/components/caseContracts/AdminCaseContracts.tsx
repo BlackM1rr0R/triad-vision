@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle2, Circle, Download, ExternalLink, FilePlus2, FileSignature, FolderOpen, Info, Lock, PenLine, Undo2, Upload, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Circle, Download, ExternalLink, Eye, FilePlus2, FileSignature, FolderOpen, Info, Lock, PenLine, Undo2, Upload, X } from 'lucide-react';
 import { api, fileUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
@@ -168,6 +168,11 @@ const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop 
             {workSet ? <FilePlus2 className="size-3.5" aria-hidden /> : <Upload className="size-3.5" aria-hidden />}{' '}
             {s.state === 'NOT_SENT' ? t('caseContracts.v2.upload') : workSet ? t('caseContracts.v2.uploadMore') : t('caseContracts.resend')}
           </button>
+        )}
+        {r && !workSet && (
+          <a href={`/api/admin/signatures/${r.id}/document?version=original`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+            <Eye className="size-3.5" aria-hidden /> {t('caseContracts.v2.openSent')}
+          </a>
         )}
         {r?.finalDocumentId && !workSet && (
           <a href={fileUrl(r.finalDocumentId)} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
