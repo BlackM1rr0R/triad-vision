@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -215,6 +215,10 @@ const RequirementCard = ({
   const mode = clientUploadMode(caseStatus, req);
   // A replacement just went in: its check notices stay visible although the upload controls close again.
   const [replaced, setReplaced] = useState(false);
+  // Replacing a rejected document: the chosen file waits for "Göndər" (a wrong pick can be changed first).
+  const [staged, setStaged] = useState<File | null>(null);
+  const stagedUrl = useMemo(() => (staged ? URL.createObjectURL(staged) : null), [staged]);
+  useEffect(() => () => { if (stagedUrl) URL.revokeObjectURL(stagedUrl); }, [stagedUrl]);
   const canUpload = open || mode !== null;
   const showNotices = canUpload || replaced;
   const [progress, setProgress] = useState<number | null>(null);
@@ -349,13 +353,45 @@ const RequirementCard = ({
           </p>
         )}
         {canUpload && <HowToShoot requirementKey={(req as Requirement & { key?: string | null }).key} title={tr(req.title)} />}
-        {canUpload && (
-          <FileDrop
-            onFile={upload}
-            progress={progress}
-            compact={docs.length > 0}
-            label={docs.length > 0 ? t('portal.docs.replace') : t('portal.docs.upload')}
-          />
+        {canUpload && staged && mode === 'replace' ? (
+          <div className="rounded-xl border border-brand-500/40 bg-brand-50/60 p-3 dark:bg-brand-500/10" role="group" aria-label={t('portal.docs.stagedTitle')}>
+            <p className="text-xs font-semibold text-ink">{t('portal.docs.stagedTitle')}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <FileText className="size-4 shrink-0 text-muted" aria-hidden />
+              <span className="min-w-0 flex-1 truncate text-sm text-ink" title={staged.name}>
+                {staged.name} · {formatBytes(staged.size)}
+              </span>
+              {stagedUrl && (
+                <a href={stagedUrl} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+                  <ExternalLink className="size-4" aria-hidden /> {t('portal.docs.stagedView')}
+                </a>
+              )}
+              <button type="button" className="btn-secondary btn-sm" disabled={progress !== null} onClick={() => setStaged(null)}>
+                {t('portal.docs.stagedChange')}
+              </button>
+              <button
+                type="button"
+                className="btn-primary btn-sm"
+                disabled={progress !== null}
+                onClick={async () => {
+                  const file = staged;
+                  await upload(file);
+                  setStaged(null);
+                }}
+              >
+                <Send className="size-4" aria-hidden /> {progress !== null ? `${Math.round(progress * 100)}%` : t('portal.docs.stagedSend')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          canUpload && (
+            <FileDrop
+              onFile={mode === 'replace' ? async (f: File) => setStaged(f) : upload}
+              progress={progress}
+              compact={docs.length > 0}
+              label={docs.length > 0 ? t('portal.docs.replace') : t('portal.docs.upload')}
+            />
+          )
         )}
         {canUpload && (
           <div className="flex flex-wrap items-center gap-2">

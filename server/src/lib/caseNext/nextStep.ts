@@ -220,6 +220,7 @@ export type RuleCode =
   | 'TRANSLATION_MISSING'
   | 'STATUS_OVERDUE'
   | 'AWAIT_CLIENT_SUBMIT'
+  | 'AWAIT_CLIENT_FIX'
   | 'AWAIT_DECISION'
   | 'VISA_APPROVED'
   | 'VISA_REFUSED'
@@ -398,6 +399,10 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
       } else {
         add({ code: 'BOOK_APPOINTMENT', priority: slow ? 89 : 84, tone: slow ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_ACTIONS', kind: 'scroll', target: 'case-actions' }, taskAction(f, 'appointment', staffLocale, 1, now), { id: 'BUILD_PACKAGE', kind: 'package' }] });
       }
+    } else if (notAccepted.every((r) => latest(r)?.status === 'REJECTED')) {
+      // Every open document was rejected: the client was told and can upload a replacement in this step
+      // (lib/clientUploadTarget) — the ball is with the client, no "return for changes" needed.
+      add({ code: 'AWAIT_CLIENT_FIX', priority: 45, tone: 'info', params: { count: notAccepted.length }, items: notAccepted.map((r) => r.title), actions: [{ id: 'OPEN_MESSAGES', kind: 'scroll', target: 'case-messages' }] });
     } else {
       const lines = notAccepted.map((r) => {
         const d = latest(r);

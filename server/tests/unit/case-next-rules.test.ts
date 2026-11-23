@@ -72,8 +72,14 @@ describe('next step rules', () => {
     expect(top(facts({ status: 'DOCUMENTS_REVIEW', requirements: reqs, daysInStatus: 5 }))).toMatchObject({ code: 'SEND_CONTRACT', tone: 'urgent' });
   });
 
-  it('rejected documents, nothing pending → return for changes with a note in the client language', () => {
-    const f = facts({ status: 'DOCUMENTS_REVIEW', requirements: [req('PASSPORT', 'INITIAL', ['ACCEPTED']), req('DIPLOMA', 'INITIAL', ['REJECTED'])] });
+  it('only rejected documents (the client was told and can replace them) → wait for the client, no return', () => {
+    const s = top(facts({ status: 'DOCUMENTS_REVIEW', requirements: [req('PASSPORT', 'INITIAL', ['ACCEPTED']), req('DIPLOMA', 'INITIAL', ['REJECTED'])] }));
+    expect(s).toMatchObject({ code: 'AWAIT_CLIENT_FIX', tone: 'info', params: { count: 1 } });
+    expect(s.actions.map((x) => x.kind)).not.toContain('transition');
+  });
+
+  it('a required document missing (plus a rejected one), nothing pending → return for changes with a note in the client language', () => {
+    const f = facts({ status: 'DOCUMENTS_REVIEW', requirements: [req('PASSPORT', 'INITIAL', []), req('DIPLOMA', 'INITIAL', ['REJECTED'])] });
     const s = top(f);
     expect(s.code).toBe('RETURN_FOR_CHANGES');
     const a = s.actions[0] as Extract<NextAction, { kind: 'transition' }>;
