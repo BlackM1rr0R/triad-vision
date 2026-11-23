@@ -41,7 +41,9 @@ describe('deleting signature requests', () => {
     const cand = await asClient();
     const admin = await asAdmin();
     const created = await driveCaseTo('CONTRACT_SENT', { client: cand.agent, admin: admin.agent });
-    const req = await prisma.signatureRequest.findFirstOrThrow({ where: { caseId: created.id } });
+    // A case-contract request on that live case (the old CONTRACT_SENT flow has none of its own).
+    const made = expectStatus(await createRequest(admin.agent, { title: `Əmək müqaviləsi · ${created.number}`, signers: [{ role: 'OTHER', name: 'C One', email: 'c1@test.local' }] }), 201).body.request;
+    const req = await prisma.signatureRequest.update({ where: { id: made.id }, data: { caseId: created.id, isCaseContract: true } });
     const res = await admin.agent.delete(`/api/admin/signatures/${req.id}`);
     expect(res.status).toBe(409);
     expect(await prisma.signatureRequest.count({ where: { id: req.id } })).toBe(1);
