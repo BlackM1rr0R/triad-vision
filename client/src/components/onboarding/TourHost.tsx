@@ -100,6 +100,9 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
   const step = def.steps[Math.min(index, def.steps.length - 1)];
   const last = index >= def.steps.length - 1;
   const [target, setTarget] = useState<HTMLElement | null>(null);
+  // Step whose element `target` is: while the next step's element is still being looked for, the previous
+  // highlight and popover stay on screen (no flash of the whole overlay between steps).
+  const [targetStep, setTargetStep] = useState<string | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
   const [dontShow, setDontShow] = useState(false);
   const [vw, setVw] = useState(() => window.innerWidth);
@@ -155,7 +158,6 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
   // Find the target (it may mount late: lazy chunks, queries). Missing for 3 s → skip the step.
   useEffect(() => {
     if (!onRoute) return;
-    setTarget(null);
     let tries = 0;
     let timer = 0;
     const look = () => {
@@ -167,6 +169,7 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
         // Panes with their own scroll (workspace) are not moved by the window scroll above.
         if (off) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         setTarget(el);
+        setTargetStep(step.id);
         return;
       }
       if (++tries > 30) {
@@ -191,7 +194,10 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         if (!target.isConnected) {
-          setTarget(findTarget(step));
+          // Re-rendered or left with the page: take the new element when there is one, else keep the last
+          // position until the step's own element is found (never drop the overlay in between).
+          const el = findTarget(step);
+          if (el) setTarget(el);
           return;
         }
         setRect(rectOf(target));
@@ -236,6 +242,7 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
   const sheetTop = mobile && rect.top + rect.height / 2 > window.innerHeight * 0.5;
   const popStyle: CSSProperties = mobile ? {} : { ...place(rect, POP_W, popH, step.placement ?? 'auto'), width: POP_W };
   const motion = !reducedMotion();
+  const pending = targetStep !== step.id; // next step's element not found yet
 
   return createPortal(
     <>
@@ -251,6 +258,7 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
         aria-modal="false"
         aria-labelledby={`${ids}-title`}
         aria-describedby={`${ids}-text`}
+        aria-busy={pending || undefined}
         tabIndex={-1}
         onKeyDown={(e) => {
           if (e.target instanceof HTMLInputElement) return;
@@ -267,7 +275,8 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
           mobile
             ? ['inset-x-2 rounded-2xl', sheetTop ? 'top-[max(0.5rem,env(safe-area-inset-top))]' : 'bottom-[max(0.5rem,env(safe-area-inset-bottom))]']
             : 'rounded-2xl',
-          motion && !mobile && 'transition-transform duration-300 ease-out',
+          motion && (mobile ? 'transition-opacity duration-200' : 'transition-[transform,opacity] duration-300 ease-out'),
+          pending && 'opacity-80',
         )}
         style={popStyle}
         data-tour-popover
@@ -306,7 +315,7 @@ function TourRunner({ def, index, userId, restart }: { def: TourDef; index: numb
                 {t('pux.tour.skip')}
               </Button>
             )}
-            <Button size="sm" iconRight={last ? Check : ArrowRight} onClick={next} data-autofocus>
+            <Button size="sm" iconRight={last ? Check : ArrowRight} onClick={next} disabled={pending} data-autofocus>
               {last ? t('pux.tour.done') : t('pux.tour.next')}
             </Button>
           </div>
