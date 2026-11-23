@@ -17,6 +17,7 @@ describe('vacancy requests', () => {
   beforeEach(cleanJobs);
 
   it('guests: name + contact + consent required, honeypot ignored, a lead and a staff notification, no case', async () => {
+    await asStaff(); // receives the staff notification
     const body = { type: 'WORK', sector: 'logistics', profession: 'truck_driver', city: 'Hamburg', germanLevel: 'A2', lng: 'az' };
     expect((await anon().post('/api/vacancy-requests').send({ ...body, name: 'Rauf', phone: '+994501234567' })).body.error).toBe('CONSENT_REQUIRED');
     expect((await anon().post('/api/vacancy-requests').send({ ...body, consent: true, phone: '+994501234567' })).body.error).toBe('NAME_REQUIRED');

@@ -19,7 +19,9 @@ import { cancelRequest, createClientRequest, createGuestRequest, requestIdFromTo
  */
 export const vacancyRequestsRouter = Router();
 
-const createLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 8 });
+// Guests only (signed-in clients are capped by their open requests); rejected forms do not count against the limit.
+const guestLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 8, skipFailedRequests: true });
+const createLimiter: typeof guestLimiter = (req, res, next) => (req.user ? next() : guestLimiter(req, res, next));
 const tokenLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30 });
 
 const guestFields = z.object({
