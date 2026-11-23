@@ -204,6 +204,8 @@ export const buildSummary = (data: SeoData) => {
 export const buildService = (data: SeoData) => {
   const origin = siteOrigin();
   return {
+    // name + capabilities: the fields AI discovery checkers read (geo-optimizer: name >= 3 chars, non-empty list)
+    name: `${SITE_NAME} — recruitment and visa-document preparation`,
     provider: { name: SITE_NAME, url: `${origin}/` },
     serviceType: 'Recruitment and visa-document preparation for workers from Azerbaijan placed with employers in Germany',
     areaServed: ['Azerbaijan', 'Türkiye', 'Ukraine', 'Germany'],
