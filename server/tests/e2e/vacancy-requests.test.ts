@@ -17,7 +17,7 @@ describe('vacancy requests', () => {
   beforeEach(cleanJobs);
 
   it('guests: name + contact + consent required, honeypot ignored, a lead and a staff notification, no case', async () => {
-    await asStaff(); // receives the staff notification
+    await asAdmin(); // staff notices go to ADMIN+ (notifyStaff)
     const body = { type: 'WORK', sector: 'logistics', profession: 'truck_driver', city: 'Hamburg', germanLevel: 'A2', lng: 'az' };
     expect((await anon().post('/api/vacancy-requests').send({ ...body, name: 'Rauf', phone: '+994501234567' })).body.error).toBe('CONSENT_REQUIRED');
     expect((await anon().post('/api/vacancy-requests').send({ ...body, consent: true, phone: '+994501234567' })).body.error).toBe('NAME_REQUIRED');
@@ -34,7 +34,7 @@ describe('vacancy requests', () => {
     expect(r).toMatchObject({ type: 'WORK', sector: 'logistics', profession: 'truck_driver', city: 'Hamburg', status: 'NEW', userId: null, email: 'rauf@test.local' });
     const lead = await prisma.inquiry.findUniqueOrThrow({ where: { id: r.inquiryId! } });
     expect(lead).toMatchObject({ source: 'vacancy-request', email: 'rauf@test.local', contactName: 'Rauf' });
-    await waitFor(() => prisma.notification.findFirst({ where: { type: 'VACANCY_REQUEST' } }));
+    await waitFor(() => prisma.notification.findFirst({ where: { type: 'STAFF', title: { startsWith: 'Vakansiya sorğusu' } } }));
     expect(await prisma.consentRecord.count({ where: { type: 'VACANCY_REQUEST', email: 'rauf@test.local', granted: true } })).toBe(1);
     // The same request again is not duplicated.
     expect(expectStatus(await anon().post('/api/vacancy-requests').send({ ...body, consent: true, name: 'Rauf', email: 'rauf@test.local' }), 201).body.already).toBe(true);
@@ -151,8 +151,13 @@ describe('vacancy requests', () => {
     const fresh = await createVacancy({ slug: 'fresh-lkw', city: 'Hamburg' });
     await runVacancyRequestNotices();
     const told = await prisma.vacancyRequestNotice.findMany({ where: { vacancyId: { not: dead.id } } });
-    expect(told.every((t) => t.vacancyId === fresh.id)).toBe(true);
-    expect(told.length).toBeGreaterThanOrEqual(2);
+    const slugOf = new Map((await prisma.vacancy.findMany({ select: { id: true, slug: true } })).map((v) => [v.id, v.slug]));
+    const slugs = told.map((t) => slugOf.get(t.vacancyId));
+    // Other sector, other type and a full vacancy: nobody. München: only the guest request without a city.
+    expect(slugs.filter((x) => ['no-cook', 'no-ausb', 'no-full'].includes(x ?? ''))).toEqual([]);
+    const clientReq = await prisma.vacancyRequest.findFirstOrThrow({ where: { userId: client.user.id } });
+    expect(told.filter((t) => t.requestId === clientReq.id).map((t) => slugOf.get(t.vacancyId))).toEqual(['fresh-lkw']);
+    expect(slugs.filter((x) => x === 'fresh-lkw')).toHaveLength(2);
 
     // A cancelled request hears nothing more.
     const mine = expectStatus(await client.agent.get('/api/vacancy-requests/mine'), 200).body.items[0];
