@@ -517,6 +517,7 @@ describe('POST /api/cases/:id/messages', () => {
     });
     const staff = await staffNotifications(admin.user.id);
     expect(staff.some((n) => n.title === `${c.number}: müştəridən yeni mesaj` && n.body === 'Salam, sualım var')).toBe(true);
+    expect(staff.find((n) => n.title === `${c.number}: müştəridən yeni mesaj`)).toMatchObject({ link: `/admin/inbox?case=${c.id}` });
   });
 
   it('validates the body and protects other clients’ cases', async () => {

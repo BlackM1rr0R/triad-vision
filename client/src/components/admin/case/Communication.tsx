@@ -26,7 +26,11 @@ import { useCannedComposer } from '@/components/staffDesk/CannedReplies';
 
 registerCopy(pagesMessaging);
 
-export const Messages = ({ c }: { c: CaseDetail }) => {
+/** What the messages panel needs of a case (the staff inbox passes a light object, the case page the full detail). */
+export type MessagesCase = Pick<CaseDetail, 'id' | 'messages'> & { client: Pick<CaseDetail['client'], 'locale'>; companyId?: string | null };
+
+/** `listClassName` replaces the default height cap of the message list (the inbox split view fills its column). */
+export const Messages = ({ c, listClassName }: { c: MessagesCase; listClassName?: string }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const refresh = useCaseRefresh(c.id);
@@ -47,7 +51,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
     id: c.id,
     items: messages.filter((m) => !m.pending && !m.failed).map((m) => ({ id: m.id, text: translatableText(m), lang: m.lang ?? m.voice?.transcriptLang })),
   });
-  const companyId = (c as CaseDetail & { companyId?: string | null }).companyId;
+  const companyId = c.companyId;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -91,7 +95,7 @@ export const Messages = ({ c }: { c: CaseDetail }) => {
           scrollRef.current = el;
           thread.listRef(el);
         }}
-        className="max-h-[420px] space-y-3 overflow-y-auto px-5 py-5 sm:px-6"
+        className={clsx(listClassName ?? 'max-h-[420px]', 'space-y-3 overflow-y-auto px-5 py-5 sm:px-6')}
       >
         {messages.length === 0 && <p className="py-6 text-center text-sm text-muted">{t('admin.case.comm.noMessages')}</p>}
         {messages.map((m, i) => {

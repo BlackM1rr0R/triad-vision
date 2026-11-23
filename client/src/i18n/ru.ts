@@ -312,6 +312,8 @@ const ru: Messages = {
     created: 'Создана',
     updated: 'Обновлена',
     currentStep: 'Текущий шаг',
+    docsAcceptedTitle: 'Ваши документы приняты',
+    docsAcceptedHelp: 'Все первичные документы приняты. Сейчас готовится ваш договор с Triad Vision — от вас пока ничего не требуется.',
     nextAction: 'Что требуется от вас',
     waitingUs: 'Наша команда работает — вы получите уведомление.',
     waiting: 'В работе',

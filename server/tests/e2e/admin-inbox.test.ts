@@ -91,6 +91,47 @@ describe('admin inbox', () => {
     expect(closed.items.map((i) => i.caseId)).not.toContain(b.id);
   });
 
+  it('filters unread threads and searches by client name or case number inside the viewer scope', async () => {
+    const staff = await asStaff();
+    const other = await asStaff();
+    const p = uniq('InboxQ');
+    const first = uniq('Zeynalov');
+    const clientA = await asClient({ firstName: 'Aysel', lastName: first });
+    const clientB = await asClient({ firstName: 'Bəxtiyar', lastName: first });
+    const clientC = await asClient({ firstName: 'Aysel', lastName: first });
+    const a = await createCaseVia(clientA.agent, p);
+    const b = await createCaseVia(clientB.agent, p);
+    const c = await createCaseVia(clientC.agent, p);
+    await prisma.case.update({ where: { id: a.id }, data: { assignedStaffId: staff.user.id } });
+    await prisma.case.update({ where: { id: b.id }, data: { assignedStaffId: staff.user.id } });
+    await prisma.case.update({ where: { id: c.id }, data: { assignedStaffId: other.user.id } });
+    const now = Date.now();
+    // a: unread client message; b: read client message then a staff answer; c: another staff member's case
+    await prisma.caseMessage.create({ data: { caseId: a.id, authorId: clientA.user.id, body: 'Salam', createdAt: new Date(now - 30 * MIN) } });
+    await prisma.caseMessage.createMany({
+      data: [
+        { caseId: b.id, authorId: clientB.user.id, body: 'Sənəd', createdAt: new Date(now - 50 * MIN), readAt: new Date(now - 45 * MIN) },
+        { caseId: b.id, authorId: staff.user.id, body: 'Yoxlayırıq', createdAt: new Date(now - 40 * MIN) },
+      ],
+    });
+    await prisma.caseMessage.create({ data: { caseId: c.id, authorId: clientC.user.id, body: 'Başqası', createdAt: new Date(now - 20 * MIN) } });
+
+    const unread = expectStatus(await staff.agent.get('/api/admin/inbox').query({ filter: 'unread' }), 200).body as InboxResponse;
+    expect(unread.items.map((i) => i.caseId)).toContain(a.id);
+    expect(unread.items.map((i) => i.caseId)).not.toContain(b.id);
+    expect(unread.items.every((i) => i.unread > 0)).toBe(true);
+
+    // search: by the shared last name → both own cases, never the colleague's; by case number → exactly that case
+    const byName = expectStatus(await staff.agent.get('/api/admin/inbox').query({ q: first }), 200).body as InboxResponse;
+    expect(byName.items.map((i) => i.caseId).sort()).toEqual([a.id, b.id].sort());
+    const byTwoWords = expectStatus(await staff.agent.get('/api/admin/inbox').query({ q: `Bəxtiyar ${first}` }), 200).body as InboxResponse;
+    expect(byTwoWords.items.map((i) => i.caseId)).toEqual([b.id]);
+    const byNumber = expectStatus(await staff.agent.get('/api/admin/inbox').query({ q: a.number }), 200).body as InboxResponse;
+    expect(byNumber.items.map((i) => i.caseId)).toEqual([a.id]);
+    const none = expectStatus(await staff.agent.get('/api/admin/inbox').query({ q: 'nomatch-xyz' }), 200).body as InboxResponse;
+    expect(none.items).toEqual([]);
+  });
+
   it('is staff-only and validates the query', async () => {
     const client = await asClient();
     expect((await client.agent.get('/api/admin/inbox')).status).toBe(403);

@@ -151,7 +151,7 @@ export interface StaffNavItem {
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
-  badge?: 'today' | 'training';
+  badge?: 'today' | 'training' | 'inbox';
   /** Optional feature (System → Modules); hidden when switched off. */
   module?: ModuleKey;
   /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
@@ -237,6 +237,7 @@ const w = (id: string, path: string, icon: LucideIcon, module?: ModuleKey): Staf
 export const STAFF_NAV: StaffNavItem[] = [
   // Bu gün
   a('today', '/admin/today', ListChecks, 'today', { badge: 'today' }),
+  a('inbox', '/admin/inbox', MessagesSquare, 'today', { badge: 'inbox' }), // client conversations + client profile side by side (phone "Mesajlar" tab); badge = unanswered threads
   a('myDay', '/admin/my-day', Sun, 'today'),
   a('dashboard', '/admin', LayoutDashboard, 'today', { end: true }),
   a('workspace', '/workspace/home', LayoutGrid, 'today'),
@@ -288,7 +289,6 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('employmentContracts', '/admin/employment-contracts', FileText, 'employers'),
   a('interviewPrep', '/admin/interview-prep', MessageCircleQuestion, 'employers', { module: 'interviewPrep' }),
   // Ünsiyyət
-  a('inbox', '/admin/inbox', MessagesSquare, 'comms'), // case threads awaiting the team's answer (phone "Mesajlar" tab)
   a('notifications', '/admin/notifications', Bell, undefined), // notification center history + settings (header bell "Bütün bildirişlər")
   a('messaging', '/admin/messaging', MessageSquareText, 'comms'),
   a('cannedReplies', '/admin/canned-replies', MessageSquareQuote, 'comms'), // canned replies for the "/" picker in composers
@@ -428,11 +428,11 @@ export type HubKey = 'today' | 'cases' | 'clients' | 'employers' | 'comms' | 'fi
  * their own URLs, so old links and bookmarks still open them. Labels: anav.hubs.<key>.
  */
 export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
-  { key: 'today', icon: LayoutDashboard, tabs: ['today', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
+  { key: 'today', icon: LayoutDashboard, tabs: ['today', 'inbox', 'myDay', 'dashboard', 'kanban', 'tasks', 'clientTasks'] },
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse', 'germanyReady'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist', 'realSalaries'] },
-  { key: 'comms', icon: MessageSquareText, tabs: ['inbox', 'notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports', 'quarterlyReport'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'publicApiKeys', 'agents'] },
   {

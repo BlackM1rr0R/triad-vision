@@ -83,7 +83,7 @@ export const createCaseMessage = async (opts: {
   const message = serializeMessage(created);
   if (opts.side === 'client') {
     const via = opts.channel === 'whatsapp' ? ' (WhatsApp)' : '';
-    await notifyStaff(`${c.number}: müştəridən yeni mesaj${via}`, opts.body || (opts.voiceId ? '🎤 Səsli mesaj' : ''), { caseId: c.id, link: `/admin/cases/${c.id}`, type: 'NEW_MESSAGE' });
+    await notifyStaff(`${c.number}: müştəridən yeni mesaj${via}`, opts.body || (opts.voiceId ? '🎤 Səsli mesaj' : ''), { caseId: c.id, link: `/admin/inbox?case=${c.id}`, type: 'NEW_MESSAGE' }); // opens the conversation in the staff inbox
   } else {
     await notifyClient(c.id, 'NEW_MESSAGE');
   }

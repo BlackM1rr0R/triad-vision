@@ -312,6 +312,8 @@ const de: Messages = {
     created: 'Erstellt',
     updated: 'Aktualisiert',
     currentStep: 'Aktueller Schritt',
+    docsAcceptedTitle: 'Ihre Dokumente sind angenommen',
+    docsAcceptedHelp: 'Alle ersten Dokumente sind angenommen. Jetzt wird Ihr Arbeitsvertrag mit Triad Vision vorbereitet — Sie müssen gerade nichts tun.',
     nextAction: 'Ihre Aufgabe',
     waitingUs: 'Unser Team arbeitet daran – Sie erhalten eine Benachrichtigung.',
     waiting: 'In Bearbeitung',

@@ -7,6 +7,7 @@ import { forbidden, parse } from '../../lib/http.js';
 import { hasMinRole } from '../../middleware/auth.js';
 import { unansweredThreads } from '../../lib/myWork.js';
 import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js';
+import { inboxSearchWhere } from '../../lib/inboxSearch.js';
 
 /**
  * Staff message inbox (mounted at /api/admin/inbox, STAFF+): the case conversations of the last INBOX_WINDOW_DAYS,
@@ -14,12 +15,15 @@ import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js';
  * the phone "Mesajlar" tab (pages/admin/Inbox.tsx); replies and "read" use the existing case endpoints
  * (POST /admin/cases/:id/messages, POST /admin/cases/:id/messages/read).
  *
- *   GET /inbox?scope=mine|all&filter=all|awaiting
+ *   GET /inbox?scope=mine|all&filter=all|awaiting|unread&q=<name | case number | phone>
  *       { items: [{ caseId, number, status, client, assignedStaff, lastMessage: { excerpt, at, fromClient, voice },
  *                   awaitingReply, since, waitingCount, unread }], counts: { awaiting, unread }, scope }
  *
  * Scope follows "my work": STAFF see their own cases, ADMIN+ their own plus unassigned ones; scope=all (every case)
- * is ADMIN+ only. Open cases only. "Awaiting" = the latest message is from the client (lib/myWork unansweredThreads).
+ * is ADMIN+ only. Open cases only. "Awaiting" = the latest message is from the client (lib/myWork unansweredThreads);
+ * "unread" = threads with client messages nobody has read yet. `q` (desktop split view search) narrows the cases by
+ * client name, case number or phone — inside the same case scope. The desktop view reads the thread, marks it read and
+ * replies through the case message endpoints (GET/POST /admin/cases/:id/messages[/read]).
  */
 export const adminInboxRouter = Router();
 
@@ -34,15 +38,16 @@ const excerpt = (s: string) => {
 };
 
 adminInboxRouter.get('/', async (req, res) => {
-  const q = parse(z.object({ scope: z.enum(['mine', 'all']).default('mine'), filter: z.enum(['all', 'awaiting']).default('all') }), req.query);
+  const q = parse(z.object({ scope: z.enum(['mine', 'all']).default('mine'), filter: z.enum(['all', 'awaiting', 'unread']).default('all'), q: z.string().trim().max(80).optional() }), req.query);
   const me = req.user!;
   const isAdmin = hasMinRole(me.role, 'ADMIN');
   if (q.scope === 'all' && !isAdmin) throw forbidden('TEAM_SCOPE_FORBIDDEN');
   const mine: Prisma.CaseWhereInput = q.scope === 'all' ? {} : isAdmin ? { OR: [{ assignedStaffId: me.id }, { assignedStaffId: null }] } : { assignedStaffId: me.id };
 
+  const search = inboxSearchWhere(q.q);
   const rows = await prisma.caseMessage.findMany({
     // + the viewer's case scope (lib/access; every case by default)
-    where: { createdAt: { gte: new Date(Date.now() - INBOX_WINDOW_DAYS * DAY) }, case: withCaseScope({ status: { notIn: FINAL_STATUSES }, ...mine }, await caseScopeWhere(me)) },
+    where: { createdAt: { gte: new Date(Date.now() - INBOX_WINDOW_DAYS * DAY) }, case: withCaseScope({ status: { notIn: FINAL_STATUSES }, ...mine, ...search }, await caseScopeWhere(me)) },
     // No `body` here: only the newest message of the (at most INBOX_MAX_THREADS) threads shown needs its text.
     select: { id: true, caseId: true, createdAt: true, authorId: true, readAt: true, voiceId: true, case: { select: { clientId: true } } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -57,8 +62,8 @@ adminInboxRouter.get('/', async (req, res) => {
     if (fromClient(m) && !m.readAt) unread.set(m.caseId, (unread.get(m.caseId) ?? 0) + 1);
   }
   const awaiting = [...open.entries()].sort((a, b) => a[1].since.getTime() - b[1].since.getTime()).map(([id]) => id);
-  const rest = q.filter === 'awaiting' ? [] : [...latest.keys()].filter((id) => !open.has(id)); // already newest first
-  const ids = [...awaiting, ...rest].slice(0, INBOX_MAX_THREADS);
+  const rest = q.filter === 'awaiting' ? [] : [...latest.keys()].filter((id) => !open.has(id) && (q.filter !== 'unread' || unread.has(id))); // already newest first
+  const ids = [...(q.filter === 'unread' ? awaiting.filter((id) => unread.has(id)) : awaiting), ...rest].slice(0, INBOX_MAX_THREADS);
   const cases = ids.length
     ? await prisma.case.findMany({
         where: { id: { in: ids } },

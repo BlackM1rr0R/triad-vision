@@ -114,7 +114,7 @@ describe('case chat realtime', () => {
       expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/messages`).send({ body: 'Xoş gəldiniz' }), 201);
     });
     expect(clientEvents.map((e) => e.type)).toEqual(expect.arrayContaining(['message.new', 'notification']));
-    expect(clientEvents.find((e) => e.type === 'notification')!.payload).toMatchObject({ type: 'NEW_MESSAGE', caseId: c.id, link: `/account/cases/${c.id}` });
+    expect(clientEvents.find((e) => e.type === 'notification')!.payload).toMatchObject({ type: 'NEW_MESSAGE', caseId: c.id, link: `/account/cases/${c.id}?tab=messages` });
 
     const list = expectStatus(await client.agent.get(`/api/cases/${c.id}/messages`), 200).body.messages as { body: string; channel: string; readAt: null }[];
     expect(list.map((m) => m.body)).toEqual(['Salam', 'Xoş gəldiniz']);
@@ -336,6 +336,7 @@ describe('WhatsApp webhooks', () => {
     expect(msgs[0]).toMatchObject({ authorId: client.user.id, channel: 'whatsapp', externalId: 'wamid.ABC1' });
     const staff = await prisma.notification.findFirst({ where: { userId: admin.user.id, type: 'STAFF' }, orderBy: { createdAt: 'desc' } });
     expect(staff!.title).toBe(`${c.number}: müştəridən yeni mesaj (WhatsApp)`);
+    expect(staff!.link).toBe(`/admin/inbox?case=${c.id}`); // the notification opens the conversation in the staff inbox
 
     // Meta retries deliveries: the same wamid is ignored.
     const again = await anon().post('/api/messaging/webhooks/whatsapp').set('Content-Type', 'application/json').set('X-Hub-Signature-256', sign('app-secret', raw)).send(raw);

@@ -71,7 +71,8 @@ export const buildStatusLine = (f: StatusFacts): StatusLine => {
   const p = f.primary;
   const find = (k: NextKind) => f.actions.find((a) => a.kind === k) ?? null;
   const other = f.actions.find((a) => !STAGE_KINDS.includes(a.kind) && !SOFT.includes(a.kind)) ?? null;
-  const done = (stage: StatusStage, to: string | null = p ? caseUrl(p.id) : null): StatusLine => ({
+  // "Bax" goes straight to the case's current-step card (not the top of the page with the portal header).
+  const done = (stage: StatusStage, to: string | null = p ? caseUrl(p.id, '#current-step') : null): StatusLine => ({
     stage,
     required: false,
     detail: null,
@@ -100,7 +101,8 @@ export const buildStatusLine = (f: StatusFacts): StatusLine => {
     }
     case 'DOCUMENTS_REVIEW':
       if (f.pendingDocs > 0) return done('DOCS_REVIEW');
-      return done(f.hasEmployer ? 'CONTRACT_PREP' : 'JOB_SEARCH');
+      // All documents accepted: the next step is the Əmək müqaviləsi with Triad Vision (lib/caseContracts).
+      return done('CONTRACT_PREP');
     case 'CONTRACT_SENT':
       if (f.contractTurn === 'TRIAD' || f.contractTurn === 'STAFF') return done('LABOUR_TRIAD');
       return need('SIGN_LABOUR', find('SIGN_CONTRACT'), caseUrl(p.id, '?tab=docs#contract'), null);

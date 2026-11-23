@@ -19,6 +19,7 @@ import { adminCopy } from '@/i18n/admin';
 import { roleLabel } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
+import { InboxNavBadge } from '@/components/staffMobile/InboxNavBadge'; // unanswered client messages
 import { TrainingNavBadge } from '@/components/team/training/TrainingNotice'; // unfinished required courses
 import { pagesCalls } from '@/i18n/pagesCalls';
 import { LiveChatAlerts } from '@/components/livechat/LiveChatAlerts'; // live chat queue sound + toast, incoming calls
@@ -152,6 +153,7 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
           <item.icon className={clsx('size-4 shrink-0', isActive ? 'text-ink' : 'text-muted group-hover:text-ink')} aria-hidden />
           {!collapsed && <span className="truncate">{label}</span>}
           {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
+          {item.badge === 'inbox' && <InboxNavBadge collapsed={collapsed} />}
           {item.badge === 'training' && <TrainingNavBadge collapsed={collapsed} />}
         </>
       )}

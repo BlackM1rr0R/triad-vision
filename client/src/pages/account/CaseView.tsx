@@ -58,6 +58,10 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
   const { t } = useTranslation();
   const clientTurn = CLIENT_ACTION.includes(data.status);
   const staffTurn = STAFF_ACTION.includes(data.status);
+  // Initial documents all accepted, contract not sent yet: say so instead of "documents under review".
+  const initialReqs = data.requirements.filter((r) => r.stage === 'INITIAL' && r.required);
+  const docsAccepted =
+    data.status === 'DOCUMENTS_REVIEW' && initialReqs.length > 0 && initialReqs.every((r) => r.documents.some((d) => d.status === 'ACCEPTED'));
 
   return (
     <motion.section
@@ -66,10 +70,11 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={clsx(
-        'relative overflow-hidden rounded-3xl border p-6 sm:p-8',
+        'relative scroll-mt-40 overflow-hidden rounded-3xl border p-6 sm:p-8',
         clientTurn ? 'border-warning-border bg-highlight-bg' : 'border-line bg-card shadow-[var(--tv-shadow-card)]',
       )}
       aria-labelledby="current-step-title"
+      id="current-step"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
         <span
@@ -95,9 +100,9 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
             {staffTurn && <span className="badge bg-info-bg text-info-fg">{t('portal.waiting')}</span>}
           </div>
           <h2 id="current-step-title" className="mt-2 text-xl font-semibold break-words text-ink sm:text-[1.7rem]">
-            {t(`portal.status.${data.status}`)}
+            {docsAccepted ? t('portal.docsAcceptedTitle') : t(`portal.status.${data.status}`)}
           </h2>
-          <p className={clsx('mt-2 max-w-[65ch] leading-relaxed', clientTurn ? 'text-ink/80' : 'text-muted')}>{t(`portal.statusHelp.${data.status}`)}</p>
+          <p className={clsx('mt-2 max-w-[65ch] leading-relaxed', clientTurn ? 'text-ink/80' : 'text-muted')}>{docsAccepted ? t('portal.docsAcceptedHelp') : t(`portal.statusHelp.${data.status}`)}</p>
           {staffTurn && <p className="mt-2 text-sm font-medium text-info-fg">{t('portal.waitingUs')}</p>}
 
           {data.status === 'CANCELLED' && data.cancelReason && (
@@ -306,6 +311,8 @@ export default function CaseView() {
         {current === 'overview' && (
           <>
             <CurrentStepPanel data={data} />
+            {/* Home city → German city with the six milestones (primary case only), right below the current step. */}
+            {nextStep.data?.case?.id === data.id && <JourneyCard next={nextStep.data} />}
             {data.status === 'APPROVED' && <SuccessShareCard caseId={data.id} />}
             {/* Every other open item (the portal home shows only the top three). */}
             <NextItems items={next.items} short={next.short} />
@@ -317,8 +324,6 @@ export default function CaseView() {
             <ClientRecognitionCard caseId={data.id} />
             {/* Embassy / Ausländerbehörde from the authorities catalogue (read-only; nothing while none is linked). */}
             <ClientAuthoritiesCard caseId={data.id} />
-            {/* Home city → German city with the six milestones (primary case only). */}
-            {nextStep.data?.case?.id === data.id && <JourneyCard next={nextStep.data} />}
             {/* One timeline: steps with their dates. */}
             <div id="forecast" className="scroll-mt-40">
               <ForecastStrip caseId={data.id} />

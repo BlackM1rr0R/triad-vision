@@ -320,6 +320,8 @@ const tr: SiteCopy<Messages> = {
     created: 'Oluşturulma',
     updated: 'Güncellenme',
     currentStep: 'Mevcut adım',
+    docsAcceptedTitle: 'Belgeleriniz kabul edildi',
+    docsAcceptedHelp: 'Tüm ilk belgeleriniz kabul edildi. Şimdi Triad Vision ile sözleşmeniz hazırlanıyor — şu anda sizden bir şey gerekmiyor.',
     nextAction: 'Sizden beklenen',
     waitingUs: 'Ekibimiz üzerinde çalışıyor — size bildirim gönderilecek.',
     waiting: 'İşlemde',

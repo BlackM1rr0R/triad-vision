@@ -310,6 +310,8 @@ const az = {
     created: 'Yaradılıb',
     updated: 'Yenilənib',
     currentStep: 'Cari addım',
+    docsAcceptedTitle: 'Sənədləriniz qəbul edildi',
+    docsAcceptedHelp: 'Bütün ilkin sənədləriniz qəbul olunub. İndi əmək müqaviləniz hazırlanır — sizdən hazırda heç nə tələb olunmur.',
     nextAction: 'Sizdən gözlənilən',
     waitingUs: 'Komandamız işləyir — sizə bildiriş göndəriləcək.',
     waiting: 'Gözləmədə',

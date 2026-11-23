@@ -189,7 +189,11 @@ export default function AccountHome() {
         <NextStepCard data={step} loading={next.isLoading} caseLink={caseId ? caseHref(caseId, 'overview') : null} tour="portal-next" />
       )}
 
-      {/* Right below "Do this now": the documents and the whole process at a glance (own case only). */}
+      {/* Always in view, right below "Do this now": the progress bar and the route home → Germany with the milestones. */}
+      {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
+      {step?.case && <JourneyCard next={step} />}
+
+      {/* Then the documents and the whole process at a glance (own case only). */}
       {!startHero && caseId && <DocStatusSection caseId={caseId} />}
 
       {/* A referral partner's data-sharing consent: only shown when it applies, and it needs an answer. */}
@@ -200,9 +204,6 @@ export default function AccountHome() {
       {nav.featured.length > 0 && <StageTools tools={nav.featured} ctx={ctx} badge={nav.toolBadges} allBadge={nav.allBadge} />}
 
       <MoreArea>
-        {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
-        {/* Home city → German city with the six milestones (map on tablet / desktop, list on phones). */}
-        {step?.case && <JourneyCard next={step} />}
         {cases.length > 0 && <CountdownCards />}
         {approved && stage !== 'IN_GERMANY' && <GermanyDayCard />}
         {approved && <SuccessShareCard dismissible />}

@@ -27,6 +27,7 @@ export type BallReason =
   | 'ATTEND_APPOINTMENT'
   // team
   | 'REVIEW_DOCS'
+  | 'PREPARE_CONTRACT' // initial documents all accepted: staff prepare the Əmək müqaviləsi
   | 'CHECK_SIGNATURE'
   | 'LODGE_APPLICATION'
   | 'REPLY_MESSAGE'
@@ -92,7 +93,7 @@ const STATUS_SIDE: Record<CaseStatus, BallSide> = {
 };
 
 const CLIENT_ORDER: BallReason[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'ATTEND_APPOINTMENT', 'SIGN_DOCUMENTS', 'CLIENT_TASKS'];
-const TEAM_ORDER: BallReason[] = ['REVIEW_DOCS', 'TRIAD_SIGN_CONTRACT', 'RESEND_CONTRACT', 'CHECK_SIGNATURE', 'LODGE_APPLICATION', 'REPLY_MESSAGE'];
+const TEAM_ORDER: BallReason[] = ['REVIEW_DOCS', 'PREPARE_CONTRACT', 'TRIAD_SIGN_CONTRACT', 'RESEND_CONTRACT', 'CHECK_SIGNATURE', 'LODGE_APPLICATION', 'REPLY_MESSAGE'];
 
 export interface BallFacts {
   id: string;
@@ -181,7 +182,8 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   add('CLIENT', 'CLIENT_TASKS', f.tasks.length, minDate(f.tasks.map((t) => t.dueAt)));
 
   // Team.
-  if (f.status === 'DOCUMENTS_REVIEW' || f.status === 'EMBASSY_REVIEW') add('TEAM', 'REVIEW_DOCS', Math.max(1, f.pendingDocs));
+  if (f.status === 'DOCUMENTS_REVIEW' && f.pendingDocs === 0) add('TEAM', 'PREPARE_CONTRACT', 1);
+  else if (f.status === 'DOCUMENTS_REVIEW' || f.status === 'EMBASSY_REVIEW') add('TEAM', 'REVIEW_DOCS', Math.max(1, f.pendingDocs));
   if (contractTurn === 'TRIAD') add('TEAM', 'TRIAD_SIGN_CONTRACT', 1);
   if (contractTurn === 'STAFF') add('TEAM', 'RESEND_CONTRACT', 1);
   if (f.status === 'CONTRACT_SIGNED' && workTurn !== 'CLIENT') add('TEAM', 'CHECK_SIGNATURE', 1);

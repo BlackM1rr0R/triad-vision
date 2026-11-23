@@ -24,8 +24,8 @@ describe('cabinet status line', () => {
     expect(buildStatusLine(facts('DOCUMENTS_REVIEW', { pendingDocs: 3 }))).toMatchObject({ stage: 'DOCS_REVIEW', required: false, action: null });
   });
 
-  it('job search until an employer is linked, then the contract is prepared', () => {
-    expect(buildStatusLine(facts('DOCUMENTS_REVIEW'))).toMatchObject({ stage: 'JOB_SEARCH', required: false });
+  it('documents accepted → the Əmək müqaviləsi is prepared (with or without an employer); Bax opens the current step', () => {
+    expect(buildStatusLine(facts('DOCUMENTS_REVIEW'))).toMatchObject({ stage: 'CONTRACT_PREP', required: false, to: expect.stringMatching(/#current-step$/) });
     expect(buildStatusLine(facts('DOCUMENTS_REVIEW', { hasEmployer: true }))).toMatchObject({ stage: 'CONTRACT_PREP', required: false });
   });
 

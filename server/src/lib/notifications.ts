@@ -186,7 +186,9 @@ export const notifyClient = async (
   const title = brandify(rendered.title);
   const body = brandify(rendered.body);
   // Document reviews open the case's documents tab, where a rejected file can be uploaded again.
-  const link = `/account/cases/${c.id}${type === 'DOCUMENT_REJECTED' || type === 'DOCUMENT_ACCEPTED' ? '?tab=docs' : ''}`;
+  // Straight to the right tab (a message opens the Mesajlar tab, a document the Sənədlər tab).
+  const tabQuery = type === 'DOCUMENT_REJECTED' || type === 'DOCUMENT_ACCEPTED' ? '?tab=docs' : type === 'NEW_MESSAGE' ? '?tab=messages' : '';
+  const link = `/account/cases/${c.id}${tabQuery}`;
 
   const n = await prisma.notification.create({
     data: { userId: c.clientId, caseId, type, title, body, link },

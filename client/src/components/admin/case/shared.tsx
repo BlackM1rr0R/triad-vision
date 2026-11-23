@@ -35,6 +35,7 @@ export const useCaseRefresh = (id: string) => {
       qc.invalidateQueries({ queryKey: caseKey(id) }),
       qc.invalidateQueries({ queryKey: ['admin-cases'] }),
       qc.invalidateQueries({ queryKey: ['admin-dashboard'] }),
+      qc.invalidateQueries({ queryKey: ['admin-inbox'] }), // staff inbox list (awaiting / unread badges)
     ]);
 };
 

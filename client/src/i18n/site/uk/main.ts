@@ -320,6 +320,8 @@ const uk: SiteCopy<Messages> = {
     created: 'Створено',
     updated: 'Оновлено',
     currentStep: 'Поточний крок',
+    docsAcceptedTitle: 'Ваші документи прийнято',
+    docsAcceptedHelp: 'Усі первинні документи прийнято. Зараз готується ваш договір із Triad Vision — від вас наразі нічого не потрібно.',
     nextAction: 'Що потрібно від вас',
     waitingUs: 'Наша команда працює над цим — ви отримаєте сповіщення.',
     waiting: 'В опрацюванні',

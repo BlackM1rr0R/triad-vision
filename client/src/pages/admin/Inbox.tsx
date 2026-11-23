@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { CheckCheck, Clock, MessageSquareReply, Mic } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { hasMinRole, type CaseStatus } from '@/lib/types';
+import { hasMinRole } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesStaffMobile } from '@/i18n/pagesStaffMobile';
@@ -18,35 +18,38 @@ import { fmtRelative, fullName, toastError } from '@/components/admin/labels';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { SwipeRow } from '@/components/staffMobile/SwipeRow';
 import { ReplySheet } from '@/components/staffMobile/ReplySheet';
+import { InboxSplit } from '@/components/staffInbox/InboxSplit';
+import { SPLIT_QUERY, useMedia } from '@/components/staffInbox/useMedia';
+import type { InboxItem, InboxResponse } from '@/components/staffInbox/types';
 
 registerCopy(pagesStaffMobile);
-
-// ─── API (server routes/admin/inbox.ts) ─────────────────────────────────
-
-interface InboxItem {
-  caseId: string;
-  number: string;
-  status: CaseStatus;
-  client: { id: string; firstName: string; lastName: string; phone: string | null };
-  assignedStaff: { id: string; firstName: string; lastName: string } | null;
-  lastMessage: { excerpt: string; at: string; fromClient: boolean; voice: boolean };
-  awaitingReply: boolean;
-  since: string | null;
-  waitingCount: number;
-  unread: number;
-}
-interface InboxResponse {
-  items: InboxItem[];
-  counts: { awaiting: number; unread: number };
-  scope: 'mine' | 'all';
-}
 
 /**
  * Messages (/admin/inbox, STAFF+): the client conversations of the viewer's open cases — waiting for the team's
  * answer first (oldest wait on top), then recent threads. Designed for the phone tab bar: swipe right = reply sheet,
  * swipe left = mark read, tap = the case's communication tab; the same actions are buttons in every row.
+ * From 1024 px the page is the split view (components/staffInbox): conversations, open thread and client profile
+ * side by side, the open conversation in `?case=<id>`.
  */
 export default function AdminInbox() {
+  const split = useMedia(SPLIT_QUERY);
+  return split ? <SplitPage /> : <PhoneInbox />;
+}
+
+function SplitPage() {
+  const { t } = useTranslation();
+  usePageTitle(t('smob.inbox.title'));
+  return <InboxSplit />;
+}
+
+function PhoneInbox() {
+  // A notification link (/admin/inbox?case=<id>) on a narrow screen opens the case's messages tab.
+  const caseParam = useSearchParams()[0].get('case');
+  if (caseParam) return <Navigate to={`/admin/cases/${encodeURIComponent(caseParam)}?tab=communication`} replace />;
+  return <PhoneList />;
+}
+
+function PhoneList() {
   const { t } = useTranslation();
   usePageTitle(t('smob.inbox.title'));
   const { user } = useAuth();
