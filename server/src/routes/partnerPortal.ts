@@ -11,6 +11,7 @@ import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middl
 import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
 import { FINAL_STATUSES } from '../lib/caseFlow.js';
+import { partnerTrend } from '../lib/partnerPortal/trend.js';
 import { caseLabels, commissionTotals, monthRange, settlementClientNames } from '../lib/partners/commissions.js';
 import { buildCommissionWorkbook } from '../lib/partners/report.js';
 import { ACTIVE_FILTER, listPartnerCases, partnerCaseDetail, storePartnerUpload, visaFacets } from '../lib/partnerPortal/cases.js';
@@ -86,7 +87,7 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
   const ctx = await partnerContextOf(req);
   const { partner, perms } = ctx;
   const [cases, commissions, events] = await Promise.all([
-    prisma.case.findMany({ where: { partnerId: partner.id }, select: { clientId: true, status: true, processingStage: true } }),
+    prisma.case.findMany({ where: { partnerId: partner.id }, select: { clientId: true, status: true, processingStage: true, createdAt: true, decisionAt: true } }),
     prisma.partnerCommission.findMany({ where: { partnerId: partner.id }, select: { amountCents: true, status: true, createdAt: true, paidAt: true } }),
     prisma.caseEvent.findMany({
       where: { visibleToClient: true, case: { partnerId: partner.id } },
@@ -109,6 +110,8 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
       rejected: perms.caseStage ? cases.filter((c) => isRefused(c)).length : null,
     },
     byVisa: facetsFor(await visaFacets({ partnerId: partner.id }), perms),
+    // Monthly trend of the partner's own clients / cases; the visa series only with the case-stage permission.
+    trend: (({ approved, ...rest }) => ({ ...rest, approved: perms.caseStage ? approved : null }))(partnerTrend(cases, new Date())),
     commissions: perms.payments ? { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents } : null,
     // Client names and stage changes: only with the client list and the case stage.
     recent:

@@ -7,6 +7,7 @@ import { HttpError, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { recordConsent } from '../lib/privacy/consents.js';
 import { calculatorCategories, DOC_STATES, estimate, getCalculatorSettings, INPUT_LEVELS } from '../lib/growth/calculator.js';
 import { publicMap } from '../lib/growth/map.js';
+import { publicHomeStats } from '../lib/growth/homeStats.js';
 import { eventIcs, leadForRegistrant, mailRegistrant, registrationIdOf } from '../lib/growth/events.js';
 import { asEventLocale } from '../lib/growth/eventTexts.js';
 import { getReferralSettings, maskedName, referralCodeForView, referralLink, syncReferrals } from '../lib/growth/referral.js';
@@ -24,6 +25,7 @@ import { onInquiryCreated } from '../lib/assignment/inquiry.js';
  * Public growth features — mounted at /api/growth:
  *   GET  /calculator, /calculator/estimate   start-date calculator
  *   GET  /map                                Germany placement map (aggregates ≥ 3 per city)
+ *   GET  /home-stats                         home counters: workers placed (map total, cities >= 3) + open vacancies
  *   GET  /events, /events/:slug              upcoming info sessions / webinars
  *   POST /events/:slug/register              registration (honeypot, consent, rate limit)
  *   GET  /events/:slug/ics                   "add to calendar" (?r=<registrant token> adds the join link)
@@ -38,6 +40,11 @@ growthRouter.use(referralShareRouter); // referral landing page, share messages,
 
 const publicCache = (res: import('express').Response, seconds = 60) =>
   res.setHeader('Cache-Control', `public, max-age=${seconds}, stale-while-revalidate=600`);
+
+growthRouter.get('/home-stats', async (_req, res) => {
+  publicCache(res, 300);
+  res.json(await publicHomeStats());
+});
 
 // ─── Start-date calculator ─────────────────────────────────────────────
 

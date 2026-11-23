@@ -4,10 +4,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, CalendarRange, Clock3, Columns3, KanbanSquare, List, MailCheck, PlaneLanding, Search, Users, Workflow } from 'lucide-react';
+import { m } from 'framer-motion';
+import { AlertTriangle, Briefcase, CalendarRange, Clock3, Columns3, KanbanSquare, List, MailCheck, PlaneLanding, Search, Users, Workflow } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesEmployerPipeline } from '@/i18n/pagesEmployerPipeline';
+import { pagesDashboards } from '@/i18n/pagesDashboards';
 import { pagesEmployerWorkers } from '@/i18n/pagesEmployerWorkers';
 import { useRealtime, useRealtimeStatus } from '@/lib/realtime';
 import { fmtDate } from '@/components/admin/labels';
@@ -26,9 +28,10 @@ import { PIPELINE_STAGES, type Blocker, type PipelineCard, type PipelineResponse
 
 registerCopy(pagesEmployerPipeline);
 registerCopy(pagesEmployerWorkers);
+registerCopy(pagesDashboards);
 
-type View = 'board' | 'list' | 'timeline';
-const VIEWS: View[] = ['board', 'list', 'timeline'];
+type View = 'board' | 'positions' | 'list' | 'timeline';
+const VIEWS: View[] = ['board', 'positions', 'list', 'timeline'];
 
 const STAGE_DOT: Record<PipelineStage, string> = {
   CONTRACT: 'bg-sky-500',
@@ -162,6 +165,71 @@ const Board = ({ cards, onOpen }: { cards: PipelineCard[]; onOpen: (id: string) 
           );
         })}
       </div>
+    </div>
+  );
+};
+
+/**
+ * Candidates per vacancy: a row per position, a column per pipeline stage, the candidates' names in the cells. Read-only
+ * (a name opens the same worker card as the board). Only what the board shows already: name, position, stage.
+ */
+const PositionBoard = ({ cards, onOpen }: { cards: PipelineCard[]; onOpen: (id: string) => void }) => {
+  const { t } = useTranslation();
+  const rows = useMemo(() => {
+    const by = new Map<string, PipelineCard[]>();
+    for (const c of cards) by.set(c.position, [...(by.get(c.position) ?? []), c]);
+    return [...by.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  }, [cards]);
+  if (!rows.length) return <p className="py-6 text-center text-sm text-muted">{t('dash.board.empty')}</p>;
+  return (
+    <div className="-mx-5 overflow-x-auto px-5 pb-2 sm:-mx-6 sm:px-6" role="region" aria-label={t('dash.board.title')} tabIndex={0}>
+      <p className="mb-3 text-xs text-muted">{t('dash.board.note')}</p>
+      <table className="w-full min-w-[860px] border-separate border-spacing-1.5 text-sm">
+        <thead>
+          <tr className="text-xs text-muted">
+            <th scope="col" className="w-44 px-2 py-1 text-left font-medium">
+              {t('dash.board.position')}
+            </th>
+            {PIPELINE_STAGES.map((stage) => (
+              <th key={stage} scope="col" className="px-2 py-1 text-left font-medium">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className={clsx('size-2.5 rounded-full', STAGE_DOT[stage])} aria-hidden />
+                  {t(`employerPipeline.stage.${stage}`)}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([position, list], ri) => (
+            <m.tr key={position} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: ri * 0.05 }}>
+              <th scope="row" className="rounded-xl bg-sunken px-3 py-2 text-left align-top">
+                <span className="block font-semibold text-ink">{position}</span>
+                <span className="text-xs font-normal text-muted">
+                  {t('dash.board.total')}: <b className="text-ink tabular-nums">{list.length}</b>
+                </span>
+              </th>
+              {PIPELINE_STAGES.map((stage) => {
+                const here = list.filter((c) => c.stage === stage);
+                return (
+                  <td key={stage} className={clsx('rounded-xl p-1.5 align-top', here.length ? 'bg-sunken' : 'bg-sunken/40')} aria-label={t('dash.board.cell', { position, stage: t(`employerPipeline.stage.${stage}`), count: here.length })}>
+                    <ul className="space-y-1">
+                      {here.map((c) => (
+                        <li key={c.id}>
+                          <button type="button" onClick={() => onOpen(c.id)} className={clsx('w-full truncate rounded-lg border bg-card px-2 py-1 text-left text-xs font-medium text-ink hover:border-line-strong', c.blockers.length ? 'border-warning-border' : 'border-line')}>
+                            {c.name}
+                            {c.slow && <Clock3 className="ml-1 inline size-3 text-warning-fg" aria-hidden />}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                );
+              })}
+            </m.tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
@@ -366,6 +434,7 @@ export const CompanyPipeline = () => {
                 onChange={(v) => setParam('view', v === 'board' ? null : v)}
                 items={[
                   { key: 'board', label: t('employerPipeline.views.board'), icon: KanbanSquare },
+                  { key: 'positions', label: t('dash.board.byPosition'), icon: Briefcase },
                   { key: 'list', label: t('employerPipeline.views.list'), icon: List },
                   { key: 'timeline', label: t('employerPipeline.views.timeline'), icon: CalendarRange },
                 ]}
@@ -390,6 +459,8 @@ export const CompanyPipeline = () => {
 
             {cards.length === 0 ? (
               <Empty icon={Columns3} illustration={<SearchEmpty className="w-32" />} title={t('employerPipeline.noMatch')} />
+            ) : view === 'positions' ? (
+              <PositionBoard cards={cards} onOpen={(id) => setParam('worker', id)} />
             ) : view === 'list' ? (
               <ListView cards={cards} onOpen={(id) => setParam('worker', id)} />
             ) : view === 'timeline' ? (

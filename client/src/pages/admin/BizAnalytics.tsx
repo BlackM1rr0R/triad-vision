@@ -3,23 +3,27 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { AlertTriangle, Download, Filter, Hourglass, Layers, LineChart as LineIcon, Timer, TrendingUp, UsersRound } from 'lucide-react';
+import { AlertTriangle, Download, Filter, Flame, Globe2, Hourglass, Layers, LineChart as LineIcon, Timer, TrendingUp, UsersRound } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesBizAnalytics } from '@/i18n/pagesBizAnalytics';
+import { pagesDashboards } from '@/i18n/pagesDashboards';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { statusLabel } from '@/components/admin/labels';
 import { Chip, ErrorBlock, LoadingBlock, PageHead, Panel, StatTile } from '@/components/admin/ui';
-import { AreaChart, HBarList, VIZ, type ChartSeries } from '@/components/charts';
+import { AnimatedFunnel, AreaChart, HBarList, VIZ, type ChartSeries, type PipelineStep } from '@/components/charts';
+import { StageHeatmapView } from '@/components/dashboards/StageHeatmap';
+import { LivePlacementMap } from '@/components/dashboards/LivePlacementMap';
 import { useReportFormat } from '@/components/reports/types';
 import type { CaseStatus } from '@/lib/types';
 import { RevenueView } from '@/components/salesAnalytics/RevenueView'; // "Gəlir və satış" tab (lib/salesAnalytics)
 import { salesCsvHref } from '@/components/salesAnalytics/api';
 
 registerCopy(pagesBizAnalytics);
+registerCopy(pagesDashboards);
 
 // ─── API shape (server lib/bizAnalytics/service.ts) ─────────────────────
 
@@ -67,12 +71,15 @@ interface BizResponse {
     bottleneck: { stage: Stage | null; rows: { stage: Stage; open: number; medianWaitingDays: number | null; waitingDays: number; overTypical: number }[] };
   };
   performance: { partners: PerfRow[]; agents: PerfRow[]; staff: PerfRow[] };
-  funnel: { steps: FunnelStep[]; cohorts: { month: string; steps: FunnelStep[]; inquiries: number | null }[]; inquiries: number | null; categoryFiltered: boolean };
+  funnel: { pipeline: PipelineStep[]; steps: FunnelStep[]; cohorts: { month: string; steps: FunnelStep[]; inquiries: number | null }[]; inquiries: number | null; categoryFiltered: boolean };
   categories: { id: string; slug: string; visaLabel: string | null; title: Record<string, string> | null }[];
 }
 
-type Section = 'stages' | 'partners' | 'funnel' | 'revenue';
-const SECTIONS: Section[] = ['stages', 'partners', 'funnel', 'revenue'];
+type Section = 'stages' | 'heatmap' | 'partners' | 'funnel' | 'map' | 'revenue';
+const SECTIONS: Section[] = ['stages', 'heatmap', 'partners', 'funnel', 'map', 'revenue'];
+/** Tabs with their own data (not the /business report) and without a CSV export. */
+const OWN_DATA: Section[] = ['revenue', 'map'];
+const NO_CSV: Section[] = ['heatmap', 'map'];
 const PRESETS = [3, 6, 12] as const;
 type Preset = (typeof PRESETS)[number] | 'custom';
 /** Stages drawn in the trend by default (the rest can be switched on in the legend). */
@@ -217,7 +224,7 @@ export default function AdminBizAnalytics() {
     queryFn: async () => (await api.get<BizResponse>('/admin/analytics/business', { params })).data,
     placeholderData: keepPreviousData,
     staleTime: 60_000,
-    enabled: section !== 'revenue',
+    enabled: !OWN_DATA.includes(section),
   });
   const csvHref = section === 'revenue' ? salesCsvHref(range, 'revenue') : `/api/admin/analytics/business.csv?${new URLSearchParams({ ...params, section }).toString()}`;
 
@@ -257,9 +264,11 @@ export default function AdminBizAnalytics() {
         title={t('biz.title')}
         subtitle={t('biz.subtitle')}
         actions={
-          <a href={csvHref} className="btn-secondary btn-sm" download>
-            <Download className="size-3.5" aria-hidden /> {t('biz.csv')} · {section === 'revenue' ? t('sales.tab') : t(`biz.tabs.${section}`)}
-          </a>
+          NO_CSV.includes(section) ? null : (
+            <a href={csvHref} className="btn-secondary btn-sm" download>
+              <Download className="size-3.5" aria-hidden /> {t('biz.csv')} · {section === 'revenue' ? t('sales.tab') : t(`biz.tabs.${section}`)}
+            </a>
+          )
         }
       />
 
@@ -275,7 +284,7 @@ export default function AdminBizAnalytics() {
           </Chip>
           {isFetching && !isLoading && <Spinner className="ml-1 size-3.5 text-link" />}
         </div>
-        <label className={clsx('flex min-w-0 items-center gap-2 text-xs text-muted', section === 'revenue' && 'hidden')}>
+        <label className={clsx('flex min-w-0 items-center gap-2 text-xs text-muted', (section === 'revenue' || section === 'map') && 'hidden')}>
           <span className="shrink-0">{t('biz.category')}</span>
           <select className="input min-w-0 sm:w-64" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">{t('biz.allCategories')}</option>
@@ -308,13 +317,17 @@ export default function AdminBizAnalytics() {
       <Tabs
         className="mb-6"
         label={t('biz.title')}
-        items={SECTIONS.map((k) => ({ key: k, label: k === 'revenue' ? t('sales.tab') : t(`biz.tabs.${k}`) }))}
+        items={SECTIONS.map((k) => ({ key: k, label: k === 'revenue' ? t('sales.tab') : k === 'heatmap' ? t('dash.heat.title') : k === 'map' ? t('dash.map.title') : t(`biz.tabs.${k}`) }))}
         value={section}
         onChange={setSection}
       />
 
       {section === 'revenue' ? (
         <RevenueView range={range} />
+      ) : section === 'map' ? (
+        <Panel title={t('dash.map.title')} icon={Globe2}>
+          <LivePlacementMap />
+        </Panel>
       ) : isLoading ? (
         <LoadingBlock />
       ) : error ? (
@@ -322,6 +335,12 @@ export default function AdminBizAnalytics() {
       ) : data ? (
         <div className={clsx('space-y-6 transition-opacity', isFetching && 'opacity-70')}>
           {section === 'stages' && <StagesView data={data} days={days} catName={catName} series={series} points={points} hidden={hidden} toggle={toggle} />}
+          {section === 'heatmap' && (
+            <Panel title={t('dash.heat.title')} icon={Flame}>
+              <p className="-mt-1 mb-4 text-xs text-muted">{t('dash.heat.note')}</p>
+              <StageHeatmapView visaCategoryId={category} />
+            </Panel>
+          )}
           {section === 'partners' && <PartnersView data={data} />}
           {section === 'funnel' && <FunnelView data={data} />}
         </div>
@@ -506,6 +525,12 @@ const FunnelView = ({ data }: { data: BizResponse }) => {
   const showInquiries = fu.inquiries !== null;
   return (
     <>
+      <Panel title={t('dash.funnel.title')} icon={Filter}>
+        <p className="-mt-1 mb-4 text-xs text-muted">{t('dash.funnel.note')}</p>
+        {fu.categoryFiltered && <p className="mb-4 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-ink/80">{t('biz.funnel.filtered')}</p>}
+        <AnimatedFunnel steps={fu.pipeline} />
+      </Panel>
+
       <Panel title={t('biz.funnel.title')} icon={Filter}>
         <p className="-mt-1 mb-4 text-xs text-muted">{t('biz.funnel.note')}</p>
         {fu.categoryFiltered && <p className="mb-4 rounded-lg border border-line bg-sunken px-3 py-2 text-xs text-ink/80">{t('biz.funnel.filtered')}</p>}

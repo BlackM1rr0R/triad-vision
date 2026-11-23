@@ -1,13 +1,14 @@
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { badRequest, parse } from '../../lib/http.js';
+import { badRequest, forbidden, parse } from '../../lib/http.js';
 import { computeAnalytics } from '../../lib/funnel.js';
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
-import { caseScopeWhere, hasFullCaseScope } from '../../lib/access/api.js';
+import { can, caseScopeWhere, hasFullCaseScope } from '../../lib/access/api.js';
 import { OVERVIEW_PERIODS } from '../../lib/analyticsOverview/compute.js';
 import { cachedOverview, goalSchema, overviewActivity, overviewCsv, writeGoal } from '../../lib/analyticsOverview/service.js';
-import { BIZ_SECTIONS, bizAnalytics, bizCsv, bizQuery } from '../../lib/bizAnalytics/service.js';
+import { BIZ_SECTIONS, bizAnalytics, bizCsv, bizQuery, stageHeatmapCases, stageHeatmapCasesQuery, stageHeatmapQuery, stageHeatmapReport } from '../../lib/bizAnalytics/service.js';
+import { placementsMap } from '../../lib/growth/placementsMap.js';
 import { SALES_SECTIONS, salesAnalytics, salesCsv, salesQuery } from '../../lib/salesAnalytics/service.js';
 
 // Admin: analytics — mounted at /api/admin/analytics (staff and above; aggregates only, no personal data)
@@ -39,6 +40,17 @@ adminAnalyticsRouter.get('/business', requireMinRole('ADMIN'), async (req, res) 
   res.json(await bizAnalytics(parse(bizQuery, req.query), undefined, await caseScopeWhere(req.user)));
 });
 
+// Stage heatmap (ADMIN+): open cases by days waiting in their stage; the cell list shows the cases behind a cell.
+// Both follow the viewer's staff case scope; the list also needs the "cases" view permission (case numbers, names).
+adminAnalyticsRouter.get('/stage-heatmap', requireMinRole('ADMIN'), async (req, res) => {
+  res.json(await stageHeatmapReport(parse(stageHeatmapQuery, req.query), await caseScopeWhere(req.user)));
+});
+
+adminAnalyticsRouter.get('/stage-heatmap/cases', requireMinRole('ADMIN'), async (req, res) => {
+  if (!(await can(req.user, 'cases', 'view'))) throw forbidden('FORBIDDEN');
+  res.json(await stageHeatmapCases(parse(stageHeatmapCasesQuery, req.query), await caseScopeWhere(req.user)));
+});
+
 adminAnalyticsRouter.get('/business.csv', requireMinRole('ADMIN'), async (req, res) => {
   const { section, ...rest } = parse(z.object({ section: z.enum(BIZ_SECTIONS).default('partners') }).passthrough(), req.query);
   const q = parse(bizQuery, rest);
@@ -61,6 +73,12 @@ const fullScopeOnly = async (req: Request, res: Response, next: NextFunction) =>
     next(e);
   }
 };
+
+// Live placement map (ADMIN+): real placements per German city (approved / arrived cases, past placements, admin map
+// entries) — company-wide counts, so only for the full case scope like the revenue figures. Counts only, no cases.
+adminAnalyticsRouter.get('/placements', requireMinRole('ADMIN'), fullScopeOnly, async (_req, res) => {
+  res.json(await placementsMap());
+});
 
 adminAnalyticsRouter.get('/sales', requireMinRole('ADMIN'), fullScopeOnly, async (req, res) => {
   res.json(await salesAnalytics(parse(salesQuery, req.query)));

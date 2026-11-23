@@ -8,7 +8,7 @@ import { monthOf } from '../kpi/compute.js';
 import { computeProfitability } from '../profitability/compute.js';
 import { getProfitSettings } from '../profitability/settings.js';
 import { bakuDay, bakuMidnight, bakuParts, dayRange } from '../reports/dates.js';
-import { bottleneck, funnelCohorts, monthsIn, perfRows, stageStats, STAGE_STATUSES, type FunnelClient, type PerfCase, type StageCase } from './compute.js';
+import { bottleneck, funnelCohorts, heatBucketOf, HEAT_BUCKETS, monthsIn, perfRows, pipelineSteps, stageHeatmap, stageStats, STAGE_STATUSES, type FunnelClient, type HeatBucketKey, type PerfCase, type StageCase, type StageStatus } from './compute.js';
 import { isFullScope, scoped } from '../accessAudit/scope.js';
 
 /**
@@ -176,10 +176,13 @@ const funnelSection = async (start: Date, end: Date, cat: Prisma.CaseWhereInput,
   const departed = new Set(arrived.map((a) => a.clientId));
   const input: FunnelClient[] = clients.map((u) => ({ registeredAt: u.createdAt, consultation: booked.has(u.id), caseRank: clientRank.get(u.id) ?? null, departed: departed.has(u.id) }));
   const f = funnelCohorts(input, months);
+  // registration → documents → contract → embassy → visa (animated funnel with the drop-off per step)
+  const pipeline = pipelineSteps(clients.map((u) => clientRank.get(u.id) ?? null));
   const inquiriesByMonth = new Map<string, number>();
   for (const i of inquiries) inquiriesByMonth.set(monthOf(i.createdAt), (inquiriesByMonth.get(monthOf(i.createdAt)) ?? 0) + 1);
   return {
     ...f,
+    pipeline,
     // Company / contact inquiries are not linked to client accounts: shown beside the cohort, not in it.
     inquiries: hasCat ? null : inquiries.length,
     cohorts: f.cohorts.map((c) => ({ ...c, inquiries: hasCat ? null : (inquiriesByMonth.get(c.month) ?? 0) })),
@@ -274,4 +277,44 @@ export const bizCsv = (r: BizAnalytics, section: BizSection) => {
       c.inquiries,
     ]),
   ]);
+};
+
+// ─── Stage heatmap ──────────────────────────────────────────────────────
+
+/** Open cases in their current stage: `since` = last status change (else the creation). In-scope cases only. */
+const openStageCases = async (where: Prisma.CaseWhereInput) => {
+  const open = await prisma.case.findMany({ where: { AND: [where, { status: { in: [...STAGE_STATUSES] as CaseStatus[] } }] }, select: { id: true, number: true, status: true, createdAt: true, clientId: true } });
+  const lastChange = await prisma.caseEvent.groupBy({ by: ['caseId'], where: { toStatus: { not: null }, case: { AND: [where, { status: { in: [...STAGE_STATUSES] as CaseStatus[] } }] } }, _max: { createdAt: true } });
+  const last = new Map(lastChange.map((r) => [r.caseId, r._max.createdAt]));
+  return open.map((c) => {
+    const l = last.get(c.id);
+    return { ...c, since: l && l > c.createdAt ? l : c.createdAt };
+  });
+};
+
+export const stageHeatmapQuery = z.object({ visaCategoryId: z.string().trim().min(1).max(40).optional() });
+export const stageHeatmapCasesQuery = stageHeatmapQuery.extend({
+  stage: z.enum(STAGE_STATUSES as unknown as [StageStatus, ...StageStatus[]]),
+  bucket: z.enum(HEAT_BUCKETS.map((b) => b.key) as unknown as [HeatBucketKey, ...HeatBucketKey[]]),
+});
+
+/** Stage × waiting-time grid of the open cases (staff case scope applied); red buckets = stuck. */
+export const stageHeatmapReport = async (q: z.infer<typeof stageHeatmapQuery>, scope: Prisma.CaseWhereInput = {}, now = new Date()) => {
+  const open = await openStageCases(scoped(caseCategory(q.visaCategoryId), scope));
+  return { buckets: HEAT_BUCKETS.map((b) => ({ key: b.key, from: b.from, to: Number.isFinite(b.to) ? b.to : null, stuck: b.stuck })), ...stageHeatmap(open, now), generatedAt: now.toISOString() };
+};
+
+const CASES_LIMIT = 100;
+
+/** The cases behind one heatmap cell, longest waiting first (same scope as the grid). */
+export const stageHeatmapCases = async (q: z.infer<typeof stageHeatmapCasesQuery>, scope: Prisma.CaseWhereInput = {}, now = new Date()) => {
+  const open = (await openStageCases(scoped(caseCategory(q.visaCategoryId), scope))).filter((c) => c.status === q.stage && heatBucketOf(Math.max(0, (now.getTime() - c.since.getTime()) / DAY)) === q.bucket);
+  open.sort((a, b) => a.since.getTime() - b.since.getTime());
+  const page = open.slice(0, CASES_LIMIT);
+  const clients = page.length ? await prisma.user.findMany({ where: { id: { in: page.map((c) => c.clientId) } }, select: { id: true, firstName: true, lastName: true } }) : [];
+  const name = new Map(clients.map((u) => [u.id, personName(u)]));
+  return {
+    total: open.length,
+    items: page.map((c) => ({ id: c.id, number: c.number, client: name.get(c.clientId) ?? null, status: c.status, since: c.since.toISOString(), waitingDays: Math.floor(Math.max(0, now.getTime() - c.since.getTime()) / DAY) })),
+  };
 };

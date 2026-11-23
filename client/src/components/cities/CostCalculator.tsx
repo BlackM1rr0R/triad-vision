@@ -6,6 +6,7 @@ import { ArrowRight, Info, Minus, Plus, Wallet } from 'lucide-react';
 import { CITIES, DATA_YEAR, KINDERGELD, cityBySlug } from '@/lib/cities/data';
 import { FLAT_SIZE, estimate, suggestedHousing, type Household, type Housing } from '@/lib/cities/calc';
 import { useCityFormat } from './format';
+import { MoneyBars } from './MoneyBars';
 
 const HOUSEHOLDS: Household[] = ['single', 'couple', 'family'];
 const HOUSINGS: Housing[] = ['wg', 'room1', 'room2', 'room3'];
@@ -151,6 +152,7 @@ export const CostCalculator = ({ citySlug, onCityChange }: { citySlug: string; o
             );
           })}
         </ul>
+        <MoneyBars lines={result.lines} total={result.total} net={hasNet ? netValue : null} cityName={f.l4(city.name)} />
         <div className="mt-5 rounded-2xl bg-sunken p-4 sm:p-5">
           <div className="flex items-baseline justify-between gap-3">
             <span className="font-semibold text-ink">{t('citiesPage.calc.total')}</span>

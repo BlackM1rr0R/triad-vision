@@ -297,3 +297,56 @@ export const funnelCohorts = (clients: FunnelClient[], months: string[]) => {
   }
   return { steps: steps(total), cohorts: months.map((month) => ({ month, steps: steps(perMonth.get(month)!) })) };
 };
+
+// ─── Application pipeline funnel (animated dashboard) ───────────────────
+
+/** registration → documents → contract → embassy → visa. */
+export const PIPELINE_STEPS = ['registered', 'documents', 'contract', 'embassy', 'visa'] as const;
+export type PipelineStep = (typeof PIPELINE_STEPS)[number];
+/** Furthest visa step (lib/funnel STATUS_RANK) a client's cases must have reached for each step. */
+const PIPELINE_MIN_RANK: Record<Exclude<PipelineStep, 'registered'>, number> = { documents: 1, contract: 3, embassy: 4, visa: 7 };
+
+/**
+ * Clients per pipeline step ("reached or beyond", like funnelCohorts) with the step conversion and the drop-off
+ * (clients that reached the previous step but not this one). `caseRanks`: furthest case step of every registered
+ * client in the cohort, null = no case yet.
+ */
+export const pipelineSteps = (caseRanks: (number | null)[]) => {
+  const counts = PIPELINE_STEPS.map((key) => (key === 'registered' ? caseRanks.length : caseRanks.filter((r) => r !== null && r >= PIPELINE_MIN_RANK[key]).length));
+  return PIPELINE_STEPS.map((key, i) => ({
+    key,
+    count: counts[i],
+    rate: i === 0 ? null : rate(counts[i], counts[i - 1]),
+    ofFirst: i === 0 ? (counts[0] ? 100 : null) : rate(counts[i], counts[0]),
+    dropped: i === 0 ? 0 : Math.max(0, counts[i - 1] - counts[i]),
+  }));
+};
+
+// ─── Stage heatmap (open cases by days waiting in their current stage) ──
+
+/** Waiting-time buckets in days: [from, to) — the last one is open ended. `stuck` = long enough to need attention. */
+export const HEAT_BUCKETS = [
+  { key: 'd7', from: 0, to: 7, stuck: false },
+  { key: 'd14', from: 7, to: 14, stuck: false },
+  { key: 'd30', from: 14, to: 30, stuck: false },
+  { key: 'd60', from: 30, to: 60, stuck: true },
+  { key: 'd60plus', from: 60, to: Infinity, stuck: true },
+] as const;
+export type HeatBucketKey = (typeof HEAT_BUCKETS)[number]['key'];
+
+export const heatBucketOf = (waitingDays: number): HeatBucketKey => (HEAT_BUCKETS.find((b) => waitingDays >= b.from && waitingDays < b.to) ?? HEAT_BUCKETS[HEAT_BUCKETS.length - 1]).key;
+
+/** Open cases per stage and waiting bucket; `since` = when the case entered its current status. */
+export const stageHeatmap = (open: OpenCase[], now: Date) => {
+  const rows = STAGE_STATUSES.map((stage) => {
+    const counts = Object.fromEntries(HEAT_BUCKETS.map((b) => [b.key, 0])) as Record<HeatBucketKey, number>;
+    let total = 0;
+    for (const c of open) {
+      if (c.status !== stage) continue;
+      counts[heatBucketOf(Math.max(0, (now.getTime() - c.since.getTime()) / DAY))]++;
+      total++;
+    }
+    return { stage, total, counts, stuck: HEAT_BUCKETS.filter((b) => b.stuck).reduce((a, b) => a + counts[b.key], 0) };
+  });
+  return { rows, max: Math.max(0, ...rows.flatMap((r) => Object.values(r.counts))), totalOpen: rows.reduce((a, r) => a + r.total, 0), totalStuck: rows.reduce((a, r) => a + r.stuck, 0) };
+};

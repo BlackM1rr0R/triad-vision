@@ -9,6 +9,7 @@ import {
   allocatePayment,
   daysOverdue,
   expectedPayments,
+  expectedVsReceived,
   inquiryLeadSource,
   isOverdue,
   leadSourceRows,
@@ -152,6 +153,15 @@ const loadDue = async (now: Date) => {
   return { ...expectedPayments(dueRows, now), overdueRows, overdueByKind };
 };
 
+/** Invoices (client + company, no drafts / cancelled) by due date in [start, end): what was expected to come in. */
+const loadDueInPeriod = async (start: Date, end: Date) => {
+  const [client, company] = await Promise.all([
+    prisma.clientInvoice.findMany({ where: { status: { in: ['SENT', 'PARTIALLY_PAID', 'PAID', 'OVERDUE'] }, dueDate: { gte: start, lt: end }, currency: 'EUR' }, select: { dueDate: true, grossCents: true } }),
+    prisma.invoice.findMany({ where: { status: { in: ['SENT', 'PAID', 'OVERDUE'] }, dueDate: { gte: start, lt: end }, currency: 'EUR' }, select: { dueDate: true, grossCents: true } }),
+  ]);
+  return [...client, ...company].map((r) => ({ at: r.dueDate, cents: r.grossCents }));
+};
+
 // ─── Leads ──────────────────────────────────────────────────────────────
 
 const loadLeads = async (start: Date, end: Date) => {
@@ -191,11 +201,12 @@ export const salesAnalytics = async (q: SalesQuery, now = new Date()) => {
   const months = monthsIn(cur.start, cur.end);
   const prevMonths = monthsIn(prev.start, prev.end);
 
-  const [money, due, leadsAll, commissions] = await Promise.all([
+  const [money, due, leadsAll, commissions, dueRowsInPeriod] = await Promise.all([
     loadMoney(prev.start, cur.end),
     loadDue(now),
     loadLeads(prev.start, cur.end),
     prisma.partnerCommission.groupBy({ by: ['partnerId'], where: { createdAt: { gte: cur.start, lt: cur.end }, status: { not: 'CANCELLED' } }, _sum: { amountCents: true } }),
+    loadDueInPeriod(prev.start, cur.end),
   ]);
 
   // Revenue
@@ -252,6 +263,7 @@ export const salesAnalytics = async (q: SalesQuery, now = new Date()) => {
       partnerShare: payCur + invCur > 0 ? Math.round((partnerRevenue / (payCur + invCur)) * 1000) / 10 : null,
     },
     revenue: { months, invoices: series.invoices, payments: series.payments, total: series.total, prevTotal: prevSeries.total },
+    plan: expectedVsReceived(months, prevMonths, dueRowsInPeriod, { cur: series.total, prev: prevSeries.total }, cur, prev),
     expected: { months: due.months, later: due.later, overdue: { ...due.overdue, byKind: due.overdueByKind, rows: due.overdueRows } },
     services: services.map((s) => {
       const pkg = s.key.startsWith('package:') ? pkgOf.get(s.key.slice(8)) : undefined;
@@ -287,9 +299,9 @@ export const salesCsv = (r: SalesAnalytics, section: SalesSection) => {
   switch (section) {
     case 'revenue':
       return lines([
-        ['Ay', 'İşəgötürən hesabları EUR', 'Müştəri ödənişləri EUR', 'Cəmi EUR', 'Əvvəlki dövr EUR'],
-        ...r.revenue.months.map((m, i) => [m, eur(r.revenue.invoices[i]), eur(r.revenue.payments[i]), eur(r.revenue.total[i]), r.revenue.prevTotal[i] === undefined ? '' : eur(r.revenue.prevTotal[i])]),
-        ['Cəmi', eur(r.summary.invoicesCents), eur(r.summary.paymentsCents), eur(r.summary.revenueCents), eur(r.summary.revenuePrevCents)],
+        ['Ay', 'İşəgötürən hesabları EUR', 'Müştəri ödənişləri EUR', 'Cəmi EUR', 'Əvvəlki dövr EUR', 'Gözlənilən (son tarix) EUR'],
+        ...r.revenue.months.map((m, i) => [m, eur(r.revenue.invoices[i]), eur(r.revenue.payments[i]), eur(r.revenue.total[i]), r.revenue.prevTotal[i] === undefined ? '' : eur(r.revenue.prevTotal[i]), eur(r.plan.expected[i] ?? 0)]),
+        ['Cəmi', eur(r.summary.invoicesCents), eur(r.summary.paymentsCents), eur(r.summary.revenueCents), eur(r.summary.revenuePrevCents), eur(r.plan.totals.expected)],
       ]);
     case 'expected':
       return lines([

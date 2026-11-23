@@ -28,6 +28,8 @@ export interface SalesResponse {
     partnerShare: number | null;
   };
   revenue: { months: string[]; invoices: number[]; payments: number[]; total: number[]; prevTotal: number[] };
+  /** Expected (invoices by due month) vs received (paid) by month, with the previous period aligned by index. */
+  plan: { months: string[]; expected: number[]; received: number[]; prevExpected: (number | null)[]; prevReceived: (number | null)[]; totals: { expected: number; received: number; prevExpected: number; prevReceived: number } };
   expected: {
     months: ({ month: string; total: number } & Record<DueKind, number>)[];
     later: { total: number } & Record<DueKind, number>;

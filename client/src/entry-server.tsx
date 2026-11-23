@@ -54,6 +54,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'referral-terms',
   'life-config', // /life-in-germany: professions, cities, yearly parameters, CBAR rate (article figures)
   'live-numbers', // home / about live numbers board: anonymous aggregates (≥ 3), the same for everyone
+  'home-stats', // home counters: workers placed (map total, cities >= 3) + open vacancies (GET /growth/home-stats), counts only
   'globe-map', // home globe: placement map aggregates (GET /growth/map, cities with ≥ 3 workers only)
   'eur-azn', // /salary-calculator (+ other tools): the CBAR EUR→AZN rate (GET /life/rate), the same for everyone
   'when-estimate', // /when-in-germany: percentiles of groups ≥ 10 cases (daily), the same for everyone with the same answers

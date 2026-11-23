@@ -6,6 +6,7 @@ import { useL10n } from '@/lib/l10n';
 import { registerLazyCopy } from '@/i18n';
 import pagesJourney from '@/i18n/pagesJourney?lazy-copy';
 import { useForecast } from './api';
+import { WaitingBar } from './WaitingBar';
 import type { Forecast, ForecastStep } from './types';
 
 registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
@@ -135,6 +136,8 @@ export const ForecastView = ({ forecast, className }: { forecast: Forecast; clas
         )}
         {finished && <p className="rounded-xl bg-success-bg px-3.5 py-2 text-sm font-semibold text-success-fg">{t('journey.forecast.finished')}</p>}
       </div>
+
+      <WaitingBar forecast={forecast} />
 
       <ol className="mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin] sm:gap-4 [&>li]:min-w-[8.5rem] sm:[&>li]:min-w-0">
         {forecast.steps.map((s, i) => (

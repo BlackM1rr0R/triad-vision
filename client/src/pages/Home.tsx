@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, Repeat } from 'lucide-react';
 import { Hero } from '@/components/home/Hero';
 import { StatsBar } from '@/components/home/StatsBar';
+import { HomeCounters } from '@/components/home/HomeCounters';
 import {
   AudienceSection,
   AusbildungSection,
@@ -147,6 +148,7 @@ export default function Home() {
     <>
       <Hero audience={audience} onChoose={choose} />
       <StatsBar />
+      <HomeCounters />
       <Suspense fallback={<WorldBandPlaceholder />}>
         <WorldBand />
       </Suspense>

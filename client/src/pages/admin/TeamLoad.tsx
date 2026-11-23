@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
+import { m } from 'framer-motion';
 import { AlarmClock, CalendarDays, FolderKanban, Gauge, ListTodo, MessageSquareWarning, Palmtree, UserX, Users } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesStaffDesk } from '@/i18n/pagesStaffDesk';
+import { pagesDashboards } from '@/i18n/pagesDashboards';
 import { useAuth } from '@/lib/auth';
 import { hasMinRole, type Role } from '@/lib/types';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -14,6 +16,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useWorkload, type CapacityLevel, type WorkloadRow } from '@/components/staffDesk/api';
 
 registerCopy(pagesStaffDesk);
+registerCopy(pagesDashboards);
 
 const LEVEL: Record<CapacityLevel, { bar: string; text: string }> = {
   low: { bar: 'bg-success', text: 'text-success-fg' },
@@ -94,15 +97,67 @@ export default function AdminTeamLoad() {
       ) : !rows.length ? (
         <EmptyState icon={Users} title={t('sd.load.empty')} />
       ) : (
+        <>
+        {admin && rows.length > 1 && <CapacityOverview rows={rows} />}
         <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {rows.map((r) => (
             <StaffCard key={r.id} r={r} meId={user?.id ?? ''} />
           ))}
         </ul>
+        </>
       )}
     </div>
   );
 }
+
+/** Bars are drawn up to this share of capacity; the 100 % line (the personal maximum) sits at 100 / BAR_MAX. */
+const BAR_MAX = 150;
+
+/**
+ * Team overview: one coloured capacity bar per staff member (open cases against the personal maximum), sorted like
+ * the cards. The bar grows in once (transform only — "reduce motion" switches it off); the 100 % marker shows the
+ * limit; level and percentage are written out, so colour is never the only signal. A list of the same numbers is the
+ * text alternative (aria-label on the figure).
+ */
+const CapacityOverview = ({ rows }: { rows: WorkloadRow[] }) => {
+  const { t } = useTranslation();
+  const summary = rows.map((r) => `${fullName(r)} ${r.capacityPct}% (${t(`sd.load.levels.${r.level}`)})`).join(', ');
+  const limit = (100 / BAR_MAX) * 100;
+  return (
+    <figure className="m-0 rounded-xl border border-line bg-card p-4 shadow-[var(--tv-shadow-card)]" aria-label={t('dash.load.aria', { summary })}>
+      <figcaption className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-ink">{t('dash.load.title')}</span>
+        <span className="flex flex-wrap items-center gap-3 text-[11px] text-muted">
+          {(['low', 'ok', 'high', 'over'] as CapacityLevel[]).map((l) => (
+            <span key={l} className="inline-flex items-center gap-1.5">
+              <span className={clsx('size-2.5 rounded-sm', LEVEL[l].bar)} aria-hidden /> {t(`sd.load.levels.${l}`)}
+            </span>
+          ))}
+        </span>
+      </figcaption>
+      <ul className="space-y-2" aria-hidden>
+        {rows.map((r, i) => (
+          <li key={r.id} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3.5rem] items-center gap-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_4.5rem]">
+            <span className="truncate text-xs font-medium text-ink">{fullName(r)}</span>
+            <span className="relative h-3 rounded-full bg-sunken">
+              <m.span
+                className={clsx('absolute inset-y-0 left-0 block origin-left rounded-full', LEVEL[r.level].bar)}
+                style={{ width: `${Math.min(BAR_MAX, r.capacityPct) / BAR_MAX * 100}%`, minWidth: r.capacityPct > 0 ? 4 : 0 }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.6, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+              />
+              <span className="absolute -inset-y-1 w-px bg-ink/40" style={{ left: `${limit}%` }} />
+            </span>
+            <span className={clsx('num text-right text-xs font-semibold tabular-nums', LEVEL[r.level].text)}>
+              {r.capacityPct}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+};
 
 const Metric = ({ label, value, to, tone, icon: Icon }: { label: string; value: number; to: string; tone?: 'danger' | 'warning'; icon: typeof Users }) => (
   <Link to={to} className="group flex min-w-0 flex-col rounded-lg border border-line px-2.5 py-2 transition-colors hover:border-line-strong hover:bg-sunken/50">

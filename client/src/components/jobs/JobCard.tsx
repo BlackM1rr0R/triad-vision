@@ -8,7 +8,7 @@ import type { PublicVacancy } from './types';
 import { useMorphSource } from '@/lib/viewTransition';
 import { vacancyImageSrcSet, vacancyImages } from './images';
 import { CompanyLogo } from './CompanyLogo';
-import { PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // "3 boş yer" / "Yer qalmayıb"
+import { PlacesBadge, PlacesBar } from '@/components/vacancyPlaces/PlacesBadge'; // "3 boş yer" / "Yer qalmayıb"
 import { DeactivatedBadge, isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // "Deaktiv — müraciət qəbul olunmur"
 
 /** Vacancy card on the public board. */
@@ -94,6 +94,7 @@ export const JobCard = ({ v, className }: { v: PublicVacancy; className?: string
           </li>
         )}
       </ul>
+      {!off && <PlacesBar v={v} className="mb-4" />}
 
       <div className="mt-auto flex flex-wrap items-end justify-between gap-2 border-t border-line pt-4">
         {salary ? (

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Activity, ArrowRight, BadgeCheck, Ban, Briefcase, CalendarDays, CheckCircle2, Clock3, HandCoins, Layers, Users, Wallet } from 'lucide-react';
+import { Activity, ArrowRight, BadgeCheck, Ban, Briefcase, CalendarDays, CheckCircle2, Clock3, HandCoins, Layers, TrendingUp, Users, Wallet } from 'lucide-react';
+import { registerCopy } from '@/i18n';
+import { pagesDashboards } from '@/i18n/pagesDashboards';
+import { AreaChart, VIZ, type ChartSeries } from '@/components/charts';
 import { useL10n } from '@/lib/l10n';
 import { api } from '@/lib/api';
 import { money, day } from '@/components/agents/format';
@@ -9,6 +12,31 @@ import { accessOf, type PartnerDashboard, type PartnerMe } from '@/components/pa
 import { ErrorRetry, Kpi, Loading, Section, StatusPill } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui';
 import { EmptyInbox } from '@/components/illustrations';
+
+registerCopy(pagesDashboards);
+
+const monthLabel = (m: string) => `${m.slice(5, 7)}.${m.slice(2, 4)}`;
+
+/** Monthly trend line of the partner's own clients, cases and granted visas (the visa line only with the case-stage permission). */
+const TrendSection = ({ trend }: { trend: NonNullable<PartnerDashboard['trend']> }) => {
+  const { t } = useTranslation();
+  const series: ChartSeries[] = [
+    { key: 'clients', label: t('dash.trend.clients'), color: VIZ[0] },
+    { key: 'cases', label: t('dash.trend.cases'), color: VIZ[1] },
+    ...(trend.approved ? [{ key: 'approved', label: t('dash.trend.approved'), color: VIZ[2] }] : []),
+  ];
+  const points = trend.months.map((x, i) => ({ x, values: { clients: trend.clients[i], cases: trend.cases[i], ...(trend.approved ? { approved: trend.approved[i] } : {}) } }));
+  const empty = !trend.clients.some(Boolean) && !trend.cases.some(Boolean) && !trend.approved?.some(Boolean);
+  return (
+    <Section title={t('dash.trend.title')} icon={TrendingUp}>
+      {empty ? (
+        <p className="py-6 text-center text-sm text-muted">{t('dash.trend.empty')}</p>
+      ) : (
+        <AreaChart mode="line" points={points} series={series} xLabel={monthLabel} ariaLabel={t('dash.trend.aria')} height={220} />
+      )}
+    </Section>
+  );
+};
 
 export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
   const { t } = useTranslation();
@@ -40,6 +68,8 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
           <p className="col-span-2 self-center text-sm text-muted lg:col-span-3">{t('partnerAccess.noStage')}</p>
         )}
       </div>
+
+      {d.trend && <TrendSection trend={d.trend} />}
 
       {!!d.byVisa?.length && (
         <Section title={t('partnerPortal.dashboard.byVisa')} icon={Layers}>

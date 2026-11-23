@@ -96,6 +96,8 @@ export interface PartnerDashboard {
   commissions: (Totals & { thisMonthCents: number }) | null;
   /** Counts per visa kind (category, else type). */
   byVisa?: VisaFacet[];
+  /** Last 12 months (oldest first); `approved` is null without the case-stage permission. */
+  trend?: { months: string[]; clients: number[]; cases: number[]; approved: number[] | null };
   recent: { id: string; type: string; toStatus: CaseStatus | null; createdAt: string; caseId: string; caseNumber: string; client: string }[];
 }
 

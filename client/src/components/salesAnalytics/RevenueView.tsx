@@ -8,11 +8,13 @@ import { pagesSalesAnalytics } from '@/i18n/pagesSalesAnalytics';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import { ErrorBlock, LoadingBlock, Panel } from '@/components/admin/ui';
-import { AreaChart, DeltaPill, FunnelBars, HBarList, StatCard, VIZ, type ChartSeries } from '@/components/charts';
+import { AreaChart, DeltaPill, FunnelBars, HBarList, PlanBars, StatCard, VIZ, type ChartSeries } from '@/components/charts';
+import { pagesDashboards } from '@/i18n/pagesDashboards';
 import { useReportFormat } from '@/components/reports/types';
 import { salesCsvHref, useSalesAnalytics, type DueKind, type SalesResponse, type SalesSection } from './api';
 
 registerCopy(pagesSalesAnalytics);
+registerCopy(pagesDashboards);
 
 /**
  * "Gəlir və satış" — the revenue & sales tab of Admin → Biznes analitikası (ADMIN+): paid revenue by month,
@@ -47,6 +49,7 @@ export const RevenueView = ({ range }: { range: { from: string; to: string } }) 
       <p className="text-xs text-muted">{t('sales.note', { from: data.range.prevFrom, to: data.range.prevTo })}</p>
       <Kpis data={data} />
       <RevenuePanel data={data} range={range} />
+      <PlanPanel data={data} />
       <div className="grid gap-6 xl:grid-cols-2">
         <ExpectedPanel data={data} range={range} />
         <OverduePanel data={data} range={range} />
@@ -125,6 +128,20 @@ const RevenuePanel = ({ data, range }: { data: SalesResponse; range: { from: str
         </span>
         <DeltaPill value={data.summary.revenueDelta} title={t('sales.vsPrev')} />
       </p>
+    </Panel>
+  );
+};
+
+// ─── Expected vs received (animated bars, previous period dashed) ───────
+
+const PlanPanel = ({ data }: { data: SalesResponse }) => {
+  const { t } = useTranslation();
+  const p = data.plan;
+  const months = p.months.map((month, i) => ({ month, expected: p.expected[i], received: p.received[i], prevExpected: p.prevExpected[i], prevReceived: p.prevReceived[i] }));
+  return (
+    <Panel title={t('dash.plan.title')} icon={Wallet}>
+      <p className="-mt-1 mb-3 text-xs text-muted">{t('dash.plan.note')}</p>
+      {months.some((x) => x.expected > 0 || x.received > 0) ? <PlanBars months={months} monthLabel={monthLabel} /> : <p className="py-8 text-center text-sm text-muted">{t('sales.empty')}</p>}
     </Panel>
   );
 };

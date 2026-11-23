@@ -13,7 +13,10 @@ import { FileDrop } from './FileDrop';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useApiError } from './useApiError';
 import { SUBMIT_DOCS_EVENT } from './submitDocsEvent';
-import { celebrate } from '@/components/motion/celebrate';
+import { celebrate, celebrateOnce } from '@/components/motion/celebrate';
+import { ProgressRing } from './ProgressRing';
+import { reachedFull, ringPercent } from '@/components/docProgress/ring';
+import { pagesVisualPlus } from '@/i18n/pagesVisualPlus';
 // Document vault + automatic checks: client-side check before upload, "choose from my vault", server check result.
 import { useDocCheckGate } from '@/components/vault/DocCheckDialog';
 import { VaultPicker } from '@/components/vault/VaultPicker';
@@ -45,6 +48,7 @@ import { pagesDocProgress } from '@/i18n/pagesDocProgress'; // dprog.embassy.ear
 
 registerCopy(pagesPortalMoments);
 registerCopy(pagesDocProgress);
+registerCopy(pagesVisualPlus);
 
 type UploadStage = 'INITIAL' | 'EMBASSY';
 
@@ -436,7 +440,15 @@ export const CaseDocuments = ({
   const required = reqs.filter((r) => r.required);
   const missing = required.filter((r) => !isSatisfied(r));
   const doneCount = required.length - missing.length;
-  const pct = required.length ? Math.round((doneCount / required.length) * 100) : 100;
+  const pct = ringPercent(doneCount, required.length);
+
+  // The ring is complete: confetti once per case and stage on this device (only when this view saw it fill up; no server write).
+  const seen = useRef<{ done: number; total: number } | null>(null);
+  useEffect(() => {
+    const now = { done: doneCount, total: required.length };
+    if (reachedFull(seen.current, now)) celebrateOnce(`docs-ring:${data.id}:${stage}`, { count: 40 });
+    seen.current = now;
+  }, [doneCount, required.length, data.id, stage]);
 
   // The "Yoxlamaya göndər" button of the next-step bar on the same page (NextUpCard) opens the same confirmation.
   const canSubmit = open && missing.length === 0 && !submitting;
@@ -503,20 +515,15 @@ export const CaseDocuments = ({
           )}
         </div>
         {required.length > 0 && (
-          <div className="w-full sm:w-48">
-            <div className="mb-1 flex justify-between text-xs font-semibold text-muted">
-              <span>{t('common.required')}</span>
-              <span className="text-ink">
+          <div className="flex items-center gap-3" data-testid="docs-ring">
+            <ProgressRing percent={pct} size={72} stroke={7} label={t('vizp.ring.aria', { done: doneCount, total: required.length })}>
+              <span className="font-display text-sm font-semibold text-ink tabular-nums">
                 {doneCount}/{required.length}
               </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-line">
-              <motion.div
-                className={clsx('h-full rounded-full', pct === 100 ? 'bg-success' : 'bg-primary')}
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              />
+            </ProgressRing>
+            <div className="min-w-0 text-xs font-semibold text-muted">
+              <span className="block">{t('common.required')}</span>
+              {pct === 100 && <span className="block text-success-fg">{t('vizp.ring.ready')}</span>}
             </div>
           </div>
         )}

@@ -5,6 +5,8 @@
  * table view. Colours come from the validated --viz-* tokens (index.css), light and dark. Motion only under
  * `motion-safe`. Copy: i18n/charts.ts (registered by ./parts).
  */
+export { AnimatedFunnel, type PipelineStep } from './AnimatedFunnel';
+export { PlanBars, type PlanMonth } from './PlanBars';
 export { AreaChart, useSeriesToggle, type ChartPoint, type ChartSeries } from './AreaChart';
 export { DeltaPill, pctDelta } from './DeltaPill';
 export { FunnelBars, type FunnelStep } from './FunnelBars';

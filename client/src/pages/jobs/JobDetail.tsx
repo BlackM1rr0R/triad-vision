@@ -58,7 +58,7 @@ import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
 import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
 import { sceneForProfession } from '@/lib/workScenes/meta';
-import { FullNotice, PlacesBadge } from '@/components/vacancyPlaces/PlacesBadge'; // free places, "Yer qalmayıb"
+import { FullNotice, PlacesBadge, PlacesBar } from '@/components/vacancyPlaces/PlacesBadge'; // free places, "Yer qalmayıb"
 import { isFull, placesErrorText } from '@/components/vacancyPlaces/api';
 import { DeactivatedBadge, DeactivatedNotice, isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated: visible, applications closed
 
@@ -604,6 +604,7 @@ export default function JobDetail() {
                 {v.drivingLicence && <Fact icon={Car} label={t('jobsArea.detail.facts.licence')}>{v.drivingLicence}</Fact>}
                 <Fact icon={Users} label={t('jobsArea.detail.facts.positions')}>
                   {v.positions} <PlacesBadge v={v} className="ml-1 align-middle" />
+                  {!isDeactivated(v) && <PlacesBar v={v} className="mt-2 max-w-xs" />}
                 </Fact>
                 {v.validThrough && <Fact icon={CalendarClock} label={t('jobsArea.detail.facts.closes')}>{fmtDate(v.validThrough)}</Fact>}
               </dl>

@@ -91,6 +91,32 @@ export const revenueByMonth = (months: string[], invoices: MoneyRow[], payments:
   return { invoices: inv, payments: pay, total: inv.map((v, i) => v + pay[i]) };
 };
 
+/**
+ * Expected vs received by month: `due` = invoices (client + company, not draft / cancelled) by due month, `received`
+ * = paid revenue by month (revenueByMonth totals). Only rows inside the window count (like revenueByMonth), so a
+ * month outside the period never shows figures. `prev*` = the previous window of the same length, aligned by index.
+ */
+export const expectedVsReceived = (
+  months: string[],
+  prevMonths: string[],
+  due: MoneyRow[],
+  received: { cur: number[]; prev: number[] },
+  cur: { start: Date; end: Date },
+  prev: { start: Date; end: Date },
+) => {
+  const expected = revenueByMonth(months, due, [], cur).invoices;
+  const prevExpected = revenueByMonth(prevMonths, due, [], prev).invoices;
+  const align = (xs: number[]) => months.map((_, i) => xs[i] ?? null);
+  return {
+    months,
+    expected,
+    received: received.cur,
+    prevExpected: align(prevExpected),
+    prevReceived: align(received.prev),
+    totals: { expected: expected.reduce((a, b) => a + b, 0), received: received.cur.reduce((a, b) => a + b, 0), prevExpected: prevExpected.reduce((a, b) => a + b, 0), prevReceived: received.prev.reduce((a, b) => a + b, 0) },
+  };
+};
+
 export const sumIn = (rows: MoneyRow[], w: { start: Date; end: Date }) => rows.reduce((a, r) => (inWin(r.at, w) ? a + r.cents : a), 0);
 
 // ─── Revenue by package / service ───────────────────────────────────────
