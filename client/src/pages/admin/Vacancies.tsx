@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { fmtDate, fmtRelative, fullName } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
 import { JobAlertStatsPanel } from '@/components/jobs/JobAlertStatsPanel';
+import { VacancyRequestsPanel } from '@/components/jobs/VacancyRequestsPanel'; // "Vakansiya sorğusu" list: filter, status, note, assign, offer a vacancy
 import { WaitlistStatsPanel } from '@/components/jobs/WaitlistStatsPanel'; // vacancy waitlist per profession + export
 import { VacancyForm, formFromVacancy, payloadFromForm, type VacancyFormState } from '@/components/company/VacancyForm';
 import { ScorePill } from '@/components/jobs/MatchMeter';
@@ -474,7 +475,7 @@ const VacancyDrawer = ({ id, onClose }: { id: string | null; onClose: () => void
   );
 };
 
-export default function AdminVacancies() {
+function VacanciesList() {
   const { t } = useTranslation();
   const L = useJobLabels();
   const [params, setParams] = useSearchParams();
@@ -719,6 +720,32 @@ export default function AdminVacancies() {
       <WaitlistStatsPanel className="mt-6" />
 
       <VacancyDrawer key={openId ?? 'none'} id={openId} onClose={() => setParam('id', null)} />
+    </div>
+  );
+}
+
+/** Admin › Vacancies: the vacancy list and (tab "Sorğular", ?tab=requests) the candidates' vacancy requests. */
+export default function AdminVacancies() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'requests' ? 'requests' : 'list';
+  const counts = useQuery({ queryKey: ['admin-vacancy-requests', 'new-count'], queryFn: async () => (await api.get<{ counts: Record<string, number> }>('/admin/vacancies/requests', { params: { status: 'NEW' } })).data.counts.NEW ?? 0, staleTime: 60_000 });
+  const go = (next: 'list' | 'requests') => {
+    const p = new URLSearchParams();
+    if (next === 'requests') p.set('tab', 'requests');
+    setParams(p, { replace: true });
+  };
+  return (
+    <div>
+      <div role="tablist" aria-label={t('admin.nav.vacancies')} className="mb-5 flex gap-1.5 border-b border-line">
+        {(['list', 'requests'] as const).map((k) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={clsx('-mb-px min-h-11 border-b-2 px-4 text-sm font-semibold', tab === k ? 'border-primary text-ink' : 'border-transparent text-muted hover:text-ink')} onClick={() => go(k)} data-testid={`vacancies-tab-${k}`}>
+            {t(k === 'list' ? 'vreq.admin.tabList' : 'vreq.admin.tab')}
+            {k === 'requests' && !!counts.data && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-link">{counts.data}</span>}
+          </button>
+        ))}
+      </div>
+      {tab === 'requests' ? <VacancyRequestsPanel /> : <VacanciesList />}
     </div>
   );
 }

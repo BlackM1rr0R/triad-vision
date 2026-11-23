@@ -17,6 +17,7 @@ import { toastJobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type ApplicationStatus, type EmploymentType } from '@/components/jobs/types';
 import type { L10n } from '@/lib/types';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
+import { MyVacancyRequests } from '@/components/jobs/VacancyRequestForm';
 import { RecommendationsCard } from '@/components/aiWriting/Recommendations';
 import { Handshake } from '@/components/illustrations';
 
@@ -178,6 +179,8 @@ export default function AccountApplications() {
         <p className="text-sm text-muted">{t('jobsArea.applications.withdrawText')}</p>
       </ConfirmDialog>
       {/* Matching vacancies (moved here from the portal home). */}
+      {/* "Vakansiya sorğusu": the client's own requests for a kind of job (list, status, offered vacancies, cancel). */}
+      <MyVacancyRequests />
       <RecommendationsCard />
     </div>
   );

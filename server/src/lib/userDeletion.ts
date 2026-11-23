@@ -13,6 +13,7 @@ import { retireClientFolders } from './drive/workflowLinks.js';
 import { deleteCourseData } from './course/service.js';
 import { eraseInquiries } from './privacy/inquiries.js';
 import { LEBENSLAUF_SUBDIR, lebenslaufKeysOf } from './cv/versions.js';
+import { eraseVacancyRequests } from './vacancyRequests/privacy.js';
 import { eraseGermanyJobAlerts } from './germanyJobs/alerts.js';
 import { eraseRateAlerts } from './rateAlerts/service.js';
 import { revokeAllShares } from './successShare/service.js';
@@ -226,6 +227,8 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
         await tx.webPushSubscription.deleteMany({ where: { userId } });
         // Job alerts of the account and of its e-mail address (plain ids, no foreign key).
         await tx.jobAlert.deleteMany({ where: { OR: [{ userId }, { email: target.email.toLowerCase() }] } });
+        // Vakansiya sorğusu requests of the account / address (notices cascade).
+        await eraseVacancyRequests(target.email, userId, tx);
         // Germany job search: alerts of the account / address and saved listings (plain ids).
         await eraseGermanyJobAlerts(target.email, userId, tx);
         // EUR → AZN rate alerts of the account / address (plain ids).

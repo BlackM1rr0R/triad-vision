@@ -244,6 +244,7 @@ const SearchPage = lazyRoute('SearchPage', () => import('./pages/SearchPage')); 
 const CompareVisas = lazyRoute('CompareVisas', () => import('./pages/tools/CompareVisas')); // "which visa fits me?" table + wizard
 const EbookPage = lazyRoute('EbookPage', () => import('./pages/growth/Ebook')); // e-book lead magnet /ebook/:slug
 const JobAlertManage = lazyRoute('JobAlertManage', () => import('./pages/JobAlertManage')); // job alert confirm / manage / unsubscribe link
+const VacancyRequestManage = lazyRoute('VacancyRequestManage', () => import('./pages/VacancyRequestManage')); // guest cancel link of a vacancy request
 const JobAlertGermanyManage = lazyRoute('JobAlertGermanyManage', () => import('./pages/JobAlertGermanyManage')); // Germany job alert (/jobs/germany) confirm / manage / unsubscribe link
 const AccountSavedJobs = lazyRoute('AccountSavedJobs', () => import('./pages/account/SavedJobs')); // Learn › Saved jobs (Germany job search) + job alerts
 const AnerkennungGuide = lazyRoute('AnerkennungGuide', () => import('./pages/tools/Anerkennung'));
@@ -528,6 +529,7 @@ export default function App() {
             <Route path="compare-visas" element={<CompareVisas />} />
             <Route path="ebook/:slug" element={<EbookPage />} />
             <Route path="job-alert" element={<JobAlertManage />} />
+            <Route path="vacancy-request" element={<VacancyRequestManage />} />
             <Route path="job-alert/germany" element={<JobAlertGermanyManage />} />
             <Route path="result-email" element={<ResultEmailManage />} />
             <Route path="rate-alert" element={<RateAlertManage />} />

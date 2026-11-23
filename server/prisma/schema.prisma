@@ -7647,3 +7647,66 @@ model CaseReadyDocsSend {
 
   @@index([caseId, createdAt])
 }
+
+enum VacancyRequestStatus {
+  NEW
+  IN_PROGRESS
+  OFFERED
+  CLOSED
+}
+
+/// "Vakansiya sorğusu" (lib/vacancyRequests): a candidate (guest or client) who did not find the job they want asks for
+/// "this kind of job" (type WORK / AUSBILDUNG + sector / profession + optional city). No case is created by it; staff
+/// offer vacancies, and every new / reactivated matching vacancy is announced once (VacancyRequestNotice). Plain ids
+/// (user, staff, source vacancy, lead) — erased with the account / by e-mail (lib/vacancyRequests/privacy.ts).
+model VacancyRequest {
+  id              String               @id @default(cuid())
+  /// WORK | AUSBILDUNG
+  type            String               @db.VarChar(12)
+  sector          String?              @db.VarChar(30)
+  /// Canonical profession key (lib/matching.ts) or free text.
+  profession      String?              @db.VarChar(120)
+  city            String?              @db.VarChar(80)
+  germanLevel     String?              @db.VarChar(4)
+  note            String?              @db.Text
+  status          VacancyRequestStatus @default(NEW)
+  /// Signed-in client (null = guest).
+  userId          String?              @db.VarChar(40)
+  /// Guest contact (null for accounts).
+  contactName     String?              @db.VarChar(120)
+  email           String?              @db.VarChar(190)
+  phone           String?              @db.VarChar(40)
+  locale          String               @default("az") @db.VarChar(8)
+  /// Vacancy the request was made from (deactivated vacancy page) — announced again when it is reactivated.
+  sourceVacancyId String?              @db.VarChar(40)
+  /// Lead (Inquiry id) of a guest request.
+  inquiryId       String?              @db.VarChar(40)
+  assignedStaffId String?              @db.VarChar(40)
+  staffNote       String?              @db.Text
+  cancelledAt     DateTime?
+  closedAt        DateTime?
+  lastOfferedAt   DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  notices         VacancyRequestNotice[]
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@index([email])
+  @@index([type, sector])
+}
+
+/// One row per request and vacancy it was told about (automatic or offered by staff) — never twice.
+model VacancyRequestNotice {
+  id        String         @id @default(cuid())
+  requestId String
+  request   VacancyRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  vacancyId String         @db.VarChar(40)
+  /// AUTO | STAFF
+  source    String         @db.VarChar(8)
+  staffId   String?        @db.VarChar(40)
+  sentAt    DateTime       @default(now())
+
+  @@unique([requestId, vacancyId])
+  @@index([vacancyId])
+}

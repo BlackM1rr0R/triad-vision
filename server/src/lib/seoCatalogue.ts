@@ -1787,6 +1787,7 @@ export const PRIVATE_PREFIXES = [
   '/check-in',
   '/unsubscribe',
   '/job-alert', // job alert confirm / manage link (token)
+  '/vacancy-request', // guest cancel link of a vacancy request (token)
   '/r', // personal referral landing pages (/r/<slug>) and tracked review links
   '/upload', // login-free case upload link (/upload/<token>)
   '/originals', // hand-over receipt check (/originals/verify/<code>, QR on the act)

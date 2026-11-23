@@ -1,6 +1,7 @@
 import { registerJob } from '../lib/scheduler.js';
 import { purgeJobAlerts, runJobAlertDigests } from '../lib/jobAlerts/service.js';
 import { runWaitlistNotices } from '../lib/jobAlerts/waitlist.js';
+import { runVacancyRequestNotices } from '../lib/vacancyRequests/service.js';
 
 // Job alerts: daily digests (safety net next to the publish hook, at most one e-mail per alert per day) and
 // DSGVO housekeeping (unconfirmed alerts after 7 days, unsubscribed ones 30 days after unsubscribing).
@@ -20,5 +21,14 @@ registerJob({
   everyMs: 10 * 60 * 1000,
   run: async () => {
     await runWaitlistNotices();
+  },
+});
+
+// Vakansiya sorğusu (lib/vacancyRequests): requests are told once per matching new / reactivated vacancy (safety net next to the publish hook).
+registerJob({
+  name: 'vacancy-request-notices',
+  everyMs: 10 * 60 * 1000,
+  run: async () => {
+    await runVacancyRequestNotices();
   },
 });

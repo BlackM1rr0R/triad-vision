@@ -132,6 +132,7 @@ import { compareRouter } from './routes/compare.js';
 import { visaChecklistRouter } from './routes/visaChecklist.js';
 import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
+import { vacancyRequestsRouter } from './routes/vacancyRequests.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
 import { accountCaseContractsRouter } from './routes/accountCaseContracts.js'; // client portal: Əmək / İş müqaviləsi states
 import { accountAuthoritiesRouter } from './routes/accountAuthorities.js'; // client portal: embassy / Ausländerbehörde info (catalogue)
@@ -316,6 +317,7 @@ export const createApp = () => {
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
   app.use('/api/visa-checklist', visaChecklistRouter); // public document checklist generator (/visa-document-checklist)
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
+  app.use('/api/vacancy-requests', vacancyRequestsRouter); // "Vakansiya sorğusu" (guests + clients)
   app.use('/api/job-alerts', jobAlertsRouter); // "notify me about new jobs" (double opt-in, digests)
   app.use('/api/growth', growthRouter); // start-date calculator, placement map, info sessions, client referrals
   app.use('/api/budget', budgetRouter); // first-month budget in Germany (public + client portal prefill)

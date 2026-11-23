@@ -18,6 +18,7 @@ import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { ComparableJobCard } from '@/components/jobs/CompareToggle';
 import { CompareTray } from '@/components/jobs/CompareTray';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
+import { VacancyRequestForm } from '@/components/jobs/VacancyRequestForm'; // "Vakansiya sorğusu": I want this kind of job
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: the vacancy waitlist
 import { isFull } from '@/components/vacancyPlaces/api';
 import { isDeactivated } from '@/components/vacancyActive/DeactivatedBadge'; // deactivated vacancies: after the open ones, no apply
@@ -71,6 +72,7 @@ export default function Jobs() {
   // Nothing to apply for (no results, or every listed vacancy is full): offer the vacancy waitlist.
   const noFreePlace = !!data && (data.items.length === 0 || (page === 1 && data.items.every((v) => isFull(v) || isDeactivated(v))));
   const openItems = data?.items.filter((v) => !isDeactivated(v)) ?? [];
+  const requestType = params.get('employmentType') === 'AUSBILDUNG' ? ('AUSBILDUNG' as const) : ('WORK' as const); // "Vakansiya sorğusu" preselects the filtered kind
   const offItems = data?.items.filter(isDeactivated) ?? [];
 
   const reset = () => {
@@ -248,6 +250,7 @@ export default function Jobs() {
               </div>
               {/* No vacancy at all: the vacancy waitlist right under the empty state. */}
               <WaitlistForm className="mt-6" city={params.get('city')} />
+              <VacancyRequestForm className="mt-6" variant="empty" type={requestType} sector={params.get('sector')} profession={params.get('search')} city={params.get('city')} />
               </>
             ) : (
               <>
@@ -280,6 +283,7 @@ export default function Jobs() {
                     </button>
                   </nav>
                 )}
+                <VacancyRequestForm className="mt-10" type={requestType} sector={params.get('sector')} profession={params.get('search')} city={params.get('city')} />
               </>
             )}
 

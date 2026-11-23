@@ -263,6 +263,7 @@ let again = false;
  */
 export const onVacancyPublished = () => {
   void import('./waitlist.js').then((m) => m.runWaitlistNoticesSoon()).catch(() => undefined); // lazy: waitlist imports this module
+  void import('../vacancyRequests/service.js').then((m) => m.runVacancyRequestNoticesSoon()).catch(() => undefined); // "Vakansiya sorğusu": requests matching a new / reactivated vacancy
   if (running) {
     again = true;
     return;

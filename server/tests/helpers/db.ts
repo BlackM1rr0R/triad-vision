@@ -219,6 +219,7 @@ export const resetDb = async () => {
   await prisma.leadVisitor.deleteMany(); // lead scoring visitors + landing pages (plain ids, no dependants)
   await prisma.landingPage.deleteMany();
   await prisma.guidePage.deleteMany(); // SEO topic guides (no foreign keys)
+  await prisma.vacancyRequest.deleteMany(); // vacancy requests (notices cascade; plain ids)
   await prisma.jobAlert.deleteMany(); // job alerts + e-book lead magnets (plain ids, no foreign keys)
   await prisma.germanyJobAlert.deleteMany(); // Germany job search: alerts (sent ids cascade) + saved listings
   await prisma.savedGermanyJob.deleteMany();

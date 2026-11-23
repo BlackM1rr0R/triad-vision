@@ -10,6 +10,7 @@ import { partnerExportProfile } from '../partners/profile.js'; // referral partn
 import { listFieldDefs } from '../partners/fieldDefs.js';
 import { exportGermanyJobAlerts } from '../germanyJobs/alerts.js'; // Germany job search: alerts and saved listings
 import { exportRateAlerts } from '../rateAlerts/service.js'; // EUR → AZN rate alerts
+import { exportVacancyRequests } from '../vacancyRequests/privacy.js'; // "Vakansiya sorğusu" requests
 import { exportJobAlerts } from '../jobAlerts/privacy.js'; // our vacancy alerts + vacancy waitlist (with the notices sent)
 import { exportSavedJobs } from '../germanyJobs/saved.js';
 import { exportInquiries } from './inquiries.js'; // website contact / employer enquiries sent with this e-mail
@@ -199,6 +200,7 @@ export const buildUserExport = async (userId: string) => {
     savedGermanyJobs: await exportSavedJobs(userId),
     // Our vacancy alerts and the vacancy waitlist ("tell me when a matching vacancy opens"), with the vacancies notified.
     vacancyAlerts: await exportJobAlerts(user.email, userId),
+    vacancyRequests: await exportVacancyRequests(user.email, userId),
     // EUR → AZN rate alerts of this account / e-mail address.
     rateAlerts: await exportRateAlerts(user.email, userId),
     notifications,

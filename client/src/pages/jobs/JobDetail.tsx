@@ -49,6 +49,7 @@ import { GapList, ScoreRing } from '@/components/jobs/MatchMeter';
 import { jobsError, useJobLabels } from '@/components/jobs/labels';
 import { APPLICATION_STATUS_TONE, type ApplicationStatus, type Match, type PublicVacancy } from '@/components/jobs/types';
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
+import { VacancyRequestForm } from '@/components/jobs/VacancyRequestForm'; // deactivated vacancy: "oxşarını istəyirəm"
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // full vacancy: "Uyğun vakansiya açılanda xəbər ver"
 import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // camera scan → PDF per document
 import { scanPagesToPdf } from '@/components/scanner/scanPdf';
@@ -582,6 +583,7 @@ export default function JobDetail() {
             <div id="job-alert" className="scroll-mt-28">
               {isFull(v) || isDeactivated(v) ? <WaitlistForm profession={v.profession} city={v.city} full={!isDeactivated(v)} /> : <JobAlertForm profession={v.profession} />}
             </div>
+            {isDeactivated(v) && <VacancyRequestForm variant="deactivated" type={v.employmentType === 'AUSBILDUNG' ? 'AUSBILDUNG' : 'WORK'} sector={v.sector} city={v.city} sourceVacancySlug={v.slug} />}
             <WorkSceneCard scene={sceneForProfession(v.profession)} />
           </div>
 
