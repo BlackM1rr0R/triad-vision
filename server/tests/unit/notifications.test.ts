@@ -80,7 +80,7 @@ describe('notification catalog', () => {
         expect(n.title).not.toContain('undefined');
         expect(n.body).not.toContain('undefined');
         // Document reviews open the documents tab (re-upload of a rejected file right there).
-        const link = type === 'DOCUMENT_ACCEPTED' || type === 'DOCUMENT_REJECTED' ? '/account/cases/c1?tab=docs' : '/account/cases/c1';
+        const link = type === 'DOCUMENT_ACCEPTED' || type === 'DOCUMENT_REJECTED' ? '/account/cases/c1?tab=docs' : type === 'NEW_MESSAGE' ? '/account/cases/c1?tab=messages' : '/account/cases/c1';
         expect(n).toMatchObject({ userId: 'u1', type, link });
         seen.add(n.title);
       }
