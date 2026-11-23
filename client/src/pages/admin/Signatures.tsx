@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FileSignature, Plus, Scale, Search } from 'lucide-react';
+import { Eraser, FileSignature, Plus, Scale, Search, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { confirmDialog } from '@/components/ui/ConfirmHost';
 import { registerCopy } from '@/i18n';
 import { pagesSign } from '@/i18n/pagesSign';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Panel } from '@/components/admin/ui';
@@ -11,7 +14,7 @@ import { NewSignatureRequest } from '@/components/esign/NewRequest';
 import { RequestDetail } from '@/components/esign/RequestDetail';
 import { RequestRows } from '@/components/esign/RequestList';
 import { MySignaturesList, PortalSign } from '@/components/esign/MySignatures';
-import type { RequestStatus, StaffRequest } from '@/components/esign/api';
+import { useEsignError, type RequestStatus, type StaffRequest } from '@/components/esign/api';
 
 registerCopy(pagesSign);
 
@@ -37,12 +40,19 @@ export default function AdminSignatures() {
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const openId = params.get('open');
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const err = useEsignError();
+  const canDelete = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebounced(q.trim()), 300);
     return () => window.clearTimeout(id);
   }, [q]);
   useEffect(() => setPage(1), [status, mine, debounced]);
+  useEffect(() => setSelected(new Set()), [status, mine, debounced, page]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['esign', 'list', status, mine, debounced, page],
@@ -51,6 +61,48 @@ export default function AdminSignatures() {
     placeholderData: keepPreviousData,
     enabled: !signerId,
   });
+
+  const orphans = useQuery({
+    queryKey: ['esign', 'orphans'],
+    queryFn: async () => (await api.get<{ count: number }>('/admin/signatures/orphans')).data.count,
+    enabled: canDelete && !signerId,
+  });
+
+  const finish = async (res: { removed: number; blocked?: unknown[] }) => {
+    toast.success(t('esign.admin.delete.done', { count: res.removed }));
+    if (res.blocked?.length) toast.warning(t('esign.admin.delete.blocked', { count: res.blocked.length }));
+    setSelected(new Set());
+    await qc.invalidateQueries({ queryKey: ['esign'] });
+  };
+  const removeMany = async (ids: string[], message: string) => {
+    if (!(await confirmDialog({ message, confirmLabel: t('esign.admin.delete.confirm') }))) return;
+    setDeleting(true);
+    try {
+      await finish((await api.post<{ removed: number; blocked: unknown[] }>('/admin/signatures/delete-many', { ids })).data);
+    } catch (e) {
+      err.toast(e);
+    } finally {
+      setDeleting(false);
+    }
+  };
+  const cleanup = async () => {
+    if (!(await confirmDialog({ message: t('esign.admin.delete.cleanupConfirm', { count: orphans.data ?? 0 }), confirmLabel: t('esign.admin.delete.confirm') }))) return;
+    setDeleting(true);
+    try {
+      await finish((await api.post<{ removed: number }>('/admin/signatures/cleanup-orphans', {})).data);
+    } catch (e) {
+      err.toast(e);
+    } finally {
+      setDeleting(false);
+    }
+  };
+  const toggle = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const open = (id: string | null) => {
     const next = new URLSearchParams(params);
@@ -71,10 +123,18 @@ export default function AdminSignatures() {
         title={t('esign.admin.title')}
         subtitle={t('esign.admin.subtitle')}
         actions={
-          <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
-            <Plus className="size-4" aria-hidden />
-            {t('esign.admin.new')}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canDelete && !!orphans.data && (
+              <button type="button" className="btn-secondary btn-sm" disabled={deleting} onClick={() => void cleanup()}>
+                <Eraser className="size-4" aria-hidden />
+                {t('esign.admin.delete.cleanup', { count: orphans.data })}
+              </button>
+            )}
+            <button type="button" className="btn-primary btn-sm" onClick={() => setCreating(true)}>
+              <Plus className="size-4" aria-hidden />
+              {t('esign.admin.new')}
+            </button>
+          </div>
         }
       />
 
@@ -97,6 +157,15 @@ export default function AdminSignatures() {
               {t('esign.admin.mine')}
             </Chip>
           </div>
+          {canDelete && selected.size > 0 && (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-muted">{t('esign.admin.delete.selected', { count: selected.size })}</span>
+              <button type="button" className="btn-secondary btn-sm" disabled={deleting} onClick={() => void removeMany([...selected], t('esign.admin.delete.message', { count: selected.size }))}>
+                <Trash2 className="size-4" aria-hidden />
+                {t('esign.admin.delete.row')}
+              </button>
+            </div>
+          )}
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
             <input className="input pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('esign.admin.search')} aria-label={t('esign.admin.search')} />
@@ -112,7 +181,11 @@ export default function AdminSignatures() {
           ) : !data?.items.length ? (
             <EmptyState icon={FileSignature} title={t('esign.admin.empty')} />
           ) : (
-            <RequestRows items={data.items} onOpen={open} />
+            <RequestRows
+              items={data.items}
+              onOpen={open}
+              {...(canDelete ? { selected, onToggle: toggle, onDelete: (r: StaffRequest) => void removeMany([r.id], t('esign.admin.delete.message', { count: 1 })) } : {})}
+            />
           )}
         </div>
         {pages > 1 && (

@@ -125,8 +125,14 @@ export const useClientFolderActions = () => {
     const done = targets.filter((x) => x.stage === 'DONE');
     if (done.length && can('documents', 'edit')) out.push({ id: 'cf-send', icon: SendHorizontal, label: t('clientFolders.send.action'), onClick: () => open('send', done), primary: true });
     if (can('partners', 'edit')) {
-      const any = targets.some((x) => x.partner);
-      out.push({ id: 'cf-partner', icon: Handshake, label: t(any ? 'clientFolders.partner.change' : 'clientFolders.partner.assign'), onClick: () => open('partner', targets), primary: targets.length > 1 });
+      out.push({
+        id: 'cf-partner',
+        icon: Handshake,
+        label: t('clientFolders.partner.button'),
+        onClick: () => open('partner', targets),
+        primary: true,
+        labelled: true,
+      });
     }
     return out;
   };

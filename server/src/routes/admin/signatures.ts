@@ -6,7 +6,7 @@ import type { Prisma } from '@prisma/client';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
-import { badRequest, notFound, parse } from '../../lib/http.js';
+import { badRequest, forbidden, notFound, parse } from '../../lib/http.js';
 import { caseScopeWhere } from '../../lib/access/api.js';
 import { DriveAccessCtx, requireNode } from '../../lib/drive/access.js';
 import { storagePath } from '../../lib/drive/storage.js';
@@ -25,6 +25,7 @@ import {
   type Actor,
 } from '../../lib/esign/service.js';
 import { metaOf, pdfUpload, sendPdf } from '../../lib/esign/http.js';
+import { deleteBlocker, findOrphanRequestIds, removeOrphanRequests, removeSignatureRequest } from '../../lib/esign/remove.js';
 import { withCountersigner } from '../../lib/esign/countersign.js';
 
 /** Staff side of the e-signature module, mounted at /api/admin/signatures (STAFF+ with 2FA). */
@@ -247,6 +248,54 @@ adminSignaturesRouter.post('/', pdfUpload.single('file'), async (req, res) => {
   }
   void audit(req, 'signature.create', created.id, { title: created.title, caseId: created.caseId, sent: body.send });
   res.status(201).json({ request: await staffDetail(created.id) });
+});
+
+// ─── Delete (ADMIN / SUPER_ADMIN; /api/admin guard maps these to documents:delete) ───
+
+const requireAdmin = (req: Express.Request) => {
+  if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN') throw forbidden('ADMIN_ONLY');
+};
+
+/** How many requests the orphan cleanup would remove (deleted accounts / cases). */
+adminSignaturesRouter.get('/orphans', async (req, res) => {
+  requireAdmin(req);
+  res.json({ count: (await findOrphanRequestIds()).length });
+});
+
+adminSignaturesRouter.post('/cleanup-orphans', async (req, res) => {
+  requireAdmin(req);
+  const result = await removeOrphanRequests();
+  void audit(req, 'signature.cleanupOrphans', undefined, result);
+  res.json(result);
+});
+
+/** Bulk delete: protected requests (live case contract, open AVV / order) are skipped and returned in `blocked`. */
+adminSignaturesRouter.post('/delete-many', async (req, res) => {
+  requireAdmin(req);
+  const { ids } = parse(z.object({ ids: z.array(id).min(1).max(200) }), req.body);
+  const removed: string[] = [];
+  const blocked: { id: string; code: string }[] = [];
+  for (const rid of ids) {
+    const blocker = await deleteBlocker(rid);
+    if (blocker) {
+      blocked.push({ id: rid, code: blocker });
+      continue;
+    }
+    const r = await removeSignatureRequest(rid);
+    if (r) {
+      removed.push(rid);
+      void audit(req, 'signature.delete', rid, { title: r.title, status: r.status, caseId: r.caseId });
+    }
+  }
+  res.json({ removed: removed.length, blocked });
+});
+
+adminSignaturesRouter.delete('/:id', async (req, res) => {
+  requireAdmin(req);
+  const r = await removeSignatureRequest(String(req.params.id));
+  if (!r) throw notFound('SIGNATURE_REQUEST_NOT_FOUND');
+  void audit(req, 'signature.delete', r.id, { title: r.title, status: r.status, caseId: r.caseId });
+  res.json({ ok: true });
 });
 
 adminSignaturesRouter.get('/:id', async (req, res) => {

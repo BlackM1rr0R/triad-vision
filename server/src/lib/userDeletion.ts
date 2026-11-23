@@ -1,3 +1,4 @@
+import { removeSignatureRequest } from './esign/remove.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Prisma, Role } from '@prisma/client';
@@ -155,6 +156,19 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   const skillVideoFiles = (await prisma.skillVideo.findMany({ where: { userId }, select: { storedName: true, posterName: true } })).flatMap((v) => [v.storedName, v.posterName]);
   const lebenslaufFiles = await lebenslaufKeysOf(userId); // saved Lebenslauf PDFs (rows cascade with the user)
   const translationFiles = await prisma.translationOrderFile.findMany({ where: { storageKey: { not: null }, order: { clientId: userId } }, select: { storageKey: true } });
+  // E-signature requests of the account (SetNull would leave them orphaned): those of its cases, and ones where it was the only
+  // client-side signer (no employer signer). Removed after the commit together with their PDFs.
+  const signatureIds = (
+    await prisma.signatureRequest.findMany({
+      where: {
+        OR: [
+          ...(ownCaseIds.length ? [{ caseId: { in: ownCaseIds } }] : []),
+          { signers: { some: { userId, role: 'CANDIDATE' as const } }, NOT: { signers: { some: { role: 'COMPANY' as const } } } },
+        ],
+      },
+      select: { id: true },
+    })
+  ).map((r) => r.id);
   const mailFiles = await prisma.mailAttachment.findMany({
     where: { storageKey: { not: null }, message: { account: { userId } } },
     select: { storageKey: true },
@@ -333,6 +347,7 @@ export const deleteUserAccount = async (actorId: string, userId: string, ip?: st
   await prisma.packingChecklist.deleteMany({ where: { userId } }); // My Germany day packing checklist (plain id)
   await prisma.readinessSnapshot.deleteMany({ where: { userId } }); // Germany readiness score history (plain id)
   await prisma.readinessSelfCheck.deleteMany({ where: { userId } }); // readiness money self-check (plain id)
+  for (const id of signatureIds) await removeSignatureRequest(id, { force: true }).catch((err) => console.error('[user-delete] could not remove signature request', id, err));
   await eraseStudentRecords(userId); // language-school attendance / exam records + certificate files (plain ids)
   await deleteCourseData(userId); // pre-departure course: enrollments, progress, quiz attempts, certificates (plain ids)
   await revokeAllShares(userId); // public "visa approved" share links (Setting rows keyed by token)

@@ -1,19 +1,35 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import { fmtDate } from '@/components/admin/labels';
 import { SIGNER_TONE, STATUS_TONE, type StaffRequest } from './api';
 
 /** Compact rows of signature requests with each party's progress (cards on phones, a grid row from md). */
-export const RequestRows = ({ items, onOpen, showCase = true }: { items: StaffRequest[]; onOpen: (id: string) => void; showCase?: boolean }) => {
+export const RequestRows = ({
+  items,
+  onOpen,
+  showCase = true,
+  selected,
+  onToggle,
+  onDelete,
+}: {
+  items: StaffRequest[];
+  onOpen: (id: string) => void;
+  showCase?: boolean;
+  /** Admin list only (ADMIN+): checkbox selection and a per-row delete button. */
+  selected?: Set<string>;
+  onToggle?: (id: string) => void;
+  onDelete?: (r: StaffRequest) => void;
+}) => {
   const { t } = useTranslation();
   return (
     <ul className="divide-y divide-line">
       {items.map((r) => {
         const done = r.signers.filter((s) => s.status === 'SIGNED').length;
         return (
-          <li key={r.id}>
-            <button type="button" onClick={() => onOpen(r.id)} className="group grid w-full grid-cols-1 gap-2 px-1 py-3 text-left transition hover:bg-surface/60 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_auto_auto] md:items-center md:gap-4 md:px-2">
+          <li key={r.id} className="flex items-center gap-1">
+            {onToggle && <input type="checkbox" className="size-4 shrink-0" checked={selected?.has(r.id) ?? false} onChange={() => onToggle(r.id)} aria-label={r.title} />}
+            <button type="button" onClick={() => onOpen(r.id)} className="group grid min-w-0 flex-1 grid-cols-1 gap-2 px-1 py-3 text-left transition hover:bg-surface/60 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_auto_auto] md:items-center md:gap-4 md:px-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink group-hover:text-link">{r.title}</p>
                 <p className="truncate text-xs text-muted">
@@ -38,6 +54,12 @@ export const RequestRows = ({ items, onOpen, showCase = true }: { items: StaffRe
               </div>
               <ChevronRight className="hidden size-4 text-muted md:block" aria-hidden />
             </button>
+            {onDelete && (
+              <button type="button" className="btn-secondary btn-sm shrink-0" onClick={() => onDelete(r)} title={t('esign.admin.delete.row')}>
+                <Trash2 className="size-4" aria-hidden />
+                <span className="hidden sm:inline">{t('esign.admin.delete.row')}</span>
+              </button>
+            )}
           </li>
         );
       })}

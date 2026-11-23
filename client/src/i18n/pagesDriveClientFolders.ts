@@ -9,6 +9,7 @@ const az = {
     heading: 'Müştəri qovluğu',
     partner: {
       assign: 'Partnyor təyin et',
+      button: 'Partnyor',
       change: 'Partnyoru dəyiş',
       remove: 'Partnyorluqdan çıxart',
       pickTitle: 'Partnyor seçin',
@@ -105,6 +106,7 @@ const de: typeof az = {
     heading: 'Kundenordner',
     partner: {
       assign: 'Partner zuweisen',
+      button: 'Partner',
       change: 'Partner ändern',
       remove: 'Partnerschaft entfernen',
       pickTitle: 'Partner wählen',
@@ -201,6 +203,7 @@ const en: typeof az = {
     heading: 'Client folder',
     partner: {
       assign: 'Assign partner',
+      button: 'Partner',
       change: 'Change partner',
       remove: 'Remove partner',
       pickTitle: 'Choose a partner',
@@ -297,6 +300,7 @@ const ru: typeof az = {
     heading: 'Папка клиента',
     partner: {
       assign: 'Назначить партнёра',
+      button: 'Партнёр',
       change: 'Сменить партнёра',
       remove: 'Убрать партнёра',
       pickTitle: 'Выберите партнёра',

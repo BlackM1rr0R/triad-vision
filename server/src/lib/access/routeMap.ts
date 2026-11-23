@@ -57,6 +57,8 @@ const ADMIN_RULES: Rule[] = [
   r('/admin/reveal', 'clients', { action: 'view' }), // masked field reveal (reason + log in lib/privacy)
   r('/admin/sensitive', 'settings'),
   r('/admin/impersonate', 'clients'),
+  // Signature request deletion (POST bulk / cleanup endpoints are deletes; the routes also require ADMIN+)
+  r('/admin/signatures/(?:delete-many|cleanup-orphans)', 'documents', { action: 'delete' }),
   // Drive client folder actions (routes/admin/clientFolders): partner = partners, Fertig → portal = documents, stage = cases (segment)
   r('/admin/client-folders/partner', 'partners'),
   r('/admin/client-folders/(?:ready-docs|cases/[^/]+/ready-docs)', 'documents'),
