@@ -18,11 +18,14 @@ test.describe('admin', () => {
     const anchor = 'h1';
     await scrollTo(page, anchor, 250);
     const before = await scrollState(page, anchor);
+    expect(before.top, 'the test could scroll the page').toBeGreaterThanOrEqual(200);
     const url = page.url();
 
-    await reviewNow.click();
+    await reviewNow.click({ noWaitAfter: true });
     const drawer = page.getByRole('dialog', { name: 'Yoxlanılmalı sənədlər' });
     await expect(drawer).toBeVisible();
+    // Where does the page move? Soft checks per stage (the hard one below stays the verdict).
+    expect.soft((await scrollState(page, anchor)).top, 'scroll right after the drawer opened').toBeGreaterThanOrEqual(before.top - 4);
     const reviewed = page.waitForResponse((r) => r.request().method() === 'POST' && /\/documents\/[^/]+\/review$/.test(r.url()));
     await drawer.getByRole('button', { name: 'Qəbul et', exact: true }).first().click();
     expect((await reviewed).status(), 'POST review').toBe(200);
