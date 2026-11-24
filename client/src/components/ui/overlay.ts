@@ -71,6 +71,11 @@ export const hasOpenOverlay = () => layers.length > 0;
 
 let lockCount = 0;
 let saved: { overflow: string; paddingRight: string; x: number; y: number } | null = null;
+// While locked the page behind must not move at all: any scroll of the window (a late layout reset, scroll
+// anchoring, a focus) is put back at once.
+const holdPosition = () => {
+  if (saved && (window.scrollY !== saved.y || window.scrollX !== saved.x)) window.scrollTo(saved.x, saved.y);
+};
 
 /**
  * Locks the page scroll under a modal / drawer. The lock goes on <html>, not on <body>: with the body's
@@ -89,12 +94,14 @@ export const lockScroll = () => {
       body.style.paddingRight = `${current + scrollbar}px`;
     }
     root.style.overflow = 'hidden';
-    if (window.scrollY !== saved.y || window.scrollX !== saved.x) window.scrollTo(saved.x, saved.y);
+    holdPosition();
+    window.addEventListener('scroll', holdPosition, { passive: true });
     setSmoothScrollPaused(true);
   }
   return () => {
     if (--lockCount === 0 && saved) {
       const { x, y } = saved;
+      window.removeEventListener('scroll', holdPosition);
       document.documentElement.style.overflow = saved.overflow;
       document.body.style.paddingRight = saved.paddingRight;
       saved = null;
