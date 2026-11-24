@@ -115,11 +115,10 @@ germanyJobsRouter.post('/apply', applyLimiter, requireExternalApply, cvUpload.si
     if (forward) await recordConsent({ userId: account?.id ?? null, email: body.email, type: 'EXTERNAL_JOB_FORWARD', granted: true, source: 'EXTERNAL_JOB_APPLY', req });
     await sendApplicantConfirmation(body.email, body.name, job, lng, forward);
     await attachLeadContext(inquiry.id, { visitorId: body.visitorId });
-    // Automatic check → Anschreiben → e-mail to the employer / staff queue (lib/germanyJobs/autoSend.ts; never throws).
-    if (forward) {
-      const row = await prisma.externalJobApplication.findUnique({ where: { inquiryId: inquiry.id }, select: { id: true } });
-      if (row) await processExternalApplication(row.id);
-    }
+    // Automatic check → Anschreiben → e-mail to the employer (forward consent) or the package for the client to send
+    // themselves (lib/germanyJobs/autoSend.ts; never throws).
+    const row = await prisma.externalJobApplication.findUnique({ where: { inquiryId: inquiry.id }, select: { id: true } });
+    if (row) await processExternalApplication(row.id);
     res.status(201).json({ ok: true, id: inquiry.id });
   } catch (err) {
     await removeFile(file);

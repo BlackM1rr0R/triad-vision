@@ -7,6 +7,10 @@ import { auditsSettled } from '../../src/lib/audit.js';
 import { applyInput, createExternalApplication } from '../../src/lib/germanyJobs/apply.js';
 import { processExternalApplication, runExternalAutoSend } from '../../src/lib/germanyJobs/autoSend.js';
 import { nextDayStart, setAutoSendSettings } from '../../src/lib/germanyJobs/autoSettings.js';
+import { runEmployerDiscovery } from '../../src/lib/germanyJobs/discovery/index.js';
+
+/** Discovery without network: every page answers with HTML that has no address. */
+const noAddressFetcher = async (url: string) => ({ url, status: 200, contentType: 'text/html', body: '<html><body>Stellenanzeige</body></html>', truncated: false, hops: [url] });
 
 /**
  * "Apply via Triad Vision" automatic sending (lib/germanyJobs/autoSend.ts): check → missing-data notice and later
@@ -102,28 +106,35 @@ describe('automatic sending with a known employer e-mail', () => {
   it('never trusts an address of another site', async () => {
     const client = await readyClient();
     const r = await seed({ message: 'Bitte an hr@other-firm.de' }, client.user.id);
-    expect(r.state).toBe('READY');
+    expect(r.state).toBe('SEARCHING');
     expect(await prisma.emailLog.count({ where: { to: 'hr@other-firm.de' } })).toBe(0);
   });
 });
 
-describe('no employer e-mail → "Göndərməyə hazır" queue', () => {
-  it('prepares the package, tells the client, staff download it and mark it sent', async () => {
+describe('no employer e-mail → the client sends it; help → "Göndərməyə hazır" queue', () => {
+  it('looks for the address, hands it to the client, help moves it to staff, who download it and mark it sent', async () => {
     const client = await readyClient();
     const r = await seed({ message: '', listingUrl: 'https://www.stepstone.de/stellenangebote--fahrer-123' }, client.user.id);
-    expect(r.state).toBe('READY');
+    expect(r.state).toBe('SEARCHING');
+    await runEmployerDiscovery({ fetchPage: noAddressFetcher });
     const app = await appOf(r.inquiryId);
-    expect(app.status).toBe('SUBMITTED');
+    expect(app).toMatchObject({ status: 'SUBMITTED', autoState: 'CLIENT_SEND', discoveryState: 'NOT_FOUND' });
     expect(app.coverLetterBody).toBeTruthy();
-    const ready = await prisma.notification.findFirstOrThrow({ where: { userId: client.user.id, type: 'EXTERNAL_APPLICATION_READY' } });
-    expect(ready.body).toContain('hazırlanıb, işəgötürənə göndərilir');
+    const handed = await prisma.notification.findFirstOrThrow({ where: { userId: client.user.id, type: 'EXTERNAL_APPLICATION_CLIENT_SEND' } });
+    expect(handed.title).toContain('özünüz göndərin');
 
     const staff = await asStaff();
-    const overview = await staff.agent.get('/api/admin/external-applications/auto/overview').expect(200);
+    let overview = await staff.agent.get('/api/admin/external-applications/auto/overview').expect(200);
     expect(overview.body.today).toEqual({ sent: 0, limit: 30 });
-    expect(overview.body.settings.enabled).toBe(true);
+    expect(overview.body.settings).toMatchObject({ enabled: true, discovery: true });
+    expect(overview.body.queue).toHaveLength(0); // the client sends it: nothing for staff
+    expect(overview.body.counts.CLIENT_SEND).toBe(1);
+
+    // The client could not send it: staff queue.
+    await client.agent.post(`/api/external-applications/${app.id}/help`).send({ note: 'E-poçt ünvanı yoxdur' }).expect(200);
+    overview = await staff.agent.get('/api/admin/external-applications/auto/overview').expect(200);
     expect(overview.body.queue).toHaveLength(1);
-    expect(overview.body.queue[0]).toMatchObject({ inquiryId: r.inquiryId, state: 'READY', listingUrl: 'https://www.stepstone.de/stellenangebote--fahrer-123', hasCoverLetter: true });
+    expect(overview.body.queue[0]).toMatchObject({ inquiryId: r.inquiryId, state: 'READY', reason: 'CLIENT_HELP', listingUrl: 'https://www.stepstone.de/stellenangebote--fahrer-123', hasCoverLetter: true });
 
     const zipRes = await staff.agent.get(`/api/admin/external-applications/${r.inquiryId}/package.zip`).buffer(true).parse(binaryParser).expect(200);
     expect(zipRes.headers['content-type']).toContain('application/zip');
@@ -135,7 +146,7 @@ describe('no employer e-mail → "Göndərməyə hazır" queue', () => {
 
     // Staff found an address on the listing page: the normal pipeline sends it.
     const other = await seed({ listingUrl: 'https://www.stepstone.de/stellenangebote--koch-9', listingTitle: 'Berufskraftfahrer C (m/w/d)', message: '' }, client.user.id);
-    expect(other.state).toBe('READY');
+    expect(other.state).toBe('SEARCHING');
     const bad = await staff.agent.put(`/api/admin/external-applications/${other.inquiryId}/auto/employer-email`).send({ email: 'jobs@stepstone.de' });
     expect(bad.status).toBe(400);
     const set = await staff.agent.put(`/api/admin/external-applications/${other.inquiryId}/auto/employer-email`).send({ email: 'personal@spedition-ost.de' }).expect(200);
@@ -204,11 +215,13 @@ describe('missing data', () => {
 });
 
 describe('consent', () => {
-  it('without the forward consent nothing is sent; consent in the portal starts the sending', async () => {
+  it('without the forward consent nothing is sent in our name (the client sends it); consent in the portal starts the sending', async () => {
     const client = await readyClient();
     const res = await apply(fields({ forwardConsent: '', attachLebenslauf: 'true' }), client.agent).expect(201);
     let app = await appOf(res.body.id);
-    expect(app).toMatchObject({ autoState: 'NO_CONSENT', status: 'SUBMITTED', forwardConsentAt: null });
+    expect(app).toMatchObject({ autoState: 'CLIENT_SEND', status: 'SUBMITTED', forwardConsentAt: null });
+    const mine = await client.agent.get('/api/external-applications').expect(200);
+    expect(mine.body.items[0].auto.clientSend).toMatchObject({ employerEmail: EMPLOYER, subject: 'Bewerbung als Berufskraftfahrer CE' });
     await runExternalAutoSend();
     expect(await prisma.emailLog.count({ where: { to: EMPLOYER } })).toBe(0);
     const staff = await asStaff();

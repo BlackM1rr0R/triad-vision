@@ -30,7 +30,7 @@ import { extractEmails } from '../../lib/germanyJobs/autoCheck.js';
  *   GET    /:id/lebenslauf.pdf       the client's newest saved Lebenslauf (audited)
  * Automatic sending (lib/germanyJobs/autoSend.ts):
  *   GET    /auto/overview            today's count / limit, kill switch, "Göndərməyə hazır" queue (READY + QUEUED)
- *   GET    /auto/settings            PUT (ADMIN+, settings area): { enabled, dailyLimit, perDomainLimit, replyTo } (audited)
+ *   GET    /auto/settings            PUT (ADMIN+, settings area): { enabled, dailyLimit, perDomainLimit, replyTo, discovery } (audited)
  *   POST   /auto/mark-sent           { ids: inquiry ids } → "Göndərildi" bulk: FORWARDED + client notice (audited)
  *   PUT    /:id/auto/employer-email  { email | null } → set by staff; a READY / QUEUED application continues (may send)
  *   POST   /:id/auto/send            staff "send now" (no limits / kill switch; consent + CV required; audited)
@@ -106,6 +106,8 @@ adminExternalApplicationsRouter.get('/auto/overview', async (_req, res) => {
       reason: r.autoReason,
       nextAt: r.autoNextAt,
       employerEmail: r.employerEmail,
+      employerPageUrl: r.employerPageUrl,
+      clientHelpAt: r.clientHelpAt,
       hasCoverLetter: !!r.coverLetterBody,
     })),
   });
@@ -241,10 +243,10 @@ adminExternalApplicationsRouter.put('/:id/auto/employer-email', async (req, res)
   if (app.autoSentAt) throw badRequest('ALREADY_SENT');
   const email = body.email || null;
   if (email && !extractEmails(email).length) throw badRequest('EMPLOYER_EMAIL_NOT_ALLOWED'); // job boards / no-reply
-  await prisma.externalJobApplication.update({ where: { id: app.id }, data: { employerEmail: email, employerEmailSource: email ? 'staff' : null, ...(app.autoReason === 'EMAIL_REJECTED' ? { autoReason: null } : {}) } });
+  await prisma.externalJobApplication.update({ where: { id: app.id }, data: { employerEmail: email, employerEmailSource: email ? 'staff' : null, employerEmailEvidence: null, employerEmailEvidenceUrl: null, ...(app.autoReason === 'EMAIL_REJECTED' ? { autoReason: null } : {}) } });
   await audit(req, 'EXTERNAL_JOB_EMPLOYER_EMAIL_SET', `inquiry:${app.inquiryId}`, { email });
-  // A READY / QUEUED application with a new address continues through the normal pipeline (check, limits, kill switch).
-  if (email && (app.autoState === 'READY' || app.autoState === 'QUEUED')) await processExternalApplication(app.id);
+  // An open application with a new address continues through the normal pipeline (check, consent, limits, kill switch).
+  if (email && ['READY', 'QUEUED', 'SEARCHING', 'CLIENT_SEND'].includes(app.autoState ?? '')) await processExternalApplication(app.id);
   res.json(await view(await load(app.inquiryId)));
 });
 

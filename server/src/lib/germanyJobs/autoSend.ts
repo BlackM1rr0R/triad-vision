@@ -6,7 +6,7 @@ import { prisma } from '../../db.js';
 import { audit } from '../audit.js';
 import { brandSync } from '../brand/index.js';
 import { renderEmail, sendMail, sendMailDetailed, type MailAttachment } from '../mailer.js';
-import { notifyUser } from '../notifications.js';
+import { notifyStaff, notifyUser } from '../notifications.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
 import { germanRank } from '../matching.js';
 import { coverLetterPdf, draftCoverLetter } from '../coverLetters/index.js';
@@ -18,32 +18,50 @@ import { notifyStatusChange } from './applicationStatus.js';
 import { attachLebenslaufCopy } from './lebenslaufAttach.js';
 import { baseDomain, checkExternalApplication, isGermanLevel, missingKey, parseGermanRequirement, readMissing, type AutoCheckResult } from './autoCheck.js';
 import { dayStart, getAutoSendSettings, limitReason, nextDayStart, replyToAddress, type AutoSendSettings } from './autoSettings.js';
-import { employerMail, localePath, needsMessage, readyMessage } from './autoTexts.js';
+import { clientHelpStaffText, clientRemindMessage, clientSendMessage, employerMail, localePath, needsMessage } from './autoTexts.js';
 
 /**
  * Automatic handling of "apply via Triad Vision" applications (owner decision: full automatic sending with checks):
  *
- *   new application with forward consent ─► check (lib/germanyJobs/autoCheck.ts)
+ *   new application ─► check (lib/germanyJobs/autoCheck.ts)
  *     ├─ data missing → NEEDS_DATA: status stays SUBMITTED with a note; the client is told exactly what is missing
  *     │                 (in-app + e-mail, links to profile / CV builder); re-checked on profile / CV changes and by
  *     │                 the scheduler, then it continues by itself
- *     └─ ok → Anschreiben from the template (no AI) is attached, then
- *          ├─ employer e-mail known → e-mail "in our name" (From: brand, Reply-To: agency inbox) with Anschreiben +
- *          │                          CV as PDF → FORWARDED (+ timeline event, client notification, audit)
- *          │                          limits: daily total + per employer domain; over a limit → QUEUED for the next
- *          │                          day; admin kill switch → QUEUED until switched on again
- *          └─ no e-mail → READY: staff queue "Göndərməyə hazır" (package download, "sent" bulk action); the client
- *                         reads "prepared, being sent to the employer"
- *   without forward consent → NO_CONSENT: nothing is sent automatically (the client can agree later in the portal).
+ *     └─ ok → Anschreiben from the template (no AI) is attached, then (owner decision: MIXED mode)
+ *          ├─ forward consent + employer e-mail known → e-mail "in our name" (From: brand, Reply-To: agency inbox)
+ *          │       with Anschreiben + CV as PDF → FORWARDED (+ timeline event, client notification, audit)
+ *          │       limits: daily total + per employer domain; over a limit → QUEUED for the next day; admin kill
+ *          │       switch → QUEUED until switched on again
+ *          ├─ no address yet → SEARCHING: the scheduler resolves the listing link and looks for the employer's
+ *          │       address (lib/germanyJobs/discovery); found → the branch above
+ *          └─ no usable address (not found, robots.txt, failure, SMTP rejected) or no forward consent →
+ *                  CLIENT_SEND: the client gets the ready package (Anschreiben + CV, direct employer link, texts to
+ *                  copy) and sends it themselves, then confirms "Göndərdim" (FORWARDED, mode CLIENT); one reminder
+ *                  after 3 days; "Alınmadı" → READY (staff queue "Göndərməyə hazır") + staff notified
+ *   Sending in our name always needs the forward consent; the client sending their own data does not.
  *
  * Never sends twice: one claim per row (autoState → SENDING in one conditional update) and no second send for the
  * same client + listing. Everything here never throws to its caller (apply route, profile save, scheduler).
  */
 
-export const AUTO_STATES = ['NO_CONSENT', 'NEEDS_DATA', 'READY', 'QUEUED', 'SENDING', 'SENT', 'STOPPED', 'DUPLICATE'] as const;
+export const AUTO_STATES = ['NO_CONSENT', 'NEEDS_DATA', 'SEARCHING', 'CLIENT_SEND', 'READY', 'QUEUED', 'SENDING', 'SENT', 'STOPPED', 'DUPLICATE'] as const;
 export type AutoState = (typeof AUTO_STATES)[number];
 /** States the automation may still move on from. */
-const OPEN_STATES: AutoState[] = ['NEEDS_DATA', 'READY', 'QUEUED'];
+const OPEN_STATES: AutoState[] = ['NEEDS_DATA', 'SEARCHING', 'CLIENT_SEND', 'READY', 'QUEUED'];
+/** Days after the hand-over to the client before the one reminder. */
+export const CLIENT_REMIND_DAYS = 3;
+
+/**
+ * Pure routing after a passed check (unit-tested): where an application goes next.
+ * SEND = e-mail in our name, SEARCH = look for the address first, CLIENT = the client sends it, STAFF = stays with staff.
+ */
+export const nextStep = (a: { consent: boolean; employerEmail: string | null; emailRejected: boolean; discoveryDone: boolean; discoveryOn: boolean; state: string | null }): 'SEND' | 'SEARCH' | 'CLIENT' | 'STAFF' => {
+  const usable = !!a.employerEmail && !a.emailRejected;
+  if (a.consent && usable) return 'SEND';
+  if (a.state === 'READY') return 'STAFF'; // the client asked for help / staff took it
+  if (!a.employerEmail && !a.discoveryDone && a.discoveryOn) return 'SEARCH';
+  return 'CLIENT';
+};
 
 const appInclude = { inquiry: { select: { contactName: true, email: true, phone: true, locale: true, anonymizedAt: true } } } satisfies Prisma.ExternalJobApplicationInclude;
 type App = Prisma.ExternalJobApplicationGetPayload<{ include: typeof appInclude }>;
@@ -152,15 +170,16 @@ const tellClientMissing = async (app: App, check: AutoCheckResult, user: Awaited
   await sendMail(app.inquiry.email, `Triad Vision · ${m.title}`, renderEmail(m.title, m.body, { label: m.cta, url: `${config.clientUrl}${localePath(lng, m.path)}` }));
 };
 
-const tellClientReady = async (app: App, user: Awaited<ReturnType<typeof clientUser>>) => {
+/** "Your application is ready: send it to the employer yourself" (in-app + e-mail, or e-mail to a guest); reminder once. */
+const tellClientSend = async (app: App, user: Awaited<ReturnType<typeof clientUser>>, reminder = false) => {
   const lng = clientLocale(app, user);
-  const m = readyMessage(lng, jobName(app));
+  const m = reminder ? clientRemindMessage(lng, jobName(app)) : clientSendMessage(lng, jobName(app));
   if (user) {
-    await notifyUser(user.id, { type: 'EXTERNAL_APPLICATION_READY', title: m.title, body: m.body, link: '/account/job-applications', ctaLabel: m.cta, forceEmail: true });
+    await notifyUser(user.id, { type: reminder ? 'EXTERNAL_APPLICATION_CLIENT_REMIND' : 'EXTERNAL_APPLICATION_CLIENT_SEND', title: m.title, body: m.body, link: '/account/job-applications', ctaLabel: m.cta, forceEmail: true });
     return;
   }
   if (app.inquiry.anonymizedAt) return;
-  await sendMail(app.inquiry.email, `Triad Vision · ${m.title}`, renderEmail(m.title, m.body, { label: m.cta, url: `${config.clientUrl}/account/job-applications` }));
+  await sendMail(app.inquiry.email, `Triad Vision · ${m.title}`, renderEmail(m.title, m.body, { label: m.cta, url: `${config.clientUrl}${localePath(lng, '/account/job-applications')}` }));
 };
 
 // ─── Sending ──────────────────────────────────────────────────────────────
@@ -180,6 +199,27 @@ const ensureCvFile = async (app: App) => {
   const cv = await attachLebenslaufCopy(app.userId); // newest saved Lebenslauf, or one built from the CV builder now
   await setState(app.id, { cvStoredName: cv.storedName, cvOriginalName: cv.originalName.slice(0, 255), cvMime: cv.mime, cvSize: cv.size, lebenslaufVersionId: cv.lebenslaufVersionId ?? null });
   return { path: cvPath(cv.storedName), name: cv.originalName, mime: cv.mime };
+};
+
+/**
+ * No usable employer address (or no forward consent): the client gets the prepared package and sends it themselves.
+ * The Anschreiben and the CV file are made ready here (never in the client's GET requests). Told once.
+ */
+const handToClient = async (app: App, user: Awaited<ReturnType<typeof clientUser>>, now = new Date()): Promise<AutoState> => {
+  await ensureCoverLetter(app);
+  if (!(await ensureCvFile(app))) {
+    await setState(app.id, { autoState: 'NEEDS_DATA', autoMissing: 'CV' });
+    return 'NEEDS_DATA';
+  }
+  const moved = await prisma.externalJobApplication.updateMany({
+    where: { id: app.id, autoSentAt: null, ...stateNotIn(['SENDING', 'SENT', 'STOPPED', 'DUPLICATE', 'CLIENT_SEND']) },
+    data: { autoState: 'CLIENT_SEND', autoNextAt: null, clientSendAt: app.clientSendAt ?? now },
+  });
+  if (moved.count && !app.clientSendAt) {
+    await audit(systemReqTyped, 'EXTERNAL_JOB_CLIENT_SEND', `inquiry:${app.inquiryId}`, { discovery: app.discoveryState, reason: app.autoReason, consent: !!app.forwardConsentAt });
+    await tellClientSend(app, user);
+  }
+  return 'CLIENT_SEND';
 };
 
 /** Employer e-mails sent today (all, and to one employer domain). */
@@ -203,7 +243,7 @@ export type SendOutcome = 'SENT' | 'QUEUED' | 'FAILED' | 'BUSY' | 'NO_EMAIL' | '
 const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: string | null, now = new Date()): Promise<SendOutcome> => {
   if (!app.forwardConsentAt) return 'NO_CONSENT';
   const to = app.employerEmail;
-  if (!to) return 'NO_EMAIL';
+  if (!to || (!staffId && app.autoReason === 'EMAIL_REJECTED')) return 'NO_EMAIL'; // a refused address is never retried by itself
   const domain = baseDomain(to.split('@')[1] ?? '');
   if (!staffId) {
     if (!settings.enabled) {
@@ -237,10 +277,14 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
     const result = await sendMailDetailed({ to, subject: mail.subject, html: renderEmail(mail.subject, mail.body), attachments, replyTo: replyToAddress(settings) || undefined });
     const mode = staffId ? 'STAFF' : 'AUTO';
     if (result.status === 'FAILED') {
-      // 5xx = the address does not exist: staff take over (READY queue); otherwise try again in an hour.
+      // 5xx = the address does not exist: the client sends it themselves (CLIENT_SEND); otherwise try again in an hour.
       const permanent = !!result.responseCode && result.responseCode >= 500;
-      await setState(app.id, permanent ? { autoState: 'READY', autoReason: 'EMAIL_REJECTED', autoNextAt: null } : { autoState: 'QUEUED', autoReason: 'SEND_FAILED', autoNextAt: new Date(now.getTime() + 60 * 60 * 1000) });
+      await setState(app.id, permanent ? { autoState: null, autoReason: 'EMAIL_REJECTED', autoNextAt: null } : { autoState: 'QUEUED', autoReason: 'SEND_FAILED', autoNextAt: new Date(now.getTime() + 60 * 60 * 1000) });
       await audit(staffReq(staffId), 'EXTERNAL_JOB_AUTO_SEND_FAILED', `inquiry:${app.inquiryId}`, { to, mode, error: (result.error ?? '').slice(0, 300), permanent });
+      if (permanent) {
+        const fresh = await loadApp(app.id);
+        if (fresh) await handToClient(fresh, await clientUser(fresh.userId), now);
+      }
       return 'FAILED';
     }
     const at = new Date();
@@ -264,7 +308,7 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
 // ─── The pipeline ─────────────────────────────────────────────────────────
 
 /**
- * Check → note / notice → Anschreiben → send or READY. Runs for new applications, after the client changed data,
+ * Check → note / notice → Anschreiben → send, look for the address, or hand to the client. Runs for new applications, after the client changed data,
  * from the scheduler and after staff actions. Returns the new state (null = not handled automatically).
  */
 export const processExternalApplication = async (id: string, opts: { now?: Date } = {}): Promise<AutoState | null> => {
@@ -273,16 +317,26 @@ export const processExternalApplication = async (id: string, opts: { now?: Date 
     const app = await loadApp(id);
     if (!app || app.inquiry.anonymizedAt) return null;
     if (app.status !== 'SUBMITTED') return (app.autoState as AutoState | null) ?? null; // staff took over / already forwarded
-    if (!app.forwardConsentAt) {
-      if (app.autoState !== 'NO_CONSENT') await setState(app.id, { autoState: 'NO_CONSENT' });
-      return 'NO_CONSENT';
-    }
     const state = app.autoState as AutoState | null;
     if (state && !OPEN_STATES.includes(state) && state !== 'NO_CONSENT') return state; // SENT / SENDING / STOPPED / DUPLICATE
     const now = opts.now ?? new Date();
-    const { result, user, germanLevel } = await runCheck(app);
     // Conditional writes: a parallel run may already be sending this row; its result must not be overwritten.
     const stillOpen: Prisma.ExternalJobApplicationWhereInput = { id: app.id, autoSentAt: null, OR: [{ autoState: null }, { autoState: { in: [...OPEN_STATES, 'NO_CONSENT'] } }] };
+    if (!app.forwardConsentAt) {
+      // Nothing goes out in our name. A client with an account and a CV gets the package to send it themselves (no
+      // agency check needed for that); everyone else waits for the consent as before.
+      const owner = await clientUser(app.userId);
+      if (!owner || !(await cvAvailable(app, true))) {
+        if (state !== 'NO_CONSENT') await prisma.externalJobApplication.updateMany({ where: stillOpen, data: { autoState: 'NO_CONSENT' } });
+        return 'NO_CONSENT';
+      }
+      if (await alreadySent(app)) {
+        await setState(app.id, { autoState: 'DUPLICATE' });
+        return 'DUPLICATE';
+      }
+      return routeAfterCheck(app, owner, state, now, stillOpen);
+    }
+    const { result, user, germanLevel } = await runCheck(app);
     await prisma.externalJobApplication.updateMany({ where: stillOpen, data: { autoMissing: missingKey(result.missing) || null, autoCheckedAt: now } });
     if (!result.ok) {
       const moved = await prisma.externalJobApplication.updateMany({ where: stillOpen, data: { autoState: 'NEEDS_DATA', autoReason: null, autoNextAt: null } });
@@ -297,31 +351,42 @@ export const processExternalApplication = async (id: string, opts: { now?: Date 
     }
     // The "needs" note goes once everything is there.
     if (app.statusNote && app.autoNotifiedKey) await setState(app.id, { statusNote: null, autoNotifiedKey: null });
-    await ensureCoverLetter(app);
-    // No address, or the employer's server refused it (staff check the address in the READY queue).
-    if (!app.employerEmail || app.autoReason === 'EMAIL_REJECTED') {
-      // Conditional update: only the call that moves the row to READY tells the client.
-      const moved = await prisma.externalJobApplication.updateMany({ where: { id: app.id, OR: [{ autoState: null }, { autoState: { not: 'READY' } }] }, data: { autoState: 'READY', autoReason: null, autoNextAt: null } });
-      if (moved.count) {
-        await audit(systemReqTyped, 'EXTERNAL_JOB_AUTO_READY', `inquiry:${app.inquiryId}`, {});
-        await tellClientReady(app, user);
-      }
-      return 'READY';
-    }
-    const fresh = (await loadApp(app.id))!;
-    const out = await sendToEmployer(fresh, await getAutoSendSettings(), null, now);
-    return out === 'SENT' ? 'SENT' : out === 'NO_CV' ? 'NEEDS_DATA' : ((await prisma.externalJobApplication.findUnique({ where: { id }, select: { autoState: true } }))?.autoState as AutoState | null) ?? null;
+    return routeAfterCheck(app, user, state, now, stillOpen);
   } catch (err) {
     console.error('[germany-jobs] automatic processing failed', id, err);
     return null;
   }
 };
 
+/** Anschreiben, then: send in our name, look for the address first, hand to the client, or leave it with staff. */
+const routeAfterCheck = async (app: App, user: Awaited<ReturnType<typeof clientUser>>, state: AutoState | null, now: Date, stillOpen: Prisma.ExternalJobApplicationWhereInput): Promise<AutoState | null> => {
+  await ensureCoverLetter(app);
+  const settings = await getAutoSendSettings();
+  const step = nextStep({
+    consent: !!app.forwardConsentAt,
+    employerEmail: app.employerEmail,
+    emailRejected: app.autoReason === 'EMAIL_REJECTED',
+    discoveryDone: !!app.discoveryState,
+    discoveryOn: settings.discovery,
+    state,
+  });
+  if (step === 'STAFF') return 'READY';
+  if (step === 'SEARCH') {
+    // The scheduler looks for the address (lib/germanyJobs/discovery) and runs this again with the result.
+    const moved = await prisma.externalJobApplication.updateMany({ where: stillOpen, data: { autoState: 'SEARCHING', autoReason: null, autoNextAt: null } });
+    return moved.count ? 'SEARCHING' : null;
+  }
+  if (step === 'CLIENT') return handToClient((await loadApp(app.id))!, user, now);
+  const fresh = (await loadApp(app.id))!;
+  const out = await sendToEmployer(fresh, settings, null, now);
+  return out === 'SENT' ? 'SENT' : out === 'NO_CV' ? 'NEEDS_DATA' : ((await prisma.externalJobApplication.findUnique({ where: { id: app.id }, select: { autoState: true } }))?.autoState as AutoState | null) ?? null;
+};
+
 /** The client changed profile / CV / documents: re-check their open applications (never throws). */
 export const recheckUserApplications = async (userId: string) => {
   if (isImpersonating()) return;
   try {
-    const rows = await prisma.externalJobApplication.findMany({ where: { userId, status: 'SUBMITTED', autoState: { in: ['NEEDS_DATA', 'NO_CONSENT'] }, forwardConsentAt: { not: null } }, select: { id: true }, take: 20 });
+    const rows = await prisma.externalJobApplication.findMany({ where: { userId, status: 'SUBMITTED', autoState: { in: ['NEEDS_DATA', 'NO_CONSENT'] } }, select: { id: true }, take: 20 });
     for (const r of rows) await processExternalApplication(r.id);
   } catch (err) {
     console.error('[germany-jobs] re-check failed', err);
@@ -367,7 +432,65 @@ export const runExternalAutoSend = async (now = new Date()) => {
     take: 200,
   });
   for (const r of needs) await processExternalApplication(r.id, { now });
-  return { sent, rechecked: needs.length, stuck: stuck.count };
+  const reminded = await remindClientSend(now);
+  return { sent, rechecked: needs.length, stuck: stuck.count, reminded };
+};
+
+/** One reminder CLIENT_REMIND_DAYS after the hand-over while the client has not confirmed (conditional: once). */
+export const remindClientSend = async (now = new Date()) => {
+  const rows = await prisma.externalJobApplication.findMany({
+    where: { autoState: 'CLIENT_SEND', status: 'SUBMITTED', autoSentAt: null, clientRemindedAt: null, clientSendAt: { lte: new Date(now.getTime() - CLIENT_REMIND_DAYS * 24 * 60 * 60 * 1000) } },
+    select: { id: true },
+    take: 200,
+  });
+  let n = 0;
+  for (const r of rows) {
+    const claimed = await prisma.externalJobApplication.updateMany({ where: { id: r.id, clientRemindedAt: null, autoState: 'CLIENT_SEND', autoSentAt: null }, data: { clientRemindedAt: now } });
+    if (!claimed.count) continue;
+    const app = await loadApp(r.id);
+    if (!app || app.inquiry.anonymizedAt) continue;
+    await tellClientSend(app, await clientUser(app.userId), true).catch((err) => console.error('[germany-jobs] reminder failed', err));
+    n++;
+  }
+  return n;
+};
+
+// ─── The client sends it themselves (routes/externalApplications.ts) ──────
+
+/** Can the client confirm / ask for help now (pure)? Only while nothing went out and staff have not closed it. */
+export const clientMaySend = (a: { status: string; autoSentAt: Date | null; autoState: string | null }) =>
+  a.status === 'SUBMITTED' && !a.autoSentAt && !['SENDING', 'SENT', 'DUPLICATE'].includes(a.autoState ?? '');
+
+/** "Göndərdim": the client sent the package → FORWARDED (mode CLIENT) + timeline event; staff see it. */
+export const clientConfirmSent = async (applicationId: string, userId: string) => {
+  if (isImpersonating()) return false;
+  const app = await loadApp(applicationId);
+  if (!app || app.userId !== userId || app.inquiry.anonymizedAt || !clientMaySend(app)) return false;
+  const at = new Date();
+  const claimed = await prisma.externalJobApplication.updateMany({
+    where: { id: app.id, userId, autoSentAt: null, status: 'SUBMITTED', ...stateNotIn(['SENDING', 'SENT', 'DUPLICATE']) },
+    data: { autoState: 'SENT', autoSentAt: at, autoSentMode: 'CLIENT', autoReason: null, autoNextAt: null, status: 'FORWARDED', statusNote: null, statusChangedAt: at },
+  });
+  if (!claimed.count) return false;
+  await prisma.externalJobApplicationEvent.create({ data: { applicationId: app.id, status: 'FORWARDED', createdAt: at } });
+  return true;
+};
+
+/** "Alınmadı / problem var": staff take over (READY queue "Göndərməyə hazır") and are notified (once). */
+export const clientNeedsHelp = async (applicationId: string, userId: string, note: string | null) => {
+  if (isImpersonating()) return false;
+  const app = await loadApp(applicationId);
+  if (!app || app.userId !== userId || app.inquiry.anonymizedAt || !clientMaySend(app)) return false;
+  const claimed = await prisma.externalJobApplication.updateMany({
+    where: { id: app.id, userId, autoSentAt: null, status: 'SUBMITTED', ...stateNotIn(['SENDING', 'SENT', 'DUPLICATE']) },
+    data: { autoState: 'READY', autoReason: 'CLIENT_HELP', autoNextAt: null, clientHelpAt: new Date() },
+  });
+  if (!claimed.count) return false;
+  if (!app.clientHelpAt) {
+    const t = clientHelpStaffText({ name: app.inquiry.contactName, job: jobName(app), note });
+    await notifyStaff(t.subject, t.body, { link: `/admin/inquiries?open=${app.inquiryId}`, type: 'EXTERNAL_APPLICATION_HELP' }).catch((err) => console.error('[germany-jobs] staff notice failed', err));
+  }
+  return true;
 };
 
 // ─── Staff overrides (routes/admin/externalApplications.ts) ───────────────
@@ -404,7 +527,7 @@ export const stopAutomation = (applicationId: string) =>
 
 /** Staff switch the automation on again for a stopped / duplicate row: runs the pipeline from the start. */
 export const resumeAutomation = async (applicationId: string) => {
-  await prisma.externalJobApplication.updateMany({ where: { id: applicationId, autoSentAt: null, autoState: { in: ['STOPPED', 'DUPLICATE', 'READY', 'QUEUED'] } }, data: { autoState: null, autoReason: null, autoNextAt: null } });
+  await prisma.externalJobApplication.updateMany({ where: { id: applicationId, autoSentAt: null, autoState: { in: ['STOPPED', 'DUPLICATE', 'READY', 'QUEUED', 'CLIENT_SEND'] } }, data: { autoState: null, autoReason: null, autoNextAt: null } });
   return processExternalApplication(applicationId);
 };
 
@@ -425,6 +548,14 @@ export const autoView = (app: {
   autoSentMode: string | null;
   employerEmail: string | null;
   employerEmailSource: string | null;
+  employerEmailEvidence: string | null;
+  employerEmailEvidenceUrl: string | null;
+  employerPageUrl: string | null;
+  discoveryState: string | null;
+  discoveryAt: Date | null;
+  clientSendAt: Date | null;
+  clientRemindedAt: Date | null;
+  clientHelpAt: Date | null;
   forwardConsentAt: Date | null;
   requiredGerman: string | null;
 }) => ({
@@ -437,6 +568,14 @@ export const autoView = (app: {
   sentMode: app.autoSentMode,
   employerEmail: app.employerEmail,
   employerEmailSource: app.employerEmailSource,
+  employerEmailEvidence: app.employerEmailEvidence,
+  employerEmailEvidenceUrl: app.employerEmailEvidenceUrl,
+  employerPageUrl: app.employerPageUrl,
+  discoveryState: app.discoveryState,
+  discoveryAt: app.discoveryAt,
+  clientSendAt: app.clientSendAt,
+  clientRemindedAt: app.clientRemindedAt,
+  clientHelpAt: app.clientHelpAt,
   forwardConsentAt: app.forwardConsentAt,
   requiredGerman: app.requiredGerman,
 });

@@ -16,6 +16,7 @@ import { fmtDate } from '@/components/admin/labels';
 import { useBlobDownload } from '@/components/cv/CvDownloadButton';
 import { CoverLetterEditor } from '@/components/germanyJobs/CoverLetterEditor';
 import { STATUS_TONE, hostOf, xappError, type ExternalAppStatus, type TimelineStep } from '@/components/germanyJobs/externalApps';
+import { ClientSendGuide, type ClientSendInfo } from '@/components/germanyJobs/ClientSendGuide';
 
 registerCopy(pagesExternalApps);
 registerCopy(pagesExternalAuto);
@@ -28,6 +29,9 @@ interface AutoInfo {
   consent: boolean;
   missing: { code: MissingCode; path: string }[];
   requiredGerman: string | null;
+  sentMode?: string | null;
+  /** The client sends the prepared package themselves (CLIENT_SEND / help asked). */
+  clientSend?: ClientSendInfo | null;
 }
 
 interface MyExternalApplication {
@@ -81,6 +85,28 @@ const AutoBox = ({ a }: { a: MyExternalApplication }) => {
           ))}
         </ul>
       </div>
+    );
+  }
+  if (auto.clientSend) {
+    return (
+      <>
+        <ClientSendGuide appId={a.id} info={auto.clientSend} queryKey={['my-external-applications']} />
+        {!auto.consent && auto.clientSend.employerEmail && (
+          <div className="mt-2 rounded-lg border border-line bg-sunken/60 px-3 py-3 text-sm">
+            <p className="text-muted">{t('xauto.portal.client.consentOffer')}</p>
+            <Button className="mt-2" size="sm" variant="secondary" icon={ShieldCheck} loading={consent.isPending} onClick={() => consent.mutate()}>
+              {t('xauto.portal.consent')}
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  }
+  if (auto.state === 'SEARCHING') {
+    return (
+      <p className="mt-4 flex items-center gap-2 rounded-lg border border-line bg-info-bg px-3 py-2 text-sm text-info-fg" role="status">
+        <Send className="size-4 shrink-0" aria-hidden /> {t('xauto.portal.searching')}
+      </p>
     );
   }
   if (auto.state === 'READY' || auto.state === 'QUEUED' || auto.state === 'SENDING') {

@@ -10,6 +10,7 @@ export const resetDb = async () => {
   // Newer add-on tables (plain ids / children only; nothing references them)
   for (const m of [
     prisma.germanyJobAlertSent,
+    prisma.employerEmailDiscovery, // employer e-mail discovery cache (no relations)
     prisma.arrivalCertificate,
     prisma.readyActivityResult, // Germany Ready (plain ids)
     prisma.readyCertificate,

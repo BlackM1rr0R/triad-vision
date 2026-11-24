@@ -33,15 +33,25 @@ registerCopy(pagesExternalAuto);
 export const AUTO_CHECKS = ['ACCOUNT', 'CV', 'GERMAN_LEVEL', 'PROFESSION', 'PASSPORT', 'PHONE', 'EMAIL'] as const;
 
 export interface AutoView {
-  state: 'NO_CONSENT' | 'NEEDS_DATA' | 'READY' | 'QUEUED' | 'SENDING' | 'SENT' | 'STOPPED' | 'DUPLICATE' | null;
+  state: 'NO_CONSENT' | 'NEEDS_DATA' | 'SEARCHING' | 'CLIENT_SEND' | 'READY' | 'QUEUED' | 'SENDING' | 'SENT' | 'STOPPED' | 'DUPLICATE' | null;
   missing: string[];
   checkedAt: string | null;
   reason: string | null;
   nextAt: string | null;
   sentAt: string | null;
-  sentMode: 'AUTO' | 'STAFF' | 'MANUAL' | null;
+  sentMode: 'AUTO' | 'STAFF' | 'MANUAL' | 'CLIENT' | null;
   employerEmail: string | null;
-  employerEmailSource: 'listing' | 'staff' | null;
+  employerEmailSource: 'listing' | 'staff' | 'DISCOVERED' | null;
+  /** Employer e-mail discovery (server lib/germanyJobs/discovery). */
+  employerEmailEvidence: string | null;
+  employerEmailEvidenceUrl: string | null;
+  employerPageUrl: string | null;
+  discoveryState: 'FOUND' | 'NOT_FOUND' | 'ROBOTS' | 'FAILED' | 'SKIPPED' | null;
+  discoveryAt: string | null;
+  /** The client sends the package themselves. */
+  clientSendAt: string | null;
+  clientRemindedAt: string | null;
+  clientHelpAt: string | null;
   forwardConsentAt: string | null;
   requiredGerman: string | null;
 }
@@ -49,12 +59,43 @@ export interface AutoView {
 export const STATE_TONE: Record<NonNullable<AutoView['state']>, BadgeTone> = {
   NO_CONSENT: 'neutral',
   NEEDS_DATA: 'warning',
-  READY: 'info',
+  SEARCHING: 'info',
+  CLIENT_SEND: 'info',
+  READY: 'warning',
   QUEUED: 'info',
   SENDING: 'info',
   SENT: 'success',
   STOPPED: 'neutral',
   DUPLICATE: 'neutral',
+};
+
+const extLink = (href: string, label: string) => (
+  <a href={href} target="_blank" rel="nofollow noopener noreferrer" className="inline-flex items-center gap-1 text-link hover:underline">
+    {label} <ExternalLink className="size-3" aria-hidden />
+  </a>
+);
+
+/** "E-poçt tapıldı: x@y.de (mənbə: səhifə)" with the page it was found on, or why nothing was found. */
+const DiscoveryInfo = ({ a }: { a: AutoView }) => {
+  const { t } = useTranslation();
+  if (a.employerEmailSource === 'DISCOVERED' && a.employerEmail) {
+    return (
+      <div className="rounded-md border border-line bg-surface px-2 py-1.5">
+        <p className="flex flex-wrap items-center gap-x-2 text-ink">
+          <span className="font-semibold">{t('xauto.admin.discovered', { email: a.employerEmail })}</span>
+          {a.employerEmailEvidenceUrl && extLink(a.employerEmailEvidenceUrl, t('xauto.admin.evidencePage'))}
+        </p>
+        {a.employerEmailEvidence && <p className="mt-0.5 line-clamp-2 break-words text-muted">{a.employerEmailEvidence}</p>}
+      </div>
+    );
+  }
+  if (!a.discoveryState && !a.employerPageUrl) return null;
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 text-muted">
+      {a.discoveryState && <span>{t(`xauto.admin.discoveryResult.${a.discoveryState}`)}</span>}
+      {a.employerPageUrl && extLink(a.employerPageUrl, t('xauto.admin.employerPage'))}
+    </p>
+  );
 };
 
 /** Per application (inside ExternalJobStatus): check, state, employer address and overrides. */
@@ -97,6 +138,18 @@ export const ExternalAutoSection = <T extends { auto: AutoView; status: string }
       </p>
       {sent && <p className="text-success-fg">{t('xauto.admin.sentAt', { date: fmtDateTime(a.sentAt!), mode: t(`xauto.admin.modes.${a.sentMode ?? 'AUTO'}`) })}</p>}
       <p className="text-muted">{a.forwardConsentAt ? t('xauto.admin.consentAt', { date: fmtDateTime(a.forwardConsentAt) }) : t('xauto.admin.noConsent')}</p>
+      <DiscoveryInfo a={a} />
+      {(a.clientSendAt || a.clientHelpAt) && (
+        <p className="text-muted">
+          {[
+            a.clientSendAt && t('xauto.admin.clientSendAt', { date: fmtDateTime(a.clientSendAt) }),
+            a.clientRemindedAt && t('xauto.admin.clientRemindedAt', { date: fmtDateTime(a.clientRemindedAt) }),
+            a.clientHelpAt && t('xauto.admin.clientHelpAt', { date: fmtDateTime(a.clientHelpAt) }),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
 
       <div>
         <p className="font-semibold text-ink">{t('xauto.admin.checkTitle')}</p>
@@ -184,6 +237,7 @@ interface AutoSettings {
   perDomainLimit: number;
   replyTo: string;
   replyToEffective: string;
+  discovery: boolean;
 }
 
 interface QueueItem {
@@ -197,6 +251,8 @@ interface QueueItem {
   reason: string | null;
   nextAt: string | null;
   employerEmail: string | null;
+  employerPageUrl: string | null;
+  clientHelpAt: string | null;
   hasCoverLetter: boolean;
 }
 
@@ -252,7 +308,7 @@ export const ExternalAutoQueuePanel = () => {
           {d.settings.enabled ? t('xauto.admin.on') : t('xauto.admin.off')}
         </Badge>
         <span className="font-semibold text-ink">{t('xauto.admin.today', { n: d.today.sent, limit: d.today.limit })}</span>
-        <span className="text-xs text-muted">{t('xauto.admin.counts', { needs: d.counts.NEEDS_DATA ?? 0, consent: d.counts.NO_CONSENT ?? 0, queued: d.counts.QUEUED ?? 0 })}</span>
+        <span className="text-xs text-muted">{t('xauto.admin.counts', { needs: d.counts.NEEDS_DATA ?? 0, consent: d.counts.NO_CONSENT ?? 0, queued: d.counts.QUEUED ?? 0, client: d.counts.CLIENT_SEND ?? 0 })}</span>
       </div>
 
       <form
@@ -280,6 +336,9 @@ export const ExternalAutoQueuePanel = () => {
           {t('xauto.admin.save')}
         </Button>
       </form>
+      <div className="mt-3">
+        <Switch checked={d.settings.discovery} onChange={(v) => save.mutate({ discovery: v })} label={t('xauto.admin.discoveryLabel')} hint={t('xauto.admin.discoveryHint')} showLabel disabled={!canEdit || save.isPending} />
+      </div>
       {!canEdit && <p className="mt-2 text-xs text-muted">{t('xauto.admin.adminOnly')}</p>}
 
       <div className="mt-5 border-t border-line pt-4">
@@ -311,7 +370,7 @@ export const ExternalAutoQueuePanel = () => {
                   {t(`xauto.admin.states.${r.state}`)}
                   {r.reason ? ` · ${t(`xauto.admin.reasons.${r.reason}`, { defaultValue: r.reason })}` : ''}
                 </Badge>
-                <a href={r.listingUrl} target="_blank" rel="nofollow noopener noreferrer" className="btn-ghost btn-sm">
+                <a href={r.employerPageUrl ?? r.listingUrl} target="_blank" rel="nofollow noopener noreferrer" className="btn-ghost btn-sm">
                   {t('xauto.admin.listing')} <ExternalLink className="size-3.5" aria-hidden />
                 </a>
                 <Button size="sm" variant="ghost" icon={Package} loading={pkg.busy} onClick={() => void pkg.run(`/admin/external-applications/${r.inquiryId}/package.zip`, 'Bewerbung.zip')}>

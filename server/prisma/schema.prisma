@@ -6609,11 +6609,26 @@ model ExternalJobApplication {
   forwardConsentAt   DateTime?
   /// German level the listing asks for (parsed from the listing; null = not stated).
   requiredGerman     String?   @db.VarChar(10)
-  /// Employer address for the automatic sending; source: listing (provider data / the employer's own site) | staff.
+  /// Employer address for the automatic sending; source: listing (provider data / the employer's own site) | staff |
+  /// DISCOVERED (found on the employer / listing page by lib/germanyJobs/discovery).
   employerEmail       String?  @db.VarChar(190)
   employerEmailSource String?  @db.VarChar(20)
-  /// Automatic sending: NO_CONSENT | NEEDS_DATA | READY (no employer e-mail, staff queue) | QUEUED (limit, switched
-  /// off, retry) | SENDING | SENT | STOPPED (staff) | DUPLICATE (same client + listing already sent). null = old row.
+  /// Discovery: page the address was found on + the text around it (for staff).
+  employerEmailEvidenceUrl String? @db.VarChar(1000)
+  employerEmailEvidence    String? @db.VarChar(500)
+  /// Direct employer / job page behind the provider's tracking link (resolved by the discovery).
+  employerPageUrl     String?  @db.VarChar(1000)
+  /// Discovery result: FOUND | NOT_FOUND | ROBOTS (robots.txt disallows) | FAILED | SKIPPED (switched off). null = not run.
+  discoveryState      String?  @db.VarChar(20)
+  discoveryAt         DateTime?
+  /// The client was asked to send the prepared package themselves (CLIENT_SEND), reminded once, asked staff for help.
+  clientSendAt        DateTime?
+  clientRemindedAt    DateTime?
+  clientHelpAt        DateTime?
+  /// Automatic sending: NO_CONSENT (old rows) | NEEDS_DATA | SEARCHING (employer e-mail discovery running) | CLIENT_SEND
+  /// (no usable address: the client sends the package) | READY (staff queue: client asked for help, stuck send) |
+  /// QUEUED (limit, switched off, retry) | SENDING | SENT | STOPPED (staff) | DUPLICATE (same client + listing already
+  /// sent). null = old row.
   autoState          String?   @db.VarChar(20)
   /// Missing-data codes of the last check, comma-separated (lib/germanyJobs/autoCheck.ts).
   autoMissing        String?   @db.VarChar(200)
@@ -6625,7 +6640,8 @@ model ExternalJobApplication {
   /// Next try of a QUEUED application (null = when sending is switched on again).
   autoNextAt         DateTime?
   autoSentAt         DateTime?
-  /// AUTO (system) | STAFF (staff pressed "send now") | MANUAL (staff sent it outside and marked it sent).
+  /// AUTO (system) | STAFF (staff pressed "send now") | MANUAL (staff sent it outside and marked it sent) | CLIENT (the
+  /// client sent the package and confirmed "Göndərdim").
   autoSentMode       String?   @db.VarChar(10)
   createdAt       DateTime @default(now())
   events          ExternalJobApplicationEvent[]
@@ -6633,6 +6649,26 @@ model ExternalJobApplication {
   @@index([userId])
   @@index([autoState, autoNextAt])
   @@index([autoSentAt])
+}
+
+/// Employer e-mail discovery cache per listing URL (lib/germanyJobs/discovery): success and failure kept 7 days, so the
+/// same listing is fetched at most once a week. Holds no personal data (listing / employer pages only).
+model EmployerEmailDiscovery {
+  id          String   @id @default(cuid())
+  /// sha256 of the listing URL.
+  urlHash     String   @unique @db.Char(64)
+  listingUrl  String   @db.VarChar(1000)
+  /// FOUND | NOT_FOUND | ROBOTS | FAILED
+  outcome     String   @db.VarChar(20)
+  pageUrl     String?  @db.VarChar(1000)
+  email       String?  @db.VarChar(190)
+  evidenceUrl String?  @db.VarChar(1000)
+  evidence    String?  @db.VarChar(500)
+  error       String?  @db.VarChar(200)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([expiresAt])
 }
 
 /// Status timeline of an external job application (one row per change; the note is visible to the client).

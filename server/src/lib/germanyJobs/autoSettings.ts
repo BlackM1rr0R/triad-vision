@@ -18,11 +18,13 @@ export const autoSendSettingsSchema = z
     perDomainLimit: z.number().int().min(1).max(50),
     /** Reply-To of the employer e-mails (agency inbox); empty = brand support address / ADMIN_NOTIFY_EMAIL. */
     replyTo: z.union([z.literal(''), z.string().trim().toLowerCase().email().max(190)]),
+    /** Employer e-mail discovery: look for the address on the employer / listing page (lib/germanyJobs/discovery). */
+    discovery: z.boolean(),
   })
   .strict();
 export type AutoSendSettings = z.infer<typeof autoSendSettingsSchema>;
 
-export const DEFAULT_AUTO_SEND: AutoSendSettings = { enabled: true, dailyLimit: 30, perDomainLimit: 3, replyTo: '' };
+export const DEFAULT_AUTO_SEND: AutoSendSettings = { enabled: true, dailyLimit: 30, perDomainLimit: 3, replyTo: '', discovery: true };
 
 export const getAutoSendSettings = async (): Promise<AutoSendSettings> => {
   const row = await prisma.setting.findUnique({ where: { key: AUTO_SEND_KEY } });
