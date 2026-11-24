@@ -10,6 +10,7 @@ import { hasMinRole } from '@/lib/types';
 import { registerCopy } from '@/i18n';
 import { pagesExternalApps } from '@/i18n/pagesExternalApps';
 import { pagesExternalAuto } from '@/i18n/pagesExternalAuto';
+import { pagesEmailDelivery } from '@/i18n/pagesEmailDelivery';
 import { Panel } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/Badge';
 import type { BadgeTone } from '@/components/ui/status';
@@ -23,6 +24,7 @@ import { xappError } from './externalApps';
 
 registerCopy(pagesExternalApps);
 registerCopy(pagesExternalAuto);
+registerCopy(pagesEmailDelivery); // automatic limit after bounces (adminDelivery.health.*)
 
 /**
  * Staff side of the automatic sending of "apply via Triad Vision" applications (server lib/germanyJobs/autoSend.ts,
@@ -258,7 +260,9 @@ interface QueueItem {
 
 interface Overview {
   settings: AutoSettings;
-  today: { sent: number; limit: number };
+  /** limit = what applies today (lowered automatically after bounces); configured = the setting. */
+  today: { sent: number; limit: number; configured?: number };
+  health?: { factor: number; reason: 'BOUNCES' | null; changedAt: string | null; last: { rate: number } | null };
   counts: Record<string, number>;
   queue: QueueItem[];
 }
@@ -308,6 +312,11 @@ export const ExternalAutoQueuePanel = () => {
           {d.settings.enabled ? t('xauto.admin.on') : t('xauto.admin.off')}
         </Badge>
         <span className="font-semibold text-ink">{t('xauto.admin.today', { n: d.today.sent, limit: d.today.limit })}</span>
+        {d.health && d.health.factor < 1 && (
+          <Badge tone="warning" dot>
+            {t('adminDelivery.health.limit', { effective: d.today.limit, configured: d.today.configured ?? d.settings.dailyLimit })} · {t('adminDelivery.health.lowered', { rate: `${Math.round((d.health.last?.rate ?? 0) * 1000) / 10} %` })}
+          </Badge>
+        )}
         <span className="text-xs text-muted">{t('xauto.admin.counts', { needs: d.counts.NEEDS_DATA ?? 0, consent: d.counts.NO_CONSENT ?? 0, queued: d.counts.QUEUED ?? 0, client: d.counts.CLIENT_SEND ?? 0 })}</span>
       </div>
 

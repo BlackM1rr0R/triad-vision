@@ -31,6 +31,8 @@ import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing';
 import { pagesPartnerRecords } from '@/i18n/pagesPartnerRecords';
 import { MessageCircleReply, ScrollText, Video } from 'lucide-react';
 import { pagesMyDay } from '@/i18n/pagesMyDay';
+import { BadgeCheck, LifeBuoy, PenTool, SearchCheck, Send } from 'lucide-react';
+import { pagesTodayQueue } from '@/i18n/pagesTodayQueue';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
 registerCopy(pagesPostArrival); // embassy_review kind (four-eyes check of the embassy package)
@@ -40,6 +42,7 @@ registerCopy(pagesRecognition); // recognition_deadline / accelerated_deadline k
 registerCopy(pagesCaseProcessing); // processing kind + note (team document workflow)
 registerCopy(pagesPartnerRecords); // partner_contract kind + notes (employer / partner contracts)
 registerCopy(pagesMyDay); // client_message / interview kinds + the "Bu günüm" page
+registerCopy(pagesTodayQueue); // case contracts, external applications, vacancy requests + scope "Mənim sahəm"
 
 export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   doc_review: FileCheck2,
@@ -70,6 +73,11 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   partner_contract: ScrollText, // employer / partner contract: end date or notice deadline near
   client_message: MessageCircleReply, // the client wrote last, no answer yet
   interview: Video, // employer ↔ candidate interview
+  contract_triad: PenTool, // case contract: Triad Vision signs
+  contract_approve: BadgeCheck, // case contract signed by everyone: staff approve
+  external_help: LifeBuoy, // apply via Triad Vision: the client asked for help
+  external_ready: Send, // apply via Triad Vision: ready to send (staff queue)
+  vacancy_request: SearchCheck, // new "Vakansiya sorğusu"
 };
 
 /** Icon tile colours per category (light + dark via the brand / status tokens used across the admin). */

@@ -634,12 +634,60 @@ model Notification {
 }
 
 model EmailLog {
+  id           String   @id @default(cuid())
+  to           String
+  subject      String   @db.Text
+  status       String // SENT | FAILED | CONSOLE | SUPPRESSED (not sent: hard bounce / complaint, lib/deliverability)
+  error        String?  @db.Text
+  /// SMTP reply code of a rejection (4xx temporary, 5xx permanent); null when sent or unknown.
+  responseCode Int?
+  /// Message-ID header of the sent mail (bounce / reply matching).
+  messageId    String?  @db.VarChar(500)
+  /// Recipient domain (lower case) for the per-domain statistics of Admin → E-poçt göndərişi.
+  toDomain     String?  @db.VarChar(190)
+  /// What the mail was: EMPLOYER_APPLICATION (automatic application in our name) | CAMPAIGN | null (transactional).
+  category     String?  @db.VarChar(24)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([category, createdAt])
+  @@index([messageId])
+}
+
+/// Delivery problems reported back to us (lib/deliverability): bounces (DSN / SMTP rejects) and spam complaints (ARF).
+/// One row per report and recipient; HARD bounces and complaints also put the address on EmailSuppression.
+model EmailBounce {
+  id                String   @id @default(cuid())
+  address           String   @db.VarChar(190)
+  /// HARD (5.x.x) | SOFT (4.x.x) | COMPLAINT (feedback loop)
+  kind              String   @db.VarChar(12)
+  /// Enhanced status code (5.1.1) or the feedback type (abuse).
+  status            String?  @db.VarChar(40)
+  diagnostic        String?  @db.VarChar(500)
+  /// DSN (bounce mail in the mailbox) | SMTP (rejected while sending) | ARF (feedback report)
+  source            String   @db.VarChar(10)
+  /// Message-ID of the report mail (dedupe across mailboxes that sync the same mail).
+  reportMessageId   String?  @db.VarChar(500)
+  /// Message-ID of our original mail, when the report carries it.
+  originalMessageId String?  @db.VarChar(500)
+  createdAt         DateTime @default(now())
+
+  @@unique([reportMessageId, address])
+  @@index([createdAt])
+  @@index([address])
+}
+
+/// Addresses we no longer send automatic mail to (external auto-send, campaigns): hard bounce, complaint or staff.
+model EmailSuppression {
   id        String   @id @default(cuid())
-  to        String
-  subject   String   @db.Text
-  status    String // SENT | FAILED | CONSOLE
-  error     String?  @db.Text
+  address   String   @unique @db.VarChar(190)
+  /// HARD_BOUNCE | COMPLAINT | MANUAL
+  reason    String   @db.VarChar(20)
+  detail    String?  @db.VarChar(500)
+  /// Plain id of the staff member (MANUAL).
+  createdById String? @db.VarChar(40)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Website content (CMS) ─────────────────────────────────────────────
@@ -6653,12 +6701,47 @@ model ExternalJobApplication {
   /// AUTO (system) | STAFF (staff pressed "send now") | MANUAL (staff sent it outside and marked it sent) | CLIENT (the
   /// client sent the package and confirmed "Göndərdim").
   autoSentMode       String?   @db.VarChar(10)
+  /// Message-ID of the automatic employer e-mail: answers are matched by In-Reply-To / References (lib/germanyJobs/replies).
+  autoMessageId      String?   @db.VarChar(500)
   createdAt       DateTime @default(now())
   events          ExternalJobApplicationEvent[]
+  replies         ExternalJobApplicationReply[]
 
   @@index([userId])
   @@index([autoState, autoNextAt])
   @@index([autoSentAt])
+  @@index([autoMessageId])
+}
+
+/// An employer's answer to an application, found in the agency mailbox (lib/germanyJobs/replies). The keyword rules
+/// only suggest a status; staff apply it (INTERVIEW / REJECTED) or keep the current one. Staff-only (not shown to the client).
+model ExternalJobApplicationReply {
+  id              String                 @id @default(cuid())
+  applicationId   String
+  application     ExternalJobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  /// Message-ID header of the mail (one row per mail and application, also when several mailboxes sync it).
+  rfcMessageId    String                 @db.VarChar(500)
+  /// Workspace MailMessage row the reply was read from (plain id; the row may be deleted later).
+  mailMessageId   String?                @db.VarChar(40)
+  fromAddr        String?                @db.VarChar(255)
+  fromName        String?                @db.VarChar(255)
+  subject         String?                @db.VarChar(1000)
+  excerpt         String?                @db.Text
+  receivedAt      DateTime
+  /// MESSAGE_ID (In-Reply-To / References) | DOMAIN (sender domain + listing title / candidate name)
+  matchedBy       String                 @db.VarChar(12)
+  /// INTERVIEW | REJECTION | DOCUMENTS | OTHER
+  classification  String                 @db.VarChar(12)
+  /// INTERVIEW | REJECTED | null (nothing to change)
+  suggestedStatus String?                @db.VarChar(20)
+  /// APPLIED | KEPT | null (open)
+  resolution      String?                @db.VarChar(10)
+  resolvedById    String?                @db.VarChar(40)
+  resolvedAt      DateTime?
+  createdAt       DateTime               @default(now())
+
+  @@unique([applicationId, rfcMessageId])
+  @@index([resolution, createdAt])
 }
 
 /// Employer e-mail discovery cache per listing URL (lib/germanyJobs/discovery): success and failure kept 7 days, so the

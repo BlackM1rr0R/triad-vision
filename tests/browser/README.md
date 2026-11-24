@@ -26,6 +26,7 @@ playwright.config.ts  ── webServer 1: npx tsx tests/browser/scripts/start-ap
 - **Seeded clients** (one per scenario so tests never depend on each other): `viewer` (handed in, read-only tests),
   `docs` (nothing uploaded), `submit` (all uploaded, not handed in), `replace` (one document rejected),
   `messages` (staff message + "Yeni mesaj" notification), `review` (pending documents, client message, drive folder).
+  Flow specs (flows.spec.ts): `contract` (Əmək müqaviləsi sent, client signs first), `docLink` (embassy list exists; one upload fills both lists), `external` (apply via Triad Vision, guide to self-send; employer-page fetch replaced by an injected offline fetcher).
   Plus a super admin with a mailbox (two long HTML mails) and an open vacancy.
 
 ### How staff sign in (2FA)

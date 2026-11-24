@@ -88,6 +88,7 @@ const AdminTeamLoad = lazyRoute('AdminTeamLoad', () => import('./pages/admin/Tea
 const AdminCannedReplies = lazyRoute('AdminCannedReplies', () => import('./pages/admin/CannedReplies')); // canned replies
 const AdminCoverLetterTemplates = lazyRoute('AdminCoverLetterTemplates', () => import('./pages/admin/CoverLetterTemplates')); // Anschreiben templates
 const AdminMailboxes = lazyRoute('AdminMailboxes', () => import('./pages/admin/Mailboxes'));
+const AdminEmailDelivery = lazyRoute('AdminEmailDelivery', () => import('./pages/admin/EmailDelivery')); // deliverability, bounces, suppression list (ADMIN+)
 const AdminSignatures = lazyRoute('AdminSignatures', () => import('./pages/admin/Signatures'));
 const SignPage = lazyRoute('SignPage', () => import('./pages/SignPage'));
 const QuotePage = lazyRoute('QuotePage', () => import('./pages/QuotePage'));
@@ -912,6 +913,14 @@ export default function App() {
             <Route path="team-load" element={<AdminTeamLoad />} />
             <Route path="canned-replies" element={<AdminCannedReplies />} />
             <Route path="cover-letter-templates" element={<AdminCoverLetterTemplates />} />
+            <Route
+              path="email-delivery"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminEmailDelivery />
+                </RequireAuth>
+              }
+            />
             <Route
               path="mailboxes"
               element={

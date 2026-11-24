@@ -111,9 +111,11 @@ const shellPreloads = (): Plugin => ({
       const cyrillic = font(/onest-cyrillic-wght-normal-[\w-]+\.woff2$/);
 
       // Static import closure of a chunk (what the browser needs before the module can run).
-      const chunks = new Map<string, { imports: string[]; dynamicImports: string[]; facade?: string | null; isEntry: boolean }>();
+      const chunks = new Map<string, { imports: string[]; dynamicImports: string[]; facade?: string | null; isEntry: boolean; ids: string[] }>();
       for (const [name, out] of Object.entries(bundle)) {
-        if (out.type === 'chunk') chunks.set(name, { imports: out.imports, dynamicImports: out.dynamicImports, facade: out.facadeModuleId, isEntry: out.isEntry });
+        if (out.type === 'chunk') {
+          chunks.set(name, { imports: out.imports, dynamicImports: out.dynamicImports, facade: out.facadeModuleId, isEntry: out.isEntry, ids: out.moduleIds.map((id) => id.replace(/\\/g, '/')) });
+        }
       }
       const closure = (start: string[]) => {
         const seen = new Set<string>();
@@ -129,8 +131,16 @@ const shellPreloads = (): Plugin => ({
       const entry = [...chunks.entries()].find(([, c]) => c.isEntry)?.[0];
       const inEntry = closure(entry ? [entry] : []);
       const src = fileURLToPath(new URL('./src', import.meta.url)).replace(/\\/g, '/');
+      // The chunk of a page module: the one it is the facade of or, when Rollup merged the page with modules only it
+      // uses and left facadeModuleId empty (happens to pages/Home.tsx), the non-entry chunk that contains it. Without
+      // the fallback the home page got no route preload at all.
+      const pageChunk = (module: string) => {
+        const id = `${src}/${module}`;
+        const list = [...chunks.entries()];
+        return (list.find(([, c]) => c.facade?.replace(/\\/g, '/') === id) ?? list.find(([, c]) => !c.isEntry && c.ids.includes(id)))?.[0];
+      };
       const routeLinks = (module: string) => {
-        const chunk = [...chunks.entries()].find(([, c]) => c.facade?.replace(/\\/g, '/') === `${src}/${module}`)?.[0];
+        const chunk = pageChunk(module);
         if (!chunk) return '';
         // Page chunk first, then its imports.
         const list = [chunk, ...[...closure([chunk])].filter((f) => f !== chunk)].filter((f) => !inEntry.has(f));
@@ -154,7 +164,7 @@ const shellPreloads = (): Plugin => ({
       // Page copy split per language (vite/lazyCopy.ts) that the route's chunks load before the page renders: the
       // chunk of the URL's language, plus the fallbacks i18next reads for it (copyChain in src/i18n/index.ts).
       const routeCopyLinks = (module: string) => {
-        const chunk = [...chunks.entries()].find(([, c]) => c.facade?.replace(/\\/g, '/') === `${src}/${module}`)?.[0];
+        const chunk = pageChunk(module);
         if (!chunk) return '';
         const byFile = new Map<string, Map<string, string>>();
         for (const f of closure([chunk])) {
@@ -262,7 +272,10 @@ export default defineConfig(({ isSsrBuild }) => ({
     ? { target: 'node22', outDir: 'dist-ssr', emptyOutDir: true, copyPublicDir: false, minify: false, sourcemap: false }
     : {
         target: 'es2022',
-        modulePreload: { resolveDependencies: (_file, deps) => deps.filter((d) => !entryChunks.has(d)) },
+        // Dynamic imports: leave out the entry's own chunks (already loaded). The HTML keeps them: there they are the
+        // <link rel="modulepreload"> of react / data / i18n, fetched in parallel with the entry instead of after the
+        // browser has downloaded and parsed it (one round trip less before the first render / hydration).
+        modulePreload: { resolveDependencies: (_file, deps, { hostType }) => (hostType === 'html' ? deps : deps.filter((d) => !entryChunks.has(d))) },
         rollupOptions: {
           output: {
             // Only libraries every page needs go in shared chunks.

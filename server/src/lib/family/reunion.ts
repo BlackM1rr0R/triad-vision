@@ -5,6 +5,7 @@ import { config } from '../../config.js';
 import { prisma } from '../../db.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import { notifyUser } from '../notifications.js';
+import { linkUploadedDocument } from '../docLink/service.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
 import { createRequirements } from '../docsIntel/requirementTemplates.js';
 import { ensureProfile } from './members.js';
@@ -134,6 +135,7 @@ export const copyReusableDocs = async (mainCaseId: string, memberCaseId: string,
         throw err;
       }
       void copyDocumentToDrive(doc.id);
+      await linkUploadedDocument(doc.id, { actorId }); // also the matching requirement of the other list (never throws)
       copiedItems.push(def.title.de);
     }
   }

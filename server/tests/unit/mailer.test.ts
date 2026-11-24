@@ -34,14 +34,14 @@ describe('sendMail via SMTP', () => {
     m.sendMail.mockResolvedValue({});
     await sendMail('a@test.local', 'Subject', '<p>x</p>');
     expect(m.sendMail).toHaveBeenCalledWith({ from: 'TV <no-reply@test.local>', to: 'a@test.local', subject: 'Subject', html: '<p>x</p>', text: 'x' });
-    expect(m.prisma.emailLog.create).toHaveBeenCalledWith({ data: { to: 'a@test.local', subject: 'Subject', status: 'SENT' } });
+    expect(m.prisma.emailLog.create).toHaveBeenCalledWith({ data: { to: 'a@test.local', subject: 'Subject', status: 'SENT', toDomain: 'test.local', messageId: null } });
   });
 
   it('never throws on SMTP failure and logs FAILED with the error', async () => {
     m.sendMail.mockRejectedValue(new Error('auth failed'));
     await expect(sendMail('a@test.local', 'S', 'h')).resolves.toBeUndefined();
     expect(m.prisma.emailLog.create).toHaveBeenCalledWith({
-      data: { to: 'a@test.local', subject: 'S', status: 'FAILED', error: 'Error: auth failed' },
+      data: { to: 'a@test.local', subject: 'S', status: 'FAILED', error: 'Error: auth failed', toDomain: 'test.local', messageId: null },
     });
   });
 

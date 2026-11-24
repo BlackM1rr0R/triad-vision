@@ -227,6 +227,8 @@ const uk: SiteCopy<Messages> = {
     whatsapp: 'WhatsApp',
     hours: 'Години роботи',
     offices: 'Наші офіси',
+    mapLoad: 'Завантажити інтерактивну карту',
+    mapOpen: 'Відкрити в OpenStreetMap',
     formTitle: 'Напишіть нам',
     writeWhatsapp: 'Написати у WhatsApp',
   },

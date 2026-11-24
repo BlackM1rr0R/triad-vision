@@ -687,6 +687,63 @@ export const PAGES_FINANCE: PageHelpEntry[] = [
     },
   },
   {
+    route: 'email-delivery',
+    text: {
+      az: {
+        title: 'E-poçt göndərişi',
+        purpose: 'Göndərilən məktubların nəticəsi: SMTP xətaları, geri qayıdan məktublar, spam şikayətləri, bloklanmış ünvanlar, SPF/DKIM/DMARC və avtomatik müraciət limitinin vəziyyəti. Yalnız Administrator və Baş administrator.',
+        steps: [
+          '“Oxunan poçt qutuları” blokunda info@ qutusunun sinxronlaşdığını yoxlayın. Yoxsa, onu Poçt bölməsinə əlavə edin.',
+          '“SPF, DKIM, DMARC” blokunda xəbərdarlıqları oxuyun və lazım olsa domen provayderində düzəldin.',
+          '“Bloklanmış ünvanlar” siyahısında ünvanı əl ilə əlavə edin və ya səhv bloklananı silin.',
+        ],
+        tips: [
+          'Daimi geri qayıdan (5.x.x) və spam şikayəti olan ünvanlara avtomatik müraciət və kampaniya getmir.',
+          'Problem payı 5 %-dən çox olsa, gündəlik limit avtomatik yarıya düşür və yavaş-yavaş bərpa olunur.',
+        ],
+      },
+      ru: {
+        title: 'Доставка e-mail',
+        purpose: 'Результаты отправки писем: ошибки SMTP, возвраты, жалобы на спам, заблокированные адреса, SPF/DKIM/DMARC и состояние лимита автоматических откликов. Только Администратор и Главный администратор.',
+        steps: [
+          'В блоке «Читаемые ящики» проверьте, что ящик info@ синхронизируется; если нет, добавьте его в Почту.',
+          'В блоке «SPF, DKIM, DMARC» прочитайте предупреждения и при необходимости исправьте записи у регистратора домена.',
+          'В списке «Заблокированные адреса» добавьте адрес вручную или удалите ошибочно заблокированный.',
+        ],
+        tips: [
+          'На адреса с постоянным возвратом (5.x.x) или жалобой на спам автоматические отклики и кампании не отправляются.',
+          'При доле проблем выше 5 % дневной лимит автоматически уменьшается вдвое и медленно восстанавливается.',
+        ],
+      },
+      en: {
+        title: 'E-mail delivery',
+        purpose: 'How our mail is delivered: SMTP errors, bounces, spam complaints, suppressed addresses, SPF/DKIM/DMARC and the state of the automatic application limit. Administrators and the Super admin only.',
+        steps: [
+          'Under “Mailboxes read” check that the info@ mailbox is synced; if not, add it in Mail.',
+          'Under “SPF, DKIM, DMARC” read the warnings and fix the records at the domain provider if needed.',
+          'In “Suppressed addresses” add an address manually or remove one that was blocked by mistake.',
+        ],
+        tips: [
+          'Addresses with a hard bounce (5.x.x) or a spam complaint get no automatic applications or campaigns.',
+          'Above 5 % problem rate the daily limit is halved automatically and recovers slowly.',
+        ],
+      },
+      de: {
+        title: 'E-Mail-Zustellung',
+        purpose: 'Wie unsere Mails ankommen: SMTP-Fehler, Rückläufer, Spam-Beschwerden, gesperrte Adressen, SPF/DKIM/DMARC und der Stand des automatischen Bewerbungslimits. Nur Administratoren und Super-Admin.',
+        steps: [
+          'Unter „Gelesene Postfächer“ prüfen, ob das Postfach info@ synchronisiert wird; sonst in Mail hinzufügen.',
+          'Unter „SPF, DKIM, DMARC“ die Warnungen lesen und die Einträge bei Bedarf beim Domain-Anbieter korrigieren.',
+          'In „Gesperrte Adressen“ eine Adresse manuell hinzufügen oder eine irrtümlich gesperrte entfernen.',
+        ],
+        tips: [
+          'Adressen mit dauerhafter Unzustellbarkeit (5.x.x) oder Spam-Beschwerde erhalten keine automatischen Bewerbungen und Kampagnen.',
+          'Über 5 % Problemquote wird das Tageslimit automatisch halbiert und erholt sich langsam.',
+        ],
+      },
+    },
+  },
+  {
     route: 'kpi',
     text: {
       az: {

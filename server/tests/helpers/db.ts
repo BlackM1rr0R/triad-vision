@@ -11,6 +11,9 @@ export const resetDb = async () => {
   for (const m of [
     prisma.germanyJobAlertSent,
     prisma.employerEmailDiscovery, // employer e-mail discovery cache (no relations)
+    prisma.externalJobApplicationReply, // employer replies (child of ExternalJobApplication)
+    prisma.emailBounce, // deliverability: bounce / complaint reports + suppression list (no relations)
+    prisma.emailSuppression,
     prisma.arrivalCertificate,
     prisma.readyActivityResult, // Germany Ready (plain ids)
     prisma.readyCertificate,

@@ -227,6 +227,8 @@ const de: Messages = {
     whatsapp: 'WhatsApp',
     hours: 'Öffnungszeiten',
     offices: 'Unsere Büros',
+    mapLoad: 'Interaktive Karte laden',
+    mapOpen: 'In OpenStreetMap öffnen',
     formTitle: 'Schreiben Sie uns',
     writeWhatsapp: 'Per WhatsApp schreiben',
   },

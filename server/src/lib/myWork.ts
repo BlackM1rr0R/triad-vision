@@ -12,6 +12,8 @@ import { stageLabel } from './caseProcessing/texts.js'; // team document workflo
 import { caseScopeWhere } from './access/api.js'; // staff case scope
 import { withCaseScope } from './access/resolve.js';
 import { partnerContractWork } from './partnerRecords/work.js'; // employer / partner contracts ending or at their notice deadline
+import { can } from './access/api.js';
+import { contractWork, withoutRequests } from './myWorkContracts.js'; // case contracts: Triad Vision to sign / staff to approve
 
 /**
  * "My work today" (GET /api/admin/my-work): one queue of everything that waits for the signed-in staff
@@ -48,6 +50,11 @@ export const WORK_KINDS = [
   'partner_contract', // employer / referral partner contract: end date or notice deadline within its reminder lead time (lib/partnerRecords)
   'client_message', // the client wrote in the case messages and the team has not answered yet ("Bu günüm")
   'interview', // employer ↔ candidate interview today / this week run by the viewer ("Bu günüm")
+  'contract_triad', // case contract (Əmək / İş müqaviləsi) waiting for the Triad Vision signature (lib/caseContracts)
+  'contract_approve', // case contract signed by every party, staff approve it (V2 İş müqaviləsi: the whole set)
+  'external_help', // "apply via Triad Vision": the client pressed "Alınmadı" and asked for help (READY + CLIENT_HELP)
+  'external_ready', // "apply via Triad Vision": staff "Göndərməyə hazır" queue (READY for another reason)
+  'vacancy_request', // "Vakansiya sorğusu" still NEW (lib/vacancyRequests)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
 
@@ -83,6 +90,11 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   partner_contract: 'documents',
   client_message: 'mail',
   interview: 'bookings',
+  contract_triad: 'signatures',
+  contract_approve: 'signatures',
+  external_help: 'leads',
+  external_ready: 'leads',
+  vacancy_request: 'leads',
 };
 
 /** Page that lists all items of a kind (the "+N more" link). */
@@ -115,6 +127,11 @@ const MORE_LINK: Record<WorkKind, string> = {
   partner_contract: '/admin/companies',
   client_message: '/admin/cases',
   interview: '/admin/interviews',
+  contract_triad: '/admin/cases?status=CONTRACT_SENT',
+  contract_approve: '/admin/cases?status=CONTRACT_SIGNED',
+  external_help: '/admin/inquiries',
+  external_ready: '/admin/inquiries',
+  vacancy_request: '/admin/vacancies?tab=requests',
 };
 
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';
@@ -163,8 +180,15 @@ export interface WorkItem {
   actions: WorkAction[];
 }
 
+/**
+ * mine  own cases (ADMIN+: + unassigned ones) and own personal items
+ * team  every case of the viewer's access scope (ASSIGNED / TEAM / ALL, lib/access) + own personal items
+ * all   ADMIN+: the whole team's queue
+ */
+export type WorkScope = 'mine' | 'team' | 'all';
+
 export interface WorkResult {
-  scope: 'mine' | 'all';
+  scope: WorkScope;
   generatedAt: string;
   items: WorkItem[];
   counts: { total: number; urgent: number; overdue: number; byKind: Partial<Record<WorkKind, number>>; byCategory: Record<WorkCategory, number> };
@@ -264,6 +288,10 @@ interface Ctx {
   c: Clock;
   /** The viewer's case scope (lib/access caseScopeWhere; {} = every case, the default). */
   scope: Prisma.CaseWhereInput;
+  /** scope=team: every case of the access scope, not only the assigned ones. */
+  caseTeam: boolean;
+  /** Areas the viewer may see (view): queue kinds of other areas are left out. */
+  perms: { documents: boolean; clients: boolean; employers: boolean };
 }
 
 interface Source {
@@ -275,7 +303,7 @@ interface Source {
 
 /** Cases the viewer looks after: own cases (+ unassigned ones for ADMIN+), every case for the team view. */
 const myCases = (ctx: Ctx): Prisma.CaseWhereInput =>
-  withCaseScope(ctx.team ? {} : ctx.isAdmin ? { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] } : { assignedStaffId: ctx.viewer.id }, ctx.scope);
+  withCaseScope(ctx.team || ctx.caseTeam ? {} : ctx.isAdmin ? { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] } : { assignedStaffId: ctx.viewer.id }, ctx.scope);
 
 const staffSelect = { select: { id: true, firstName: true, lastName: true } } as const;
 
@@ -1301,16 +1329,211 @@ const interviews = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
+// ─── Case contracts, external applications, vacancy requests ───────────
+
+const contractRowSelect = {
+  id: true,
+  caseId: true,
+  title: true,
+  contractKind: true,
+  contractFlow: true,
+  status: true,
+  order: true,
+  createdAt: true,
+  sentAt: true,
+  completedAt: true,
+  approvedAt: true,
+  expiresAt: true,
+  returnedAt: true,
+  supersededAt: true,
+  finalDocumentId: true,
+  signers: { select: { role: true, status: true, order: true, signedAt: true } },
+} satisfies Prisma.SignatureRequestSelect;
+
+/** Contracts waiting for the Triad Vision signature / the staff approval on the viewer's cases (lib/myWorkContracts). */
+const caseContracts = async (ctx: Ctx): Promise<Source[]> => {
+  if (!ctx.perms.documents) return [];
+  const caseWhere: Prisma.CaseWhereInput = { status: { notIn: FINAL_STATUSES }, ...myCases(ctx) };
+  // Cases with an open contract request (sent, or completed and not approved yet) — then every contract request of them.
+  const openRows = await prisma.signatureRequest.findMany({
+    where: { contractKind: { not: null }, OR: [{ status: 'SENT' }, { status: 'COMPLETED', approvedAt: null }], case: caseWhere },
+    select: { caseId: true },
+    distinct: ['caseId'],
+    take: 500,
+  });
+  const caseIds = openRows.map((r) => r.caseId).filter((x): x is string => !!x);
+  if (!caseIds.length) return [];
+  const [rows, cases] = await Promise.all([
+    prisma.signatureRequest.findMany({ where: { caseId: { in: caseIds }, contractKind: { not: null } }, select: contractRowSelect }),
+    prisma.case.findMany({ where: { id: { in: caseIds } }, select: { id: true, number: true, client: { select: { firstName: true, lastName: true } }, assignedStaff: staffSelect } }),
+  ]);
+  const byId = new Map(cases.map((c) => [c.id, c]));
+  const work = contractWork(rows, ctx.c.now).filter((w) => byId.has(w.caseId));
+  const draft = (w: (typeof work)[number]): Draft => {
+    const c = byId.get(w.caseId)!;
+    const href = `${caseLink(c.id)}#case-contract`;
+    const common = {
+      title: `${c.number} · ${name(c.client)}`,
+      subtitle: w.documents > 1 ? `${w.title} (+${w.documents - 1})` : w.title,
+      note: { key: `contractStep.${w.step}` },
+      since: w.since,
+      link: href,
+      refs: { caseId: c.id, caseNumber: c.number, requestId: w.requestId, step: w.step },
+      assignee: person(c.assignedStaff),
+    };
+    if (w.kind === 'contract_triad') {
+      return {
+        ...common,
+        id: `contract_triad:${w.requestId}`,
+        kind: 'contract_triad',
+        // The client already signed (V2) or waits for the invitation (old flow): within a working day.
+        priority: 'HIGH',
+        dueAt: new Date(w.since.getTime() + DAY),
+        actions: [{ key: 'signContract', label: 'signContract', type: 'link', href, primary: true }],
+      };
+    }
+    return {
+      ...common,
+      id: `contract_approve:${c.id}:${w.step}`,
+      kind: 'contract_approve',
+      priority: 'HIGH',
+      dueAt: new Date(w.since.getTime() + 2 * DAY),
+      actions: [
+        { key: 'approveContract', label: 'approveContract', type: 'api', method: 'POST', endpoint: `/admin/case-contracts/cases/${c.id}/approve`, body: { step: w.step }, confirm: true, primary: true },
+        ...(w.finalDocumentId ? [{ key: 'view', label: 'view', type: 'url' as const, href: `/api/files/${w.finalDocumentId}` }] : []),
+        open(href),
+      ],
+    };
+  };
+  const triad = work.filter((w) => w.kind === 'contract_triad');
+  const approve = work.filter((w) => w.kind === 'contract_approve');
+  return [
+    { kind: 'contract_triad', total: triad.length, items: triad.slice(0, LIMIT_PER_KIND).map(draft) },
+    { kind: 'contract_approve', total: approve.length, items: approve.slice(0, LIMIT_PER_KIND).map(draft) },
+  ];
+};
+
+/**
+ * "Apply via Triad Vision" applications in the staff queue (autoState READY): the client pressed "Alınmadı"
+ * (CLIENT_HELP) or the automatic sending stopped for staff. Mine: the lead is mine or unassigned; team / all: every one.
+ */
+const externalApplications = async (ctx: Ctx): Promise<Source[]> => {
+  if (!ctx.perms.clients) return [];
+  const inquiry: Prisma.InquiryWhereInput = { anonymizedAt: null, ...(ctx.team || ctx.caseTeam ? {} : { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] }) };
+  const base: Prisma.ExternalJobApplicationWhereInput = { autoState: 'READY', status: 'SUBMITTED', inquiry };
+  const helpWhere: Prisma.ExternalJobApplicationWhereInput = { ...base, autoReason: 'CLIENT_HELP' };
+  // autoReason NULL is "another reason" too (SQL NOT never matches NULL).
+  const readyWhere: Prisma.ExternalJobApplicationWhereInput = { ...base, OR: [{ autoReason: null }, { autoReason: { not: 'CLIENT_HELP' } }] };
+  const select = {
+    inquiryId: true,
+    listingTitle: true,
+    listingCompany: true,
+    employerEmail: true,
+    autoReason: true,
+    autoCheckedAt: true,
+    clientHelpAt: true,
+    createdAt: true,
+    inquiry: { select: { contactName: true, phone: true, assignedStaffId: true } },
+  } satisfies Prisma.ExternalJobApplicationSelect;
+  const [help, helpTotal, ready, readyTotal] = await Promise.all([
+    prisma.externalJobApplication.findMany({ where: helpWhere, orderBy: { clientHelpAt: 'asc' }, take: LIMIT_PER_KIND, select }),
+    prisma.externalJobApplication.count({ where: helpWhere }),
+    prisma.externalJobApplication.findMany({ where: readyWhere, orderBy: { createdAt: 'asc' }, take: LIMIT_PER_KIND, select }),
+    prisma.externalJobApplication.count({ where: readyWhere }),
+  ]);
+  const item = (a: (typeof help)[number], kind: 'external_help' | 'external_ready'): Draft => {
+    const auto = `/admin/external-applications/${a.inquiryId}/auto`;
+    const href = `/admin/inquiries?open=${a.inquiryId}`;
+    const since = (kind === 'external_help' ? a.clientHelpAt : a.autoCheckedAt) ?? a.createdAt;
+    const actions: WorkAction[] = [open(href, true)];
+    if (a.employerEmail) actions.push({ key: 'sendNow', label: 'sendNow', type: 'api', method: 'POST', endpoint: `${auto}/send`, body: {}, confirm: true });
+    actions.push({ key: 'markSent', label: 'markSent', type: 'api', method: 'POST', endpoint: `${auto}/mark-sent`, body: {}, confirm: true });
+    return {
+      id: `${kind}:${a.inquiryId}`,
+      kind,
+      title: a.inquiry.contactName,
+      subtitle: join(a.listingTitle, a.listingCompany),
+      note: { key: kind === 'external_help' ? 'externalHelp' : a.employerEmail ? 'externalHasEmail' : 'externalNoEmail' },
+      priority: kind === 'external_help' ? 'HIGH' : 'NORMAL',
+      dueAt: new Date(since.getTime() + (kind === 'external_help' ? DAY : 2 * DAY)),
+      since,
+      link: href,
+      refs: { inquiryId: a.inquiryId, phone: a.inquiry.phone ?? null },
+      assignee: a.inquiry.assignedStaffId === ctx.viewer.id ? person(ctx.viewer) : null,
+      actions,
+    };
+  };
+  return [
+    { kind: 'external_help', total: helpTotal, items: help.map((a) => item(a, 'external_help')) },
+    { kind: 'external_ready', total: readyTotal, items: ready.map((a) => item(a, 'external_ready')) },
+  ];
+};
+
+/** New "Vakansiya sorğusu" requests (mine: assigned to me or nobody). Contacts only with the clients view permission. */
+const vacancyRequests = async (ctx: Ctx): Promise<Source> => {
+  if (!ctx.perms.employers) return { kind: 'vacancy_request', total: 0, items: [] };
+  const where: Prisma.VacancyRequestWhereInput = {
+    status: 'NEW',
+    cancelledAt: null,
+    ...(ctx.team || ctx.caseTeam ? {} : { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] }),
+  };
+  const [rows, total] = await Promise.all([
+    prisma.vacancyRequest.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      take: LIMIT_PER_KIND,
+      select: { id: true, type: true, profession: true, sector: true, city: true, germanLevel: true, userId: true, contactName: true, assignedStaffId: true, createdAt: true },
+    }),
+    prisma.vacancyRequest.count({ where }),
+  ]);
+  const userIds = ctx.perms.clients ? [...new Set(rows.map((r) => r.userId).filter((x): x is string => !!x))] : [];
+  const users = userIds.length ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true } }) : [];
+  const userName = new Map(users.map((u) => [u.id, name(u)]));
+  return {
+    kind: 'vacancy_request',
+    total,
+    items: rows.map((r) => {
+      const endpoint = `/admin/vacancies/requests/${r.id}`;
+      const who = ctx.perms.clients ? (r.userId ? userName.get(r.userId) : r.contactName) : null;
+      return {
+        id: `vacancy_request:${r.id}`,
+        kind: 'vacancy_request',
+        title: r.profession || r.sector || r.type,
+        subtitle: join(who, r.city, r.germanLevel ? `Deutsch ${r.germanLevel}` : null),
+        note: { key: `vacancyRequestType.${r.type === 'AUSBILDUNG' ? 'AUSBILDUNG' : 'WORK'}` },
+        priority: 'NORMAL',
+        dueAt: new Date(r.createdAt.getTime() + 2 * DAY),
+        since: r.createdAt,
+        link: '/admin/vacancies?tab=requests',
+        refs: { vacancyRequestId: r.id },
+        assignee: r.assignedStaffId === ctx.viewer.id ? person(ctx.viewer) : null,
+        actions: [
+          { key: 'take', label: 'take', type: 'api', method: 'PATCH', endpoint, body: { status: 'IN_PROGRESS', assignedStaffId: ctx.viewer.id }, primary: true },
+          open('/admin/vacancies?tab=requests'),
+        ],
+      } satisfies Draft;
+    }),
+  };
+};
+
 // ─── Assembly ─────────────────────────────────────────────────────────
 
-export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
+export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; caseTeam?: boolean; tz?: number; now?: Date }): Promise<WorkResult> => {
+  const [scope, documents, clients, employers] = await Promise.all([
+    caseScopeWhere(viewer),
+    can(viewer, 'documents', 'view'),
+    can(viewer, 'clients', 'view'),
+    can(viewer, 'employers', 'view'),
+  ]);
   const ctx: Ctx = {
     viewer,
     team: opts.team,
+    caseTeam: !opts.team && !!opts.caseTeam,
     isAdmin: hasMinRole(viewer.role, 'ADMIN'),
     isSuper: viewer.role === 'SUPER_ADMIN',
     c: clockFor(opts.tz, opts.now),
-    scope: await caseScopeWhere(viewer),
+    scope,
+    perms: { documents, clients, employers },
   };
   const groups = await Promise.all([
     docReviews(ctx),
@@ -1334,8 +1557,14 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     recognitionWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // Anerkennung deadlines (lib/recognition/work)
     acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
     partnerContractWork({ team: ctx.team, viewerId: ctx.viewer.id, isAdmin: ctx.isAdmin }, ctx.c.now), // employer / partner contracts ending (lib/partnerRecords/work)
+    caseContracts(ctx), // case contracts: Triad Vision signs / staff approve
+    externalApplications(ctx), // apply via Triad Vision: client asked for help, staff READY queue
+    vacancyRequests(ctx), // new "Vakansiya sorğusu"
   ]);
-  const sources = groups.flat().filter((s): s is Source => !!s);
+  const flat = groups.flat().filter((s): s is Source => !!s);
+  // A case contract the viewer signs is listed once, as contract_triad (opens the case's contract panel).
+  const triadIds = new Set(flat.filter((s) => s.kind === 'contract_triad').flatMap((s) => s.items.map((i) => i.refs.requestId).filter((x): x is string => !!x)));
+  const sources = triadIds.size ? flat.map((s) => (s.kind === 'sign_mine' || s.kind === 'countersign' ? withoutRequests(s, triadIds) : s)) : flat;
   const items = sources.flatMap((s) => s.items.map((d) => finish(d, ctx.c))).sort(compareItems);
 
   const byKind: Partial<Record<WorkKind, number>> = {};
@@ -1348,7 +1577,7 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?
     if (s.total > s.items.length) more.push({ kind: s.kind, count: s.total - s.items.length, link: MORE_LINK[s.kind] });
   }
   return {
-    scope: opts.team ? 'all' : 'mine',
+    scope: opts.team ? 'all' : ctx.caseTeam ? 'team' : 'mine',
     generatedAt: ctx.c.now.toISOString(),
     items,
     counts: {
@@ -1369,8 +1598,8 @@ const CACHE_MAX = 500;
 const cache = new Map<string, { at: number; value: WorkResult }>();
 const inflight = new Map<string, Promise<WorkResult>>();
 
-export const cachedMyWork = async (viewer: WorkViewer, opts: { team: boolean; tz?: number; fresh?: boolean }): Promise<WorkResult> => {
-  const key = `${viewer.id}|${opts.team ? 'all' : 'mine'}|${opts.tz ?? ''}|${viewer.locale}`;
+export const cachedMyWork = async (viewer: WorkViewer, opts: { team: boolean; caseTeam?: boolean; tz?: number; fresh?: boolean }): Promise<WorkResult> => {
+  const key = `${viewer.id}|${opts.team ? 'all' : opts.caseTeam ? 'team' : 'mine'}|${opts.tz ?? ''}|${viewer.locale}`;
   const hit = cache.get(key);
   if (!opts.fresh && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
   const pending = !opts.fresh && inflight.get(key);

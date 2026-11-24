@@ -205,7 +205,7 @@ const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop 
 };
 
 /** Triad Vision signs first (drawn or typed signature). */
-const SignDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffStep; onClose: () => void; onDone: () => void }) => {
+export const SignDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffStep; onClose: () => void; onDone: () => void }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const padRef = useRef<SignaturePadHandle>(null);
@@ -276,7 +276,7 @@ const SignDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffSt
 };
 
 /** V2: send a document back with a reason (the client sees it). */
-const ReturnDialog = ({ caseId, step, doc, onClose, onDone }: { caseId: string; step: Step; doc: StaffDoc | null; onClose: () => void; onDone: () => void }) => {
+export const ReturnDialog = ({ caseId, step, doc, onClose, onDone }: { caseId: string; step: Step; doc: StaffDoc | null; onClose: () => void; onDone: () => void }) => {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const send = useMutation({
@@ -312,6 +312,38 @@ const ReturnDialog = ({ caseId, step, doc, onClose, onDone }: { caseId: string; 
   );
 };
 
+/** Staff approval of a signed contract step (confirm dialog + endpoint); shared by the case page and the quick drawer. */
+export const ApproveDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffStep | undefined; onClose: () => void; onDone: () => void | Promise<void> }) => {
+  const { t } = useTranslation();
+  const approve = useMutation({
+    mutationFn: async (step: Step) => (await api.post<StaffOverview>(`/admin/case-contracts/cases/${caseId}/approve`, { step })).data,
+    onSuccess: async () => {
+      toast.success(t('caseContracts.approveDialog.done'));
+      onClose();
+      await onDone();
+    },
+    onError: (err) => toast.error(ccError(t, err)),
+  });
+  return (
+    <ConfirmDialog
+      open={!!s}
+      onClose={onClose}
+      onConfirm={() => s && approve.mutate(s.step)}
+      tone="primary"
+      loading={approve.isPending}
+      title={s ? t('caseContracts.approveDialog.title', { name: t(`caseContracts.steps.${s.step}.name`) }) : ''}
+      confirmLabel={t('caseContracts.approve')}
+      message={
+        <>
+          {t('caseContracts.approveDialog.text')}
+          {s?.step === 'LABOUR' && <span className="mt-2 block">{t('caseContracts.approveDialog.labourNext')}</span>}
+          {s?.step === 'WORK' && s.flow === 'V2' && <span className="mt-2 block">{t('caseContracts.v2.approveWork')}</span>}
+        </>
+      }
+    />
+  );
+};
+
 /**
  * "Müqavilələr" on the case's documents tab: 1) Əmək müqaviləsi, 2) İş müqaviləsi (locked until 1 is approved).
  * Triad Vision signs first, then the client, then staff approve; the employer is not part of either contract.
@@ -329,15 +361,6 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
   const refresh = async () => {
     await Promise.all([qc.invalidateQueries({ queryKey: staffKey(c.id) }), qc.invalidateQueries({ queryKey: ['esign'] }), refreshCase()]);
   };
-  const approve = useMutation({
-    mutationFn: async (step: Step) => (await api.post<StaffOverview>(`/admin/case-contracts/cases/${c.id}/approve`, { step })).data,
-    onSuccess: async () => {
-      toast.success(t('caseContracts.approveDialog.done'));
-      setApproving(null);
-      await refresh();
-    },
-    onError: (err) => toast.error(ccError(t, err)),
-  });
   const drop = useMutation({
     mutationFn: async (requestId: string) => (await api.post<StaffOverview>(`/admin/case-contracts/cases/${c.id}/drop`, { requestId })).data,
     onSuccess: refresh,
@@ -417,22 +440,7 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
           }}
         />
       )}
-      <ConfirmDialog
-        open={!!approveStep}
-        onClose={() => setApproving(null)}
-        onConfirm={() => approveStep && approve.mutate(approveStep.step)}
-        tone="primary"
-        loading={approve.isPending}
-        title={approveStep ? t('caseContracts.approveDialog.title', { name: t(`caseContracts.steps.${approveStep.step}.name`) }) : ''}
-        confirmLabel={t('caseContracts.approve')}
-        message={
-          <>
-            {t('caseContracts.approveDialog.text')}
-            {approveStep?.step === 'LABOUR' && <span className="mt-2 block">{t('caseContracts.approveDialog.labourNext')}</span>}
-            {approveStep?.step === 'WORK' && approveStep.flow === 'V2' && <span className="mt-2 block">{t('caseContracts.v2.approveWork')}</span>}
-          </>
-        }
-      />
+      <ApproveDialog caseId={c.id} s={approveStep} onClose={() => setApproving(null)} onDone={refresh} />
     </Panel>
   );
 };

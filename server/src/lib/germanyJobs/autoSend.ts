@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import type { Locale, Prisma } from '@prisma/client';
@@ -18,6 +19,7 @@ import { notifyStatusChange } from './applicationStatus.js';
 import { attachLebenslaufCopy } from './lebenslaufAttach.js';
 import { baseDomain, checkExternalApplication, isGermanLevel, missingKey, parseGermanRequirement, readMissing, type AutoCheckResult } from './autoCheck.js';
 import { dayStart, getAutoSendSettings, limitReason, nextDayStart, replyToAddress, type AutoSendSettings } from './autoSettings.js';
+import { EMPLOYER_CATEGORY, effectiveLimit, isSuppressed, refreshSendHealth, sendingDomain } from '../deliverability/service.js';
 import { clientHelpStaffText, clientRemindMessage, clientSendMessage, employerMail, localePath, needsMessage } from './autoTexts.js';
 
 /**
@@ -250,8 +252,17 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
       await setState(app.id, { autoState: 'QUEUED', autoReason: 'DISABLED', autoNextAt: null });
       return 'QUEUED';
     }
+    if (await isSuppressed(to)) {
+      // Hard bounce / spam complaint earlier (lib/deliverability): never again automatically; the client sends it.
+      await setState(app.id, { autoState: null, autoReason: 'EMAIL_REJECTED', autoNextAt: null });
+      await audit(systemReqTyped, 'EXTERNAL_JOB_AUTO_SEND_SUPPRESSED', `inquiry:${app.inquiryId}`, { to });
+      const fresh = await loadApp(app.id);
+      if (fresh) await handToClient(fresh, await clientUser(fresh.userId), now);
+      return 'NO_EMAIL';
+    }
     const counts = await sentToday(domain, now);
-    const reason = limitReason(settings, counts.total, counts.toDomain);
+    // The daily limit follows the bounce / failure rate of the last 7 days (lib/deliverability/health.ts).
+    const reason = limitReason({ ...settings, dailyLimit: await effectiveLimit(settings.dailyLimit) }, counts.total, counts.toDomain);
     if (reason) {
       await setState(app.id, { autoState: 'QUEUED', autoReason: reason, autoNextAt: nextDayStart(now) });
       return 'QUEUED';
@@ -274,7 +285,9 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
     ];
     const brand = brandSync();
     const mail = employerMail({ applicant: app.inquiry.contactName, title: app.listingTitle, company: app.listingCompany, listingUrl: app.listingUrl, subject: letter.subject, brandName: brand.name, phone: brand.phone, domain: brand.domain });
-    const result = await sendMailDetailed({ to, subject: mail.subject, html: renderEmail(mail.subject, mail.body), attachments, replyTo: replyToAddress(settings) || undefined });
+    // Own Message-ID: employer answers (In-Reply-To / References) and bounces are matched to this application by it.
+    const messageId = `xapp.${app.id}.${crypto.randomBytes(6).toString('hex')}@${sendingDomain()}`;
+    const result = await sendMailDetailed({ to, subject: mail.subject, html: renderEmail(mail.subject, mail.body), attachments, replyTo: replyToAddress(settings) || undefined, messageId, category: EMPLOYER_CATEGORY });
     const mode = staffId ? 'STAFF' : 'AUTO';
     if (result.status === 'FAILED') {
       // 5xx = the address does not exist: the client sends it themselves (CLIENT_SEND); otherwise try again in an hour.
@@ -291,7 +304,7 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
     await prisma.$transaction([
       prisma.externalJobApplication.update({
         where: { id: app.id },
-        data: { autoState: 'SENT', autoSentAt: at, autoSentMode: mode, autoReason: null, autoNextAt: null, status: 'FORWARDED', statusNote: null, statusChangedAt: at },
+        data: { autoState: 'SENT', autoSentAt: at, autoSentMode: mode, autoReason: null, autoNextAt: null, autoMessageId: result.messageId?.slice(0, 500) ?? messageId, status: 'FORWARDED', statusNote: null, statusChangedAt: at },
       }),
       prisma.externalJobApplicationEvent.create({ data: { applicationId: app.id, status: 'FORWARDED', staffId, createdAt: at } }),
     ]);
@@ -400,6 +413,7 @@ export const recheckUserApplications = async (userId: string) => {
  */
 export const runExternalAutoSend = async (now = new Date()) => {
   const settings = await getAutoSendSettings();
+  await refreshSendHealth(now); // lower / recover the daily limit from the bounce rate before sending
   const stuck = await prisma.externalJobApplication.updateMany({
     where: { autoState: 'SENDING', autoSentAt: null, autoNextAt: { lt: new Date(now.getTime() - 30 * 60 * 1000) } },
     data: { autoState: 'READY', autoReason: 'SEND_FAILED', autoNextAt: null },

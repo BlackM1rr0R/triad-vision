@@ -227,6 +227,8 @@ const tr: SiteCopy<Messages> = {
     whatsapp: 'WhatsApp',
     hours: 'Çalışma saatleri',
     offices: 'Ofislerimiz',
+    mapLoad: 'Etkileşimli haritayı yükle',
+    mapOpen: "OpenStreetMap'te aç",
     formTitle: 'Bize yazın',
     writeWhatsapp: 'WhatsApp’tan yazın',
   },

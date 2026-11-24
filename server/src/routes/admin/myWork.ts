@@ -15,7 +15,8 @@ import { cachedMyWork, invalidateMyWork } from '../../lib/myWork.js';
 
 /**
  * "My work today" (mounted at /api/admin/my-work, STAFF+ with 2FA via the admin router):
- *   GET  /?scope=mine|all&tz=&fresh=1      the unified queue (lib/myWork.ts); scope=all is ADMIN+ only; cached 30 s per user
+ *   GET  /?scope=mine|team|all&tz=&fresh=1 the unified queue (lib/myWork.ts); team = every case of the own access scope;
+ *                                          scope=all is ADMIN+ only; cached 30 s per user
  *   POST /tasks/:ref/snooze { days=1 }     moves an open task's deadline to the next day(s) (assignee or manager)
  *   POST /expiry/:docId/remind             sends the client the document expiry warning now (texts of the expiry job)
  * Every other button of the queue calls the existing endpoint of its module directly.
@@ -34,14 +35,15 @@ const viewerOf = (req: Request) => ({
 adminMyWorkRouter.get('/', async (req, res) => {
   const q = parse(
     z.object({
-      scope: z.enum(['mine', 'all']).default('mine'),
+      scope: z.enum(['mine', 'team', 'all']).default('mine'),
       tz: z.coerce.number().int().min(-900).max(900).optional(),
       fresh: z.enum(['1', 'true', '0', 'false']).optional(),
     }),
     req.query,
   );
   if (q.scope === 'all' && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('TEAM_SCOPE_FORBIDDEN');
-  const result = await cachedMyWork(viewerOf(req), { team: q.scope === 'all', tz: q.tz, fresh: q.fresh === '1' || q.fresh === 'true' });
+  // team: every case of the viewer's access scope (ASSIGNED / TEAM / ALL) — any staff member; all: ADMIN+.
+  const result = await cachedMyWork(viewerOf(req), { team: q.scope === 'all', caseTeam: q.scope === 'team', tz: q.tz, fresh: q.fresh === '1' || q.fresh === 'true' });
   res.json(result);
 });
 

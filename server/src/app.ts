@@ -134,6 +134,7 @@ import { leadMagnetsRouter } from './routes/leadMagnets.js';
 import { jobAlertsRouter } from './routes/jobAlerts.js';
 import { vacancyRequestsRouter } from './routes/vacancyRequests.js';
 import { accountRecognitionRouter } from './routes/accountRecognition.js'; // client portal: recognition status card
+import { accountDocTemplatesRouter } from './routes/accountDocTemplates.js'; // client cabinet: prefilled VIDEX sheet, Lebenslauf, Anschreiben (read-only)
 import { accountCaseContractsRouter } from './routes/accountCaseContracts.js'; // client portal: Əmək / İş müqaviləsi states
 import { accountAuthoritiesRouter } from './routes/accountAuthorities.js'; // client portal: embassy / Ausländerbehörde info (catalogue)
 import { accountPermitsRouter } from './routes/accountPermits.js'; // client portal: own permit / passport / insurance expiry dates
@@ -274,6 +275,7 @@ export const createApp = () => {
   app.use('/api/admin', adminRouter);
   app.use('/api/account/billing', accountBillingRouter); // before the account router
   app.use('/api/account/recognition', accountRecognitionRouter); // read-only Anerkennung status of the own case
+  app.use('/api/account/doc-templates', accountDocTemplatesRouter); // prefilled document templates of the own case (lib/docTemplates)
   app.use('/api/account/case-contracts', accountCaseContractsRouter); // two-step case contracts of the own case (lib/caseContracts)
   app.use('/api/account/rule-changes', accountRuleChangesRouter); // rule changes sent to the client (lib/ruleChanges)
   app.use('/api/account/authorities', accountAuthoritiesRouter); // read-only authorities (catalogue) of the own case

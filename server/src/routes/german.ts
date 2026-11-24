@@ -6,6 +6,7 @@ import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
 import { audit } from '../lib/audit.js';
+import { linkUploadedDocument } from '../lib/docLink/service.js';
 import { badRequest, forbidden, parse } from '../lib/http.js';
 import { checkCaseDocument } from '../lib/docCheck/index.js';
 import { scheduleAiDocCheck } from '../lib/aiDocs/docCheck.js';
@@ -150,6 +151,7 @@ germanRouter.post('/me/exams/:id/certificate', documentUpload.single('file'), as
       },
     });
     await prisma.germanExam.update({ where: { id: exam.id }, data: { certificateDocumentId: doc.id } });
+    await linkUploadedDocument(doc.id); // also the matching requirement of the other list (never throws)
     await prisma.caseEvent.create({ data: { caseId, type: 'DOCUMENT_UPLOADED', note: doc.originalName, actorId: userId, visibleToClient: false } });
     await audit(req, 'GERMAN_CERTIFICATE_UPLOADED', `document:${doc.id}`, { examId: exam.id, caseId });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId }); // automation hook

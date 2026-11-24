@@ -232,6 +232,8 @@ export const clearExternalApplications = async (inquiryIds: string[], tx: Prisma
     });
     // Staff notes to the client may name the person; the status steps stay for statistics.
     await tx.externalJobApplicationEvent.updateMany({ where: { applicationId: { in: rows.map((r) => r.id) } }, data: { note: null } });
+    // Employer answers quote the person (name, CV): removed with the lead's data.
+    await tx.externalJobApplicationReply.deleteMany({ where: { applicationId: { in: rows.map((r) => r.id) } } });
     for (const r of rows) if (r.cvStoredName) await fsp.unlink(cvPath(r.cvStoredName)).catch(() => undefined);
   } catch (err) {
     console.error('[germany-jobs] clearing application data failed', err);

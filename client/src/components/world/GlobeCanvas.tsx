@@ -58,7 +58,8 @@ export default function GlobeCanvas({
     el.append(canvas);
 
     let size = Math.max(1, Math.round(el.clientWidth));
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // 1.5× is visually the same on a hi-DPI screen for this soft, glowing globe and draws ~44 % fewer pixels than 2×.
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
     const max = Math.max(1, ...cities.map((c) => c.workers));
     const marker = hexRgb('#f2b52e');
     const globe = createGlobe(canvas, {

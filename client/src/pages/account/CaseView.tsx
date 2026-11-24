@@ -48,6 +48,7 @@ import { CaseNumbers } from './portal/SecondaryCards';
 import { NextItems } from './portal/NextItems';
 import { anchorTargetId, tabOfAnchor, useNextUp, type CaseTab } from './portal/useNextUp';
 import { CaseDocProgress } from '@/components/docProgress/DocProgress'; // status bars, team stage (Schon geschrieben / Fertig / Ablehnung), embassy collection
+import { DocTemplatesCard } from '@/components/docTemplates/DocTemplatesCard'; // "Hazır sənəd şablonları": VIDEX sheet, Lebenslauf, Anschreiben
 import { OfflineCard } from '@/components/offline/OfflineCard'; // "Oflayn sənədlərim" + "Termin məlumatı" (PWA, own device)
 
 registerCopy(pagesPortalUx);
@@ -237,13 +238,15 @@ export default function CaseView() {
   const embassyDocs = <CaseDocuments key="embassy" data={data} stage="EMBASSY" onChanged={refresh} />;
   // Document intelligence (OCR / checks) sits right under the documents being worked on.
   const docIntel = <DocIntelPanel key="doc-intel" caseId={data.id} />;
+  // Prefilled templates (VIDEX preparation sheet, Lebenslauf, Anschreiben): right under the embassy documents.
+  const templates = ['REJECTED', 'CANCELLED'].includes(data.status) ? null : <DocTemplatesCard key="templates" caseId={data.id} />;
   const mainBlocks = contractFirst
-    ? [contract, initialDocs, docIntel, embassyDocs]
+    ? [contract, initialDocs, docIntel, embassyDocs, templates]
     : embassyFirst
-      ? [embassyDocs, docIntel, contract, initialDocs]
+      ? [embassyDocs, templates, docIntel, contract, initialDocs]
       : data.status === 'DOCUMENTS_PENDING' || data.status === 'DOCUMENTS_REVIEW'
-        ? [initialDocs, docIntel, contract, embassyDocs]
-        : [embassyDocs, docIntel, contract, initialDocs];
+        ? [initialDocs, docIntel, contract, embassyDocs, templates]
+        : [embassyDocs, templates, docIntel, contract, initialDocs];
   const relation = relationLabel(family.relation);
   const unread = data.messages.filter((m) => m.author.id !== user?.id && !(m as MsgWithRead).readAt).length;
   const activeCase = overview?.activeCase?.id === data.id ? overview.activeCase : null;

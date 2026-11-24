@@ -14,6 +14,9 @@ import { storeBuffer } from './storage.js';
 import { cleanMessageId, threadCandidates, threadKeyOf } from './thread.js';
 // AI mail triage hook (see announceArrivals); the feature lives in lib/ai/features/mailTriage.ts.
 import { detectAutoMail, onNewInboundMessage, type SkipReason } from '../ai/features/mailTriage.js';
+// Bounce / complaint reports and employer answers in the agency mailboxes (no AI): lib/deliverability/inbound.ts.
+import { onAgencyInbound } from '../deliverability/inbound.js';
+import type { ReportPart } from '../deliverability/dsn.js';
 
 /**
  * IMAP → database synchronisation. One run per account: list folders, fetch new messages by UID,
@@ -197,7 +200,24 @@ export interface StoredNew {
   notify: boolean;
   /** AI triage: auto-reply / bounce detected from the headers (no AI call for these) */
   autoReason?: SkipReason | null;
+  /** multipart/report Content-Type (with report-type) and its machine-readable parts (lib/deliverability). */
+  reportType?: string | null;
+  reportParts?: ReportPart[];
 }
+
+const REPORT_PART = /delivery-status|feedback-report|rfc822/i;
+
+/** Report parts mailparser kept as attachments (delivery-status goes into the text, which is read as well). */
+export const reportPartsOf = (parsed: { headers?: Map<string, unknown>; attachments: { contentType?: string; content?: Buffer }[] }): { reportType: string | null; parts: ReportPart[] } => {
+  const ct = parsed.headers?.get('content-type') as { value?: string; params?: Record<string, string> } | string | undefined;
+  const value = typeof ct === 'string' ? ct : (ct?.value ?? '');
+  const reportType = /multipart\/report/i.test(value) ? `${value}; report-type=${(typeof ct === 'object' && ct?.params?.['report-type']) || ''}` : null;
+  const parts = parsed.attachments
+    .filter((a) => REPORT_PART.test(a.contentType ?? '') && a.content?.length)
+    .slice(0, 5)
+    .map((a) => ({ contentType: a.contentType ?? '', content: a.content!.subarray(0, 64 * 1024).toString('utf8') }));
+  return { reportType, parts };
+};
 
 /** Parses one fetched message and inserts/updates its row. Returns the row id and whether it was new. */
 export const storeFetched = async (account: MailAccount, folder: MailFolder, m: ImapFetched): Promise<StoredNew | null> => {
@@ -296,7 +316,8 @@ export const storeFetched = async (account: MailAccount, folder: MailFolder, m: 
     prisma.mailMessage.create({ data: { id, accountId: account.id, folderId: folder.id, uid: BigInt(m.uid), ...data } }),
     ...(attachmentRows.length ? [prisma.mailAttachment.createMany({ data: attachmentRows.map((a) => ({ ...a, messageId: id })) })] : []),
   ]);
-  return { id, folderId: folder.id, fromName: data.fromName, fromAddr: data.fromAddr, subject, seen: data.seen, isNew: true, notify: true, autoReason: detectAutoMail(parsed.headers) };
+  const report = reportPartsOf(parsed);
+  return { id, folderId: folder.id, fromName: data.fromName, fromAddr: data.fromAddr, subject, seen: data.seen, isNew: true, notify: true, autoReason: detectAutoMail(parsed.headers), reportType: report.reportType, reportParts: report.parts };
 };
 
 // ─── Rules ────────────────────────────────────────────────────────────
@@ -497,6 +518,8 @@ const announceArrivals = async (account: MailAccount, arrived: StoredNew[]) => {
     }
     // ── AI mail triage hook: queued in the background (fire-and-forget), never breaks the sync ──
     for (const a of newInbox) onNewInboundMessage(a.id, { autoReason: a.autoReason ?? null, initial: !a.notify });
+    // ── Deliverability + employer replies (agency mailboxes only, not the first sync of a folder; background) ──
+    onAgencyInbound(account, newInbox.filter((a) => a.notify).map((a) => ({ id: a.id, contentType: a.reportType ?? null, reportParts: a.reportParts ?? [] })));
   }
   const announce = newInbox.filter((a) => a.notify);
   const fresh = announce.length ? await prisma.mailMessage.findMany({ where: { id: { in: announce.map((a) => a.id) } }, select: { id: true, folderId: true, seen: true, fromName: true, fromAddr: true, subject: true } }) : [];

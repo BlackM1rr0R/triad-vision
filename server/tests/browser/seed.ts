@@ -17,7 +17,12 @@ import { sanitizeMailHtml } from '../../src/lib/mail/sanitize.js';
 import { prisma, resetDb, settle } from '../helpers/db';
 import { asClient, asSuperAdmin, type Actor } from '../helpers/api';
 import { TEST_PASSWORD } from '../helpers/factories';
-import { clientCase, createCaseVia, expectStatus, uploadRequired } from '../helpers/workflow';
+import { clientCase, createCaseVia, expectStatus, reviewAll, uploadRequired } from '../helpers/workflow';
+import { makePdf, PDF } from '../helpers/files';
+import { applyInput, createExternalApplication } from '../../src/lib/germanyJobs/apply.js';
+import { processExternalApplication } from '../../src/lib/germanyJobs/autoSend.js';
+import { runEmployerDiscovery, type PageFetcher } from '../../src/lib/germanyJobs/discovery/index.js';
+import type { SafeResponse } from '../../src/lib/net/safeFetch.js';
 
 if (!config.isTest) throw new Error('The browser seed runs with NODE_ENV=test only');
 if (!/triad_vision_browser|_browser/.test(process.env.DATABASE_URL ?? '')) {
@@ -184,8 +189,70 @@ const main = async () => {
   const vhSubject = 'Ekran hündürlüyündə məktub — brauzer testi';
   const vhMail = await mailMessage(vhSubject, vhHtml, 10);
 
+  // contract: initial documents accepted, Əmək müqaviləsi (own PDF, client + Triad Vision places) sent through the
+  // real admin API (lib/caseContracts, V2): the client signs first, then Triad Vision.
+  const contract = await clientWithCase('Tural', 'İmzalayan', 'contract');
+  await uploadRequired(contract.actor.agent, contract.caseId, 'INITIAL');
+  expectStatus(await contract.actor.agent.post(`/api/cases/${contract.caseId}/submit`), 200);
+  await reviewAll(admin.agent, contract.caseId, 'INITIAL');
+  const clientBox = { role: 'CANDIDATE', page: 1, x: 60, y: 100, w: 200, h: 50 };
+  const triadBox = { role: 'STAFF', page: 1, x: 320, y: 100, w: 200, h: 50 };
+  expectStatus(
+    await admin.agent
+      .post(`/api/admin/case-contracts/cases/${contract.caseId}/upload`)
+      .field('meta', JSON.stringify({ step: 'LABOUR', placements: [[clientBox, triadBox]] }))
+      .attach('files', await makePdf('Emek muqavilesi', 2), { filename: 'emek-muqavilesi.pdf', ...PDF }),
+    201,
+  );
+
+  // docLink: an embassy list that already exists (staff listed the passport there) while the client is still in the
+  // initial documents: the passport uploaded once appears in both lists (lib/docLink).
+  const docLink = await clientWithCase('Aytən', 'Əlaqələndirən', 'doclink');
+  const embassyTitle = 'Pasport (səfirlik üçün)';
+  await prisma.documentRequirement.create({ data: { caseId: docLink.caseId, stage: 'EMBASSY', key: 'PASSPORT', title: az(embassyTitle), required: true, sortOrder: 50 } });
+  const docLinkInitial = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: docLink.caseId, stage: 'INITIAL', key: 'PASSPORT' }, select: { id: true } });
+
+  // external: "Apply via Triad Vision" for a listing elsewhere. The employer-page fetch is replaced by an injected
+  // fetcher (an offline page without an address), so the application lands in CLIENT_SEND: the client gets the
+  // package and the step-by-step guide. Nothing here touches the network.
+  const externalListing = { url: 'https://jobs.example.test/stellen/berufskraftfahrer-ce', title: 'Berufskraftfahrer CE (brauzer testi)', company: 'Nord Logistik GmbH' };
+  const external = await clientWithCase('Elnur', 'Müraciətçi', 'external');
+  await prisma.user.update({ where: { id: external.actor.user.id }, data: { passportNumber: 'C01234567', germanLevel: 'B1', profession: 'Berufskraftfahrer', phone: '+994501234567' } });
+  expectStatus(
+    await external.actor.agent.put('/api/cv').send({ data: { headline: 'Berufskraftfahrer', experience: [{ title: 'Kraftfahrer', employer: 'Azərsun', from: '2019-01', to: null }], drivingLicences: ['CE'] } }),
+    200,
+  );
+  expectStatus(await external.actor.agent.post('/api/cv/lebenslauf').send({}), 201);
+  const externalInquiry = await createExternalApplication(
+    applyInput.parse({
+      provider: 'link',
+      listingUrl: externalListing.url,
+      listingTitle: externalListing.title,
+      listingCompany: externalListing.company,
+      listingLocation: 'Hamburg',
+      jobType: 'job',
+      name: 'Elnur Müraciətçi',
+      email: external.actor.user.email,
+      phone: '050 123 45 67',
+      germanLevel: 'B1',
+      profession: 'Kraftfahrer',
+      experienceYears: '6',
+      message: '',
+      consent: 'true',
+      forwardConsent: 'true',
+      lng: 'az',
+    }),
+    { phone: '+994501234567', lng: 'az', cv: null, userId: external.actor.user.id, partnerId: null, accountLabel: null },
+  );
+  const externalApp = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: externalInquiry.id } });
+  await processExternalApplication(externalApp.id);
+  const offlinePage: PageFetcher = async (u): Promise<SafeResponse> => ({ url: u, status: 200, contentType: 'text/html; charset=utf-8', body: '<p>Jetzt online bewerben</p>', truncated: false, hops: [u] });
+  await runEmployerDiscovery({ fetchPage: offlinePage });
+  const externalState = (await prisma.externalJobApplication.findUniqueOrThrow({ where: { id: externalApp.id } })).autoState;
+  if (externalState !== 'CLIENT_SEND') throw new Error(`seed: the external application is in ${externalState}, expected CLIENT_SEND`);
+
   // Guided tours off for every seeded user (server-side progress; the browser fixtures also set the local flags).
-  for (const a of [admin, viewer.actor, docs.actor, submit.actor, replace.actor, messages.actor, review.actor]) {
+  for (const a of [admin, viewer.actor, docs.actor, submit.actor, replace.actor, messages.actor, review.actor, contract.actor, docLink.actor, external.actor]) {
     for (const tour of ['admin', 'staff', 'client-stages']) {
       expectStatus(await a.agent.put(`/api/tours/${tour}`).send({ status: 'never' }), 200);
     }
@@ -214,6 +281,9 @@ const main = async () => {
       },
       messages: { ...caseClient(messages), staffMessage },
       review: { ...caseClient(review), clientMessage },
+      contract: caseClient(contract),
+      docLink: { ...caseClient(docLink), initialRequirementTitle: await requirementTitle(docLinkInitial.id), embassyRequirementTitle: embassyTitle },
+      external: { ...caseClient(external), listingTitle: externalListing.title, listingCompany: externalListing.company },
     },
     drive: { clientFolderId: folder.id, clientFolderName: folder.name, parentId: folder.parentId },
     mail: { accountId: account.id, folderId: inbox.id, messageId: mail.id, subject: mailSubject, vhMessageId: vhMail.id, vhSubject },

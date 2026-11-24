@@ -33,7 +33,8 @@ const LOCALES = ['az', 'de', 'en', 'ru'];
 
 const readScope = (): WorkScope => {
   try {
-    return localStorage.getItem(SCOPE_KEY) === 'all' ? 'all' : 'mine';
+    const s = localStorage.getItem(SCOPE_KEY);
+    return s === 'all' || s === 'team' ? s : 'mine';
   } catch {
     return 'mine';
   }
@@ -62,7 +63,12 @@ export default function Today() {
   const isAdmin = hasMinRole(user?.role, 'ADMIN');
   usePageTitle(t('today.title'));
 
-  const [scope, setScopeState] = useState<WorkScope>(() => (isAdmin ? readScope() : 'mine'));
+  // "Mənim sahəm" (team = every case of the own access scope) for everyone; the whole team (all) for ADMIN+.
+  const scopes: WorkScope[] = isAdmin ? ['mine', 'team', 'all'] : ['mine', 'team'];
+  const [scope, setScopeState] = useState<WorkScope>(() => {
+    const s = readScope();
+    return s === 'all' && !isAdmin ? 'mine' : s;
+  });
   const [byAssignee, setByAssignee] = useState(false);
   const [filter, setFilter] = useState<WorkFilter>('all');
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -243,21 +249,20 @@ export default function Today() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {!!data?.counts.byKind.doc_review && <FastReviewButton pending={data.counts.byKind.doc_review} className="min-h-8 py-0 text-xs" />}
-            {isAdmin && (
-              <div className="inline-flex rounded-lg border border-line bg-sunken p-0.5" role="group" aria-label={t('today.scope.label')}>
-                {(['mine', 'all'] as const).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setScope(s)}
-                    aria-pressed={scope === s}
-                    className={clsx('min-h-8 rounded-md px-3 text-sm font-semibold transition', scope === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
-                  >
-                    {t(s === 'mine' ? 'today.scope.mine' : 'today.scope.team')}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="inline-flex rounded-lg border border-line bg-sunken p-0.5" role="group" aria-label={t('today.scope.label')}>
+              {scopes.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setScope(s)}
+                  aria-pressed={scope === s}
+                  title={s === 'team' ? t('today.scope.areaHint') : undefined}
+                  className={clsx('min-h-8 rounded-md px-3 text-sm font-semibold transition', scope === s ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink')}
+                >
+                  {t(s === 'mine' ? 'today.scope.mine' : s === 'team' ? 'today.scope.area' : 'today.scope.team')}
+                </button>
+              ))}
+            </div>
             {isAdmin && scope === 'all' && (
               <label className="inline-flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-line bg-card px-3 text-sm text-ink">
                 <input type="checkbox" className="size-4 accent-primary" checked={byAssignee} onChange={(e) => setByAssignee(e.target.checked)} />
@@ -329,7 +334,7 @@ export default function Today() {
                         item={item}
                         now={now}
                         active={index === active}
-                        showAssignee={scope === 'all' && !byAssignee}
+                        showAssignee={(scope === 'all' && !byAssignee) || scope === 'team'}
                         armed={armed}
                         refCb={(el) => {
                           if (el) rowRefs.current.set(item.id, el);

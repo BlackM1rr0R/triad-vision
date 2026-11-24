@@ -71,19 +71,25 @@ export default function AiLauncher() {
           setMounted(true);
           setOpen(true);
         }}
+        title={copy.open}
         aria-haspopup="dialog"
         aria-expanded={open}
         data-bnav-lift
         className={clsx(
-          'fixed right-[5.25rem] bottom-4 z-40 inline-flex size-14 items-center justify-center gap-2 rounded-full bg-primary text-sm sm:w-auto sm:justify-start font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 sm:px-5',
+          // Round icon button (the size of the WhatsApp one) until the screen has a gutter wide enough for the
+          // labelled pill: the pill reached into the page's right column and covered its buttons.
+          'fixed right-[5.25rem] bottom-4 z-40 inline-flex size-14 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-contrast shadow-[var(--tv-shadow-raised)] transition-colors hover:bg-primary-hover sm:right-[5.75rem] sm:bottom-6 2xl:w-auto 2xl:justify-start 2xl:px-5',
           open && 'pointer-events-none opacity-0',
           helpFab && 'max-sm:hidden',
         )}
       >
         <Sparkles className="size-5 shrink-0" aria-hidden />
-        {/* Phones: icon only, so the round button does not cover the page content. */}
-        <span className="sr-only sm:not-sr-only">{copy.open}</span>
+        {/* Icon only below 2xl, so the round button does not cover the page content. */}
+        <span className="sr-only 2xl:not-sr-only">{copy.open}</span>
       </button>
+      {/* Room below the page's last row so the floating buttons never sit on top of its controls at the end of
+          the page (e.g. "Mənə zəng edin" in the call card). */}
+      <div aria-hidden className={clsx('h-20 sm:h-24', helpFab && 'max-sm:hidden')} data-testid="fab-spacer" />
 
       {mounted && (
         <div className={clsx('fixed inset-0 z-[60]', !open && 'pointer-events-none invisible')} aria-hidden={!open}>

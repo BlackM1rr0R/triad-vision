@@ -35,6 +35,8 @@ registerCopy(pagesCaseContracts);
 
 // The contract upload dialog (pdf.js) loads only when it is opened outside the case page (quick drawer of the list).
 const UploadDialog = lazy(() => import('@/components/caseContracts/UploadDialog'));
+// Triad signature / return / approve of the contract steps in the quick drawer (same dialogs as the case page).
+const QuickContractActions = lazy(() => import('@/components/caseContracts/QuickContractActions'));
 
 type ActionKey = 'SEND_CONTRACT' | 'REQUEST_CHANGES' | 'CONFIRM_CONTRACT' | 'REJECT_SIGNATURE' | 'SCHEDULE' | 'MARK_LODGED' | 'DECIDE' | 'REOPEN';
 
@@ -112,7 +114,7 @@ interface PendingConfirm {
   body: ActionBody;
 }
 
-export const ActionPanel = ({ c }: { c: CaseDetail }) => {
+export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContracts?: boolean }) => {
   const { t } = useTranslation();
   const actions = AVAILABLE[c.status];
   const [selected, setSelected] = useState<ActionKey | null>(actions[0] ?? null);
@@ -458,6 +460,13 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
         )}
 
         {selected && actions.includes(selected) && <div>{renderForm(selected)}</div>}
+
+        {/* Quick drawer only (`quickContracts`); the case page has the full contracts panel. */}
+        {quickContracts && !isFinal && c.status !== 'DOCUMENTS_PENDING' && (
+          <Suspense fallback={null}>
+            <QuickContractActions caseId={c.id} />
+          </Suspense>
+        )}
 
         {!isFinal && (
           <div className="border-t border-line pt-4">

@@ -5,6 +5,7 @@ import { FourEyesPanel } from '@/components/caseNext/FourEyesPanel';
 import CaseOriginalsPanel from '@/components/originals/CaseOriginalsPanel';
 import { EmploymentContractPanel } from '@/components/placement/EmploymentContractPanel';
 import { CaseOfficialFormsPanel } from '@/components/officialForms/CaseOfficialFormsPanel';
+import { AdminDocTemplates } from '@/components/docTemplates/AdminDocTemplates'; // VIDEX preparation sheet, Lebenslauf, Anschreiben (prefilled)
 import { RecognitionPanel } from '@/components/recognition/RecognitionPanel';
 import { AcceleratedPanel } from '@/components/recognition/AcceleratedPanel';
 import { CaseSkillVideos } from '@/components/skillVideos/StaffSkillVideos';
@@ -61,6 +62,8 @@ export default function DocumentsTab({ c, isAdmin }: CaseTabProps) {
       <EmploymentContractPanel caseId={c.id} />
       {/* Official forms: national visa application, Erklärung zum Beschäftigungsverhältnis … (fill, missing data, employer signature). */}
       <CaseOfficialFormsPanel caseId={c.id} />
+      {/* Prefilled templates from the profile / case: download (audited) or add a copy to the client folder. */}
+      <AdminDocTemplates caseId={c.id} />
       {/* Name spelling: typed name → passport MRZ form / German spellings, vs. the passport MRZ on file. */}
       <NameChecker caseId={c.id} audience="staff" />
       {/* Recognition of the qualification (Anerkennung): procedures, checklist, letters, deficits, fee, deadline. */}

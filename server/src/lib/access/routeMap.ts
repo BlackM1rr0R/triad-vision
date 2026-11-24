@@ -37,7 +37,7 @@ const ADMIN_RULES: Rule[] = [
   r('/admin/users/staff', 'self'),
   r('/admin/users/clients\\.xlsx', 'clients'),
   // Case sub-resources
-  r('/admin/cases/[^/]+/(?:documents|upload-links|official-forms|embassy-package|ezb-wizard)', 'documents'),
+  r('/admin/cases/[^/]+/(?:documents|upload-links|official-forms|embassy-package|ezb-wizard|doc-templates)', 'documents'),
   r('/admin/cases/[^/]+/(?:messages|typing)', 'communications'),
   r('/admin/bulk/cases', 'cases'),
   r('/admin/bulk/(?:inquiries|candidates)', 'clients'),
@@ -204,6 +204,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   translate: 'communications',
   'rule-changes': 'communications',
   mailboxes: 'communications',
+  'email-delivery': 'communications', // deliverability, bounces, suppression list (ADMIN+ in the mount)
 };
 
 /**

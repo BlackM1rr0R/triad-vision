@@ -51,6 +51,7 @@ import {
   ListTodo,
   Mail,
   MailCheck,
+  MailWarning,
   Megaphone,
   MessageCircleQuestion,
   MessageSquareQuote,
@@ -188,7 +189,7 @@ const PERM_OF: Record<string, PermArea> = {
   referralPartners: 'partners', publicApiKeys: 'partners', agents: 'partners',
   companies: 'employers', employerChecklist: 'employers', realSalaries: 'employers', vacancies: 'employers', jobChannels: 'employers',
   candidateRequests: 'employers', candidatePool: 'employers', interviews: 'employers', employmentContracts: 'employers', interviewPrep: 'employers',
-  inbox: 'communications', messaging: 'communications', mailboxes: 'communications', campaigns: 'communications', ruleChanges: 'communications',
+  inbox: 'communications', messaging: 'communications', mailboxes: 'communications', emailDelivery: 'communications', campaigns: 'communications', ruleChanges: 'communications',
   calls: 'communications', surveys: 'communications', 'ws.mail': 'communications', 'ws.chat': 'communications', 'ws.contacts': 'communications',
   'ws.liveChats': 'communications',
   invoices: 'finance', clientInvoices: 'finance', packages: 'finance', accounting: 'finance', settlements: 'finance', finance: 'finance',
@@ -294,6 +295,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('cannedReplies', '/admin/canned-replies', MessageSquareQuote, 'comms'), // canned replies for the "/" picker in composers
   a('coverLetterTemplates', '/admin/cover-letter-templates', PenLine, 'employers', { adminOnly: true }), // Anschreiben templates for "apply via Triad Vision"
   a('mailboxes', '/admin/mailboxes', AtSign, 'system', { adminOnly: true }), // our own @domain mailboxes (Team hub, next to users)
+  a('emailDelivery', '/admin/email-delivery', MailWarning, 'comms', { adminOnly: true }), // deliverability: bounces, suppression list, SPF/DKIM/DMARC
   a('mailTriage', '/admin/ai/mail-triage', MailCheck, 'comms', { superOnly: true, module: 'aiAssistant' }),
   a('campaigns', '/admin/campaigns', Megaphone, 'comms', { adminOnly: true, module: 'campaigns' }),
   a('ruleChanges', '/admin/rule-changes', Scale, 'comms'), // rule-change notices to affected clients (publish ADMIN+)
@@ -433,7 +435,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'cases', icon: FolderKanban, tabs: ['cases', 'review', 'requirements', 'docsAudit', 'expiring', 'dataQuality', 'recognition', 'accelerated', 'authorities', 'originals', 'signatures', 'countersign', 'officialForms', 'caseForms', 'contractTemplates', 'translations'] },
   { key: 'clients', icon: Users, tabs: ['candidates', 'skillVideos', 'register', 'duplicates', 'checkIns', 'arrivals', 'familyReunion', 'partnerHousing', 'journey', 'examDates', 'waitingRoom', 'preCourse', 'germanyReady'] },
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist', 'realSalaries'] },
-  { key: 'comms', icon: MessageSquareText, tabs: ['notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
+  { key: 'comms', icon: MessageSquareText, tabs: ['notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'emailDelivery', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports', 'quarterlyReport'] },
   { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'publicApiKeys', 'agents'] },
   {

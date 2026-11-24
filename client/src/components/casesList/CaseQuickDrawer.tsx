@@ -312,7 +312,7 @@ export const CaseQuickDrawer = ({
           </Section>
 
           {/* Workflow step (status change): the same form as on the case page */}
-          <ActionPanel c={c} />
+          <ActionPanel c={c} quickContracts />
 
           <Section
             title={t('cl.drawer.contact')}

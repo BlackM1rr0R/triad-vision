@@ -227,6 +227,8 @@ const en: Messages = {
     whatsapp: 'WhatsApp',
     hours: 'Office hours',
     offices: 'Our offices',
+    mapLoad: 'Load interactive map',
+    mapOpen: 'Open in OpenStreetMap',
     formTitle: 'Write to us',
     writeWhatsapp: 'Message on WhatsApp',
   },

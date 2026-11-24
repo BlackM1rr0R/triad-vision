@@ -106,6 +106,7 @@ import { adminTrustRouter } from './trust.js'; // Trust Center settings + AVV te
 import { adminAccountingRouter } from './accounting.js'; // currencies, billing entities, exchange rates, DATEV export, XRechnung
 import { adminPackagesRouter } from './packages.js'; // service packages + online orders
 import { adminSiteFeaturesRouter } from './siteFeatures.js'; // search stats, job alert stats, story video upload, e-book lead magnets
+import { adminDocTemplatesRouter } from './docTemplates.js'; // prefilled templates of a case: VIDEX preparation sheet, Lebenslauf, Anschreiben
 import { adminOfficialFormsRouter } from './officialForms.js'; // official fillable PDFs: templates, mapping, case fills, employer declaration
 import { adminAcceleratedRouter, adminRecognitionRouter } from './recognition.js'; // Anerkennung tracker + § 81a accelerated procedure
 import { adminDashboardLayoutRouter } from './dashboardLayout.js'; // personal dashboard widget layout
@@ -121,6 +122,7 @@ import { adminPastPlacementsRouter } from './pastPlacements.js'; // past placeme
 import { adminStudyRouter } from './study.js'; // Study in Germany catalogue: CRUD (STAFF+, delete ADMIN+), CSV import / export, application files
 import { adminGermanyJobsRouter } from './germanyJobs.js'; // Adzuna search status, CVs of "apply via Triad Vision" leads
 import { adminExternalApplicationsRouter } from './externalApplications.js'; // apply via Triad Vision: status for the client, Anschreiben
+import { adminEmailDeliveryRouter } from './emailDelivery.js'; // E-poçt göndərişi: deliverability, bounces, suppression list, SPF/DKIM/DMARC (ADMIN+)
 import { adminCoverLetterTemplatesRouter } from './coverLetterTemplates.js'; // Anschreiben templates per job type
 import { adminJobFeedsRouter } from './jobFeeds.js'; // external job boards: feed URLs + token, per-vacancy distribution, BA HR-BA-XML
 import { adminStaffUiRouter } from './staffUi.js'; // saved views, table settings, "what's new" (Setting rows per user / team)
@@ -350,6 +352,7 @@ adminRouter.use(['/content', '/settings', '/vacancies', '/companies', '/reviews'
 });
 
 adminRouter.use(adminCaseAiRouter); // /cases/:id/ai/*, /case-ai/settings
+adminRouter.use(adminDocTemplatesRouter); // /cases/:id/doc-templates*
 adminRouter.use(adminOfficialFormsRouter); // /official-forms/*, /cases/:id/official-forms*
 adminRouter.use(adminCaseNextRouter); // /cases/:id/next-step*, /cases/:id/embassy-package*
 adminRouter.use(adminClientDataRouter); // /case-forms/*, /cases/:id/forms*, /cases/:id/data-confirmation*, /doc-guides*
@@ -361,6 +364,7 @@ adminRouter.use('/cases', adminCasesRouter);
 adminRouter.use('/users', adminUsersRouter);
 adminRouter.use('/duplicates', requireMinRole('ADMIN'), adminDuplicatesRouter); // duplicate clients: review, not-a-duplicate, merge
 adminRouter.use('/mailboxes', requireMinRole('ADMIN'), adminMailboxesRouter);
+adminRouter.use('/email-delivery', requireMinRole('ADMIN'), adminEmailDeliveryRouter); // E-poçt göndərişi (ADMIN+)
 adminRouter.use('/companies', adminCompaniesRouter);
 adminRouter.use('/employer-reports', adminEmployerReportsRouter); // monthly employer report: preview, regenerate, send
 adminRouter.use('/vacancies', adminVacanciesRouter);

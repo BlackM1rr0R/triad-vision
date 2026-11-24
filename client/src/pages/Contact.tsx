@@ -10,6 +10,7 @@ import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { BookingCta } from '@/components/booking/BookingCta';
 import { StatusBox } from '@/components/site/StatusBox';
+import { OfficeMap } from '@/components/site/OfficeMap';
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -78,12 +79,7 @@ export default function Contact() {
             {c?.offices.map((o, i) => (
               <Reveal key={o.address} delay={i * 0.1}>
                 <div className="card overflow-hidden">
-                  <iframe
-                    title={tr(o.city)}
-                    loading="lazy"
-                    className="h-56 w-full border-0 grayscale-[40%]"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${o.lng - 0.012}%2C${o.lat - 0.006}%2C${o.lng + 0.012}%2C${o.lat + 0.006}&layer=mapnik&marker=${o.lat}%2C${o.lng}`}
-                  />
+                  <OfficeMap lat={o.lat} lng={o.lng} title={tr(o.city)} />
                   <div className="flex items-start gap-3 p-5">
                     <MapPin className="mt-0.5 size-5 shrink-0 text-muted" />
                     <div>

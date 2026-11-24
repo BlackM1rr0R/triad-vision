@@ -227,6 +227,8 @@ const ru: Messages = {
     whatsapp: 'WhatsApp',
     hours: 'Часы работы',
     offices: 'Наши офисы',
+    mapLoad: 'Загрузить интерактивную карту',
+    mapOpen: 'Открыть в OpenStreetMap',
     formTitle: 'Напишите нам',
     writeWhatsapp: 'Написать в WhatsApp',
   },

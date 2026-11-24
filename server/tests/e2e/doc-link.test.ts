@@ -12,6 +12,7 @@ import { createCase } from '../../src/lib/caseFlow.js';
 import { createRequirements } from '../../src/lib/docsIntel/requirementTemplates.js';
 import { copyDocumentToDrive } from '../../src/lib/drive/caseFolders.js';
 import { backfillLinkedDocuments } from '../../src/lib/docLink/service.js';
+import { requestDocument } from '../../src/lib/ai/features/caseAi/actions.js';
 
 /**
  * Linked case documents (lib/docLink): a document both the initial and the embassy list ask for is uploaded once and
@@ -128,5 +129,28 @@ describe('linked documents (initial ↔ embassy)', () => {
     const before = await prisma.document.count({ where: { caseId: c.id } });
     await backfillLinkedDocuments();
     expect(await prisma.document.count({ where: { caseId: c.id } })).toBe(before);
+  });
+
+  it('a requirement requested by the case AI is filled at once from the other list', async () => {
+    const { user } = await createClient();
+    const staff = await asAdmin();
+    const c = await createCase(user.id, { profession: 'Aşpaz', visaType: 'WORK' });
+    await prisma.$transaction((tx) => createRequirements(tx, c.id, 'EMBASSY', null));
+    const iniPassport = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: c.id, stage: 'INITIAL', key: 'PASSPORT' } });
+    const embPassport = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: c.id, stage: 'EMBASSY', key: 'PASSPORT' } });
+    await prisma.document.deleteMany({ where: { requirementId: embPassport.id } });
+    await prisma.documentRequirement.delete({ where: { id: embPassport.id } });
+    const storedName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.pdf`;
+    const buf = await makePdf('PASS');
+    await fs.mkdir(config.uploads.privateDir, { recursive: true });
+    await fs.writeFile(path.join(config.uploads.privateDir, storedName), buf);
+    const src = await prisma.document.create({
+      data: { caseId: c.id, requirementId: iniPassport.id, stage: 'INITIAL', originalName: 'pass.pdf', storedName, mimeType: 'application/pdf', size: buf.length, status: 'ACCEPTED', uploadedById: user.id },
+    });
+    await prisma.case.update({ where: { id: c.id }, data: { status: 'EMBASSY_DOCUMENTS' } });
+
+    const keyed = await requestDocument(c.id, { requirementKey: 'PASSPORT', title: l10n('Pasport') }, staff.user.id, { notify: false });
+    expect(keyed).toMatchObject({ created: true, requirement: { stage: 'EMBASSY' } });
+    expect(await docsOf(keyed.requirement.id)).toMatchObject([{ linkedFromId: src.id, stage: 'EMBASSY' }]);
   });
 });

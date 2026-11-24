@@ -4,6 +4,8 @@ import { prisma } from '../db.js';
 import { isImpersonating } from './privacy/impersonationContext.js';
 import { brandify, brandSync } from './brand/index.js';
 import { htmlToText } from './mail/sanitize.js';
+import { emailDomain } from './deliverability/dsn.js';
+import { recordSmtpReject } from './deliverability/service.js';
 
 const transporter = config.smtp.host
   ? nodemailer.createTransport({
@@ -77,9 +79,9 @@ export const renderEmail = (title: string, body: string, cta?: { label: string; 
 </table></td></tr></table></body></html>`;
 };
 
-const log = async (data: { to: string; subject: string; status: string; error?: string }) => {
+const log = async (data: { to: string; subject: string; status: string; error?: string; responseCode?: number; messageId?: string | null; category?: string | null }) => {
   try {
-    await prisma.emailLog.create({ data });
+    await prisma.emailLog.create({ data: { ...data, toDomain: emailDomain(data.to).slice(0, 190) || null, messageId: data.messageId?.slice(0, 500) || null } });
   } catch (err) {
     console.error('[mail] could not write EmailLog', err);
   }
@@ -123,7 +125,8 @@ export const sendMail = async (to: string, subject: string, html: string, attach
     } catch (err) {
       // Email failures must never break the workflow; the in-app notification is the source of truth.
       console.error('[mail] failed', err);
-      await log({ to, subject: safeSubject, status: 'FAILED', error: String(err).slice(0, 2000) });
+      const code = (err as { responseCode?: unknown }).responseCode;
+      await log({ to, subject: safeSubject, status: 'FAILED', error: String(err).slice(0, 2000), responseCode: typeof code === 'number' ? code : undefined });
     }
   } catch (err) {
     console.error('[mail] unexpected', err);
@@ -136,6 +139,8 @@ export interface MailResult {
   error?: string;
   /** SMTP reply code of a rejection (5xx = permanent, e.g. unknown mailbox). */
   responseCode?: number;
+  /** Message-ID header of the mail (without <>), also in CONSOLE mode when the caller gave one. */
+  messageId?: string;
 }
 
 /**
@@ -153,23 +158,29 @@ export const sendMailDetailed = async (msg: {
   attachments?: MailAttachment[];
   /** Answers go here instead of the From address. */
   replyTo?: string;
+  /** Own Message-ID (without <>): replies and bounces are matched by it (lib/germanyJobs/replies, lib/deliverability). */
+  messageId?: string;
+  /** EmailLog category for the deliverability statistics: EMPLOYER_APPLICATION | CAMPAIGN. */
+  category?: string;
 }): Promise<MailResult> => {
   const safeSubject = headerSafe(brandify(msg.subject));
   try {
     if (!msg.to) return { status: 'FAILED', error: 'NO_ADDRESS' };
+    const ownId = msg.messageId ? msg.messageId.replace(/[^A-Za-z0-9._@+=$-]/g, '').slice(0, 400) : undefined;
     if (!transporter) {
       if (!config.isTest) console.log(`\n[mail:console] to=${msg.to}\n  subject=${safeSubject}\n`);
-      await log({ to: msg.to, subject: safeSubject, status: 'CONSOLE' });
-      return { status: 'CONSOLE' };
+      await log({ to: msg.to, subject: safeSubject, status: 'CONSOLE', messageId: ownId, category: msg.category });
+      return { status: 'CONSOLE', messageId: ownId };
     }
     const headers = Object.fromEntries(
       Object.entries(msg.headers ?? {}).map(([k, v]) => [k.replace(/[^A-Za-z0-9-]/g, ''), headerSafe(v).slice(0, 900)]),
     );
     try {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: brandSync().emailFrom,
         to: headerSafe(msg.to),
         subject: safeSubject,
+        ...(ownId ? { messageId: `<${ownId}>` } : {}),
         html: brandify(msg.html),
         text: msg.text === undefined ? plainTextOf(brandify(msg.html)) : brandify(msg.text),
         headers,
@@ -178,13 +189,16 @@ export const sendMailDetailed = async (msg: {
           ? { attachments: msg.attachments.map((a) => ({ filename: headerSafe(a.filename), content: a.content, contentType: a.contentType })) }
           : {}),
       });
-      await log({ to: msg.to, subject: safeSubject, status: 'SENT' });
-      return { status: 'SENT' };
+      const sentId = (typeof info?.messageId === 'string' ? info.messageId.replace(/^<|>$/g, '') : '') || ownId;
+      await log({ to: msg.to, subject: safeSubject, status: 'SENT', messageId: sentId, category: msg.category });
+      return { status: 'SENT', messageId: sentId };
     } catch (err) {
       const e = err as { responseCode?: number; message?: string };
       const error = String(e.message ?? err).slice(0, 2000);
-      await log({ to: msg.to, subject: safeSubject, status: 'FAILED', error });
-      return { status: 'FAILED', error, responseCode: typeof e.responseCode === 'number' ? e.responseCode : undefined };
+      const responseCode = typeof e.responseCode === 'number' ? e.responseCode : undefined;
+      await log({ to: msg.to, subject: safeSubject, status: 'FAILED', error, responseCode, messageId: ownId, category: msg.category });
+      await recordSmtpReject(msg.to, responseCode, error);
+      return { status: 'FAILED', error, responseCode };
     }
   } catch (err) {
     console.error('[mail] unexpected', err);

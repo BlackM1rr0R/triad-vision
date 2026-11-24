@@ -23,7 +23,10 @@ const MIN_PER_CITY = 3;
 const webglAvailable = () => {
   try {
     const c = document.createElement('canvas');
-    return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    const gl = (c.getContext('webgl2') || c.getContext('webgl')) as WebGLRenderingContext | null;
+    // Release the probe context at once (browsers cap live contexts; cobe creates its own).
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    return !!gl;
   } catch {
     return false;
   }

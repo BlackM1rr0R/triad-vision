@@ -417,7 +417,8 @@ export const ManagerCard = ({ c }: { c: ActiveCase | null }) => {
         </div>
       </div>
       {!c?.manager && <p className="mt-3 text-sm leading-relaxed text-muted">{t('accountPage.dash.manager.pending')}</p>}
-      <div className="mt-4 grid grid-cols-1 gap-2 min-[400px]:grid-cols-3">
+      {/* Wraps by content width (the aside column is narrow: three equal columns cut "WhatsApp" off). */}
+      <div className="mt-4 flex flex-wrap gap-2 *:min-w-fit *:flex-1 *:whitespace-nowrap">
         {c && (
           <Link to={caseLink(c, '#messages')} className="btn-primary btn-sm min-h-11">
             <MessageCircle className="size-4" aria-hidden />

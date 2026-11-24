@@ -13,6 +13,7 @@ import { checkCaseDocument, runChecks, targetForVaultKind, vaultDir } from './do
 import { vaultKindsFor } from './docCheck/vault.js';
 import { STAGE_FOLDER } from './drive/cases.js';
 import { copyDocumentToDrive, ensureCaseFolder } from './drive/caseFolders.js';
+import { linkUploadedDocument } from './docLink/service.js';
 import { freeNameIn, safeUploadName } from './drive/names.js';
 import { hashStored } from './drive/org/hash.js';
 import { copyIntoStore, removeStored } from './drive/storage.js';
@@ -325,6 +326,7 @@ export const attachVaultDocsToCase = async (caseId: string, vaultIds: string[]):
             },
           });
           taken.add(req.id);
+          await linkUploadedDocument(doc.id); // also the matching requirement of the other list (never throws)
           await prisma.caseEvent.create({ data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: `${doc.originalName} (müraciət)`, actorId: c.clientId, visibleToClient: false } });
           await copyDocumentToDrive(doc.id, { pending: true }); // "<client folder>/Reisepass/…"
           await checkCaseDocument(doc.id);

@@ -14,6 +14,7 @@ import { pagesCaseContracts } from './pagesCaseContracts';
 import { pagesClientPlus } from './pagesClientPlus';
 import { pagesCourse } from './pagesCourse';
 import { pagesCv } from './pagesCv';
+import { pagesDocTemplates } from './pagesDocTemplates';
 import { pagesDocProgress } from './pagesDocProgress';
 import { pagesGermanyDay } from './pagesGermanyDay';
 import { pagesGermanyReady } from './pagesGermanyReady';
@@ -46,6 +47,7 @@ const PORTAL_MODULES: Record<string, Bundle> = {
   pagesClientPlus,
   pagesCourse,
   pagesCv,
+  pagesDocTemplates,
   pagesDocProgress,
   pagesGermanyDay,
   pagesGermanyReady,

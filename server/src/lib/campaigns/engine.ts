@@ -3,6 +3,7 @@ import { Prisma, type Campaign, type CampaignChannel, type CampaignRecipient, ty
 import { prisma } from '../../db.js';
 import { config } from '../../config.js';
 import { sendMailDetailed } from '../mailer.js';
+import { CAMPAIGN_CATEGORY, isSuppressed } from '../deliverability/service.js';
 import { publish } from '../messaging/realtime.js';
 import { deliver } from '../messaging/outbound.js';
 import { normalizePhone } from '../messaging/providers.js';
@@ -173,9 +174,13 @@ const sendOne = async (ctx: Ctx, r: CampaignRecipient) => {
     return;
   }
 
-  // EMAIL
+  // EMAIL — never to an address that hard-bounced or complained (lib/deliverability suppression list)
+  if (await isSuppressed(user.email)) {
+    await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: 'SKIPPED', skipReason: 'SUPPRESSED', address: user.email } });
+    return;
+  }
   const mail = buildEmail({ kind: campaign.kind, content: ctx.content, locale, vars, token: r.token, links: ctx.links, footerLine: ctx.footerLine });
-  const res = await sendMailDetailed({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text, headers: mail.headers });
+  const res = await sendMailDetailed({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text, headers: mail.headers, category: CAMPAIGN_CATEGORY });
   if (config.isTest) testOutbox.push({ to: user.email, ...mail });
   if (res.status !== 'FAILED') {
     await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: 'SENT', sentAt: now, deliveredAt: now, address: user.email, error: null } });

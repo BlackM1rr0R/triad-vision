@@ -225,6 +225,8 @@ const az = {
     whatsapp: 'WhatsApp',
     hours: 'İş saatları',
     offices: 'Ofislərimiz',
+    mapLoad: 'İnteraktiv xəritəni yüklə',
+    mapOpen: 'OpenStreetMap-də aç',
     formTitle: 'Bizə yazın',
     writeWhatsapp: 'WhatsApp-da yaz',
   },

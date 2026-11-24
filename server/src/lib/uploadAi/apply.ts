@@ -12,7 +12,7 @@ import { logDriveActivity } from '../driveCollab/activity.js';
 import { assertNotLockedByOther } from '../driveCollab/lock.js';
 import { setDocumentExpiry } from '../expiry/index.js';
 import { trashRejectedCopy } from '../drive/caseFolders.js';
-import { syncLinkedReview } from '../docLink/service.js';
+import { linkUploadedDocument, syncLinkedReview } from '../docLink/service.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import type { QualityReason } from './quality.js';
 import { reuploadNote } from './texts.js';
@@ -110,13 +110,17 @@ export const applyInsight = async (insightId: string, actor: Actor, opts: { acti
     documentId = (await prisma.driveNode.findUnique({ where: { id: insight.driveNodeId }, select: { documentId: true } }))?.documentId ?? null;
   }
   let linkedId: string | null = null;
+  let relinkId: string | null = null; // document attached to a requirement here: also goes to the matching requirement of the other list
 
   for (const action of actionOrder.filter((a) => wanted.includes(a))) {
     if (action === 'link' && insight.proposedRequirementId) {
       if (insight.driveNodeId && !documentId) {
         const linked = await linkDriveFile(insight, insight.proposedRequirementId, actor);
         documentId = linked.documentId;
-        if (linked.created) linkedId = linked.documentId;
+        if (linked.created) {
+          linkedId = linked.documentId;
+          relinkId = linked.documentId;
+        }
         changes.push({ action, from: null, to: { requirementId: insight.proposedRequirementId, documentId } });
       } else if (documentId && !insight.driveNodeId) {
         const req = await prisma.documentRequirement.findUnique({ where: { id: insight.proposedRequirementId }, select: { id: true, caseId: true, stage: true } });
@@ -124,6 +128,7 @@ export const applyInsight = async (insightId: string, actor: Actor, opts: { acti
         if (!req || !doc || req.caseId !== doc.caseId) throw badRequest('INVALID_REQUIREMENT');
         await prisma.document.update({ where: { id: documentId }, data: { requirementId: req.id, stage: req.stage } });
         changes.push({ action, from: { requirementId: doc.requirementId, stage: doc.stage }, to: { requirementId: req.id, stage: req.stage } });
+        relinkId = documentId;
       }
     }
     if (action === 'expiry' && insight.expiryDate && documentId) {
@@ -186,6 +191,7 @@ export const applyInsight = async (insightId: string, actor: Actor, opts: { acti
     confidence: insight.confidence,
     changes,
   } as unknown as Prisma.InputJsonValue);
+  if (relinkId) await linkUploadedDocument(relinkId, { actorId: actor.id }); // after the writes above (never throws, skipped when impersonating)
   return { insight: updated, changes };
 };
 

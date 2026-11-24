@@ -14,6 +14,7 @@ import { useBlobDownload } from '@/components/cv/CvDownloadButton';
 import { CoverLetterEditor } from './CoverLetterEditor';
 import { EXTERNAL_APP_STATUSES, STATUS_TONE, xappError, type AttachedLetter, type ExternalAppStatus } from './externalApps';
 import { ExternalAutoSection, type AutoView } from './ExternalAutoPanel'; // automatic check / sending + overrides
+import { EmployerReplies, type EmployerReply } from './EmployerReplies'; // employer answers from the agency mailbox
 
 registerCopy(pagesExternalApps);
 
@@ -30,6 +31,8 @@ interface StaffView {
   cvFromLebenslauf: boolean;
   lebenslauf: { id: string; version: number; createdAt: string } | null;
   anonymized: boolean;
+  /** Employer answers matched in the agency mailbox (staff only). */
+  replies?: EmployerReply[];
 }
 
 /**
@@ -95,6 +98,8 @@ export const ExternalJobStatus = ({ inquiryId }: { inquiryId: string }) => {
       </div>
 
       <ExternalAutoSection inquiryId={inquiryId} view={v} onUpdate={put} />
+
+      {!!v.replies?.length && <EmployerReplies<StaffView> inquiryId={inquiryId} replies={v.replies} onUpdate={put} />}
 
       <form
         className="grid gap-2 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]"

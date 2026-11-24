@@ -16,6 +16,9 @@ import { cvPath } from '../../lib/germanyJobs/apply.js';
 import { autoView, markSentByStaff, processExternalApplication, resumeAutomation, sentToday, staffSendNow, stopAutomation } from '../../lib/germanyJobs/autoSend.js';
 import { autoSendSettingsSchema, getAutoSendSettings, replyToAddress, setAutoSendSettings } from '../../lib/germanyJobs/autoSettings.js';
 import { extractEmails } from '../../lib/germanyJobs/autoCheck.js';
+import { replyView } from '../../lib/germanyJobs/replies.js';
+import { effectiveDailyLimit } from '../../lib/deliverability/health.js';
+import { getSendHealth } from '../../lib/deliverability/service.js';
 
 /**
  * "Apply via Triad Vision" applications, staff side — mounted at /api/admin/external-applications (STAFF+);
@@ -38,12 +41,16 @@ import { extractEmails } from '../../lib/germanyJobs/autoCheck.js';
  *   POST   /:id/auto/resume          check and continue again
  *   POST   /:id/auto/mark-sent       sent outside the system
  *   GET    /:id/package.zip          Anschreiben PDF + CV + listing info (audited)
+ * Employer answers (lib/germanyJobs/replies: matched in the agency mailbox, keyword suggestion, staff decide):
+ *   POST   /:id/replies/:replyId     { action: APPLY | KEEP } → APPLY sets the suggested status (event + client notice,
+ *                                    audited), KEEP leaves the status; the reply is marked done either way
  */
 export const adminExternalApplicationsRouter = Router();
 
 const appInclude = {
   inquiry: { select: { contactName: true, email: true, phone: true, locale: true, anonymizedAt: true } },
   events: { orderBy: { createdAt: 'asc' } },
+  replies: { orderBy: { receivedAt: 'desc' }, take: 20 },
 } satisfies Prisma.ExternalJobApplicationInclude;
 
 const load = async (inquiryId: string) => {
@@ -76,6 +83,8 @@ const view = async (app: Awaited<ReturnType<typeof load>>) => {
     anonymized: !!app.inquiry.anonymizedAt,
     listingUrl: app.listingUrl,
     auto: autoView(app),
+    // Staff only: employer answers found in the agency mailbox with the suggested status.
+    replies: app.replies.map(replyView),
   };
 };
 
@@ -84,6 +93,7 @@ const view = async (app: Awaited<ReturnType<typeof load>>) => {
 adminExternalApplicationsRouter.get('/auto/overview', async (_req, res) => {
   const settings = await getAutoSendSettings();
   const today = await sentToday();
+  const health = await getSendHealth();
   const rows = await prisma.externalJobApplication.findMany({
     where: { autoState: { in: ['READY', 'QUEUED'] }, status: 'SUBMITTED', inquiry: { anonymizedAt: null } },
     orderBy: { createdAt: 'asc' },
@@ -93,7 +103,9 @@ adminExternalApplicationsRouter.get('/auto/overview', async (_req, res) => {
   const counts = await prisma.externalJobApplication.groupBy({ by: ['autoState'], where: { status: 'SUBMITTED', autoState: { not: null } }, _count: { _all: true } });
   res.json({
     settings: { ...settings, replyToEffective: replyToAddress(settings) },
-    today: { sent: today.total, limit: settings.dailyLimit },
+    // limit = what applies today: lowered automatically after bounces / failures (lib/deliverability/health.ts).
+    today: { sent: today.total, limit: effectiveDailyLimit(settings.dailyLimit, health.factor), configured: settings.dailyLimit },
+    health: { factor: health.factor, reason: health.reason, changedAt: health.changedAt, last: health.last },
     counts: Object.fromEntries(counts.map((c) => [c.autoState ?? '', c._count._all])),
     queue: rows.map((r) => ({
       inquiryId: r.inquiryId,
@@ -159,19 +171,48 @@ const statusInput = z
   })
   .strict();
 
+/** Staff status change: event + audit + client notice (also used by "apply the suggestion" of an employer answer). */
+const setStatus = async (req: import('express').Request, app: Awaited<ReturnType<typeof load>>, status: (typeof EXTERNAL_APP_STATUSES)[number], note: string | null, extra: Record<string, unknown> = {}) => {
+  const from = readStatus(app.status);
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.externalJobApplication.update({ where: { id: app.id }, data: { status, statusNote: note, statusChangedAt: now } }),
+    prisma.externalJobApplicationEvent.create({ data: { applicationId: app.id, status, note, staffId: req.user!.id, createdAt: now } }),
+  ]);
+  await audit(req, 'EXTERNAL_JOB_APPLICATION_STATUS', `inquiry:${app.inquiryId}`, { from, to: status, note: !!note, ...extra });
+  await notifyStatusChange(app, status, note);
+};
+
 adminExternalApplicationsRouter.post('/:id/status', async (req, res) => {
   const body = parse(statusInput, req.body);
   const app = await load(String(req.params.id));
   if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
-  const from = readStatus(app.status);
-  if (from === body.status && !body.note) throw badRequest('STATUS_UNCHANGED');
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.externalJobApplication.update({ where: { id: app.id }, data: { status: body.status, statusNote: body.note, statusChangedAt: now } }),
-    prisma.externalJobApplicationEvent.create({ data: { applicationId: app.id, status: body.status, note: body.note, staffId: req.user!.id, createdAt: now } }),
-  ]);
-  await audit(req, 'EXTERNAL_JOB_APPLICATION_STATUS', `inquiry:${app.inquiryId}`, { from, to: body.status, note: !!body.note });
-  await notifyStatusChange(app, body.status, body.note);
+  if (readStatus(app.status) === body.status && !body.note) throw badRequest('STATUS_UNCHANGED');
+  await setStatus(req, app, body.status, body.note);
+  res.json(await view(await load(app.inquiryId)));
+});
+
+const replyInput = z.object({ action: z.enum(['APPLY', 'KEEP']) }).strict();
+
+adminExternalApplicationsRouter.post('/:id/replies/:replyId', async (req, res) => {
+  const body = parse(replyInput, req.body);
+  const app = await load(String(req.params.id));
+  const reply = await prisma.externalJobApplicationReply.findFirst({ where: { id: String(req.params.replyId), applicationId: app.id } });
+  if (!reply) throw notFound('REPLY_NOT_FOUND');
+  if (reply.resolution) throw badRequest('REPLY_ALREADY_HANDLED');
+  const status = reply.suggestedStatus === 'INTERVIEW' || reply.suggestedStatus === 'REJECTED' ? reply.suggestedStatus : null;
+  if (body.action === 'APPLY') {
+    if (!status) throw badRequest('NO_SUGGESTED_STATUS');
+    if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  }
+  // Conditional: two staff members clicking at once change the status only once.
+  const claimed = await prisma.externalJobApplicationReply.updateMany({
+    where: { id: reply.id, resolution: null },
+    data: { resolution: body.action === 'APPLY' ? 'APPLIED' : 'KEPT', resolvedById: req.user!.id, resolvedAt: new Date() },
+  });
+  if (!claimed.count) throw badRequest('REPLY_ALREADY_HANDLED');
+  if (body.action === 'APPLY' && status && readStatus(app.status) !== status) await setStatus(req, app, status, null, { fromReply: reply.id });
+  else await audit(req, 'EXTERNAL_JOB_REPLY_HANDLED', `inquiry:${app.inquiryId}`, { reply: reply.id, action: body.action, classification: reply.classification });
   res.json(await view(await load(app.inquiryId)));
 });
 

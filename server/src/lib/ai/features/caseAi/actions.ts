@@ -2,6 +2,7 @@ import type { Locale, Prisma } from '@prisma/client';
 import { prisma } from '../../../../db.js';
 import { badRequest, notFound } from '../../../http.js';
 import { notifyUser } from '../../../notifications.js';
+import { linkCaseRequirements } from '../../../docLink/service.js';
 import { createCaseMessage } from '../../../messaging/caseMessages.js';
 import { activeStaff, activityRow, createNumbered, taskKey } from '../../../tasks/core.js';
 import { notifyAssigned } from '../../../tasks/notify.js';
@@ -76,6 +77,7 @@ export const requestDocument = async (
       },
     });
     created = true;
+    await linkCaseRequirements(c.id, { actorId }); // a new requirement may already be covered by a document of the other list (never throws)
   }
   const title = (requirement.title as Record<string, string>)[c.client.locale] || (requirement.title as Record<string, string>).de || '';
   const tx = REQUEST_TEXT[c.client.locale];
