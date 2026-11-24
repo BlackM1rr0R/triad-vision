@@ -118,6 +118,12 @@ const alreadySent = async (app: App) => {
   );
 };
 
+/**
+ * "autoState is not one of …" including rows without a state. SQL `NOT IN` / `<>` are never true for NULL, so a bare
+ * `{ notIn }` would silently skip new rows (autoState null) — the claim would then never succeed.
+ */
+const stateNotIn = (states: AutoState[]): Prisma.ExternalJobApplicationWhereInput => ({ OR: [{ autoState: null }, { autoState: { notIn: states } }] });
+
 const setState = (id: string, data: Prisma.ExternalJobApplicationUpdateInput) => prisma.externalJobApplication.update({ where: { id }, data });
 
 // ─── Client notices ───────────────────────────────────────────────────────
@@ -212,7 +218,7 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
     }
   }
   // One claim per row: only one caller (route, scheduler, staff) gets past this line.
-  const claim = await prisma.externalJobApplication.updateMany({ where: { id: app.id, autoSentAt: null, autoState: { notIn: ['SENDING', 'SENT'] } }, data: { autoState: 'SENDING', autoNextAt: now } }); // autoNextAt = claim time (stuck check)
+  const claim = await prisma.externalJobApplication.updateMany({ where: { id: app.id, autoSentAt: null, ...stateNotIn(['SENDING', 'SENT']) }, data: { autoState: 'SENDING', autoNextAt: now } }); // autoNextAt = claim time (stuck check)
   if (!claim.count) return 'BUSY';
   try {
     const letter = await ensureCoverLetter(app);
@@ -380,7 +386,7 @@ export const markSentByStaff = async (applicationId: string, staffId: string) =>
   const app = await loadApp(applicationId);
   if (!app || app.autoSentAt || app.inquiry.anonymizedAt) return false;
   const at = new Date();
-  const claimed = await prisma.externalJobApplication.updateMany({ where: { id: app.id, autoSentAt: null, autoState: { not: 'SENDING' } }, data: { autoState: 'SENT', autoSentAt: at, autoSentMode: 'MANUAL', autoReason: null, autoNextAt: null } });
+  const claimed = await prisma.externalJobApplication.updateMany({ where: { id: app.id, autoSentAt: null, ...stateNotIn(['SENDING']) }, data: { autoState: 'SENT', autoSentAt: at, autoSentMode: 'MANUAL', autoReason: null, autoNextAt: null } });
   if (!claimed.count) return false;
   const forward = app.status === 'SUBMITTED';
   if (forward) {
@@ -394,7 +400,7 @@ export const markSentByStaff = async (applicationId: string, staffId: string) =>
 };
 
 export const stopAutomation = (applicationId: string) =>
-  prisma.externalJobApplication.updateMany({ where: { id: applicationId, autoState: { not: 'SENDING' }, autoSentAt: null }, data: { autoState: 'STOPPED', autoNextAt: null } });
+  prisma.externalJobApplication.updateMany({ where: { id: applicationId, ...stateNotIn(['SENDING']), autoSentAt: null }, data: { autoState: 'STOPPED', autoNextAt: null } });
 
 /** Staff switch the automation on again for a stopped / duplicate row: runs the pipeline from the start. */
 export const resumeAutomation = async (applicationId: string) => {
