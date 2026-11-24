@@ -59,10 +59,12 @@ export const requestDocument = async (
   let requirement = input.requirementId ? await prisma.documentRequirement.findUnique({ where: { id: input.requirementId } }) : null;
   if (input.requirementId && (!requirement || requirement.caseId !== c.id)) throw notFound('REQUIREMENT_NOT_FOUND');
   let created = false;
-  if (!requirement && input.requirementKey) requirement = await prisma.documentRequirement.findFirst({ where: { caseId: c.id, key: input.requirementKey } });
+  // The stage the case is in now: an embassy-stage request for a passport is a new EMBASSY requirement even when the
+  // initial list already has one (lib/docLink then fills it from the initial document).
+  const stage = ['EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING'].includes(c.status) ? 'EMBASSY' : 'INITIAL';
+  if (!requirement && input.requirementKey) requirement = await prisma.documentRequirement.findFirst({ where: { caseId: c.id, key: input.requirementKey, stage } });
   if (!requirement) {
     if (!input.title || !Object.values(input.title).some((s) => s?.trim())) throw badRequest('TITLE_REQUIRED');
-    const stage = ['EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING'].includes(c.status) ? 'EMBASSY' : 'INITIAL';
     const max = await prisma.documentRequirement.aggregate({ where: { caseId: c.id, stage }, _max: { sortOrder: true } });
     const t = input.title;
     const fb = t.de || t.en || t.az || t.ru;
