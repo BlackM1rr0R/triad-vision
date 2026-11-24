@@ -11,6 +11,10 @@ import { buildTimeline, linkApplicationsByEmail, readStatus } from '../lib/germa
 import { COVER_JOB_TYPES } from '../lib/coverLetters/fill.js';
 import { coverLetterInput, coverLetterPdf, draftCoverLetter } from '../lib/coverLetters/index.js';
 import { attachmentHeader } from '../lib/cv/pdf.js';
+import { recordConsent } from '../lib/privacy/consents.js';
+import { grantForwardConsent, recheckUserApplications } from '../lib/germanyJobs/autoSend.js';
+import { readMissing } from '../lib/germanyJobs/autoCheck.js';
+import { FIX_PATH } from '../lib/germanyJobs/autoTexts.js';
 
 /**
  * "My applications" for listings of other job sites (apply via Triad Vision) — mounted at /api/external-applications
@@ -20,6 +24,8 @@ import { attachmentHeader } from '../lib/cv/pdf.js';
  *   GET  /:id/cover-letter          Anschreiben draft from the template of the job type (?jobType=) + the letter staff attached
  *   POST /:id/cover-letter/pdf      { subject, body } → PDF (DIN 5008 layout)
  *   POST /:id/cover-letter/save     { subject, body } → stored with the client's letters (Learn › Cover letters)
+ *   POST /:id/forward-consent       the client agrees (later) that we forward CV + data to the employer → automatic
+ *                                   check and sending start (lib/germanyJobs/autoSend.ts; consent logged)
  */
 export const externalApplicationsRouter = Router();
 externalApplicationsRouter.use(requireRole('CLIENT'));
@@ -40,7 +46,11 @@ const ownApplication = async (userId: string, id: string) => {
 externalApplicationsRouter.get('/', async (req, res) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: uid(req) }, select: { id: true, email: true, emailVerifiedAt: true, role: true } });
   const linked = await linkApplicationsByEmail(user);
-  if (linked) await audit(req, 'EXTERNAL_JOB_APPLICATIONS_LINKED', `user:${user.id}`, { count: linked });
+  if (linked) {
+    await audit(req, 'EXTERNAL_JOB_APPLICATIONS_LINKED', `user:${user.id}`, { count: linked });
+    // Linked applications now have an account to check against (linking never happens while viewing as the client).
+    void recheckUserApplications(user.id);
+  }
   const rows = await prisma.externalJobApplication.findMany({
     where: { userId: user.id, inquiry: { anonymizedAt: null } },
     orderBy: { createdAt: 'desc' },
@@ -65,6 +75,13 @@ externalApplicationsRouter.get('/', async (req, res) => {
         cv: r.cvOriginalName ? { name: r.cvOriginalName, size: r.cvSize, lebenslauf: !!r.lebenslaufVersionId } : null,
         coverLetter: r.coverLetterBody ? { subject: r.coverLetterSubject, at: r.coverLetterAt } : null,
         timeline: buildTimeline(r.createdAt, status, r.events),
+        // Automatic sending: what is missing (with where to fix it) / prepared / waiting for the consent.
+        auto: {
+          state: r.autoState,
+          consent: !!r.forwardConsentAt,
+          missing: r.autoState === 'NEEDS_DATA' ? readMissing(r.autoMissing).map((code) => ({ code, path: FIX_PATH[code] })) : [],
+          requiredGerman: r.requiredGerman,
+        },
         events: r.events.map((e) => ({ status: readStatus(e.status), note: e.note, at: e.createdAt })),
       };
     }),
@@ -110,4 +127,14 @@ externalApplicationsRouter.post('/:id/cover-letter/save', async (req, res) => {
     data: { userId: uid(req), kind: 'JOB', language: 'de', title: body.subject.slice(0, 200), body: body.body, answers: {} },
   });
   res.status(201).json({ letter: { id: letter.id, title: letter.title } });
+});
+
+externalApplicationsRouter.post('/:id/forward-consent', async (req, res) => {
+  const app = await ownApplication(uid(req), String(req.params.id));
+  if (app.forwardConsentAt) throw conflict('ALREADY_CONSENTED');
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: uid(req) }, select: { email: true } });
+  await recordConsent({ userId: uid(req), email: user.email, type: 'EXTERNAL_JOB_FORWARD', granted: true, source: 'PORTAL', req });
+  await audit(req, 'EXTERNAL_JOB_FORWARD_CONSENT', `inquiry:${app.inquiryId}`, {});
+  const state = await grantForwardConsent(app.id);
+  res.json({ ok: true, state });
 });

@@ -10,6 +10,12 @@ import { coverLetterInput, coverLetterPdf, draftCoverLetter } from '../../lib/co
 import { attachmentHeader } from '../../lib/cv/pdf.js';
 import fs from 'node:fs';
 import { latestLebenslauf, lebenslaufFileName, lebenslaufPath, lebenslaufView } from '../../lib/cv/versions.js';
+import JSZip from 'jszip';
+import { requireMinRole } from '../../middleware/auth.js';
+import { cvPath } from '../../lib/germanyJobs/apply.js';
+import { autoView, markSentByStaff, processExternalApplication, resumeAutomation, sentToday, staffSendNow, stopAutomation } from '../../lib/germanyJobs/autoSend.js';
+import { autoSendSettingsSchema, getAutoSendSettings, replyToAddress, setAutoSendSettings } from '../../lib/germanyJobs/autoSettings.js';
+import { extractEmails } from '../../lib/germanyJobs/autoCheck.js';
 
 /**
  * "Apply via Triad Vision" applications, staff side — mounted at /api/admin/external-applications (STAFF+);
@@ -22,6 +28,16 @@ import { latestLebenslauf, lebenslaufFileName, lebenslaufPath, lebenslaufView } 
  *   POST   /:id/cover-letter/pdf     { subject, body } → PDF of the text being edited
  *   GET    /:id/cover-letter.pdf     PDF of the attached letter
  *   GET    /:id/lebenslauf.pdf       the client's newest saved Lebenslauf (audited)
+ * Automatic sending (lib/germanyJobs/autoSend.ts):
+ *   GET    /auto/overview            today's count / limit, kill switch, "Göndərməyə hazır" queue (READY + QUEUED)
+ *   GET    /auto/settings            PUT (ADMIN+, settings area): { enabled, dailyLimit, perDomainLimit, replyTo } (audited)
+ *   POST   /auto/mark-sent           { ids: inquiry ids } → "Göndərildi" bulk: FORWARDED + client notice (audited)
+ *   PUT    /:id/auto/employer-email  { email | null } → set by staff; a READY / QUEUED application continues (may send)
+ *   POST   /:id/auto/send            staff "send now" (no limits / kill switch; consent + CV required; audited)
+ *   POST   /:id/auto/stop            no automatic sending for this application
+ *   POST   /:id/auto/resume          check and continue again
+ *   POST   /:id/auto/mark-sent       sent outside the system
+ *   GET    /:id/package.zip          Anschreiben PDF + CV + listing info (audited)
  */
 export const adminExternalApplicationsRouter = Router();
 
@@ -58,8 +74,71 @@ const view = async (app: Awaited<ReturnType<typeof load>>) => {
     cvFromLebenslauf: !!app.lebenslaufVersionId,
     lebenslauf: latest ? lebenslaufView(latest) : null,
     anonymized: !!app.inquiry.anonymizedAt,
+    listingUrl: app.listingUrl,
+    auto: autoView(app),
   };
 };
+
+// ─── Automatic sending: overview, settings, queue ───────────────────────────
+
+adminExternalApplicationsRouter.get('/auto/overview', async (_req, res) => {
+  const settings = await getAutoSendSettings();
+  const today = await sentToday();
+  const rows = await prisma.externalJobApplication.findMany({
+    where: { autoState: { in: ['READY', 'QUEUED'] }, status: 'SUBMITTED', inquiry: { anonymizedAt: null } },
+    orderBy: { createdAt: 'asc' },
+    take: 200,
+    include: { inquiry: { select: { contactName: true } } },
+  });
+  const counts = await prisma.externalJobApplication.groupBy({ by: ['autoState'], where: { status: 'SUBMITTED', autoState: { not: null } }, _count: { _all: true } });
+  res.json({
+    settings: { ...settings, replyToEffective: replyToAddress(settings) },
+    today: { sent: today.total, limit: settings.dailyLimit },
+    counts: Object.fromEntries(counts.map((c) => [c.autoState ?? '', c._count._all])),
+    queue: rows.map((r) => ({
+      inquiryId: r.inquiryId,
+      name: r.inquiry.contactName,
+      listingTitle: r.listingTitle,
+      listingCompany: r.listingCompany,
+      listingUrl: r.listingUrl,
+      createdAt: r.createdAt,
+      state: r.autoState,
+      reason: r.autoReason,
+      nextAt: r.autoNextAt,
+      employerEmail: r.employerEmail,
+      hasCoverLetter: !!r.coverLetterBody,
+    })),
+  });
+});
+
+adminExternalApplicationsRouter.get('/auto/settings', async (_req, res) => {
+  const settings = await getAutoSendSettings();
+  res.json({ settings: { ...settings, replyToEffective: replyToAddress(settings) } });
+});
+
+adminExternalApplicationsRouter.put('/auto/settings', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(autoSendSettingsSchema.partial(), req.body ?? {});
+  const before = await getAutoSendSettings();
+  const settings = await setAutoSendSettings(body);
+  await audit(req, 'EXTERNAL_JOB_AUTO_SETTINGS_UPDATED', 'setting:externalAutoSend', { from: before, to: settings });
+  // Switched on again: waiting applications go out with the next scheduler run (within the limits).
+  res.json({ settings: { ...settings, replyToEffective: replyToAddress(settings) } });
+});
+
+const idsInput = z.object({ ids: z.array(z.string().min(1).max(40)).min(1).max(100) }).strict();
+
+adminExternalApplicationsRouter.post('/auto/mark-sent', async (req, res) => {
+  const body = parse(idsInput, req.body);
+  const rows = await prisma.externalJobApplication.findMany({ where: { inquiryId: { in: body.ids } }, select: { id: true, inquiryId: true } });
+  let done = 0;
+  for (const r of rows) {
+    if (await markSentByStaff(r.id, req.user!.id)) {
+      done++;
+      await audit(req, 'EXTERNAL_JOB_MARKED_SENT', `inquiry:${r.inquiryId}`, { bulk: true });
+    }
+  }
+  res.json({ ok: true, done });
+});
 
 adminExternalApplicationsRouter.get('/:id', async (req, res) => {
   res.json(await view(await load(String(req.params.id))));
@@ -149,4 +228,89 @@ adminExternalApplicationsRouter.get('/:id/lebenslauf.pdf', async (req, res) => {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('Content-Disposition', attachmentHeader(await lebenslaufFileName(app.userId!, v), req.query.inline === '1'));
   res.sendFile(lebenslaufPath(v.storageKey));
+});
+
+// ─── Automatic sending: per application ─────────────────────────────────────
+
+const emailInput = z.object({ email: z.union([z.null(), z.literal(''), z.string().trim().toLowerCase().email().max(190)]) }).strict();
+
+adminExternalApplicationsRouter.put('/:id/auto/employer-email', async (req, res) => {
+  const body = parse(emailInput, req.body);
+  const app = await load(String(req.params.id));
+  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  if (app.autoSentAt) throw badRequest('ALREADY_SENT');
+  const email = body.email || null;
+  if (email && !extractEmails(email).length) throw badRequest('EMPLOYER_EMAIL_NOT_ALLOWED'); // job boards / no-reply
+  await prisma.externalJobApplication.update({ where: { id: app.id }, data: { employerEmail: email, employerEmailSource: email ? 'staff' : null, ...(app.autoReason === 'EMAIL_REJECTED' ? { autoReason: null } : {}) } });
+  await audit(req, 'EXTERNAL_JOB_EMPLOYER_EMAIL_SET', `inquiry:${app.inquiryId}`, { email });
+  // A READY / QUEUED application with a new address continues through the normal pipeline (check, limits, kill switch).
+  if (email && (app.autoState === 'READY' || app.autoState === 'QUEUED')) await processExternalApplication(app.id);
+  res.json(await view(await load(app.inquiryId)));
+});
+
+adminExternalApplicationsRouter.post('/:id/auto/send', async (req, res) => {
+  const app = await load(String(req.params.id));
+  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  if (!app.forwardConsentAt) throw badRequest('NO_FORWARD_CONSENT');
+  if (!app.employerEmail) throw badRequest('NO_EMPLOYER_EMAIL');
+  if (app.autoSentAt) throw badRequest('ALREADY_SENT');
+  const out = await staffSendNow(app.id, req.user!.id);
+  if (out === 'NO_CV') throw badRequest('CV_NOT_FOUND');
+  if (out === 'FAILED') throw badRequest('SEND_FAILED');
+  if (out === 'BUSY') throw badRequest('ALREADY_SENT');
+  res.json(await view(await load(app.inquiryId)));
+});
+
+adminExternalApplicationsRouter.post('/:id/auto/stop', async (req, res) => {
+  const app = await load(String(req.params.id));
+  await stopAutomation(app.id);
+  await audit(req, 'EXTERNAL_JOB_AUTO_STOPPED', `inquiry:${app.inquiryId}`, {});
+  res.json(await view(await load(app.inquiryId)));
+});
+
+adminExternalApplicationsRouter.post('/:id/auto/resume', async (req, res) => {
+  const app = await load(String(req.params.id));
+  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  await audit(req, 'EXTERNAL_JOB_AUTO_RESUMED', `inquiry:${app.inquiryId}`, {});
+  await resumeAutomation(app.id);
+  res.json(await view(await load(app.inquiryId)));
+});
+
+adminExternalApplicationsRouter.post('/:id/auto/mark-sent', async (req, res) => {
+  const app = await load(String(req.params.id));
+  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  if (!(await markSentByStaff(app.id, req.user!.id))) throw badRequest('ALREADY_SENT');
+  await audit(req, 'EXTERNAL_JOB_MARKED_SENT', `inquiry:${app.inquiryId}`, {});
+  res.json(await view(await load(app.inquiryId)));
+});
+
+/** One-click package for the "Göndərməyə hazır" queue: what the e-mail to the employer would carry. */
+adminExternalApplicationsRouter.get('/:id/package.zip', async (req, res) => {
+  const app = await load(String(req.params.id));
+  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
+  const zip = new JSZip();
+  const letter = app.coverLetterBody ? { subject: app.coverLetterSubject ?? 'Bewerbung', body: app.coverLetterBody } : await draftCoverLetter(app);
+  const pdf = await coverLetterPdf(app, letter);
+  zip.file(pdf.filename, pdf.pdf);
+  if (app.cvStoredName && fs.existsSync(cvPath(app.cvStoredName))) zip.file(app.cvOriginalName ?? 'CV', fs.readFileSync(cvPath(app.cvStoredName)));
+  else {
+    const v = app.userId ? await latestLebenslauf(app.userId) : null;
+    if (v && fs.existsSync(lebenslaufPath(v.storageKey))) zip.file(await lebenslaufFileName(app.userId!, v), fs.readFileSync(lebenslaufPath(v.storageKey)));
+  }
+  const info = [
+    `Stelle: ${app.listingTitle ?? '-'}`,
+    `Arbeitgeber: ${app.listingCompany ?? '-'}`,
+    `Ort: ${app.listingLocation ?? '-'}`,
+    `Anzeige: ${app.listingUrl}`,
+    `Bewerber: ${app.inquiry.contactName}`,
+    `Betreff: ${letter.subject}`,
+    `Weitergabe an Arbeitgeber erlaubt (DSGVO): ${app.forwardConsentAt ? app.forwardConsentAt.toISOString() : 'nein'}`,
+  ];
+  zip.file('Stellenanzeige.txt', info.join('\r\n'));
+  const buf = await zip.generateAsync({ type: 'nodebuffer' });
+  await audit(req, 'EXTERNAL_JOB_PACKAGE_DOWNLOADED', `inquiry:${app.inquiryId}`, {});
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Content-Disposition', attachmentHeader(`Bewerbung_${app.inquiryId}.zip`, false));
+  res.send(buf);
 });

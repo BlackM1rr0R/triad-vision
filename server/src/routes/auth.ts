@@ -38,6 +38,7 @@ import { scanUserDuplicates } from '../lib/duplicates/detect.js';
 import { RECOGNITION_STATUSES } from '../lib/matching.js';
 import { phoneCountryForRole } from '../lib/phone.js';
 import { phoneInput } from '../lib/phoneField.js';
+import { recheckUserApplications } from '../lib/germanyJobs/autoSend.js';
 
 export const authRouter = Router();
 
@@ -450,6 +451,8 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
   }
   if (body.firstName !== undefined || body.lastName !== undefined || body.passportNumber !== undefined) void syncClientFolders(user.id); // folder names
   if (['firstName', 'lastName', 'phone', 'birthDate', 'passportNumber', 'city'].some((k) => k in body)) void scanUserDuplicates(user.id);
+  // Apply via Triad Vision: applications waiting for these details are checked again (lib/germanyJobs/autoSend.ts).
+  if (user.role === 'CLIENT' && ['phone', 'passportNumber', 'profession', 'germanLevel'].some((k) => k in body)) void recheckUserApplications(user.id);
   if (body.newPassword) {
     // Every other device must log in again with the new password; this one keeps its session.
     await revokeUserSessions(user.id, req.session!.id);

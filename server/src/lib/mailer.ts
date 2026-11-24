@@ -143,7 +143,17 @@ export interface MailResult {
  * text part. Used by bulk senders (campaigns) that throttle, retry and mark rejects themselves.
  * Never throws. Header names and values are made single-line.
  */
-export const sendMailDetailed = async (msg: { to: string; subject: string; html: string; text?: string; headers?: Record<string, string> }): Promise<MailResult> => {
+export const sendMailDetailed = async (msg: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  headers?: Record<string, string>;
+  /** Files sent along (the automatic employer e-mail of lib/germanyJobs/autoSend.ts: Anschreiben + CV). */
+  attachments?: MailAttachment[];
+  /** Answers go here instead of the From address. */
+  replyTo?: string;
+}): Promise<MailResult> => {
   const safeSubject = headerSafe(brandify(msg.subject));
   try {
     if (!msg.to) return { status: 'FAILED', error: 'NO_ADDRESS' };
@@ -156,7 +166,18 @@ export const sendMailDetailed = async (msg: { to: string; subject: string; html:
       Object.entries(msg.headers ?? {}).map(([k, v]) => [k.replace(/[^A-Za-z0-9-]/g, ''), headerSafe(v).slice(0, 900)]),
     );
     try {
-      await transporter.sendMail({ from: brandSync().emailFrom, to: headerSafe(msg.to), subject: safeSubject, html: brandify(msg.html), text: msg.text === undefined ? plainTextOf(brandify(msg.html)) : brandify(msg.text), headers });
+      await transporter.sendMail({
+        from: brandSync().emailFrom,
+        to: headerSafe(msg.to),
+        subject: safeSubject,
+        html: brandify(msg.html),
+        text: msg.text === undefined ? plainTextOf(brandify(msg.html)) : brandify(msg.text),
+        headers,
+        ...(msg.replyTo ? { replyTo: headerSafe(msg.replyTo) } : {}),
+        ...(msg.attachments?.length
+          ? { attachments: msg.attachments.map((a) => ({ filename: headerSafe(a.filename), content: a.content, contentType: a.contentType })) }
+          : {}),
+      });
       await log({ to: msg.to, subject: safeSubject, status: 'SENT' });
       return { status: 'SENT' };
     } catch (err) {

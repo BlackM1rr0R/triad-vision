@@ -20,6 +20,9 @@ import {
 } from '../lib/germanyJobs/apply.js';
 import { germanyJobAlertsRouter, savedGermanyJobsRouter } from './germanyJobAlerts.js';
 import { attachLebenslaufCopy } from '../lib/germanyJobs/lebenslaufAttach.js';
+import { processExternalApplication } from '../lib/germanyJobs/autoSend.js';
+import { recordConsent } from '../lib/privacy/consents.js';
+import { prisma } from '../db.js';
 
 /**
  * Almaniya iş bazası — mounted at /api/germany-jobs (public):
@@ -29,6 +32,7 @@ import { attachLebenslaufCopy } from '../lib/germanyJobs/lebenslaufAttach.js';
  *                  (404 FEATURE_DISABLED when none is enabled; 30 per minute per IP; provider caches)
  *   POST /apply    multipart: listing + candidate fields + optional CV ("cv": PDF / DOC / DOCX) → Inquiry lead,
  *                  staff notice, confirmation e-mail. Honeypot `website`, consent required, 10 per hour per IP.
+ *                  `forwardConsent` (DSGVO, logged as EXTERNAL_JOB_FORWARD) starts the automatic check and sending.
  *   /alerts/…      "notify me about new jobs like this" (routes/germanyJobAlerts.ts)
  *   /saved/…       saved listings of signed-in clients (snapshot only; routes/germanyJobAlerts.ts)
  * Third-party listings are never stored beyond the short search cache (lib/germanyJobs/adzuna.ts); saved jobs and
@@ -107,8 +111,15 @@ germanyJobsRouter.post('/apply', applyLimiter, requireExternalApply, cvUpload.si
     void onInquiryCreated(inquiry.id); // automation rules + optional auto-assignment (never throws)
     const job = body.listingTitle ?? body.listingCompany ?? new URL(body.listingUrl).hostname;
     await notifyStaff(`Xarici vakansiyaya müraciət: ${body.name} · ${job}`.slice(0, 200), inquiry.message, { link: `/admin/inquiries?open=${inquiry.id}` });
-    await sendApplicantConfirmation(body.email, body.name, job, lng);
+    const forward = !!body.forwardConsent;
+    if (forward) await recordConsent({ userId: account?.id ?? null, email: body.email, type: 'EXTERNAL_JOB_FORWARD', granted: true, source: 'EXTERNAL_JOB_APPLY', req });
+    await sendApplicantConfirmation(body.email, body.name, job, lng, forward);
     await attachLeadContext(inquiry.id, { visitorId: body.visitorId });
+    // Automatic check → Anschreiben → e-mail to the employer / staff queue (lib/germanyJobs/autoSend.ts; never throws).
+    if (forward) {
+      const row = await prisma.externalJobApplication.findUnique({ where: { inquiryId: inquiry.id }, select: { id: true } });
+      if (row) await processExternalApplication(row.id);
+    }
     res.status(201).json({ ok: true, id: inquiry.id });
   } catch (err) {
     await removeFile(file);

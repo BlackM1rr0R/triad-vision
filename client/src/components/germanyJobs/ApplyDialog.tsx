@@ -60,7 +60,7 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
   const uid = useId();
   const id = (k: string) => `${uid}-${k}`;
   const client = user?.role === 'CLIENT' ? user : null;
-  const empty = { url: '', title: '', company: '', name: '', email: '', phone: '', germanLevel: '', profession: '', experience: '', message: '', consent: false, website: '' };
+  const empty = { url: '', title: '', company: '', name: '', email: '', phone: '', germanLevel: '', profession: '', experience: '', message: '', consent: false, forwardConsent: false, website: '' };
   const [f, setF] = useState(empty);
   const [cv, setCv] = useState<File | null>(null);
   // Signed-in clients attach their newest saved Lebenslauf by default (server builds one when none is saved).
@@ -140,6 +140,8 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
     if (f.experience.trim()) fd.set('experienceYears', f.experience.trim());
     if (f.message.trim()) fd.set('message', f.message.trim());
     fd.set('consent', f.consent ? 'true' : '');
+    // DSGVO: we may forward the CV and data to the employer (server: automatic check and sending).
+    fd.set('forwardConsent', f.forwardConsent ? 'true' : '');
     fd.set('lng', currentSiteLocale());
     if (f.website) fd.set('website', f.website);
     const visitorId = leadVisitorId();
@@ -188,7 +190,7 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
             <Button variant="secondary" onClick={onClose} disabled={sending}>
               {t('gj.apply.cancel')}
             </Button>
-            <Button type="submit" form={form} loading={sending} icon={Send} disabled={!urlOk || phoneBad || !f.consent}>
+            <Button type="submit" form={form} loading={sending} icon={Send} disabled={!urlOk || phoneBad || !f.consent || !f.forwardConsent}>
               {sending ? t('gj.apply.sending') : t('gj.apply.submit')}
             </Button>
           </>
@@ -376,6 +378,10 @@ export const ApplyDialog = ({ listing, onClose }: { listing: ExternalListing | n
                   {t('gj.apply.privacyLink')}
                 </Link>
               </span>
+            </label>
+            <label className="flex items-start gap-2.5 text-sm text-muted">
+              <input type="checkbox" required className="mt-0.5 size-5 shrink-0 accent-brand-600" checked={f.forwardConsent} onChange={(e) => set('forwardConsent', e.target.checked)} />
+              <span>{t('gj.apply.forwardConsent')}</span>
             </label>
           </fieldset>
 

@@ -13,10 +13,13 @@ import { fmtDate, fmtDateTime } from '@/components/admin/labels';
 import { useBlobDownload } from '@/components/cv/CvDownloadButton';
 import { CoverLetterEditor } from './CoverLetterEditor';
 import { EXTERNAL_APP_STATUSES, STATUS_TONE, xappError, type AttachedLetter, type ExternalAppStatus } from './externalApps';
+import { ExternalAutoSection, type AutoView } from './ExternalAutoPanel'; // automatic check / sending + overrides
 
 registerCopy(pagesExternalApps);
 
 interface StaffView {
+  listingUrl: string;
+  auto: AutoView;
   inquiryId: string;
   userId: string | null;
   status: ExternalAppStatus;
@@ -90,6 +93,8 @@ export const ExternalJobStatus = ({ inquiryId }: { inquiryId: string }) => {
         {v.statusChangedAt && <span>{fmtDateTime(v.statusChangedAt)}</span>}
         {v.cvFromLebenslauf && <span>· {t('xapp.status.fromLebenslauf')}</span>}
       </div>
+
+      <ExternalAutoSection inquiryId={inquiryId} view={v} onUpdate={put} />
 
       <form
         className="grid gap-2 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]"

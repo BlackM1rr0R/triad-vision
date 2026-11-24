@@ -6602,10 +6602,37 @@ model ExternalJobApplication {
   coverLetterSubject String?  @db.VarChar(300)
   coverLetterBody    String?  @db.Text
   coverLetterAt      DateTime?
+  /// Site language of the apply form (az | de | en | ru | tr | uk): texts to a guest applicant.
+  siteLocale         String?   @db.VarChar(5)
+  /// DSGVO: the applicant agreed that Triad Vision forwards the CV and data to the employer (ConsentRecord
+  /// EXTERNAL_JOB_FORWARD). Without it nothing is sent automatically (lib/germanyJobs/autoSend.ts).
+  forwardConsentAt   DateTime?
+  /// German level the listing asks for (parsed from the listing; null = not stated).
+  requiredGerman     String?   @db.VarChar(10)
+  /// Employer address for the automatic sending; source: listing (provider data / the employer's own site) | staff.
+  employerEmail       String?  @db.VarChar(190)
+  employerEmailSource String?  @db.VarChar(20)
+  /// Automatic sending: NO_CONSENT | NEEDS_DATA | READY (no employer e-mail, staff queue) | QUEUED (limit, switched
+  /// off, retry) | SENDING | SENT | STOPPED (staff) | DUPLICATE (same client + listing already sent). null = old row.
+  autoState          String?   @db.VarChar(20)
+  /// Missing-data codes of the last check, comma-separated (lib/germanyJobs/autoCheck.ts).
+  autoMissing        String?   @db.VarChar(200)
+  autoCheckedAt      DateTime?
+  /// Missing codes the client was last told about (a new notice only when the list changes).
+  autoNotifiedKey    String?   @db.VarChar(200)
+  /// Reason of QUEUED / last failure: DAILY_LIMIT | DOMAIN_LIMIT | DISABLED | SEND_FAILED | EMAIL_REJECTED.
+  autoReason         String?   @db.VarChar(40)
+  /// Next try of a QUEUED application (null = when sending is switched on again).
+  autoNextAt         DateTime?
+  autoSentAt         DateTime?
+  /// AUTO (system) | STAFF (staff pressed "send now") | MANUAL (staff sent it outside and marked it sent).
+  autoSentMode       String?   @db.VarChar(10)
   createdAt       DateTime @default(now())
   events          ExternalJobApplicationEvent[]
 
   @@index([userId])
+  @@index([autoState, autoNextAt])
+  @@index([autoSentAt])
 }
 
 /// Status timeline of an external job application (one row per change; the note is visible to the client).

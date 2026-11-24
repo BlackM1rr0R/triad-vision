@@ -53,6 +53,8 @@ const ADMIN_RULES: Rule[] = [
   r('/admin/growth/referrals', 'clients'),
   r('/admin/growth', 'content'),
   r('/admin/marketing/inquiries', 'clients'),
+  // Automatic sending of external applications: the kill switch / limits are settings (PUT also ADMIN+ in the route).
+  r('/admin/external-applications/auto/settings', 'settings'),
   r('/admin/marketing', 'content'),
   r('/admin/reveal', 'clients', { action: 'view' }), // masked field reveal (reason + log in lib/privacy)
   r('/admin/sensitive', 'settings'),

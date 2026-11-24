@@ -32,10 +32,13 @@ export const ViewAsClientButton = ({
   user,
   className,
   compact,
+  iconOnly,
 }: {
   user: { id: string; role: Role; firstName: string; lastName: string; isActive?: boolean };
   className?: string;
   compact?: boolean;
+  /** Icon-only square button (label stays as aria-label / tooltip), for dense rows. */
+  iconOnly?: boolean;
 }) => {
   const { t } = useTranslation();
   const { user: me } = useAuth();
@@ -80,13 +83,14 @@ export const ViewAsClientButton = ({
         type="button"
         onClick={() => setOpen(true)}
         title={t('privacyTools.imp.buttonTitle')}
+        aria-label={iconOnly ? t('privacyTools.imp.button') : undefined}
         className={clsx(
-          'inline-flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-bg px-2.5 text-xs font-semibold whitespace-nowrap text-warning-fg transition hover:bg-warning-bg',
-          compact ? 'min-h-8 py-1' : 'min-h-9 py-1.5',
+          'inline-flex items-center gap-1.5 rounded-md border border-warning-border bg-warning-bg text-xs font-semibold whitespace-nowrap text-warning-fg transition hover:bg-warning-bg',
+          iconOnly ? 'size-8 justify-center' : compact ? 'min-h-8 px-2.5 py-1' : 'min-h-9 px-2.5 py-1.5',
           className,
         )}
       >
-        <Eye className="size-3.5" aria-hidden /> {t('privacyTools.imp.button')}
+        <Eye className="size-3.5" aria-hidden /> {!iconOnly && t('privacyTools.imp.button')}
       </button>
       <Modal
         open={open}

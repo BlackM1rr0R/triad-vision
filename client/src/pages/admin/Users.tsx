@@ -1,11 +1,11 @@
 import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, MoreHorizontal, Settings2, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
@@ -27,6 +27,9 @@ import { PasswordInput } from '@/components/ui/PasswordInput';
 import { PhoneInput, phoneInvalid } from '@/components/ui/PhoneInput';
 import { ClientOwnerDialog } from '@/components/partners/Ownership'; // partner-owned clients: badge, filter, owner change
 import { Pagination } from '@/components/ui/Pagination';
+import { Avatar } from '@/components/ui/Avatar';
+import { IconButton } from '@/components/ui/Button';
+import { Menu } from '@/components/ui/Menu';
 import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect'; // sidebar desk of a staff member (ADMIN+)
 import { StaffProfileSelect } from '@/components/admin/StaffProfileSelect'; // work profile of the simple sidebar (ADMIN+)
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
@@ -347,11 +350,11 @@ const RevokeSessionsDialog = ({ user, onClose }: { user: AdminUser | null; onClo
 const RoleControl = ({ u, editable }: { u: AdminUser; editable: boolean }) => {
   const { t } = useTranslation();
   const patch = useUserPatch();
-  if (!editable) return <span className={clsx('badge', ROLE_TONE[u.role])}>{roleLabel(u.role)}</span>;
+  if (!editable) return <span className={clsx('inline-flex h-8 w-28 items-center rounded-md px-2.5 text-xs font-semibold', ROLE_TONE[u.role])}>{roleLabel(u.role)}</span>;
   return (
     <select
       aria-label={t('admin.users.roleAria', { name: fullName(u) })}
-      className={clsx('min-h-8 shrink-0 cursor-pointer rounded-md border-0 py-1 pr-7 pl-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-focus/30', ROLE_TONE[u.role])}
+      className={clsx('h-8 w-28 shrink-0 cursor-pointer rounded-md border-0 py-1 pr-7 pl-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-focus/30', ROLE_TONE[u.role])}
       value={u.role}
       disabled={patch.isPending}
       onChange={(e) =>
@@ -411,7 +414,7 @@ const CountsCell = ({ u }: { u: AdminUser }) => {
   const { t } = useTranslation();
   const staff = u.role !== 'CLIENT';
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs whitespace-nowrap text-ink/80 tabular-nums">
+    <span className="inline-flex items-center gap-x-3 text-xs whitespace-nowrap text-ink/80 tabular-nums">
       {staff ? (
         <>
           <span title={t('admin.users.assignedTitle')}>{t('admin.users.assignedCount', { count: u._count.assignedCases })}</span>
@@ -429,48 +432,84 @@ const CountsCell = ({ u }: { u: AdminUser }) => {
   );
 };
 
-const RowActions = ({
+/** Staff-only settings (desk scope, work profile): one icon button next to the role, the two selects open below it. */
+const StaffSettings = ({ u, children }: { u: AdminUser; children: (open: boolean, toggle: ReactNode) => ReactNode }) => {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const toggle = (
+    <IconButton
+      icon={Settings2}
+      size="sm"
+      label={`${t('admin.users.settingsBtn')}: ${fullName(u)}`}
+      aria-expanded={open}
+      aria-controls={id}
+      className={clsx(open && 'bg-sunken text-ink')}
+      onClick={() => setOpen((v) => !v)}
+    />
+  );
+  return (
+    <>
+      {children(open, toggle)}
+      {open && (
+        <div id={id} className="mt-2 grid w-full max-w-60 gap-1.5">
+          <StaffDeskSelect userId={u.id} name={fullName(u)} className="block [&_select]:w-full" />
+          <StaffProfileSelect userId={u.id} name={fullName(u)} className="block [&_select]:w-full" />
+        </div>
+      )}
+    </>
+  );
+};
+
+/** Role control + (ADMIN+, active staff) the settings toggle, always on one line of the same height. */
+const RoleCell = ({ u, editable, showSettings }: { u: AdminUser; editable: boolean; showSettings: boolean }) => {
+  const control = <RoleControl u={u} editable={editable} />;
+  if (!showSettings) return control;
+  return (
+    <StaffSettings u={u}>
+      {(_open, toggle) => (
+        <span className="inline-flex items-center gap-1">
+          {control}
+          {toggle}
+        </span>
+      )}
+    </StaffSettings>
+  );
+};
+
+/** Row tools: view-as-client (clients, first), change history, and the "⋯" menu with Şifrə / Çıxar / Sil. */
+const RowTools = ({
   u,
   onReset,
   onRevoke,
   onDelete,
-  compact,
+  showMenu,
 }: {
   u: AdminUser;
   onReset: () => void;
   onRevoke: () => void;
   onDelete: () => void;
-  compact?: boolean;
+  showMenu: boolean;
 }) => {
   const { t } = useTranslation();
   return (
-    <span className={clsx('inline-flex items-center', compact ? '-my-2 -mr-2 gap-0.5' : 'gap-1')}>
-      <button
-        type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-link hover:bg-primary/[0.06]', compact ? 'min-h-10' : 'min-h-8 py-1')}
-        onClick={onReset}
-        title={t('admin.users.resetPassword')}
-      >
-        <KeyRound className="size-3.5" /> {t('admin.users.passwordBtn')}
-      </button>
-      <button
-        type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-muted hover:bg-danger-bg hover:text-danger-fg', compact ? 'min-h-10' : 'min-h-8 py-1')}
-        onClick={onRevoke}
-        title={t('admin.users.revokeTitle')}
-        aria-label={t('admin.users.revokeAria', { name: fullName(u) })}
-      >
-        <LogOut className="size-3.5" /> {t('admin.users.revoke')}
-      </button>
-      <button
-        type="button"
-        className={clsx('inline-flex items-center gap-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap text-danger-fg hover:bg-danger-bg', compact ? 'min-h-10' : 'min-h-8 py-1')}
-        onClick={onDelete}
-        title={t('admin.users.deleteTitle')}
-        aria-label={t('admin.users.deleteAria', { name: fullName(u) })}
-      >
-        <Trash2 className="size-3.5" /> {t('admin.users.deleteBtn')}
-      </button>
+    <span className="inline-flex items-center justify-end gap-1">
+      <ViewAsClientButton user={u} compact iconOnly />
+      <Suspense fallback={null}>
+        <HistoryButton entity="USER" entityId={u.id} name={fullName(u)} label="" className="size-8 justify-center px-0" />
+      </Suspense>
+      {showMenu && (
+        <Menu
+          label={`${t('ui.moreActions')}: ${fullName(u)}`}
+          trigger={<IconButton icon={MoreHorizontal} size="sm" label={`${t('ui.moreActions')}: ${fullName(u)}`} />}
+          items={[
+            { key: 'reset', label: t('admin.users.resetPassword'), icon: KeyRound, onSelect: onReset },
+            { key: 'revoke', label: t('admin.users.revokeTitle'), icon: LogOut, onSelect: onRevoke },
+            'separator',
+            { key: 'delete', label: t('admin.users.deleteTitle'), icon: Trash2, danger: true, onSelect: onDelete },
+          ]}
+        />
+      )}
     </span>
   );
 };
@@ -557,17 +596,33 @@ export default function Users() {
   const total = data?.total ?? 0;
   // Possible duplicate clients (badge) and merged-away accounts (link to the primary).
   const dupIds = useOpenDuplicateIds(users.filter((u) => u.role === 'CLIENT' && !u.mergedIntoId).map((u) => u.id));
-  const dupMark = (u: AdminUser) => (
-    <>
-      {u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="mt-1" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="mt-1" /> : null}
+  /** Secondary line under the name: presence dot + small chips (you, duplicate, partner), one line, never wraps. */
+  const metaLine = (u: AdminUser, self: boolean) => (
+    <span className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden">
+      <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="shrink-0" />
+      {self && <span className="badge shrink-0 bg-primary/10 py-0 text-[10px] text-link">{t('admin.common.you')}</span>}
+      {u.mergedIntoId ? <DuplicateChip userId={u.id} merged className="shrink-0" /> : dupIds.has(u.id) ? <DuplicateChip userId={u.id} className="shrink-0" /> : null}
       {/* Partner-owned client: badge opens the owner / history dialog (changing it is ADMIN+). */}
       {u.ownerPartner && (
-        <button type="button" className="badge mt-1 bg-accent-bg text-accent-fg hover:underline" onClick={() => setOwnerFor(u)}>
-          <Handshake className="size-3" aria-hidden /> {t('partnerClients.admin.badge', { name: u.ownerPartner.name })}
+        <button
+          type="button"
+          className="badge min-w-0 bg-accent-bg py-0 text-[10px] text-accent-fg hover:underline"
+          title={t('partnerClients.admin.badge', { name: u.ownerPartner.name })}
+          onClick={() => setOwnerFor(u)}
+        >
+          <Handshake className="size-3 shrink-0" aria-hidden /> <span className="truncate">{t('partnerClients.admin.badge', { name: u.ownerPartner.name })}</span>
         </button>
       )}
-    </>
+    </span>
   );
+  const nameNode = (u: AdminUser) =>
+    u.role === 'CLIENT' ? (
+      <Link to={`/admin/clients/${u.id}`} className="hover:text-link hover:underline">
+        {fullName(u)}
+      </Link>
+    ) : (
+      fullName(u)
+    );
   /** The super admin account itself and the viewer's own row are never editable. */
   const editable = (u: AdminUser) => canManage && u.id !== me?.id && u.role !== 'SUPER_ADMIN';
 
@@ -649,7 +704,17 @@ export default function Users() {
       ) : (
         <>
           <div className="hidden overflow-x-auto rounded-xl border border-line bg-card xl:block">
-            <table className="w-full min-w-[1040px] text-left text-sm">
+            <table className="w-full min-w-[1120px] table-fixed text-left text-sm">
+              <colgroup>
+                <col className="w-[22%]" />
+                <col className="w-[19%]" />
+                <col className="w-[13%]" />
+                <col className="w-[9%]" />
+                <col className="w-[12%]" />
+                <col className="w-[9%]" />
+                <col className="w-[7%]" />
+                <col className="w-[9%]" />
+              </colgroup>
               <thead className="border-b border-line bg-surface/70 text-xs font-medium whitespace-nowrap text-muted">
                 <tr>
                   <th className="px-4 py-2.5">{t('admin.users.th.user')}</th>
@@ -659,7 +724,7 @@ export default function Users() {
                   <th className="px-4 py-2.5">{t('admin.users.th.activity')}</th>
                   <th className="px-4 py-2.5">{t('admin.users.th.counts')}</th>
                   <th className="px-4 py-2.5">{t('admin.users.th.registered')}</th>
-                  {canManage && <th className="px-4 py-2.5" />}
+                  <th className="px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -667,56 +732,49 @@ export default function Users() {
                   const self = u.id === me?.id;
                   const can = editable(u);
                   return (
-                    <tr key={u.id} className={clsx(!u.isActive && 'bg-sunken text-muted')}>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold whitespace-nowrap text-ink">
-                          {u.role === 'CLIENT' ? (
-                          <Link to={`/admin/clients/${u.id}`} className="hover:text-link hover:underline">
-                            {fullName(u)}
-                          </Link>
-                        ) : (
-                          fullName(u)
-                        )}{' '}
-                        {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
-                        </p>
-                        <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-0.5" />
-                        {dupMark(u)}
-                        <ViewAsClientButton user={u} compact className="mt-1.5" />
-                        <Suspense fallback={null}>
-                          <HistoryButton entity="USER" entityId={u.id} name={fullName(u)} className="-ml-2" />
-                        </Suspense>
+                    <tr key={u.id} className={clsx('align-middle', !u.isActive && 'bg-sunken text-muted')}>
+                      <td className="px-4 py-2.5">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <Avatar name={fullName(u)} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold text-ink" title={fullName(u)}>
+                              {nameNode(u)}
+                            </p>
+                            {metaLine(u, self)}
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-xs">
-                        <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 whitespace-nowrap text-ink/80 hover:text-link">
-                          <Mail className="size-3" /> {u.email}
+                      <td className="px-4 py-2.5 text-xs">
+                        <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 text-ink/80 hover:text-link" title={u.email}>
+                          <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.email}</span>
                         </a>
-                        {u.phone && (
-                          <a href={`tel:${u.phone}`} className="flex min-h-6 items-center gap-1 text-muted hover:text-link">
-                            <Phone className="size-3" /> {u.phone}
-                          </a>
+                        {u.phone ? (
+                          <span className="flex min-h-6 items-center gap-1.5 text-muted">
+                            <a href={`tel:${u.phone}`} className="flex min-w-0 items-center gap-1 tabular-nums hover:text-link">
+                              <Phone className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.phone}</span>
+                            </a>
+                            <CallButton target={{ clientId: u.id }} phone={u.phone} name={fullName(u)} compact className="size-6 min-h-0 shrink-0 justify-center px-0 py-0" />
+                          </span>
+                        ) : (
+                          <span className="flex min-h-6 items-center text-muted">—</span>
                         )}
-                        {u.phone && <CallButton target={{ clientId: u.id }} phone={u.phone} name={fullName(u)} compact className="mt-1" />}
                       </td>
-                      <td className="px-4 py-3">
-                        <RoleControl u={u} editable={can} />
-                        {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-1.5 block" />}
-                        {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffProfileSelect userId={u.id} name={fullName(u)} className="mt-1.5 block" />}
+                      <td className="px-4 py-2.5">
+                        <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <ActiveControl u={u} editable={can} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <ActivityCell u={u} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <CountsCell u={u} />
                       </td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap text-muted">{fmtDate(u.createdAt)}</td>
-                      {canManage && (
-                        <td className="px-4 py-3 text-right">
-                          {can && <RowActions u={u} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />}
-                        </td>
-                      )}
+                      <td className="px-4 py-2.5 text-xs whitespace-nowrap text-muted tabular-nums">{fmtDate(u.createdAt)}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />
+                      </td>
                     </tr>
                   );
                 })}
@@ -731,38 +789,40 @@ export default function Users() {
               return (
                 <li key={u.id} className={clsx('rounded-xl border border-line bg-card p-4', !u.isActive && 'opacity-70')}>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-ink">
-                        {u.role === 'CLIENT' ? (
-                          <Link to={`/admin/clients/${u.id}`} className="hover:text-link hover:underline">
-                            {fullName(u)}
-                          </Link>
-                        ) : (
-                          fullName(u)
-                        )}{' '}
-                        {self && <span className="badge ml-1 bg-primary/10 text-[10px] text-link">{t('admin.common.you')}</span>}
-                      </p>
-                      <p className="truncate text-xs text-muted">{u.email}</p>
-                      {u.phone && <p className="text-xs text-muted">{u.phone}</p>}
-                      <OnlineDot online={u.online} lastSeenAt={u.lastSeenAt} className="mt-1" />
-                      {dupMark(u)}
-                      <ViewAsClientButton user={u} compact className="mt-2" />
-                      <Suspense fallback={null}>
-                        <HistoryButton entity="USER" entityId={u.id} name={fullName(u)} compact className="-ml-2" />
-                      </Suspense>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar name={fullName(u)} size="sm" />
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-ink" title={fullName(u)}>
+                          {nameNode(u)}
+                        </p>
+                        {metaLine(u, self)}
+                      </div>
                     </div>
-                    <RoleControl u={u} editable={can} />
+                    <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />
                   </div>
-                  {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffDeskSelect userId={u.id} name={fullName(u)} className="mt-2 block" />}
-                  {isAdmin && u.role !== 'CLIENT' && u.isActive && <StaffProfileSelect userId={u.id} name={fullName(u)} className="mt-2 block" />}
+                  <div className="mt-3 space-y-1 text-xs text-muted">
+                    <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 text-ink/80 hover:text-link" title={u.email}>
+                      <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.email}</span>
+                    </a>
+                    {u.phone && (
+                      <span className="flex min-h-6 items-center gap-1.5">
+                        <a href={`tel:${u.phone}`} className="flex min-w-0 items-center gap-1 tabular-nums hover:text-link">
+                          <Phone className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.phone}</span>
+                        </a>
+                        <CallButton target={{ clientId: u.id }} phone={u.phone} name={fullName(u)} compact className="size-6 min-h-0 shrink-0 justify-center px-0 py-0" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} />
+                  </div>
                   <div className="mt-3 space-y-1.5 border-t border-line pt-3">
                     <ActivityCell u={u} />
                     <CountsCell u={u} />
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
                     <ActiveControl u={u} editable={can} />
-                    <span className="text-[11px] text-muted">{t('admin.users.registeredAt', { date: fmtDate(u.createdAt) })}</span>
-                    {can && <RowActions u={u} compact onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />}
+                    <span className="text-[11px] text-muted tabular-nums">{t('admin.users.registeredAt', { date: fmtDate(u.createdAt) })}</span>
                   </div>
                 </li>
               );

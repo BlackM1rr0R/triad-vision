@@ -855,6 +855,7 @@ const az = {
         registered: 'Qeydiyyat',
       },
       registeredAt: 'Qeydiyyat {{date}}',
+      settingsBtn: 'Parametrlər',
     },
     settings: {
       saved: 'Parametrlər yadda saxlanıldı.',
@@ -2195,6 +2196,7 @@ const de: typeof az = {
         registered: 'Registriert',
       },
       registeredAt: 'Registriert am {{date}}',
+      settingsBtn: 'Einstellungen',
     },
     settings: {
       saved: 'Einstellungen gespeichert.',
@@ -3535,6 +3537,7 @@ const en: typeof az = {
         registered: 'Registered',
       },
       registeredAt: 'Registered {{date}}',
+      settingsBtn: 'Settings',
     },
     settings: {
       saved: 'Settings saved.',
@@ -4911,6 +4914,7 @@ const ru = {
         registered: 'Регистрация',
       },
       registeredAt: 'Регистрация {{date}}',
+      settingsBtn: 'Настройки',
     },
     settings: {
       saved: 'Настройки сохранены.',

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { ArrowRight, Building2, Check, CircleDashed, ExternalLink, FileText, MapPin, MessageSquareText, PenLine, Save } from 'lucide-react';
+import { AlertCircle, ArrowRight, Building2, Check, CircleDashed, ExternalLink, FileText, MapPin, MessageSquareText, PenLine, Save, Send, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
 import { pagesExternalApps } from '@/i18n/pagesExternalApps';
+import { pagesExternalAuto } from '@/i18n/pagesExternalAuto'; // automatic sending: missing data, "prepared", consent
 import { Spinner } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
 import { fmtDate } from '@/components/admin/labels';
@@ -17,6 +18,17 @@ import { CoverLetterEditor } from '@/components/germanyJobs/CoverLetterEditor';
 import { STATUS_TONE, hostOf, xappError, type ExternalAppStatus, type TimelineStep } from '@/components/germanyJobs/externalApps';
 
 registerCopy(pagesExternalApps);
+registerCopy(pagesExternalAuto);
+
+type MissingCode = 'ACCOUNT' | 'CV' | 'GERMAN_LEVEL' | 'PROFESSION' | 'PASSPORT' | 'PHONE' | 'EMAIL';
+
+/** Automatic sending (server lib/germanyJobs/autoSend.ts). */
+interface AutoInfo {
+  state: string | null;
+  consent: boolean;
+  missing: { code: MissingCode; path: string }[];
+  requiredGerman: string | null;
+}
 
 interface MyExternalApplication {
   id: string;
@@ -34,7 +46,63 @@ interface MyExternalApplication {
   coverLetter: { subject: string | null; at: string | null } | null;
   timeline: TimelineStep[];
   events: { status: ExternalAppStatus; note: string | null; at: string }[];
+  auto?: AutoInfo;
 }
+
+/** What the automatic sending waits for: missing data with links, "prepared", or the forward consent. */
+const AutoBox = ({ a }: { a: MyExternalApplication }) => {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const consent = useMutation({
+    mutationFn: async () => api.post(`/external-applications/${a.id}/forward-consent`),
+    onSuccess: async () => {
+      toast.success(t('xauto.portal.consentDone'));
+      await qc.invalidateQueries({ queryKey: ['my-external-applications'] });
+    },
+    onError: (err) => toast.error(xappError(err)),
+  });
+  const auto = a.auto;
+  if (!auto || a.status !== 'SUBMITTED') return null;
+  if (auto.state === 'NEEDS_DATA' && auto.missing.length) {
+    return (
+      <div className="mt-4 rounded-lg border border-warning-border bg-warning-bg px-3 py-3 text-sm text-warning-fg" role="status">
+        <p className="flex items-center gap-2 font-semibold">
+          <AlertCircle className="size-4 shrink-0" aria-hidden /> {t('xauto.portal.needsTitle')}
+        </p>
+        <p className="mt-1">{t('xauto.portal.needsIntro')}</p>
+        <ul className="mt-2 space-y-1.5">
+          {auto.missing.map((m) => (
+            <li key={m.code} className="flex flex-wrap items-center justify-between gap-2">
+              <span>{t(`xauto.portal.missing.${m.code}`, { need: auto.requiredGerman ?? 'A2' })}</span>
+              <Link to={m.path} className="btn-ghost btn-sm shrink-0">
+                {t('xauto.portal.fix')} <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+  if (auto.state === 'READY' || auto.state === 'QUEUED' || auto.state === 'SENDING') {
+    return (
+      <p className="mt-4 flex items-center gap-2 rounded-lg border border-line bg-info-bg px-3 py-2 text-sm text-info-fg" role="status">
+        <Send className="size-4 shrink-0" aria-hidden /> {t('xauto.portal.ready')}
+      </p>
+    );
+  }
+  if (!auto.consent && (auto.state === 'NO_CONSENT' || auto.state === null)) {
+    return (
+      <div className="mt-4 rounded-lg border border-line bg-sunken/60 px-3 py-3 text-sm">
+        <p className="font-semibold text-ink">{t('xauto.portal.noConsentTitle')}</p>
+        <p className="mt-1 text-muted">{t('xauto.portal.noConsentText')}</p>
+        <Button className="mt-2" size="sm" variant="secondary" icon={ShieldCheck} loading={consent.isPending} onClick={() => consent.mutate()}>
+          {t('xauto.portal.consent')}
+        </Button>
+      </div>
+    );
+  }
+  return null;
+};
 
 /** One step of the status timeline (vertical list on phones, a row from sm up). */
 const Step = ({ step, last }: { step: TimelineStep; last: boolean }) => {
@@ -126,6 +194,8 @@ const ApplicationCard = ({ a, onLetter }: { a: MyExternalApplication; onLetter: 
             ))}
         </div>
       )}
+
+      <AutoBox a={a} />
 
       {a.coverLetter && <p className="mt-3 text-xs text-success-fg">{t('xapp.portal.coverAttached')}</p>}
 

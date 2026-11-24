@@ -16,6 +16,7 @@ import {
   type ProviderPage,
   type SearchQuery,
 } from './common.js';
+import { extractEmails, parseGermanRequirement } from './autoCheck.js';
 
 /**
  * Arbeitnow (https://www.arbeitnow.com/api/job-board-api) — the default, free provider: no key, jobs in Germany
@@ -47,6 +48,11 @@ interface FeedJob extends GermanyJob {
   haystack: string;
   place: string;
   createdTs: number;
+  /**
+   * Facts for "apply via Triad Vision" read from the full description (never sent to the browser): employer
+   * addresses stated in the ad and the German level it asks for (lib/germanyJobs/autoCheck.ts).
+   */
+  facts?: { emails: string[]; german: string | null };
 }
 
 interface FeedState {
@@ -107,6 +113,7 @@ export const normalizeArbeitnow = (raw: unknown, visa: Set<string> | null): Feed
     haystack: fold([title, company ?? '', tags.join(' '), types.join(' '), description].join(' ')),
     place: fold(location ?? ''),
     createdTs: created,
+    facts: { emails: extractEmails(description).slice(0, 3), german: parseGermanRequirement(`${title}. ${description}`) },
   };
 };
 
@@ -221,7 +228,17 @@ export const filterFeed = (items: FeedJob[], q: SearchQuery) => {
   return q.sort === 'date' ? [...out].sort((a, b) => b.createdTs - a.createdTs) : out;
 };
 
-const strip = ({ haystack: _h, place: _p, createdTs: _c, ...j }: FeedJob): GermanyJob => j;
+const strip = ({ haystack: _h, place: _p, createdTs: _c, facts: _f, ...j }: FeedJob): GermanyJob => j;
+
+/**
+ * "Apply via Triad Vision": employer addresses and German requirement of a feed listing (`arbeitnow:<slug>`), from
+ * the cached feed only (no extra request). null = not in the feed (any more) or the provider is off.
+ */
+export const arbeitnowListingFacts = async (id: string): Promise<{ emails: string[]; german: string | null } | null> => {
+  if (!arbeitnowProvider.enabled() || !id.startsWith('arbeitnow:')) return null;
+  await loadFile(Date.now());
+  return state.items.find((j) => j.id === id)?.facts ?? null;
+};
 
 export const arbeitnowProvider: JobProvider = {
   info: { id: 'arbeitnow', name: 'Arbeitnow', url: 'https://www.arbeitnow.com' },
