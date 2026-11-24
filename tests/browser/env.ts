@@ -37,6 +37,8 @@ export const serverEnv: Record<string, string> = {
   JWT_SECRET: 'browser-test-jwt-secret-not-for-any-real-instance',
   TOTP_ENC_KEY: '',
   CLIENT_URL: WEB_URL,
+  // The seed talks to the API in-process with the server e2e helpers, which send Origin http://localhost:5173.
+  ALLOWED_ORIGINS: 'http://localhost:5173',
   UPLOADS_DIR: path.join(os.tmpdir(), 'triad-vision-browser-uploads'),
   DOCS_DIR: path.join(os.tmpdir(), 'triad-vision-browser-docs'),
   ADMIN_NOTIFY_EMAIL: 'staff-inbox@test.local',
