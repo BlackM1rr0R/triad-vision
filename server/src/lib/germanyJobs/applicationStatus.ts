@@ -45,15 +45,15 @@ export const buildTimeline = (createdAt: Date, status: ExternalAppStatus, events
 // ─── Client-facing texts (in-app notification + e-mail) ────────────────────
 
 const STATUS_TEXT: Record<Locale, Record<ExternalAppStatus, string>> = {
-  az: { SUBMITTED: 'Göndərildi', FORWARDED: 'İşəgötürənə göndərildi', INTERVIEW: 'Müsahibə', ACCEPTED: 'Qəbul edildi', REJECTED: 'İmtina', NO_REPLY: 'Cavab gəlmədi' },
-  de: { SUBMITTED: 'Eingereicht', FORWARDED: 'An den Arbeitgeber weitergeleitet', INTERVIEW: 'Vorstellungsgespräch', ACCEPTED: 'Zusage', REJECTED: 'Absage', NO_REPLY: 'Keine Rückmeldung' },
-  en: { SUBMITTED: 'Submitted', FORWARDED: 'Forwarded to the employer', INTERVIEW: 'Interview', ACCEPTED: 'Accepted', REJECTED: 'Rejected', NO_REPLY: 'No reply' },
-  ru: { SUBMITTED: 'Отправлена', FORWARDED: 'Передана работодателю', INTERVIEW: 'Собеседование', ACCEPTED: 'Принято', REJECTED: 'Отказ', NO_REPLY: 'Нет ответа' },
+  az: { SUBMITTED: 'Müraciət edildi', FORWARDED: 'İşəgötürənə göndərildi', INTERVIEW: 'Müsahibə', ACCEPTED: 'Qəbul edildi', REJECTED: 'İmtina', NO_REPLY: 'Cavab gəlmədi' },
+  de: { SUBMITTED: 'Eingegangen', FORWARDED: 'An den Arbeitgeber weitergeleitet', INTERVIEW: 'Vorstellungsgespräch', ACCEPTED: 'Zusage', REJECTED: 'Absage', NO_REPLY: 'Keine Rückmeldung' },
+  en: { SUBMITTED: 'Received', FORWARDED: 'Forwarded to the employer', INTERVIEW: 'Interview', ACCEPTED: 'Accepted', REJECTED: 'Rejected', NO_REPLY: 'No reply' },
+  ru: { SUBMITTED: 'Получена', FORWARDED: 'Передана работодателю', INTERVIEW: 'Собеседование', ACCEPTED: 'Принято', REJECTED: 'Отказ', NO_REPLY: 'Нет ответа' },
 };
 
 const BODY: Record<Locale, Record<ExternalAppStatus, string>> = {
   az: {
-    SUBMITTED: 'Müraciətiniz yenidən "göndərildi" mərhələsinə qaytarıldı.',
+    SUBMITTED: 'Müraciətiniz yenidən "müraciət edildi" mərhələsinə qaytarıldı.',
     FORWARDED: 'Müraciətinizi işəgötürənə göndərdik. Cavab gələn kimi sizə xəbər verəcəyik.',
     INTERVIEW: 'İşəgötürən sizinlə müsahibə keçirmək istəyir. Komandamız vaxtı və hazırlığı sizinlə razılaşdıracaq.',
     ACCEPTED: 'Təbriklər! İşəgötürən müsbət cavab verdi. Növbəti addımlar (müqavilə, viza) üçün sizinlə əlaqə saxlayacağıq.',
