@@ -188,12 +188,24 @@ export const FolderPickerModal = ({ open, onClose, onPick, title }: { open: bool
 };
 
 /** The folder (name, path, "open in drive") or a placeholder, with the actions next to it. */
-export const FolderLine = ({ folder, empty, children, compact }: { folder: FolderInfo | null; empty?: ReactNode; children?: ReactNode; compact?: boolean }) => {
+export const FolderLine = ({
+  folder,
+  empty,
+  children,
+  compact,
+  className,
+}: {
+  folder: FolderInfo | null;
+  empty?: ReactNode;
+  children?: ReactNode;
+  compact?: boolean;
+  className?: string;
+}) => {
   const { t } = useTranslation();
   return (
-    <div className={clsx('flex flex-wrap items-center gap-2', compact ? 'text-xs' : 'text-sm')}>
+    <div className={clsx('flex min-w-0 flex-wrap items-center gap-2', compact ? 'text-xs' : 'text-sm', className)}>
       {folder ? (
-        <Link to={driveFolderHref(folder.id)} className="inline-flex min-w-0 items-center gap-1.5 font-semibold text-link hover:underline" title={folder.path}>
+        <Link to={driveFolderHref(folder.id)} className="inline-flex max-w-full min-w-0 items-center gap-1.5 font-semibold text-link hover:underline" title={folder.path}>
           <FolderOpen className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{folder.name}</span>
           <ExternalLink className="size-3 shrink-0" aria-hidden />

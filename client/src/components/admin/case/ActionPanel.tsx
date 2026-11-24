@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
@@ -25,11 +26,15 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { fmtDateTime, statusLabel, toLocalInput } from '../labels';
 import { Panel } from '../ui';
 import { goToCaseSection } from './sections';
-import { missingAccepted, useCaseAction, type ActionBody } from './shared';
+import { missingAccepted, useCaseAction, useCaseRefresh, type ActionBody } from './shared';
+import { staffKey } from '@/components/caseContracts/api';
 import { registerCopy } from '@/i18n';
 import { pagesCaseContracts } from '@/i18n/pagesCaseContracts';
 
 registerCopy(pagesCaseContracts);
+
+// The contract upload dialog (pdf.js) loads only when it is opened outside the case page (quick drawer of the list).
+const UploadDialog = lazy(() => import('@/components/caseContracts/UploadDialog'));
 
 type ActionKey = 'SEND_CONTRACT' | 'REQUEST_CHANGES' | 'CONFIRM_CONTRACT' | 'REJECT_SIGNATURE' | 'SCHEDULE' | 'MARK_LODGED' | 'DECIDE' | 'REOPEN';
 
@@ -125,6 +130,10 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
   const [validTo, setValidTo] = useState('');
   const [reopenTo, setReopenTo] = useState<'DOCUMENTS_PENDING' | 'EMBASSY_DOCUMENTS'>('EMBASSY_DOCUMENTS');
   const [cancelReason, setCancelReason] = useState('');
+  // "Göndər: Əmək müqaviləsi" where no case page is open (quick drawer of the cases list): the upload dialog right here.
+  const [uploading, setUploading] = useState(false);
+  const qc = useQueryClient();
+  const refreshCase = useCaseRefresh(c.id);
 
   // Reset forms whenever the status changes (an action succeeded or someone else moved the case).
   useEffect(() => {
@@ -161,7 +170,8 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
             <p className="text-sm text-ink/80">{a('sendContractText', { status: statusLabel('CONTRACT_SENT') })}</p>
             <MissingHint missing={missingInitial} what={a('sendContractWhat')} />
             {/* Əmək müqaviləsi is sent from the two-step contracts panel (documents tab): Triad Vision signs first, no employer. */}
-            <button type="button" className="btn-primary btn-sm" disabled={missingInitial.length > 0} onClick={() => goToCaseSection('case-contract')}>
+            {/* On the case page: scroll to the contracts panel. Elsewhere (quick drawer): open the same upload dialog here. */}
+            <button type="button" className="btn-primary btn-sm" disabled={missingInitial.length > 0} onClick={() => !goToCaseSection('case-contract') && setUploading(true)}>
               <FileSignature className="size-3.5" /> {t('caseContracts.send')}: {t('caseContracts.steps.LABOUR.name')}
             </button>
           </div>
@@ -491,6 +501,20 @@ export const ActionPanel = ({ c }: { c: CaseDetail }) => {
           </div>
         )}
       </div>
+
+      {uploading && (
+        <Suspense fallback={null}>
+          <UploadDialog
+            caseId={c.id}
+            step="LABOUR"
+            onClose={() => setUploading(false)}
+            onDone={async () => {
+              setUploading(false);
+              await Promise.all([qc.invalidateQueries({ queryKey: staffKey(c.id) }), qc.invalidateQueries({ queryKey: ['esign'] }), refreshCase()]);
+            }}
+          />
+        </Suspense>
+      )}
 
       <ConfirmDialog
         open={!!confirm}

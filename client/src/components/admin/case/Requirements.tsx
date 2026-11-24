@@ -3,11 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { Check, CheckCheck, ClipboardList, Plus, Trash2, Upload, X } from 'lucide-react';
+import { Check, CheckCheck, ClipboardList, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import { api, fileUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
-import type { CaseDetail, CaseDocument, Requirement } from '@/lib/types';
+import type { CaseDetail, CaseDocument, L10n, Requirement } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { L10nInput, emptyL10n } from '../L10nInput';
@@ -29,6 +29,14 @@ import { MarkEditor } from '@/components/review/MarkEditor';
 import { MarkedScan } from '@/components/review/MarkedScan';
 import { cleanMarks, marksOf, type ReviewMark } from '@/components/review/marks';
 import { scanKind } from '@/components/review/ScanPage';
+// Linked documents (server lib/docLink): "Avtomatik əlavə olundu: İlkin sənədlərdən" chip, document type of a requirement.
+import { LinkedDocChip } from '@/components/docLink/LinkedDocChip';
+
+/** Template keys (document types) staff can give a per-case requirement; the same list as the requirement templates. */
+const REQUIREMENT_KEYS = [
+  'PASSPORT', 'PHOTO', 'PHOTO_2', 'CV', 'DIPLOMA', 'EMPLOYMENT_REF', 'DRIVING_LICENCE', 'LANGUAGE_CERT', 'GERMAN_CERT',
+  'HEALTH_INSURANCE', 'SIGNED_CONTRACT', 'ANERKENNUNG', 'VIDEX', 'ACCOMMODATION', 'BIRTH_CERT', 'MARRIAGE_CERT', 'POLICE_CERT', 'BANK_STATEMENT',
+];
 
 type Stage = 'INITIAL' | 'EMBASSY';
 
@@ -98,6 +106,7 @@ const DocRow = ({ c, doc, requirementKey }: { c: CaseDetail; doc: CaseDocument; 
               {doc.originalName}
             </p>
             <DocMeta doc={doc} />
+            <LinkedDocChip doc={doc} staff className="mt-0.5" />
             {/* name on the document ≠ client (or family member): same check as client uploads, a warning only */}
             <CaseDocNameWarning caseId={c.id} docId={doc.id} />
           </div>
@@ -227,7 +236,10 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
   const [toggling, setToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const state = reqState(r);
+  // Copies added automatically from the other list do not block the removal (the server removes them with it).
+  const hasOwnDocs = r.documents.some((d) => !d.linkedFromId);
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -313,10 +325,19 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
           </button>
           <button
             type="button"
+            className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-link lg:size-8"
+            onClick={() => setEditing(true)}
+            title={t('dlink.admin.editReq')}
+            aria-label={t('dlink.admin.editReq')}
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            type="button"
             className="grid size-10 place-items-center rounded-lg text-muted transition hover:bg-card hover:text-danger-fg disabled:cursor-not-allowed disabled:opacity-40 lg:size-8"
             onClick={() => setConfirmDelete(true)}
-            disabled={r.documents.length > 0}
-            title={r.documents.length > 0 ? t('admin.case.req.cantDeleteWithDocs') : t('admin.case.req.deleteReq')}
+            disabled={hasOwnDocs}
+            title={hasOwnDocs ? t('admin.case.req.cantDeleteWithDocs') : t('admin.case.req.deleteReq')}
             aria-label={t('admin.case.req.deleteReq')}
           >
             <Trash2 className="size-3.5" />
@@ -339,40 +360,65 @@ const RequirementCard = ({ c, r }: { c: CaseDetail; r: Requirement }) => {
         message={t('admin.case.req.deleteReqMsg', { title: tr(r.title) })}
         confirmLabel={t('admin.common.delete')}
       />
+      {editing && <RequirementModal c={c} stage={r.stage === 'EMBASSY' ? 'EMBASSY' : 'INITIAL'} edit={r} open onClose={() => setEditing(false)} />}
     </motion.li>
   );
 };
 
 // ─── Add requirement ────────────────────────────────────────────────────
 
-const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage: Stage; open: boolean; onClose: () => void }) => {
+const toL10n = (v: unknown): L10n => {
+  const o = (v && typeof v === 'object' ? v : {}) as Partial<L10n>;
+  return { az: o.az ?? '', de: o.de ?? '', en: o.en ?? '', ru: o.ru ?? '' };
+};
+
+/** Add a requirement to one list of the case, or (with `edit`) rename / retype an existing one. */
+const RequirementModal = ({ c, stage, open, onClose, edit }: { c: CaseDetail; stage: Stage; open: boolean; onClose: () => void; edit?: Requirement }) => {
   const { t } = useTranslation();
   const refresh = useCaseRefresh(c.id);
-  const [title, setTitle] = useState(emptyL10n);
-  const [description, setDescription] = useState(emptyL10n);
-  const [required, setRequired] = useState(true);
+  const [title, setTitle] = useState(() => (edit ? toL10n(edit.title) : emptyL10n()));
+  const [description, setDescription] = useState(() => (edit?.description ? toL10n(edit.description) : emptyL10n()));
+  const [required, setRequired] = useState(edit?.required ?? true);
+  const [key, setKey] = useState(edit?.key ?? '');
   const [busy, setBusy] = useState(false);
   const hasTitle = !!(title.az.trim() || title.de.trim() || title.en.trim() || title.ru.trim());
+  const keys = key && !REQUIREMENT_KEYS.includes(key) ? [key, ...REQUIREMENT_KEYS] : REQUIREMENT_KEYS;
+  const formId = edit ? `edit-req-${edit.id}` : `add-req-form-${stage}`;
 
   const submit = async () => {
     if (!hasTitle) return;
     setBusy(true);
     try {
       const hasDesc = description.az.trim() || description.de.trim() || description.en.trim() || description.ru.trim();
+      if (edit) {
+        const res = await api.patch<{ linked?: number }>(`/admin/cases/${c.id}/requirements/${edit.id}`, {
+          title,
+          description: hasDesc ? description : null,
+          required,
+          key: key || null,
+        });
+        await refresh();
+        toast.success(res.data.linked ? t('dlink.admin.linkedCount', { count: res.data.linked }) : t('dlink.admin.saved'));
+        onClose();
+        return;
+      }
       // Empty languages are translated by the server (AI); without the AI it copies the text that was written.
-      const res = await api.post<{ translation: { autoTranslated: boolean; reason: string | null } | null }>(`/admin/cases/${c.id}/requirements`, {
+      const res = await api.post<{ linked?: number; translation: { autoTranslated: boolean; reason: string | null } | null }>(`/admin/cases/${c.id}/requirements`, {
         stage,
         title,
         description: hasDesc ? description : undefined,
         required,
+        ...(key ? { key } : {}),
       });
       await refresh();
       const tx = res.data.translation;
       if (tx && !tx.autoTranslated && tx.reason && tx.reason !== 'NOTHING_TO_TRANSLATE') toast.warning(t('admin.l10n.savedCopied', { reason: tx.reason }));
       else toast.success(t('admin.case.req.reqAdded'));
+      if (res.data.linked) toast.success(t('dlink.admin.linkedCount', { count: res.data.linked }));
       setTitle(emptyL10n());
       setDescription(emptyL10n());
       setRequired(true);
+      setKey('');
       onClose();
     } catch (err) {
       toastError(err);
@@ -385,21 +431,21 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
     <Modal
       open={open}
       onClose={onClose}
-      title={t('admin.case.req.addReqTitle', { stage: stageLabel(stage) })}
-      description={t('admin.case.req.addReqDesc')}
+      title={edit ? t('dlink.admin.editReqTitle') : t('admin.case.req.addReqTitle', { stage: stageLabel(stage) })}
+      description={edit ? undefined : t('admin.case.req.addReqDesc')}
       footer={
         <>
           <button type="button" className="btn-secondary btn-sm" onClick={onClose}>
             {t('admin.common.cancel')}
           </button>
-          <button type="submit" form="add-req-form" className="btn-primary btn-sm" disabled={!hasTitle || busy}>
-            {busy && <Spinner className="size-3.5" />} {t('admin.common.add')}
+          <button type="submit" form={formId} className="btn-primary btn-sm" disabled={!hasTitle || busy}>
+            {busy && <Spinner className="size-3.5" />} {edit ? t('admin.common.save') : t('admin.common.add')}
           </button>
         </>
       }
     >
       <form
-        id="add-req-form"
+        id={formId}
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -412,6 +458,20 @@ const AddRequirementModal = ({ c, stage, open, onClose }: { c: CaseDetail; stage
           <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-primary" />
           {t('admin.case.req.requiredCheckbox')}
         </label>
+        <div>
+          <label className="label" htmlFor={`${formId}-key`}>
+            {t('dlink.admin.keyLabel')}
+          </label>
+          <select id={`${formId}-key`} className="input" value={key} onChange={(e) => setKey(e.target.value)}>
+            <option value="">{t('dlink.admin.keyNone')}</option>
+            {keys.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-muted">{t('dlink.admin.keyHint')}</p>
+        </div>
       </form>
     </Modal>
   );
@@ -489,7 +549,7 @@ export const RequirementsSection = ({ c, stage }: { c: CaseDetail; stage: Stage 
           ))}
         </ul>
       )}
-      <AddRequirementModal c={c} stage={stage} open={adding} onClose={() => setAdding(false)} />
+      <RequirementModal c={c} stage={stage} open={adding} onClose={() => setAdding(false)} />
       <ConfirmDialog
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}

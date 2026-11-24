@@ -27,6 +27,7 @@ import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric ph
 
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
+import { linkUploadedDocument } from '../lib/docLink/service.js'; // one upload for the initial and the embassy list
 
 /**
  * Personal document vault: clients keep their documents (passport, diplomas, photos…) once and reuse
@@ -359,6 +360,7 @@ vaultRouter.post('/:id/use', async (req, res) => {
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away (type folder; never throws)
+    await linkUploadedDocument(doc.id); // also attached to the matching requirement of the other list (initial ↔ embassy; never throws)
     await notifyClientUpload(c, target, requirement, doc.originalName); // staff: a rejected document replaced / an early embassy upload
     void completeTasksForUpload(doc.id); // client tasks linked to this requirement are done (never throws)
     const checks = await checkCaseDocument(doc.id);

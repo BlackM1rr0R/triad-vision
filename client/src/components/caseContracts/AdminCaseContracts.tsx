@@ -63,7 +63,7 @@ const DocRow = ({ d, onReturn, onReplace, onDrop }: { d: StaffDoc; onReturn: () 
       <span className={clsx('badge', STATE_TONE[d.state])}>{t(`caseContracts.states.${d.state}`)}</span>
       {d.returnReason && <span className="basis-full text-danger-fg">{t('caseContracts.v2.returnedReason', { reason: d.returnReason })}</span>}
       <span className="flex basis-full flex-wrap gap-1">
-        <a href={d.finalDocumentId ? fileUrl(d.finalDocumentId) : `/api/admin/signatures/${d.id}/document`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+        <a href={d.finalDocumentId ? fileUrl(d.finalDocumentId) : `/api/admin/signatures/${d.id}/document?version=current`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
           <ExternalLink className="size-3.5" aria-hidden /> {d.finalDocumentId ? t('caseContracts.openSigned') : t('caseContracts.v2.open')}
         </a>
         {canReturn && (
@@ -174,6 +174,12 @@ const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop 
             <Eye className="size-3.5" aria-hidden /> {t('caseContracts.v2.openSent')}
           </a>
         )}
+        {/* V2: the client signed, Triad Vision not yet — the PDF with the client's signature in its place. */}
+        {r && !workSet && v2 && r.status === 'SENT' && r.client?.status === 'SIGNED' && (
+          <a href={`/api/admin/signatures/${r.id}/document?version=current`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
+            <Eye className="size-3.5" aria-hidden /> {t('caseContracts.v2.openClientSigned')}
+          </a>
+        )}
         {r?.finalDocumentId && !workSet && (
           <a href={fileUrl(r.finalDocumentId)} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
             <Download className="size-3.5" aria-hidden /> {t('caseContracts.openSigned')}
@@ -238,8 +244,9 @@ const SignDialog = ({ caseId, s, onClose, onDone }: { caseId: string; s: StaffSt
       }
     >
       {s.request && (
-        <a href={`/api/admin/signatures/${s.request.id}/document`} target="_blank" rel="noreferrer" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-link underline">
-          <ExternalLink className="size-3.5" aria-hidden /> {s.request.title}
+        // "current": with the signatures given so far (V2: the client's) — Triad Vision sees them before signing.
+        <a href={`/api/admin/signatures/${s.request.id}/document?version=current`} target="_blank" rel="noreferrer" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-link underline">
+          <ExternalLink className="size-3.5" aria-hidden /> {s.request.client?.status === 'SIGNED' ? `${t('caseContracts.v2.openClientSigned')} · ${s.request.title}` : s.request.title}
         </a>
       )}
       <div className="mb-3 inline-flex rounded-lg border border-line p-0.5" role="group">

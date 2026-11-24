@@ -167,10 +167,11 @@ export const OnlineDot = ({ online, lastSeenAt, className }: { online: boolean; 
 };
 
 /** Small "label: value" definition row used in detail cards. */
+/** Label left, value right in a two-column grid: the value column can shrink (long values truncate / wrap), so it never runs over the label. */
 export const DefRow = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
-    <dt className="shrink-0 text-xs text-muted">{label}</dt>
-    <dd className="min-w-0 text-right font-medium text-ink tabular-nums">{children}</dd>
+  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-3 py-1.5 text-sm">
+    <dt className="max-w-[12rem] text-xs break-words text-muted">{label}</dt>
+    <dd className="min-w-0 text-right font-medium break-words text-ink tabular-nums">{children}</dd>
   </div>
 );
 

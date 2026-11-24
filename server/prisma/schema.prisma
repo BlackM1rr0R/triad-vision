@@ -548,8 +548,18 @@ model Document {
   photoCheck       Json?
   /// Staff marks on a rejected scan shown to the client: [{ page, x, y, w, h (0–1), note }].
   reviewMarks      Json?
+  /// Linked copy (lib/docLink): the same file uploaded for the matching requirement of the other stage
+  /// (initial ↔ embassy). Own stored file (copied), so deleting one never removes the other's file.
+  linkedFromId     String?
+  linkedFrom       Document?            @relation("DocumentLink", fields: [linkedFromId], references: [id], onDelete: SetNull)
+  linkedCopies     Document[]           @relation("DocumentLink")
+  /// Stage of the source document ("added automatically from the initial documents"); kept when the source goes.
+  linkedFromStage  DocStage?
+  /// Staff reviewed the linked copy on its own: the source's review no longer changes it.
+  linkDetached     Boolean              @default(false)
 
   @@index([caseId, stage])
+  @@index([linkedFromId])
   @@index([ocrAt, createdAt]) // perf (migration 20261129100000_perf_indexes)
   @@index([expiresAt]) // perf (migration 20261129100000_perf_indexes)
 }

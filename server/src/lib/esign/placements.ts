@@ -164,3 +164,35 @@ export const stampSignatures = async (doc: PDFDocument, signers: StampSigner[], 
     page.drawText(caption, { x: p.x + 1, y: p.y + 1, size: capSize, font, color: rgb(0.36, 0.42, 0.53) });
   }
 };
+
+// ─── Interim copy while the request is being signed ───────────────────
+
+export interface InterimSignerLite {
+  role: string;
+  status: string;
+  order: number;
+}
+
+/**
+ * What an interim PDF of a request in progress shows (null = nothing to show, serve the original): the signatures
+ * given so far, drawn into their places like at completion, so that e.g. Triad Vision sees the client's signature
+ * on the Əmək müqaviləsi before signing it. Only requests with placements (case contracts V2) that are still SENT
+ * and have at least one signature. Per role the FIRST signer of that role fills its boxes (as stampSignatures does
+ * at completion); a role whose first signer has not signed yet keeps its places empty (its form fields stay).
+ */
+export const interimPlan = <S extends InterimSignerLite>(status: string, signers: S[], placements: Placement[] | null | undefined): { signers: S[]; placements: Placement[] } | null => {
+  if (status !== 'SENT' || !placements?.length) return null;
+  const firstOfRole = new Map<string, S>();
+  for (const s of [...signers].sort((a, b) => a.order - b.order)) if (!firstOfRole.has(s.role)) firstOfRole.set(s.role, s);
+  const signed = [...firstOfRole.values()].filter((s) => s.status === 'SIGNED');
+  const roles = new Set(signed.map((s) => s.role));
+  const places = placements.filter((p) => roles.has(p.role));
+  return places.length ? { signers: signed, placements: places } : null;
+};
+
+/** The interim PDF: the original with the given signatures stamped into their places (no certificate page). */
+export const buildInterimPdf = async (original: Buffer, signers: StampSigner[], placements: Placement[]) => {
+  const doc = await PDFDocument.load(original);
+  await stampSignatures(doc, signers, placements);
+  return Buffer.from(await doc.save());
+};

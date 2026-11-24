@@ -45,6 +45,7 @@ import { clientUploadMode, embassyUploadsEarly } from '@/lib/docReplace'; // a n
 import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments'; // requirement state chips, rejected without a reason
 import { pagesDocProgress } from '@/i18n/pagesDocProgress'; // dprog.embassy.earlyHint
+import { LinkedDocChip } from '@/components/docLink/LinkedDocChip'; // "Avtomatik əlavə olundu: İlkin sənədlərdən"
 
 registerCopy(pagesPortalMoments);
 registerCopy(pagesDocProgress);
@@ -127,6 +128,7 @@ const DocRow = ({
             <p className="truncate text-xs text-muted">
               {formatBytes(doc.size)} · {dateTime(doc.createdAt)}
             </p>
+            <LinkedDocChip doc={doc} className="mt-0.5" />
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1">

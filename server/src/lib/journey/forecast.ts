@@ -315,6 +315,23 @@ export const rangesFor = async (visaCategoryId: string | null, visaType: VisaTyp
   return resolveRanges({ category, all }, parseOverride(visa?.forecast), DEFAULTS_BY_TYPE[visaType]);
 };
 
+/**
+ * Pure: the status the steps are projected from. Documents under review with nothing left to check and at least
+ * one accepted (all accepted, none pending) already wait for the Əmək müqaviləsi — the status line says
+ * "Əmək müqaviləsi hazırlanır" (lib/account/statusLine) and the current-step card "Sənədləriniz qəbul edildi",
+ * so the contract step is the current one (from the last upload / status change on).
+ */
+export const projectedStatus = (
+  status: CaseStatus,
+  history: StatusPoint[],
+  docs: { pending: number; accepted: number; lastAt: Date | null },
+): { status: CaseStatus; history: StatusPoint[] } => {
+  if (status !== 'DOCUMENTS_REVIEW' || docs.pending > 0 || docs.accepted === 0) return { status, history };
+  const last = history.reduce<Date | null>((m, p) => (!m || p.at > m ? p.at : m), null);
+  const at = docs.lastAt && (!last || docs.lastAt > last) ? docs.lastAt : (last ?? new Date());
+  return { status: 'CONTRACT_SENT', history: [...history, { status: 'CONTRACT_SENT', at }] };
+};
+
 /** Forecast of one case from its stored status events. */
 export const forecastForCase = async (caseId: string): Promise<Forecast> => {
   const c = await prisma.case.findUniqueOrThrow({
@@ -330,7 +347,19 @@ export const forecastForCase = async (caseId: string): Promise<Forecast> => {
   const ranges = await rangesFor(c.visaCategoryId, c.visaType);
   const history: StatusPoint[] = c.events.map((e) => ({ status: e.toStatus as CaseStatus, at: e.createdAt }));
   if (!history.length) history.push({ status: 'DOCUMENTS_PENDING', at: c.createdAt });
-  return { ...computeForecast({ status: c.status, history, ranges }), visaType: c.visaType };
+  let projected = { status: c.status, history };
+  if (c.status === 'DOCUMENTS_REVIEW') {
+    // Same rule as the status line: the requirement documents of the first stage, none left to check.
+    const where = { caseId, stage: 'INITIAL' as const, requirementId: { not: null } };
+    const [pending, accepted, last] = await Promise.all([
+      prisma.document.count({ where: { ...where, status: 'PENDING' } }),
+      prisma.document.count({ where: { ...where, status: 'ACCEPTED' } }),
+      prisma.document.findFirst({ where, orderBy: { createdAt: 'desc' }, select: { createdAt: true } }),
+    ]);
+    projected = projectedStatus(c.status, history, { pending, accepted, lastAt: last?.createdAt ?? null });
+  }
+  // The real status stays on the result; only the steps follow the projected one.
+  return { ...computeForecast({ status: projected.status, history: projected.history, ranges }), status: c.status, visaType: c.visaType };
 };
 
 // ─── Travel after the visa ─────────────────────────────────────────────

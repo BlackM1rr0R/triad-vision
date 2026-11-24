@@ -337,9 +337,16 @@ export type CopyResult = 'copied' | 'exists' | 'missing' | 'skipped';
 const copyInner = async (documentId: string, opts: CopyOptions = {}): Promise<CopyResult> => {
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
-    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true, createdAt: true, requirement: { select: { title: true, key: true } } },
+    select: { id: true, caseId: true, stage: true, originalName: true, storedName: true, mimeType: true, size: true, status: true, uploadedById: true, createdAt: true, linkedFromId: true, requirement: { select: { title: true, key: true } } },
   });
   if (!doc || !(doc.status === 'ACCEPTED' || (opts.pending && doc.status === 'PENDING'))) return 'skipped';
+  // A linked copy (lib/docLink: the same file attached to the initial and the embassy list) gets no second file in
+  // the client folder: its source's copy is that file (same type folder). Only when the source was rejected and the
+  // copy accepted on its own does the copy get one.
+  if (doc.linkedFromId) {
+    const src = await prisma.document.findUnique({ where: { id: doc.linkedFromId }, select: { status: true } });
+    if (src && src.status !== 'REJECTED') return 'exists';
+  }
   const existing = await prisma.driveNode.findUnique({ where: { documentId: doc.id }, select: { id: true, deletedAt: true, deletedById: true, parent: { select: { deletedAt: true } } } });
   if (existing) {
     // A copy the system put in the bin when the upload was rejected comes back when it is accepted after all.

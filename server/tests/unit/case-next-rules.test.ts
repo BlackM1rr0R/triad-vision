@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CaseStatus, DocStatus } from '@prisma/client';
 import { computeSteps, nextStepView, TYPICAL_DAYS, type CaseFacts, type FactRequirement, type NextAction } from '../../src/lib/caseNext/nextStep.js';
 import { DEFAULT_CHECKLISTS } from '../../src/lib/ai/features/caseAi/config.js';
+import { contractProgress } from '../../src/lib/caseNext/ai.js';
 
 const NOW = new Date('2026-10-20T09:00:00Z');
 const DAY = 24 * 3600 * 1000;
@@ -167,5 +168,53 @@ describe('next step rules', () => {
     expect(v.steps).toHaveLength(3);
     expect(v.total).toBeGreaterThan(3);
     expect(v.steps[0].code).toBe('PASSPORT_EXPIRED');
+  });
+});
+
+describe('next step: two-step contracts V2 (lib/caseContracts/turn)', () => {
+  const openContract = { id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' };
+  const sent = (over: Partial<CaseFacts> = {}) => facts({ status: 'CONTRACT_SENT', contract: { sentAt: ago(2), signedAt: null }, daysInStatus: 0, ...over });
+  const signed = (over: Partial<CaseFacts> = {}) => facts({ status: 'CONTRACT_SIGNED', contract: { sentAt: ago(4), signedAt: ago(0) }, contractV2: true, daysInStatus: 0, ...over });
+
+  it('Əmək müqaviləsi: the client signed (V2) — Triad Vision signs now, never "client not invited yet"', () => {
+    const f = sent({ contractTurn: 'TRIAD', contractV2: true });
+    expect(top(f)).toMatchObject({ code: 'TRIAD_SIGN_AFTER_CLIENT', params: { days: 0 }, actions: [openContract] });
+    expect(codes(f)).not.toContain('TRIAD_SIGN_CONTRACT');
+    expect(codes(f)).not.toContain('CONTRACT_NOT_SIGNED');
+    expect(contractProgress(f)).toMatch(/client HAS signed; Triad Vision must sign/);
+  });
+
+  it('Əmək müqaviləsi approved, no İş müqaviləsi documents yet — send them (not "confirm the contract")', () => {
+    const f = signed({ contractTurn: 'STAFF', workContract: 'NOT_SENT' });
+    expect(top(f)).toMatchObject({ code: 'SEND_WORK_CONTRACT', tone: 'action', actions: [openContract] });
+    expect(codes(f)).not.toContain('CONFIRM_CONTRACT');
+    expect(contractProgress(f)).toMatch(/upload and send the work contract/);
+  });
+
+  it('İş müqaviləsi documents sent — the client signs (info, reminders later; no "status overdue")', () => {
+    const f = signed({ contractTurn: 'CLIENT', workContract: 'CLIENT_TO_SIGN' });
+    expect(codes(f)).toEqual(['AWAIT_WORK_SIGNATURE']);
+    expect(top(f)).toMatchObject({ tone: 'info', actions: [openContract] });
+    const late = signed({ contractTurn: 'CLIENT', workContract: 'CLIENT_TO_SIGN', daysInStatus: 9, statusSince: ago(9), lastClientActivityAt: ago(9) });
+    expect(codes(late)).toEqual(expect.arrayContaining(['CLIENT_IDLE', 'CONTRACT_NOT_SIGNED', 'AWAIT_WORK_SIGNATURE']));
+    expect(codes(late)).not.toContain('STATUS_OVERDUE');
+    expect(codes(late)).not.toContain('CONFIRM_CONTRACT');
+  });
+
+  it('İş müqaviləsi signed by the client — staff approve it; returned / expired — send a new version', () => {
+    expect(top(signed({ contractTurn: 'STAFF', workContract: 'SIGNED' }))).toMatchObject({ code: 'APPROVE_WORK_CONTRACT', actions: [openContract] });
+    expect(top(signed({ contractTurn: 'STAFF', workContract: 'SIGNED', daysInStatus: 5 }))).toMatchObject({ code: 'APPROVE_WORK_CONTRACT', tone: 'urgent' });
+    expect(top(signed({ contractTurn: 'STAFF', workContract: 'RETURNED' }))).toMatchObject({ code: 'RESEND_WORK_CONTRACT', params: { state: 'RETURNED' } });
+    expect(top(signed({ contractTurn: 'STAFF', workContract: 'EXPIRED' }))).toMatchObject({ code: 'RESEND_WORK_CONTRACT' });
+    expect(contractProgress(signed({ contractTurn: 'STAFF', workContract: 'SIGNED' }))).toMatch(/review and approve/);
+  });
+
+  it('old flow unchanged: Triad Vision first, then the client; signed contract is confirmed by the transition', () => {
+    expect(top(sent({ contractTurn: 'TRIAD', contractV2: false }))).toMatchObject({ code: 'TRIAD_SIGN_CONTRACT' });
+    expect(top(sent({ contractTurn: 'TRIAD' }))).toMatchObject({ code: 'TRIAD_SIGN_CONTRACT' });
+    const old = top(facts({ status: 'CONTRACT_SIGNED', contract: { sentAt: ago(6), signedAt: ago(2) }, contractTurn: null }));
+    expect(old).toMatchObject({ code: 'CONFIRM_CONTRACT', params: { days: 2 } });
+    expect(old.actions[0]).toMatchObject({ kind: 'transition', request: { body: { action: 'CONFIRM_CONTRACT' } } });
+    expect(contractProgress(sent({ contractTurn: 'TRIAD' }))).toMatch(/Triad Vision signs first/);
   });
 });

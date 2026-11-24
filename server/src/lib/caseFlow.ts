@@ -11,6 +11,7 @@ import { syncCaseFolder } from './drive/caseFolders.js';
 import { notifyPartnerCaseStatus } from './partnerPortal/notify.js';
 import { syncSettlementsForCase } from './settlement/service.js';
 import { emitAutomationEvent } from './automation/events.js'; // automation rules: domain events (never throws)
+import { linkCaseRequirements } from './docLink/service.js'; // one upload for the initial and the embassy list (never throws)
 import { ensureEarlyEmbassyRequirements } from './earlyEmbassy/service.js'; // embassy list while waiting for the contract (never throws)
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
@@ -355,6 +356,7 @@ export const staffConfirmContract = async (caseId: string, actorId: string) => {
       if (!has) await createRequirements(tx, caseId, 'EMBASSY', (await tx.case.findUniqueOrThrow({ where: { id: caseId }, select: { visaCategoryId: true } })).visaCategoryId);
     },
   });
+  await linkCaseRequirements(caseId); // documents the initial list already has (passport …) also fill the new embassy list (never throws)
   await after(caseId, 'EMBASSY_DOCS_REQUESTED');
   // A signed Əmək müqaviləsi (two-step case contracts) counts as approved by this step (lazy import: no cycle; never throws).
   await import('./caseContracts/service.js').then((m) => m.onContractConfirmed(caseId, actorId)).catch(() => undefined);
@@ -457,5 +459,6 @@ export const staffReopen = async (
       }
     },
   });
+  if (to === 'EMBASSY_DOCUMENTS') await linkCaseRequirements(caseId); // a fresh embassy list gets the matching initial documents (never throws)
   await after(caseId, 'REOPENED', { note });
 };

@@ -5,8 +5,8 @@ import { checklistFor, getCaseAiSettings, STATUTORY, type ChecklistItem } from '
 import type { L10n } from '../ai/features/caseAi/texts.js';
 import { PACKAGE_EVENT } from './embassyPackage.js';
 import { confirmationStates, type ConfirmState } from '../clientData/confirmation.js';
-import type { ContractTurn } from '../caseContracts/flow.js';
-import { loadContractTurns } from '../caseContracts/turn.js'; // CONTRACT_SENT: Triad Vision signs first / new version due
+import type { ContractTurn, StepState } from '../caseContracts/flow.js';
+import { loadContractInfo } from '../caseContracts/turn.js'; // whose turn the contract is, old flow vs V2, İş müqaviləsi state
 import { CHANGES_NOTE, fmtDate, fmtDateTime, message, MESSAGE_TEXT, TRANSLATION_TITLE } from './texts.js';
 
 /**
@@ -78,6 +78,10 @@ export interface CaseFacts {
   contract: { sentAt: Date; signedAt: Date | null } | null;
   /** CONTRACT_SENT: whose turn the case contract is (lib/caseContracts/turn); undefined = the client's. */
   contractTurn?: ContractTurn | null;
+  /** The case contract follows the V2 flow (lib/caseContracts/flow): client first, then Triad Vision; then the İş müqaviləsi. */
+  contractV2?: boolean;
+  /** CONTRACT_SIGNED + V2: state of the İş müqaviləsi documents (undefined / null = old flow or not loaded). */
+  workContract?: StepState | null;
   requirements: FactRequirement[];
   lastClientActivityAt: Date | null;
   lastClientMessageAt: Date | null;
@@ -138,7 +142,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
     confirmationStates(ids),
   ]);
 
-  const turns = await loadContractTurns(cases, now);
+  const contracts = await loadContractInfo(cases, now);
   return cases.map((c) => {
     const since = opts.statusSince?.get(c.id) ?? entered.find((e) => e.caseId === c.id && e.toStatus === c.status)?.createdAt ?? c.createdAt;
     const clientMsg = msgs.find((m) => m.caseId === c.id && m.authorId === c.clientId)?._max.createdAt ?? null;
@@ -176,7 +180,9 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
       appointmentAt: c.appointmentAt,
       appointmentPlace: c.appointmentPlace,
       contract: c.contract ? { sentAt: c.contract.sentAt, signedAt: c.contract.signedAt } : null,
-      contractTurn: turns.get(c.id) ?? null,
+      contractTurn: contracts.get(c.id)?.turn ?? null,
+      contractV2: contracts.get(c.id)?.v2 ?? false,
+      workContract: contracts.get(c.id)?.work ?? null,
       requirements,
       lastClientActivityAt: maxDate(clientMsg, clientEvent, clientUpload),
       lastClientMessageAt: clientMsg,
@@ -213,7 +219,12 @@ export type RuleCode =
   | 'OVERDUE_TASKS'
   | 'CONTRACT_NOT_SIGNED'
   | 'TRIAD_SIGN_CONTRACT'
+  | 'TRIAD_SIGN_AFTER_CLIENT'
   | 'RESEND_CONTRACT'
+  | 'SEND_WORK_CONTRACT'
+  | 'RESEND_WORK_CONTRACT'
+  | 'AWAIT_WORK_SIGNATURE'
+  | 'APPROVE_WORK_CONTRACT'
   | 'MISSING_DOCS'
   | 'DECISION_OVERDUE'
   | 'CHECKLIST_GAP'
@@ -414,26 +425,37 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
     }
   }
 
-  // V2 (lib/caseContracts/turn): after the Əmək müqaviləsi the İş müqaviləsi — the client signs, then staff approve it
-  // in the contract panel (the "Confirm contract" transition is refused while it is open).
-  if (f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'CLIENT' && f.daysInStatus >= 3) {
-    add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign)] });
+  // V2 (lib/caseContracts/turn): the Əmək müqaviləsi is approved by Triad Vision's signature, then the İş müqaviləsi:
+  // staff upload 1–10 documents → the client signs them → staff approve the set (moves the case to the embassy
+  // documents). The "Confirm contract" transition is refused while it is open, so every step opens the contracts panel.
+  const openContract: NextAction = { id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' };
+  const workClientTurn = f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'CLIENT';
+  if (workClientTurn) {
+    add({ code: 'AWAIT_WORK_SIGNATURE', priority: 40, tone: 'info', params: { days: f.daysInStatus }, actions: [openContract] });
+    if (f.daysInStatus >= 3) add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign), openContract] });
   }
   if (f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'STAFF') {
-    add({ code: 'CONFIRM_CONTRACT', priority: slow ? 90 : 85, tone: slow ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+    const work = f.workContract;
+    const urgent = { priority: slow ? 90 : 85, tone: (slow ? 'urgent' : 'action') as NextStep['tone'], params: { days: f.daysInStatus } };
+    if (work === 'NOT_SENT') add({ code: 'SEND_WORK_CONTRACT', ...urgent, actions: [openContract] });
+    else if (work === 'RETURNED' || work === 'DECLINED' || work === 'EXPIRED' || work === 'CANCELLED') add({ code: 'RESEND_WORK_CONTRACT', ...urgent, params: { days: f.daysInStatus, state: work }, actions: [openContract] });
+    else if (work === 'SIGNED') add({ code: 'APPROVE_WORK_CONTRACT', ...urgent, actions: [openContract] });
+    // Facts without the İş müqaviləsi state (older callers): staff check it in the contracts panel.
+    else add({ code: 'CONFIRM_CONTRACT', ...urgent, actions: [openContract] });
   }
   if (f.status === 'CONTRACT_SIGNED' && !f.contractTurn) {
     const signedDays = f.contract?.signedAt ? Math.max(0, Math.floor((now.getTime() - f.contract.signedAt.getTime()) / DAY)) : f.daysInStatus;
     add({ code: 'CONFIRM_CONTRACT', priority: slow ? 90 : 85, tone: slow ? 'urgent' : 'action', params: { days: signedDays }, actions: [transition(f, 'CONFIRM_CONTRACT', { action: 'CONFIRM_CONTRACT' }), { id: 'OPEN_ACTIONS', kind: 'scroll', target: 'case-actions' }] });
   }
 
-  // Two-step contracts: Triad Vision signs first; the client is invited only afterwards — never chase the client then.
+  // Əmək müqaviləsi (CONTRACT_SENT): old flow — Triad Vision signs first, the client is invited only afterwards;
+  // V2 — the client signs first, then Triad Vision. Never chase the client while it is Triad Vision's turn.
   const clientContractTurn = f.status === 'CONTRACT_SENT' && (f.contractTurn === undefined || f.contractTurn === 'CLIENT' || f.contractTurn === null);
   if (f.status === 'CONTRACT_SENT' && f.contractTurn === 'TRIAD') {
-    add({ code: 'TRIAD_SIGN_CONTRACT', priority: f.daysInStatus >= 1 ? 87 : 80, tone: f.daysInStatus >= 2 ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+    add({ code: f.contractV2 ? 'TRIAD_SIGN_AFTER_CLIENT' : 'TRIAD_SIGN_CONTRACT', priority: f.daysInStatus >= 1 ? 87 : 80, tone: f.daysInStatus >= 2 ? 'urgent' : 'action', params: { days: f.daysInStatus }, actions: [openContract] });
   }
   if (f.status === 'CONTRACT_SENT' && f.contractTurn === 'STAFF') {
-    add({ code: 'RESEND_CONTRACT', priority: 86, tone: 'action', params: { days: f.daysInStatus }, actions: [{ id: 'OPEN_CONTRACT', kind: 'scroll', target: 'case-contract' }] });
+    add({ code: 'RESEND_CONTRACT', priority: 86, tone: 'action', params: { days: f.daysInStatus }, actions: [openContract] });
   }
   if (clientContractTurn && f.daysInStatus >= 3) {
     add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign)] });
@@ -457,11 +479,11 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   }
 
   // Client silent while the case waits for them
-  if (CLIENT_SIDE.includes(f.status) && (f.status !== 'CONTRACT_SENT' || clientContractTurn)) {
+  if ((CLIENT_SIDE.includes(f.status) && (f.status !== 'CONTRACT_SENT' || clientContractTurn)) || workClientTurn) {
     const idle = daysSince(f.lastClientActivityAt ?? f.statusSince);
     const staffRecent = f.lastStaffMessageAt && now.getTime() - f.lastStaffMessageAt.getTime() < 3 * DAY;
     if (idle !== null && idle >= 7 && !staffRecent) {
-      const body = missing.length ? T.docs(missing.map((r) => r.title[L] || r.title.de)) : f.status === 'CONTRACT_SENT' ? T.sign : T.idle;
+      const body = missing.length ? T.docs(missing.map((r) => r.title[L] || r.title.de)) : f.status === 'CONTRACT_SENT' || workClientTurn ? T.sign : T.idle;
       add({ code: 'CLIENT_IDLE', priority: 75 + Math.min(10, idle - 7), tone: idle >= 14 ? 'urgent' : 'action', params: { days: idle }, actions: [messageAction(f, 'SEND_MESSAGE', body), taskAction(f, 'idle', staffLocale, 1, now)] });
     }
   }
@@ -512,7 +534,8 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   }
 
   // Slow in a staff-side status with nothing more specific to do.
-  if (slow && !steps.some((s) => s.priority >= 80) && ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'].includes(f.status)) {
+  // (Not while the client signs the İş müqaviləsi: CONTRACT_SIGNED is then the client's side.)
+  if (slow && !workClientTurn && !steps.some((s) => s.priority >= 80) && ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'].includes(f.status)) {
     add({ code: 'STATUS_OVERDUE', priority: 64, tone: 'action', params: { days: f.daysInStatus, typical: f.typicalDays }, actions: [taskAction(f, 'overdue', staffLocale, 1, now)] });
   }
 

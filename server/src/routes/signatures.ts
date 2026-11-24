@@ -12,13 +12,14 @@ import {
   expireIfDue,
   logEvent,
   markViewed,
+  renderInterimPdf,
   sha256,
   signAsSigner,
   signerView,
 } from '../lib/esign/service.js';
 import { issueSignOtp, maskEmail, signSessionValid, verifySignOtp, SIGN_SESSION_TTL_MS } from '../lib/esign/otp.js';
 import { esignText } from '../lib/esign/texts.js';
-import { metaOf, sendPdf } from '../lib/esign/http.js';
+import { metaOf, sendPdf, sendPdfBuffer } from '../lib/esign/http.js';
 import { isImpersonating } from '../lib/privacy/impersonationContext.js';
 import { maskPhone, smsConfigured } from '../lib/messaging/providers.js';
 import { sendSecretSms } from '../lib/messaging/outbound.js';
@@ -172,6 +173,13 @@ const serveSignerDocument = async (req: Request, res: Response, signerId: string
   const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: requestId } });
   const useFinal = r.status === 'COMPLETED' && !!r.finalKey;
   if (!useFinal && r.status !== 'SENT') throw conflict('REQUEST_NOT_ACTIVE');
+  // While being signed (case contracts V2): the signatures given so far in their places — the signer sees what
+  // they (and the parties before them) signed. Same request, so the caller's access is already checked.
+  const interim = useFinal ? null : await renderInterimPdf(r.id);
+  if (interim) {
+    if (!isImpersonating()) await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), signerId, note: 'current' });
+    return void sendPdfBuffer(res, interim, `${r.originalName.replace(/\.pdf$/i, '')}-partly-signed.pdf`, !!req.query.download);
+  }
   if (!isImpersonating()) await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), signerId, note: useFinal ? 'final' : 'original' });
   const base = r.originalName.replace(/\.pdf$/i, '');
   sendPdf(res, useFinal ? r.finalKey! : r.originalKey, useFinal ? `${base}-signed.pdf` : r.originalName, !!req.query.download);

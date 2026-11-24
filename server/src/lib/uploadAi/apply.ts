@@ -12,6 +12,7 @@ import { logDriveActivity } from '../driveCollab/activity.js';
 import { assertNotLockedByOther } from '../driveCollab/lock.js';
 import { setDocumentExpiry } from '../expiry/index.js';
 import { trashRejectedCopy } from '../drive/caseFolders.js';
+import { syncLinkedReview } from '../docLink/service.js';
 import { badRequest, conflict, notFound } from '../http.js';
 import type { QualityReason } from './quality.js';
 import { reuploadNote } from './texts.js';
@@ -218,6 +219,7 @@ export const requestReupload = async (documentId: string, actor: { id: string; i
 
   await prisma.document.update({ where: { id: doc.id }, data: { status: 'REJECTED', reviewNote: note } });
   await trashRejectedCopy(doc.id); // its incoming copy leaves the client folder (bin; back when accepted)
+  await syncLinkedReview(doc.id); // its linked copy in the other list is rejected with the same note (lib/docLink; never throws)
   await prisma.caseEvent.create({ data: { caseId: doc.caseId, type: 'DOCUMENT_REJECTED', note: `${doc.originalName}: ${note}`, actorId: actor.id } });
   void emitAutomationEvent({ type: 'DOCUMENT_REJECTED', entityType: 'document', entityId: doc.id, caseId: doc.caseId }); // automation hook
   const title = (doc.requirement?.title as Record<string, string> | null)?.[locale] ?? doc.originalName;

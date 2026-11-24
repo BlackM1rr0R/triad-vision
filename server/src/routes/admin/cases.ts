@@ -24,7 +24,7 @@ import { badRequest, conflict, HttpError, notFound, parse } from '../../lib/http
 import { notifyClient } from '../../lib/notifications.js';
 import { createCaseMessage, listMessages, markMessagesRead, publishTyping } from '../../lib/messaging/caseMessages.js';
 import { deleteCaseDocument } from '../../lib/caseDocDelete.js';
-import { copyDocumentToDrive, syncCaseFolder, trashRejectedCopy } from '../../lib/drive/caseFolders.js';
+import { copyDocumentToDrive, removeDocumentCopy, syncCaseFolder, trashRejectedCopy } from '../../lib/drive/caseFolders.js';
 import { caseParentFor, checkTargetFolder, folderInfos, vacancyProfession } from '../../lib/drive/vacancyFolders.js'; // vacancy folders
 import { hasMinRole, requireMinRole } from '../../middleware/auth.js';
 import { hasMissing, translateMany } from '../../lib/ai/translate.js';
@@ -40,10 +40,12 @@ import { PROCESSING_STAGES, processingSummaries, stageCounts, stageWhere } from 
 import { FINAL_PROCESS_STATUSES } from '../../lib/recognition/rules.js';
 import { caseScopeWhere, withCaseScope } from '../../lib/access/index.js'; // case scope (ALL = every case, the default)
 import { ensureEarlyEmbassyRequirements } from '../../lib/earlyEmbassy/service.js'; // embassy list while waiting for the contract
-
+import { linkCaseRequirements, linkUploadedDocument, syncLinkedReview } from '../../lib/docLink/service.js'; // one upload for the initial and the embassy list
 export const adminCasesRouter = Router();
 
 const l10n = z.object({ az: z.string(), de: z.string(), en: z.string(), ru: z.string() });
+/** Requirement key (document type) as in the requirement templates (admin/requirements.ts): PASSPORT, PHOTO, CV … */
+const requirementKey = z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_]{1,39}$/);
 const VISA_TYPES = ['WORK', 'AUSBILDUNG', 'WEITERBILDUNG', 'JOB_SEEKER', 'STUDY', 'FAMILY', 'TOURIST'] as const;
 const STATUSES = [
   'DOCUMENTS_PENDING', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT', 'CONTRACT_SIGNED', 'EMBASSY_DOCUMENTS',
@@ -338,6 +340,8 @@ adminCasesRouter.post('/:id/requirements', async (req, res) => {
       title: l10n,
       description: l10n.optional(),
       required: z.boolean().default(true),
+      // Document type (template key: PASSPORT, PHOTO, CV …): the same document of the other list is linked in (lib/docLink).
+      key: requirementKey.nullable().optional(),
     }),
     req.body,
   );
@@ -359,36 +363,49 @@ adminCasesRouter.post('/:id/requirements', async (req, res) => {
     data: {
       caseId: c.id,
       stage: body.stage,
+      key: body.key ?? null,
       required: body.required,
       title: tx?.values.title ?? body.title,
       ...(description ? { description: tx?.values.description ?? description } : {}),
       sortOrder: (max._max.sortOrder ?? -1) + 1,
     },
   });
-  res.status(201).json({ requirement, translation: tx ? { autoTranslated: tx.autoTranslated, reason: tx.reason ?? null } : null });
+  // The same document already uploaded for the other list is attached right away (lib/docLink; never throws).
+  const linked = requirement.key ? await linkCaseRequirements(c.id, { actorId: req.user!.id }) : 0;
+  res.status(201).json({ requirement, linked, translation: tx ? { autoTranslated: tx.autoTranslated, reason: tx.reason ?? null } : null });
 });
 
 adminCasesRouter.patch('/:id/requirements/:reqId', async (req, res) => {
   const body = parse(
-    z.object({ title: l10n.optional(), description: l10n.nullable().optional(), required: z.boolean().optional() }),
+    z.object({ title: l10n.optional(), description: l10n.nullable().optional(), required: z.boolean().optional(), key: requirementKey.nullable().optional() }),
     req.body,
   );
   const r = await prisma.documentRequirement.findUnique({ where: { id: req.params.reqId } });
   if (!r || r.caseId !== req.params.id) throw notFound();
+  if (body.title && !Object.values(body.title).some((s) => s.trim())) throw badRequest('TITLE_REQUIRED');
   const requirement = await prisma.documentRequirement.update({
     where: { id: r.id },
     data: { ...body, description: body.description === null ? Prisma.DbNull : body.description },
   });
-  res.json({ requirement });
+  // A document type set now: the matching document of the other list is linked in (never throws).
+  const linked = body.key && body.key !== r.key ? await linkCaseRequirements(r.caseId, { actorId: req.user!.id }) : 0;
+  res.json({ requirement, linked });
 });
 
 adminCasesRouter.delete('/:id/requirements/:reqId', async (req, res) => {
   const r = await prisma.documentRequirement.findUnique({
     where: { id: req.params.reqId },
-    include: { _count: { select: { documents: true } } },
+    include: { documents: { select: { id: true, storedName: true, linkedFromId: true } } },
   });
   if (!r || r.caseId !== req.params.id) throw notFound();
-  if (r._count.documents > 0) throw conflict('REQUIREMENT_HAS_DOCUMENTS');
+  // Only copies added automatically from the other list (lib/docLink) do not block the removal: they go with it
+  // (their own files; the source document stays in its list).
+  if (r.documents.some((d) => !d.linkedFromId)) throw conflict('REQUIREMENT_HAS_DOCUMENTS');
+  if (r.documents.length) {
+    for (const d of r.documents) await removeDocumentCopy(d.id).catch(() => 0);
+    await prisma.document.deleteMany({ where: { id: { in: r.documents.map((d) => d.id) } } });
+    for (const d of r.documents) await fs.unlink(path.join(config.uploads.privateDir, path.basename(d.storedName))).catch(() => undefined);
+  }
   await prisma.documentRequirement.delete({ where: { id: r.id } });
   res.json({ ok: true });
 });
@@ -428,6 +445,9 @@ adminCasesRouter.post('/:id/documents/:docId/review', async (req, res) => {
   if (body.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
   if (body.status === 'REJECTED') await trashRejectedCopy(doc.id); // the incoming copy leaves the client folder (bin; back on accept)
   if (body.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // language certificate → profile German level (never throws)
+  // Linked copies in the other list follow this review; a linked copy reviewed here keeps its own (lib/docLink; never throws).
+  const followed = await syncLinkedReview(doc.id);
+  if (body.status === 'REJECTED') for (const id of followed) await trashRejectedCopy(id);
   // Last required initial document accepted in DOCUMENTS_REVIEW: the case waits for the contract → embassy list early (never throws).
   if (body.status === 'ACCEPTED' && doc.stage === 'INITIAL') await ensureEarlyEmbassyRequirements(doc.caseId);
   await prisma.caseEvent.create({
@@ -499,6 +519,8 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
     });
     if (doc.status === 'ACCEPTED') void copyDocumentToDrive(doc.id); // a copy in the client's drive folder
     if (doc.status === 'ACCEPTED') await onLanguageCertAccepted(doc.id, req.user!.id); // staff-uploaded certificate → German level
+    // Also attached to the matching requirement of the other list (initial ↔ embassy; never throws).
+    if (body.stage === 'INITIAL' || body.stage === 'EMBASSY') await linkUploadedDocument(doc.id, { actorId: req.user!.id });
 
     if (body.stage === 'CONTRACT') {
       try {

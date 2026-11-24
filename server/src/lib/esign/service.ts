@@ -10,7 +10,7 @@ import { renderEmail, sendMail } from '../mailer.js';
 import { notifyUser } from '../notifications.js';
 import { clientSignContract, staffSendContract } from '../caseFlow.js';
 import { buildFinalPdf } from './pdf.js';
-import { placementsSchema } from './placements.js';
+import { buildInterimPdf, interimPlan, placementsSchema } from './placements.js';
 import { esignText, formatDay } from './texts.js';
 import { maskEmail } from './otp.js';
 import { maskPhone, normalizePhone, smsConfigured } from '../messaging/providers.js';
@@ -899,4 +899,32 @@ export const runSignatureJobs = async (now = new Date()) => {
     return 0;
   });
   return result;
+};
+
+// ─── Interim copy ──────────────────────────────────────────────────────
+
+/**
+ * The PDF of a request in progress with the signatures given so far in their places (case contracts V2): rendered
+ * on the fly from the untouched original (nothing stored, nothing to clean up; read-only, so safe in GET handlers
+ * and while impersonating). null = no interim copy (no placements, nobody signed yet, or not SENT any more).
+ */
+export const renderInterimPdf = async (requestId: string): Promise<Buffer | null> => {
+  const r = await prisma.signatureRequest.findUnique({
+    where: { id: requestId },
+    select: { status: true, originalKey: true, placements: true, signers: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] } },
+  });
+  if (!r) return null;
+  const plan = interimPlan(r.status, r.signers, r.placements ? (placementsSchema.safeParse(r.placements).data ?? null) : null);
+  if (!plan) return null;
+  const signers = [];
+  for (const s of plan.signers) {
+    signers.push({
+      role: s.role,
+      name: s.name,
+      signedAt: s.signedAt,
+      imagePng: s.signatureImageKey ? await readStored(s.signatureImageKey).catch(() => null) : null,
+      typedName: s.typedName ?? (s.signatureImageKey ? null : s.name),
+    });
+  }
+  return buildInterimPdf(await readStored(r.originalKey), signers, plan.placements);
 };

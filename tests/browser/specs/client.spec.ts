@@ -34,6 +34,23 @@ test.describe('client cabinet', () => {
     await expect(stickyNextBar(page)).not.toContainText('Sizdən gözlənilən');
   });
 
+  test('status line "Bax" opens the stage panel in place and closes it again', async ({ context, page }) => {
+    const c = seed().clients.viewer;
+    await signIn(context, c);
+    await openCase(page, c);
+    const url = page.url();
+    const toggle = statusLine(page).getByRole('button', { name: 'Bax' });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    const panel = page.getByTestId('cabinet-status-panel');
+    await expect(panel).toBeVisible();
+    await expect(statusLine(page).getByRole('button', { name: 'Gizlət' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(panel.getByRole('link', { name: 'Müraciətə keç' })).toBeVisible();
+    expect(page.url(), '"Bax" does not navigate').toBe(url);
+    await statusLine(page).getByRole('button', { name: 'Gizlət' }).click();
+    await expect(panel).toBeHidden();
+  });
+
   test('journey card sits right below the current step, near the top', async ({ context, page }) => {
     const c = seed().clients.viewer;
     await signIn(context, c);

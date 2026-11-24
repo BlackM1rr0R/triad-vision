@@ -243,11 +243,18 @@ export interface CaseDocument {
   reviewNote: string | null;
   uploadedById: string;
   createdAt: string;
+  /** Added automatically from the matching requirement of the other list (server lib/docLink). */
+  linkedFromId?: string | null;
+  linkedFromStage?: DocStage | null;
+  /** Staff reviewed the linked copy on its own (it no longer follows its source). */
+  linkDetached?: boolean;
 }
 
 export interface Requirement {
   id: string;
   stage: DocStage;
+  /** Template key (PASSPORT, PHOTO, CV …); null for a requirement typed for one case. */
+  key?: string | null;
   title: L10n;
   description: L10n | null;
   required: boolean;

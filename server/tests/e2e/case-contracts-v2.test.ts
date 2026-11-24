@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { CaseStatus } from '@prisma/client';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDict, PDFDocument, PDFName } from 'pdf-lib';
 import { asClient, asStaff } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { uniq } from '../helpers/factories';
-import { makePdf, PDF, SIGNATURE_DATA_URL } from '../helpers/files';
+import { binaryParser, makePdf, PDF, SIGNATURE_DATA_URL } from '../helpers/files';
 import { expectStatus } from '../helpers/workflow';
 import { asCandidate, createCompany, createVacancy } from './vacancies.fixtures';
 import { staffConfirmContract } from '../../src/lib/caseFlow.js';
+import { ballInCourtFor } from '../../src/lib/clientProcess/ballInCourt.js';
 
 /**
  * Case contracts V2 (lib/caseContracts): staff upload their own PDF with marked signature places.
@@ -97,6 +98,57 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
     await waitFor(async () => prisma.notification.findFirst({ where: { userId: client.user.id, type: 'CASE_CONTRACT_APPROVED' } }));
     // "Confirm contract" cannot skip the İş müqaviləsi.
     await expect(staffConfirmContract(c.id, staff.user.id)).rejects.toMatchObject({ code: 'WORK_CONTRACT_PENDING' });
+  });
+
+  it('interim PDF: after the client signs, staff see the client signature before Triad Vision signs; the original stays untouched; next step / ball follow V2', async () => {
+    const { client, c, staff } = await setup();
+    const [id] = expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek', boxes: [CLIENT_BOX, TRIAD_BOX] }]), 201).body.signatureRequestIds as string[];
+    const get = (url: string) => staff.agent.get(url).buffer(true).parse(binaryParser);
+    const images = async (buf: Buffer) => {
+      const page = (await PDFDocument.load(buf)).getPages()[0];
+      return page.node.Resources()?.lookupMaybe(PDFName.of('XObject'), PDFDict)?.keys().length ?? 0;
+    };
+    const original = expectStatus(await get(`/api/admin/signatures/${id}/document?version=original`), 200).body as Buffer;
+    // Nobody signed yet: "current" is the original.
+    expect(Buffer.compare(expectStatus(await get(`/api/admin/signatures/${id}/document?version=current`), 200).body as Buffer, original)).toBe(0);
+
+    const cand = await candidateOf(id);
+    expectStatus(await client.agent.post(`/api/signatures/my/${cand.id}/sign`).send({ mode: 'DRAW', signature: SIGNATURE_DATA_URL, agree: true }), 200);
+    const current = await get(`/api/admin/signatures/${id}/document?version=current`);
+    expectStatus(current, 200);
+    expect(current.headers['content-type']).toContain('application/pdf');
+    const interim = current.body as Buffer;
+    expect(Buffer.compare(interim, original)).not.toBe(0);
+    expect(await images(interim)).toBeGreaterThan(await images(original));
+    // The default while signing is the interim copy too; the original is unchanged.
+    expect(Buffer.compare(expectStatus(await get(`/api/admin/signatures/${id}/document`), 200).body as Buffer, interim)).toBe(0);
+    expect(Buffer.compare(expectStatus(await get(`/api/admin/signatures/${id}/document?version=original`), 200).body as Buffer, original)).toBe(0);
+    // The client's own copy shows their signature as well.
+    const mine = await client.agent.get(`/api/signatures/my/${cand.id}/document`).buffer(true).parse(binaryParser);
+    expect(await images(expectStatus(mine, 200).body as Buffer)).toBeGreaterThan(await images(original));
+
+    // Staff next step and ball: Triad Vision signs now (the client has signed) — not "client not invited yet".
+    const next = expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep;
+    expect(next.steps[0]).toMatchObject({ code: 'TRIAD_SIGN_AFTER_CLIENT' });
+    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'TRIAD_SIGN_CONTRACT' });
+
+    // Triad Vision signs → approved; the next step is the İş müqaviləsi, not "confirm the contract".
+    expectStatus(await staff.agent.post(`${BASE}/${c.id}/triad-sign`).send({ step: 'LABOUR', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
+    await completed(id);
+    await waitFor(async () => (await prisma.signatureRequest.findUniqueOrThrow({ where: { id } })).approvedAt);
+    const after = expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep;
+    expect(after.steps[0]).toMatchObject({ code: 'SEND_WORK_CONTRACT' });
+    expect(after.steps.map((x: { code: string }) => x.code)).not.toContain('CONFIRM_CONTRACT');
+    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'SEND_WORK_CONTRACT' });
+
+    // İş müqaviləsi sent: the client's turn; signed by the client: staff approve.
+    const [w] = expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX] }]), 201).body.signatureRequestIds as string[];
+    expect(expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep.steps.map((x: { code: string }) => x.code)).toContain('AWAIT_WORK_SIGNATURE');
+    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'CLIENT', reason: 'SIGN_CONTRACT' });
+    expectStatus(await client.agent.post(`/api/signatures/my/${(await candidateOf(w)).id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
+    await completed(w);
+    expect(expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep.steps[0]).toMatchObject({ code: 'APPROVE_WORK_CONTRACT' });
+    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'APPROVE_WORK_CONTRACT' });
   });
 
   it('Əmək müqaviləsi returned with a reason: the client sees it, a new version can be uploaded', async () => {

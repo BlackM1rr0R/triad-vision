@@ -32,7 +32,8 @@ const az = {
     estimateNote: 'Tarixlər oxşar müraciətlərə əsaslanan təxmini proqnozdur.',
     submitted: 'Göndərilib: {{date}}',
     recognitionRejected: 'Tanınmadı',
-    nowLabel: 'İndi',
+    nowLabel: 'Hazırkı mərhələ',
+    openCase: 'Müraciətə keç',
     nextLabel: 'Növbəti addım',
   },
 };
@@ -71,7 +72,8 @@ const de: Copy = {
     estimateNote: 'Die Daten sind eine Schätzung auf Basis ähnlicher Anträge.',
     submitted: 'Eingereicht: {{date}}',
     recognitionRejected: 'Nicht anerkannt',
-    nowLabel: 'Jetzt',
+    nowLabel: 'Aktuelle Etappe',
+    openCase: 'Zum Antrag',
     nextLabel: 'Nächster Schritt',
   },
 };
@@ -108,7 +110,8 @@ const en: Copy = {
     estimateNote: 'Dates are an estimate based on similar applications.',
     submitted: 'Submitted: {{date}}',
     recognitionRejected: 'Not recognised',
-    nowLabel: 'Now',
+    nowLabel: 'Current stage',
+    openCase: 'Go to my application',
     nextLabel: 'Next step',
   },
 };
@@ -145,7 +148,8 @@ const ru: Copy = {
     estimateNote: 'Даты — примерный прогноз на основе похожих заявок.',
     submitted: 'Подано: {{date}}',
     recognitionRejected: 'Не признано',
-    nowLabel: 'Сейчас',
+    nowLabel: 'Текущий этап',
+    openCase: 'Перейти к заявке',
     nextLabel: 'Следующий шаг',
   },
 };
@@ -182,7 +186,8 @@ const tr: Copy = {
     estimateNote: 'Tarihler, benzer başvurulara dayanan bir tahmindir.',
     submitted: 'Gönderildi: {{date}}',
     recognitionRejected: 'Denklik verilmedi',
-    nowLabel: 'Şimdi',
+    nowLabel: 'Şu anki aşama',
+    openCase: 'Başvuruma git',
     nextLabel: 'Sonraki adım',
   },
 };
@@ -219,7 +224,8 @@ const uk: Copy = {
     estimateNote: 'Дати — орієнтовний прогноз на основі схожих заявок.',
     submitted: 'Подано: {{date}}',
     recognitionRejected: 'Не визнано',
-    nowLabel: 'Зараз',
+    nowLabel: 'Поточний етап',
+    openCase: 'Перейти до заявки',
     nextLabel: 'Наступний крок',
   },
 };

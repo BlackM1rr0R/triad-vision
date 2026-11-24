@@ -4,6 +4,7 @@ import {
   DEFAULT_RANGES,
   median,
   parseOverride,
+  projectedStatus,
   quantile,
   rangeFromSample,
   resolveRanges,
@@ -172,5 +173,25 @@ describe('forecast math', () => {
     });
     expect(f.currentSince).toEqual(d('2026-05-01T00:00:00Z'));
     expect(f.steps[2].expectedFrom).toEqual(d('2026-05-15T00:00:00Z'));
+  });
+});
+
+describe('projectedStatus: documents accepted -> the contract step is current', () => {
+  const history = [
+    { status: 'DOCUMENTS_PENDING' as const, at: d('2026-01-01T00:00:00Z') },
+    { status: 'DOCUMENTS_REVIEW' as const, at: d('2026-01-10T00:00:00Z') },
+  ];
+  it('keeps the status while documents wait for review or none was accepted', () => {
+    expect(projectedStatus('DOCUMENTS_REVIEW', history, { pending: 1, accepted: 3, lastAt: null }).status).toBe('DOCUMENTS_REVIEW');
+    expect(projectedStatus('DOCUMENTS_REVIEW', history, { pending: 0, accepted: 0, lastAt: null }).status).toBe('DOCUMENTS_REVIEW');
+    expect(projectedStatus('DOCUMENTS_PENDING', history, { pending: 0, accepted: 2, lastAt: null }).status).toBe('DOCUMENTS_PENDING');
+  });
+  it('all accepted: documents done, contract current', () => {
+    const p = projectedStatus('DOCUMENTS_REVIEW', history, { pending: 0, accepted: 4, lastAt: d('2026-01-12T00:00:00Z') });
+    expect(p.status).toBe('CONTRACT_SENT');
+    const f = computeForecast({ ...p, ranges: defaults(), now: d('2026-01-13T00:00:00Z') });
+    expect(f.currentStep).toBe('CONTRACT');
+    expect(f.steps.map((s) => s.status)).toEqual(['done', 'current', 'upcoming', 'upcoming', 'upcoming']);
+    expect(f.steps[0].leftAt).toEqual(d('2026-01-12T00:00:00Z'));
   });
 });

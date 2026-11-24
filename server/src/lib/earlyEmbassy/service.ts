@@ -3,6 +3,7 @@ import { prisma } from '../../db.js';
 import { createRequirements } from '../docsIntel/requirementTemplates.js';
 import { EARLY_EMBASSY_STATUSES, earlyEmbassyOpen } from './rules.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
+import { linkCaseRequirements } from '../docLink/service.js';
 
 /**
  * Early embassy documents (rules in ./rules.ts): creates a case's EMBASSY requirement rows as soon as it waits for the
@@ -30,7 +31,7 @@ export const ensureEarlyEmbassyRequirements = async (caseId: string): Promise<bo
       const initial = await prisma.documentRequirement.findMany({ where: { caseId, stage: 'INITIAL' }, select: { required: true, documents: { select: { status: true } } } });
       if (!earlyEmbassyOpen(quick.status, initial)) return false;
     }
-    return await prisma.$transaction(
+    const created = await prisma.$transaction(
       async (tx) => {
         const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM \`Case\` WHERE id = ${caseId} FOR UPDATE`;
         if (!locked.length) return false;
@@ -49,6 +50,9 @@ export const ensureEarlyEmbassyRequirements = async (caseId: string): Promise<bo
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 15_000 },
     );
+    // Documents the initial list already has for the same need (passport, photo …) are attached right away (lib/docLink).
+    if (created) await linkCaseRequirements(caseId);
+    return created;
   } catch (err) {
     console.error('[early-embassy] could not create the embassy requirements', err);
     return false;

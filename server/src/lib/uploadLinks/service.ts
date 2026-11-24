@@ -13,6 +13,7 @@ import { photoCheckOnUpload } from '../photoCheck/index.js';
 import { emitAutomationEvent } from '../automation/events.js';
 import { completeTasksForUpload } from '../clientProcess/tasks.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
+import { linkUploadedDocument } from '../docLink/service.js'; // one upload for the initial and the embassy list
 import { decodeOriginalName, verifyUploadedFile } from '../../middleware/upload.js';
 import { CASE_DOC_MIME, HEIF_MIME } from '../fileCheck.js';
 import { initialsOf } from '../originals/receipts.js';
@@ -197,6 +198,7 @@ export const ingestLinkUpload = async (token: string, file: Express.Multer.File,
     await prisma.caseEvent.create({ data: { caseId: c.id, type: 'DOCUMENT_UPLOADED', note: `${doc.originalName} (link)`, actorId: c.clientId, visibleToClient: false } });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id });
     void copyDocumentToDrive(doc.id, { pending: true });
+    await linkUploadedDocument(doc.id); // also attached to the matching requirement of the other list (initial ↔ embassy; never throws)
     const checks = await checkCaseDocument(doc.id); // PDF readable, image, resolution, passport MRZ / expiry (never throws)
     const quality = publicQuality(await prepareCaseDocument(doc.id)); // blur / darkness / cut-off (never throws)
     const photoCheck = await photoCheckOnUpload(doc.id); // biometric photo rules for PHOTO requirements (never throws)

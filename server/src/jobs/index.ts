@@ -69,3 +69,4 @@ import './rateAlerts.js'; // EUR → AZN rate alerts: after the daily CBAR fetch
 import './accessAudit.js'; // Access Center › Audit: quarterly access review (days 1–7 of a quarter, once) + access anomaly alerts every 10 min
 import './browserErrors.js'; // browser error log: daily digest of new error groups to the admins + 30-day retention
 import './driveCaseLinks.js'; // drive: client folder marks, İş axını case links by name, left-behind client folders hidden from partners
+import './docLink.js'; // linked case documents: matching accepted documents of the initial / embassy list filled into the other (once after start, then daily)

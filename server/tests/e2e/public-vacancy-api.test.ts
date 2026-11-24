@@ -107,7 +107,7 @@ describe('public vacancy API: vacancies', () => {
     expect(all.body.total).toBe(2);
     expect(all.body.items.map((v: { id: string }) => v.id).sort()).toEqual([truck.id, nurse.id].sort());
     const t = all.body.items.find((v: { id: string }) => v.id === truck.id);
-    expect(t).toMatchObject({ language: 'en', title: 'LKW-Fahrer en', city: 'Bonn', country: 'DE', professionKey: 'truck_driver', companyName: 'Spedition Nord GmbH', salary: { min: 2800, max: 3400, currency: 'EUR' } });
+    expect(t).toMatchObject({ language: 'en', title: 'LKW-Fahrer en', city: 'Bonn', country: 'DE', professionKey: 'truck_driver', companyName: null, salary: { min: 2800, max: 3400, currency: 'EUR' } });
     expect(t.applyUrl).toContain(`/jobs/${truck.slug}?ref=${encodeURIComponent(code)}&src=${encodeURIComponent(key.prefix)}`);
     expect(JSON.stringify(all.body)).not.toMatch(/staffNote|companyId|driveFolderId/);
 

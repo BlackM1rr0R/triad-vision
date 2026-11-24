@@ -11,6 +11,7 @@ import { isRefused } from '../caseProcessing/index.js';
 import { visaKeyOf } from '../partners/index.js';
 import { loadContractTurns } from '../caseContracts/turn.js'; // whose turn a two-step contract is (Triad Vision signs first)
 import type { ContractTurn } from '../caseContracts/flow.js';
+import { linkUploadedDocument } from '../docLink/service.js'; // one upload for the initial and the embassy list
 
 /**
  * What a referral partner may see of "their" clients' cases (data minimisation):
@@ -329,6 +330,7 @@ export const storePartnerUpload = async (input: {
   void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
   if (target.replacement) await notifyReplacement(c, requirement, `${doc.originalName} (partnyor)`);
   if (target.early) await notifyEarlyEmbassyUpload(c, requirement, `${doc.originalName} (partnyor)`);
+  await linkUploadedDocument(doc.id); // also the matching requirement of the other list (never throws)
   const checks = await checkCaseDocument(doc.id);
   return { document: { id: doc.id, name: doc.originalName, status: doc.status, createdAt: doc.createdAt }, checks, caseNumber: c.number };
 };

@@ -37,6 +37,42 @@ export const clearNextStepAiCache = () => cache.clear();
 
 const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
+/**
+ * Where the two-step case contract stands, in plain words for the model (who has signed, whose turn it is) —
+ * "contractSigned" alone made it say "the client has not signed" while Triad Vision's signature was missing (V2).
+ */
+export const contractProgress = (f: Pick<CaseFacts, 'status' | 'contract' | 'contractTurn' | 'contractV2' | 'workContract'>): string | null => {
+  if (f.status === 'CONTRACT_SENT') {
+    if (f.contractTurn === 'TRIAD')
+      return f.contractV2
+        ? 'Labour contract (Əmək müqaviləsi): the client HAS signed; Triad Vision must sign now (its signature approves it). Nothing is needed from the client.'
+        : 'Labour contract (Əmək müqaviləsi): Triad Vision signs first; the client is invited to sign afterwards. Nothing is needed from the client yet.';
+    if (f.contractTurn === 'STAFF') return 'Labour contract (Əmək müqaviləsi): the signature request expired, was declined or voided; staff must send a new version.';
+    if (f.contractTurn === 'CLIENT') return f.contractV2 ? 'Labour contract (Əmək müqaviləsi): sent; the client has not signed yet (the client signs first, then Triad Vision).' : 'Labour contract (Əmək müqaviləsi): waiting for the client to sign.';
+    return null;
+  }
+  if (f.status === 'CONTRACT_SIGNED') {
+    if (!f.contractV2) return 'Contract signed by the client; staff must check and confirm it.';
+    const labour = 'Labour contract (Əmək müqaviləsi) signed by the client and Triad Vision and approved. ';
+    switch (f.workContract) {
+      case 'NOT_SENT':
+        return `${labour}Next: staff must upload and send the work contract (İş müqaviləsi) documents to the client.`;
+      case 'CLIENT_TO_SIGN':
+        return `${labour}Work contract (İş müqaviləsi) documents were sent; waiting for the client to sign them.`;
+      case 'SIGNED':
+        return `${labour}The client signed all work contract (İş müqaviləsi) documents; staff must review and approve them, then the embassy documents follow.`;
+      case 'RETURNED':
+      case 'DECLINED':
+      case 'EXPIRED':
+      case 'CANCELLED':
+        return `${labour}A work contract (İş müqaviləsi) document was sent back / declined / expired; staff must send a new version.`;
+      default:
+        return labour;
+    }
+  }
+  return null;
+};
+
 /** What the model gets: no documents, no contact data — only the case state and the rule output. */
 export const aiInput = (f: CaseFacts, view: NextStepView, staffLocale: Locale) => ({
   staffLanguage: LANG[staffLocale],
@@ -52,6 +88,7 @@ export const aiInput = (f: CaseFacts, view: NextStepView, staffLocale: Locale) =
     passportExpiry: day(f.passportExpiry),
     plannedEntry: day(f.plannedEntry),
     contractSigned: !!f.contract?.signedAt,
+    contract: contractProgress(f),
     lastClientActivity: day(f.lastClientActivityAt),
     openTasks: f.openTasks,
     documents: f.requirements.map((r) => ({ title: r.title.en || r.title.de, stage: r.stage, required: r.required, latest: r.docs[0]?.status ?? 'NONE' })),

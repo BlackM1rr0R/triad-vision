@@ -1,8 +1,8 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { AlertTriangle, ChevronDown, ChevronRight, RotateCw } from 'lucide-react';
+import { AlertTriangle, ChevronDown, RotateCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { AppointmentWidget, LastMessageCard } from '@/components/portal/Dashboard';
 import { JourneyCard } from '@/components/portal/JourneyCard';
@@ -15,8 +15,6 @@ import pagesAccount from '@/i18n/pagesAccount?lazy-copy';
 import { pagesPortalUx } from '@/i18n/pagesPortalUx';
 import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { pagesPortalStage } from '@/i18n/pagesPortalStage';
-import { toolPath, type PortalToolKey, type ToolLinkContext } from '@/lib/portalTools';
-import { ALL_TOOLS_ICON, TOOL_ICON, toolLabel } from '@/components/portal/portalToolMeta';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { NextWhileYouWait } from '@/components/waitingRoom/NextWhileYouWait'; // "Next while you wait" (waiting room)
 import { SuccessShareCard } from '@/components/portal/SuccessShareCard'; // visa approved: congratulations + share card (hideable)
@@ -24,7 +22,6 @@ import { PermitExpiryCard } from '@/components/portal/PermitExpiryCard'; // afte
 import { PartnerSharingCard } from '@/components/portal/PartnerSharingCard'; // client of a referral partner: who it is + data-sharing consent
 import { NextStepCard } from './portal/NextStepCard';
 import { DocStatusSection } from '@/components/docProgress/DocProgress'; // "Sənədlərimin vəziyyəti": ring, steps, status bars, team stage
-import { HomeProgress } from './portal/HomeProgress';
 import { caseHref } from './portal/useNextUp';
 import { AccountHomeSkeleton } from './portal/HomeSkeleton';
 import { CountdownCards } from '@/components/portal/CountdownCards'; // embassy / flight / Anmeldung countdowns + destination weather
@@ -39,50 +36,7 @@ registerCopy(pagesPortalUx);
 registerCopy(pagesPortalNav);
 registerCopy(pagesPortalStage);
 
-/** "For this stage": the tools the server features for the client's stage, plus "All tools". */
-function StageTools({ tools, ctx, badge, allBadge }: { tools: PortalToolKey[]; ctx: ToolLinkContext; badge: (k: PortalToolKey) => number; allBadge: number }) {
-  const { t } = useTranslation();
-  const items = tools.map((k) => ({ k, to: toolPath(k, ctx) })).filter((x): x is { k: PortalToolKey; to: string } => !!x.to);
-  const tile =
-    'group relative flex min-h-14 items-center gap-3 rounded-2xl border border-line bg-card px-3.5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-sunken focus-visible:ring-2 focus-visible:ring-primary';
-  const Count = ({ n }: { n: number }) =>
-    n > 0 ? (
-      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-danger px-1.5 text-[11px] leading-none font-bold text-white">
-        <span aria-hidden>{n > 99 ? '99+' : n}</span>
-        <span className="sr-only">{t('pux.nav.badge', { count: n })}</span>
-      </span>
-    ) : null;
-  return (
-    <section aria-labelledby="stage-tools-title" data-tour="portal-stage-tools">
-      <h2 id="stage-tools-title" className="type-overline text-muted">
-        {t('pstage.home.forStage')}
-      </h2>
-      <ul className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {items.map(({ k, to }) => {
-          const Icon = TOOL_ICON[k];
-          return (
-            <li key={k} className="min-w-0">
-              <Link to={to} className={tile}>
-                <Icon className="size-5 shrink-0 text-link" aria-hidden />
-                <span className="min-w-0 break-words">{toolLabel(t, k)}</span>
-                <Count n={badge(k)} />
-              </Link>
-            </li>
-          );
-        })}
-        <li className="min-w-0">
-          <Link to="/account/all" className={clsx(tile, 'border-dashed text-link')} data-tour="portal-all-home">
-            <ALL_TOOLS_ICON className="size-5 shrink-0" aria-hidden />
-            <span className="min-w-0 break-words">{t('pstage.home.allTools')}</span>
-            {allBadge > 0 ? <Count n={allBadge} /> : <ChevronRight className="ml-auto size-4 shrink-0 text-muted" aria-hidden />}
-          </Link>
-        </li>
-      </ul>
-    </section>
-  );
-}
-
-/** "More": the cards that used to crowd the home (progress, journey map, readiness …), folded away and mounted on demand. */
+/** "More": the cards that used to crowd the home (countdowns, readiness, Germany Ready …), folded away and mounted on demand. */
 function MoreArea({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const { hash } = useLocation();
@@ -115,10 +69,13 @@ function MoreArea({ children }: { children: ReactNode }) {
 }
 
 /**
- * Portal home, calm and stage-based, top to bottom: ONE big card "Do this now" with the most important
- * action (GET /api/account/next-step), at most three small cards (messages, the next appointment, one stage
- * card), the tools of the client's stage (server: lib/account/portalStage.ts) and a folded "More" area with
- * everything else that used to live here (progress, journey map, countdowns, readiness, Germany Ready …).
+ * Portal home ("Əsas"), a short overview, top to bottom: ONE big card "Do this now" with the most important action
+ * (GET /api/account/next-step), "Sənədlərimin vəziyyəti" (documents + the six stages), a compact "Sizin yolunuz"
+ * (current stage → next step, linking to the case page), at most three small cards (last message, the next
+ * appointment, one stage card) and a folded "More" area (countdowns, readiness, Germany Ready …).
+ * The case details — current-step card, the full journey map, the dated forecast, documents, messages — live on
+ * "Müraciətim" (/account/cases/:id) only, so the two pages do not repeat each other. The stage's tools are in the
+ * top navigation (no tool panel here).
  */
 export default function AccountHome() {
   const { t } = useTranslation();
@@ -163,7 +120,6 @@ export default function AccountHome() {
   const appointmentAhead = activeCase?.appointment && new Date(activeCase.appointment.at).getTime() > Date.now() ? activeCase : null;
   const waitingStage = stage === 'PREPARING' || stage === 'AT_EMBASSY';
   const approved = cases.some((c) => c.status === 'APPROVED');
-  const ctx: ToolLinkContext = { caseId: nav.caseId, caseCount: nav.caseCount, approvedCaseId: nav.approvedCaseId };
 
   // At most three small cards: messages, the next appointment and one card of the stage.
   const small = [
@@ -189,19 +145,15 @@ export default function AccountHome() {
         <NextStepCard data={step} loading={next.isLoading} caseLink={caseId ? caseHref(caseId, 'overview') : null} tour="portal-next" />
       )}
 
-      {/* Always in view, right below "Do this now": the progress bar and the route home → Germany with the milestones. */}
-      {step?.case && <HomeProgress next={step} stage={stage} detailsTo={caseId && activeCase ? caseHref(caseId, 'overview', '#forecast') : null} tour="portal-progress" />}
-      {step?.case && <JourneyCard next={step} />}
-
-      {/* Then the documents and the whole process at a glance (own case only). */}
+      {/* Right below "Do this now": the documents and the six stages at a glance (own case only; one progress block). */}
       {!startHero && caseId && <DocStatusSection caseId={caseId} />}
+      {/* "Sizin yolunuz", short: current stage → next step; the map and the dates are on the case page. */}
+      {step?.case && <JourneyCard next={step} compactTo={caseId ? caseHref(caseId, 'overview') : null} tour="portal-progress" />}
 
       {/* A referral partner's data-sharing consent: only shown when it applies, and it needs an answer. */}
       <PartnerSharingCard />
 
       {small.length > 0 && <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">{small}</div>}
-
-      {nav.featured.length > 0 && <StageTools tools={nav.featured} ctx={ctx} badge={nav.toolBadges} allBadge={nav.allBadge} />}
 
       <MoreArea>
         {cases.length > 0 && <CountdownCards />}

@@ -27,3 +27,14 @@ export const sendPdf = (res: Response, key: string, filename: string, download: 
   res.setHeader('Cache-Control', 'private, no-store');
   res.sendFile(storedPath(key));
 };
+
+/** Same headers as sendPdf, for a PDF rendered on the fly (interim copy of a request being signed). */
+export const sendPdfBuffer = (res: Response, pdf: Buffer, filename: string, download: boolean) => {
+  const name = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${download ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(name)}`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.send(pdf);
+};

@@ -9,6 +9,7 @@ import { notifyClientUpload, resolveClientUploadTarget } from '../clientUploadTa
 import { badRequest, conflict, forbidden, notFound } from '../http.js';
 import { checkCaseDocument } from '../docCheck/index.js';
 import { copyDocumentToDrive } from '../drive/caseFolders.js';
+import { linkUploadedDocument } from '../docLink/service.js'; // one upload for the initial and the embassy list
 import { fillExpiryFromOcr } from '../expiry/index.js';
 
 import { emitAutomationEvent } from '../automation/events.js';
@@ -86,6 +87,7 @@ export const storeScanDocument = async (
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: resolved.c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // a copy in the client's drive folder (client scans right away)
+    await linkUploadedDocument(doc.id); // also attached to the matching requirement of the other list (initial ↔ embassy; never throws)
     // Staff: a rejected document was replaced / an embassy document came early (no hand-in follows).
     if (resolved.requirement) await notifyClientUpload(resolved.c, resolved, resolved.requirement, doc.originalName);
     if (!resolved.asStaff) void import('../clientProcess/tasks.js').then((m) => m.completeTasksForUpload(doc.id)); // linked client tasks

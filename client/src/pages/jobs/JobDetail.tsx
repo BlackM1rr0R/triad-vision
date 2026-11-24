@@ -19,11 +19,9 @@ import {
   ListChecks,
   MailWarning,
   MapPin,
-  Paperclip,
   Send,
   Stamp,
   Users,
-  X,
 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { currentHref, useAuth } from '@/lib/auth';
@@ -31,7 +29,6 @@ import { useL10n } from '@/lib/l10n';
 import { JobGallery } from '@/components/jobs/JobGallery';
 import { vacancyImages } from '@/components/jobs/images';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { ACCEPT as DOC_ACCEPT, prepareFile } from '@/components/portal/FileDrop';
 import { isStaffRole } from '@/lib/types';
 import i18n, { currentSiteLocale, registerCopy, registerLazyCopy } from '@/i18n';
 import pagesJobs from '@/i18n/pagesJobs?lazy-copy';
@@ -51,10 +48,6 @@ import { APPLICATION_STATUS_TONE, type ApplicationStatus, type Match, type Publi
 import { JobAlertForm } from '@/components/jobs/JobAlertForm';
 import { VacancyRequestForm } from '@/components/jobs/VacancyRequestForm'; // deactivated vacancy: "oxşarını istəyirəm"
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // full vacancy: "Uyğun vakansiya açılanda xəbər ver"
-import { ScanCameraButton } from '@/components/scanner/ScanCameraButton'; // camera scan → PDF per document
-import { scanPagesToPdf } from '@/components/scanner/scanPdf';
-import { VaultApplyPicker } from '@/components/vault/VaultApplyPicker'; // documents from the vault instead of re-uploading
-import type { VaultDoc } from '@/components/vault/api';
 import { pagesPortalExtras } from '@/i18n/pagesPortalExtras';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
 import { WorkSceneCard } from '@/components/workScenes/WorkSceneCard'; // interactive workplace of this profession (/work-scenes/*)
@@ -67,12 +60,6 @@ registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited be
 registerCopy(pagesPortalExtras); // px.apply.*, px.scan.*
 
 const HERO = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=2000&q=70';
-
-/** Documents a candidate may attach when applying (server: lib/applicationUploads.ts). */
-const APPLY_DOC_KINDS = ['PASSPORT', 'CV', 'DIPLOMA', 'LANGUAGE_CERT', 'OTHER'] as const;
-type ApplyDocKind = (typeof APPLY_DOC_KINDS)[number];
-/** Uploads + vault documents per application (server: lib/applicationUploads.ts MAX_APPLICATION_FILES). */
-const MAX_APPLY_FILES = 6;
 
 interface MeResponse {
   match: Match;
@@ -117,21 +104,8 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
   const L = useJobLabels();
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
-  // Optional documents (Reisepass, CV, diploma …): one file per kind, attached to the case once it exists.
-  const [docs, setDocs] = useState<Partial<Record<ApplyDocKind, File>>>({});
-  // Documents picked from the vault (sent as ids, not re-uploaded).
-  const [vaultDocs, setVaultDocs] = useState<VaultDoc[]>([]);
-  /** Upload progress of the documents (0..1), null when nothing is being sent. */
-  const [progress, setProgress] = useState<number | null>(null);
-  // Picked files are checked right away: type, then images are compressed and the 5 MB limit applies.
-  const pickDoc = async (k: ApplyDocKind, file: File) => {
-    const { file: ready, problem } = await prepareFile(file);
-    if (problem) {
-      toast.error(t(problem === 'portal.docs.tooLarge' ? 'jobsArea.applyErrors.fileTooLarge' : 'jobsArea.applyErrors.badType', { name: file.name }));
-      return;
-    }
-    setDocs((d) => ({ ...d, [k]: ready }));
-  };
+  // No documents here: applying opens the visa application, where they are uploaded per requirement. (The server
+  // still accepts the older multipart form with files / vaultIds — lib/applicationUploads.ts.)
   const isClient = user?.role === 'CLIENT';
   const me = useQuery({
     queryKey: ['job-me', v.slug],
@@ -139,33 +113,10 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
     enabled: isClient,
   });
   const apply = useMutation({
-    mutationFn: async () => {
-      const picked = APPLY_DOC_KINDS.filter((k) => docs[k]);
-      const vaultIds = vaultDocs.map((d) => d.id);
-      if (!picked.length) return api.post(`/vacancies/${v.slug}/apply`, { message: message.trim() || undefined, ...(vaultIds.length ? { vaultIds } : {}) });
-      const form = new FormData();
-      if (message.trim()) form.append('message', message.trim());
-      for (const id of vaultIds) form.append('vaultIds', id);
-      for (const k of picked) {
-        form.append('files', docs[k]!); // compressed when picked (pickDoc)
-        form.append('kinds', k);
-      }
-      setProgress(0);
-      try {
-        return await api.post(`/vacancies/${v.slug}/apply`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (e) => setProgress(e.total ? e.loaded / e.total : 0),
-        });
-      } finally {
-        setProgress(null);
-      }
-    },
+    mutationFn: async () => api.post(`/vacancies/${v.slug}/apply`, { message: message.trim() || undefined }),
     onSuccess: (res) => {
-      const body = res.data as { documents?: unknown[]; caseId?: string | null } | undefined;
-      const sent = (body?.documents ?? []).length;
-      toast.success(sent ? `${t('jobsArea.detail.success')} ${t('jobsArea.detail.docsSent', { count: sent })}` : t('jobsArea.detail.success'));
-      setDocs({});
-      setVaultDocs([]);
+      const body = res.data as { caseId?: string | null } | undefined;
+      toast.success(t('jobsArea.detail.success'));
       setOpen(false);
       void qc.invalidateQueries({ queryKey: ['job-me', v.slug] });
       void qc.invalidateQueries({ queryKey: ['my-applications'] });
@@ -296,72 +247,6 @@ const ApplyBox = ({ v }: { v: PublicVacancy }) => {
               placeholder={t('jobsArea.detail.messagePlaceholder')}
             />
           </div>
-          <fieldset className="space-y-2">
-            <legend className="label">{t('jobsArea.detail.docsTitle')}</legend>
-            <p className="text-xs text-muted">{t('jobsArea.detail.docsHint')}</p>
-            <ul className="space-y-1.5">
-              {APPLY_DOC_KINDS.map((k) => {
-                const f = docs[k];
-                const id = `apply-doc-${k}`;
-                return (
-                  <li key={k} className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-1.5">
-                    <Paperclip className="size-4 shrink-0 text-muted" aria-hidden />
-                    <span className="text-sm font-medium text-ink">{t(`jobsArea.detail.doc${k}`)}</span>
-                    {f ? (
-                      <>
-                        <span className="min-w-0 flex-1 truncate text-xs text-muted" title={f.name}>
-                          {f.name}
-                        </span>
-                        <button type="button" className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-danger-fg hover:underline" onClick={() => setDocs((d) => ({ ...d, [k]: undefined }))}>
-                          <X className="size-3.5" aria-hidden /> {t('jobsArea.detail.docRemove')}
-                        </button>
-                      </>
-                    ) : (
-                      <span className="ml-auto flex flex-wrap items-center gap-3">
-                      {/* Camera scan (multi-page → one PDF) instead of picking a file. */}
-                      <ScanCameraButton
-                        className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-link hover:underline"
-                        title={t(`jobsArea.detail.doc${k}`)}
-                        onPages={async (pages) => {
-                          try {
-                            await pickDoc(k, await scanPagesToPdf(pages, t(`jobsArea.detail.doc${k}`)));
-                            return true;
-                          } catch {
-                            toast.error(t('px.scan.failed'));
-                            return false;
-                          }
-                        }}
-                      />
-                      <label htmlFor={id} className="inline-flex min-h-11 cursor-pointer items-center text-xs font-semibold text-link hover:underline">
-                        {t('jobsArea.detail.docChoose')}
-                        <input
-                          id={id}
-                          type="file"
-                          className="sr-only"
-                          accept={DOC_ACCEPT}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = '';
-                            if (file) void pickDoc(k, file);
-                          }}
-                        />
-                      </label>
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            <VaultApplyPicker selected={vaultDocs} onChange={setVaultDocs} max={MAX_APPLY_FILES - APPLY_DOC_KINDS.filter((k) => docs[k]).length} />
-          </fieldset>
-          {progress !== null && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted">{t('jobsArea.applyErrors.uploading', { percent: Math.round(progress * 100) })}</p>
-              <div className="h-1.5 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-label={t('ui.uploadProgress')} aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
-                <div className="h-full bg-primary transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
-              </div>
-            </div>
-          )}
           <div className="flex gap-2">
             <button type="submit" className={buttonClass({ className: 'flex-1' })} disabled={apply.isPending}>
               {apply.isPending ? <Spinner className="size-4" /> : <Send className="size-4" />} {t('jobsArea.detail.send')}

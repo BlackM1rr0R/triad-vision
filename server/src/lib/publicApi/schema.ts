@@ -46,7 +46,7 @@ export const vacancyListSchema = (baseUrl: string) => {
           employmentType: { enum: ['FULL_TIME', 'PART_TIME', 'SEASONAL', 'AUSBILDUNG'] },
           datePosted: { type: ['string', 'null'], format: 'date-time' },
           validThrough: { type: ['string', 'null'], format: 'date-time' },
-          companyName: { ...nstr, description: 'Only when the employer agreed to be named.' },
+          companyName: { ...nstr, description: 'Always null: employer names are not published (candidates learn them after the work contract).' },
           visaCategory: { type: ['object', 'null'], properties: { slug: str, label: str } },
           imageUrl: { type: ['string', 'null'], format: 'uri' },
           url: { type: 'string', format: 'uri' },

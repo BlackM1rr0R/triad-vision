@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { ArrowRight, Route } from 'lucide-react';
@@ -17,8 +18,10 @@ registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited
  * "Your journey" (portal home and case overview): home city → German city with six milestones
  * (documents → contract → embassy → decision → travel → arrival) from GET /api/account/next-step.
  * Tablet / desktop: the animated map next to the milestone list; phones: the list only (same content).
+ * `compactTo`: the portal home's short version — the current stage and the next step with a link to the case page
+ * (map, milestone list and dates live on the case page only, so the two pages do not repeat each other).
  */
-export function JourneyCard({ next, className, tour }: { next: NextStep | undefined; className?: string; tour?: string }) {
+export function JourneyCard({ next, className, tour, compactTo }: { next: NextStep | undefined; className?: string; tour?: string; compactTo?: string | null }) {
   const { t, i18n } = useTranslation();
   const journey = next?.journey ?? null;
   const milestones = useMemo(() => (journey ? buildMilestones(journey) : []), [journey]);
@@ -55,19 +58,21 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
         {journey.outcome === 'REJECTED' && <span className="badge bg-danger-bg text-danger-fg">{t('jmap.rejected')}</span>}
       </div>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-center">
-        <div className="hidden md:block">
-          <JourneyMap
-            journey={journey}
-            milestones={milestones}
-            labelOf={labelOf}
-            fromName={fromName}
-            toName={toName}
-            summary={t('jmap.mapLabel', { from: fromName, to: toName, status })}
-          />
+      {!compactTo && (
+        <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-center">
+          <div className="hidden md:block">
+            <JourneyMap
+              journey={journey}
+              milestones={milestones}
+              labelOf={labelOf}
+              fromName={fromName}
+              toName={toName}
+              summary={t('jmap.mapLabel', { from: fromName, to: toName, status })}
+            />
+          </div>
+          <JourneyTimeline milestones={milestones} labelOf={labelOf} />
         </div>
-        <JourneyTimeline milestones={milestones} labelOf={labelOf} />
-      </div>
+      )}
 
       {current && (
         <div className="mt-5 flex flex-col gap-2 rounded-xl bg-sunken px-4 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3" aria-live="polite">
@@ -89,7 +94,16 @@ export function JourneyCard({ next, className, tour }: { next: NextStep | undefi
         </div>
       )}
 
+      {!current && compactTo && status && <p className="mt-4 text-sm text-muted">{status}</p>}
+
       {estimated && <p className="mt-3 text-xs text-muted">{t('jmap.estimateNote')}</p>}
+
+      {compactTo && (
+        <Link to={compactTo} className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-link hover:underline">
+          {t('jmap.openCase')}
+          <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden />
+        </Link>
+      )}
     </section>
   );
 }

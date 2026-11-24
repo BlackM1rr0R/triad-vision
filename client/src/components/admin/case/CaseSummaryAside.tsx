@@ -164,14 +164,15 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
           )}
           {folders && (
             <DefRow label={t('vacFolders.case.folder')}>
-              <span className="inline-flex max-w-full min-w-0 flex-col items-end">
-                <FolderLine folder={folders.folder} compact />
+              {/* Long names ("Men Menov · Pass-Nr. …") truncate inside the value column; the full path is the tooltip. */}
+              <div className="min-w-0">
+                <FolderLine folder={folders.folder} compact className="justify-end" />
                 {folders.parent && (
-                  <span className="max-w-full truncate text-xs font-normal text-muted" title={folders.parent.path}>
+                  <span className="block truncate text-xs font-normal text-muted" title={folders.parent.path}>
                     {t('vacFolders.case.parent')}: {folders.parent.name}
                   </span>
                 )}
-              </span>
+              </div>
             </DefRow>
           )}
           <DefRow label={t('admin.case.header.createdAt')}>{fmtDate(c.createdAt)}</DefRow>

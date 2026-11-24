@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CaseStatus } from '@prisma/client';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { PDFDict, PDFDocument, PDFName, StandardFonts } from 'pdf-lib';
 import {
   activeWorkSet,
   caseContractTurn,
@@ -14,7 +14,9 @@ import {
   workSetState,
   type WorkDocLite,
 } from '../../src/lib/caseContracts/flow.js';
-import { inspectPdfFields, resolvePlacements, stampSignatures } from '../../src/lib/esign/placements.js';
+import { buildInterimPdf, inspectPdfFields, interimPlan, resolvePlacements, stampSignatures, type Placement } from '../../src/lib/esign/placements.js';
+
+import { PNG_BUFFER } from '../helpers/files';
 
 vi.mock('../../src/db.js', () => ({ prisma: {} }));
 
@@ -143,6 +145,19 @@ describe('consumers: the client signs the İş müqaviləsi in CONTRACT_SIGNED (
     expect(computeBall(facts(null), settings, NOW)).toMatchObject({ side: 'TEAM', reason: 'CHECK_SIGNATURE' });
   });
 
+  it('ball in court (V2): the team sends the İş müqaviləsi documents, then approves the signed set — no "check the signature"', () => {
+    const v2 = (work: 'NOT_SENT' | 'SIGNED' | 'RETURNED' | 'CLIENT_TO_SIGN') => ({ ...facts(work === 'CLIENT_TO_SIGN' ? 'CLIENT' : 'STAFF'), workContract: work });
+    expect(computeBall(v2('NOT_SENT'), settings, NOW)).toMatchObject({ side: 'TEAM', reason: 'SEND_WORK_CONTRACT' });
+    expect(computeBall(v2('RETURNED'), settings, NOW)).toMatchObject({ side: 'TEAM', reason: 'SEND_WORK_CONTRACT' });
+    expect(computeBall(v2('SIGNED'), settings, NOW)).toMatchObject({ side: 'TEAM', reason: 'APPROVE_WORK_CONTRACT' });
+    const client = computeBall(v2('CLIENT_TO_SIGN'), settings, NOW);
+    expect(client).toMatchObject({ side: 'CLIENT', reason: 'SIGN_CONTRACT' });
+    expect(client.items.some((i) => i.side === 'TEAM' && i.reason !== 'REPLY_MESSAGE')).toBe(false);
+    for (const w of ['NOT_SENT', 'SIGNED'] as const) expect(computeBall(v2(w), settings, NOW).items.some((i) => i.reason === 'CHECK_SIGNATURE')).toBe(false);
+    // Əmək müqaviləsi signed by the client, Triad Vision's turn: the team signs.
+    expect(computeBall({ ...facts(null), contractTurn: 'TRIAD' as const, status: 'CONTRACT_SENT' as CaseStatus, contract: { signedAt: null, signatureRequestId: 'r1' } }, settings, NOW)).toMatchObject({ side: 'TEAM', reason: 'TRIAD_SIGN_CONTRACT' });
+  });
+
   it('partner portal and the client next action', () => {
     expect(nextActionOf('CONTRACT_SIGNED', 0, 'CLIENT')).toBe('SIGN_CONTRACT');
     expect(nextActionOf('CONTRACT_SIGNED', 0, 'STAFF')).toBe('WAIT_CONTRACT_CHECK');
@@ -203,5 +218,44 @@ describe('signature places on the original pages (lib/esign/placements)', () => 
     expect(d.getForm().getFieldMaybe('client_signature')).toBeUndefined();
     const again = await PDFDocument.load(await d.save());
     expect(again.getPageCount()).toBe(2);
+  });
+});
+
+describe('interim PDF while a V2 request is being signed (lib/esign/placements)', () => {
+  const places: Placement[] = [
+    { role: 'CANDIDATE', page: 1, x: 60, y: 100, w: 200, h: 50, field: 'client_signature' },
+    { role: 'STAFF', page: 1, x: 320, y: 100, w: 200, h: 50 },
+  ];
+  const signer = (role: string, status: string, order: number) => ({ role, status, order });
+
+  it('selects the signatures given so far and only their places', () => {
+    const clientSigned = interimPlan('SENT', [signer('STAFF', 'PENDING', 2), signer('CANDIDATE', 'SIGNED', 1)], places);
+    expect(clientSigned).toEqual({ signers: [signer('CANDIDATE', 'SIGNED', 1)], placements: [places[0]] });
+    // nobody signed, no places (old flow: signature page at completion), not in progress any more → no interim copy
+    expect(interimPlan('SENT', [signer('CANDIDATE', 'PENDING', 1), signer('STAFF', 'PENDING', 2)], places)).toBeNull();
+    expect(interimPlan('SENT', [signer('CANDIDATE', 'SIGNED', 1)], null)).toBeNull();
+    expect(interimPlan('SENT', [signer('CANDIDATE', 'SIGNED', 1)], [])).toBeNull();
+    for (const status of ['COMPLETED', 'CANCELLED', 'DECLINED', 'DRAFT']) expect(interimPlan(status, [signer('CANDIDATE', 'SIGNED', 1)], places)).toBeNull();
+    // like the final stamp: the FIRST signer of a role fills its places
+    expect(interimPlan('SENT', [signer('CANDIDATE', 'PENDING', 1), signer('CANDIDATE', 'SIGNED', 2)], places)).toBeNull();
+  });
+
+  it('stamps the client signature into its place; the Triad Vision place and the original stay untouched', async () => {
+    const d = await PDFDocument.create();
+    const p1 = d.addPage([595, 842]);
+    const form = d.getForm();
+    form.createTextField('client_signature').addToPage(p1, { x: 60, y: 100, width: 200, height: 50 });
+    form.createTextField('triad_signature').addToPage(p1, { x: 320, y: 30, width: 200, height: 50 });
+    const original = Buffer.from(await d.save());
+    const copy = Buffer.from(original);
+    const plan = interimPlan('SENT', [signer('CANDIDATE', 'SIGNED', 1), signer('STAFF', 'PENDING', 2)], places)!;
+    const out = await buildInterimPdf(original, [{ role: 'CANDIDATE', name: 'Rauf Həsənov', signedAt: NOW, imagePng: PNG_BUFFER }], plan.placements);
+    expect(Buffer.compare(original, copy)).toBe(0);
+    const again = await PDFDocument.load(out);
+    expect(again.getPageCount()).toBe(1);
+    expect(again.getForm().getFieldMaybe('client_signature')).toBeUndefined();
+    expect(again.getForm().getFieldMaybe('triad_signature')).toBeDefined();
+    const xobjects = again.getPages()[0].node.Resources()?.lookupMaybe(PDFName.of('XObject'), PDFDict);
+    expect(xobjects?.keys().length ?? 0).toBeGreaterThan(0);
   });
 });

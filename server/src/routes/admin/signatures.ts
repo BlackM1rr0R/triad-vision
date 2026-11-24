@@ -18,13 +18,14 @@ import {
   createRequest,
   logEvent,
   remindRequest,
+  renderInterimPdf,
   sendRequest,
   staffDetail,
   staffSummary,
   updateSignerEmail,
   type Actor,
 } from '../../lib/esign/service.js';
-import { metaOf, pdfUpload, sendPdf } from '../../lib/esign/http.js';
+import { metaOf, pdfUpload, sendPdf, sendPdfBuffer } from '../../lib/esign/http.js';
 import { deleteBlocker, findOrphanRequestIds, removeOrphanRequests, removeSignatureRequest } from '../../lib/esign/remove.js';
 import { withCountersigner } from '../../lib/esign/countersign.js';
 
@@ -336,15 +337,29 @@ adminSignaturesRouter.post('/:id/cancel', async (req, res) => {
   res.json({ request: await staffDetail(String(req.params.id)) });
 });
 
-/** ?version=original|final (default: final when completed), ?download=1 for an attachment. */
+/**
+ * ?version=original|current|final, ?download=1 for an attachment. Default: final when completed, else current.
+ *   original  the untouched upload
+ *   current   while being signed (case contracts V2): the original with the signatures given so far drawn into their
+ *             places (lib/esign/placements interimPlan) — Triad Vision sees the client's signature before signing;
+ *             the final copy once completed; the original when nobody has signed yet
+ */
 adminSignaturesRouter.get('/:id/document', async (req, res) => {
-  const q = parse(z.object({ version: z.enum(['original', 'final']).optional(), download: z.string().optional() }), req.query);
+  const q = parse(z.object({ version: z.enum(['original', 'current', 'final']).optional(), download: z.string().optional() }), req.query);
   const r = await prisma.signatureRequest.findUnique({ where: { id: String(req.params.id) } });
   if (!r) throw notFound('SIGNATURE_REQUEST_NOT_FOUND');
-  const version = q.version ?? (r.finalKey ? 'final' : 'original');
+  const base = r.originalName.replace(/\.pdf$/i, '');
+  const wanted = q.version ?? 'current';
+  if (wanted === 'current' && !r.finalKey) {
+    const interim = await renderInterimPdf(r.id);
+    if (interim) {
+      await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), actorId: req.user!.id, note: 'current' });
+      return sendPdfBuffer(res, interim, `${base}-partly-signed.pdf`, !!q.download);
+    }
+  }
+  const version = wanted === 'current' ? (r.finalKey ? 'final' : 'original') : wanted;
   const key = version === 'final' ? r.finalKey : r.originalKey;
   if (!key) throw notFound('DOCUMENT_NOT_FOUND');
   await logEvent(r.id, 'DOWNLOADED', { ...metaOf(req), actorId: req.user!.id, note: version });
-  const base = r.originalName.replace(/\.pdf$/i, '');
   sendPdf(res, key, version === 'final' ? `${base}-signed.pdf` : r.originalName, !!q.download);
 });

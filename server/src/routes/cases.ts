@@ -27,6 +27,7 @@ import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
 import { notifyEarlyEmbassyUpload, notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
 import { earlyEmbassyOpenFor, ensureEarlyEmbassyRequirements } from '../lib/earlyEmbassy/service.js'; // embassy documents while waiting for the contract
+import { linkUploadedDocument, removeLinkedPendingCopies } from '../lib/docLink/service.js'; // one upload for the initial and the embassy list
 
 export const casesRouter = Router();
 casesRouter.use(requireAuth);
@@ -128,6 +129,7 @@ casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, re
     });
     void emitAutomationEvent({ type: 'DOCUMENT_UPLOADED', entityType: 'document', entityId: doc.id, caseId: c.id }); // automation hook
     void copyDocumentToDrive(doc.id, { pending: true }); // into the client folder right away: "<client>/Reisepass" … (never throws)
+    await linkUploadedDocument(doc.id); // also attached to the matching requirement of the other list (initial ↔ embassy; never throws)
     if (target.replacement) await notifyReplacement(c, requirement, doc.originalName);
     if (target.early) await notifyEarlyEmbassyUpload(c, requirement, doc.originalName); // no hand-in follows yet: staff are told
     // Automatic quality checks (PDF readable, photo is an image, resolution, passport MRZ/expiry); never throws.
@@ -155,6 +157,7 @@ casesRouter.delete('/:id/documents/:docId', async (req, res) => {
   if (!stageOpen || doc.uploadedById !== req.user!.id || doc.status === 'ACCEPTED') {
     throw conflict('DELETE_NOT_ALLOWED');
   }
+  await removeLinkedPendingCopies(doc.id); // its still-pending copy in the other list goes with it (lib/docLink)
   await prisma.document.delete({ where: { id: doc.id } });
   await removeFile(doc.storedName);
   res.json({ ok: true });
