@@ -21,12 +21,13 @@ test.describe('admin', () => {
     expect(before.top, 'the test could scroll the page').toBeGreaterThanOrEqual(200);
     const url = page.url();
 
-    await reviewNow.click({ noWaitAfter: true });
+    // dispatchEvent: Playwright's click() first scrolls the target into view (the button sits under the sticky header
+    // at this scroll position), which moved the page itself and made the test blame the drawer.
+    await reviewNow.dispatchEvent('click');
     const drawer = page.getByRole('dialog', { name: 'Yoxlanılmalı sənədlər' });
     await expect(drawer).toBeVisible();
     // Opening the drawer must not move the page (the old body overflow lock reset it to the top).
-    const geo = await page.evaluate(() => ({ y: scrollY, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bsh: document.body.scrollHeight, htmlOv: getComputedStyle(document.documentElement).overflowY, bodyOv: getComputedStyle(document.body).overflowY, bodyPos: getComputedStyle(document.body).position, rootH: document.getElementById('root')?.getBoundingClientRect().height }));
-    expect((await scrollState(page, anchor)).top, 'scroll right after the drawer opened ' + JSON.stringify(geo)).toBeGreaterThanOrEqual(before.top - 4);
+    expect((await scrollState(page, anchor)).top, 'scroll right after the drawer opened').toBeGreaterThanOrEqual(before.top - 4);
     const reviewed = page.waitForResponse((r) => r.request().method() === 'POST' && /\/documents\/[^/]+\/review$/.test(r.url()));
     await drawer.getByRole('button', { name: 'Qəbul et', exact: true }).first().click();
     expect((await reviewed).status(), 'POST review').toBe(200);
