@@ -6,6 +6,7 @@ import { Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ChatPanel } from './index';
 import { focusBack, useHelpAction, useHelpFabPresent } from '@/lib/helpMenu';
+import { lockScroll } from '@/components/ui/overlay'; // page scroll lock that keeps the position
 
 /*
  * "AI köməkçi" button for clients on /account/* (rendered by AccountLayout). It sits to the left of
@@ -40,11 +41,10 @@ export default function AiLauncher() {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', onKey);
     // Keep the page behind the slide-over from scrolling on phones.
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      unlock();
     };
   }, [open]);
 

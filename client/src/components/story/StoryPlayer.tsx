@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react';
 import { useMotionOK } from '@/components/motion';
 import { registerCopy } from '@/i18n';
 import { pagesVisaStory } from '@/i18n/pagesVisaStory';
+import { lockScroll } from '@/components/ui/overlay'; // page scroll lock that keeps the position
 
 registerCopy(pagesVisaStory);
 
@@ -74,10 +75,9 @@ export function StoryPlayer({ slides, label, onClose, durationMs = 6500 }: { sli
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     rootRef.current?.focus();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
-      document.body.style.overflow = overflow;
+      unlock();
       before?.focus?.();
     };
   }, []);

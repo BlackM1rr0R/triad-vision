@@ -70,25 +70,35 @@ export const hasOpenOverlay = () => layers.length > 0;
 // ─── Scroll lock ────────────────────────────────────────────────────────
 
 let lockCount = 0;
-let saved: { overflow: string; paddingRight: string } | null = null;
+let saved: { overflow: string; paddingRight: string; x: number; y: number } | null = null;
 
+/**
+ * Locks the page scroll under a modal / drawer. The lock goes on <html>, not on <body>: with the body's
+ * `overflow-x: clip` (index.css) Chrome reset the page to the top the moment `body { overflow: hidden }` was set,
+ * so every drawer opened on a scrolled page jumped it to the top (found by the browser tests). The position is
+ * also put back explicitly after locking and unlocking, whatever the browser does.
+ */
 export const lockScroll = () => {
   if (lockCount++ === 0) {
+    const root = document.documentElement;
     const body = document.body;
-    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
-    saved = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
+    const scrollbar = window.innerWidth - root.clientWidth;
+    saved = { overflow: root.style.overflow, paddingRight: body.style.paddingRight, x: window.scrollX, y: window.scrollY };
     if (scrollbar > 0) {
       const current = parseFloat(getComputedStyle(body).paddingRight) || 0;
       body.style.paddingRight = `${current + scrollbar}px`;
     }
-    body.style.overflow = 'hidden';
+    root.style.overflow = 'hidden';
+    if (window.scrollY !== saved.y || window.scrollX !== saved.x) window.scrollTo(saved.x, saved.y);
     setSmoothScrollPaused(true);
   }
   return () => {
     if (--lockCount === 0 && saved) {
-      document.body.style.overflow = saved.overflow;
+      const { x, y } = saved;
+      document.documentElement.style.overflow = saved.overflow;
       document.body.style.paddingRight = saved.paddingRight;
       saved = null;
+      if (window.scrollY !== y || window.scrollX !== x) window.scrollTo(x, y);
       setSmoothScrollPaused(false);
     }
   };

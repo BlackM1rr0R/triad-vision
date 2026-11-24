@@ -11,6 +11,7 @@ import { pagesToolsHub } from '@/i18n/pagesToolsHub';
 import { localePath, navigateToUrl } from '@/lib/localeRouter';
 import { closeSearch } from './searchStore';
 import { MIN_QUERY, Marked, TYPE_ICON, fetchSearch, groupHits, logSearch, readRecent, rememberSearch, writeRecent, type SearchHit } from './siteSearch';
+import { lockScroll } from '@/components/ui/overlay'; // page scroll lock that keeps the position
 
 registerCopy(pagesDiscover);
 registerCopy(pagesToolsHub); // result types glossary / profession / study, "did you mean"
@@ -40,13 +41,12 @@ const PaletteDialog = () => {
   // Lock body scroll, focus input, restore focus on close.
   useEffect(() => {
     const prevFocus = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     document.documentElement.setAttribute('data-search-palette-open', '');
     const id = window.setTimeout(() => inputRef.current?.focus(), 30);
     return () => {
       window.clearTimeout(id);
-      document.body.style.overflow = prevOverflow;
+      unlock();
       document.documentElement.removeAttribute('data-search-palette-open');
       prevFocus?.focus?.({ preventScroll: true });
     };

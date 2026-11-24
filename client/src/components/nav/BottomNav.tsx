@@ -59,14 +59,15 @@ export const useSoftKeyboardOpen = () => {
   return open;
 };
 
-/** A modal / drawer / full-screen menu is open: they all lock the body scroll (overflow: hidden). */
+/** A modal / drawer / full-screen menu is open: they all lock the page scroll (lockScroll: <html> overflow hidden). */
 export const useBodyScrollLocked = () => {
   const [locked, setLocked] = useState(false);
   useEffect(() => {
-    const read = () => setLocked(document.body.style.overflow === 'hidden');
+    const read = () => setLocked(document.documentElement.style.overflow === 'hidden' || document.body.style.overflow === 'hidden');
     read();
     const mo = new MutationObserver(read);
     mo.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
     return () => mo.disconnect();
   }, []);
   return locked;

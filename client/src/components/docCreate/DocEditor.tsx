@@ -39,6 +39,7 @@ import { RichBlock, type PendingSelection } from './RichBlock';
 import { TableEditor } from './TableEditor';
 import { getBrand } from '@/lib/brand';
 import { confirmDialog } from '@/components/ui/ConfirmHost';
+import { lockScroll } from '@/components/ui/overlay'; // page scroll lock that keeps the position
 
 export type DocEditorTarget = { mode: 'new'; parentId: string } | { mode: 'edit'; nodeId: string };
 
@@ -473,11 +474,10 @@ export default function DocEditor({ target, folderName, onClose, onSaved }: { ta
       }
     };
     window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      unlock();
     };
   });
   useEffect(() => {

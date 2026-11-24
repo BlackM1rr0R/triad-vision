@@ -50,6 +50,7 @@ import { adminNavCopy } from '@/i18n/adminNav'; // hub names for the breadcrumb
 registerCopy(adminNavCopy);
 import { getBrand } from '@/lib/brand';
 import { BreakGlassHost } from '@/components/access/BreakGlassHost'; // 403 OUT_OF_SCOPE → "request emergency access" (lib/access)
+import { lockScroll } from '@/components/ui/overlay'; // page scroll lock that keeps the position
 registerCopy(pagesCalls);
 
 /**
@@ -460,11 +461,10 @@ export default function AdminLayout() {
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMobileOpen(false);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     document.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = prev;
+      unlock();
       document.removeEventListener('keydown', onKey);
     };
   }, [mobileOpen]);
