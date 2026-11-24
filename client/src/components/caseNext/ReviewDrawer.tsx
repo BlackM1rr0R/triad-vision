@@ -58,7 +58,18 @@ export const ReviewDrawer = ({ open, onClose, c, documentIds, onChanged }: { ope
   useEffect(() => {
     if (!advanceTo) return;
     const el = itemRefs.current.get(advanceTo);
-    el?.scrollIntoView({ block: 'nearest' });
+    // Scroll only the panel's own list: element.scrollIntoView() also scrolls every scrollable ancestor, which
+    // moved the case page behind the drawer to the top after each decision.
+    if (el) {
+      let box: HTMLElement | null = el.parentElement;
+      while (box && !(box.scrollHeight > box.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+      if (box && el.closest('[role="dialog"]')?.contains(box)) {
+        const r = el.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        if (r.top < b.top) box.scrollTop -= b.top - r.top;
+        else if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom;
+      }
+    }
     el?.querySelector<HTMLElement>('button:not([disabled])')?.focus({ preventScroll: true });
     setAdvanceTo(null);
   }, [advanceTo]);

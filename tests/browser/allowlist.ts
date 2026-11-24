@@ -15,6 +15,12 @@ const ALLOWED: { re: RegExp; why: string }[] = [
     re: /EventSource|net::ERR_ABORTED|net::ERR_BLOCKED_BY_CLIENT/,
     why: 'aborted live-update stream / blocked third-party request',
   },
+  {
+    // Playwright's addInitScript (fixtures: language, cookie consent, tours off) is injected into every frame, also the
+    // sandboxed mail iframe (no allow-scripts by design), where Chrome blocks it and logs this.
+    re: /Blocked script execution in 'about:srcdoc' because the document's frame is sandboxed/,
+    why: 'test init script in the sandboxed mail frame',
+  },
 ];
 
 export const isAllowedConsoleError = (text: string) => ALLOWED.some((a) => a.re.test(text));
