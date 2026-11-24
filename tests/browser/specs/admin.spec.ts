@@ -21,10 +21,30 @@ test.describe('admin', () => {
     expect(before.top, 'the test could scroll the page').toBeGreaterThanOrEqual(200);
     const url = page.url();
 
+    // TEMP diagnostics: log every call that can move the page (removed once the jump is found).
+    const scrollLog: string[] = [];
+    page.on('console', (m) => { if (m.text().startsWith('SCROLLCALL')) scrollLog.push(m.text()); });
+    await page.evaluate(() => {
+      const log = (n: string) => console.log('SCROLLCALL ' + n + ' :: ' + (new Error().stack ?? '').split(String.fromCharCode(10)).slice(2, 7).map((x) => x.trim()).join(' | '));
+      for (const k of ['scrollTo', 'scroll', 'scrollBy'] as const) {
+        const o = window[k].bind(window) as (...a: unknown[]) => void;
+        (window as unknown as Record<string, unknown>)[k] = (...args: unknown[]) => { log('window.' + k + ' ' + JSON.stringify(args)); o(...args); };
+      }
+      const si = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (this: Element, ...args: unknown[]) { log('scrollIntoView ' + this.tagName + '.' + String((this as HTMLElement).className).slice(0, 60)); return si.apply(this, args as []); };
+      const d = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop')!;
+      Object.defineProperty(Element.prototype, 'scrollTop', { get: d.get, set(this: Element, v: number) { log('scrollTop=' + v + ' on ' + this.tagName); d.set!.call(this, v); }, configurable: true });
+      const fo = HTMLElement.prototype.focus;
+      HTMLElement.prototype.focus = function (this: HTMLElement, o?: FocusOptions) { log('focus ' + this.tagName + ' preventScroll=' + String(o?.preventScroll)); return fo.call(this, o); };
+      let last = window.scrollY;
+      window.addEventListener('scroll', () => { if (window.scrollY !== last) { log('scroll event ' + last + ' -> ' + window.scrollY + ' bodyOverflow=' + document.body.style.overflow); last = window.scrollY; } }, true);
+    });
     await reviewNow.click({ noWaitAfter: true });
     const drawer = page.getByRole('dialog', { name: 'Yoxlanılmalı sənədlər' });
     await expect(drawer).toBeVisible();
     // Where does the page move? Soft checks per stage (the hard one below stays the verdict).
+    await page.waitForTimeout(300);
+    console.log(['SCROLL DIAGNOSTICS', ...scrollLog].join(String.fromCharCode(10)));
     expect.soft((await scrollState(page, anchor)).top, 'scroll right after the drawer opened').toBeGreaterThanOrEqual(before.top - 4);
     const reviewed = page.waitForResponse((r) => r.request().method() === 'POST' && /\/documents\/[^/]+\/review$/.test(r.url()));
     await drawer.getByRole('button', { name: 'Qəbul et', exact: true }).first().click();
