@@ -137,9 +137,7 @@ describe('linked documents (initial ↔ embassy)', () => {
     const c = await createCase(user.id, { profession: 'Aşpaz', visaType: 'WORK' });
     await prisma.$transaction((tx) => createRequirements(tx, c.id, 'EMBASSY', null));
     const iniPassport = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: c.id, stage: 'INITIAL', key: 'PASSPORT' } });
-    const embPassport = await prisma.documentRequirement.findFirstOrThrow({ where: { caseId: c.id, stage: 'EMBASSY', key: 'PASSPORT' } });
-    await prisma.document.deleteMany({ where: { requirementId: embPassport.id } });
-    await prisma.documentRequirement.delete({ where: { id: embPassport.id } });
+    // The default embassy list has no passport requirement: the case AI asks for it below.
     const storedName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.pdf`;
     const buf = await makePdf('PASS');
     await fs.mkdir(config.uploads.privateDir, { recursive: true });

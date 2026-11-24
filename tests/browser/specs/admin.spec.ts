@@ -77,7 +77,8 @@ test.describe('admin', () => {
   test('signatures list loads', async ({ page }) => {
     await page.goto('/admin/signatures');
     await expect(page.getByRole('heading', { level: 1, name: 'İmzalar' })).toBeVisible();
-    await expect(page.getByText('Hələ imza tələbi yoxdur.')).toBeVisible();
+    // The seed has a case-contract request, so the list shows it (not the empty state).
+    await expect(page.getByText(/Əmək müqaviləsi/).first()).toBeVisible();
   });
 
   test('mail reader: a long HTML message gets a stable iframe height', async ({ page }) => {

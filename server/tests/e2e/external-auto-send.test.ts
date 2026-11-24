@@ -125,7 +125,7 @@ describe('no employer e-mail → the client sends it; help → "Göndərməyə h
 
     const staff = await asStaff();
     let overview = await staff.agent.get('/api/admin/external-applications/auto/overview').expect(200);
-    expect(overview.body.today).toEqual({ sent: 0, limit: 30 });
+    expect(overview.body.today).toMatchObject({ sent: 0, limit: 30, configured: 30 });
     expect(overview.body.settings).toMatchObject({ enabled: true, discovery: true });
     expect(overview.body.queue).toHaveLength(0); // the client sends it: nothing for staff
     expect(overview.body.counts.CLIENT_SEND).toBe(1);
@@ -261,7 +261,7 @@ describe('limits, kill switch and staff overrides', () => {
     expect(await prisma.emailLog.count({ where: { to: 'jobs@firma-zwei.de' } })).toBe(0);
 
     const overview = await staff.agent.get('/api/admin/external-applications/auto/overview').expect(200);
-    expect(overview.body.today).toEqual({ sent: 1, limit: 1 });
+    expect(overview.body.today).toMatchObject({ sent: 1, limit: 1, configured: 1 });
     expect(overview.body.queue.map((q: { inquiryId: string; reason: string }) => [q.inquiryId, q.reason])).toEqual([[second.inquiryId, 'DAILY_LIMIT']]);
 
     // Same day: still waiting. Next day: sent by the scheduler.
