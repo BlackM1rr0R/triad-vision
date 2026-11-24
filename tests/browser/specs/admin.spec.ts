@@ -25,7 +25,8 @@ test.describe('admin', () => {
     const drawer = page.getByRole('dialog', { name: 'Yoxlanılmalı sənədlər' });
     await expect(drawer).toBeVisible();
     // Opening the drawer must not move the page (the old body overflow lock reset it to the top).
-    expect((await scrollState(page, anchor)).top, 'scroll right after the drawer opened').toBeGreaterThanOrEqual(before.top - 4);
+    const geo = await page.evaluate(() => ({ y: scrollY, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bsh: document.body.scrollHeight, htmlOv: getComputedStyle(document.documentElement).overflowY, bodyOv: getComputedStyle(document.body).overflowY, bodyPos: getComputedStyle(document.body).position, rootH: document.getElementById('root')?.getBoundingClientRect().height }));
+    expect((await scrollState(page, anchor)).top, 'scroll right after the drawer opened ' + JSON.stringify(geo)).toBeGreaterThanOrEqual(before.top - 4);
     const reviewed = page.waitForResponse((r) => r.request().method() === 'POST' && /\/documents\/[^/]+\/review$/.test(r.url()));
     await drawer.getByRole('button', { name: 'Qəbul et', exact: true }).first().click();
     expect((await reviewed).status(), 'POST review').toBe(200);
