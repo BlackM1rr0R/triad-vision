@@ -1,4 +1,4 @@
-import { useId, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { Suspense, useId, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, m as motion } from 'framer-motion';
@@ -133,7 +133,10 @@ export const Drawer = ({
                 <X className="size-4" aria-hidden />
               </button>
             </div>
-            <div className={clsx('min-h-0 flex-1 overflow-y-auto overscroll-contain', padded && 'px-5 py-5 sm:px-6', bodyClassName)}>{children}</div>
+            <div className={clsx('min-h-0 flex-1 overflow-y-auto overscroll-contain', padded && 'px-5 py-5 sm:px-6', bodyClassName)}>
+              {/* Lazy parts inside the panel wait here, never at the page's route boundary (that blanked the page and lost the scroll). */}
+              <Suspense fallback={null}>{children}</Suspense>
+            </div>
             {footer && (
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line bg-sunken/60 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
                 {footer}

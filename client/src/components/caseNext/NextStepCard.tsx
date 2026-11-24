@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -116,7 +116,13 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
   };
 
   // The review panel lives outside the card's own loading state, so it never closes under the reviewer's hands.
-  const drawer = review ? <ReviewDrawer open onClose={() => setReview(null)} c={c} documentIds={review} onChanged={refresh} /> : null;
+  // Own Suspense boundary: the drawer's lazily loaded copy / parts must not suspend up to the route boundary, which
+  // swapped the whole case page for its fallback for a moment and dropped the scroll position to the top.
+  const drawer = review ? (
+    <Suspense fallback={null}>
+      <ReviewDrawer open onClose={() => setReview(null)} c={c} documentIds={review} onChanged={refresh} />
+    </Suspense>
+  ) : null;
   if (isLoading || !data) return drawer;
   const steps = data.steps;
   const visible = showAll ? [...steps, ...data.rest] : steps;

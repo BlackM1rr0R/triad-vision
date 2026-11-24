@@ -1,4 +1,4 @@
-import { useId, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { Suspense, useId, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { useClientOnly } from '@/lib/ssr';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, m as motion } from 'framer-motion';
@@ -179,7 +179,8 @@ export const Modal = ({
             </div>
             {children != null && children !== false && (
               <div className={clsx('min-h-0 flex-1 overflow-y-auto overscroll-contain', padded && ['px-5 py-5 sm:px-6', !footer && 'pb-[max(1.25rem,env(safe-area-inset-bottom))]'], bodyClassName)}>
-                {children}
+                {/* Lazy parts inside the dialog wait here, never at the page's route boundary (that blanked the page and lost the scroll). */}
+                <Suspense fallback={null}>{children}</Suspense>
               </div>
             )}
             {footer && (
