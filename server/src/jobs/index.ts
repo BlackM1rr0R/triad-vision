@@ -67,4 +67,5 @@ import './dataFreshness.js'; // daily: data freshness registry — admin reminde
 import './futureLetters.js'; // letter to my future self: delivered once on arrival or the client's fallback date (every 3 h)
 import './rateAlerts.js'; // EUR → AZN rate alerts: after the daily CBAR fetch, one e-mail per met alert (then paused), 6-month expiry, purge
 import './accessAudit.js'; // Access Center › Audit: quarterly access review (days 1–7 of a quarter, once) + access anomaly alerts every 10 min
+import './browserErrors.js'; // browser error log: daily digest of new error groups to the admins + 30-day retention
 import './driveCaseLinks.js'; // drive: client folder marks, İş axını case links by name, left-behind client folders hidden from partners

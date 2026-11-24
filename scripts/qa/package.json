@@ -1,0 +1,9 @@
+{
+  "name": "triad-qa",
+  "private": true,
+  "type": "module",
+  "description": "Isolated tooling for scripts/qa (live-site QA crawl); not part of the app",
+  "dependencies": {
+    "playwright": "*"
+  }
+}

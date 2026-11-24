@@ -170,6 +170,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   content: 'content',
   guides: 'content',
   'site-features': 'content',
+  'browser-errors': 'settings', // browser error log (ADMIN+ in the router)
   // settings
   brand: 'settings',
   license: 'settings',

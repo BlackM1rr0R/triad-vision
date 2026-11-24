@@ -41,12 +41,15 @@ import {
 import { SITE_TEXTS, siteLocale } from '../lib/site/texts.js';
 import { deriveTheme, getSiteTheme, saveSiteTheme, THEME_DEFAULTS, THEME_KEY, themeSchema } from '../lib/site/theme.js';
 import { getBrand, invalidateBrand, publicBrand } from '../lib/brand/index.js';
+import { clientErrorSchema, recordClientError } from '../lib/browserErrors/service.js';
+import { isImpersonating } from '../lib/privacy/impersonationContext.js';
 
 /**
  * Site features (PWA stream):
  *   /api/site/push/*            Web Push subscriptions of the installed site
  *   /api/site/status/*          public status check (no login) + the client's privacy switch / family link
  *   /api/site/problems          "Problem bildir" (anyone) and /api/site/admin/problems (admins)
+ *   /api/site/client-errors     browser error log: the site reports uncaught errors, render errors, 5xx (anyone, rate-limited)
  */
 export const siteRouter = Router();
 
@@ -300,6 +303,20 @@ siteRouter.post('/problems', problemLimiter, problemUpload.single('image'), asyn
   }
   void audit(req, 'PROBLEM_REPORTED', `problem:${report.id}`, { pageUrl: report.pageUrl });
   res.status(201).json({ ok: true, id: report.id });
+});
+
+// ─── Browser error log (lib/browserErrors; admin page: /api/admin/browser-errors) ───
+
+/** Per IP: a broken page can fire many errors; the client sends each error once per page load, 60 per 10 minutes is plenty. */
+const clientErrorLimiter = limiter({ windowMs: 10 * 60 * 1000, limit: 60 });
+
+siteRouter.post('/client-errors', clientErrorLimiter, async (req, res) => {
+  const body = parse(clientErrorSchema, req.body ?? {});
+  // "View as client" is read-only at DB level: nothing is stored while impersonating.
+  if (!isImpersonating()) {
+    await recordClientError(body, { userId: req.user?.id ?? null, role: req.user?.role ?? null, serverUserAgent: req.get('user-agent') });
+  }
+  res.status(202).json({ ok: true });
 });
 
 // Admin page "Problem bildirişləri".

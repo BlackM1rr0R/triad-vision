@@ -107,6 +107,7 @@ export const resetDb = async () => {
   await prisma.casePublicStatus.deleteMany();
   await prisma.publicStatusAttempt.deleteMany();
   await prisma.problemReport.deleteMany();
+  await prisma.browserErrorGroup.deleteMany();
   // Automation rules + automatic assignment (plain ids, no dependants)
   await prisma.automationStep.deleteMany();
   await prisma.automationRun.deleteMany();

@@ -18,6 +18,9 @@ const baseCss = (dark: boolean) => `
   /* The frame is sized to the content: html/body must never take the frame's height (a "height: 100%" mail
      would otherwise grow the frame, which grows the page, … without end). */
   html, body { height: auto !important; min-height: 0 !important; overflow: hidden; }
+  /* Inside the frame 1vh is a part of the frame's own height: a "min-height: 100vh" block would grow with every
+     resize of the frame. Viewport-sized boxes from the mail lose that size. */
+  [style*="vh"] { min-height: 0 !important; height: auto !important; max-height: none !important; }
   body { margin: 0; padding: 4px 2px 12px; font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: ${dark ? '#e6ecf7' : '#0b1f44'}; background: transparent; word-wrap: break-word; overflow-wrap: anywhere; }
   img { max-width: 100%; height: auto; }
   table { max-width: 100%; }
@@ -48,6 +51,7 @@ export const MailBody = ({ html, text, showImages, onShowImages }: { html: strin
     if (!frame) return;
     let raf = 0;
     const timers: number[] = [];
+    let creep = 0;
     // Measure the CONTENT (the body's box), never documentElement.scrollHeight: that is at least the frame's
     // own height, so "frame = scrollHeight + 8" grew by 8 px on every resize until the 20 000 px cap.
     const measure = () => {
@@ -57,6 +61,11 @@ export const MailBody = ({ html, text, showImages, onShowImages }: { html: strin
       const margins = style ? parseFloat(style.marginTop) + parseFloat(style.marginBottom) : 0;
       const h = Math.ceil(body.getBoundingClientRect().height + margins);
       const next = Math.min(Math.max(h + 4, 80), 20000);
+      // Feedback guard (a <style> block sized in vh that the rule above does not reach): the content keeps
+      // growing by a few px right after each resize of the frame — stop following it after 3 such steps.
+      const delta = next - heightRef.current;
+      creep = delta > 0 && delta <= 24 ? creep + 1 : 0;
+      if (creep > 3) return;
       if (h > 0 && Math.abs(next - heightRef.current) > 2) {
         heightRef.current = next;
         setHeight(next);

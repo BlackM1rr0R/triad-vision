@@ -27,3 +27,7 @@ license-private.pem
 
 # Visual regression test output (diffs, actual screenshots; scripts/ci/visual.mjs)
 tests/visual/output/
+
+# Browser tests (tests/browser): report, traces, crawl screenshots, seed output
+tests/browser/output/
+tests/browser/.data/

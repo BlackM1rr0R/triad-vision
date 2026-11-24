@@ -5205,6 +5205,34 @@ model ProblemReport {
   @@index([ipHash, createdAt])
 }
 
+/// Browser error log (lib/browserErrors): one row per fingerprint (kind + message shape + top frame) with a count.
+/// userId / statusById are plain ids. Rows not seen for 30 days are deleted (jobs/browserErrors.ts).
+model BrowserErrorGroup {
+  id          String    @id @default(cuid())
+  fingerprint String    @unique @db.Char(40)
+  kind        String    @db.VarChar(12)
+  message     String    @db.VarChar(500)
+  topFrame    String    @default("") @db.VarChar(300)
+  sampleStack String?   @db.Text
+  /// Last route (ids replaced, only allowlisted query parameters).
+  route       String    @db.VarChar(300)
+  release     String?   @db.VarChar(40)
+  role        String?   @db.VarChar(20)
+  userId      String?   @db.VarChar(40)
+  userAgent   String?   @db.VarChar(300)
+  count       Int       @default(1)
+  /// NEW | RESOLVED | IGNORED
+  status      String    @default("NEW") @db.VarChar(12)
+  statusAt    DateTime?
+  statusById  String?   @db.VarChar(40)
+  digestedAt  DateTime?
+  firstSeenAt DateTime
+  lastSeenAt  DateTime
+
+  @@index([status, lastSeenAt])
+  @@index([lastSeenAt])
+}
+
 // ─── Messaging plus: automatic translation, three-party threads, voice messages ─────
 
 /// Cached machine translation of one message into one reader language (lib/messagingPlus/translate.ts).

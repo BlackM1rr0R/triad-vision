@@ -79,6 +79,7 @@ export const SYNONYMS: Record<string, string> = {
   realSalaries: 'real maaşlar, maaş bazası, müqavilə maaşı, echte gehälter, gehaltsdatenbank, lohn, real salaries, salary database, pay ranges, реальные зарплаты, база зарплат',
   quarterlyReport: 'rüblük hesabat, rüb, miqrasiya hesabatı, quartalsbericht, quartal, arbeitsmobilität, quarterly report, labour mobility, pdf, квартальный отчёт, квартал',
   yearReview: 'ilin yekunu, illik hesabat, jahresrückblick, jahresbilanz, year in review, wrapped, итоги года, годовой отчёт',
+  browserErrors: 'brauzer xətaları, xəta, javascript, konsol, console error, browser fehler, js fehler, ошибки браузера, ошибка js, sentry',
   problemReports: 'problem, xəta, bug, fehler, meldung, ошибка, проблема',
   settings: 'ayar, settings, einstellungen, konfiguration, настройки',
   security: 'təhlükəsizlik, 2fa, session, security, sicherheit, безопасность',

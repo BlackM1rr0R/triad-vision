@@ -65,7 +65,7 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()"
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()"
 		Cross-Origin-Opener-Policy same-origin
 		-Server
 	}

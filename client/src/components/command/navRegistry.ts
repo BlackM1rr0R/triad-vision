@@ -151,7 +151,7 @@ export interface StaffNavItem {
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
-  badge?: 'today' | 'training' | 'inbox';
+  badge?: 'today' | 'training' | 'inbox' | 'browserErrors';
   /** Optional feature (System → Modules); hidden when switched off. */
   module?: ModuleKey;
   /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
@@ -200,7 +200,7 @@ const PERM_OF: Record<string, PermArea> = {
   faqs: 'content', posts: 'content', journey: 'content', events: 'content', reviews: 'content', docGuides: 'content', studyProgrammes: 'content',
   waitingRoom: 'content', preCourse: 'content', siteTools: 'content', cityCosts: 'content', dataFreshness: 'content', pastPlacements: 'content',
   landingPages: 'content', leadMagnets: 'content', guides: 'content', legal: 'content',
-  users: 'settings', settings: 'settings', history: 'settings', automation: 'settings', integrations: 'settings', problemReports: 'settings',
+  users: 'settings', settings: 'settings', history: 'settings', automation: 'settings', integrations: 'settings', problemReports: 'settings', browserErrors: 'settings',
   'ws.drive': 'drive',
 };
 
@@ -346,6 +346,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('toolAnalytics', '/admin/tool-analytics', ChartNoAxesCombined, 'site'), // public tools: views, interactions, result e-mails, attributed sign-ups (aggregates)
   a('searchPerformance', '/admin/search-performance', ChartNoAxesCombined, 'site', { adminOnly: true }), // Google Search Console: queries, pages, CTR (ADMIN+)
   a('problemReports', '/admin/problems', Bug, 'site', { adminOnly: true }),
+  a('browserErrors', '/admin/browser-errors', Bug, 'site', { adminOnly: true, badge: 'browserErrors' }), // browser error log (ADMIN+); badge = new error groups in the last 24 h
   // Sistem
   a('settings', '/admin/settings', Settings, 'system', { adminOnly: true }),
   a('legal', '/admin/legal', ScrollText, 'system', { adminOnly: true }),
@@ -443,7 +444,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'team', icon: UsersRound, tabs: ['users', 'mailboxes', 'kpi', 'teamLoad', 'shifts', 'training', 'trainingChecklist', 'whatsNew', 'timeTracking', 'oversight', 'weeklyReports'] },
   { key: 'compliance', icon: Scale, tabs: ['privacyRequests', 'legal', 'history', 'security', 'securityAlerts', 'sensitiveAccess', 'storage'] },
   { key: 'ai', icon: Sparkles, tabs: ['ai', 'aiSettings', 'mailTriage'] },
-  { key: 'system', icon: Settings, tabs: ['accessCenter', 'settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'setupChecklist', 'designSystem', 'kb', 'problemReports', 'help'] },
+  { key: 'system', icon: Settings, tabs: ['accessCenter', 'settings', 'trust', 'tvDisplay', 'integrations', 'automation', 'modules', 'usage', 'brand', 'license', 'customers', 'onboarding', 'setupChecklist', 'designSystem', 'kb', 'problemReports', 'browserErrors', 'help'] },
 ];
 
 export const hubHref = (key: HubKey) => `/admin/hub/${key}`;

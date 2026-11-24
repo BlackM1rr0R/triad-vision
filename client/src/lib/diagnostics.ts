@@ -1,10 +1,11 @@
 import { AxiosError } from 'axios';
 import { api } from './api';
+import { installErrorReporter, reportClientError } from './errorReporter';
 
 /**
  * Tiny diagnostics for "Problem bildir": the last 20 client-side errors (console.error, uncaught errors,
  * unhandled promise rejections) in a ring buffer and the last failed API call. Imported once, early, by
- * main.tsx; nothing leaves the browser unless the user sends a problem report.
+ * main.tsx. The same errors also go (de-duplicated, stack trimmed, no secrets) to the browser error log, see errorReporter.ts.
  */
 
 const MAX = 20;
@@ -56,6 +57,7 @@ export const installDiagnostics = () => {
   };
   window.addEventListener('error', (e) => push(`Uncaught ${e.error ? short(e.error) : e.message} @ ${e.filename}:${e.lineno}`));
   window.addEventListener('unhandledrejection', (e) => push(`Unhandled rejection: ${short(e.reason)}`));
+  installErrorReporter(); // browser error log (admin "Brauzer xətaları")
   api.interceptors.response.use(undefined, (err: unknown) => {
     if (err instanceof AxiosError && err.code !== 'ERR_CANCELED' && err.code !== 'ERR_IMPERSONATION_READ_ONLY') {
       const data = err.response?.data as { error?: string; requestId?: string } | undefined;
@@ -67,6 +69,10 @@ export const installDiagnostics = () => {
         requestId: data?.requestId ?? (err.response?.headers?.['x-request-id'] as string | undefined),
         at: new Date().toISOString(),
       };
+      if ((err.response?.status ?? 0) >= 500) {
+        const where = `${lastApiError.method ?? 'GET'} ${(lastApiError.url ?? '').replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|c[a-z0-9]{20,30}/gi, ':id')}`;
+        reportClientError('api5xx', new Error(`${where} → ${lastApiError.status} ${lastApiError.code ?? ''}`.trim()), { stack: '' });
+      }
     }
     return Promise.reject(err);
   });

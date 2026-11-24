@@ -1,6 +1,6 @@
 # CI/CD for triad-vision.de
 #
-#   every push / pull request:  typecheck + build + unit tests + e2e tests (12 parallel shards)
+#   every push / pull request:  typecheck + build + unit tests + e2e tests (12 parallel shards) + browser tests (Playwright)
 #   push to main:               images are built in parallel with the tests; all green → ship them to production
 #                               (backup first), check the live site
 #
@@ -206,9 +206,74 @@ jobs:
         working-directory: server
         run: npx vitest run --project e2e --shard=${{ matrix.shard }}/12
 
+  # Real browser end-to-end tests (Playwright, Chromium): the built client served like production (static files,
+  # /api proxied) + the real API on a seeded MySQL database; clicks through public pages, the client cabinet and
+  # admin screens. Staff sign in with a real TOTP code for a seeded secret (no 2FA bypass). See tests/browser/README.md.
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=40
+    env:
+      TEST_DB_HOST: 127.0.0.1:3306
+      TEST_DB_USER: root
+      TEST_DB_PASSWORD: root
+      BROWSER_DB_NAME: triad_vision_browser
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema server/prisma/schema.prisma
+      - name: Playwright browser (cached)
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: Chromium system libraries
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      # Typecheck of the client runs in "Typecheck & build"; here only the bundle.
+      - name: Build the client
+        working-directory: client
+        run: npx vite build
+      - name: Browser tests
+        run: npx playwright test -c tests/browser
+      - name: Upload report and traces
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-report
+          path: |
+            tests/browser/output/report/
+            tests/browser/output/test-results/
+          retention-days: 14
+      - name: Upload crawl screenshots
+        if: ${{ !cancelled() && hashFiles('tests/browser/output/crawl/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-crawl
+          path: tests/browser/output/crawl/
+          retention-days: 14
+
   deploy:
     name: Deploy to production
-    needs: [checks, server-typecheck, infra, unit, e2e, images]
+    needs: [checks, server-typecheck, infra, unit, e2e, browser, images]
     # images is skipped with DEPLOY_SERVER_BUILD=1 (server-side build fallback); the deploy still runs then.
     if: >-
       !cancelled() && !failure() &&

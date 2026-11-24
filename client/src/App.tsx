@@ -275,6 +275,7 @@ const AdminToday = lazyRoute('AdminToday', () => import('./pages/admin/Today'));
 const StatusPage = lazyRoute('StatusPage', () => import('./pages/Status')); // public status check without login
 const TrustPage = lazyRoute('TrustPage', () => import('./pages/Trust')); // public Trust Center (/trust)
 const CandidateCataloguePage = lazyRoute('CandidateCataloguePage', () => import('./pages/CandidateCatalogue')); // anonymous candidate catalogue (/kandidaten, German first)
+const AdminBrowserErrors = lazyRoute('AdminBrowserErrors', () => import('./pages/admin/BrowserErrors')); // "Brauzer xətaları": browser error log (ADMIN+)
 const AdminProblemReports = lazyRoute('AdminProblemReports', () => import('./pages/admin/ProblemReports')); // "Problem bildirişləri"
 
 const AdminMyDay = lazyRoute('AdminMyDay', () => import('./pages/admin/MyDay')); // "Bu günüm": day plan on the my-work queue
@@ -1051,6 +1052,14 @@ export default function App() {
             />
             {/* Admins + the staff member chosen in its settings (the API decides; others see "no access"). */}
             <Route path="problems" element={<AdminProblemReports />} />
+            <Route
+              path="browser-errors"
+              element={
+                <RequireAuth roles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminBrowserErrors />
+                </RequireAuth>
+              }
+            />
             <Route path="partners/*" element={<AdminPartners />} />
             <Route path="register" element={<AdminClientRegister />} />
             <Route path="settlements/*" element={<AdminSettlements />} />

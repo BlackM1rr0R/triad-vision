@@ -903,6 +903,63 @@ export const PAGES_SYSTEM: PageHelpEntry[] = [
     },
   },
   {
+    route: 'browser-errors',
+    text: {
+      az: {
+        title: 'Brauzer xətaları',
+        purpose: 'Saytda və kabinetlərdə brauzerdə baş verən xətalar (gözlənilməz xəta, render xətası, yüklənməyən fayl, server 5xx) eyni xətalar qruplaşdırılmış halda. Yalnız administratorlar görür; 30 gün saxlanılır.',
+        steps: [
+          'Siyahını status (Yeni, Həll olunub, Nəzərə alınmır) üzrə süzün və ya mətn və səhifə üzrə axtarın.',
+          'Qrupu açın: təkrar sayı, ilk və son dəfə, səhifə, versiya, brauzer və stek nümunəsi görünür.',
+          'Düzəldiləndən sonra «Həll olunub», əhəmiyyətsizdirsə «Nəzərə alma» seçin; həll olunmuş xəta yenidən baş versə, yenidən «Yeni» olur.',
+        ],
+        tips: [
+          'Yan paneldəki qırmızı say son 24 saatda baş verən yeni xəta qruplarını göstərir.',
+          'Şəxsi məlumat saxlanılmır: ünvandakı sorğu parametrləri, identifikatorlar və tokenlər silinir.',
+        ],
+      },
+      ru: {
+        title: 'Ошибки браузера',
+        purpose: 'Ошибки в браузере на сайте и в кабинетах (непойманная ошибка, ошибка отрисовки, незагруженный файл, ответ сервера 5xx), одинаковые ошибки сгруппированы. Видят только администраторы; хранятся 30 дней.',
+        steps: [
+          'Фильтруйте список по статусу (Новая, Решена, Игнорируется) или ищите по тексту и странице.',
+          'Откройте группу: видны число повторов, первое и последнее появление, страница, версия, браузер и пример стека.',
+          'После исправления выберите «Решена», если неважно — «Игнорировать»; решённая ошибка при повторении снова становится «Новой».',
+        ],
+        tips: [
+          'Красное число в боковом меню показывает новые группы ошибок за последние 24 часа.',
+          'Личные данные не сохраняются: параметры адреса, идентификаторы и токены удаляются.',
+        ],
+      },
+      en: {
+        title: 'Browser errors',
+        purpose: 'Errors raised in the browser on the website and the portals (uncaught error, render error, failed file load, server 5xx), identical errors grouped. Visible to admins only; kept for 30 days.',
+        steps: [
+          'Filter the list by status (New, Resolved, Ignored) or search the text and page.',
+          'Open a group: count, first and last seen, page, release, browser and a sample stack.',
+          'Mark it «Resolved» once fixed, or «Ignored» if irrelevant; a resolved error that happens again becomes «New» again.',
+        ],
+        tips: [
+          'The red number in the sidebar shows new error groups from the last 24 hours.',
+          'No personal data is stored: URL query parameters, ids and tokens are removed.',
+        ],
+      },
+      de: {
+        title: 'Browser-Fehler',
+        purpose: 'Fehler im Browser auf der Website und in den Kundenbereichen (unerwarteter Fehler, Darstellungsfehler, nicht geladene Datei, Server-5xx), gleiche Fehler gruppiert. Nur für Admins sichtbar; 30 Tage gespeichert.',
+        steps: [
+          'Liste nach Status (Neu, Behoben, Ignoriert) filtern oder in Text und Seite suchen.',
+          'Gruppe öffnen: Anzahl, erstes und letztes Auftreten, Seite, Version, Browser und ein Beispiel-Stack.',
+          'Nach der Korrektur „Behoben“, bei Irrelevanz „Ignoriert“ wählen; ein behobener Fehler wird beim erneuten Auftreten wieder „Neu“.',
+        ],
+        tips: [
+          'Die rote Zahl in der Seitenleiste zeigt neue Fehlergruppen der letzten 24 Stunden.',
+          'Es werden keine personenbezogenen Daten gespeichert: URL-Parameter, IDs und Tokens werden entfernt.',
+        ],
+      },
+    },
+  },
+  {
     route: 'problems',
     text: {
       az: {

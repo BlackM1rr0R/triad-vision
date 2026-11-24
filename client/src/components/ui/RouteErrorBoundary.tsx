@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { reportClientError } from '@/lib/errorReporter';
 
 /**
  * Last line of defence for a route that throws while rendering or whose lazy chunk failed to load
@@ -14,6 +15,7 @@ export class RouteErrorBoundary extends Component<{ children: ReactNode }, { err
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[route]', error, info.componentStack);
+    reportClientError('react', error, { stack: [error.stack ?? '', ...(info.componentStack ?? '').split('\n').slice(0, 4)].join('\n') });
     if (isChunkError(error) && reloadOnce()) window.location.reload();
   }
 
