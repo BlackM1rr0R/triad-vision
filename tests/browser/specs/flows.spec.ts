@@ -49,7 +49,8 @@ test.describe('contract: Əmək müqaviləsi (V2)', () => {
     await test.step('staff: the client-signed PDF and the "sign for Triad Vision" next step', async () => {
       await signIn(context, seed().admin);
       await page.goto(`/admin/cases/${c.caseId}?tab=documents`);
-      await expect(page.getByRole('heading', { level: 1, name: c.caseNumber })).toBeVisible();
+      // First admin page of this context: the admin chunks download now (cold cache) — allow more than the default.
+      await expect(page.getByRole('heading', { level: 1, name: c.caseNumber })).toBeVisible({ timeout: 30_000 });
       const step = page.getByRole('article', { name: 'Əmək müqaviləsi', exact: true });
       await expect(step.getByRole('link', { name: 'Müştərinin imzaladığı PDF-ə bax' }).first()).toBeVisible();
       await expect(page.locator('#case-next-step')).toContainText('Müştəri Əmək müqaviləsini imzaladı — Triad Vision adından imzalayın');

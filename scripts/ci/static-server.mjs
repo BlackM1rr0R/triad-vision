@@ -32,6 +32,35 @@ const TYPES = {
 };
 const COMPRESSIBLE = /^(text\/|application\/(json|manifest\+json|wasm)|image\/svg)/;
 
+/**
+ * index.html is a Caddy template in production: its per-language / per-route preload hints sit in
+ * `<!--tv:if …:tv--> … <!--tv:end:tv-->` branches (client/vite.config.ts, shellPreloads) and Caddy keeps only the
+ * branch of the request. Served raw, the browser fetched the hints of EVERY branch (~750 modulepreloads: every public
+ * page and language) on each navigation, and the page's own chunks queued behind them (seconds on a CI runner).
+ * This server leaves the template as it was (inert comments) but drops the preload links inside conditional
+ * branches: the page loads its chunks itself, as without hints. Links outside any branch (entry deps) stay.
+ */
+const PRELOAD_LINK = /<link\b[^>]*\brel="(?:modulepreload|preload)"[^>]*>/g;
+export const stripShellTemplate = (html) => {
+  let out = '';
+  let depth = 0;
+  let last = 0;
+  const flush = (to) => {
+    const part = html.slice(last, to);
+    out += depth > 0 ? part.replace(PRELOAD_LINK, '') : part;
+  };
+  for (const m of html.matchAll(/<!--tv:([\s\S]*?):tv-->/g)) {
+    flush(m.index);
+    out += m[0];
+    last = m.index + m[0].length;
+    const action = m[1].trim();
+    if (/^if\b/.test(action)) depth++;
+    else if (action === 'end') depth = Math.max(0, depth - 1);
+  }
+  flush(html.length);
+  return out;
+};
+
 /** Starts the server; resolves with { server, url, close }. */
 export const startStaticServer = ({ dir, port = 0, api } = {}) =>
   new Promise((resolve, reject) => {
@@ -39,6 +68,9 @@ export const startStaticServer = ({ dir, port = 0, api } = {}) =>
     const index = path.join(root, 'index.html');
     if (!fs.existsSync(index)) return reject(new Error(`No index.html in ${root} (build the client first)`));
     const apiUrl = api ? new URL(api) : null;
+    // gzip each hashed asset once, not on every request (a page loads hundreds of chunks; compressing each of them again per
+    // request kept the server busy for seconds and made pages wait for their own chunks).
+    const gzipCache = new Map();
 
     const server = http.createServer((req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost');
@@ -73,9 +105,15 @@ export const startStaticServer = ({ dir, port = 0, api } = {}) =>
         'content-type': type,
         'cache-control': url.pathname.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
       };
-      const body = fs.readFileSync(file);
+      const body = file === index ? Buffer.from(stripShellTemplate(fs.readFileSync(index, 'utf8'))) : fs.readFileSync(file);
       if (COMPRESSIBLE.test(type) && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? '')) && body.length > 1024) {
-        const gz = zlib.gzipSync(body, { level: 6 });
+        // Hashed assets never change under the same name: compress them once.
+        const cacheable = url.pathname.startsWith('/assets/');
+        let gz = cacheable ? gzipCache.get(file) : undefined;
+        if (!gz) {
+          gz = zlib.gzipSync(body, { level: 6 });
+          if (cacheable) gzipCache.set(file, gz);
+        }
         res.writeHead(200, { ...headers, 'content-encoding': 'gzip', vary: 'Accept-Encoding', 'content-length': gz.length });
         res.end(gz);
       } else {

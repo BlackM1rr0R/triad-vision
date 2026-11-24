@@ -43,6 +43,8 @@ test.describe('crawl', () => {
   });
 
   test('client cabinet', async ({ context, page, errors }) => {
+    // 10 routes plus a status check per seeded client (9 since the flow specs): ~2–5 s each on a CI runner.
+    test.setTimeout(150_000);
     const s = seed();
     const c = s.clients.viewer;
     await signIn(context, c);
