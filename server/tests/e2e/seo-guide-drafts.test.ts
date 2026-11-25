@@ -19,10 +19,11 @@ describe('SEO guide drafts', () => {
     expect(await prisma.guidePage.count({ where: { published: false } })).toBe(drafts.length);
 
     const sitemap = (await anon().get('/sitemaps/guides.xml')).text;
-    // In az / de / en / ru only the profession recognition guides are live.
+    // In az / de / en / ru the profession recognition guides are live, plus the 2026 SEO guides where written (az/ru/tr).
     for (const lng of ['az', 'de', 'en', 'ru']) {
       const items = (await anon().get('/api/guides').query({ lng })).body.items as { key: string; locale: string }[];
-      expect(items.map((g) => g.key).sort(), lng).toEqual([...PROFESSION_KEYS].sort());
+      const seo = (SEO2026_LOCALES as readonly string[]).includes(lng) ? [...SEO2026_KEYS] : [];
+      expect(items.map((g) => g.key).sort(), lng).toEqual([...PROFESSION_KEYS, ...seo].sort());
       expect(items.every((g) => g.locale === lng), lng).toBe(true);
     }
     // /anerkennung links them in a "by profession" block of the crawler HTML.
