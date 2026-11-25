@@ -3,9 +3,9 @@
 const az = {
   gsc: {
     title: 'Google axtarış nəticələri',
-    subtitle: 'Son 28 gün ({{from}} – {{to}}) · Google Search Console · {{site}}',
+    subtitle: '{{from}} – {{to}} · Google Search Console · {{site}}',
     refresh: 'Yenilə',
-    cachedAt: 'Məlumat: {{time}} (6 saatda bir yenilənir)',
+    cachedAt: 'Məlumat: {{time}} (saatda bir yenilənir)',
     clicks: 'Kliklər',
     impressions: 'Göstərilmələr',
     ctr: 'CTR',
@@ -38,7 +38,7 @@ const az = {
     },
     opp: {
       title: 'İmkanlar',
-      intro: 'Yuxarıdakı məlumatdan avtomatik çıxarılıb (son 28 gün, ən çox 250 sorğu və 250 səhifə).',
+      intro: 'Yuxarıdakı məlumatdan avtomatik çıxarılıb (seçilmiş dövr, ən çox 250 sorğu və 250 səhifə).',
       locales: 'Dillər üzrə',
       localesHint: 'Səhifə URL-inin dil prefiksinə görə (az prefikssiz; köhnə ?lng= URL-ləri öz dilinə sayılır). Mövqe göstərilmələrə görə çəkili ortadır.',
       locale: 'Dil',
@@ -97,9 +97,9 @@ const az = {
 const de: typeof az = {
   gsc: {
     title: 'Google-Suchleistung',
-    subtitle: 'Letzte 28 Tage ({{from}} – {{to}}) · Google Search Console · {{site}}',
+    subtitle: '{{from}} – {{to}} · Google Search Console · {{site}}',
     refresh: 'Aktualisieren',
-    cachedAt: 'Stand: {{time}} (wird alle 6 Stunden aktualisiert)',
+    cachedAt: 'Stand: {{time}} (wird stündlich aktualisiert)',
     clicks: 'Klicks',
     impressions: 'Impressionen',
     ctr: 'CTR',
@@ -132,7 +132,7 @@ const de: typeof az = {
     },
     opp: {
       title: 'Potenziale',
-      intro: 'Automatisch aus den Daten oben abgeleitet (letzte 28 Tage, bis zu 250 Suchanfragen und 250 Seiten).',
+      intro: 'Automatisch aus den Daten oben abgeleitet (gewählter Zeitraum, bis zu 250 Suchanfragen und 250 Seiten).',
       locales: 'Nach Sprache',
       localesHint: 'Nach dem Sprachpräfix der Seiten-URL (az ohne Präfix; alte ?lng=-URLs zählen zu ihrer Sprache). Position nach Impressionen gewichtet.',
       locale: 'Sprache',
@@ -191,9 +191,9 @@ const de: typeof az = {
 const en: typeof az = {
   gsc: {
     title: 'Google search performance',
-    subtitle: 'Last 28 days ({{from}} – {{to}}) · Google Search Console · {{site}}',
+    subtitle: '{{from}} – {{to}} · Google Search Console · {{site}}',
     refresh: 'Refresh',
-    cachedAt: 'Data as of {{time}} (refreshed every 6 hours)',
+    cachedAt: 'Data as of {{time}} (refreshed hourly)',
     clicks: 'Clicks',
     impressions: 'Impressions',
     ctr: 'CTR',
@@ -226,7 +226,7 @@ const en: typeof az = {
     },
     opp: {
       title: 'Opportunities',
-      intro: 'Derived automatically from the data above (last 28 days, up to 250 queries and 250 pages).',
+      intro: 'Derived automatically from the data above (selected period, up to 250 queries and 250 pages).',
       locales: 'By language',
       localesHint: 'By the language prefix of the page URL (az unprefixed; legacy ?lng= URLs count for their language). Position weighted by impressions.',
       locale: 'Language',
@@ -285,9 +285,9 @@ const en: typeof az = {
 const ru: typeof az = {
   gsc: {
     title: 'Эффективность в Google',
-    subtitle: 'Последние 28 дней ({{from}} – {{to}}) · Google Search Console · {{site}}',
+    subtitle: '{{from}} – {{to}} · Google Search Console · {{site}}',
     refresh: 'Обновить',
-    cachedAt: 'Данные на {{time}} (обновляются каждые 6 часов)',
+    cachedAt: 'Данные на {{time}} (обновляются каждый час)',
     clicks: 'Клики',
     impressions: 'Показы',
     ctr: 'CTR',
@@ -320,7 +320,7 @@ const ru: typeof az = {
     },
     opp: {
       title: 'Возможности',
-      intro: 'Рассчитано автоматически по данным выше (последние 28 дней, до 250 запросов и 250 страниц).',
+      intro: 'Рассчитано автоматически по данным выше (выбранный период, до 250 запросов и 250 страниц).',
       locales: 'По языкам',
       localesHint: 'По языковому префиксу URL страницы (az без префикса; старые URL с ?lng= учитываются в своём языке). Позиция взвешена по показам.',
       locale: 'Язык',

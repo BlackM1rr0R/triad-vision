@@ -5,6 +5,7 @@ import {
   escapeHtml,
   isKnownRoute,
   isPrivatePath,
+  jobHiringOrganization,
   jobPostingLd,
   localBusinessLd,
   normalizePath,
@@ -29,6 +30,8 @@ import {
 } from '../../src/lib/seo.js';
 import { GENERIC_META, SEO_LOCALES, SITE_NAME, SITEMAP_STATIC, STATIC_PAGES, textIn } from '../../src/lib/seoCatalogue.js';
 import { renderBody } from '../../src/lib/seoBody.js';
+import { careerSitemapPaths } from '../../src/lib/careerPages/seo.js';
+import { CAREER_LOCALES } from '../../src/lib/careerPages/index.js';
 import type { GuideRow } from '../../src/lib/guides/service.js';
 
 const ORIGIN = 'http://localhost:5173';
@@ -379,14 +382,14 @@ describe('renderHead', () => {
 });
 
 describe('JSON-LD builders', () => {
-  it('builds a JobPosting with a "confidential" hiring organisation when the company is hidden (Google agency rule)', () => {
+  it('builds a JobPosting with Triad Vision as the hiring organisation (agency; the employer stays hidden)', () => {
     const ld = jobPostingLd(job(), 'de', `${ORIGIN}/de/jobs/lkw-hamburg`);
     expect(ld).toMatchObject({
       '@type': 'JobPosting',
       title: 'Driver de',
       datePosted: '2026-10-01T00:00:00.000Z',
       employmentType: 'FULL_TIME',
-      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
+      hiringOrganization: { '@type': 'Organization', name: 'Triad Vision', sameAs: `${ORIGIN}/`, logo: `${ORIGIN}/logo-512.png` },
       identifier: { '@type': 'PropertyValue', name: 'Triad Vision', value: 'lkw-hamburg' },
       jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressLocality: 'Hamburg', addressRegion: 'Hamburg', addressCountry: 'DE' } },
       baseSalary: { '@type': 'MonetaryAmount', currency: 'EUR', value: { minValue: 2800, maxValue: 3400, unitText: 'MONTH' } },
@@ -394,7 +397,7 @@ describe('JSON-LD builders', () => {
     });
     expect(ld.description).toBe('<p>Line one</p><p>Line two de</p><p><strong>Anforderungen</strong></p><ul><li>CE</li></ul>');
     expect(JSON.stringify(ld)).not.toContain('Hidden GmbH');
-    expect(ld.hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
+    expect(ld.hiringOrganization).toEqual(jobHiringOrganization());
     expect(ld.validThrough).toBeDefined();
     // Region from the city (names and aliases of the budget city data); unknown places get none.
     expect(jobPostingLd(job({ city: 'Munich' }), 'en', 'u').jobLocation).toMatchObject({ address: { addressRegion: 'Bayern' } });
@@ -404,7 +407,8 @@ describe('JSON-LD builders', () => {
 
   it('never names the employer (even with showCompany) and maps employment types and salaries', () => {
     const shown = jobPostingLd(job({ showCompany: true, employmentType: 'SEASONAL', salaryMax: null, closesAt: null }), 'en', 'u');
-    expect(shown.hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
+    expect(shown.hiringOrganization).toEqual(jobHiringOrganization());
+    expect(JSON.stringify(shown)).not.toContain('Hidden GmbH');
     expect(shown.employmentType).toBe('TEMPORARY');
     expect(shown.baseSalary).toMatchObject({ value: { value: 2800, unitText: 'MONTH' } });
     expect(shown.validThrough).toBeUndefined();
@@ -413,6 +417,17 @@ describe('JSON-LD builders', () => {
     const desc = jobPostingLd(job({ description: { en: '<img src=x onerror=alert(1)>' }, requirements: null }), 'en', 'u').description;
     expect(desc).toBe('<p>&lt;img src=x onerror=alert(1)&gt;</p>');
     expect(jobPostingLd(job({ requirements: { en: ['B1'] } }), 'tr', 'u').description).toContain('Aranan nitelikler');
+  });
+
+  it('JobPosting carries every field Google requires and never leaks the employer', () => {
+    const ld = jobPostingLd(job({ showCompany: true }), 'ru', `${ORIGIN}/ru/jobs/lkw-hamburg`) as Record<string, any>;
+    for (const f of ['title', 'description', 'datePosted', 'hiringOrganization', 'jobLocation', 'identifier', 'validThrough', 'employmentType', 'baseSalary']) expect(ld[f], f).toBeDefined();
+    expect(ld.hiringOrganization).toMatchObject({ '@type': 'Organization', name: 'Triad Vision', sameAs: expect.stringMatching(/^https?:\/\//), logo: expect.stringMatching(/logo-512\.png$/) });
+    expect(ld.jobLocation.address.addressCountry).toBe('DE');
+    expect(ld.directApply).toBe(true);
+    expect(ld.baseSalary.value.unitText).toBe('MONTH');
+    expect(new Date(ld.validThrough).getTime()).toBeGreaterThan(new Date(ld.datePosted).getTime());
+    expect(JSON.stringify(ld)).not.toMatch(/Hidden GmbH|hidden\.example/);
   });
 
   it('builds the Organization from settings and never adds a (self-serving) AggregateRating', () => {
@@ -482,7 +497,8 @@ describe('robots.txt, sitemaps and RSS', () => {
     const xml = renderSitemap(emptyData({ posts: [{ slug: 'a&b', title: {}, excerpt: {}, cover: '', publishedAt: new Date(), updatedAt: new Date('2026-10-01T00:00:00Z') }] }));
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
     // + the glossary terms (static data, lib/glossary), every language.
-    expect(xml.match(/<url>/g)).toHaveLength((SITEMAP_STATIC.length + 1 + glossarySitemapPaths().length) * 6);
+    // + the career pages (lib/careerPages: Ausbildung occupations, metropolis city pages) in the five career languages.
+    expect(xml.match(/<url>/g)).toHaveLength((SITEMAP_STATIC.length + 1 + glossarySitemapPaths().length) * 6 + careerSitemapPaths(emptyData()).length * CAREER_LOCALES.length);
     expect(xml).toContain(`<loc>${ORIGIN}/de/news/a&amp;b</loc>`);
     expect(xml).toContain(`<loc>${ORIGIN}/news/a&amp;b</loc>`);
     expect(xml).toContain(`hreflang="uk" href="${ORIGIN}/uk/news/a&amp;b"`);

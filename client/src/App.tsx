@@ -250,6 +250,8 @@ const JobAlertGermanyManage = lazyRoute('JobAlertGermanyManage', () => import('.
 const AccountSavedJobs = lazyRoute('AccountSavedJobs', () => import('./pages/account/SavedJobs')); // Learn › Saved jobs (Germany job search) + job alerts
 const AnerkennungGuide = lazyRoute('AnerkennungGuide', () => import('./pages/tools/Anerkennung'));
 const CitiesGuide = lazyRoute('CitiesGuide', () => import('./pages/tools/Cities'));
+const CityWork = lazyRoute('CityWork', () => import('./pages/career/CityWork')); // /cities/:slug (server lib/careerPages)
+const AusbildungOccupation = lazyRoute('AusbildungOccupation', () => import('./pages/career/AusbildungOccupation')); // /ausbildung/:slug
 // SEO: topic guides and interactive tools (Chancenkarte points, Blue Card salary check)
 const Guides = lazyRoute('Guides', () => import('./pages/guides/Guides'));
 const GuideDetail = lazyRoute('GuideDetail', () => import('./pages/guides/GuideDetail'));
@@ -444,6 +446,8 @@ const INTENT: [string, () => Promise<unknown>][] = [
   ['/visas', () => import('./pages/Visas')],
   ['/partners', () => import('./pages/Partners')],
   ['/stories', () => import('./pages/Stories')],
+  ['/ausbildung/', () => import('./pages/career/AusbildungOccupation')],
+  ['/cities/', () => import('./pages/career/CityWork')],
   ['/ausbildung', () => import('./pages/Ausbildung')],
   ['/eligibility', () => import('./pages/Eligibility')],
   ['/uygunluq-testi', () => import('./pages/EligibilityQuiz')],
@@ -521,11 +525,13 @@ export default function App() {
             <Route path="partners" element={<Partners />} />
             <Route path="stories" element={<Stories />} />
             <Route path="ausbildung" element={<Ausbildung />} />
+            <Route path="ausbildung/:slug" element={<AusbildungOccupation />} />
             <Route path="faq" element={<FaqPage />} />
             <Route path="news" element={<News />} />
             <Route path="salary-calculator" element={<SalaryCalculator />} />
             <Route path="anerkennung" element={<AnerkennungGuide />} />
             <Route path="cities" element={<CitiesGuide />} />
+            <Route path="cities/:slug" element={<CityWork />} />
             <Route path="guides" element={<Guides />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="compare-visas" element={<CompareVisas />} />

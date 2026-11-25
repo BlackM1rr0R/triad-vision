@@ -5,7 +5,21 @@
  * client/src/lib/professionHubs.ts (tests/unit/professionHubs.test.ts keeps both in line via the slugs).
  */
 
-export const PROFESSION_HUB_SLUGS = ['truck-driver', 'cook', 'nurse', 'care-worker', 'electrician', 'construction-worker'] as const;
+export const PROFESSION_HUB_SLUGS = [
+  'truck-driver',
+  'cook',
+  'nurse',
+  'care-worker',
+  'electrician',
+  'construction-worker',
+  // Added 2026-11-25 (SEO profession landings: courier, warehouse, hotel / restaurant service, seasonal farm work, mechatronics, IT).
+  'courier',
+  'warehouse',
+  'hospitality',
+  'agriculture',
+  'mechatronics',
+  'it-specialist',
+] as const;
 export type ProfessionHubSlug = (typeof PROFESSION_HUB_SLUGS)[number];
 
 export interface ProfessionHub {
@@ -47,6 +61,36 @@ export const PROFESSION_HUBS: ProfessionHub[] = [
     slug: 'construction-worker',
     professions: ['construction_worker', 'welder', 'carpenter', 'painter', 'plumber'],
     tools: ['/salary-calculator', '/work-scenes/construction-site', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/german-mock-exam', '/budget', '/rent-check', '/workplace-etiquette'],
+  },
+  {
+    slug: 'courier',
+    professions: ['courier'],
+    tools: ['/salary-calculator', '/driving-licence-germany', '/traffic-signs', '/work-schedule-check', '/shift-pay-calculator', '/which-city', '/budget', '/workplace-etiquette'],
+  },
+  {
+    slug: 'warehouse',
+    professions: ['warehouse'],
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/german-mock-exam', '/which-city', '/budget', '/rent-check', '/workplace-etiquette'],
+  },
+  {
+    slug: 'hospitality',
+    professions: ['waiter', 'hotel'],
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/work-scenes/restaurant-kitchen', '/german-mock-exam', '/anerkennung', '/budget', '/which-city', '/workplace-etiquette'],
+  },
+  {
+    slug: 'agriculture',
+    professions: ['agriculture'],
+    tools: ['/salary-calculator', '/work-schedule-check', '/budget', '/send-money-home', '/health-insurance-comparison', '/german-mock-exam', '/workplace-etiquette'],
+  },
+  {
+    slug: 'mechatronics',
+    professions: ['mechanic'],
+    tools: ['/anerkennung', '/salary-calculator', '/german-mock-exam', '/blue-card-check', '/chancenkarte-calculator', '/which-city', '/budget', '/workplace-etiquette'],
+  },
+  {
+    slug: 'it-specialist',
+    professions: ['it'],
+    tools: ['/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/salary-calculator', '/tax-class-chooser', '/which-city', '/rent-check', '/family-reunification-check'],
   },
 ];
 

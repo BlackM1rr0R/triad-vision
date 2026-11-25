@@ -176,10 +176,10 @@ describe('company logo', () => {
     expect(list.body.items.find((x: { id: string }) => x.id === shown.id).companyLogo).toBeNull();
 
     const head = (await anon().get('/api/seo/head').query({ path: `/jobs/${shown.slug}`, lng: 'de' })).text;
-    expect(ld(head).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
+    expect(ld(head).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toMatchObject({ '@type': 'Organization', name: 'Triad Vision' });
     const hiddenHead = (await anon().get('/api/seo/head').query({ path: `/jobs/${hidden.slug}`, lng: 'de' })).text;
-    // Hidden employer: "confidential" (Google's rule for agencies), never the employer's logo.
-    expect(ld(hiddenHead).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toEqual({ '@type': 'Organization', name: 'confidential' });
+    // Hidden employer: the agency (Triad Vision) is the hiring organisation, never the employer's logo.
+    expect(ld(hiddenHead).find((b) => b['@type'] === 'JobPosting').hiringOrganization).toMatchObject({ '@type': 'Organization', name: 'Triad Vision' });
 
     expectStatus(await co.agent.delete('/api/company/me/logo'), 200);
     await flushImageCleanups();

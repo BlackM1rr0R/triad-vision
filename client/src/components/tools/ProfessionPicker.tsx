@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Car, ChefHat, HardHat, HeartHandshake, Stethoscope, Zap, type LucideIcon } from 'lucide-react';
+import { Car, ChefHat, ConciergeBell, HardHat, HeartHandshake, Laptop, Package, Sprout, Stethoscope, Warehouse, Wrench, Zap, type LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { registerCopy } from '@/i18n';
 import { pagesProfessionHubs } from '@/i18n/pagesProfessionHubs';
@@ -15,6 +15,12 @@ const ICONS: Record<ProfessionHubSlug, LucideIcon> = {
   'care-worker': HeartHandshake,
   electrician: Zap,
   'construction-worker': HardHat,
+  courier: Package,
+  warehouse: Warehouse,
+  hospitality: ConciergeBell,
+  agriculture: Sprout,
+  mechatronics: Wrench,
+  'it-specialist': Laptop,
 };
 
 /** "I am a …" chips linking the profession hubs (/for/<slug>): tools hub, home page and the hubs themselves. */

@@ -22,6 +22,8 @@ import { findJobLanding, jobLandings, jobLandingTexts, landingOfJob, parseJobLan
 import { studyDetailBody, studyDetailSlug, studyListBody } from './study/seo.js';
 import { glossaryListBody, glossaryTermBody, glossaryTermOfPath } from './glossary/seo.js';
 import { hubOfPath } from './professionHubs.js';
+import { careerBody, careerIndexLinks } from './careerPages/seo.js';
+import { isCareerDetailPath } from './careerPages/index.js';
 import { CHANGES_PATH, changes2027Body } from './changes2027/seo.js';
 
 /*
@@ -214,6 +216,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
   const studyItem = studySlug ? (data.study ?? []).find((x) => x.slug === studySlug) : undefined;
   // Glossary term page (lib/glossary/seo.ts).
   const glossaryItem = glossaryTermOfPath(path);
+  // Ausbildung occupation pages and city pages (lib/careerPages/seo.ts).
+  const careerHtml = isCareerDetailPath(path) ? careerBody(path, lng, data, link) : null;
   if (landing) {
     const lt = jobLandingTexts(landing, lng, jobRegion(landing.city));
     const jl = JL[lng];
@@ -231,6 +235,8 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       rel.sameProfession.length ? section(lt.labels.sameProfession, landingLinks(rel.sameProfession)) : '',
       `<p>${link('/jobs', lt.labels.allJobs)} · ${link('/booking', t.cta)}</p>`,
     );
+  } else if (careerHtml) {
+    out.push(...careerHtml);
   } else if (glossaryItem) {
     out.push(...glossaryTermBody(glossaryItem, lng, link), `<p>${link('/guides', staticLabel('/guides'))} · ${link('/booking', t.cta)}</p>`);
   } else if (studyItem) {
@@ -500,10 +506,12 @@ export const renderBody = (rawPath: string, data: SeoData): string => {
       default: {
         // Profession hubs (/for/<slug>): the hub's tools, then the CTA.
         const hub = hubOfPath(path);
-        if (hub) out.push(section(staticLabel('/tools'), linkList(hub.tools)), `<p>${link('/jobs', staticLabel('/jobs'))}</p>`);
+        if (hub) out.push(section(staticLabel('/tools'), linkList(hub.tools)), ...(careerBody(path, lng, data, link) ?? []), `<p>${link('/jobs', staticLabel('/jobs'))}</p>`);
         out.push(cta);
       }
     }
+    // /ausbildung and /cities: links to the occupation and city pages (career languages).
+    out.push(...careerIndexLinks(path, lng, data, link));
     if ((TOOLS.includes(path) && path !== '/tools') || path === '/' || path === '/for-workers') out.push(section(staticLabel('/tools'), linkList(TOOLS)));
   }
   out.push('</main>');

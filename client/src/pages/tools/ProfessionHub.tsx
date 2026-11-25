@@ -9,6 +9,7 @@ import { ToolCard } from '@/components/audience/AudienceSections';
 import { TOOLS } from '@/components/audience/tools';
 import { PathLink, useGuides } from '@/components/guides/shared';
 import { ProfessionPicker } from '@/components/tools/ProfessionPicker';
+import { HubCareerSections } from '@/components/career/CareerBlocks'; // requirements, visa path, steps, FAQ, related (server lib/careerPages)
 import { useMoney } from '@/components/tools/format';
 import { buttonClass } from '@/components/ui/Button';
 import { useGlossaryList } from '@/pages/glossary/GlossaryIndex';
@@ -69,6 +70,7 @@ const Vocabulary = ({ hub }: { hub: Hub }) => {
   const [scene, setScene] = useState<WorkScene | null>(null);
   useEffect(() => {
     let alive = true;
+    if (!hub.scene) return;
     void SCENES[hub.scene]()
       .then((s) => alive && setScene(s))
       .catch(() => undefined);
@@ -213,7 +215,7 @@ export default function ProfessionHub() {
   usePageTitle(hub ? t(`profHub.hubs.${hub.slug}.h1`) : null);
   if (!hub) return <NotFound />;
 
-  const scene = SCENE_META.find((s) => s.id === hub.scene)!;
+  const scene = hub.scene ? (SCENE_META.find((s) => s.id === hub.scene) ?? null) : null;
   const tools = hub.tools.map((p) => TOOLS.find((x) => x.to === p)).filter((x): x is (typeof TOOLS)[number] => !!x);
   const level = hub.mockExam.endsWith('b1') ? 'b1' : 'a1';
   const asOf = new Date(`${HUB_SALARY_AS_OF}T12:00:00Z`).toLocaleDateString(currentSiteLocale(), { dateStyle: 'medium' });
@@ -242,8 +244,11 @@ export default function ProfessionHub() {
         </div>
       </section>
 
+      <HubCareerSections slug={hub.slug} salaryLink={`/salary-calculator?gross=${salaryMid(hub)}`} />
+
       <section className="section bg-sunken" aria-labelledby="hub-learn">
         <div className="container-x grid gap-6 lg:grid-cols-2">
+          {scene ? (
           <div className="card card-pad rounded-3xl">
             <h2 id="hub-learn" className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
               <HardHat className="size-5 text-primary" aria-hidden /> {t('profHub.scene')}: {t(`ws.scenes.${scene.id}.title`)}
@@ -255,6 +260,14 @@ export default function ProfessionHub() {
             </Link>
             <GlossaryTerms hub={hub} />
           </div>
+          ) : (
+            <div className="card card-pad rounded-3xl">
+              <h2 id="hub-learn" className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
+                <HardHat className="size-5 text-primary" aria-hidden /> {t('profHub.glossary')}
+              </h2>
+              <GlossaryTerms hub={hub} />
+            </div>
+          )}
           <div className="space-y-6">
             <div className="card card-pad rounded-3xl">
               <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-ink">

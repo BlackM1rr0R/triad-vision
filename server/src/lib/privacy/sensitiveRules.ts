@@ -177,6 +177,7 @@ export const EXTRA_EXCLUDED_PATHS = [
   /^\/api\/visa-checklist(\/|$)/,
   /^\/api\/landing(\/|$)/,
   /^\/api\/profession-hubs(\/|$)/,
+  /^\/api\/career(\/|$)/,
   /^\/api\/candidate-catalogue(\/|$)/,
   /^\/api\/search(\/|$)/,
   /^\/api\/guides(\/|$)/,

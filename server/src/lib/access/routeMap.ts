@@ -32,6 +32,7 @@ const r = (path: string, target: RouteTarget, extra: Omit<Rule, 're' | 'target'>
 const ADMIN_RULES: Rule[] = [
   // Own permissions + the Access Center (its routers check canManageAccess / break-glass themselves)
   r('/admin/me/permissions', 'self'),
+  r('/admin/access/mailboxes', 'self'), // shared mailboxes: SUPER_ADMIN only (requireRole in the router, lib/mail/access)
   r('/admin/access', 'self'),
   // Staff picker (assignee drop-downs everywhere) stays open; the rest of user management is settings.
   r('/admin/users/staff', 'self'),
@@ -224,7 +225,7 @@ const OTHER_RULES: Rule[] = [
   r('/cases', 'cases'),
   r('/family', 'cases'),
   r('/journey', 'cases'),
-  r('/mail', 'communications'),
+  r('/mail', 'communications'), // own mailboxes; shared ones are checked per mailbox in the handler (lib/mail/access)
   r('/mailbox', 'communications'),
   r('/ai-mail', 'communications'),
   r('/chat', 'communications'),

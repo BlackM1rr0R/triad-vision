@@ -57,9 +57,12 @@ export const sendMessage = async (userId: string, account: MailAccount, input: S
   const draft = input.draftId ? await prisma.mailMessage.findFirst({ where: { id: input.draftId, accountId: account.id, isDraft: true } }) : null;
   if (input.draftId && !draft) throw notFound('MAIL_DRAFT_NOT_FOUND');
 
-  // Attachments: the draft's own uploads plus any attachment of the user's messages (forwarding).
+  // Attachments: the draft's own uploads plus any attachment of the user's messages or of the sending mailbox
+  // (forwarding; the caller checked the user may send as `account`, own or shared).
   const ids = [...new Set(input.attachmentIds)];
-  const attachments = ids.length ? await prisma.mailAttachment.findMany({ where: { id: { in: ids }, message: { account: { userId } } }, include: { message: { include: { folder: true, account: true } } } }) : [];
+  const attachments = ids.length
+    ? await prisma.mailAttachment.findMany({ where: { id: { in: ids }, message: { OR: [{ accountId: account.id }, { account: { userId } }] } }, include: { message: { include: { folder: true, account: true } } } })
+    : [];
   if (attachments.length !== ids.length) throw badRequest('INVALID_ATTACHMENT');
   const files: { filename: string; content: Buffer; contentType: string; cid?: string }[] = [];
   let totalBytes = 0;

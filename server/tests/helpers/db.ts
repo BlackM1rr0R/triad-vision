@@ -30,6 +30,8 @@ export const resetDb = async () => {
     prisma.realSalaryExclusion,
     prisma.realSalarySnapshot,
     prisma.googleReviewInvite,
+    prisma.searchKeywordDay, // Search Console keyword tracker (plain ids)
+    prisma.searchKeyword,
     prisma.dataFreshnessReview,
     prisma.whatsNewEntry, // Yeniliklər admin entries + seen marks, training checklist events, owner setup marks (plain ids)
     prisma.whatsNewSeen,
@@ -189,6 +191,7 @@ export const resetDb = async () => {
   await prisma.mailMessage.deleteMany();
   await prisma.mailRule.deleteMany();
   await prisma.mailTemplate.deleteMany();
+  await prisma.mailAccountGrant.deleteMany(); // shared-mailbox access (lib/mail/access)
   await prisma.mailFolder.deleteMany();
   await prisma.mailAccount.deleteMany();
   await prisma.staffMailbox.deleteMany(); // disabled-state of our own Stalwart mailboxes (plain ids)

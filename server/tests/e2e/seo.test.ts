@@ -182,7 +182,7 @@ describe('GET /api/seo/head', () => {
     });
   });
 
-  it('adds a JobPosting for open jobs and hides the employer ("confidential") unless showCompany', async () => {
+  it('adds a JobPosting for open jobs and names Triad Vision (never the employer) as hiring organisation', async () => {
     const hidden = await createJob();
     const shown = await createJob({ showCompany: true, employmentType: 'AUSBILDUNG' });
     const expired = await createJob({ closesAt: new Date(Date.now() - day) });
@@ -193,7 +193,7 @@ describe('GET /api/seo/head', () => {
       title: 'Driver de',
       description: '<p>Drive trucks de</p>',
       employmentType: 'FULL_TIME',
-      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
+      hiringOrganization: { '@type': 'Organization', name: 'Triad Vision' },
       identifier: { '@type': 'PropertyValue', value: hidden.slug },
       datePosted: hidden.publishedAt!.toISOString(),
       jobLocation: { address: { addressLocality: 'Hamburg', addressRegion: 'Hamburg', addressCountry: 'DE' } },
@@ -205,7 +205,7 @@ describe('GET /api/seo/head', () => {
 
     const b = ld((await anon().get('/api/seo/head').query({ path: `/jobs/${shown.slug}` })).text);
     expect(b.find((x) => x['@type'] === 'JobPosting')).toMatchObject({
-      hiringOrganization: { '@type': 'Organization', name: 'confidential' },
+      hiringOrganization: { '@type': 'Organization', name: 'Triad Vision' },
       employmentType: ['FULL_TIME', 'OTHER'],
     });
     expect(JSON.stringify(b)).not.toContain('SEO Co');
@@ -280,7 +280,7 @@ describe('GET /__seo/status (crawler status code of the HTML shell)', () => {
       const head = await anon().get('/__seo/head').query({ path });
       expect(head.text, path).toContain(`rel="canonical" href="${ORIGIN}${path}"`);
       const posting = ld(head.text).find((b) => b['@type'] === 'JobPosting');
-      expect(posting, path).toMatchObject({ title: `Driver ${lng}`, hiringOrganization: { name: 'confidential' }, url: `${ORIGIN}${path}` });
+      expect(posting, path).toMatchObject({ title: `Driver ${lng}`, hiringOrganization: { name: 'Triad Vision' }, url: `${ORIGIN}${path}` });
       const body = await anon().get('/__seo/body').query({ path });
       expect(body.text, path).toContain(`<h1>Driver ${lng} — Hamburg</h1>`);
       expect(body.text, path).toContain(`Drive trucks ${lng}`);

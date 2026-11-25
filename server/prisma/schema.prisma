@@ -115,6 +115,7 @@ model User {
   statusEmoji             String?                  @db.VarChar(16)
   statusUntil             DateTime?
   mailAccounts            MailAccount[]
+  mailAccountGrants       MailAccountGrant[] // workspace mailboxes of colleagues this user may open (Access Center › Mailboxes)
   mailLabels              MailLabel[]
   mailRules               MailRule[]
   mailTemplates           MailTemplate[]
@@ -1890,8 +1891,31 @@ model MailAccount {
   folders       MailFolder[]
   messages      MailMessage[]
   rules         MailRule[]
+  grants        MailAccountGrant[]
 
   @@unique([userId, email])
+}
+
+enum MailGrantLevel {
+  READ // "Oxu": list, open, download attachments
+  SEND // "Oxu və göndər": also reply / send as this mailbox, drafts and message actions
+}
+
+/// Access to a colleague's workspace mailbox, given by a SUPER_ADMIN (Access Center › Mailboxes, lib/mail/access).
+/// The owner always has full access; a SUPER_ADMIN reads every mailbox without a row. Grant / revoke are audit-logged.
+model MailAccountGrant {
+  id          String         @id @default(cuid())
+  accountId   String
+  account     MailAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level       MailGrantLevel @default(READ)
+  grantedById String?        @db.VarChar(40) // plain id of the super admin who gave it
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([accountId, userId])
+  @@index([userId])
 }
 
 enum MailFolderRole {
@@ -7893,4 +7917,29 @@ model VacancyRequestNotice {
 
   @@unique([requestId, vacancyId])
   @@index([vacancyId])
+}
+
+/// Search Console keyword tracker (lib/searchConsoleTracker, /admin/search-performance): target keywords staff follow.
+/// `country` = ISO 3166-1 alpha-3 lower case ("aze") or empty for all countries. Plain ids (no relations).
+model SearchKeyword {
+  id           String    @id @default(cuid())
+  keyword      String    @db.VarChar(200)
+  country      String    @default("") @db.VarChar(3)
+  createdById  String?   @db.VarChar(40)
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([keyword, country])
+}
+
+/// One day of a tracked keyword (Search Analytics, query filter "equals"): clicks, impressions, average position.
+model SearchKeywordDay {
+  id          String   @id @default(cuid())
+  keywordId   String   @db.VarChar(40)
+  day         DateTime @db.Date
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  position    Float    @default(0)
+
+  @@unique([keywordId, day])
 }

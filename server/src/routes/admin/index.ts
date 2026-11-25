@@ -78,6 +78,7 @@ import { adminPermitsRouter } from './permits.js'; // permit expiry reminders (r
 import { adminFourEyesRouter } from './fourEyes.js'; // four-eyes check of the embassy package
 import { adminAccessLogRouter } from '../accessLog.js'; // client access log (ADMIN+)
 import { adminAccessEmployersRouter } from './accessEmployers.js'; // Access Center › Employers (SUPER_ADMIN)
+import { adminAccessMailboxesRouter } from './accessMailboxes.js'; // Access Center › Mailboxes: who may open which workspace mailbox (SUPER_ADMIN)
 import { adminAccessSensitiveRouter } from './accessSensitive.js'; // Access Center › Sensitive fields (SUPER_ADMIN / manage access)
 import { adminAccessPartnersRouter } from './accessPartners.js'; // Access Center › Partners: per-partner portal permissions, team members, messages
 import { adminAccessAuditRouter } from './accessAudit.js'; // Access Center › Audit: who can see what, access reviews, anomaly alerts (manage access)
@@ -289,6 +290,7 @@ adminRouter.use('/authorities', adminAuthoritiesRouter); // Botschaft / Ausländ
 adminRouter.use(adminFourEyesRouter); // /cases/:id/four-eyes*, /four-eyes/* (embassy package review)
 adminRouter.use(adminCaseProcessingRouter); // /cases/:id/processing, /case-processing/board (Schon geschrieben → Fertig, Ablehnung)
 adminRouter.use('/client-folders', adminClientFoldersRouter); // /client-folders/partner, /processing, /ready-docs/send, /cases/:caseId/ready-docs
+adminRouter.use('/access/mailboxes', adminAccessMailboxesRouter); // shared workspace mailboxes: grants READ / SEND (SUPER_ADMIN, lib/mail/access)
 adminRouter.use('/access/employers', adminAccessEmployersRouter); // employer roles per company member (SUPER_ADMIN)
 adminRouter.use('/access/sensitive', adminAccessSensitiveRouter); // mask groups × role / template / user, test as user
 adminRouter.use('/access/partners', adminAccessPartnersRouter); // per-partner permissions (manage access), team members + messages (partners:view/edit)

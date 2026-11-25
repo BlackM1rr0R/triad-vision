@@ -33,6 +33,8 @@ import { programmeDescription, programmeLd, programmeTitle, studyDetailSlug, stu
 import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
 import { germanExamFaqFor } from './germanExam/seo.js';
+import { careerResolve, careerSitemapPaths, careerStatus, hubFaqLd } from './careerPages/seo.js'; // /ausbildung/:slug, /cities/:slug, hub FAQ
+import { CAREER_LASTMOD, CAREER_LOCALES, cityPageSlug, isCareerDetailPath, jobsInCity } from './careerPages/index.js';
 import { CHANGES_PATH, changes2027Ld } from './changes2027/seo.js';
 import { getCatalogue } from './candidateCatalogue/index.js';
 import { professionLabel } from './candidateCatalogue/labels.js';
@@ -610,9 +612,22 @@ export const jobRegion = (city: string | null | undefined) => {
 };
 
 /**
- * JobPosting for Google for Jobs. We are a staffing agency: when the employer is not named on the page
- * (showCompany off), Google's guidelines ask for hiringOrganization.name "confidential" — not the agency's
- * own name (https://developers.google.com/search/docs/appearance/structured-data/job-posting).
+ * Hiring organisation of every JobPosting: Triad Vision as the recruiting agency (owner's decision). The real
+ * employer is never named, not even with showCompany (clients see it only after the İş müqaviləsi).
+ */
+export const jobHiringOrganization = () => {
+  const origin = siteOrigin();
+  return {
+    '@type': 'Organization',
+    name: SITE_NAME,
+    sameAs: `${origin}/`,
+    logo: `${origin}/logo-512.png`,
+  };
+};
+
+/**
+ * JobPosting for Google for Jobs (open, active vacancies only; the page of a closed / expired one has none).
+ * Apply happens on our own site (directApply).
  */
 export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: string) => {
   const title = collapse(pick(job.title, lng));
@@ -620,8 +635,7 @@ export const jobPostingLd = (job: SeoData['jobs'][number], lng: SeoLocale, url: 
     textToHtml(pick(job.description, lng)) +
     listHtml(JOB_LABELS[lng].requirements, pickList(job.requirements, lng)) +
     listHtml(JOB_LABELS[lng].benefits, pickList(job.benefits, lng));
-  // Owner's rule: the real employer is never named on our public pages (clients see it only after the İş müqaviləsi).
-  const hiringOrganization = { '@type': 'Organization', name: 'confidential' };
+  const hiringOrganization = jobHiringOrganization();
   const region = jobRegion(job.city);
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -778,7 +792,7 @@ const TOOL_CATEGORY: Record<string, string> = {
   '/german-level-test-self': 'EducationalApplication',
 };
 
-const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
+export const faqPageLd = (items: { q: string; a: string }[], lng: SeoLocale) =>
   items.length
     ? {
         '@context': 'https://schema.org',
@@ -1095,6 +1109,9 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       resolved.ogType = 'article';
       resolved.jsonLd.push(...changes2027Ld(lng, url, `${origin}/og-default.png`, { '@id': organizationId() }, pageUrl('/about', lng)));
     }
+    // Profession hubs: FAQPage of the questions the page shows (career languages only, lib/careerPages).
+    const hubLd = hubFaqLd(path, lng);
+    if (hubLd) resolved.jsonLd.push(hubLd);
     const germanExamFaq = germanExamFaqFor(path, lng);
     if (germanExamFaq) {
       const ld = faqPageLd(germanExamFaq, lng);
@@ -1273,6 +1290,11 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
       extraMeta: [],
     };
   }
+
+  // Ausbildung occupation pages and city pages (lib/careerPages/seo.ts): five languages, no page in the others.
+  const career = careerResolve(path, lng, data, url);
+  if (career === 'missing') return generic;
+  if (career) return career;
 
   const m = /^\/(visas|services|news|jobs|events|guides)\/([^/]+)$/.exec(path);
   if (!m) return generic;
@@ -1497,6 +1519,7 @@ export const routeMatches = (pattern: string, path: string) => {
 export const isKnownRoute = (path: string) =>
   path === '/' ||
   !!parseJobLandingPath(path) ||
+  isCareerDetailPath(path) ||
   !!STATIC_PAGES[path] ||
   isPrivatePath(path) ||
   SPA_ROUTES.some((r) => routeMatches(r, path)) ||
@@ -1509,7 +1532,10 @@ export const isKnownRoute = (path: string) =>
  * Private areas, token pages and the SPA's other routes answer 200 (the app handles them).
  */
 export const pageStatus = (rawPath: string, data: SeoData): 200 | 404 => {
-  const { path } = requestTarget(rawPath, null);
+  const { path, lng } = requestTarget(rawPath, null);
+  // Ausbildung occupation and city pages: only in the career languages, cities only while they have a page.
+  const career = careerStatus(path, lng, data);
+  if (career) return career;
   // Profession × city landing page: only while it has live vacancies (no empty pages).
   if (path.startsWith('/jobs/in/')) {
     const jl = parseJobLandingPath(path);
@@ -1729,9 +1755,18 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/glossary': latest([GLOSSARY_LASTMOD]),
       };
       // /platform sells the platform: only the owner's instance lists it (customer instances answer 404 there).
-      return SITEMAP_STATIC.filter((path) => path !== '/platform' || getLicense().role === 'owner').flatMap((path) =>
-        allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
-      );
+      // Career detail pages (/ausbildung/<slug>, /cities/<slug>): the five career languages only (lib/careerPages).
+      const careerLocales = Object.fromEntries(CAREER_LOCALES.map((l) => [l, l]));
+      const careerLastmod = (p: string) => {
+        const city = cityPageSlug(p);
+        return city ? latest([CAREER_LASTMOD, ...jobsInCity(jobs, city).map((j) => j.updatedAt)]) : CAREER_LASTMOD;
+      };
+      return [
+        ...SITEMAP_STATIC.filter((path) => path !== '/platform' || getLicense().role === 'owner').flatMap((path) =>
+          allLanguages(path, path === '/' ? latest(Object.values(sectionLastmod)) : (sectionLastmod[path] ?? STATIC_LASTMOD)),
+        ),
+        ...careerSitemapPaths(data).flatMap((p) => allLanguages(p, careerLastmod(p), undefined, careerLocales)),
+      ];
     }
     case 'content':
       return [

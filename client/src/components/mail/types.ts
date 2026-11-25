@@ -31,6 +31,18 @@ export interface MailAccount {
   syncError: string | null;
   lastSyncAt: string | null;
   createdAt: string;
+  /** The viewer's access (shared mailboxes, server lib/mail/access); own accounts: OWNER. */
+  access?: MailAccess;
+  /** Owner of a shared mailbox (null for own accounts). */
+  owner?: { id: string; firstName: string; lastName: string } | null;
+}
+
+export type MailAccess = 'OWNER' | 'SEND' | 'READ';
+
+/** GET /mail/mailboxes: the mailbox switcher. */
+export interface MailboxesResponse {
+  own: { id: string; email: string; displayName: string | null; access: 'OWNER' }[];
+  shared: { id: string; email: string; displayName: string | null; access: MailAccess; owner: { id: string; firstName: string; lastName: string } }[];
 }
 
 export interface ProviderPreset {
@@ -114,6 +126,8 @@ export interface MessageRow {
 }
 
 export interface MessageDetail extends MessageRow {
+  /** Only on GET /mail/messages/:id: the viewer's access to this message's mailbox. */
+  access?: MailAccess;
   messageId: string | null;
   inReplyTo: string | null;
   cc: Address[];

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { AlertCircle, Archive, AtSign, ChevronDown, Clock, FileText, Flag, Folder, Inbox, Mail, MailOpen, PenSquare, RefreshCw, Send, Settings, ShieldAlert, Trash2 } from 'lucide-react';
+import { AlertCircle, Archive, AtSign, ChevronDown, Clock, FileText, Flag, Folder, Inbox, KeyRound, Mail, MailOpen, PenSquare, RefreshCw, Send, Settings, ShieldAlert, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { registerCopy } from '@/i18n';
@@ -131,6 +131,12 @@ export const MailSidebar = ({
         // Super admin: create / manage the team's @domain mailboxes (Admin → Mailboxes).
         <Link to="/admin/mailboxes" className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted hover:bg-primary/[0.06] hover:text-ink">
           <AtSign className="size-3.5" aria-hidden /> {t('mailAdmin.manage.link')}
+        </Link>
+      )}
+      {isSuperAdmin && (
+        // Super admin: who may open which mailbox (Access Center › Mailboxes, copy registered by the Mail page).
+        <Link to="/admin/access?tab=mailboxes" className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted hover:bg-primary/[0.06] hover:text-ink">
+          <KeyRound className="size-3.5" aria-hidden /> {t('mailAccess.mail.manageLink')}
         </Link>
       )}
     </div>

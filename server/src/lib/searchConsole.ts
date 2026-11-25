@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 
 /**
  * Google Search Console performance for the admin panel (Admin → Sayt → Axtarış nəticələri, /admin/search-performance).
  *
  * Configuration (environment, never stored in the database):
  *   GSC_SERVICE_ACCOUNT_JSON  the service account key file (JSON, as is or base64-encoded)
+ *   GSC_SERVICE_ACCOUNT_FILE  alternative: path of the key file on the server (used when the JSON variable is empty)
  *   GSC_SITE_URL              the Search Console property: "sc-domain:triad-vision.de" (domain property) or
  *                             "https://triad-vision.de/" (URL-prefix property)
  * The service account's e-mail must be added as a user of the property (Search Console → Settings → Users and
@@ -21,8 +23,10 @@ import crypto from 'node:crypto';
  */
 
 const SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+/** Needed only to submit a sitemap (lib/searchConsoleTracker.ts). */
+export const SCOPE_WRITE = 'https://www.googleapis.com/auth/webmasters';
 const TOKEN_URI = 'https://oauth2.googleapis.com/token';
-const API = 'https://searchconsole.googleapis.com/webmasters/v3';
+export const API = 'https://searchconsole.googleapis.com/webmasters/v3';
 const INSPECT_API = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
 export const GSC_CACHE_MS = 6 * 60 * 60 * 1000;
 const RANGE_DAYS = 28;
@@ -45,7 +49,15 @@ export type GscConfig =
 /** Reads the configuration from the environment (each call: tests and a restart-free key rotation). */
 export const gscConfig = (env: NodeJS.ProcessEnv = process.env): GscConfig => {
   const siteUrl = env.GSC_SITE_URL?.trim() || null;
-  const raw = env.GSC_SERVICE_ACCOUNT_JSON?.trim();
+  let raw = env.GSC_SERVICE_ACCOUNT_JSON?.trim();
+  const file = env.GSC_SERVICE_ACCOUNT_FILE?.trim();
+  if (!raw && file) {
+    try {
+      raw = fs.readFileSync(file, 'utf8').trim();
+    } catch {
+      return { configured: false, siteUrl, reason: 'INVALID_CREDENTIALS', serviceAccountEmail: null };
+    }
+  }
   if (!raw) return { configured: false, siteUrl, reason: 'MISSING_CREDENTIALS', serviceAccountEmail: null };
   let account: Partial<ServiceAccount> | null = null;
   for (const text of [raw, Buffer.from(raw, 'base64').toString('utf8')]) {
@@ -70,10 +82,10 @@ export const gscConfig = (env: NodeJS.ProcessEnv = process.env): GscConfig => {
 const b64url = (v: string | Buffer) => Buffer.from(v).toString('base64url');
 
 /** The signed JWT assertion of the service account (RFC 7523). */
-export const signAssertion = (account: ServiceAccount, now = Date.now()) => {
+export const signAssertion = (account: ServiceAccount, now = Date.now(), scope = SCOPE) => {
   const iat = Math.floor(now / 1000);
   const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const claims = b64url(JSON.stringify({ iss: account.client_email, scope: SCOPE, aud: account.token_uri || TOKEN_URI, iat, exp: iat + 3600 }));
+  const claims = b64url(JSON.stringify({ iss: account.client_email, scope, aud: account.token_uri || TOKEN_URI, iat, exp: iat + 3600 }));
   const signature = crypto.createSign('RSA-SHA256').update(`${header}.${claims}`).sign(account.private_key, 'base64url');
   return `${header}.${claims}.${signature}`;
 };
@@ -88,7 +100,7 @@ export class GscError extends Error {
 }
 
 /** Google's error text without anything we sent (the assertion is never echoed back, but keep it short). */
-const errorText = async (res: Response) => {
+export const errorText = async (res: Response) => {
   try {
     const body = (await res.json()) as { error?: { message?: string } | string; error_description?: string };
     const msg = typeof body.error === 'object' ? body.error?.message : (body.error_description ?? body.error);
@@ -98,21 +110,22 @@ const errorText = async (res: Response) => {
   }
 };
 
-let token: { value: string; until: number; email: string } | null = null;
+const tokens = new Map<string, { value: string; until: number; email: string }>();
 
-const accessToken = async (account: ServiceAccount) => {
-  if (token && token.email === account.client_email && token.until > Date.now() + 60_000) return token.value;
+export const accessToken = async (account: ServiceAccount, scope = SCOPE) => {
+  const cached = tokens.get(scope);
+  if (cached && cached.email === account.client_email && cached.until > Date.now() + 60_000) return cached.value;
   const res = await fetch(account.token_uri || TOKEN_URI, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: signAssertion(account) }).toString(),
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: signAssertion(account, Date.now(), scope) }).toString(),
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new GscError('AUTH_FAILED', await errorText(res));
   const body = (await res.json()) as { access_token?: string; expires_in?: number };
   if (!body.access_token) throw new GscError('AUTH_FAILED', 'no access token');
-  token = { value: body.access_token, until: Date.now() + (body.expires_in ?? 3600) * 1000, email: account.client_email };
-  return token.value;
+  tokens.set(scope, { value: body.access_token, until: Date.now() + (body.expires_in ?? 3600) * 1000, email: account.client_email });
+  return body.access_token;
 };
 
 export interface GscRow {
@@ -373,7 +386,7 @@ export const buildOpportunities = (queries: GscRow[], pages: GscRow[], queryPage
   };
 };
 
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+export const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
 /** The 28 days ending yesterday (UTC; Search Console data of today is still incomplete). */
 export const reportRange = (now = new Date()) => {
@@ -383,7 +396,7 @@ export const reportRange = (now = new Date()) => {
 };
 
 const round = (n: number, digits: number) => Math.round(n * 10 ** digits) / 10 ** digits;
-const toRow = (r: { keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number }): GscRow => ({
+export const toRow = (r: { keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number }): GscRow => ({
   key: r.keys?.[0] ?? '',
   clicks: r.clicks ?? 0,
   impressions: r.impressions ?? 0,
@@ -391,7 +404,7 @@ const toRow = (r: { keys?: string[]; clicks?: number; impressions?: number; ctr?
   position: round(r.position ?? 0, 1),
 });
 
-const query = async (cfg: Extract<GscConfig, { configured: true }>, access: string, body: Record<string, unknown>) => {
+export const query = async (cfg: Extract<GscConfig, { configured: true }>, access: string, body: Record<string, unknown>) => {
   const res = await fetch(`${API}/sites/${encodeURIComponent(cfg.siteUrl)}/searchAnalytics/query`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${access}`, 'Content-Type': 'application/json' },
@@ -630,7 +643,7 @@ export const urlInspection = async ({ refresh = false, now = new Date() } = {}):
 /** Tests: forget the cached report, inspection and token. */
 export const resetSearchConsoleCache = () => {
   cache = null;
-  token = null;
+  tokens.clear();
   inflight = null;
   inspectionCache = null;
   inspectionInflight = null;

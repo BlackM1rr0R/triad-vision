@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useRealtimeStatus } from '@/lib/realtime';
-import type { BulkAction, FoldersResponse, ListParams, ListResponse, MailAccount, MailLabel, MailRule, MailTemplate, MessageDetail, ProviderPreset, SnoozePreset } from './types';
+import type { BulkAction, FoldersResponse, ListParams, ListResponse, MailAccount, MailboxesResponse, MailLabel, MailRule, MailTemplate, MessageDetail, ProviderPreset, SnoozePreset } from './types';
 
 export const mailKeys = {
   all: ['mail'] as const,
@@ -15,6 +15,7 @@ export const mailKeys = {
   templates: ['mail', 'templates'] as const,
   providers: ['mail', 'providers'] as const,
   summary: ['mail', 'summary'] as const,
+  mailboxes: ['mail', 'mailboxes'] as const,
   recipients: (q: string) => ['mail', 'recipients', q] as const,
 };
 
@@ -35,7 +36,7 @@ const listQuery = (p: ListParams, cursor?: string) => {
   return q;
 };
 
-export const useFolders = (accountId?: string) => {
+export const useFolders = (accountId?: string, enabled = true) => {
   // Changes are pushed (mail.new / mail.updated invalidate this query); poll slowly while the stream is up.
   const live = useRealtimeStatus() === 'open';
   return useQuery({
@@ -43,8 +44,13 @@ export const useFolders = (accountId?: string) => {
     queryFn: async () => (await api.get<FoldersResponse>('/mail/folders', { params: accountId ? { accountId } : {} })).data,
     staleTime: 15_000,
     refetchInterval: live ? 300_000 : 60_000,
+    enabled,
   });
 };
+
+/** Own mailboxes + the ones shared with the viewer (a super admin: every mailbox), for the mailbox switcher. */
+export const useMailboxes = () =>
+  useQuery({ queryKey: mailKeys.mailboxes, queryFn: async () => (await api.get<MailboxesResponse>('/mail/mailboxes')).data, staleTime: 60_000 });
 
 export const useMessageList = (params: ListParams, enabled = true) =>
   useInfiniteQuery({

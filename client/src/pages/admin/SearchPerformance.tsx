@@ -12,6 +12,7 @@ import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Flag } from '@/components/ui/Flag';
 import { EmptyState, ErrorBlock, KpiCell, KpiStrip, ListSkeleton, Panel } from '@/components/admin/ui';
+import { DEFAULT_FILTERS, Delta, FilterBar, KeywordTracker, SitemapPanel, TrendChart, exploreParams, type ExploreFilters } from '@/components/admin/SearchConsolePanels';
 
 registerCopy(pagesSearchConsole);
 
@@ -55,7 +56,7 @@ interface Opportunities {
 type GscErrorCode = 'AUTH_FAILED' | 'NO_ACCESS' | 'API_ERROR';
 type NotConfigured = { configured: false; reason: 'MISSING_CREDENTIALS' | 'MISSING_SITE' | 'INVALID_CREDENTIALS'; siteUrl: string | null; serviceAccountEmail: string | null };
 
-/** GET /api/admin/search-console (server lib/searchConsole.ts). */
+/** GET /api/admin/search-console/explore (server lib/searchConsoleTracker.ts). */
 type Result =
   | NotConfigured
   | {
@@ -65,9 +66,9 @@ type Result =
       cached: boolean;
       error: { code: GscErrorCode; message: string } | null;
       report: {
-        startDate: string;
-        endDate: string;
+        filter: { startDate: string; endDate: string };
         totals: Omit<Row, 'key'>;
+        previous: Omit<Row, 'key'> | null;
         queries: Row[];
         pages: Row[];
         days: Row[];
@@ -106,7 +107,7 @@ type InspectionResult =
       report: { siteUrl: string; origin: string; rows: InspectionRow[]; fetchedAt: string } | null;
     };
 
-const KEY = ['admin', 'search-console'];
+const KEY = ['admin', 'search-console', 'explore'];
 const INSPECT_KEY = ['admin', 'search-console', 'inspection'];
 /** Mirrors the server thresholds (lib/searchConsole.ts) for the explanations. */
 const STRIKING = { min: 4, max: 20 };
@@ -450,6 +451,7 @@ const Setup = ({ result }: { result: Extract<Result, { configured: false }> }) =
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-fg" aria-hidden /> {t(`gsc.setup.reason.${result.reason}`)}
         </p>
         {result.serviceAccountEmail && <p className="break-all text-muted">{t('gsc.setup.account', { email: result.serviceAccountEmail })}</p>}
+        <p className="text-muted">{t('gscx.setup.note')}</p>
       </div>
     </Panel>
   );
@@ -464,12 +466,22 @@ export default function SearchPerformance() {
   usePageTitle(t('gsc.title'));
   const qc = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: KEY, queryFn: async () => (await api.get<Result>('/admin/search-console')).data });
+  const [filters, setFilters] = useState<ExploreFilters>(DEFAULT_FILTERS);
+  const params = exploreParams(filters);
+  // A custom range is only requested when both dates are set.
+  const ready = !(filters.from || filters.to) || (!!filters.from && !!filters.to);
+  const queryKey = [...KEY, params];
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey,
+    enabled: ready,
+    placeholderData: (prev) => prev,
+    queryFn: async () => (await api.get<Result>('/admin/search-console/explore', { params })).data,
+  });
 
   const refresh = async () => {
     setRefreshing(true);
     try {
-      qc.setQueryData(KEY, (await api.get<Result>('/admin/search-console', { params: { refresh: '1' } })).data);
+      qc.setQueryData(queryKey, (await api.get<Result>('/admin/search-console/explore', { params: { ...params, refresh: '1' } })).data);
     } finally {
       setRefreshing(false);
     }
@@ -491,7 +503,7 @@ export default function SearchPerformance() {
     <div>
       <PageHeader
         title={t('gsc.title')}
-        subtitle={report && data?.configured ? t('gsc.subtitle', { from: report.startDate, to: report.endDate, site: data.siteUrl }) : undefined}
+        subtitle={report && data?.configured ? t('gsc.subtitle', { from: report.filter.startDate, to: report.filter.endDate, site: data.siteUrl }) : undefined}
         actions={
           data?.configured ? (
             <Button variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => void refresh()}>
@@ -500,6 +512,11 @@ export default function SearchPerformance() {
           ) : undefined
         }
       />
+      {data?.configured && (
+        <div className="mb-6">
+          <FilterBar value={filters} onChange={setFilters} />
+        </div>
+      )}
       {isLoading ? (
         <ListSkeleton stats={4} />
       ) : error || !data ? (
@@ -520,11 +537,12 @@ export default function SearchPerformance() {
           {report && (
             <>
               <KpiStrip cols={4}>
-                <KpiCell label={t('gsc.clicks')} icon={MousePointerClick} value={num(report.totals.clicks)} />
-                <KpiCell label={t('gsc.impressions')} icon={Eye} value={num(report.totals.impressions)} />
-                <KpiCell label={t('gsc.ctr')} icon={Percent} value={pct(report.totals.ctr)} />
-                <KpiCell label={t('gsc.position')} icon={Search} value={pos(report.totals.position)} />
+                <KpiCell label={t('gsc.clicks')} icon={MousePointerClick} value={num(report.totals.clicks)} aside={<Delta now={report.totals.clicks} before={report.previous?.clicks} />} />
+                <KpiCell label={t('gsc.impressions')} icon={Eye} value={num(report.totals.impressions)} aside={<Delta now={report.totals.impressions} before={report.previous?.impressions} />} />
+                <KpiCell label={t('gsc.ctr')} icon={Percent} value={pct(report.totals.ctr)} aside={<Delta now={report.totals.ctr} before={report.previous?.ctr} />} />
+                <KpiCell label={t('gsc.position')} icon={Search} value={pos(report.totals.position)} aside={<Delta lowerIsBetter now={report.totals.position} before={report.previous?.position} />} />
               </KpiStrip>
+              <TrendChart days={report.days} />
               <p className="text-xs text-muted">{t('gsc.cachedAt', { time: new Date(report.fetchedAt).toLocaleString(i18n.language) })}</p>
               <div className="grid gap-6 xl:grid-cols-2">
                 <Panel title={t('gsc.queries')} bodyClassName="p-0 sm:p-0">
@@ -555,6 +573,8 @@ export default function SearchPerformance() {
               {report.opportunities && <OpportunitySections opp={report.opportunities} />}
             </>
           )}
+          <KeywordTracker />
+          <SitemapPanel />
           <IndexingCheck />
         </div>
       )}

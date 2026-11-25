@@ -6,7 +6,21 @@
  */
 import type { SceneId } from './workScenes/types';
 
-export const PROFESSION_HUB_SLUGS = ['truck-driver', 'cook', 'nurse', 'care-worker', 'electrician', 'construction-worker'] as const;
+export const PROFESSION_HUB_SLUGS = [
+  'truck-driver',
+  'cook',
+  'nurse',
+  'care-worker',
+  'electrician',
+  'construction-worker',
+  // Added 2026-11-25 (SEO profession landings; texts of requirements, visa path, FAQ: server lib/careerPages).
+  'courier',
+  'warehouse',
+  'hospitality',
+  'agriculture',
+  'mechatronics',
+  'it-specialist',
+] as const;
 export type ProfessionHubSlug = (typeof PROFESSION_HUB_SLUGS)[number];
 
 /**
@@ -24,8 +38,8 @@ export interface ProfessionHub {
   slug: ProfessionHubSlug;
   /** Canonical professions (server lib/matching.ts keys) whose vacancies the hub lists. */
   professions: string[];
-  /** Interactive work scene (lib/workScenes). */
-  scene: SceneId;
+  /** Interactive work scene (lib/workScenes), if one fits the profession. */
+  scene?: SceneId;
   /** Tool pages (paths of components/audience/tools.ts TOOLS, or work-scene / mock-exam sub pages). */
   tools: string[];
   /** The mock exam the hub recommends. */
@@ -106,6 +120,68 @@ export const PROFESSION_HUBS: ProfessionHub[] = [
     jobSearch: 'Bauarbeiter',
     salary: [2700, 3500],
     glossary: ['arbeitsunfall', 'berufsgenossenschaft', 'tarifvertrag', 'handwerkskammer', 'ueberstunden'],
+  },
+  {
+    slug: 'courier',
+    professions: ['courier'],
+    scene: 'truck-cab',
+    tools: ['/salary-calculator', '/driving-licence-germany', '/traffic-signs', '/work-schedule-check', '/shift-pay-calculator', '/which-city', '/budget', '/workplace-etiquette'],
+    mockExam: '/german-mock-exam/a1',
+    guides: ['driver-jobs', 'living-costs', 'salary-net', 'first-month'],
+    jobSearch: 'Kurierfahrer',
+    salary: [2410, 2900],
+    glossary: ['fuehrerschein-umschreibung', 'arbeitszeit', 'mindestlohn', 'ueberstunden', 'probezeit'],
+  },
+  {
+    slug: 'warehouse',
+    professions: ['warehouse'],
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/anerkennung', '/german-mock-exam', '/which-city', '/budget', '/rent-check', '/workplace-etiquette'],
+    mockExam: '/german-mock-exam/a1',
+    guides: ['ausbildung', 'skilled-worker-visa', 'living-costs', 'salary-net'],
+    jobSearch: 'Lagerist',
+    salary: [2500, 3000],
+    glossary: ['schichtarbeit', 'zeitarbeit', 'arbeitsvertrag', 'berufsgenossenschaft', 'arbeitsunfall'],
+  },
+  {
+    slug: 'hospitality',
+    professions: ['waiter', 'hotel'],
+    scene: 'restaurant-kitchen',
+    tools: ['/salary-calculator', '/shift-pay-calculator', '/work-schedule-check', '/work-scenes/restaurant-kitchen', '/german-mock-exam', '/anerkennung', '/budget', '/which-city', '/workplace-etiquette'],
+    mockExam: '/german-mock-exam/a1',
+    guides: ['ausbildung', 'living-costs', 'salary-net', 'first-month'],
+    jobSearch: 'Hotelfachmann',
+    salary: [2410, 2900],
+    glossary: ['ausbildung', 'schichtarbeit', 'mindestlohn', 'probezeit', 'tarifvertrag'],
+  },
+  {
+    slug: 'agriculture',
+    professions: ['agriculture'],
+    tools: ['/salary-calculator', '/work-schedule-check', '/budget', '/send-money-home', '/health-insurance-comparison', '/german-mock-exam', '/workplace-etiquette'],
+    mockExam: '/german-mock-exam/a1',
+    guides: ['work-visa', 'living-costs', 'first-month', 'salary-net'],
+    jobSearch: 'Erntehelfer',
+    salary: [2410, 2700],
+    glossary: ['mindestlohn', 'arbeitszeit', 'befristeter-arbeitsvertrag', 'krankenkasse', 'arbeitsunfall'],
+  },
+  {
+    slug: 'mechatronics',
+    professions: ['mechanic'],
+    tools: ['/anerkennung', '/salary-calculator', '/german-mock-exam', '/blue-card-check', '/chancenkarte-calculator', '/which-city', '/budget', '/workplace-etiquette'],
+    mockExam: '/german-mock-exam/b1',
+    guides: ['anerkennung', 'skilled-worker-visa', 'ausbildung', 'salary-net'],
+    jobSearch: 'Kfz-Mechatroniker',
+    salary: [2900, 3700],
+    glossary: ['anerkennung', 'handwerkskammer', 'ausbildung', 'tarifvertrag', 'arbeitsunfall'],
+  },
+  {
+    slug: 'it-specialist',
+    professions: ['it'],
+    tools: ['/blue-card-check', '/chancenkarte-calculator', '/anerkennung', '/salary-calculator', '/tax-class-chooser', '/which-city', '/rent-check', '/family-reunification-check'],
+    mockExam: '/german-mock-exam/a1',
+    guides: ['blue-card', 'chancenkarte', 'skilled-worker-visa', 'familiennachzug'],
+    jobSearch: 'Softwareentwickler',
+    salary: [3600, 4800],
+    glossary: ['blaue-karte-eu', 'chancenkarte', 'zeugnisbewertung', 'anabin', 'vorabzustimmung'],
   },
 ];
 

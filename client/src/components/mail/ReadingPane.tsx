@@ -124,6 +124,7 @@ export const ReadingPane = ({
   onBack,
   onClose,
   aiSlot,
+  access = 'OWNER',
 }: {
   message: MessageDetail | undefined;
   thread: MessageDetail[] | undefined;
@@ -137,6 +138,8 @@ export const ReadingPane = ({
   onClose: () => void;
   /** AI triage card shown above the message body */
   aiSlot?: ReactNode;
+  /** The viewer's access to the message's mailbox (shared mailboxes, server lib/mail/access): READ = view and print only. */
+  access?: 'OWNER' | 'SEND' | 'READ';
 }) => {
   const { t } = useTranslation();
   const [menu, setMenu] = useState<null | 'snooze' | 'move' | 'labels' | 'more'>(null);
@@ -175,6 +178,7 @@ export const ReadingPane = ({
   const selectedLabels = new Set(message.labels.map((l) => l.id));
   const list = conversation && thread && thread.length > 1 ? thread : [message];
   const accountFolders = folders.filter((f) => f.accountId === message.accountId);
+  const readOnly = access === 'READ';
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -186,7 +190,8 @@ export const ReadingPane = ({
             </Btn>
           </span>
         )}
-        {!message.isDraft && (
+        {readOnly && <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-link">{t('mailAccess.mail.readOnlyBadge')}</span>}
+        {!message.isDraft && !readOnly && (
           <>
             <Btn onClick={() => onAction({ type: 'reply' })} label={t('mail.actions.reply')} kbd="r">
               <Reply className="size-4" />
@@ -200,93 +205,103 @@ export const ReadingPane = ({
             <span className="mx-1 h-5 w-px bg-line" aria-hidden />
           </>
         )}
-        <Btn onClick={() => onAction({ type: 'archive' })} label={t('mail.actions.archive')} kbd="e">
-          <Archive className="size-4" />
-        </Btn>
-        <Btn onClick={() => onAction({ type: inTrash ? 'deleteForever' : 'trash' })} label={inTrash ? t('mail.actions.deleteForever') : t('mail.actions.delete')} kbd="#" danger>
-          <Trash2 className="size-4" />
-        </Btn>
-        <Btn onClick={() => onAction({ type: message.flagged ? 'unflag' : 'flag' })} label={message.flagged ? t('mail.actions.unflag') : t('mail.actions.flag')} active={message.flagged} kbd="s">
-          <Flag className={clsx('size-4', message.flagged && 'fill-warning text-warning-fg')} />
-        </Btn>
-        <div className="relative">
-          <Btn onClick={() => setMenu(menu === 'snooze' ? null : 'snooze')} label={t('mail.actions.snooze')} active={!!message.snoozedUntil}>
-            <Clock className="size-4" />
-          </Btn>
-          <SnoozeMenu
-            open={menu === 'snooze'}
-            onClose={() => setMenu(null)}
-            onPick={(v) => {
-              setMenu(null);
-              onAction({ type: 'snooze', ...v });
-            }}
-          />
-        </div>
-        <div className="relative">
-          <Btn onClick={() => setMenu(menu === 'labels' ? null : 'labels')} label={t('mail.actions.labels')} active={message.labels.length > 0}>
-            <Tag className="size-4" />
-          </Btn>
-          <LabelsMenu open={menu === 'labels'} onClose={() => setMenu(null)} labels={labels} selected={selectedLabels} onToggle={(label, on) => onAction({ type: 'label', label, on })} />
-        </div>
-        <div className="relative">
-          <Btn onClick={() => setMenu(menu === 'move' ? null : 'move')} label={t('mail.actions.move')}>
-            <FolderInput className="size-4" />
-          </Btn>
-          <MoveMenu
-            open={menu === 'move'}
-            onClose={() => setMenu(null)}
-            folders={accountFolders}
-            currentFolderId={message.folderId}
-            onPick={(folder) => {
-              setMenu(null);
-              onAction({ type: 'move', folder });
-            }}
-          />
-        </div>
+        {!readOnly && (
+          <>
+            <Btn onClick={() => onAction({ type: 'archive' })} label={t('mail.actions.archive')} kbd="e">
+              <Archive className="size-4" />
+            </Btn>
+            <Btn onClick={() => onAction({ type: inTrash ? 'deleteForever' : 'trash' })} label={inTrash ? t('mail.actions.deleteForever') : t('mail.actions.delete')} kbd="#" danger>
+              <Trash2 className="size-4" />
+            </Btn>
+            <Btn onClick={() => onAction({ type: message.flagged ? 'unflag' : 'flag' })} label={message.flagged ? t('mail.actions.unflag') : t('mail.actions.flag')} active={message.flagged} kbd="s">
+              <Flag className={clsx('size-4', message.flagged && 'fill-warning text-warning-fg')} />
+            </Btn>
+            <div className="relative">
+              <Btn onClick={() => setMenu(menu === 'snooze' ? null : 'snooze')} label={t('mail.actions.snooze')} active={!!message.snoozedUntil}>
+                <Clock className="size-4" />
+              </Btn>
+              <SnoozeMenu
+                open={menu === 'snooze'}
+                onClose={() => setMenu(null)}
+                onPick={(v) => {
+                  setMenu(null);
+                  onAction({ type: 'snooze', ...v });
+                }}
+              />
+            </div>
+            {access === 'OWNER' && (
+              <div className="relative">
+                <Btn onClick={() => setMenu(menu === 'labels' ? null : 'labels')} label={t('mail.actions.labels')} active={message.labels.length > 0}>
+                  <Tag className="size-4" />
+                </Btn>
+                <LabelsMenu open={menu === 'labels'} onClose={() => setMenu(null)} labels={labels} selected={selectedLabels} onToggle={(label, on) => onAction({ type: 'label', label, on })} />
+              </div>
+            )}
+            <div className="relative">
+              <Btn onClick={() => setMenu(menu === 'move' ? null : 'move')} label={t('mail.actions.move')}>
+                <FolderInput className="size-4" />
+              </Btn>
+              <MoveMenu
+                open={menu === 'move'}
+                onClose={() => setMenu(null)}
+                folders={accountFolders}
+                currentFolderId={message.folderId}
+                onPick={(folder) => {
+                  setMenu(null);
+                  onAction({ type: 'move', folder });
+                }}
+              />
+            </div>
+          </>
+        )}
         <span className="flex-1" />
         <div className="relative">
           <Btn onClick={() => setMenu(menu === 'more' ? null : 'more')} label={t('mail.actions.more')}>
             <MoreHorizontal className="size-4" />
           </Btn>
           <Popover open={menu === 'more'} onClose={() => setMenu(null)} className="w-56" align="right">
-            <MenuItem
-              icon={message.seen ? <Mail className="size-3.5 text-muted" /> : <MailOpen className="size-3.5 text-muted" />}
-              onClick={() => {
-                setMenu(null);
-                onAction({ type: message.seen ? 'unread' : 'read' });
-              }}
-            >
-              {message.seen ? t('mail.actions.markUnread') : t('mail.actions.markRead')}
-            </MenuItem>
-            <MenuItem
-              icon={<Briefcase className="size-3.5 text-muted" />}
-              onClick={() => {
-                setMenu(null);
-                if (message.case) onAction({ type: 'linkCase', caseRef: null });
-                else setCasePicker(true);
-              }}
-            >
-              {message.case ? t('mail.actions.unlinkCase') : t('mail.actions.linkCase')}
-            </MenuItem>
-            <MenuItem
-              icon={<ShieldAlert className="size-3.5 text-muted" />}
-              onClick={() => {
-                setMenu(null);
-                onAction({ type: inJunk ? 'notSpam' : 'spam' });
-              }}
-            >
-              {inJunk ? t('mail.actions.notSpam') : t('mail.actions.spam')}
-            </MenuItem>
-            {message.snoozedUntil && (
-              <MenuItem
-                icon={<Clock className="size-3.5 text-muted" />}
-                onClick={() => {
-                  setMenu(null);
-                  onAction({ type: 'unsnooze' });
-                }}
-              >
-                {t('mail.actions.unsnooze')}
-              </MenuItem>
+            {!readOnly && (
+              <>
+                <MenuItem
+                  icon={message.seen ? <Mail className="size-3.5 text-muted" /> : <MailOpen className="size-3.5 text-muted" />}
+                  onClick={() => {
+                    setMenu(null);
+                    onAction({ type: message.seen ? 'unread' : 'read' });
+                  }}
+                >
+                  {message.seen ? t('mail.actions.markUnread') : t('mail.actions.markRead')}
+                </MenuItem>
+                <MenuItem
+                  icon={<Briefcase className="size-3.5 text-muted" />}
+                  onClick={() => {
+                    setMenu(null);
+                    if (message.case) onAction({ type: 'linkCase', caseRef: null });
+                    else setCasePicker(true);
+                  }}
+                >
+                  {message.case ? t('mail.actions.unlinkCase') : t('mail.actions.linkCase')}
+                </MenuItem>
+                <MenuItem
+                  icon={<ShieldAlert className="size-3.5 text-muted" />}
+                  onClick={() => {
+                    setMenu(null);
+                    onAction({ type: inJunk ? 'notSpam' : 'spam' });
+                  }}
+                >
+                  {inJunk ? t('mail.actions.notSpam') : t('mail.actions.spam')}
+                </MenuItem>
+                {message.snoozedUntil && (
+                  <MenuItem
+                    icon={<Clock className="size-3.5 text-muted" />}
+                    onClick={() => {
+                      setMenu(null);
+                      onAction({ type: 'unsnooze' });
+                    }}
+                  >
+                    {t('mail.actions.unsnooze')}
+                  </MenuItem>
+                )}
+              </>
             )}
             <MenuItem
               icon={<Printer className="size-3.5 text-muted" />}

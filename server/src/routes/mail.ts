@@ -48,10 +48,14 @@ import { adoptMailUpload, mailPath, removeMailStored } from '../lib/mail/storage
 import { applyRules, syncAccount, withRemote } from '../lib/mail/sync.js';
 import { threadKeyOf } from '../lib/mail/thread.js';
 import { AI_FILTERS, aiFilterWhere } from '../lib/ai/features/mailTriage.js';
+import { assertMailAccess, loadMailAccount, noteMailboxOpened, sharedMailboxes, type MailAccessLevel } from '../lib/mail/access.js';
 
 /**
  * Workspace mail (/api/mail): every staff member's own IMAP/SMTP mailboxes. Accounts, folders and
  * messages are private to their owner; admins only see account health (never passwords or content).
+ * Shared mailboxes (lib/mail/access): a SUPER_ADMIN reads every mailbox, and gives colleagues "read" or
+ * "read + send" access to a specific mailbox (Access Center › Mailboxes). Settings, rules and labels stay
+ * owner-only; opening someone else's mailbox is audit-logged once a day.
  */
 export const mailRouter = Router();
 mailRouter.use(requireMinRole('STAFF'));
@@ -69,6 +73,32 @@ const errorText = (err: unknown) => {
 };
 
 const uid = (req: Request) => req.user!.id;
+const viewer = (req: Request) => req.user!;
+
+/** A mailbox as the viewer sees it: the owner gets everything (never the password); others no server settings. */
+const viewerAccountDto = (a: Parameters<typeof accountDto>[0], access: MailAccessLevel, owner?: { id: string; firstName: string; lastName: string } | null) =>
+  access === 'OWNER'
+    ? { ...accountDto(a), access, owner: null }
+    : {
+        ...accountDto(a),
+        imapHost: '',
+        imapPort: 0,
+        smtpHost: '',
+        smtpPort: 0,
+        username: '',
+        signatureHtml: null,
+        isDefault: false,
+        access,
+        owner: owner ?? null,
+      };
+
+/** Message + the viewer's level on its mailbox; 404 without access, 403 MAIL_READ_ONLY when `send` is needed. */
+const loadMessageFor = async (req: Request, messageId: string, need: 'read' | 'send' = 'read') => {
+  const m = await prisma.mailMessage.findUnique({ where: { id: messageId }, include: messageInclude });
+  if (!m) throw notFound('MAIL_MESSAGE_NOT_FOUND');
+  const map = await assertMailAccess(viewer(req), [m.accountId], need);
+  return { m, level: map.get(m.accountId)! };
+};
 
 // ─── Providers & accounts ─────────────────────────────────────────────
 
@@ -211,10 +241,44 @@ mailRouter.delete('/accounts/:id', async (req, res) => {
 });
 
 mailRouter.post('/accounts/:id/sync', async (req, res) => {
-  const account = await loadOwnAccount(req.params.id, uid(req));
+  // Fetching new mail changes nothing the owner did: everyone who may read the mailbox may refresh it.
+  const { account, level } = await loadMailAccount(req.params.id, viewer(req));
   const result = await syncAccount(account.id);
   const fresh = await prisma.mailAccount.findUnique({ where: { id: account.id } });
-  res.json({ ...result, account: fresh ? accountDto(fresh) : null });
+  res.json({ ...result, account: fresh ? viewerAccountDto(fresh, level) : null });
+});
+
+/** Mailbox switcher: own mailboxes + the ones shared with the viewer (a SUPER_ADMIN: every mailbox). */
+mailRouter.get('/mailboxes', async (req, res) => {
+  const [own, shared] = await Promise.all([
+    prisma.mailAccount.findMany({ where: { userId: uid(req) }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }], select: { id: true, email: true, displayName: true } }),
+    sharedMailboxes(viewer(req)),
+  ]);
+  res.json({ own: own.map((a) => ({ ...a, access: 'OWNER' as const })), shared });
+});
+
+/**
+ * Owner only: who else can open this mailbox (transparency). Every SUPER_ADMIN reads all mailboxes; colleagues
+ * need a grant. Also the latest openings by others (audit MAIL_MAILBOX_OPENED, 90 days).
+ */
+mailRouter.get('/accounts/:id/access', async (req, res) => {
+  const account = await loadOwnAccount(req.params.id, uid(req));
+  const person = { id: true, firstName: true, lastName: true, email: true, role: true } as const;
+  const [grants, superAdmins, opens] = await Promise.all([
+    prisma.mailAccountGrant.findMany({ where: { accountId: account.id }, orderBy: { createdAt: 'asc' }, include: { user: { select: person } } }),
+    prisma.user.findMany({ where: { role: 'SUPER_ADMIN', isActive: true, id: { not: account.userId } }, select: person, orderBy: { firstName: 'asc' } }),
+    prisma.auditLog.findMany({
+      where: { action: 'MAIL_MAILBOX_OPENED', target: account.id, createdAt: { gte: new Date(Date.now() - 90 * 24 * 3600 * 1000) } },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      select: { createdAt: true, actor: { select: { id: true, firstName: true, lastName: true } } },
+    }),
+  ]);
+  res.json({
+    superAdmins,
+    grants: grants.filter((g) => hasMinRole(g.user.role, 'STAFF')).map((g) => ({ id: g.id, level: g.level, createdAt: g.createdAt, user: g.user })),
+    opens: opens.map((o) => ({ at: o.createdAt, user: o.actor })),
+  });
 });
 
 /** ADMIN+: every account's health (owner, provider, sync status) — never passwords or messages. */
@@ -265,9 +329,17 @@ const viewCounts = async (accountIds: string[]) => {
 
 mailRouter.get('/folders', async (req, res) => {
   const q = parse(z.object({ accountId: id.optional() }), req.query);
-  const accounts = await prisma.mailAccount.findMany({ where: { userId: uid(req) }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] });
-  const accountIds = q.accountId ? accounts.filter((a) => a.id === q.accountId).map((a) => a.id) : accounts.map((a) => a.id);
-  if (q.accountId && !accountIds.length) throw notFound('MAIL_ACCOUNT_NOT_FOUND');
+  const own = await prisma.mailAccount.findMany({ where: { userId: uid(req) }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] });
+  let accounts: ReturnType<typeof viewerAccountDto>[] = own.map((a) => viewerAccountDto(a, 'OWNER'));
+  let accountIds = q.accountId ? own.filter((a) => a.id === q.accountId).map((a) => a.id) : own.map((a) => a.id);
+  if (q.accountId && !accountIds.length) {
+    // Someone else's mailbox (grant, or SUPER_ADMIN): only that mailbox, without its server settings.
+    const { account, level } = await loadMailAccount(q.accountId, viewer(req));
+    const owner = await prisma.user.findUnique({ where: { id: account.userId }, select: { id: true, firstName: true, lastName: true } });
+    accounts = [viewerAccountDto(account, level, owner)];
+    accountIds = [account.id];
+    await noteMailboxOpened(req, account.id, level);
+  }
   const [folders, labels, labelCounts, views] = await Promise.all([
     prisma.mailFolder.findMany({ where: { accountId: { in: accountIds } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
     prisma.mailLabel.findMany({ where: { userId: uid(req) }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
@@ -276,7 +348,7 @@ mailRouter.get('/folders', async (req, res) => {
   ]);
   const unreadByLabel = new Map(labelCounts.map((c) => [c.labelId, c._count._all]));
   res.json({
-    accounts: accounts.map(accountDto),
+    accounts,
     folders: folders.map(folderDto),
     labels: labels.map((l) => ({ ...labelDto(l), unread: unreadByLabel.get(l.id) ?? 0 })),
     views,
@@ -378,8 +450,15 @@ const searchIds = async (accountIds: string[], q?: string, from?: string, to?: s
   return result ?? [];
 };
 
-const listWhere = async (userId: string, q: z.infer<typeof listSchema>): Promise<Prisma.MailMessageWhereInput> => {
-  const accountIds = await ownAccountIds(userId, q.accountId);
+const listWhere = async (req: Request, q: z.infer<typeof listSchema>): Promise<Prisma.MailMessageWhereInput> => {
+  const userId = uid(req);
+  let accountIds: string[];
+  if (q.accountId && !(await prisma.mailAccount.count({ where: { id: q.accountId, userId } }))) {
+    // A shared mailbox: listed and searched on its own (never merged into the viewer's "all mailboxes").
+    const { account, level } = await loadMailAccount(q.accountId, viewer(req));
+    accountIds = [account.id];
+    await noteMailboxOpened(req, account.id, level);
+  } else accountIds = await ownAccountIds(userId, q.accountId);
   const and: Prisma.MailMessageWhereInput[] = [{ accountId: { in: accountIds } }];
   let view: View | null = q.view ?? null;
   if (q.folderId) {
@@ -428,7 +507,7 @@ const listWhere = async (userId: string, q: z.infer<typeof listSchema>): Promise
 
 mailRouter.get('/messages', async (req, res) => {
   const q = parse(listSchema, req.query);
-  const where = await listWhere(uid(req), q);
+  const where = await listWhere(req, q);
   const cursor = decodeCursor(q.cursor);
   const threads = !!q.threads;
   const take = threads ? Math.min(400, q.limit * 6) : q.limit;
@@ -469,15 +548,18 @@ mailRouter.get('/messages', async (req, res) => {
 });
 
 mailRouter.get('/messages/:id', async (req, res) => {
-  const m = await loadOwnMessage(req.params.id, uid(req));
-  const account = await prisma.mailAccount.findUnique({ where: { id: m.accountId }, select: { email: true } });
-  const correspondents = dedupeAddresses([...(m.fromAddr ? [{ name: m.fromName ?? '', address: m.fromAddr }] : []), ...asAddressList(m.toList), ...asAddressList(m.ccList)], [account?.email ?? '']);
-  void rememberCorrespondents(uid(req), correspondents, [account?.email ?? '']);
-  res.json({ message: messageDetailDto(m) });
+  const { m, level } = await loadMessageFor(req, req.params.id);
+  if (level === 'OWNER') {
+    const account = await prisma.mailAccount.findUnique({ where: { id: m.accountId }, select: { email: true } });
+    const correspondents = dedupeAddresses([...(m.fromAddr ? [{ name: m.fromName ?? '', address: m.fromAddr }] : []), ...asAddressList(m.toList), ...asAddressList(m.ccList)], [account?.email ?? '']);
+    void rememberCorrespondents(uid(req), correspondents, [account?.email ?? '']);
+  } else await noteMailboxOpened(req, m.accountId, level);
+  res.json({ message: { ...messageDetailDto(m), access: level } });
 });
 
 mailRouter.get('/messages/:id/thread', async (req, res) => {
-  const m = await loadOwnMessage(req.params.id, uid(req));
+  const { m, level } = await loadMessageFor(req, req.params.id);
+  await noteMailboxOpened(req, m.accountId, level);
   const rows = m.threadKey
     ? await prisma.mailMessage.findMany({ where: { accountId: m.accountId, threadKey: m.threadKey, isDraft: false }, orderBy: [{ date: 'asc' }, { id: 'asc' }], take: 100, include: messageInclude })
     : [m];
@@ -543,14 +625,16 @@ const moveRows = async (rows: Flagged[], dest: { id: string; path: string; accou
 const applyAction = async (req: Request, input: z.infer<typeof actionSchema>) => {
   const userId = uid(req);
   const rows = await prisma.mailMessage.findMany({
-    where: { id: { in: input.ids }, account: { userId } },
-    select: { id: true, uid: true, folderId: true, accountId: true, isDraft: true, folder: { select: { path: true, role: true } } },
+    where: { id: { in: input.ids } },
+    select: { id: true, uid: true, folderId: true, accountId: true, isDraft: true, folder: { select: { path: true, role: true } }, account: { select: { userId: true } } },
   });
   if (rows.length !== new Set(input.ids).size) throw notFound('MAIL_MESSAGE_NOT_FOUND');
-  const ids = rows.map((r) => r.id);
-  const touched = new Set<string>(rows.map((r) => r.folderId));
   const accountIds = [...new Set(rows.map((r) => r.accountId))];
   const action: Action = input.action;
+  // Read-only access changes nothing (not even "read"); labels are personal, so only on own mailboxes.
+  await assertMailAccess(viewer(req), accountIds, action === 'label' || action === 'unlabel' ? 'owner' : 'send');
+  const ids = rows.map((r) => r.id);
+  const touched = new Set<string>(rows.map((r) => r.folderId));
   switch (action) {
     case 'read':
     case 'unread': {
@@ -566,7 +650,7 @@ const applyAction = async (req: Request, input: z.infer<typeof actionSchema>) =>
     }
     case 'move': {
       if (!input.folderId) throw badRequest('FOLDER_REQUIRED');
-      const dest = await prisma.mailFolder.findFirst({ where: { id: input.folderId, account: { userId } } });
+      const dest = await prisma.mailFolder.findFirst({ where: { id: input.folderId, accountId: { in: accountIds } } });
       if (!dest) throw notFound('MAIL_FOLDER_NOT_FOUND');
       if (rows.some((r) => r.accountId !== dest.accountId)) throw badRequest('CROSS_ACCOUNT_MOVE');
       for (const f of await moveRows(rows, dest)) touched.add(f);
@@ -615,7 +699,9 @@ const applyAction = async (req: Request, input: z.infer<typeof actionSchema>) =>
     }
   }
   await recountFolders([...touched]);
-  for (const accountId of accountIds) publish(userId, 'mail.updated', { accountId, reason: action, messageIds: ids });
+  const notify = new Set([userId, ...rows.map((r) => r.account.userId)]);
+  for (const accountId of accountIds) for (const to of notify) publish(to, 'mail.updated', { accountId, reason: action, messageIds: ids });
+  if (rows.some((r) => r.account.userId !== userId)) await audit(req, 'MAIL_SHARED_ACTION', accountIds.join(',').slice(0, 190), { action, count: ids.length });
   return ids;
 };
 
@@ -642,7 +728,8 @@ const single = (action: Action, body?: (req: Request) => Partial<z.infer<typeof 
   const extra = body ? body(req) : {};
   const messageId = String(req.params.id);
   await applyAction(req, parse(actionSchema, { ids: [messageId], action, ...extra }));
-  const m = await prisma.mailMessage.findFirst({ where: { id: messageId, account: { userId: uid(req) } }, include: messageInclude });
+  // Access was checked by applyAction (the message may be gone after a delete).
+  const m = await prisma.mailMessage.findUnique({ where: { id: messageId }, include: messageInclude });
   res.json({ ok: true, message: m ? messageDetailDto(m) : null });
 };
 
@@ -682,14 +769,14 @@ mailRouter.post('/messages/:id/labels', async (req, res) => {
 
 mailRouter.post('/messages/:id/link-case', async (req, res) => {
   const body = parse(z.object({ caseId: id.nullable() }), req.body);
-  const m = await loadOwnMessage(req.params.id, uid(req));
+  const { m } = await loadMessageFor(req, req.params.id, 'send');
   if (body.caseId) {
     const c = await prisma.case.findUnique({ where: { id: body.caseId }, select: { id: true } });
     if (!c) throw badRequest('INVALID_CASE');
   }
   await prisma.mailMessage.update({ where: { id: m.id }, data: { caseId: body.caseId } });
   await audit(req, body.caseId ? 'MAIL_LINKED_CASE' : 'MAIL_UNLINKED_CASE', m.id, { caseId: body.caseId });
-  res.json({ message: messageDetailDto(await loadOwnMessage(m.id, uid(req))) });
+  res.json({ message: messageDetailDto((await loadMessageFor(req, m.id)).m) });
 });
 
 // ─── Attachments ──────────────────────────────────────────────────────
@@ -705,14 +792,17 @@ const sendStored = (res: Response, absPath: string, name: string, mime: string, 
   });
 };
 
-const loadOwnAttachment = async (attachmentId: string, userId: string) => {
-  const a = await prisma.mailAttachment.findFirst({ where: { id: attachmentId, message: { account: { userId } } }, include: { message: { select: { uid: true, accountId: true, folder: { select: { path: true } } } } } });
+/** Attachment of a mailbox the viewer may read (own, granted, or any for a SUPER_ADMIN); else 404. */
+const loadReadableAttachment = async (req: Request, attachmentId: string) => {
+  const a = await prisma.mailAttachment.findUnique({ where: { id: attachmentId }, include: { message: { select: { uid: true, accountId: true, folder: { select: { path: true } } } } } });
   if (!a) throw notFound('ATTACHMENT_NOT_FOUND');
+  const map = await assertMailAccess(viewer(req), [a.message.accountId], 'read', 'ATTACHMENT_NOT_FOUND');
+  await noteMailboxOpened(req, a.message.accountId, map.get(a.message.accountId)!);
   return a;
 };
 
 mailRouter.get('/attachments/:id', async (req, res) => {
-  const a = await loadOwnAttachment(req.params.id, uid(req));
+  const a = await loadReadableAttachment(req, req.params.id);
   const key = await ensureAttachmentBytes(a);
   const inline = req.query.inline === '1' && INLINE_MIME.has(a.mimeType);
   sendStored(res, mailPath(key), a.filename, inline ? a.mimeType : 'application/octet-stream', inline);
@@ -720,7 +810,7 @@ mailRouter.get('/attachments/:id', async (req, res) => {
 
 /** Inline (cid:) images referenced by a message body. */
 mailRouter.get('/inline/:id', async (req, res) => {
-  const a = await loadOwnAttachment(req.params.id, uid(req));
+  const a = await loadReadableAttachment(req, req.params.id);
   if (!a.mimeType.startsWith('image/') || a.mimeType === 'image/svg+xml') throw notFound('ATTACHMENT_NOT_FOUND');
   const key = await ensureAttachmentBytes(a);
   sendStored(res, mailPath(key), a.filename, a.mimeType, true);
@@ -739,8 +829,8 @@ const draftSchema = z.object({
   forwardOfMessageId: id.nullable().optional(),
 });
 
-const draftData = async (userId: string, body: z.infer<typeof draftSchema>) => {
-  const account = await loadOwnAccount(body.accountId, userId);
+const draftData = async (req: Request, body: z.infer<typeof draftSchema>) => {
+  const { account } = await loadMailAccount(body.accountId, viewer(req), 'send');
   const original = body.replyToMessageId ? await prisma.mailMessage.findFirst({ where: { id: body.replyToMessageId, accountId: account.id } }) : null;
   if (body.replyToMessageId && !original) throw notFound('MAIL_MESSAGE_NOT_FOUND');
   const clean = sanitizeMailHtml(body.html, { keepRemoteImages: true });
@@ -771,7 +861,7 @@ const draftData = async (userId: string, body: z.infer<typeof draftSchema>) => {
 
 mailRouter.post('/drafts', async (req, res) => {
   const body = parse(draftSchema, req.body);
-  const { account, data } = await draftData(uid(req), body);
+  const { account, data } = await draftData(req, body);
   const folder = await ensureRoleFolder(account.id, 'DRAFTS');
   const draft = await prisma.mailMessage.create({
     data: { ...data, accountId: account.id, folderId: folder.id, uid: null, isDraft: true, seen: true, threadKey: data.threadKey ?? threadKeyOf({ subject: data.subject, fromAddr: account.email }) },
@@ -781,16 +871,18 @@ mailRouter.post('/drafts', async (req, res) => {
   res.status(201).json({ draft: messageDetailDto(draft) });
 });
 
-const loadOwnDraft = async (draftId: string, userId: string) => {
-  const d = await prisma.mailMessage.findFirst({ where: { id: draftId, isDraft: true, account: { userId } }, include: messageInclude });
+/** Draft in a mailbox the viewer may send from (own or an "Oxu və göndər" grant). */
+const loadDraftFor = async (req: Request, draftId: string) => {
+  const d = await prisma.mailMessage.findFirst({ where: { id: draftId, isDraft: true }, include: messageInclude });
   if (!d) throw notFound('MAIL_DRAFT_NOT_FOUND');
+  await assertMailAccess(viewer(req), [d.accountId], 'send', 'MAIL_DRAFT_NOT_FOUND');
   return d;
 };
 
 mailRouter.patch('/drafts/:id', async (req, res) => {
-  const draft = await loadOwnDraft(req.params.id, uid(req));
+  const draft = await loadDraftFor(req, req.params.id);
   const body = parse(draftSchema.omit({ accountId: true }).partial(), req.body);
-  const { data } = await draftData(uid(req), { ...body, accountId: draft.accountId, to: body.to ?? [], cc: body.cc ?? [], bcc: body.bcc ?? [], subject: body.subject ?? '', html: body.html ?? '' });
+  const { data } = await draftData(req, { ...body, accountId: draft.accountId, to: body.to ?? [], cc: body.cc ?? [], bcc: body.bcc ?? [], subject: body.subject ?? '', html: body.html ?? '' });
   const patch: Prisma.MailMessageUncheckedUpdateInput = {};
   if (body.subject !== undefined) patch.subject = data.subject;
   if (body.to !== undefined) patch.toList = data.toList;
@@ -812,7 +904,7 @@ mailRouter.patch('/drafts/:id', async (req, res) => {
 });
 
 mailRouter.delete('/drafts/:id', async (req, res) => {
-  const draft = await loadOwnDraft(req.params.id, uid(req));
+  const draft = await loadDraftFor(req, req.params.id);
   await prisma.mailMessage.delete({ where: { id: draft.id } });
   await removeMailStored(draft.attachments.map((a) => a.storageKey));
   await recountFolders([draft.folderId]);
@@ -838,7 +930,7 @@ const draftUpload = multer({
 });
 
 mailRouter.post('/drafts/:id/attachments', draftUpload.single('file'), async (req, res) => {
-  const draft = await loadOwnDraft(String(req.params.id), uid(req));
+  const draft = await loadDraftFor(req, String(req.params.id));
   const file = req.file;
   if (!file) throw badRequest('FILE_REQUIRED');
   const name = decodeOriginalName(file.originalname).replace(/[\r\n\0/\\]/g, '_').slice(0, 255) || 'attachment';
@@ -856,7 +948,7 @@ mailRouter.post('/drafts/:id/attachments', draftUpload.single('file'), async (re
 });
 
 mailRouter.delete('/drafts/:id/attachments/:aid', async (req, res) => {
-  const draft = await loadOwnDraft(req.params.id, uid(req));
+  const draft = await loadDraftFor(req, req.params.id);
   const a = draft.attachments.find((x) => x.id === req.params.aid);
   if (!a) throw notFound('ATTACHMENT_NOT_FOUND');
   await prisma.mailAttachment.delete({ where: { id: a.id } });
@@ -881,7 +973,7 @@ const sendSchema = z.object({
 
 mailRouter.post('/send', async (req, res) => {
   const body = parse(sendSchema, req.body);
-  const account = await loadOwnAccount(body.accountId, uid(req));
+  const { account, level } = await loadMailAccount(body.accountId, viewer(req), 'send');
   const row = await sendMessage(uid(req), account, {
     to: toAddresses(body.to),
     cc: toAddresses(body.cc),
@@ -894,8 +986,8 @@ mailRouter.post('/send', async (req, res) => {
     forwardOfMessageId: body.forwardOfMessageId ?? null,
     attachmentIds: body.attachmentIds,
   });
-  await audit(req, 'MAIL_SENT', row.id, { accountId: account.id, to: body.to.length + body.cc.length + body.bcc.length });
-  res.status(201).json({ message: messageDetailDto(await loadOwnMessage(row.id, uid(req))) });
+  await audit(req, 'MAIL_SENT', row.id, { accountId: account.id, to: body.to.length + body.cc.length + body.bcc.length, ...(level !== 'OWNER' ? { onBehalfOf: account.userId } : {}) });
+  res.status(201).json({ message: messageDetailDto((await loadMessageFor(req, row.id)).m) });
 });
 
 /** Recent correspondents of my mailboxes (autocomplete fallback when the address book has nothing). */

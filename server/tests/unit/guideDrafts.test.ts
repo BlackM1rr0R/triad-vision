@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import { DRAFT_KEYS, GUIDE_DRAFTS, PUBLISHED_ON_CREATE, PUBLISHED_ON_CREATE_KEYS, draftPlaceholders, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
 import { PROFESSION_GUIDES, PROFESSION_KEYS, PROFESSION_LOCALES } from '../../prisma/seed/guideDrafts/professions/index.js';
+import { SEO2026_GUIDES, SEO2026_KEYS, SEO2026_LOCALES } from '../../prisma/seed/guideDrafts/seo2026/index.js';
 import { GUIDES } from '../../prisma/seed/guides/index.js';
 import { markdownToText, renderGuideMarkdown } from '../../src/lib/guides/markdown.js';
 import { PLACEHOLDER_RE, guidePlaceholders } from '../../src/lib/guides/placeholders.js';
@@ -50,6 +51,7 @@ describe('SEO guide drafts (content)', () => {
         'employer-azerbaijan:de', 'employer-azerbaijan:en',
         'employer-drivers:de', 'employer-nursing:de', 'employer-apprentices:de', 'fast-track-81a:de',
         ...PROFESSION_KEYS.flatMap((k) => PROFESSION_LOCALES.map((l) => `${k}:${l}`)),
+        ...SEO2026_KEYS.flatMap((k) => SEO2026_LOCALES.map((l) => `${k}:${l}`)),
       ].sort(),
     );
   });
@@ -71,6 +73,20 @@ describe('SEO guide drafts (content)', () => {
       // hreflang alternates are by key: one slug per language, all different.
       const slugs = Object.values(g.pages).map((p) => p!.slug);
       expect(new Set(slugs).size, g.key).toBe(slugs.length);
+    }
+  });
+
+  it('has the SEO guides 2026 (living costs, visa documents, skilled-worker visa) in az, ru and tr, published on create', () => {
+    expect(SEO2026_GUIDES.map((g) => g.key)).toEqual([...SEO2026_KEYS]);
+    for (const g of SEO2026_GUIDES) {
+      expect(Object.keys(g.pages).sort(), g.key).toEqual([...SEO2026_LOCALES].sort());
+      for (const [locale, p] of Object.entries(g.pages)) {
+        const where = `${g.key} ${locale}`;
+        expect(p!.body, where).toContain('](/booking)');
+        expect(p!.body, where).not.toMatch(/\[(?:YOXLA|PRÜFEN|ПРОВЕРИТЬ|CHECK)/);
+        // Business rules: we never claim to translate, apostille or book embassy appointments.
+        expect(p!.body, where).toMatch(/Triad Vision/);
+      }
     }
   });
 
@@ -116,10 +132,10 @@ describe('seedGuideDrafts', () => {
     for (const r of rows) {
       expect(r.published, `${r.key} ${r.locale}`).toBe(PUBLISHED_ON_CREATE.includes(r.locale as never) || PUBLISHED_ON_CREATE_KEYS.includes(r.key as never));
     }
-    const professions = new Set<string>(PROFESSION_KEYS);
+    const professions = new Set<string>([...PROFESSION_KEYS, ...SEO2026_KEYS]);
     expect(rows.filter((r) => r.published && !professions.has(r.key)).map((r) => r.locale).sort()).toEqual([...Array(5).fill('tr'), ...Array(5).fill('uk')]);
     expect(rows.filter((r) => professions.has(r.key)).every((r) => r.published)).toBe(true);
-    expect(rows.filter((r) => professions.has(r.key))).toHaveLength(PROFESSION_KEYS.length * PROFESSION_LOCALES.length);
+    expect(rows.filter((r) => professions.has(r.key))).toHaveLength(PROFESSION_KEYS.length * PROFESSION_LOCALES.length + SEO2026_KEYS.length * SEO2026_LOCALES.length);
     expect(await seedGuideDrafts(prisma)).toBe(0);
     expect(rows).toHaveLength(GUIDE_DRAFTS.length);
   });

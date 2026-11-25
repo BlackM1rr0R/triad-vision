@@ -3,6 +3,7 @@ import { anon, asAdmin } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { GUIDE_DRAFTS, publishedOnCreate, seedGuideDrafts } from '../../prisma/seed/guideDrafts/index.js';
 import { PROFESSION_KEYS, PROFESSION_LOCALES } from '../../prisma/seed/guideDrafts/professions/index.js';
+import { SEO2026_KEYS, SEO2026_LOCALES } from '../../prisma/seed/guideDrafts/seo2026/index.js';
 import { guidePlaceholders } from '../../src/lib/guides/placeholders.js';
 
 const pathOf = (d: (typeof GUIDE_DRAFTS)[number]) => `${d.locale === 'az' ? '' : `/${d.locale}`}/guides/${d.slug}`;
@@ -13,7 +14,7 @@ describe('SEO guide drafts', () => {
     expect(await seedGuideDrafts(prisma)).toBe(0);
     const live = GUIDE_DRAFTS.filter((d) => publishedOnCreate(d));
     const drafts = GUIDE_DRAFTS.filter((d) => !publishedOnCreate(d));
-    expect(live).toHaveLength(10 + PROFESSION_KEYS.length * PROFESSION_LOCALES.length);
+    expect(live).toHaveLength(10 + PROFESSION_KEYS.length * PROFESSION_LOCALES.length + SEO2026_KEYS.length * SEO2026_LOCALES.length);
     expect(await prisma.guidePage.count({ where: { published: true } })).toBe(live.length);
     expect(await prisma.guidePage.count({ where: { published: false } })).toBe(drafts.length);
 

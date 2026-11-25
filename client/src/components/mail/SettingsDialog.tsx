@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertCircle, Briefcase, CheckCircle2, ChevronDown, Pencil, Play, Plus, RefreshCw, Share2, Trash2, X } from 'lucide-react';
+import { AlertCircle, Briefcase, CheckCircle2, ChevronDown, Pencil, Play, Plus, RefreshCw, Share2, Trash2, Users, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { fmtDateTime } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
@@ -15,6 +15,7 @@ import type { CaseRef, MailAccount, MailLabel, MailProvider, MailRule, MailTempl
 import { PROVIDERS } from './types';
 import { errorText } from './utils';
 import { MailboxSecurityTab, useMyMailboxes } from './MailboxSecurity';
+import { MailboxAccessPanel } from './MailboxAccess';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 
 export type SettingsTab = 'accounts' | 'signatures' | 'labels' | 'rules' | 'templates' | 'security';
@@ -338,6 +339,7 @@ const AccountsTab = ({ accounts }: { accounts: MailAccount[] }) => {
   const [edit, setEdit] = useState<MailAccount | null | 'new'>(null);
   const [del, setDel] = useState<MailAccount | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [who, setWho] = useState<string | null>(null); // "who can see this mailbox" panel
   const remove = useMutation({
     mutationFn: async (id: string) => api.delete(`/mail/accounts/${id}`),
     onSuccess: () => {
@@ -363,27 +365,37 @@ const AccountsTab = ({ accounts }: { accounts: MailAccount[] }) => {
   return (
     <div className="space-y-3">
       {accounts.map((a) => (
-        <div key={a.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5">
-          <span className={clsx('size-2.5 shrink-0 rounded-full', a.syncStatus === 'OK' ? 'bg-success' : a.syncStatus === 'ERROR' ? 'bg-danger' : a.syncStatus === 'SYNCING' ? 'animate-pulse bg-primary' : 'bg-line-strong')} title={t(`mail.settings.accounts.status.${a.syncStatus}`)} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-ink">
-              {a.email} {a.isDefault && <span className="ml-1 rounded-md bg-primary/10 px-1.5 text-[0.65rem] text-link">{t('mail.settings.accounts.isDefault')}</span>}
-            </p>
-            <p className="truncate text-xs text-muted">
-              {a.displayName ? `${a.displayName} · ` : ''}
-              {t('mail.settings.accounts.lastSync', { date: a.lastSyncAt ? fmtDateTime(a.lastSyncAt) : t('mail.settings.accounts.never') })}
-              {a.syncError ? ` · ${a.syncError}` : ''}
-            </p>
+        <div key={a.id} className="rounded-xl border border-line">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <span className={clsx('size-2.5 shrink-0 rounded-full', a.syncStatus === 'OK' ? 'bg-success' : a.syncStatus === 'ERROR' ? 'bg-danger' : a.syncStatus === 'SYNCING' ? 'animate-pulse bg-primary' : 'bg-line-strong')} title={t(`mail.settings.accounts.status.${a.syncStatus}`)} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-ink">
+                {a.email} {a.isDefault && <span className="ml-1 rounded-md bg-primary/10 px-1.5 text-[0.65rem] text-link">{t('mail.settings.accounts.isDefault')}</span>}
+              </p>
+              <p className="truncate text-xs text-muted">
+                {a.displayName ? `${a.displayName} · ` : ''}
+                {t('mail.settings.accounts.lastSync', { date: a.lastSyncAt ? fmtDateTime(a.lastSyncAt) : t('mail.settings.accounts.never') })}
+                {a.syncError ? ` · ${a.syncError}` : ''}
+              </p>
+            </div>
+            <Secondary onClick={() => void sync(a)} disabled={syncing === a.id}>
+              <RefreshCw className={clsx('size-3.5', syncing === a.id && 'animate-spin')} />
+            </Secondary>
+            <Secondary onClick={() => setEdit(a)}>
+              <Pencil className="size-3.5" />
+            </Secondary>
+            <Secondary onClick={() => setWho(who === a.id ? null : a.id)} className={clsx(who === a.id && 'bg-sunken')}>
+              <Users className="size-3.5" aria-label={t('mailAccess.owner.title')} />
+            </Secondary>
+            <Secondary onClick={() => setDel(a)} className="hover:text-danger-fg">
+              <Trash2 className="size-3.5" />
+            </Secondary>
           </div>
-          <Secondary onClick={() => void sync(a)} disabled={syncing === a.id}>
-            <RefreshCw className={clsx('size-3.5', syncing === a.id && 'animate-spin')} />
-          </Secondary>
-          <Secondary onClick={() => setEdit(a)}>
-            <Pencil className="size-3.5" />
-          </Secondary>
-          <Secondary onClick={() => setDel(a)} className="hover:text-danger-fg">
-            <Trash2 className="size-3.5" />
-          </Secondary>
+          {who === a.id && (
+            <div className="border-t border-line px-3 py-2.5">
+              <MailboxAccessPanel accountId={a.id} />
+            </div>
+          )}
         </div>
       ))}
       {!accounts.length && <p className="py-6 text-center text-sm text-muted">{t('mail.settings.accounts.none')}</p>}

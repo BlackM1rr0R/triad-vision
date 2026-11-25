@@ -19,7 +19,7 @@ describe('profession hubs data', () => {
     const glossary = glossarySlugs();
     for (const h of PROFESSION_HUBS) {
       for (const p of h.tools) expect(toolPaths.has(p), `${h.slug} ${p}`).toBe(true);
-      expect(SCENE_META.some((s) => s.id === h.scene), h.slug).toBe(true);
+      if (h.scene) expect(SCENE_META.some((s) => s.id === h.scene), h.slug).toBe(true);
       expect(toolPaths.has(h.mockExam)).toBe(true);
       for (const g of h.glossary) expect(glossary.has(g), `${h.slug} ${g}`).toBe(true);
       expect(h.salary[0]).toBeGreaterThanOrEqual(2410); // never below the 2026 minimum wage at 40 h
@@ -29,7 +29,7 @@ describe('profession hubs data', () => {
   });
 
   it('matches the professions of the work scene it shows', () => {
-    for (const h of PROFESSION_HUBS) {
+    for (const h of PROFESSION_HUBS.filter((x) => x.scene)) {
       const scene = SCENE_META.find((s) => s.id === h.scene)!;
       expect(h.professions.some((p) => scene.professions.includes(p)), h.slug).toBe(true);
     }

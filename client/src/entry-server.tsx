@@ -36,6 +36,7 @@ export const SSR_QUERY_KEYS = new Set<string>([
   'job',
   'job-landing', // /jobs/in/:city/:profession (GET /vacancies/landing/…)
   'profession-hub-vacancies', // /for/:profession: open vacancies of the hub (GET /profession-hubs/:slug/vacancies)
+  'career', // /for/:profession SEO blocks, /ausbildung/:slug, /cities/:slug and their lists (GET /career/…, server lib/careerPages)
   'study-programmes', // /study: the curated programme catalogue (GET /study/programmes)
   'study-programme', // /study/:slug
   'glossary', // /glossary: every term with its short definition (GET /glossary?lng=)

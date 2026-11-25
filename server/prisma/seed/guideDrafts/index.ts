@@ -8,6 +8,7 @@ import { EN_DRAFTS } from './en.js';
 import { TR_DRAFTS } from './tr.js';
 import { UK_DRAFTS } from './uk.js';
 import { PROFESSION_KEYS, professionPages, type ProfessionKey } from './professions/index.js';
+import { SEO2026_KEYS, seo2026Pages } from './seo2026/index.js';
 
 /**
  * SEO landing guides written for the target queries in docs/SEO.md ("Content suggestions"), seeded as
@@ -33,6 +34,10 @@ import { PROFESSION_KEYS, professionPages, type ProfessionKey } from './professi
  * -oekonom, -zahnarzt, -arzt, -ingenieur, -elektroniker in az, ru, de, en. Written with every fact checked
  * against official sources and without review placeholders, so these keys are created PUBLISHED in every
  * language (PUBLISHED_ON_CREATE_KEYS). Same insert-only rule: an existing row or a taken slug is never touched.
+ *
+ * SEO guides 2026 (added 2026-11-25, ./seo2026): living-costs, visa-documents, skilled-worker-visa in az, ru, tr
+ * (each language written for its audience). Figures taken from the repository's checked sources (budget city data,
+ * Blue Card / § 18 thresholds, salary-net examples), no placeholders: created PUBLISHED like the profession guides.
  */
 export const DRAFT_KEYS = [
   'driver-jobs',
@@ -46,6 +51,7 @@ export const DRAFT_KEYS = [
   'employer-apprentices',
   'fast-track-81a',
   ...PROFESSION_KEYS,
+  ...SEO2026_KEYS,
 ] as const;
 export type DraftKey = (typeof DRAFT_KEYS)[number];
 
@@ -63,7 +69,7 @@ const BY_LOCALE: [GuideLocale, Partial<Record<DraftKey, GuidePageSeed>>][] = (
     ['tr', TR_DRAFTS],
     ['uk', UK_DRAFTS],
   ] as [GuideLocale, Partial<Record<DraftKey, GuidePageSeed>>][]
-).map(([locale, pages]) => [locale, { ...pages, ...professionPages(locale) }]);
+).map(([locale, pages]) => [locale, { ...pages, ...professionPages(locale), ...seo2026Pages(locale) }]);
 
 /**
  * Languages whose new rows are created published: translations of texts that were already reviewed and
@@ -72,7 +78,7 @@ const BY_LOCALE: [GuideLocale, Partial<Record<DraftKey, GuidePageSeed>>][] = (
 export const PUBLISHED_ON_CREATE: readonly GuideLocale[] = ['tr', 'uk'];
 
 /** Keys whose new rows are created published in every language: the checked profession guides (see above). */
-export const PUBLISHED_ON_CREATE_KEYS: readonly DraftKey[] = PROFESSION_KEYS;
+export const PUBLISHED_ON_CREATE_KEYS: readonly DraftKey[] = [...PROFESSION_KEYS, ...SEO2026_KEYS];
 
 /** Whether a new row of this draft is created published (never while it still has a review placeholder). */
 export const publishedOnCreate = (d: Pick<GuideDraft, 'key' | 'locale'> & GuidePageSeed) =>

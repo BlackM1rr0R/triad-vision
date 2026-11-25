@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CityPageLinks } from '@/components/career/CareerBlocks';
 import { toast } from 'sonner';
 import { Building2, Calculator, Info, Scale } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
@@ -67,6 +68,10 @@ export default function CitiesGuide() {
         illustration={<Germany />}
         crumb={{ to: '/tools', label: t('siteNav.tools') }}
       />
+      {/* City pages (/cities/:slug: costs + our vacancies there), server lib/careerPages. */}
+      <div className="container-x">
+        <CityPageLinks />
+      </div>
 
       <nav aria-label={t('citiesPage.title')} className="border-b border-line bg-canvas">
         <div className="container-x flex gap-1.5 overflow-x-auto py-2.5 text-sm font-semibold">

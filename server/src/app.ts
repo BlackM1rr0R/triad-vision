@@ -76,6 +76,7 @@ import { bookingRouter } from './routes/booking.js';
 import { reviewsRouter } from './routes/reviews.js';
 import { trackRouter } from './routes/track.js';
 import { professionHubsRouter } from './routes/professionHubs.js'; // /for/:slug hubs: vacancies of the hub's professions
+import { careerPagesRouter } from './routes/careerPages.js'; // career pages (lib/careerPages)
 import { toolsRouter } from './routes/tools.js'; // public tools: analytics beacon, 'e-mail me my result'
 import { seoRouter } from './routes/seo.js';
 import { guidesRouter } from './routes/guides.js';
@@ -335,6 +336,7 @@ export const createApp = () => {
   app.use('/api/landing', landingRouter); // landing pages: page, view counter, form → Inquiry
   app.use('/api/reviews', reviewsRouter);
   app.use('/api/track', trackRouter);
+  app.use('/api/career', careerPagesRouter); // career pages: hub SEO blocks, /ausbildung/:slug, /cities/:slug (public, lib/careerPages)
   app.use('/api/profession-hubs', professionHubsRouter); // profession hubs (/for/:slug): open vacancies by canonical profession
   app.use('/api/tools', toolsRouter); // tool counters (cookie-less), 'e-mail me my result' + confirm / unsubscribe (lib/toolLeads)
   app.use('/api/messaging-plus', messagingPlusRouter); // translation, three-party threads, voice messages

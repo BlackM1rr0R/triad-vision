@@ -4,14 +4,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Keyboard, Mail as MailIcon, Menu, PenSquare } from 'lucide-react';
+import { ChevronDown, Keyboard, Mail as MailIcon, Menu, PenSquare } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { api } from '@/lib/api';
 import { pagesMail } from '@/i18n/pagesMail';
+import { pagesMailAccess } from '@/i18n/pagesMailAccess';
 import { useRealtime } from '@/lib/realtime';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { Spinner } from '@/components/ui/Spinner';
-import { mailKeys, syncAccount, useBulkAction, useFolders, useInvalidateMail, useLabels, useMessage, useMessageList, useThread, type BulkInput } from '@/components/mail/api';
+import { mailKeys, syncAccount, useBulkAction, useFolders, useInvalidateMail, useLabels, useMailboxes, useMessage, useMessageList, useThread, type BulkInput } from '@/components/mail/api';
 import { ComposeWindow } from '@/components/mail/Compose';
 import { Dialog } from '@/components/mail/Dialog';
 import { LabelsMenu, SnoozeMenu } from '@/components/mail/menus';
@@ -20,13 +21,14 @@ import { ReadingPane, type PaneAction } from '@/components/mail/ReadingPane';
 import { MailSettingsDialog, type SettingsTab } from '@/components/mail/SettingsDialog';
 import { MailSidebar, folderLabel, type Selection } from '@/components/mail/Sidebar';
 import { SHORTCUT_LIST, useMailShortcuts } from '@/components/mail/shortcuts';
-import type { ComposeSeed, ListParams, MessageDetail, MessageRow, View } from '@/components/mail/types';
+import type { ComposeSeed, ListParams, MailAccess, MessageDetail, MessageRow, View } from '@/components/mail/types';
 import { VIEWS } from '@/components/mail/types';
 import { errorText, subjectOf } from '@/components/mail/utils';
 import { TriageCard } from '@/components/aiMail/TriageCard';
 import { AI_FILTERS, draftToHtml, useTriageStatus, type AiFilter } from '@/components/aiMail/api';
 
 registerCopy(pagesMail);
+registerCopy(pagesMailAccess); // shared mailboxes: switcher, read-only notes
 
 const THREADS_KEY = 'tv-mail-threads';
 const readThreads = () => {
@@ -111,10 +113,22 @@ export default function WorkspaceMail() {
   const openMessage = (id: string | null) => go({}, id, !!messageId);
 
   // ─── Data ───
-  const folders = useFolders();
-  const accounts = folders.data?.accounts ?? [];
+  const ownFolders = useFolders();
+  const ownAccounts = useMemo(() => ownFolders.data?.accounts ?? [], [ownFolders.data]);
+  // Shared mailboxes (server lib/mail/access): a colleague's mailbox opened through a grant, or any for a super admin.
+  const mailboxes = useMailboxes();
+  const shared = useMemo(() => mailboxes.data?.shared ?? [], [mailboxes.data]);
+  const sharedBox = selection.accountId ? shared.find((b) => b.id === selection.accountId) : undefined;
+  const sharedFolders = useFolders(sharedBox?.id, !!sharedBox);
+  const folders = sharedBox ? sharedFolders : ownFolders;
+  const access: MailAccess = sharedBox?.access ?? 'OWNER';
+  const readOnly = access === 'READ';
+  const sharedAccount = sharedBox ? sharedFolders.data?.accounts.find((a) => a.id === sharedBox.id) : undefined;
+  // Accounts the viewer may write from: own ones, plus the shared mailbox when "read + send" was granted.
+  const accounts = useMemo(() => (sharedAccount && access === 'SEND' ? [sharedAccount, ...ownAccounts] : ownAccounts), [sharedAccount, access, ownAccounts]);
   const labels = useLabels();
-  const myEmails = useMemo(() => new Set(accounts.map((a) => a.email.toLowerCase())), [accounts]);
+  const myEmails = useMemo(() => new Set([...accounts, ...(sharedAccount ? [sharedAccount] : [])].map((a) => a.email.toLowerCase())), [accounts, sharedAccount]);
+  const ownerName = sharedBox ? `${sharedBox.owner.firstName} ${sharedBox.owner.lastName}`.trim() || sharedBox.email : '';
   const listParams: ListParams = useMemo(
     () => ({
       accountId: selection.accountId ?? undefined,
@@ -131,7 +145,7 @@ export default function WorkspaceMail() {
     }),
     [selection, filters, threads, aiFilter],
   );
-  const list = useMessageList(listParams, accounts.length > 0);
+  const list = useMessageList(listParams, ownAccounts.length > 0 || !!sharedBox);
   const items: MessageRow[] = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   const message = useMessage(messageId);
   const thread = useThread(messageId, threads);
@@ -141,11 +155,18 @@ export default function WorkspaceMail() {
   const markedRef = useRef<string | null>(null);
   useEffect(() => {
     const m = message.data;
-    if (!m || m.seen || m.isDraft || markedRef.current === m.id) return;
+    // Someone else's mailbox stays as its owner left it (unread stays unread).
+    if (!m || m.seen || m.isDraft || markedRef.current === m.id || (m.access && m.access !== 'OWNER')) return;
     markedRef.current = m.id;
     bulk.mutate({ ids: [m.id], action: 'read' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message.data?.id, message.data?.seen]);
+
+  // No mailbox of one's own but shared ones (e.g. a super admin): open the first shared mailbox.
+  useEffect(() => {
+    if (ownFolders.isSuccess && !ownAccounts.length && !selection.accountId && shared.length) go({ accountId: shared[0]!.id, view: 'inbox', folderId: null, labelId: null }, null, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownFolders.isSuccess, ownAccounts.length, selection.accountId, shared.length]);
 
   // ─── Realtime ───
   // Lists and counts refresh on every push; the "new mail" toast is shown by the workspace shell
@@ -179,7 +200,15 @@ export default function WorkspaceMail() {
   // ─── Compose ───
   const [compose, setCompose] = useState<ComposeSeed | null>(null);
   const seedKey = useRef(0);
-  const startCompose = (seed: Omit<ComposeSeed, 'key'>) => setCompose({ ...seed, key: String(++seedKey.current) });
+  const startCompose = (seed: Omit<ComposeSeed, 'key'>) => {
+    if (!accounts.length) {
+      toast.error(t('mailAccess.mail.readOnlyError'));
+      return;
+    }
+    // A read-only shared mailbox cannot be the sender: fall back to the default account.
+    const accountId = seed.accountId && accounts.some((a) => a.id === seed.accountId) ? seed.accountId : undefined;
+    setCompose({ ...seed, accountId, key: String(++seedKey.current) });
+  };
   const [settings, setSettings] = useState<SettingsTab | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -205,6 +234,11 @@ export default function WorkspaceMail() {
   const act = (a: PaneAction, ids: string[] = messageId ? [messageId] : []) => {
     if (!ids.length) return;
     const m = message.data;
+    // Shared mailboxes: read-only access only prints; labels are personal (own mailboxes only). The server checks too.
+    if ((readOnly && a.type !== 'print') || (access !== 'OWNER' && a.type === 'label')) {
+      toast.error(t('mailAccess.mail.readOnlyError'));
+      return;
+    }
     switch (a.type) {
       case 'reply':
       case 'replyAll':
@@ -279,7 +313,7 @@ export default function WorkspaceMail() {
   };
 
   const sync = async () => {
-    const targets = selection.accountId ? accounts.filter((a) => a.id === selection.accountId) : accounts;
+    const targets = sharedAccount ? [sharedAccount] : selection.accountId ? ownAccounts.filter((a) => a.id === selection.accountId) : ownAccounts;
     if (!targets.length) return;
     setSyncing(true);
     try {
@@ -343,7 +377,8 @@ export default function WorkspaceMail() {
   };
 
   // ─── No account yet ───
-  if (folders.isSuccess && !accounts.length) {
+  // (A super admin or a colleague with grants but no mailbox of their own still gets the switcher.)
+  if (ownFolders.isSuccess && !ownAccounts.length && !sharedBox && !shared.length && !mailboxes.isLoading) {
     return (
       <div className="grid h-full place-items-center bg-canvas p-6">
         <div className="max-w-md text-center">
@@ -356,7 +391,7 @@ export default function WorkspaceMail() {
             {t('mail.empty.addAccount')}
           </button>
         </div>
-        <MailSettingsDialog open={!!settings} onClose={() => setSettings(null)} initialTab={settings ?? 'accounts'} accounts={accounts} />
+        <MailSettingsDialog open={!!settings} onClose={() => setSettings(null)} initialTab={settings ?? 'accounts'} accounts={ownAccounts} />
       </div>
     );
   }
@@ -366,31 +401,63 @@ export default function WorkspaceMail() {
   return (
     <div className="flex h-full min-h-0 bg-canvas text-ink">
       {/* Left: accounts / folders / labels */}
-      <aside className={clsx('w-60 shrink-0 border-r border-line bg-card', sidebarOpen ? 'fixed inset-y-0 left-0 z-[60] block shadow-[var(--tv-shadow-raised)]' : 'hidden lg:block')}>
-        {folders.isLoading ? (
-          <div className="grid h-full place-items-center text-link">
-            <Spinner />
+      <aside className={clsx('w-60 shrink-0 border-r border-line bg-card', sidebarOpen ? 'fixed inset-y-0 left-0 z-[60] flex flex-col shadow-[var(--tv-shadow-raised)]' : 'hidden lg:flex lg:flex-col')}>
+        {shared.length > 0 && (
+          <div className="border-b border-line p-3 pb-2">
+            <label className="relative block">
+              <span className="mb-1 block text-[0.65rem] font-bold tracking-[0.14em] text-muted uppercase">{t('mailAccess.mail.switcher')}</span>
+              <select
+                value={sharedBox?.id ?? ''}
+                onChange={(e) => {
+                  setSidebarOpen(false);
+                  go({ accountId: e.target.value || null, view: 'inbox', folderId: null, labelId: null }, null);
+                }}
+                className="input appearance-none py-2 pr-8 text-sm font-semibold"
+              >
+                <option value="">{t('mailAccess.mail.mine')}</option>
+                <optgroup label={t('mailAccess.mail.sharedGroup')}>
+                  {shared.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {t('mailAccess.mail.shared', { name: `${b.owner.firstName} ${b.owner.lastName}`.trim() || b.email })} · {b.email}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 bottom-3 size-4 text-muted" aria-hidden />
+            </label>
+            {sharedBox && (
+              <p className={clsx('mt-2 rounded-lg px-2.5 py-1.5 text-xs', readOnly ? 'bg-primary/[0.06] text-link' : 'bg-warning-bg text-warning-fg')}>
+                {readOnly ? t('mailAccess.mail.readOnlyNote') : t('mailAccess.mail.sendNote', { name: ownerName })}
+              </p>
+            )}
           </div>
-        ) : (
-          <MailSidebar
-            data={folders.data}
-            selection={selection}
-            onSelect={(s) => {
-              setSidebarOpen(false);
-              go(s, null);
-            }}
-            onCompose={() => {
-              setSidebarOpen(false);
-              startCompose({ mode: 'new', accountId: selection.accountId ?? undefined });
-            }}
-            onSettings={() => {
-              setSidebarOpen(false);
-              setSettings('accounts');
-            }}
-            onSync={() => void sync()}
-            syncing={syncing}
-          />
         )}
+        <div className="min-h-0 flex-1">
+          {folders.isLoading ? (
+            <div className="grid h-full place-items-center text-link">
+              <Spinner />
+            </div>
+          ) : (
+            <MailSidebar
+              data={folders.data}
+              selection={selection}
+              onSelect={(s) => {
+                setSidebarOpen(false);
+                go(s, null);
+              }}
+              onCompose={() => {
+                setSidebarOpen(false);
+                startCompose({ mode: 'new', accountId: selection.accountId ?? undefined });
+              }}
+              onSettings={() => {
+                setSidebarOpen(false);
+                setSettings('accounts');
+              }}
+              onSync={() => void sync()}
+              syncing={syncing}
+            />
+          )}
+        </div>
       </aside>
       {sidebarOpen && <button type="button" className="fixed inset-0 z-[55] bg-navy-950/40 lg:hidden" onClick={() => setSidebarOpen(false)} aria-label={t('mail.actions.close')} />}
 
@@ -471,8 +538,9 @@ export default function WorkspaceMail() {
           onAction={(a) => act(a)}
           onBack={messageId ? () => openMessage(null) : undefined}
           onClose={() => openMessage(null)}
+          access={current?.access ?? access}
           aiSlot={
-            current && triageOn ? (
+            current && triageOn && (current.access ?? 'OWNER') === 'OWNER' ? (
               <TriageCard
                 message={current}
                 onUseDraft={(d) => startCompose({ mode: 'reply', original: current, accountId: current.accountId, subject: d.subject, html: draftToHtml(d.body) })}
@@ -499,7 +567,7 @@ export default function WorkspaceMail() {
           }}
         />
       )}
-      <MailSettingsDialog open={!!settings} onClose={() => setSettings(null)} initialTab={settings ?? 'accounts'} accounts={accounts} />
+      <MailSettingsDialog open={!!settings} onClose={() => setSettings(null)} initialTab={settings ?? 'accounts'} accounts={ownAccounts} />
       <Dialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} title={t('mail.shortcuts.title')} size="sm">
         <ul className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
           {SHORTCUT_LIST.map((s) => (

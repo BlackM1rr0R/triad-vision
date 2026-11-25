@@ -26,6 +26,7 @@ const TABS = [
   { key: 'employers', file: './EmployersTab.tsx' },
   { key: 'sensitive', file: './SensitiveFieldsTab.tsx' },
   { key: 'audit', file: './AuditTab.tsx' },
+  { key: 'mailboxes', file: './MailboxesTab.tsx' }, // SUPER_ADMIN only (shared workspace mailboxes)
 ] as const;
 type TabKey = (typeof TABS)[number]['key'];
 const TAB_KEYS = TABS.map((t) => t.key) as unknown as readonly TabKey[];
@@ -48,8 +49,10 @@ export default function AccessCenter() {
     queryFn: async () => (await api.get<{ canManage: boolean; superAdmin: boolean }>('/admin/access/me')).data,
     staleTime: 60_000,
   });
-  const items = useMemo(() => TABS.map((x) => ({ key: x.key, label: t(`accessCenter.tabs.${x.key}`) })), [t]);
-  const current = TABS.find((x) => x.key === tab) ?? TABS[0];
+  const superAdmin = !!me.data?.superAdmin;
+  const visible = useMemo(() => TABS.filter((x) => x.key !== 'mailboxes' || superAdmin), [superAdmin]);
+  const items = useMemo(() => visible.map((x) => ({ key: x.key, label: t(`accessCenter.tabs.${x.key}`) })), [t, visible]);
+  const current = visible.find((x) => x.key === tab) ?? visible[0]!;
   const Comp = tabComponent(current.file);
 
   return (

@@ -16,6 +16,7 @@ import { currentSiteLocale, registerLazyCopy } from '@/i18n';
 import { FaqJsonLd } from '@/components/seo/FaqJsonLd';
 import pagesVisa from '@/i18n/pagesVisa?lazy-copy';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { AusbildungOccupations } from '@/components/career/CareerBlocks'; // /ausbildung/:slug occupation pages
 
 registerLazyCopy(pagesVisa); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
@@ -75,6 +76,9 @@ export default function Ausbildung() {
         subtitle={t('ausbildungPage.heroSubtitle')}
         image="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=2000&q=70"
       />
+
+      {/* Occupation pages (Pflege, Koch, Hotelfach …): server lib/careerPages, career languages only. */}
+      <AusbildungOccupations />
 
       {/* Key figures */}
       <div className="pt-10 sm:pt-14">
