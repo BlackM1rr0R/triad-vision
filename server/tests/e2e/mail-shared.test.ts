@@ -117,12 +117,18 @@ describe('shared mailboxes', () => {
   });
 
   it('a send grant allows replying as the mailbox', async () => {
-    const { account, messageId } = await setup();
+    const { owner, account, messageId } = await setup();
     const sa = await asSuperAdmin();
     const colleague = await asStaff();
     await grant(sa, account.id, colleague.user.id, 'SEND');
     const res = await colleague.agent.post('/api/mail/send').send({ ...sendBody(account.id), replyToMessageId: messageId });
     expect(res.status).toBe(201);
+    // Moving and archiving are allowed; trash and delete (single and bulk) stay with the owner.
+    expect((await colleague.agent.post(`/api/mail/messages/${messageId}/trash`)).body.error).toBe('MAIL_DELETE_OWNER_ONLY');
+    expect((await colleague.agent.delete(`/api/mail/messages/${messageId}`)).status).toBe(403);
+    expect((await colleague.agent.post('/api/mail/messages/bulk').send({ ids: [messageId], action: 'delete' })).body.error).toBe('MAIL_DELETE_OWNER_ONLY');
+    expect((await colleague.agent.post(`/api/mail/messages/${messageId}/archive`)).status).toBe(200);
+    expect((await owner.agent.delete(`/api/mail/messages/${messageId}`)).status).toBe(200);
     expect(smtp.sent).toHaveLength(1);
     const audit = await prisma.auditLog.findFirst({ where: { action: 'MAIL_SENT', actorId: colleague.user.id } });
     expect(audit?.details).toMatchObject({ accountId: account.id, onBehalfOf: expect.any(String) });

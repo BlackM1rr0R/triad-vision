@@ -12,7 +12,8 @@ import { isImpersonating } from '../privacy/impersonationContext.js';
  *
  *  - OWNER  the staff member who added the mailbox: everything (settings, rules, labels, send, delete).
  *  - SEND   a colleague with an "Oxu və göndər" grant: read, reply / send as the mailbox, drafts, message actions
- *           (read/unread, flag, move, archive, trash, snooze, link to a case). No settings, rules or labels.
+ *           (read/unread, flag, move, archive, snooze, link to a case). No settings, rules, labels, and no deleting
+ *           (trash, delete, draft delete: owner only, 403 MAIL_DELETE_OWNER_ONLY).
  *  - READ   a colleague with an "Oxu" grant, and every SUPER_ADMIN without a grant: list, open, search, download
  *           attachments, see sync status. Nothing that changes the mailbox (not even "mark as read").
  *  - null   no access: the mailbox is indistinguishable from a missing one (404, as before).
@@ -37,6 +38,8 @@ export const resolveMailAccess = (viewer: Viewer, ownerId: string, grant: MailGr
 
 /** Reply / send as the mailbox, drafts, message actions. */
 export const canSend = (level: MailAccessLevel | null | undefined) => level === 'OWNER' || level === 'SEND';
+/** Trash, delete, delete a draft: the owner only (a SEND grant never deletes). */
+export const canDelete = (level: MailAccessLevel | null | undefined) => level === 'OWNER';
 export const canRead = (level: MailAccessLevel | null | undefined) => !!level;
 
 export class MailReadOnlyError extends HttpError {
@@ -66,12 +69,13 @@ export const mailAccessMap = async (viewer: Viewer, accountIds: string[]) => {
  * Throws unless the viewer has at least `need` on every mailbox: no access at all → 404 (as for a missing mailbox),
  * read-only → 403 MAIL_READ_ONLY.
  */
-export const assertMailAccess = async (viewer: Viewer, accountIds: string[], need: 'read' | 'send' | 'owner', notFoundCode = 'MAIL_MESSAGE_NOT_FOUND') => {
+export const assertMailAccess = async (viewer: Viewer, accountIds: string[], need: 'read' | 'send' | 'owner' | 'delete', notFoundCode = 'MAIL_MESSAGE_NOT_FOUND') => {
   const map = await mailAccessMap(viewer, accountIds);
   for (const level of map.values()) {
     if (!level) throw notFound(notFoundCode);
     if (need === 'send' && !canSend(level)) throw new MailReadOnlyError();
     if (need === 'owner' && level !== 'OWNER') throw new HttpError(403, 'MAIL_OWNER_ONLY');
+    if (need === 'delete' && !canDelete(level)) throw new HttpError(403, 'MAIL_DELETE_OWNER_ONLY', 'Only the mailbox owner may delete messages.');
   }
   return map;
 };

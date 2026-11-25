@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canRead, canSend, resolveMailAccess } from '../../src/lib/mail/access.js';
+import { canDelete, canRead, canSend, resolveMailAccess } from '../../src/lib/mail/access.js';
 import { classifyRoute } from '../../src/lib/access/routeMap.js';
 import { mailAccessText } from '../../src/lib/mail/accessTexts.js';
 
@@ -39,6 +39,14 @@ describe('resolveMailAccess', () => {
     expect([canRead('SEND'), canSend('SEND')]).toEqual([true, true]);
     expect([canRead('OWNER'), canSend('OWNER')]).toEqual([true, true]);
     expect([canRead(null), canSend(null)]).toEqual([false, false]);
+  });
+});
+
+describe('deleting in a shared mailbox', () => {
+  it('stays with the owner: a SEND grant may not trash or delete', () => {
+    expect([canDelete('OWNER'), canDelete('SEND'), canDelete('READ'), canDelete(null)]).toEqual([true, false, false, false]);
+    expect(canDelete(resolveMailAccess({ id: 'x', role: 'ADMIN' }, 'u-owner', 'SEND'))).toBe(false);
+    expect(canDelete(resolveMailAccess({ id: 'u-owner', role: 'STAFF' }, 'u-owner', null))).toBe(true);
   });
 });
 

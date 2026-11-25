@@ -22,7 +22,6 @@ import {
   Mail,
   Map as MapIcon,
   Menu,
-  MessageCircle,
   MessagesSquare,
   Phone,
   Route,
@@ -52,6 +51,7 @@ import { registerCopy, SITE_LOCALES, switchLanguage } from '@/i18n';
 import { siteNavCopy } from '@/i18n/siteNav';
 import { MobileToolsMenu, ToolsMenu } from '@/components/tools/hub/ToolsMenu';
 
+import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon';
 registerCopy(siteNavCopy);
 
 /** Routes whose top is light. Since the Direction B restyle every public hero is light and the header is always solid;
@@ -212,7 +212,7 @@ export const Header = () => {
                   rel="noreferrer"
                   className="flex items-center gap-1.5 whitespace-nowrap hover:text-white"
                 >
-                  <MessageCircle className="size-3.5 text-[#25d366]" /> WhatsApp
+                  <WhatsAppIcon className="size-4 shrink-0 text-[#25d366]" /> WhatsApp
                 </a>
               )}
               <span className="h-4 w-px bg-white/15" />
@@ -447,7 +447,7 @@ export const Header = () => {
                       rel="noreferrer"
                       className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-card py-3 hover:bg-sunken"
                     >
-                      <MessageCircle className="size-4 text-[#25d366]" /> WhatsApp
+                      <WhatsAppIcon className="size-4 shrink-0 text-[#25d366]" /> WhatsApp
                     </a>
                   </div>
                 )}

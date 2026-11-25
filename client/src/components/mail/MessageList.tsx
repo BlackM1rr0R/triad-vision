@@ -44,6 +44,7 @@ export const MessageList = ({
   threads,
   onThreads,
   bulk,
+  canDelete = true,
   myEmails,
   searchRef,
   title,
@@ -68,6 +69,8 @@ export const MessageList = ({
   threads: boolean;
   onThreads: (on: boolean) => void;
   bulk: (action: 'read' | 'unread' | 'archive' | 'trash' | 'flag' | 'label' | 'snooze' | 'clear') => void;
+  /** False in a shared mailbox the viewer does not own (only the owner deletes; the server answers 403 MAIL_DELETE_OWNER_ONLY). */
+  canDelete?: boolean;
   myEmails: Set<string>;
   searchRef: React.RefObject<HTMLInputElement | null>;
   title: string;
@@ -175,9 +178,11 @@ export const MessageList = ({
           <IconBtn onClick={() => bulk('archive')} label={t('mail.actions.archive')}>
             <Archive className="size-4" />
           </IconBtn>
-          <IconBtn onClick={() => bulk('trash')} label={t('mail.actions.delete')} danger>
-            <Trash2 className="size-4" />
-          </IconBtn>
+          {canDelete && (
+            <IconBtn onClick={() => bulk('trash')} label={t('mail.actions.delete')} danger>
+              <Trash2 className="size-4" />
+            </IconBtn>
+          )}
           <IconBtn onClick={() => bulk('clear')} label={t('mail.list.clearSelection')}>
             <X className="size-4" />
           </IconBtn>

@@ -7,7 +7,7 @@ const az = {
     level: { OWNER: 'Sahib', READ: 'Oxu', SEND: 'Oxu və göndər' },
     levelHint: {
       READ: 'Məktubları və faylları görür. Heç nə dəyişmir və göndərmir.',
-      SEND: 'Görür, bu qutunun adından cavab yazır və göndərir. Məktubları köçürə və silə bilər.',
+      SEND: 'Görür, bu qutunun adından cavab yazır və göndərir. Məktubları köçürə bilər, silə bilməz (yalnız sahib silir).',
     },
     admin: {
       title: 'Poçt qutularına giriş',
@@ -73,7 +73,7 @@ const de: Copy = {
     level: { OWNER: 'Inhaber', READ: 'Lesen', SEND: 'Lesen und senden' },
     levelHint: {
       READ: 'Sieht Nachrichten und Anhänge. Ändert nichts und sendet nichts.',
-      SEND: 'Sieht alles, antwortet und sendet im Namen dieses Postfachs. Kann Nachrichten verschieben und löschen.',
+      SEND: 'Sieht alles, antwortet und sendet im Namen dieses Postfachs. Kann Nachrichten verschieben, aber nicht löschen (nur der Inhaber löscht).',
     },
     admin: {
       title: 'Zugriff auf Postfächer',
@@ -137,7 +137,7 @@ const en: Copy = {
     level: { OWNER: 'Owner', READ: 'Read', SEND: 'Read and send' },
     levelHint: {
       READ: 'Sees messages and attachments. Changes and sends nothing.',
-      SEND: 'Sees everything, replies and sends as this mailbox. Can move and delete messages.',
+      SEND: 'Sees everything, replies and sends as this mailbox. Can move messages but not delete them (only the owner deletes).',
     },
     admin: {
       title: 'Mailbox access',
@@ -201,7 +201,7 @@ const ru: Copy = {
     level: { OWNER: 'Владелец', READ: 'Чтение', SEND: 'Чтение и отправка' },
     levelHint: {
       READ: 'Видит письма и вложения. Ничего не меняет и не отправляет.',
-      SEND: 'Видит всё, отвечает и отправляет от имени этого ящика. Может перемещать и удалять письма.',
+      SEND: 'Видит всё, отвечает и отправляет от имени этого ящика. Может перемещать письма, но не удалять (удаляет только владелец).',
     },
     admin: {
       title: 'Доступ к почтовым ящикам',

@@ -210,9 +210,11 @@ export const ReadingPane = ({
             <Btn onClick={() => onAction({ type: 'archive' })} label={t('mail.actions.archive')} kbd="e">
               <Archive className="size-4" />
             </Btn>
-            <Btn onClick={() => onAction({ type: inTrash ? 'deleteForever' : 'trash' })} label={inTrash ? t('mail.actions.deleteForever') : t('mail.actions.delete')} kbd="#" danger>
-              <Trash2 className="size-4" />
-            </Btn>
+            {access === 'OWNER' && (
+              <Btn onClick={() => onAction({ type: inTrash ? 'deleteForever' : 'trash' })} label={inTrash ? t('mail.actions.deleteForever') : t('mail.actions.delete')} kbd="#" danger>
+                <Trash2 className="size-4" />
+              </Btn>
+            )}
             <Btn onClick={() => onAction({ type: message.flagged ? 'unflag' : 'flag' })} label={message.flagged ? t('mail.actions.unflag') : t('mail.actions.flag')} active={message.flagged} kbd="s">
               <Flag className={clsx('size-4', message.flagged && 'fill-warning text-warning-fg')} />
             </Btn>

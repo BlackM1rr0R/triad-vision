@@ -23,7 +23,7 @@ export const autoSendSettingsSchema = z
     perDomainLimit: z.number().int().min(1).max(50),
     /** Reply-To of the employer e-mails (agency inbox); empty = brand support address / ADMIN_NOTIFY_EMAIL. */
     replyTo: z.union([z.literal(''), z.string().trim().toLowerCase().email().max(190)]),
-    /** Employer e-mail discovery: look for the address on the employer / listing page (lib/germanyJobs/discovery). */
+    /** Employer e-mail discovery: look for the address on the employer / listing page; the engine was removed. */
     discovery: z.boolean(),
   })
   .strict();
@@ -51,15 +51,4 @@ export const replyToAddress = (s: AutoSendSettings) => s.replyTo || brandSync().
 export const dayStart = (now = new Date()) => {
   const p = bakuParts(now);
   return bakuMidnight(p.y, p.m, p.d);
-};
-export const nextDayStart = (now = new Date()) => {
-  const p = bakuParts(now);
-  return bakuMidnight(p.y, p.m, p.d + 1);
-};
-
-/** Pure limit decision (unit-tested): null = may send now. */
-export const limitReason = (s: Pick<AutoSendSettings, 'dailyLimit' | 'perDomainLimit'>, sentToday: number, sentTodayToDomain: number): 'DAILY_LIMIT' | 'DOMAIN_LIMIT' | null => {
-  if (sentToday >= s.dailyLimit) return 'DAILY_LIMIT';
-  if (sentTodayToDomain >= s.perDomainLimit) return 'DOMAIN_LIMIT';
-  return null;
 };

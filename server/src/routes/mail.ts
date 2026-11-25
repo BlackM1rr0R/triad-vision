@@ -632,7 +632,7 @@ const applyAction = async (req: Request, input: z.infer<typeof actionSchema>) =>
   const accountIds = [...new Set(rows.map((r) => r.accountId))];
   const action: Action = input.action;
   // Read-only access changes nothing (not even "read"); labels are personal, so only on own mailboxes.
-  await assertMailAccess(viewer(req), accountIds, action === 'label' || action === 'unlabel' ? 'owner' : 'send');
+  await assertMailAccess(viewer(req), accountIds, action === 'label' || action === 'unlabel' ? 'owner' : action === 'trash' || action === 'delete' ? 'delete' : 'send');
   const ids = rows.map((r) => r.id);
   const touched = new Set<string>(rows.map((r) => r.folderId));
   switch (action) {
@@ -909,6 +909,8 @@ mailRouter.patch('/drafts/:id', async (req, res) => {
 
 mailRouter.delete('/drafts/:id', async (req, res) => {
   const draft = await loadDraftFor(req, req.params.id);
+  // Drafts do not track their author, so only the owner may delete them.
+  await assertMailAccess(viewer(req), [draft.accountId], 'delete', 'MAIL_DRAFT_NOT_FOUND');
   await prisma.mailMessage.delete({ where: { id: draft.id } });
   await removeMailStored(draft.attachments.map((a) => a.storageKey));
   await recountFolders([draft.folderId]);

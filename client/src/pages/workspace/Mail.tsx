@@ -239,6 +239,8 @@ export default function WorkspaceMail() {
       toast.error(t('mailAccess.mail.readOnlyError'));
       return;
     }
+    // Only the owner deletes (server: 403 MAIL_DELETE_OWNER_ONLY); the buttons are hidden, this covers the "#" shortcut.
+    if (access !== 'OWNER' && (a.type === 'trash' || a.type === 'deleteForever')) return;
     switch (a.type) {
       case 'reply':
       case 'replyAll':
@@ -492,6 +494,7 @@ export default function WorkspaceMail() {
             threads={threads}
             onThreads={setThreads}
             bulk={bulkFromList}
+            canDelete={access === 'OWNER'}
             myEmails={myEmails}
             searchRef={searchRef}
             title={title}

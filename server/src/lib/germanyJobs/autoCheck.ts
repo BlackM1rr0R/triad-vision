@@ -1,22 +1,13 @@
-import { GERMAN_LEVELS, canonicalProfession, germanRank, professionSimilarity, type GermanLevel } from '../matching.js';
+import { GERMAN_LEVELS, germanRank, type GermanLevel } from '../matching.js';
 
 /**
- * Automatic check of an "apply via Triad Vision" application before it is sent to the employer (pure, no
- * database; lib/germanyJobs/autoSend.ts collects the inputs). Conditions:
- *   ACCOUNT        the applicant has a client account (profile, CV and passport live there)
- *   CV             an uploaded CV or a saved / attached Lebenslauf
- *   GERMAN_LEVEL   the client's level meets the listing's requirement when it is stated, otherwise at least A2
- *   PROFESSION     the client's profession (form or profile) matches the listing title (lib/matching synonyms)
- *   PASSPORT       passport data (number) filled
- *   PHONE / EMAIL  contact data filled
- * Rule changes here change who is sent automatically: keep tests/unit/externalAutoCheck.test.ts in step.
+ * What old "apply via Triad Vision" applications still use: the stored missing-data codes (AutoMissing / readMissing),
+ * the German level a listing asks for and employer e-mail addresses found in listing data. The automatic check itself
+ * (account / CV / level / profession / passport conditions) was removed with the retired sending.
  */
 
 export const AUTO_MISSING_CODES = ['ACCOUNT', 'CV', 'GERMAN_LEVEL', 'PROFESSION', 'PASSPORT', 'PHONE', 'EMAIL'] as const;
 export type AutoMissing = (typeof AUTO_MISSING_CODES)[number];
-
-/** Level asked for when the listing states none. */
-export const DEFAULT_REQUIRED_GERMAN: GermanLevel = 'A2';
 
 const LEVEL_RE = /\b([ABC][12])\b/g;
 const GERMAN_WORD = /deutsch|german|sprachniveau|sprachkenntnis|немецк/i;
@@ -45,59 +36,7 @@ export const parseGermanRequirement = (text: string | null | undefined): GermanL
   return null;
 };
 
-/** The client's level meets `required` (null = not stated → the default minimum A2). */
-export const meetsGerman = (level: string | null | undefined, required: GermanLevel | null) => germanRank(level) >= germanRank(required ?? DEFAULT_REQUIRED_GERMAN);
-
-/**
- * Does any of the client's professions fit the listing title? Same canonical profession or same family (driver ↔
- * courier) counts; unknown titles fall back to shared words. No title = cannot be checked = passes.
- */
-export const professionMatches = (professions: (string | null | undefined)[], title: string | null | undefined) => {
-  if (!title || !title.trim()) return true;
-  const own = professions.filter((p): p is string => !!p && !!p.trim());
-  if (!own.length) return false;
-  // Gender suffixes and contract words in German titles carry no profession.
-  const cleanTitle = title.replace(/\((?:m|w|d|f|x|div)(?:\s*\/\s*(?:m|w|d|f|x|div))*\)/gi, ' ');
-  return own.some((p) => professionSimilarity(p, cleanTitle) >= 0.5 || professionSimilarity(cleanTitle, p) >= 0.5);
-};
-
-export interface AutoCheckInput {
-  hasAccount: boolean;
-  hasCv: boolean;
-  /** Best known level (profile or form). */
-  germanLevel: string | null;
-  /** Listing requirement (parseGermanRequirement), null = not stated. */
-  requiredGerman: GermanLevel | null;
-  professions: (string | null | undefined)[];
-  listingTitle: string | null;
-  passport: boolean;
-  phone: string | null | undefined;
-  email: string | null | undefined;
-}
-
-export interface AutoCheckResult {
-  ok: boolean;
-  missing: AutoMissing[];
-  /** Level the check asked for (listing requirement or the default). */
-  requiredGerman: GermanLevel;
-  /** Canonical profession found in the title (for the staff panel), if any. */
-  listingProfession: string | null;
-}
-
-export const checkExternalApplication = (i: AutoCheckInput): AutoCheckResult => {
-  const missing: AutoMissing[] = [];
-  if (!i.hasAccount) missing.push('ACCOUNT');
-  if (!i.hasCv) missing.push('CV');
-  if (!meetsGerman(i.germanLevel, i.requiredGerman)) missing.push('GERMAN_LEVEL');
-  if (!professionMatches(i.professions, i.listingTitle)) missing.push('PROFESSION');
-  if (!i.passport) missing.push('PASSPORT');
-  if (!i.phone || !i.phone.trim()) missing.push('PHONE');
-  if (!i.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(i.email.trim())) missing.push('EMAIL');
-  return { ok: missing.length === 0, missing, requiredGerman: i.requiredGerman ?? DEFAULT_REQUIRED_GERMAN, listingProfession: canonicalProfession(i.listingTitle) };
-};
-
-/** "CV,PASSPORT" ⇄ ['CV', 'PASSPORT'] (unknown codes dropped). */
-export const missingKey = (codes: readonly AutoMissing[]) => [...codes].sort().join(',');
+/** "CV,PASSPORT" → ['CV', 'PASSPORT'] (unknown codes dropped). */
 export const readMissing = (s: string | null | undefined): AutoMissing[] =>
   (s ?? '')
     .split(',')
