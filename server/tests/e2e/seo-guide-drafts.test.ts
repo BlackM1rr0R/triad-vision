@@ -33,7 +33,7 @@ describe('SEO guide drafts', () => {
     expect(anerk).toContain(`/ru/guides/${koch.slug}`);
     for (const d of drafts) {
       const path = pathOf(d);
-      expect(sitemap, path).not.toContain(d.slug);
+      expect(sitemap, path).not.toContain(`${path}</loc>`); // exact URL (a draft slug can be the prefix of a live one)
       expect((await anon().get(`/api/guides/${d.slug}`).query({ lng: d.locale })).status, path).toBe(404);
       expect((await anon().get('/__seo/status').query({ path })).text, path).toBe('404');
     }
