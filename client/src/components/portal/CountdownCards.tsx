@@ -33,7 +33,7 @@ export interface Countdowns {
 
 const KIND_ICON: Record<CountdownKind, LucideIcon> = { EMBASSY: Landmark, FLIGHT: Plane, ANMELDUNG: Home, BUERGERAMT: Building2 };
 const KIND_TONE: Record<CountdownKind, string> = { EMBASSY: 'chip-sky', FLIGHT: 'chip-soft', ANMELDUNG: 'chip-sage', BUERGERAMT: 'chip-peach' };
-const WEATHER_ICON: Record<WeatherIcon, LucideIcon> = { sun: Sun, partly: CloudSun, cloud: Cloud, fog: CloudFog, drizzle: CloudDrizzle, rain: CloudRain, snow: CloudSnow, storm: CloudLightning };
+export const WEATHER_ICON: Record<WeatherIcon, LucideIcon> = { sun: Sun, partly: CloudSun, cloud: Cloud, fog: CloudFog, drizzle: CloudDrizzle, rain: CloudRain, snow: CloudSnow, storm: CloudLightning };
 
 export const countdownText = (t: (k: string, o?: Record<string, unknown>) => string, c: Pick<Countdown, 'kind' | 'days'>) => {
   if (c.days === 0) return t(`cplus.countdown.${c.kind}_today`);

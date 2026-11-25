@@ -45,7 +45,7 @@ export const visaStory = async (userId: string, caseId: string, locale: CardLoca
   if (!user || user.role !== 'CLIENT' || !c) return null;
   const approvedAt = c.decisionAt ?? c.closedAt ?? c.updatedAt;
 
-  const [docsUploaded, docsApproved, messages, fromClient, attempts, exams, words, days] = await Promise.all([
+  const [docsUploaded, docsApproved, messages, fromClient, attempts, exams, words, days, contract] = await Promise.all([
     prisma.document.count({ where: { caseId: c.id } }),
     prisma.document.count({ where: { caseId: c.id, status: 'ACCEPTED' } }),
     prisma.caseMessage.count({ where: { caseId: c.id } }),
@@ -54,6 +54,8 @@ export const visaStory = async (userId: string, caseId: string, locale: CardLoca
     prisma.germanExam.findMany({ where: { userId, passed: true }, select: { level: true } }),
     prisma.germanWordProgress.findMany({ where: { userId, word: { published: true } }, select: { intervalDays: true, reviews: true } }),
     prisma.germanPracticeDay.findMany({ where: { userId, reviews: { gt: 0 } }, select: { day: true } }),
+    // signing date of the work contract (the journey film); no employer data
+    prisma.contract.findUnique({ where: { caseId: c.id }, select: { signedAt: true } }),
   ]);
 
   const city = cityOf(c);
@@ -71,6 +73,7 @@ export const visaStory = async (userId: string, caseId: string, locale: CardLoca
     firstName: firstNameOnly(user.firstName),
     registeredAt: user.createdAt.toISOString(),
     approvedAt: approvedAt.toISOString(),
+    contractSignedAt: contract?.signedAt?.toISOString() ?? null,
     days: totalDays,
     profession: c.profession?.trim() || null,
     visaLine: visaLineOf(c, locale),

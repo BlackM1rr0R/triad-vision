@@ -71,3 +71,4 @@ import './accessAudit.js'; // Access Center › Audit: quarterly access review (
 import './browserErrors.js'; // browser error log: daily digest of new error groups to the admins + 30-day retention
 import './driveCaseLinks.js'; // drive: client folder marks, İş axını case links by name, left-behind client folders hidden from partners
 import './docLink.js'; // linked case documents: matching accepted documents of the initial / embassy list filled into the other (once after start, then daily)
+import './weeklyReport.js'; // Monday 07:00 Berlin: weekly KPI PDF to the super admins (once per ISO week)

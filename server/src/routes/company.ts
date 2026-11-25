@@ -8,6 +8,7 @@ import { HttpError, badRequest, conflict, forbidden, limiter, notFound, parse } 
 import { notifyStaff } from '../lib/notifications.js';
 import { sendVerificationEmail } from '../lib/emailVerification.js';
 import { audit } from '../lib/audit.js';
+import { visaProgressForEmployer } from '../lib/placement/visaProgress.js';
 import { recordConsent } from '../lib/privacy/consents.js';
 import { notifyApplicationStatus } from '../lib/jobsNotifications.js';
 import {
@@ -454,9 +455,12 @@ companyRouter.get('/candidates', async (req, res) => {
       companyNote: true,
       updatedAt: true,
       vacancy: { select: { id: true, title: true, slug: true } },
-      user: { select: anonymisedProfileSelect },
+      user: { select: { ...anonymisedProfileSelect, id: true } },
     },
   });
+  // Visa progress of the candidate's case for THIS company's vacancy (stage + dates + approximate arrival only).
+  const visa = new Map<string, Awaited<ReturnType<typeof visaProgressForEmployer>>>();
+  for (const a of items.slice(0, 60)) visa.set(a.id, await visaProgressForEmployer(a.user.id, { vacancyId: a.vacancy.id }));
   // Team votes (lib/employerVotes): colleagues of this company only, with the signed-in user's own vote marked.
   const votes = await votesByApplication(
     items.map((a) => a.id),
@@ -465,7 +469,7 @@ companyRouter.get('/candidates', async (req, res) => {
   res.json({
     items: items.map(({ user, ...a }) => {
       const list = votes.get(a.id) ?? [];
-      return { ...a, candidate: anonymisedProfile(user), votes: list, voteSummary: voteSummary(list) };
+      return { ...a, candidate: anonymisedProfile(user), visa: visa.get(a.id) ?? null, votes: list, voteSummary: voteSummary(list) };
     }),
   });
 });

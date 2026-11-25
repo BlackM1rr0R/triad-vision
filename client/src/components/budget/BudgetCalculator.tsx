@@ -8,6 +8,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { useMoney } from '@/components/tools/format';
+import { useEurAzn } from '@/components/tools/AznEquivalent';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { registerCopy } from '@/i18n';
 import { pagesBudget } from '@/i18n/pagesBudget';
 import { useL10n } from '@/lib/l10n';
@@ -566,7 +568,25 @@ const MonthlyCard = ({ r, range }: { r: BudgetResult; range: (x: Range) => strin
         <Row label={t('budget.result.income', { kg: m.income.kindergeld ? t('budget.result.kindergeld') : '' })} value={euroCents(m.income.total)} strong />
         <Row label={t('budget.result.remaining')} value={range(m.remaining)} strong tone={m.remaining[0] < 0 ? 'danger' : undefined} />
       </div>
+      <SavingsAzn remaining={m.remaining} />
     </section>
+  );
+};
+
+/** "You could save about X AZN a month": mid-point of the monthly leftover (net - city costs) at the CBAR rate. */
+const SavingsAzn = ({ remaining }: { remaining: Range }) => {
+  const { t, i18n } = useTranslation();
+  const rate = useEurAzn().data ?? null;
+  const mid = (remaining[0] + remaining[1]) / 2;
+  if (!rate || !(mid > 0)) return null;
+  const fmt = new Intl.NumberFormat(i18n.resolvedLanguage ?? 'az', { maximumFractionDigits: 0 });
+  const [before, after = ''] = t('budget.result.saveAzn', { amount: '\u0000' }).split('\u0000');
+  return (
+    <p className="mt-4 rounded-2xl bg-success-bg p-4 text-center font-display text-lg font-semibold text-ink">
+      {before}
+      <AnimatedNumber value={Math.round(mid * rate.rate)} format={(n) => `${fmt.format(Math.round(n))} ₼`} className="text-success-fg tabular-nums" />
+      {after}
+    </p>
   );
 };
 

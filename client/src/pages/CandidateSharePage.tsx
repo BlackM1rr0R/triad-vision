@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { CheckCircle2, Circle, Clapperboard, Clock3, FileDown, FileText, ShieldCheck, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react';
+import { CheckCircle2, Circle, Clapperboard, Clock3, FileDown, FileText, Plane, ShieldCheck, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -16,6 +16,7 @@ import { Lost } from '@/components/illustrations';
 import { fmtDate } from '@/components/admin/labels';
 import { ScoreRing, GapList } from '@/components/jobs/MatchMeter';
 import { useJobLabels } from '@/components/jobs/labels';
+import { VisaProgress } from '@/components/placement/VisaProgress';
 import { MatchBars } from '@/components/placement/MatchBreakdown';
 import { placementError, type PublicShare, type ShareDecision } from '@/components/placement/api';
 
@@ -190,6 +191,12 @@ export default function CandidateSharePage() {
               </>
             )}
           </Card>
+          {s.visa && (
+            <Card title={t('placement.public.visa.title')} icon={Plane}>
+              <p className="-mt-2 mb-3 text-xs text-muted">{t('placement.public.visa.hint')}</p>
+              <VisaProgress visa={s.visa} />
+            </Card>
+          )}
         </div>
 
         <section className="card card-pad" aria-labelledby="cs-decide">

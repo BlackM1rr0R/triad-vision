@@ -6,6 +6,7 @@ import { requireMinRole } from '../../middleware/auth.js';
 import { audit } from '../../lib/audit.js';
 import { badRequest, notFound, parse } from '../../lib/http.js';
 import { clearForecastCache, FORECAST_UNITS, parseOverride, parseUnits, rangesFor, STEP_KEYS, type ForecastUnit } from '../../lib/journey/forecast.js';
+import { isVoiceStep, listVoice, removeVoice, saveVoice, voiceUpload } from '../../lib/journey/voiceGuide.js';
 import { onboardingForCase } from '../../lib/journey/onboarding.js';
 import { addFamilyMember, familyGroup, RELATIONS, removeFamilyMember } from '../../lib/journey/family.js';
 import { GERMAN_TEST_LEVELS } from '../../lib/journey/german.js';
@@ -216,4 +217,27 @@ adminJourneyRouter.delete('/cases/:id/family/:memberId', async (req, res) => {
   await removeFamilyMember(String(req.params.id), String(req.params.memberId), req.user!.id);
   await audit(req, 'FAMILY_MEMBER_REMOVED', `case:${String(req.params.memberId)}`, { parentCaseId: String(req.params.id) });
   res.json({ ok: true, ...(await familyGroup(String(req.params.id))) });
+});
+
+// ─── Voice guide (audio narration per journey step; STAFF+ list, ADMIN+ upload / delete) ───
+
+adminJourneyRouter.get('/voice', async (_req, res) => {
+  res.json({ items: await listVoice() });
+});
+
+adminJourneyRouter.put('/voice/:key', adminOnly, voiceUpload.single('file'), async (req, res) => {
+  const key = String(req.params.key);
+  if (!isVoiceStep(key)) throw notFound('STEP_NOT_FOUND');
+  if (!req.file) throw badRequest('FILE_REQUIRED');
+  const ext = await saveVoice(key, req.file.buffer);
+  await audit(req, 'JOURNEY_VOICE_SET', `journey-voice:${key}`, { ext, size: req.file.size });
+  res.json({ ok: true, ext });
+});
+
+adminJourneyRouter.delete('/voice/:key', adminOnly, async (req, res) => {
+  const key = String(req.params.key);
+  if (!isVoiceStep(key)) throw notFound('STEP_NOT_FOUND');
+  await removeVoice(key);
+  await audit(req, 'JOURNEY_VOICE_REMOVED', `journey-voice:${key}`);
+  res.json({ ok: true });
 });

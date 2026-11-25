@@ -4,6 +4,8 @@ import { getEurAzn } from '../lib/life/cbar.js';
 import { lifeConfig, lifeEstimate, lifeQuerySchema } from '../lib/life/service.js';
 import { publicLiveNumbers } from '../lib/life/liveNumbers.js';
 import { clockWeather } from '../lib/home/clockWeather.js';
+import { cityProfile } from '../lib/life/cityProfile.js';
+import { z } from 'zod';
 
 /**
  * "Life in Germany" — mounted at /api/life (public, no login):
@@ -12,6 +14,7 @@ import { clockWeather } from '../lib/home/clockWeather.js';
  *   GET /rate           EUR → AZN (CBAR, fetched server-side at most daily; last known rate as fallback)
  *   GET /live-numbers   board "this month": visas granted, arrivals, top professions / cities (≥ 3 each, 1 h cache)
  *   GET /clock-weather  home "Baku ↔ Berlin" block: current weather of both cities (Open-Meteo, cached 30 min)
+ *   GET /city-profile  "My Germany" card: ?city=… current weather + approximate Baku flight time (Open-Meteo geocoding, cached)
  */
 export const lifeRouter = Router();
 
@@ -42,4 +45,12 @@ lifeRouter.get('/live-numbers', async (_req, res) => {
 lifeRouter.get('/clock-weather', async (_req, res) => {
   publicCache(res, 1800);
   res.json(await clockWeather());
+});
+
+const cityProfileQuery = z.object({ city: z.string().trim().min(2).max(80) });
+
+lifeRouter.get('/city-profile', estimateLimiter, async (req, res) => {
+  const { city } = parse(cityProfileQuery, req.query);
+  publicCache(res, 1800);
+  res.json({ profile: await cityProfile(city) });
 });

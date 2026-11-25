@@ -32,6 +32,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { OptionCard } from '@/components/quiz/OptionCard';
 import { LeadForm } from '@/components/publicAi/LeadForm';
 import { EmailResult } from '@/components/tools/EmailResult';
+import { RingGauge } from '@/components/charts';
+import { readinessPercent, roadmapSteps } from '@/lib/quizReadiness';
 
 registerCopy(pagesPublicAi);
 
@@ -127,6 +129,36 @@ const PathCard = ({ p, best }: { p: PathResult; best: boolean }) => {
   );
 };
 
+/** Overall readiness ring plus a short personal roadmap derived from the answers (pure client-side). */
+const ReadinessCard = ({ answers, paths }: { answers: Answers; paths: PathResult[] }) => {
+  const { t } = useTranslation();
+  const pct = readinessPercent(answers, paths);
+  const steps = roadmapSteps(paths);
+  const level = (v: string | number) => (v === 'none' ? t('pai.levelNone') : String(v));
+  return (
+    <section className="grid gap-5 rounded-2xl border border-line bg-sunken p-4 sm:grid-cols-[auto_1fr] sm:p-5">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <RingGauge value={pct} size={112} stroke={10} label={t('pai.quiz.readyTitle')} />
+        <p className="max-w-[12rem] text-xs text-muted">{t('pai.quiz.readySub')}</p>
+      </div>
+      <div>
+        <h3 className="font-display text-lg font-semibold text-ink">{t('pai.quiz.roadmapTitle')}</h3>
+        <ol className="mt-2 space-y-2">
+          {steps.map((s, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm text-ink">
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-contrast">{i + 1}</span>
+              <span>{s.kind === 'gap' ? t(`pai.gaps.${s.gap.code}`, { ...s.gap, from: s.gap.from !== undefined ? level(s.gap.from) : undefined }) : t(`pai.quiz.roadmap_${s.kind}`)}</span>
+            </li>
+          ))}
+        </ol>
+        <Link to="/register" className="btn-primary mt-4">
+          <UserPlus className="size-4" aria-hidden /> {t('pai.quiz.register')}
+        </Link>
+      </div>
+    </section>
+  );
+};
+
 /** /uygunluq-testi — public eligibility quiz with deterministic scoring and an optional AI explanation. */
 export default function EligibilityQuiz() {
   const { t, i18n } = useTranslation();
@@ -207,6 +239,8 @@ export default function EligibilityQuiz() {
                       <RotateCcw className="size-4" aria-hidden /> {t('pai.quiz.again')}
                     </button>
                   </div>
+
+                  <ReadinessCard answers={answers} paths={paths} />
 
                   <div className="space-y-3">
                     {paths.map((p, i) => (

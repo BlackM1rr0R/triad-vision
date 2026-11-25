@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
 import i18n from 'i18next';
-import { CalendarClock, Flame, Hourglass, Inbox, PartyPopper, PlaneLanding, Stamp, WifiOff } from 'lucide-react';
+import { CalendarClock, FilePlus2, Flame, Trophy, Hourglass, Inbox, PartyPopper, PlaneLanding, Stamp, WifiOff } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { pagesTvDisplay } from '@/i18n/pagesTvDisplay';
 import {
@@ -12,7 +12,9 @@ import {
   readTvStream,
   readTvToken,
   TvAuthError,
+  type TvApplicationEvent,
   type TvApprovedEvent,
+  type TvLeaderEntry,
   type TvPanelKey,
   type TvPayload,
 } from '@/lib/tvDisplay';
@@ -30,6 +32,7 @@ registerCopy(pagesTvDisplay);
 
 const t = (key: string, opts?: Record<string, unknown>) => i18n.getFixedT('az')(`tvd.tv.${key}`, opts) as string;
 
+const TOAST_MS = 8_000;
 const TZ = 'Asia/Baku';
 const timeFmt = new Intl.DateTimeFormat('az', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const dayFmt = new Intl.DateTimeFormat('az', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short' });
@@ -44,12 +47,14 @@ type Phase = 'loading' | 'ready' | 'noToken' | 'revoked';
 
 // ─── Connection: data polling + event stream ───────────────────────────
 
-const useTvFeed = (token: string | null, onApproved: (e: TvApprovedEvent) => void) => {
+const useTvFeed = (token: string | null, onApproved: (e: TvApprovedEvent) => void, onApplication: (e: TvApplicationEvent) => void) => {
   const [data, setData] = useState<TvPayload | null>(null);
   const [phase, setPhase] = useState<Phase>('loading');
   const [online, setOnline] = useState(true);
   const approvedRef = useRef(onApproved);
   approvedRef.current = onApproved;
+  const applicationRef = useRef(onApplication);
+  applicationRef.current = onApplication;
   const stopped = useRef(false);
 
   const fail = useCallback(
@@ -120,6 +125,9 @@ const useTvFeed = (token: string | null, onApproved: (e: TvApprovedEvent) => voi
           onEvent: (type, payload) => {
             if (type === 'tv.approved') {
               approvedRef.current(payload as TvApprovedEvent);
+              void load();
+            } else if (type === 'tv.application') {
+              applicationRef.current(payload as TvApplicationEvent);
               void load();
             } else if (type === 'tv.refresh') void load();
           },
@@ -291,6 +299,27 @@ const Time = ({ children }: { children: ReactNode }) => <span className="w-[5.5r
 
 // ─── Panels ────────────────────────────────────────────────────────────
 
+const LeaderColumn = ({ title, rows }: { title: string; rows: TvLeaderEntry[] }) => (
+  <div className="min-w-0">
+    <div className="mb-2 text-lg font-semibold uppercase tracking-wide text-slate-400">{title}</div>
+    {rows.length === 0 ? (
+      <div className="text-xl text-slate-400">{t('leaderEmpty')}</div>
+    ) : (
+      <ol className="space-y-2">
+        {rows.map((r, i) => (
+          <li key={r.name} className="flex items-baseline gap-3 rounded-xl bg-white/5 px-4 py-2">
+            <span className="w-8 shrink-0 text-2xl font-black tabular-nums text-amber-300">{i + 1}</span>
+            <span className="min-w-0 flex-1 truncate text-2xl font-semibold text-white">{r.name}</span>
+            <span className="shrink-0 text-base tabular-nums text-slate-300">
+              {r.reviewed} {t('leaderReviewed')} · {r.moved} {t('leaderMoved')} · {r.approvals} {t('leaderApprovals')}
+            </span>
+          </li>
+        ))}
+      </ol>
+    )}
+  </div>
+);
+
 const PanelView = ({ k, data, tick, tall }: { k: TvPanelKey; data: TvPayload; tick: number; tall: boolean }) => {
   const p = data.panels;
   const cls = tall ? 'row-span-2' : undefined;
@@ -387,6 +416,18 @@ const PanelView = ({ k, data, tick, tall }: { k: TvPanelKey; data: TvPayload; ti
         </Panel>
       );
     }
+    case 'leaderboard': {
+      const lb = p.leaderboard;
+      if (!lb) return null;
+      return (
+        <Panel title={t('leaderboard')} icon={Trophy} tone="bg-amber-500/20 text-amber-200" className={cls}>
+          <div className="grid h-full grid-cols-2 gap-6">
+            <LeaderColumn title={t('leaderWeek')} rows={lb.week} />
+            <LeaderColumn title={t('leaderMonth')} rows={lb.month} />
+          </div>
+        </Panel>
+      );
+    }
     case 'arrivals': {
       const ar = p.arrivals;
       if (!ar) return null;
@@ -469,6 +510,17 @@ const Confetti = () => {
   return <canvas ref={canvas} className="pointer-events-none absolute inset-0" aria-hidden />;
 };
 
+const ApplicationToast = ({ e }: { e: TvApplicationEvent }) => (
+  <div className="tv-toast fixed bottom-10 right-10 z-40 flex max-w-xl items-center gap-5 rounded-2xl bg-sky-600/95 px-8 py-6 shadow-2xl ring-2 ring-white/30" role="status" aria-live="polite">
+    <FilePlus2 className="h-12 w-12 shrink-0 text-white" aria-hidden />
+    <div className="min-w-0">
+      <div className="text-lg font-semibold uppercase tracking-wide text-sky-100">{t('newApplication')}</div>
+      <div className="truncate text-3xl font-extrabold text-white">{e.client ?? '—'}</div>
+      {e.profession && <div className="truncate text-xl text-sky-50">{e.profession}</div>}
+    </div>
+  </div>
+);
+
 const Celebration = ({ e }: { e: TvApprovedEvent }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-emerald-700 via-emerald-900 to-slate-950" role="alert" aria-live="assertive">
     <Confetti />
@@ -507,7 +559,14 @@ export default function TvDisplay() {
     setQueue((q) => [...q, e].slice(-20));
   }, []);
 
-  const { data, phase, online } = useTvFeed(token, onApproved);
+  const [toasts, setToasts] = useState<TvApplicationEvent[]>([]);
+  const onApplication = useCallback((e: TvApplicationEvent) => {
+    if (!e?.key || seen.current.has(e.key)) return;
+    seen.current.add(e.key);
+    setToasts((q) => [...q, e].slice(-10));
+  }, []);
+
+  const { data, phase, online } = useTvFeed(token, onApproved, onApplication);
   settingsRef.current = data?.settings ?? null;
   useTvDevice();
   const now = useNow();
@@ -521,6 +580,15 @@ export default function TvDisplay() {
     const id = window.setTimeout(() => setQueue((q) => q.slice(1)), CELEBRATION_MS);
     return () => window.clearTimeout(id);
   }, [current]);
+
+  // New application toast: one at a time, ~8 s each, with the existing chime when sound is on.
+  const toast = toasts[0] ?? null;
+  useEffect(() => {
+    if (!toast) return;
+    if (settingsRef.current?.sound) playChime();
+    const id = window.setTimeout(() => setToasts((q) => q.slice(1)), TOAST_MS);
+    return () => window.clearTimeout(id);
+  }, [toast]);
 
   useEffect(() => {
     const prev = document.title;
@@ -542,9 +610,11 @@ export default function TvDisplay() {
       <style>{`
         .tv-fade { animation: tvFade .6s ease-out; }
         .tv-pop { animation: tvPop .7s cubic-bezier(.2,1.4,.4,1); }
+        .tv-toast { animation: tvToast .6s cubic-bezier(.2,1.2,.4,1); }
+        @keyframes tvToast { from { opacity: 0; transform: translateX(6rem); } to { opacity: 1; transform: none; } }
         @keyframes tvFade { from { opacity: 0; transform: translateY(.4rem); } to { opacity: 1; transform: none; } }
         @keyframes tvPop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .tv-fade, .tv-pop { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .tv-fade, .tv-pop, .tv-toast { animation: none; } }
       `}</style>
       <header className="flex items-center justify-between gap-6 px-8 pb-4 pt-6">
         <div className="flex items-baseline gap-4">
@@ -589,6 +659,7 @@ export default function TvDisplay() {
         </footer>
       )}
 
+      {toast && !current && <ApplicationToast key={toast.key} e={toast} />}
       {current && <Celebration key={current.key} e={current} />}
     </div>
   );

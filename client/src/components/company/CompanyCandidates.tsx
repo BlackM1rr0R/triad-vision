@@ -21,6 +21,7 @@ import { SharedProfile, useSharedProfiles } from '@/components/aiEmployer/Shared
 import { EmployerSkillVideos, useEmployerSkillVideos } from '@/components/skillVideos/EmployerSkillVideos';
 import { PartyChatButton, PartyConversations, PartyThreadFromQuery, usePartyThreads } from '@/components/messagingPlus/PartyThread';
 import { CandidateVotes, type EmployerVote } from '@/components/employerExtras/CandidateVotes';
+import { VisaProgress, type VisaProgressData } from '@/components/placement/VisaProgress';
 import { useCompanyAccess } from './access'; // votes / decisions need decideCandidates
 
 interface Item {
@@ -33,6 +34,8 @@ interface Item {
   candidate: AnonProfile;
   /** Team votes (colleagues of this company); `mine` marks the signed-in user's vote. */
   votes?: EmployerVote[];
+  /** Visa progress of the case for this vacancy (stage + dates + approximate arrival), null without a case. */
+  visa?: VisaProgressData | null;
 }
 
 type Action = 'INTERVIEW' | 'ACCEPT' | 'REJECT';
@@ -198,6 +201,14 @@ export const CompanyCandidates = () => {
               </dl>
               {a.companyNote && <p className="mt-3 rounded-xl bg-sunken px-3 py-2 text-sm text-ink">{a.companyNote}</p>}
               {profiles.data?.get(a.id) && <SharedProfile profile={profiles.data.get(a.id)!} />}
+              {a.visa && (
+                <div className="mt-3 rounded-xl border border-line p-3">
+                  <p className="mb-2 text-xs font-semibold text-ink">
+                    {t('placement.public.visa.title')} <span className="font-normal text-muted">({t('placement.public.visa.approximate')})</span>
+                  </p>
+                  <VisaProgress visa={a.visa} />
+                </div>
+              )}
               <EmployerSkillVideos applicationId={a.id} videos={skillVideos.data?.get(a.id)} />
               <CvDownloadButton url={`/company/candidates/${a.id}/cv.pdf`} anonymised className="mt-3" />
               <PartyChatButton thread={threadByApp.get(a.id)} className="mt-3 ml-2" />

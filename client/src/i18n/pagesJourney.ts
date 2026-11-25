@@ -156,7 +156,8 @@ const az = {
     admin: {
       title: 'Müştəri yolu',
       subtitle: 'Gözlənilən tarixlər, gəlişdən sonrakı siyahı, alman dili testi və kurslar',
-      tabs: { forecast: 'Proqnoz', onboarding: 'İlk addımlar', questions: 'Test sualları', courses: 'Kurslar' },
+      tabs: { forecast: 'Proqnoz', onboarding: 'İlk addımlar', questions: 'Test sualları', courses: 'Kurslar', voice: 'Səs bələdçisi' },
+      voice: { intro: 'Hər mərhələ üçün qısa səsli izah yükləyin. Müştərinin kabinetində həmin mərhələdə “Dinlə” düyməsi çıxır. Format: mp3, m4a və ya webm, ən çoxu 5 MB.', none: 'Səs yoxdur', upload: 'Yüklə', replace: 'Dəyiş', delete: 'Sil', uploaded: 'Yükləndi', deleted: 'Silindi', tooBig: 'Fayl 5 MB-dan böyükdür', badType: 'Yalnız mp3, m4a və ya webm', audioOf: 'Səs: {{step}}' },
       readOnly: 'Dəyişiklik üçün admin hüququ lazımdır.',
       common: { save: 'Saxla', cancel: 'Ləğv et', delete: 'Sil', edit: 'Redaktə', created: 'Yaradıldı', updated: 'Yadda saxlanıldı', deleted: 'Silindi', published: 'Dərc edilib', draft: 'Qaralama', up: 'Yuxarı', down: 'Aşağı', confirmDelete: 'Silmək istədiyinizə əminsiniz?', required: 'Məcburi sahələri doldurun' },
       forecast: {
@@ -401,7 +402,8 @@ export const pagesJourney: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; u
       admin: {
         title: 'Kundenreise',
         subtitle: 'Voraussichtliche Termine, Checkliste nach der Ankunft, Deutschtest und Kurse',
-        tabs: { forecast: 'Prognose', onboarding: 'Erste Schritte', questions: 'Testfragen', courses: 'Kurse' },
+        tabs: { forecast: 'Prognose', onboarding: 'Erste Schritte', questions: 'Testfragen', courses: 'Kurse', voice: 'Sprachführer' },
+        voice: { intro: 'Laden Sie je Schritt eine kurze Audio-Erklärung hoch. Im Kundenkonto erscheint dann bei diesem Schritt „Anhören“. Format: mp3, m4a oder webm, höchstens 5 MB.', none: 'Keine Aufnahme', upload: 'Hochladen', replace: 'Ersetzen', delete: 'Löschen', uploaded: 'Hochgeladen', deleted: 'Gelöscht', tooBig: 'Die Datei ist größer als 5 MB', badType: 'Nur mp3, m4a oder webm', audioOf: 'Audio: {{step}}' },
         readOnly: 'Änderungen erfordern Admin-Rechte.',
         common: { save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', edit: 'Bearbeiten', created: 'Angelegt', updated: 'Gespeichert', deleted: 'Gelöscht', published: 'Veröffentlicht', draft: 'Entwurf', up: 'Nach oben', down: 'Nach unten', confirmDelete: 'Wirklich löschen?', required: 'Bitte Pflichtfelder ausfüllen' },
         forecast: {
@@ -641,7 +643,8 @@ export const pagesJourney: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; u
       admin: {
         title: 'Client journey',
         subtitle: 'Expected dates, post-arrival checklist, German test and courses',
-        tabs: { forecast: 'Forecast', onboarding: 'First steps', questions: 'Test questions', courses: 'Courses' },
+        tabs: { forecast: 'Forecast', onboarding: 'First steps', questions: 'Test questions', courses: 'Courses', voice: 'Voice guide' },
+        voice: { intro: 'Upload a short spoken explanation for each step. Clients then see a “Listen” button on that step in their account. Format: mp3, m4a or webm, up to 5 MB.', none: 'No recording', upload: 'Upload', replace: 'Replace', delete: 'Delete', uploaded: 'Uploaded', deleted: 'Deleted', tooBig: 'The file is larger than 5 MB', badType: 'Only mp3, m4a or webm', audioOf: 'Audio: {{step}}' },
         readOnly: 'Changes require admin rights.',
         common: { save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', created: 'Created', updated: 'Saved', deleted: 'Deleted', published: 'Published', draft: 'Draft', up: 'Move up', down: 'Move down', confirmDelete: 'Really delete?', required: 'Fill in the required fields' },
         forecast: {
@@ -881,7 +884,8 @@ export const pagesJourney: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; u
       admin: {
         title: 'Путь клиента',
         subtitle: 'Ожидаемые даты, чек-лист после приезда, тест по немецкому и курсы',
-        tabs: { forecast: 'Прогноз', onboarding: 'Первые шаги', questions: 'Вопросы теста', courses: 'Курсы' },
+        tabs: { forecast: 'Прогноз', onboarding: 'Первые шаги', questions: 'Вопросы теста', courses: 'Курсы', voice: 'Голосовой гид' },
+        voice: { intro: 'Загрузите короткое голосовое пояснение для каждого шага. В кабинете клиента на этом шаге появится кнопка «Слушать». Формат: mp3, m4a или webm, до 5 МБ.', none: 'Нет записи', upload: 'Загрузить', replace: 'Заменить', delete: 'Удалить', uploaded: 'Загружено', deleted: 'Удалено', tooBig: 'Файл больше 5 МБ', badType: 'Только mp3, m4a или webm', audioOf: 'Аудио: {{step}}' },
         readOnly: 'Для изменений нужны права администратора.',
         common: { save: 'Сохранить', cancel: 'Отмена', delete: 'Удалить', edit: 'Изменить', created: 'Создано', updated: 'Сохранено', deleted: 'Удалено', published: 'Опубликовано', draft: 'Черновик', up: 'Вверх', down: 'Вниз', confirmDelete: 'Точно удалить?', required: 'Заполните обязательные поля' },
         forecast: {
@@ -1121,7 +1125,8 @@ export const pagesJourney: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; u
       admin: {
         title: 'Müşteri yolculuğu',
         subtitle: 'Beklenen tarihler, varış sonrası kontrol listesi, Almanca testi ve kurslar',
-        tabs: { forecast: 'Tahmin', onboarding: 'İlk adımlar', questions: 'Test soruları', courses: 'Kurslar' },
+        tabs: { forecast: 'Tahmin', onboarding: 'İlk adımlar', questions: 'Test soruları', courses: 'Kurslar', voice: 'Sesli rehber' },
+        voice: { intro: 'Her adım için kısa bir sesli açıklama yükleyin. Müşterinin hesabında o adımda “Dinle” düğmesi görünür. Biçim: mp3, m4a veya webm, en fazla 5 MB.', none: 'Kayıt yok', upload: 'Yükle', replace: 'Değiştir', delete: 'Sil', uploaded: 'Yüklendi', deleted: 'Silindi', tooBig: 'Dosya 5 MB’tan büyük', badType: 'Yalnızca mp3, m4a veya webm', audioOf: 'Ses: {{step}}' },
         readOnly: 'Değişiklikler için yönetici yetkisi gerekir.',
         common: { save: 'Kaydet', cancel: 'İptal', delete: 'Sil', edit: 'Düzenle', created: 'Oluşturuldu', updated: 'Kaydedildi', deleted: 'Silindi', published: 'Yayında', draft: 'Taslak', up: 'Yukarı taşı', down: 'Aşağı taşı', confirmDelete: 'Gerçekten silinsin mi?', required: 'Zorunlu alanları doldurun' },
         forecast: {
@@ -1361,7 +1366,8 @@ export const pagesJourney: { az: Copy; de: Copy; en: Copy; ru: Copy; tr: Copy; u
       admin: {
         title: 'Шлях клієнта',
         subtitle: 'Очікувані дати, чек-лист після приїзду, тест з німецької та курси',
-        tabs: { forecast: 'Прогноз', onboarding: 'Перші кроки', questions: 'Тестові запитання', courses: 'Курси' },
+        tabs: { forecast: 'Прогноз', onboarding: 'Перші кроки', questions: 'Тестові запитання', courses: 'Курси', voice: 'Голосовий гід' },
+        voice: { intro: 'Завантажте коротке голосове пояснення для кожного кроку. У кабінеті клієнта на цьому кроці з’явиться кнопка «Слухати». Формат: mp3, m4a або webm, до 5 МБ.', none: 'Немає запису', upload: 'Завантажити', replace: 'Замінити', delete: 'Видалити', uploaded: 'Завантажено', deleted: 'Видалено', tooBig: 'Файл більший за 5 МБ', badType: 'Лише mp3, m4a або webm', audioOf: 'Аудіо: {{step}}' },
         readOnly: 'Для змін потрібні права адміністратора.',
         common: { save: 'Зберегти', cancel: 'Скасувати', delete: 'Видалити', edit: 'Редагувати', created: 'Створено', updated: 'Збережено', deleted: 'Видалено', published: 'Опубліковано', draft: 'Чернетка', up: 'Вгору', down: 'Вниз', confirmDelete: 'Справді видалити?', required: 'Заповніть обов’язкові поля' },
         forecast: {

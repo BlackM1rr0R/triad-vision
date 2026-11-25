@@ -364,6 +364,12 @@ const AllowListSettings = () => {
   const onErr = useErr();
   const q = useQuery({ queryKey: ['reports', 'settings'], queryFn: async () => (await api.get<{ settings: { externalAllowList: string[] } }>('/admin/reports/settings')).data.settings });
   const [text, setText] = useState<string | null>(null);
+  const { i18n } = useTranslation();
+  const sendNow = useMutation({
+    mutationFn: async () => api.post('/admin/reports/weekly/send-now', {}, { headers: { 'x-locale': i18n.language } }),
+    onSuccess: () => toast.success(t('reports.settings.weeklySent')),
+    onError: onErr,
+  });
   const value = text ?? (q.data?.externalAllowList ?? []).join('\n');
   const save = useMutation({
     mutationFn: async () => api.put('/admin/reports/settings', { externalAllowList: value.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean) }),
@@ -382,6 +388,18 @@ const AllowListSettings = () => {
       <button type="button" className="btn-secondary btn-sm mt-2" disabled={save.isPending} onClick={() => save.mutate()}>
         <Save className="size-4" /> {t('reports.save')}
       </button>
+      <div className="mt-4 border-t border-line pt-3">
+        <h3 className="text-sm font-semibold text-ink">{t('reports.settings.weeklyTitle')}</h3>
+        <p className="mt-1 text-[11px] text-muted">{t('reports.settings.weeklyHint')}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" className="btn-secondary btn-sm" onClick={() => void api.get('/admin/reports/weekly/preview.pdf', { responseType: 'blob', headers: { 'x-locale': i18n.language } }).then((r) => window.open(URL.createObjectURL(r.data as Blob), '_blank')).catch(onErr)}>
+            <FileSpreadsheet className="size-4" /> {t('reports.settings.weeklyPreview')}
+          </button>
+          <button type="button" className="btn-secondary btn-sm" disabled={sendNow.isPending} onClick={() => sendNow.mutate()}>
+            <CalendarClock className="size-4" /> {t('reports.settings.weeklySend')}
+          </button>
+        </div>
+      </div>
     </section>
   );
 };

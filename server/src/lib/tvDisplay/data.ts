@@ -1,6 +1,7 @@
 import type { CaseStatus } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { bakuDayWindow, bakuMonthWindow, bakuWeekWindow, daysBetween, maskFullName, maskName, tvText } from './mask.js';
+import { buildLeaderboard } from './leaderboard.js';
 import { getTvSettings, type TvPanel, type TvSettings } from './settings.js';
 
 /**
@@ -8,8 +9,8 @@ import { getTvSettings, type TvPanel, type TvSettings } from './settings.js';
  * "first name + initial" (lib/tvDisplay/mask.ts); no ids, case numbers, e-mails, phones, places or documents.
  * Panels switched off in the settings are not computed at all.
  *
- * Team leaderboard: deliberately absent — the KPI module shows rankings to ADMIN+ only (GET /api/admin/kpi/team),
- * staff see just their own card, so the TV does not either.
+ * Team leaderboard: an opt-in panel ('leaderboard', off by default; staff first names only, counts of reviews /
+ * moves / approvals — lib/tvDisplay/leaderboard.ts). The KPI module keeps the detailed rankings for ADMIN+.
  */
 
 /** Statuses in which the next step is the team's (the client has submitted / signed and waits for a review). */
@@ -147,6 +148,7 @@ export interface TvPayload {
     waiting: Awaited<ReturnType<typeof waiting>>;
     approved: Awaited<ReturnType<typeof approved>>;
     arrivals: Awaited<ReturnType<typeof arrivals>>;
+    leaderboard: Awaited<ReturnType<typeof buildLeaderboard>>;
   }>;
 }
 
@@ -156,12 +158,13 @@ export const buildTvPayload = async (now = new Date()): Promise<TvPayload> => {
   const week = bakuWeekWindow(now);
   const month = bakuMonthWindow(now);
   const want = new Set<TvPanel>(settings.panels);
-  const [a, i, w, ap, ar] = await Promise.all([
+  const [a, i, w, ap, ar, lb] = await Promise.all([
     want.has('agenda') ? agenda(day.start, day.end) : undefined,
     want.has('inquiries') ? inquiries(day.start, day.end) : undefined,
     want.has('waiting') ? waiting(now) : undefined,
     want.has('approved') ? approved(month.start, month.end) : undefined,
     want.has('arrivals') ? arrivals(week.start, week.end) : undefined,
+    want.has('leaderboard') ? buildLeaderboard(week, month) : undefined,
   ]);
   const panels: TvPayload['panels'] = {};
   if (a) panels.agenda = a;
@@ -169,5 +172,6 @@ export const buildTvPayload = async (now = new Date()): Promise<TvPayload> => {
   if (w) panels.waiting = w;
   if (ap) panels.approved = ap;
   if (ar) panels.arrivals = ar;
+  if (lb) panels.leaderboard = lb;
   return { generatedAt: now, timezone: 'Asia/Baku', day: day.key, month: month.key, week: { start: week.start, end: week.end }, settings, panels };
 };

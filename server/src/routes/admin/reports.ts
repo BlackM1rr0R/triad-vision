@@ -13,6 +13,7 @@ import { maskerFor } from '../../lib/reports/mask.js';
 import { DeliveryError, asIdList, deliverSchedule, nextOccurrence } from '../../lib/reports/schedule.js';
 import { getReportSettings, isAllowedExternal, reportSettingsSchema, saveReportSettings } from '../../lib/reports/settings.js';
 import { AGG_FNS, GRANULARITIES, MAX_ROWS, PREVIEW_ROWS, RELATIVE_RANGES, pickLang, type RunCtx } from '../../lib/reports/types.js';
+import { buildWeeklyPdfFor, sendWeeklyNow } from '../../lib/weeklyReport/service.js';
 import { getProfitSettings } from '../../lib/profitability/settings.js';
 
 /**
@@ -29,6 +30,9 @@ import { getProfitSettings } from '../../lib/profitability/settings.js';
  *   PATCH  /schedules/:id · DELETE       edit / pause / resume · delete (creator, report owner or SUPER_ADMIN)
  *   GET    /schedules/:id/deliveries     delivery log · POST /schedules/:id/send-now
  *   GET    /settings · PUT /settings     external e-mail allow-list (PUT: SUPER_ADMIN)
+ *
+ *   GET    /weekly/preview.pdf           the weekly management PDF of the last complete week (SUPER_ADMIN; read-only)
+ *   POST   /weekly/send-now              mail that PDF to the signed-in super admin (SUPER_ADMIN; no week marker)
  *
  * Audit: REPORT_EXPORTED (every export), REPORT_SCHEDULED (schedule created / changed / deleted / sent now).
  */
@@ -373,4 +377,17 @@ adminReportsRouter.put('/settings', requireMinRole('SUPER_ADMIN'), async (req, r
   const settings = await saveReportSettings(body);
   await audit(req, 'REPORT_SETTINGS', 'reports', { externalAllowList: settings.externalAllowList });
   res.json({ settings });
+});
+
+adminReportsRouter.get('/weekly/preview.pdf', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const { pdf, week } = await buildWeeklyPdfFor(new Date(), langOf(req));
+  res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="weekly-report-${week.key}.pdf"`, 'Cache-Control': 'no-store' }).send(pdf);
+});
+
+adminReportsRouter.post('/weekly/send-now', requireMinRole('SUPER_ADMIN'), async (req, res) => {
+  const me = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { email: true, locale: true } });
+  if (!me) throw notFound('USER_NOT_FOUND');
+  await sendWeeklyNow({ email: me.email, locale: req.get('x-locale') ?? me.locale });
+  await audit(req, 'REPORT_SCHEDULED', 'weekly-report', { sentNow: true });
+  res.json({ ok: true });
 });

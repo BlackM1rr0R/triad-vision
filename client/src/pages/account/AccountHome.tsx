@@ -26,6 +26,7 @@ import { caseHref } from './portal/useNextUp';
 import { AccountHomeSkeleton } from './portal/HomeSkeleton';
 import { CountdownCards } from '@/components/portal/CountdownCards'; // embassy / flight / Anmeldung countdowns + destination weather
 import { GermanyDayCard } from '@/components/portal/GermanyDayCard'; // visa approved: countdown, week weather, packing list, first-day phrases
+import { First30DaysCard, MyGermanyCard } from '@/components/portal/FirstWeeks'; // first 30 days checklist + "My Germany" city card
 import { BadgesPanel } from '@/components/portal/BadgesPanel'; // private achievements (compact)
 import { ReadinessCard } from '@/components/readiness/Readiness'; // Germany readiness score 0–100 + the next step with the biggest gain
 import { FutureLetterCta, ReadyHomeCard } from '@/components/ready/ReadyCards'; // Germany Ready points + weekly challenge; letter to my future self
@@ -153,10 +154,14 @@ export default function AccountHome() {
       {/* A referral partner's data-sharing consent: only shown when it applies, and it needs an answer. */}
       <PartnerSharingCard />
 
+      {/* Visa approved or already in Germany: the first errands (Anmeldung, bank, Krankenkasse …) with map links. */}
+      {(approved || stage === 'IN_GERMANY') && <First30DaysCard />}
+
       {small.length > 0 && <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">{small}</div>}
 
       <MoreArea>
         {cases.length > 0 && <CountdownCards />}
+        {(approved || stage === 'IN_GERMANY') && <MyGermanyCard />}
         {approved && stage !== 'IN_GERMANY' && <GermanyDayCard />}
         {approved && <SuccessShareCard dismissible />}
         {approved && stage !== 'IN_GERMANY' && <PermitExpiryCard />}

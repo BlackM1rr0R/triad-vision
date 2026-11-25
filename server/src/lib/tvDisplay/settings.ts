@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 
 /** Office TV mode settings (Setting `tvDisplay`), edited by ADMIN+ in Admin → TV mode. */
-export const TV_PANELS = ['agenda', 'inquiries', 'waiting', 'approved', 'arrivals'] as const;
+export const TV_PANELS = ['agenda', 'inquiries', 'waiting', 'approved', 'arrivals', 'leaderboard'] as const;
 export type TvPanel = (typeof TV_PANELS)[number];
 
 export const tvSettingsSchema = z.object({
@@ -18,7 +18,8 @@ export const tvSettingsSchema = z.object({
 });
 export type TvSettings = z.infer<typeof tvSettingsSchema>;
 
-export const TV_DEFAULTS: TvSettings = { panels: [...TV_PANELS], rotationSeconds: 20, celebration: true, sound: false };
+/** The staff leaderboard is opt-in (not in the default panel list). */
+export const TV_DEFAULTS: TvSettings = { panels: TV_PANELS.filter((p) => p !== 'leaderboard'), rotationSeconds: 20, celebration: true, sound: false };
 
 const KEY = 'tvDisplay';
 

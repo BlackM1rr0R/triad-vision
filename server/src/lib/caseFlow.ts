@@ -105,6 +105,7 @@ export const createCase = async (
           { caseId: created.id, link: `/admin/cases/${created.id}` },
         );
       }
+      void import('./tvDisplay/events.js').then((m) => m.onCaseCreated(created.id)).catch(() => undefined); // office TV toast (never throws)
       await awardCaseCommission(created.id, 'CASE_CREATED'); // agent programme (never throws)
       // Referral partner: automatic commission + message to the partner (never throws).
       if (created.partnerId) await import('./partners/owned.js').then((m) => m.onPartnerCaseCreated(created.id, input.actorId ?? clientId)).catch(() => undefined);

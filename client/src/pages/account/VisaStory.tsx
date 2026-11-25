@@ -24,6 +24,8 @@ interface VisaStoryData {
   firstName: string | null;
   registeredAt: string;
   approvedAt: string;
+  /** Signing date of the work contract (null while unknown). */
+  contractSignedAt?: string | null;
   days: number;
   profession: string | null;
   visaLine: string;
@@ -63,6 +65,38 @@ const Big = ({ value, unit }: { value: number; unit: string }) => (
     <span className="text-2xl font-semibold text-white/90">{unit}</span>
   </p>
 );
+
+/** The journey film: the recap lines appear one after the other (all at once with reduced motion). */
+const FilmSteps = ({ steps }: { steps: { label: string; value?: string }[] }) => {
+  const motionOK = useMotionOK();
+  return (
+    <ol className="mt-6 space-y-4">
+      {steps.map((s, i) => (
+        <motion.li
+          key={s.label}
+          initial={motionOK ? { opacity: 0, x: -24 } : false}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: motionOK ? 0.5 + i * 0.9 : 0, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center gap-4"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 text-sm font-bold" aria-hidden>
+            {i + 1}
+          </span>
+          <span className="min-w-0">
+            {s.value ? (
+              <>
+                <span className="block text-sm text-white/80">{s.label}</span>
+                <span className="block font-display text-2xl font-bold leading-tight">{s.value}</span>
+              </>
+            ) : (
+              <span className="block font-display text-2xl font-bold leading-tight">{s.label}</span>
+            )}
+          </span>
+        </motion.li>
+      ))}
+    </ol>
+  );
+};
 
 /** Decorative flight from Baku to the destination (static with reduced motion). */
 const FlightArc = ({ city }: { city: string }) => {
@@ -349,6 +383,24 @@ export default function VisaStoryPage() {
           <>
             <Kicker>{v('fun.kicker')}</Kicker>
             <p className="mt-4 font-display text-3xl font-bold leading-snug sm:text-4xl">{funText}</p>
+          </>
+        ),
+      },
+      {
+        key: 'film',
+        bg: 'from-slate-900 via-indigo-900 to-violet-800',
+        content: (
+          <>
+            <Kicker>{v('film.kicker')}</Kicker>
+            <FilmSteps
+              steps={[
+                { label: v('film.registered'), value: date(data.registeredAt) },
+                { label: v('film.docs', { count: data.documents.uploaded }) },
+                ...(data.contractSignedAt ? [{ label: v('film.contract'), value: date(data.contractSignedAt) }] : []),
+                { label: v('film.visa'), value: date(data.approvedAt) },
+                { label: v('film.total', { count: data.days }) },
+              ]}
+            />
           </>
         ),
       },

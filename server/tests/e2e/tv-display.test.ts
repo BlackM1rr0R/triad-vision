@@ -56,7 +56,7 @@ describe('TV display tokens (ADMIN+)', () => {
   it('settings: panels, rotation, celebration, sound (validated); the payload carries only the chosen panels', async () => {
     const admin = await asAdmin();
     expect((await admin.agent.put('/api/admin/tv-display/settings').send({ rotationSeconds: 2 })).status).toBe(400);
-    expect((await admin.agent.put('/api/admin/tv-display/settings').send({ panels: ['leaderboard'] })).status).toBe(400);
+    expect((await admin.agent.put('/api/admin/tv-display/settings').send({ panels: ['ranking'] })).status).toBe(400);
     const saved = expectStatus(await admin.agent.put('/api/admin/tv-display/settings').send({ panels: ['approved', 'agenda'], rotationSeconds: 45, celebration: false, sound: true }), 200).body.settings;
     expect(saved).toEqual({ panels: ['approved', 'agenda'], rotationSeconds: 45, celebration: false, sound: true });
 
@@ -281,6 +281,25 @@ describe('TV realtime: visa approved', () => {
     await waitFor(async () => subscriberCount(TV_CHANNEL) === before);
   });
 
+  it('streams tv.application (first name + initial) when a case is created', async () => {
+    const admin = await asAdmin();
+    const { token } = await newToken(admin);
+    const before = subscriberCount(TV_CHANNEL);
+    const s = await open(token);
+    await s.readUntil('retry: 5000');
+    await waitFor(async () => subscriberCount(TV_CHANNEL) > before);
+    const client = await asClient({ firstName: 'Günel', lastName: 'Zzyenimüraciətova', phone: '+994701112233' });
+    const c = await createCaseVia(client.agent, 'Aşpaz');
+    const out = await s.readUntil('event: tv.application');
+    const data = JSON.parse(out.split('event: tv.application\n')[1].split('\n')[0].replace(/^data: /, ''));
+    expect(data).toMatchObject({ client: 'Günel Z.', profession: 'Aşpaz' });
+    expect(out).not.toContain('yenimüraciətova');
+    expect(out).not.toContain('+994');
+    expect(out).not.toContain(c.id);
+    s.ac.abort();
+    await waitFor(async () => subscriberCount(TV_CHANNEL) === before);
+  });
+
   it('a rejection does not celebrate; revoking the token cuts the open stream', async () => {
     const admin = await asAdmin();
     const { token, display } = await newToken(admin);
@@ -297,5 +316,27 @@ describe('TV realtime: visa approved', () => {
     expect(s.isDone()).toBe(true);
     expect(out).not.toContain('tv.approved');
     await waitFor(async () => subscriberCount(TV_CHANNEL) === 0);
+  });
+});
+
+describe('TV leaderboard panel (opt-in, staff first names only)', () => {
+  it('counts reviews / moves / approvals of staff this week; not in the default panels', async () => {
+    const admin = await asAdmin();
+    const staff = await createStaff({ firstName: 'Nigar', lastName: 'Zzleaderova' });
+    const client = await createClient();
+    const kase = await prisma.case.create({ data: { clientId: client.user.id, number: uniq('TV-LB-'), profession: 'X', status: 'APPROVED' } });
+    const mk = (type: string, from: string | null, to: string | null) =>
+      prisma.caseEvent.create({ data: { caseId: kase.id, type, fromStatus: from as never, toStatus: to as never, actorId: staff.user.id } });
+    await mk('DOCUMENT_ACCEPTED', null, null);
+    await mk('DOCUMENT_REJECTED', null, null);
+    await mk('STATUS_CHANGED', 'DOCUMENTS_REVIEW', 'CONTRACT_SENT');
+    await mk('DECISION', 'DECISION_PENDING', 'APPROVED');
+
+    expectStatus(await admin.agent.put('/api/admin/tv-display/settings').send({ panels: ['leaderboard'] }), 200);
+    const { token } = await newToken(admin);
+    const body = expectStatus(await tv(token).get('/api/tv/data'), 200).body;
+    expect(body.panels.leaderboard.week).toEqual([expect.objectContaining({ name: 'Nigar', reviewed: 2, moved: 2, approvals: 1 })]);
+    expect(JSON.stringify(body)).not.toContain('leaderova');
+    expect(JSON.stringify(body)).not.toContain(staff.user.id);
   });
 });

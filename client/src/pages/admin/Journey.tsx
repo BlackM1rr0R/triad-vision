@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, BookOpen, CalendarRange, Compass, Eraser, Eye, EyeOff, Languages, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpen, CalendarRange, Compass, Eraser, Eye, EyeOff, Languages, ListChecks, Mic, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -20,16 +20,18 @@ import { TranslateButton } from '@/components/admin/TranslateButton';
 import { toastError } from '@/components/admin/labels';
 import { Chip, EmptyState, ErrorBlock, LoadingBlock, PageHead, Switch } from '@/components/admin/ui';
 import { Tabs } from '@/components/ui/Tabs';
+import { VoiceGuideAdmin } from '@/components/journey/VoiceGuideAdmin';
 import { FORECAST_STEPS, GERMAN_LEVELS, type AdminForecastRow, type ForecastOverride, type ForecastRanges, type ForecastStepKey, type ForecastUnit, type GermanQuestionAdmin, type LanguageCourse, type OnboardingItem } from '@/components/journey/types';
 
 registerLazyCopy(pagesJourney); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 
-type Tab = 'forecast' | 'onboarding' | 'questions' | 'courses';
+type Tab = 'forecast' | 'onboarding' | 'questions' | 'courses' | 'voice';
 const TABS: { key: Tab; icon: typeof Compass }[] = [
   { key: 'forecast', icon: CalendarRange },
   { key: 'onboarding', icon: ListChecks },
   { key: 'questions', icon: Languages },
   { key: 'courses', icon: BookOpen },
+  { key: 'voice', icon: Mic },
 ];
 
 const useAdminList = <T,>(key: string, url: string) =>
@@ -900,6 +902,7 @@ export default function Journey() {
       {tab === 'onboarding' && <OnboardingTab canWrite={canWrite} />}
       {tab === 'questions' && <QuestionsTab canWrite={canWrite} />}
       {tab === 'courses' && <CoursesTab canWrite={canWrite} />}
+      {tab === 'voice' && <VoiceGuideAdmin canWrite={canWrite} />}
     </div>
   );
 }

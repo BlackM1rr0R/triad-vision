@@ -48,6 +48,7 @@ export const setWeatherFetch = (fn: Fetcher | null) => {
   fetcher = fn ?? defaultFetch;
   cache.clear();
   currentCache.clear();
+  pointCache.clear();
 };
 
 const cache = new Map<string, { at: number; ttl: number; value: Weather | null }>();
@@ -181,4 +182,37 @@ export const weatherFor = async (rawCity: string | null | undefined, count = 4):
   // Keep the map bounded (a few hundred destination cities at most).
   if (cache.size > 500) cache.delete(cache.keys().next().value!);
   return p;
+};
+
+export interface CityPoint {
+  name: string;
+  country: string | null;
+  lat: number;
+  lng: number;
+}
+
+const pointCache = new Map<string, { at: number; ttl: number; value: CityPoint | null }>();
+
+/** Coordinates of a destination city (Open-Meteo geocoding, German match preferred), cached 7 days; failures 15 min. */
+export const cityPoint = async (rawCity: string | null | undefined): Promise<CityPoint | null> => {
+  const city = cleanCity(rawCity);
+  if (!city) return null;
+  const key = city.toLocaleLowerCase('de');
+  const hit = pointCache.get(key);
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.value;
+  let value: CityPoint | null = null;
+  let ttl = 7 * 24 * 60 * 60 * 1000;
+  try {
+    const geo = (await fetcher(`${GEO_URL}?name=${encodeURIComponent(city)}&count=5&language=de&format=json`)) as {
+      results?: { name: string; latitude: number; longitude: number; country_code?: string }[];
+    };
+    const r = geo.results?.find((x) => x.country_code === 'DE') ?? geo.results?.[0];
+    if (r && typeof r.latitude === 'number' && typeof r.longitude === 'number') value = { name: r.name, country: r.country_code ?? null, lat: r.latitude, lng: r.longitude };
+    else ttl = FAIL_TTL_MS;
+  } catch {
+    ttl = FAIL_TTL_MS;
+  }
+  pointCache.set(key, { at: Date.now(), ttl, value });
+  if (pointCache.size > 500) pointCache.delete(pointCache.keys().next().value!);
+  return value;
 };

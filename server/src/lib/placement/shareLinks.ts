@@ -9,6 +9,7 @@ import { currentConsents } from '../privacy/consents.js';
 import { anonymisedName, anonymisedProfile, anonymisedProfileSelect } from '../vacancies.js';
 import { TOKEN_RE, newShareToken, sha256 } from '../driveCollab/share.js';
 import { introVideoInfo } from './introVideo.js';
+import { visaProgressForEmployer } from './visaProgress.js';
 import { applicationNoteLine, shareDecisionText } from './texts.js';
 
 /**
@@ -165,7 +166,7 @@ const visaForMatch = { select: { visaLabel: true, germanLevel: true } } as const
 
 /** What the employer sees on the share page. Contact data, documents, birth date and address never appear. */
 export const publicShareView = async ({ link, candidate }: ResolvedShare) => {
-  const [vacancy, company, cvAvailable, video, documents] = await Promise.all([
+  const [vacancy, company, cvAvailable, video, documents, visa] = await Promise.all([
     link.vacancyId
       ? prisma.vacancy.findUnique({
           where: { id: link.vacancyId },
@@ -176,6 +177,7 @@ export const publicShareView = async ({ link, candidate }: ResolvedShare) => {
     cvShared(candidate.id),
     introVideoInfo(candidate.introVideoKey),
     documentStatusSummary(candidate.id),
+    visaProgressForEmployer(candidate.id, { vacancyId: link.vacancyId, companyId: link.companyId }), // stage + dates + approximate arrival only
   ]);
   const match = vacancy ? matchCandidate(candidate, vacancy) : null;
   return {
@@ -184,6 +186,7 @@ export const publicShareView = async ({ link, candidate }: ResolvedShare) => {
     vacancy: vacancy ? { title: vacancy.title, city: vacancy.city, profession: vacancy.profession } : null,
     match,
     documents,
+    visa,
     cv: { available: cvAvailable },
     video: video ? { available: true, mimeType: video.mimeType, size: video.size } : { available: false },
     expiresAt: link.expiresAt,

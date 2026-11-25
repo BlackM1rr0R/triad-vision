@@ -4,6 +4,7 @@ import { errorCode } from '@/lib/api';
 import type { L10n } from '@/lib/types';
 import type { Match } from '@/components/jobs/types';
 import { TONE_CLASS } from '@/components/ui/status';
+import type { VisaProgressData } from './VisaProgress';
 
 /**
  * Placement & employer collaboration (server: lib/placement, routes/admin/placement.ts, routes/candidateShare.ts,
@@ -51,6 +52,8 @@ export interface PublicShare {
   vacancy: { title: L10n; city: string | null; profession: string | null } | null;
   match: Match | null;
   documents: { total: number; approved: number; inReview: number; missing: number; items: { id: string; title: L10n; stage: string; state: 'approved' | 'inReview' | 'missing' }[] } | null;
+  /** Visa progress of the candidate's case for this employer's vacancy (stage + dates + approximate arrival); null without one. */
+  visa: VisaProgressData | null;
   cv: { available: boolean };
   video: { available: boolean; mimeType?: string; size?: number };
   expiresAt: string;

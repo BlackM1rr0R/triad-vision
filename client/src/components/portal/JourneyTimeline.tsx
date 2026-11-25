@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Check, FileCheck2, GraduationCap, Landmark, MapPin, Minus, PenLine, Plane, Stamp, X } from 'lucide-react';
 import { useL10n } from '@/lib/l10n';
 import type { Milestone, MilestoneKey } from './journey';
+import { VoiceListen, useVoiceSteps } from './VoiceListen';
 
 export const MILESTONE_ICON: Record<MilestoneKey, LucideIcon> = {
   documents: FileCheck2,
@@ -50,6 +51,7 @@ const DOT: Record<Milestone['status'], string> = {
 export function JourneyTimeline({ milestones, labelOf, className }: { milestones: Milestone[]; labelOf: (m: Milestone) => string; className?: string }) {
   const { t } = useTranslation();
   const dateOf = useMilestoneDate();
+  const voice = useVoiceSteps().data;
   return (
     <ol aria-label={t('jmap.listLabel')} className={clsx('min-w-0', className)}>
       {milestones.map((m, i) => {
@@ -84,6 +86,7 @@ export function JourneyTimeline({ milestones, labelOf, className }: { milestones
                 </span>
               </span>
               {when && <span className="mt-0.5 block text-xs text-muted">{when}</span>}
+              <VoiceListen stepKey={m.key} steps={voice} />
             </span>
           </motion.li>
         );

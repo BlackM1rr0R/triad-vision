@@ -13,6 +13,8 @@ import { getImpersonation } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesPortalMoments } from '@/i18n/pagesPortalMoments';
 import { caseToCelebrate } from './celebration';
+import { VisaGrantedSplash } from './VisaGrantedSplash'; // full-screen flag / plane moment before the dialog
+import { useCountdowns } from '@/components/portal/CountdownCards'; // destination city
 import { InstagramCardDialog } from '@/components/portal/InstagramCardDialog'; // private Instagram success card
 import { Sparkles } from 'lucide-react';
 import { pagesVisaStory } from '@/i18n/pagesVisaStory'; // "Your visa story" button
@@ -60,6 +62,8 @@ export function ApprovedCelebration() {
   // Instagram card exist only for the main case (the server answers 404 for a member case).
   const [shown, setShown] = useState<{ id: string; number: string; main: boolean } | null>(null);
   const [instaCase, setInstaCase] = useState<string | null>(null);
+  const [splash, setSplash] = useState(true);
+  const city = useCountdowns().data?.city ?? null;
 
   const target = isClient && data ? caseToCelebrate(data.cases) : null;
   const targetId = target?.id ?? null;
@@ -68,6 +72,7 @@ export function ApprovedCelebration() {
   useEffect(() => {
     if (!targetId || wasSeen(targetId)) return;
     markSeen(targetId);
+    setSplash(true);
     setShown({ id: targetId, number: targetNumber, main: targetMain });
   }, [targetId, targetNumber, targetMain]);
   // Same key as the case page's burst, so the confetti never plays twice for one approval (no-op for reduced motion).
@@ -80,6 +85,7 @@ export function ApprovedCelebration() {
 
   if (!shown) return instaCase ? <InstagramCardDialog open onClose={() => setInstaCase(null)} caseId={instaCase} /> : null;
   const close = () => setShown(null);
+  if (splash) return <VisaGrantedSplash city={city} onClose={() => setSplash(false)} />;
 
   return (
     <Modal

@@ -7,13 +7,28 @@
  * the page uses the signed-in staff session instead (preview on an office PC).
  */
 
-export type TvPanelKey = 'agenda' | 'inquiries' | 'waiting' | 'approved' | 'arrivals';
+export type TvPanelKey = 'agenda' | 'inquiries' | 'waiting' | 'approved' | 'arrivals' | 'leaderboard';
 
 export interface TvSettings {
   panels: TvPanelKey[];
   rotationSeconds: number;
   celebration: boolean;
   sound: boolean;
+}
+
+export interface TvLeaderEntry {
+  name: string;
+  reviewed: number;
+  moved: number;
+  approvals: number;
+  score: number;
+}
+
+export interface TvApplicationEvent {
+  key: string;
+  client: string | null;
+  profession: string | null;
+  at: string;
 }
 
 export interface TvPayload {
@@ -27,6 +42,7 @@ export interface TvPayload {
     waiting: { count: number; byStatus: Record<string, number>; oldestDays: number | null; oldest: { client: string | null; owner: string | null; status: string; since: string; days: number }[] };
     approved: { count: number; items: { client: string | null; profession: string | null; city: string | null; at: string | null }[] };
     arrivals: { count: number; items: { client: string | null; at: string; city: string | null; arrived: boolean }[] };
+    leaderboard: { week: TvLeaderEntry[]; month: TvLeaderEntry[] };
   }>;
 }
 

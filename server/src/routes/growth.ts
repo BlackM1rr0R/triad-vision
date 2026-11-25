@@ -7,6 +7,7 @@ import { HttpError, conflict, limiter, notFound, parse } from '../lib/http.js';
 import { recordConsent } from '../lib/privacy/consents.js';
 import { calculatorCategories, DOC_STATES, estimate, getCalculatorSettings, INPUT_LEVELS } from '../lib/growth/calculator.js';
 import { publicMap } from '../lib/growth/map.js';
+import { publicVacancyMap } from '../lib/growth/vacancyMap.js';
 import { publicHomeStats } from '../lib/growth/homeStats.js';
 import { eventIcs, leadForRegistrant, mailRegistrant, registrationIdOf } from '../lib/growth/events.js';
 import { asEventLocale } from '../lib/growth/eventTexts.js';
@@ -25,6 +26,7 @@ import { onInquiryCreated } from '../lib/assignment/inquiry.js';
  * Public growth features — mounted at /api/growth:
  *   GET  /calculator, /calculator/estimate   start-date calculator
  *   GET  /map                                Germany placement map (aggregates ≥ 3 per city)
+ *   GET  /map/vacancies                      active vacancies with free places per city (count + salary range, no employer)
  *   GET  /home-stats                         home counters: workers placed (map total, cities >= 3) + open vacancies
  *   GET  /events, /events/:slug              upcoming info sessions / webinars
  *   POST /events/:slug/register              registration (honeypot, consent, rate limit)
@@ -99,6 +101,11 @@ growthRouter.get('/calculator/estimate', estimateLimiter, async (req, res) => {
 growthRouter.get('/map', async (_req, res) => {
   publicCache(res, 300);
   res.json(await publicMap());
+});
+
+growthRouter.get('/map/vacancies', async (_req, res) => {
+  publicCache(res, 300);
+  res.json(await publicVacancyMap());
 });
 
 growthRouter.get('/origins', async (_req, res) => {

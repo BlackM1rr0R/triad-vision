@@ -107,6 +107,7 @@ const az = {
       income: 'Gəlir (xalis{{kg}})',
       kindergeld: ' + uşaq pulu',
       remaining: 'Ayda qalır',
+      saveAzn: 'Ayda təxminən {{amount}} yığa bilərsiniz',
       chart: 'Xərclərin bölgüsü',
       warnings: {
         MIDIJOB: 'Brutto 2.000 €-ya qədər (Midijob): real tutulmalar burada göstəriləndən azdır. Ausbildung maaşlarına bu qayda tətbiq olunmur.',
@@ -299,6 +300,7 @@ const de: typeof az = {
       income: 'Einnahmen (netto{{kg}})',
       kindergeld: ' + Kindergeld',
       remaining: 'Bleibt pro Monat',
+      saveAzn: 'Du kannst monatlich etwa {{amount}} sparen',
       chart: 'Aufteilung der Kosten',
       warnings: {
         MIDIJOB: 'Brutto bis 2.000 € (Midijob): die echten Abzüge sind niedriger als hier gezeigt. Für Ausbildungsvergütungen gilt diese Regel nicht.',
@@ -491,6 +493,7 @@ const en: typeof az = {
       income: 'Income (net{{kg}})',
       kindergeld: ' + child benefit',
       remaining: 'Left per month',
+      saveAzn: 'You could save about {{amount}} a month',
       chart: 'Cost breakdown',
       warnings: {
         MIDIJOB: 'Gross up to €2,000 (Midijob): the real deductions are lower than shown. This rule does not apply to apprenticeship pay.',
@@ -683,6 +686,7 @@ const ru: typeof az = {
       income: 'Доходы (нетто{{kg}})',
       kindergeld: ' + детское пособие',
       remaining: 'Остаётся в месяц',
+      saveAzn: 'Вы сможете откладывать примерно {{amount}} в месяц',
       chart: 'Структура расходов',
       warnings: {
         MIDIJOB: 'Брутто до 2 000 € (Midijob): реальные удержания меньше показанных. Для оплаты Ausbildung это правило не действует.',

@@ -113,3 +113,18 @@ export const monthRange = (fromIso: string, toIso: string, locale: string) => {
 /** Event time in Baku: "Bazar ertəsi, 20 oktyabr 2026, 18:00". */
 export const bakuTime = (iso: string, locale: string, opts: Intl.DateTimeFormatOptions = { dateStyle: 'full', timeStyle: 'short' }) =>
   new Intl.DateTimeFormat({ az: 'az-Latn-AZ', de: 'de-DE', en: 'en-GB', ru: 'ru-RU' }[locale] ?? 'az-Latn-AZ', { ...opts, timeZone: 'Asia/Baku' }).format(new Date(iso));
+
+/** GET /growth/map/vacancies: active vacancies with free places per city (count + salary range, never the employer). */
+export interface VacancyCity {
+  city: string;
+  count: number;
+  salaryMin: number | null;
+  salaryMax: number | null;
+}
+export const useVacancyMap = (enabled: boolean) =>
+  useQuery({
+    queryKey: ['growth', 'map-vacancies'],
+    queryFn: async () => (await api.get<{ cities: VacancyCity[]; total: number }>('/growth/map/vacancies')).data,
+    staleTime: 5 * 60 * 1000,
+    enabled,
+  });

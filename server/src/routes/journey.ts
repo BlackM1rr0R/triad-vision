@@ -10,6 +10,7 @@ import { approvedCaseFor, onboardingForCase } from '../lib/journey/onboarding.js
 import { GERMAN_TEST_LEVELS, LANGUAGE_CERT_KEYS, LEVEL_RANK, pickBalanced, scoreTest, TEST_SIZE } from '../lib/journey/german.js';
 import { addFamilyMember, familyGroup, RELATIONS, removeFamilyMember } from '../lib/journey/family.js';
 import { audit } from '../lib/audit.js';
+import { isVoiceStep, listVoice, voiceFile } from '../lib/journey/voiceGuide.js';
 
 /**
  * Client journey — mounted at /api/journey. Everything a signed-in client needs around their case:
@@ -170,4 +171,21 @@ journeyRouter.get('/german/status', async (req, res) => {
     case: active ? { id: active.id, number: active.number, status: active.status, visaCategory: active.visaCategory } : null,
     certificate,
   });
+});
+
+// ─── Voice guide: which steps have a recording, and the audio itself (any signed-in user; read-only) ───
+
+journeyRouter.get('/voice', async (_req, res) => {
+  const items = await listVoice();
+  res.set('Cache-Control', 'private, no-cache');
+  res.json({ steps: items.filter((i) => i.exists).map((i) => ({ key: i.key, v: i.updatedAt ? i.updatedAt.getTime() : 0 })) });
+});
+
+journeyRouter.get('/voice/:key/audio', async (req, res) => {
+  const key = String(req.params.key);
+  if (!isVoiceStep(key)) throw notFound('VOICE_NOT_FOUND');
+  const f = await voiceFile(key);
+  if (!f) throw notFound('VOICE_NOT_FOUND');
+  res.set({ 'Content-Type': f.mime, 'Cache-Control': 'private, max-age=3600', 'X-Content-Type-Options': 'nosniff' });
+  res.sendFile(f.file);
 });
