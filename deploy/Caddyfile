@@ -279,7 +279,7 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 		}
 	}
 
-	# Hashed assets: this build's, else a previous build's (data/assets-archive, mounted at /srv-archive and kept
+	# Hashed assets: this build's, else a previous build's (data/assets-archive, mounted at /srv-archive/assets, kept
 	# 21 days by deploy/remote-deploy.sh) so a tab opened before a deploy still loads its lazy chunks. A missing
 	# asset is a plain, uncached 404 — never the HTML shell (that broke the page with a module / MIME error).
 	handle /assets/* {
