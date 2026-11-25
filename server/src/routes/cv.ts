@@ -17,7 +17,6 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import { createLebenslaufVersion, lebenslaufFileName, lebenslaufPath, lebenslaufView } from '../lib/cv/versions.js';
 import { revealedCompanyIdsForClient } from '../lib/caseContracts/employerVisibility.js';
-import { recheckUserApplications } from '../lib/germanyJobs/autoSend.js'; // apply via Triad Vision: waiting applications continue
 
 /** CV builder and motivation letters — mounted at /api/cv (clients). */
 export const cvRouter = Router();
@@ -51,7 +50,6 @@ cvRouter.put('/', async (req, res) => {
   }
   const profile = await loadProfile(uid(req));
   const cv = cvView(row);
-  void recheckUserApplications(uid(req));
   res.json({ cv, completeness: cvCompleteness(cv.data, profile) });
 });
 
@@ -91,7 +89,6 @@ cvRouter.post('/lebenslauf', async (req, res) => {
   const body = parse(z.object({ lang: z.enum(CV_LANGS).default('de'), photo: z.boolean().default(false) }).strict(), req.body ?? {});
   const row = await createLebenslaufVersion(uid(req), body);
   await audit(req, 'LEBENSLAUF_VERSION_CREATED', `user:${uid(req)}`, { version: row.version });
-  void recheckUserApplications(uid(req));
   res.status(201).json({ version: lebenslaufView(row) });
 });
 

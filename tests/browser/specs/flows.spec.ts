@@ -3,8 +3,9 @@ import { expect, openCase, seed, signIn, test } from '../fixtures';
 
 /**
  * Newer flows end to end in the browser: the two-step case contract (Əmək müqaviləsi: client signs first, then Triad
- * Vision), shared documents (one upload fills the initial and the embassy list) and "Apply via Triad Vision" for a
- * listing elsewhere (step-by-step self-send guide). Every scenario has its own seeded client (server/tests/browser/seed.ts).
+ * Vision), shared documents (one upload fills the initial and the embassy list) and a listing elsewhere (the candidate
+ * applies to the employer directly: "Elanı aç və müraciət et"). Every case scenario has its own seeded client
+ * (server/tests/browser/seed.ts).
  */
 
 /** A requirement card of one document list (`#docs-initial` / `#docs-embassy`), found by its az title. */
@@ -103,26 +104,24 @@ test.describe('shared documents (initial ↔ embassy)', () => {
   });
 });
 
-test.describe('apply via Triad Vision (listing elsewhere)', () => {
-  test('the cabinet shows the application with the step-by-step guide; "Göndərdim" moves it to sent', async ({ context, page }) => {
-    const c = seed().clients.external; // forward consent given, no employer address found: the client sends the package
-    await signIn(context, c);
-    await page.goto('/account/job-applications');
-    const card = page.getByRole('listitem').filter({ hasText: c.listingTitle }).first();
-    await expect(card).toBeVisible();
-    await expect(card).toContainText(c.listingCompany);
-    await expect(card.getByRole('list', { name: 'Müraciət edildi' })).toBeVisible();
-
-    const guide = card.getByRole('region', { name: 'Müraciətiniz hazırdır. İşəgötürənə özünüz göndərin' });
-    await expect(guide).toBeVisible();
-    await expect(guide.getByRole('link', { name: /Elanı aç/ })).toBeVisible();
-    await expect(guide.getByRole('button', { name: 'Anschreiben PDF' })).toBeVisible();
-    await expect(guide.getByRole('button', { name: 'CV PDF' })).toBeVisible();
-
-    const sent = page.waitForResponse((r) => r.request().method() === 'POST' && /\/api\/external-applications\/[^/]+\/sent$/.test(r.url()));
-    await guide.getByRole('button', { name: 'Göndərdim', exact: true }).click();
-    expect((await sent).status(), 'POST sent').toBe(200);
-    await expect(guide).toBeHidden();
-    await expect(card.getByRole('list', { name: 'İşəgötürənə göndərildi' })).toBeVisible();
+test.describe('external listing: the candidate applies directly', () => {
+  test('a job-alert link shows the listing with "Elanı aç və müraciət et" (new tab, no referrer) and the note', async ({ page }) => {
+    // No job source in the browser tests: the page must not search (the listing card comes from the link alone).
+    await page.route('**/api/germany-jobs/config', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ search: false, sources: [], apply: false }) }));
+    const url = 'https://jobs.example.test/stellen/berufskraftfahrer-ce';
+    const q = new URLSearchParams({ apply: 'arbeitnow:fahrer-ce', at: 'Berufskraftfahrer CE (brauzer testi)', ac: 'Nord Logistik GmbH', al: 'Hamburg', au: url });
+    await page.goto(`/jobs/germany/search?${q.toString()}`);
+    const card = page.locator('section[aria-labelledby="gj-mail-listing-h"]');
+    await expect(card.getByRole('heading', { name: 'Berufskraftfahrer CE (brauzer testi)' })).toBeVisible();
+    const open = card.getByRole('link', { name: /Elanı aç və müraciət et/ });
+    await expect(open).toHaveAttribute('href', url);
+    await expect(open).toHaveAttribute('target', '_blank');
+    await expect(open).toHaveAttribute('rel', /noopener/);
+    await expect(open).toHaveAttribute('rel', /noreferrer/);
+    await expect(open).toHaveAttribute('rel', /nofollow/);
+    await expect(card).toContainText('Triad Vision bu elanlarda vasitəçi deyil');
+    // Guests: the way to the free Lebenslauf / Anschreiben helpers; no "apply via Triad Vision" anywhere.
+    await expect(card.getByRole('link', { name: 'Qeydiyyatdan keç' })).toBeVisible();
+    await expect(page.getByText('Triad Vision ilə müraciət et')).toHaveCount(0);
   });
 });

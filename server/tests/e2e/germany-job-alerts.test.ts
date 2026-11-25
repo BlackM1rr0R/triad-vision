@@ -154,7 +154,7 @@ describe('saved Germany jobs', () => {
 });
 
 describe('Germany job alerts', () => {
-  it('double opt-in, digest with apply links to our site, no duplicates, manage, unsubscribe, purge', async () => {
+  it('double opt-in, digest with direct links to the original ad, no duplicates, manage, unsubscribe, purge', async () => {
     // Consent is required; the honeypot stores nothing.
     await anon().post('/api/germany-jobs/alerts').send({ email: 'a@test.local', q: 'Koch', where: 'Berlin' }).expect(400);
     await anon().post('/api/germany-jobs/alerts').send({ email: 'bot@test.local', q: 'Koch', consent: true, website: 'x' }).expect(201);
@@ -176,7 +176,7 @@ describe('Germany job alerts', () => {
     expect(confirmed.body.alert).toMatchObject({ confirmed: true, email: 'c***@test.local', frequency: 'daily', search: { q: 'Koch', where: 'Berlin' } });
     await anon().post('/api/germany-jobs/alerts/confirm').send({ token: 'x'.repeat(43) }).expect(404);
 
-    // First run: the matching feed listing (not the Munich developer), Apply links back to our site.
+    // First run: the matching feed listing (not the Munich developer), linked to the original ad.
     mail.sent = [];
     const first = await runGermanyJobAlerts();
     expect(first).toMatchObject({ due: 1, groups: 1, sent: 1 });
@@ -185,16 +185,11 @@ describe('Germany job alerts', () => {
     expect(digest.subject).toBe('1 neue Stellen zu Ihrer Suche');
     expect(digest.html).toContain('Koch (m/w/d)');
     expect(digest.html).not.toContain('Senior Developer');
-    expect(digest.html).toContain('Über Triad Vision bewerben');
+    // External apply is retired: the digest links straight to the original ad (the candidate applies directly).
+    expect(digest.html).not.toContain('Über Triad Vision bewerben');
     const hrefs = [...digest.html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
-    const applyLinks = hrefs.filter((h) => h.includes('apply='));
-    expect(applyLinks.length).toBeGreaterThan(0);
-    for (const h of applyLinks) expect(h.startsWith(`${new URL(config.clientUrl).origin}/de/jobs/germany/search?`)).toBe(true);
-    expect(hrefs.some((h) => h.startsWith('https://www.arbeitnow.com/jobs/'))).toBe(false); // never straight to the source
-    const apply = new URL(applyLinks[0]).searchParams;
-    expect(apply.get('apply')).toBe('arbeitnow:koch-berlin');
-    expect(apply.get('au')).toBe(FEED[0].url);
-    expect(apply.get('q')).toBe('Koch');
+    expect(hrefs.some((h) => h.includes('apply='))).toBe(false);
+    expect(hrefs).toContain(FEED[0].url);
     expect(hrefs.some((h) => h.includes('action=unsubscribe'))).toBe(true);
     expect(await prisma.germanyJobAlertSent.count({ where: { alertId: alert.id } })).toBe(1);
     // The feed was fetched once (the alert reused it).

@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff } from '../helpers/api';
-import { emailsTo, prisma } from '../helpers/db';
+import { prisma } from '../helpers/db';
 import { auditsSettled } from '../../src/lib/audit.js';
 import { applyInput, createExternalApplication } from '../../src/lib/germanyJobs/apply.js';
-import { processExternalApplication } from '../../src/lib/germanyJobs/autoSend.js';
 import { setAutoSendSettings } from '../../src/lib/germanyJobs/autoSettings.js';
 import { matchEmployerReply } from '../../src/lib/germanyJobs/replies.js';
 import { EMPLOYER_CATEGORY, handleInboundReport, refreshSendHealth } from '../../src/lib/deliverability/service.js';
 import { clearAgencyMailboxCache, flushAgencyInbound, onAgencyInbound } from '../../src/lib/deliverability/inbound.js';
 
 /**
- * E-mail deliverability (Admin → E-poçt göndərişi) and employer answers to automatic applications: ADMIN-only
- * endpoints, bounce reports → suppression list respected by the automatic sending, automatic daily-limit reduction,
- * reply matching by Message-ID through the mail-sync hook, staff one-click status. Tests run without SMTP (CONSOLE).
+ * E-mail deliverability (Admin → E-poçt göndərişi) and employer answers to earlier automatic applications: ADMIN-only
+ * endpoints, bounce reports → suppression list, automatic daily-limit reduction, reply matching by Message-ID through
+ * the mail-sync hook, staff one-click status. The automatic sending itself is retired (the candidate applies to
+ * external listings directly), so the "sent" applications are seeded as the history rows they now are.
+ * Tests run without SMTP (CONSOLE).
  */
 
 const EMPLOYER = 'bewerbung@nord-logistik.de';
@@ -45,10 +46,15 @@ const readyClient = async () => {
   return client;
 };
 
-const seed = async (userId: string) => {
+/** An earlier application that was sent to the employer before the retirement (history row). */
+const seedSent = async (userId: string) => {
   const q = await createExternalApplication(applyInput.parse(fields()), { phone: '+994501234567', lng: 'az', cv: null, userId, partnerId: null, accountLabel: null });
-  const app = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: q.id } });
-  return { inquiryId: q.id, id: app.id, state: await processExternalApplication(app.id) };
+  const sentAt = new Date(Date.now() - 60 * 60 * 1000);
+  const app = await prisma.externalJobApplication.update({
+    where: { inquiryId: q.id },
+    data: { status: 'FORWARDED', statusChangedAt: sentAt, autoState: 'SENT', autoSentAt: sentAt, autoSentMode: 'AUTO', employerEmail: EMPLOYER, autoMessageId: `xapp.${q.id}@triad-vision.de` },
+  });
+  return { inquiryId: q.id, id: app.id, messageId: app.autoMessageId! };
 };
 
 describe('Admin → E-poçt göndərişi', () => {
@@ -80,8 +86,8 @@ describe('Admin → E-poçt göndərişi', () => {
   });
 });
 
-describe('bounces and the automatic sending', () => {
-  it('a hard bounce suppresses the address; the next application goes to the client instead of the employer', async () => {
+describe('bounces', () => {
+  it('a hard bounce suppresses the address (stored once)', async () => {
     const handled = await handleInboundReport({
       rfcMessageId: 'dsn-1@mx.example',
       fromAddr: 'MAILER-DAEMON@mx.example',
@@ -95,12 +101,6 @@ describe('bounces and the automatic sending', () => {
     await handleInboundReport({ rfcMessageId: 'dsn-1@mx.example', fromAddr: 'MAILER-DAEMON@mx.example', subject: 'Undelivered', text: null, contentType: 'multipart/report; report-type=delivery-status', parts: [{ contentType: 'message/delivery-status', content: `Final-Recipient: rfc822; ${EMPLOYER}\nAction: failed\nStatus: 5.1.1` }] });
     expect(await prisma.emailBounce.count()).toBe(1);
     expect(await prisma.emailSuppression.findUniqueOrThrow({ where: { address: EMPLOYER } })).toMatchObject({ reason: 'HARD_BOUNCE' });
-
-    const client = await readyClient();
-    const s = await seed(client.user.id);
-    expect(s.state).toBe('CLIENT_SEND');
-    expect(await prisma.emailLog.count({ where: { to: EMPLOYER } })).toBe(0);
-    expect(await prisma.externalJobApplication.findUniqueOrThrow({ where: { id: s.id } })).toMatchObject({ autoReason: 'EMAIL_REJECTED', autoSentAt: null });
   });
 
   it('more than 5 % hard bounces in 7 days halves the daily limit (shown in the auto-send panel)', async () => {
@@ -118,15 +118,12 @@ describe('bounces and the automatic sending', () => {
 });
 
 describe('employer answers', () => {
-  it('stores the Message-ID, matches the answer from the agency mailbox, suggests a status; staff apply it once', async () => {
+  it('an earlier sent application: matches the answer by Message-ID from the agency mailbox, suggests a status; staff apply it once', async () => {
     await setAutoSendSettings({ replyTo: 'info@triad-vision.de' });
     clearAgencyMailboxCache();
     const client = await readyClient();
-    const s = await seed(client.user.id);
-    expect(s.state).toBe('SENT');
-    const app = await prisma.externalJobApplication.findUniqueOrThrow({ where: { id: s.id } });
-    expect(app.autoMessageId).toMatch(/^xapp\./);
-    expect((await emailsTo(EMPLOYER))[0]!.messageId).toBe(app.autoMessageId);
+    const s = await seedSent(client.user.id);
+    const app = { autoMessageId: s.messageId };
 
     // The agency mailbox, as the workspace mail sync stores it.
     const admin = await asAdmin();
@@ -177,8 +174,7 @@ describe('employer answers', () => {
 
   it('domain fallback needs the listing title or the candidate name; "keep" leaves the status', async () => {
     const client = await readyClient();
-    const s = await seed(client.user.id);
-    expect(s.state).toBe('SENT');
+    const s = await seedSent(client.user.id);
     const base = { rfcMessageId: null, inReplyTo: null, refs: null, fromName: null, date: new Date() };
     expect(await matchEmployerReply({ ...base, mailMessageId: 'm1', fromAddr: 'hr@nord-logistik.de', subject: 'Hallo', text: 'Danke.' })).toBeNull();
     const id = await matchEmployerReply({ ...base, mailMessageId: 'm2', fromAddr: 'hr@nord-logistik.de', subject: 'Ihre Bewerbung: Berufskraftfahrer CE (m/w/d)', text: 'Leider müssen wir Ihnen eine Absage erteilen.' });

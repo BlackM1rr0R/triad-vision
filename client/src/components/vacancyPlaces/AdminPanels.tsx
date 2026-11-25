@@ -51,14 +51,7 @@ export const ApplicationPolicyPanel = ({ className }: { className?: string }) =>
             showLabel
             disabled={!canEdit || save.isPending}
           />
-          <Switch
-            checked={data.allowExternalApplications}
-            onChange={(v) => save.mutate({ allowExternalApplications: v })}
-            label={t('vacPlaces.admin.external')}
-            hint={t('vacPlaces.admin.externalHint')}
-            showLabel
-            disabled={!canEdit || save.isPending}
-          />
+          {/* "Apply via Triad Vision" for external listings is retired (the candidate applies directly): no switch. */}
         </div>
       )}
     </Panel>

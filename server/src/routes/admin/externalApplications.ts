@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { audit } from '../../lib/audit.js';
-import { badRequest, notFound, parse } from '../../lib/http.js';
+import { badRequest, gone, notFound, parse } from '../../lib/http.js';
 import { EXTERNAL_APP_STATUSES, buildTimeline, notifyStatusChange, readStatus } from '../../lib/germanyJobs/applicationStatus.js';
 import { COVER_JOB_TYPES } from '../../lib/coverLetters/fill.js';
 import { coverLetterInput, coverLetterPdf, draftCoverLetter } from '../../lib/coverLetters/index.js';
@@ -13,9 +13,8 @@ import { latestLebenslauf, lebenslaufFileName, lebenslaufPath, lebenslaufView } 
 import JSZip from 'jszip';
 import { requireMinRole } from '../../middleware/auth.js';
 import { cvPath } from '../../lib/germanyJobs/apply.js';
-import { autoView, markSentByStaff, processExternalApplication, resumeAutomation, sentToday, staffSendNow, stopAutomation } from '../../lib/germanyJobs/autoSend.js';
+import { autoView, markSentByStaff, sentToday, stopAutomation } from '../../lib/germanyJobs/autoSend.js';
 import { autoSendSettingsSchema, getAutoSendSettings, replyToAddress, setAutoSendSettings } from '../../lib/germanyJobs/autoSettings.js';
-import { extractEmails } from '../../lib/germanyJobs/autoCheck.js';
 import { replyView } from '../../lib/germanyJobs/replies.js';
 import { effectiveDailyLimit } from '../../lib/deliverability/health.js';
 import { getSendHealth } from '../../lib/deliverability/service.js';
@@ -31,7 +30,9 @@ import { getSendHealth } from '../../lib/deliverability/service.js';
  *   POST   /:id/cover-letter/pdf     { subject, body } → PDF of the text being edited
  *   GET    /:id/cover-letter.pdf     PDF of the attached letter
  *   GET    /:id/lebenslauf.pdf       the client's newest saved Lebenslauf (audited)
- * Automatic sending (lib/germanyJobs/autoSend.ts):
+ * Automatic sending (lib/germanyJobs/autoSend.ts) is RETIRED (owner decision: for external listings the candidate
+ * applies directly). Reading stays for earlier applications; whatever would send or search answers 410
+ * EXTERNAL_APPLY_DIRECT (employer-email, send, resume); settings keep enabled / discovery false.
  *   GET    /auto/overview            today's count / limit, kill switch, "Göndərməyə hazır" queue (READY + QUEUED)
  *   GET    /auto/settings            PUT (ADMIN+, settings area): { enabled, dailyLimit, perDomainLimit, replyTo, discovery } (audited)
  *   POST   /auto/mark-sent           { ids: inquiry ids } → "Göndərildi" bulk: FORWARDED + client notice (audited)
@@ -135,7 +136,7 @@ adminExternalApplicationsRouter.put('/auto/settings', requireMinRole('ADMIN'), a
   const before = await getAutoSendSettings();
   const settings = await setAutoSendSettings(body);
   await audit(req, 'EXTERNAL_JOB_AUTO_SETTINGS_UPDATED', 'setting:externalAutoSend', { from: before, to: settings });
-  // Switched on again: waiting applications go out with the next scheduler run (within the limits).
+  // enabled / discovery stay false (retired, lib/germanyJobs/autoSettings.ts).
   res.json({ settings: { ...settings, replyToEffective: replyToAddress(settings) } });
 });
 
@@ -275,34 +276,12 @@ adminExternalApplicationsRouter.get('/:id/lebenslauf.pdf', async (req, res) => {
 
 // ─── Automatic sending: per application ─────────────────────────────────────
 
-const emailInput = z.object({ email: z.union([z.null(), z.literal(''), z.string().trim().toLowerCase().email().max(190)]) }).strict();
-
-adminExternalApplicationsRouter.put('/:id/auto/employer-email', async (req, res) => {
-  const body = parse(emailInput, req.body);
-  const app = await load(String(req.params.id));
-  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
-  if (app.autoSentAt) throw badRequest('ALREADY_SENT');
-  const email = body.email || null;
-  if (email && !extractEmails(email).length) throw badRequest('EMPLOYER_EMAIL_NOT_ALLOWED'); // job boards / no-reply
-  await prisma.externalJobApplication.update({ where: { id: app.id }, data: { employerEmail: email, employerEmailSource: email ? 'staff' : null, employerEmailEvidence: null, employerEmailEvidenceUrl: null, ...(app.autoReason === 'EMAIL_REJECTED' ? { autoReason: null } : {}) } });
-  await audit(req, 'EXTERNAL_JOB_EMPLOYER_EMAIL_SET', `inquiry:${app.inquiryId}`, { email });
-  // An open application with a new address continues through the normal pipeline (check, consent, limits, kill switch).
-  if (email && ['READY', 'QUEUED', 'SEARCHING', 'CLIENT_SEND'].includes(app.autoState ?? '')) await processExternalApplication(app.id);
-  res.json(await view(await load(app.inquiryId)));
-});
-
-adminExternalApplicationsRouter.post('/:id/auto/send', async (req, res) => {
-  const app = await load(String(req.params.id));
-  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
-  if (!app.forwardConsentAt) throw badRequest('NO_FORWARD_CONSENT');
-  if (!app.employerEmail) throw badRequest('NO_EMPLOYER_EMAIL');
-  if (app.autoSentAt) throw badRequest('ALREADY_SENT');
-  const out = await staffSendNow(app.id, req.user!.id);
-  if (out === 'NO_CV') throw badRequest('CV_NOT_FOUND');
-  if (out === 'FAILED') throw badRequest('SEND_FAILED');
-  if (out === 'BUSY') throw badRequest('ALREADY_SENT');
-  res.json(await view(await load(app.inquiryId)));
-});
+/** Retired: nothing is searched or sent for external listings any more. */
+const retired = () => {
+  throw gone('EXTERNAL_APPLY_DIRECT');
+};
+adminExternalApplicationsRouter.put('/:id/auto/employer-email', retired);
+adminExternalApplicationsRouter.post('/:id/auto/send', retired);
 
 adminExternalApplicationsRouter.post('/:id/auto/stop', async (req, res) => {
   const app = await load(String(req.params.id));
@@ -311,13 +290,7 @@ adminExternalApplicationsRouter.post('/:id/auto/stop', async (req, res) => {
   res.json(await view(await load(app.inquiryId)));
 });
 
-adminExternalApplicationsRouter.post('/:id/auto/resume', async (req, res) => {
-  const app = await load(String(req.params.id));
-  if (app.inquiry.anonymizedAt) throw badRequest('INQUIRY_ANONYMIZED');
-  await audit(req, 'EXTERNAL_JOB_AUTO_RESUMED', `inquiry:${app.inquiryId}`, {});
-  await resumeAutomation(app.id);
-  res.json(await view(await load(app.inquiryId)));
-});
+adminExternalApplicationsRouter.post('/:id/auto/resume', retired);
 
 adminExternalApplicationsRouter.post('/:id/auto/mark-sent', async (req, res) => {
   const app = await load(String(req.params.id));

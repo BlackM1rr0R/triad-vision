@@ -19,7 +19,6 @@ import { PasswordInput } from '@/components/ui/PasswordInput';
 import { CHANNELS, STATUS_TONE, type BaView, type ChannelStatus, type FeedsOverview } from '@/components/jobFeeds/types';
 import { useErrorLabel } from '@/components/jobFeeds/VacancyDistributionPanel';
 import { JobSourcesPanel } from '@/components/germanyJobs/JobSourcesPanel';
-import { ExternalAutoQueuePanel } from '@/components/germanyJobs/ExternalAutoPanel'; // apply via Triad Vision: kill switch, limits, "Göndərməyə hazır" queue
 import type { L10n } from '@/lib/types';
 
 registerCopy(pagesJobFeeds);
@@ -329,7 +328,6 @@ export default function JobChannels() {
 
       {/* Almaniya iş bazası: job sources searched on /jobs/germany (incoming direction), their state. */}
       <JobSourcesPanel />
-      <ExternalAutoQueuePanel />
 
       <Panel title={t('jobFeeds.errorsTitle')} icon={AlertTriangle}>
         {d.errors.length === 0 ? (

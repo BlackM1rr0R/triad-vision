@@ -1295,7 +1295,7 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Відкриті вакансії в Німеччині: водії, будівництво, готельний бізнес, Ausbildung та інші. Подавайте заявку з візовою підтримкою.',
     },
   },
-  // Almaniya iş bazası (/jobs/germany): German jobs + Ausbildung from free job APIs (lib/germanyJobs), "apply via Triad Vision", BA Jobbörse link.
+  // Almaniya iş bazası (/jobs/germany): German jobs + Ausbildung from free job APIs (lib/germanyJobs), the candidate applies directly, BA Jobbörse link.
   // The landing page (our own intro + the form) is indexable; the result list is third-party content: noindex.
   '/jobs/germany': {
     name: { az: 'Almaniya iş bazası', de: 'Jobbörse Deutschland', en: 'Germany job search', ru: 'Поиск работы в Германии', tr: 'Almanya iş arama', uk: 'Пошук роботи в Німеччині' },
@@ -1308,12 +1308,12 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Пошук роботи в Німеччині та Ausbildung',
     },
     description: {
-      az: 'Almaniyada minlərlə iş və Ausbildung elanında peşə və şəhər üzrə axtarış edin, bəyəndiyiniz vakansiyaya isə Triad Vision vasitəsilə müraciət edin.',
-      de: 'Tausende Jobs und Ausbildungsplätze in Deutschland nach Beruf und Ort durchsuchen und passende Stellen direkt über Triad Vision bewerben.',
-      en: 'Search thousands of jobs and Ausbildung places in Germany by profession and city, then apply for the one you like through Triad Vision.',
-      ru: 'Ищите среди тысяч вакансий и мест Ausbildung в Германии по профессии и городу и подавайте заявку на понравившуюся через Triad Vision.',
-      tr: 'Almanya\'daki binlerce iş ve Ausbildung ilanında meslek ve şehre göre arama yapın, beğendiğiniz ilana Triad Vision üzerinden başvurun.',
-      uk: 'Шукайте серед тисяч вакансій і місць Ausbildung у Німеччині за професією та містом і подавайте заявку на обрану через Triad Vision.',
+      az: 'Almaniyada minlərlə iş və Ausbildung elanında peşə və şəhər üzrə axtarış edin. Bəyəndiyiniz elana işəgötürənə birbaşa müraciət edin.',
+      de: 'Tausende Jobs und Ausbildungsplätze in Deutschland nach Beruf und Ort durchsuchen und sich direkt beim Arbeitgeber bewerben.',
+      en: 'Search thousands of jobs and Ausbildung places in Germany by profession and city, then apply directly to the employer you choose.',
+      ru: 'Ищите среди тысяч вакансий и мест Ausbildung в Германии по профессии и городу, а затем откликайтесь напрямую выбранному работодателю.',
+      tr: 'Almanya\'daki binlerce iş ve Ausbildung ilanında meslek ve şehre göre arama yapın, beğendiğiniz ilana doğrudan işverene başvurun.',
+      uk: 'Шукайте серед тисяч вакансій і місць Ausbildung у Німеччині за професією та містом, а потім відгукуйтеся напряму обраному роботодавцю.',
     },
   },
   '/jobs/germany/search': {
@@ -1329,12 +1329,12 @@ export const STATIC_PAGES: Record<string, StaticPageMeta> = {
       uk: 'Пошук роботи в Німеччині: результати',
     },
     description: {
-      az: 'Almaniyada iş və Ausbildung elanları üzrə axtarış nəticələri. Bəyəndiyiniz vakansiyaya Triad Vision vasitəsilə müraciət edin.',
-      de: 'Suchergebnisse für Jobs und Ausbildung in Deutschland. Bewerben Sie sich über Triad Vision auf die passende Stelle.',
-      en: 'Search results for jobs and Ausbildung in Germany. Apply for the right one through Triad Vision.',
-      ru: 'Результаты поиска вакансий и Ausbildung в Германии. Подайте заявку на подходящую через Triad Vision.',
-      tr: 'Almanya\'da iş ve Ausbildung arama sonuçları. Uygun ilana Triad Vision üzerinden başvurun.',
-      uk: 'Результати пошуку вакансій і Ausbildung у Німеччині. Подайте заявку на відповідну через Triad Vision.',
+      az: 'Almaniyada iş və Ausbildung elanları üzrə axtarış nəticələri. Bəyəndiyiniz elana işəgötürənə birbaşa müraciət edin.',
+      de: 'Suchergebnisse für Jobs und Ausbildung in Deutschland. Bewerben Sie sich direkt beim Arbeitgeber.',
+      en: 'Search results for jobs and Ausbildung in Germany. Apply to the employer directly.',
+      ru: 'Результаты поиска вакансий и Ausbildung в Германии. Откликайтесь работодателю напрямую.',
+      tr: 'Almanya\'da iş ve Ausbildung arama sonuçları. Uygun ilana doğrudan işverene başvurun.',
+      uk: 'Результати пошуку вакансій і Ausbildung у Німеччині. Відгукуйтеся роботодавцю напряму.',
     },
   },
   // Study in Germany (/study, /study/:slug): programme catalogue curated by staff (lib/study), "apply via Triad Vision".

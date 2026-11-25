@@ -70,7 +70,7 @@ const az = {
     },
     lebenslauf: {
       title: 'Saxlanmış Lebenslauf (PDF)',
-      intro: 'Alman standartında cədvəlli Lebenslauf. Hər saxlama yeni versiyadır; "Triad Vision ilə müraciət" ən sonuncunu əlavə edir.',
+      intro: 'Alman standartında cədvəlli Lebenslauf. Hər saxlama yeni versiyadır. PDF-i endirib işəgötürənə özünüz göndərə bilərsiniz.',
       save: 'Lebenslauf versiyası saxla',
       saved: 'Versiya {{n}} saxlanıldı.',
       version: 'Versiya {{n}}',
@@ -196,7 +196,7 @@ const de: Copy = {
     },
     lebenslauf: {
       title: 'Gespeicherte Lebensläufe (PDF)',
-      intro: 'Tabellarischer Lebenslauf nach deutschem Standard. Jedes Speichern ist eine neue Version; „Über Triad Vision bewerben“ hängt die neueste an.',
+      intro: 'Tabellarischer Lebenslauf nach deutschem Standard. Jedes Speichern ist eine neue Version. Laden Sie die PDF herunter und senden Sie sie selbst an den Arbeitgeber.',
       save: 'Lebenslauf-Version speichern',
       saved: 'Version {{n}} gespeichert.',
       version: 'Version {{n}}',
@@ -320,7 +320,7 @@ const en: Copy = {
     },
     lebenslauf: {
       title: 'Saved Lebenslauf (PDF)',
-      intro: 'German-standard tabular CV. Every save is a new version; "Apply via Triad Vision" attaches the newest.',
+      intro: 'German-standard tabular CV. Every save is a new version. Download the PDF and send it to the employer yourself.',
       save: 'Save Lebenslauf version',
       saved: 'Version {{n}} saved.',
       version: 'Version {{n}}',
@@ -444,7 +444,7 @@ const ru: Copy = {
     },
     lebenslauf: {
       title: 'Сохранённые Lebenslauf (PDF)',
-      intro: 'Табличное резюме по немецкому стандарту. Каждое сохранение — новая версия; «Отклик через Triad Vision» прикрепляет последнюю.',
+      intro: 'Табличное резюме по немецкому стандарту. Каждое сохранение — новая версия. Скачайте PDF и отправьте его работодателю сами.',
       save: 'Сохранить версию Lebenslauf',
       saved: 'Версия {{n}} сохранена.',
       version: 'Версия {{n}}',

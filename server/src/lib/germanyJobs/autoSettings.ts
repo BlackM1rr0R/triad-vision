@@ -5,10 +5,15 @@ import { brandSync } from '../brand/index.js';
 import { bakuMidnight, bakuParts } from '../reports/dates.js';
 
 /**
- * Settings of the automatic sending of "apply via Triad Vision" applications (Setting "externalAutoSend", admin:
- * Job channels › Automatic sending). Defaults per the owner: on, 30 employer e-mails per day, 3 per employer domain
- * per day. Over a limit the application waits for the next day (jobs/germanyJobs.ts).
+ * Settings of the automatic sending of "apply via Triad Vision" applications (Setting "externalAutoSend").
+ *
+ * RETIRED (owner decision): for external listings Triad Vision does nothing any more — the candidate applies to the
+ * employer directly with their own CV. No employer e-mail discovery, no automatic sending, no client-send reminders,
+ * no processing of earlier applications (they stay as history). `enabled` and `discovery` are therefore always false,
+ * whatever an older stored value says; the limits stay only for reading.
  */
+export const EXTERNAL_APPLY_RETIRED = true;
+
 export const AUTO_SEND_KEY = 'externalAutoSend';
 
 export const autoSendSettingsSchema = z
@@ -24,16 +29,17 @@ export const autoSendSettingsSchema = z
   .strict();
 export type AutoSendSettings = z.infer<typeof autoSendSettingsSchema>;
 
-export const DEFAULT_AUTO_SEND: AutoSendSettings = { enabled: true, dailyLimit: 30, perDomainLimit: 3, replyTo: '', discovery: true };
+export const DEFAULT_AUTO_SEND: AutoSendSettings = { enabled: false, dailyLimit: 30, perDomainLimit: 3, replyTo: '', discovery: false };
 
 export const getAutoSendSettings = async (): Promise<AutoSendSettings> => {
   const row = await prisma.setting.findUnique({ where: { key: AUTO_SEND_KEY } });
   const stored = autoSendSettingsSchema.partial().safeParse(row?.value ?? {});
-  return { ...DEFAULT_AUTO_SEND, ...(stored.success ? stored.data : {}) };
+  const merged = { ...DEFAULT_AUTO_SEND, ...(stored.success ? stored.data : {}) };
+  return EXTERNAL_APPLY_RETIRED ? { ...merged, enabled: false, discovery: false } : merged;
 };
 
 export const setAutoSendSettings = async (patch: Partial<AutoSendSettings>): Promise<AutoSendSettings> => {
-  const next = { ...(await getAutoSendSettings()), ...patch };
+  const next = { ...(await getAutoSendSettings()), ...patch, ...(EXTERNAL_APPLY_RETIRED ? { enabled: false, discovery: false } : {}) };
   await prisma.setting.upsert({ where: { key: AUTO_SEND_KEY }, create: { key: AUTO_SEND_KEY, value: next }, update: { value: next } });
   return next;
 };

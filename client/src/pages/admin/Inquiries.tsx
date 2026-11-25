@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { Building2, ChevronDown, ChevronRight, ChevronUp, Filter, Flame, Inbox, Search, SendHorizontal, SlidersHorizontal, User, UserCheck, Users, X } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, ChevronUp, Filter, Flame, Inbox, Search, SlidersHorizontal, User, UserCheck, Users, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   INQUIRY_KINDS,
@@ -40,7 +40,6 @@ import { pagesStaffPower } from '@/i18n/pagesStaffPower'; // saved views, table 
 import { ColumnChooser, SettingsTable, ViewModeToggle, useTableSettings, type ColumnDef } from '@/components/staffPower/tableSettings';
 import { useRowSelection } from '@/components/staffPower/selection';
 import { InquiriesBulkBar } from '@/components/staffPower/BulkBar';
-import { ExternalAutoQueuePanel } from '@/components/germanyJobs/ExternalAutoPanel'; // apply via Triad Vision: "Göndərməyə hazır" queue + automatic sending
 
 registerLazyCopy(pagesMarketing); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesAdminUx);
@@ -74,7 +73,6 @@ export default function Inquiries() {
   const drawer = useDrawerParam('open');
   const open = drawer.id;
   const [rulesOpen, setRulesOpen] = useState(false);
-  const [autoOpen, setAutoOpen] = useState(false);
   const panelCount = PANEL_KEYS.filter((k) => k !== 'assignee' && params.get(k)).length;
   const [filtersOpen, setFiltersOpen] = useState(panelCount > 0);
   const { user } = useAuth();
@@ -206,19 +204,11 @@ export default function Inquiries() {
         title={t('admin.nav.inquiries')}
         subtitle={t('admin.inquiries.subtitle')}
         actions={
-          <>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => setAutoOpen(true)}>
-              <SendHorizontal className="size-4" aria-hidden /> {t('xauto.admin.queueTitle')}
-            </button>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => setRulesOpen(true)}>
-              <SlidersHorizontal className="size-4" aria-hidden /> {t('mk.lead.settings.open')}
-            </button>
-          </>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setRulesOpen(true)}>
+            <SlidersHorizontal className="size-4" aria-hidden /> {t('mk.lead.settings.open')}
+          </button>
         }
       />
-      <Drawer open={autoOpen} onClose={() => setAutoOpen(false)} title={t('xauto.admin.title')} width="lg">
-        {autoOpen && <ExternalAutoQueuePanel />}
-      </Drawer>
       <LeadScoringSettingsDrawer open={rulesOpen} onClose={() => setRulesOpen(false)} canEdit={hasMinRole(user?.role, 'ADMIN')} />
 
       {isLoading && (

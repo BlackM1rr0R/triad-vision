@@ -6,8 +6,9 @@ import { prisma } from '../../db.js';
  *   clientsOnlyActiveVacancies  ON (default): a client starts a new case only for one of our open vacancies with a
  *                               free place; the visa type / profession come from the vacancy. OFF: the old free choice
  *                               of the visa type. Staff create cases for any visa type either way.
- *   allowExternalApplications   OFF (default): "apply via Triad Vision" for listings of other job sites (/jobs/germany,
- *                               pasted links) is switched off — the listing and its original link stay visible.
+ *   allowExternalApplications   no effect any more: "apply via Triad Vision" for listings of other job sites is retired
+ *                               (owner decision; the candidate applies directly, POST /api/germany-jobs/apply → 410).
+ *                               Kept in the stored setting only for compatibility; the admin switch is gone.
  * The test suite starts with the old behaviour (VACANCY_POLICY_DEFAULTS=legacy in tests/helpers/testEnv.ts) so older
  * tests keep their intent; the policy tests switch it on through the admin API.
  */

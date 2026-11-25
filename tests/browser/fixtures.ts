@@ -30,7 +30,6 @@ export interface Seed {
     review: SeedClient & { clientMessage: string };
     contract: SeedClient;
     docLink: SeedClient & { initialRequirementTitle: string; embassyRequirementTitle: string };
-    external: SeedClient & { listingTitle: string; listingCompany: string };
   };
   drive: { clientFolderId: string; clientFolderName: string; parentId: string };
   mail: { accountId: string; folderId: string; messageId: string; subject: string; vhMessageId: string; vhSubject: string };

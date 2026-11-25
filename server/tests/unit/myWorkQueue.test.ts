@@ -86,7 +86,8 @@ describe('withoutRequests (one entry per contract)', () => {
 
 describe('queue kinds + sorting', () => {
   it('has the new kinds', () => {
-    for (const k of ['contract_triad', 'contract_approve', 'external_help', 'external_ready', 'vacancy_request']) expect(WORK_KINDS).toContain(k);
+    for (const k of ['contract_triad', 'contract_approve', 'vacancy_request']) expect(WORK_KINDS).toContain(k);
+    for (const k of ['external_help', 'external_ready']) expect(WORK_KINDS).not.toContain(k); // external apply retired
   });
 
   it('overdue first, then priority, then nearest deadline, then oldest', () => {

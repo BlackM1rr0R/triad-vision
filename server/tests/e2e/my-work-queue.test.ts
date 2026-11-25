@@ -6,7 +6,7 @@ import { createClient, uniq } from '../helpers/factories';
 import { expectStatus } from '../helpers/workflow';
 import type { WorkItem } from '../../src/lib/myWork.js';
 
-/** "Bu günün işləri" queue (GET /api/admin/my-work): case contracts, external applications, vacancy requests, scope=team. */
+/** "Bu günün işləri" queue (GET /api/admin/my-work): case contracts, vacancy requests, scope=team (external applications are no longer queued). */
 
 const DAY = 24 * 60 * 60 * 1000;
 const ago = (ms: number) => new Date(Date.now() - ms);
@@ -45,26 +45,6 @@ const contractRequest = async (caseId: string, clientId: string, o: { status: 'S
       },
     } as never,
   });
-
-const externalApp = async (o: { reason: string | null; email?: string | null; assignedStaffId?: string | null }) => {
-  const inquiry = await prisma.inquiry.create({
-    data: { kind: 'contact', contactName: `Ext ${uniq('n')}`, email: `${uniq('e')}@example.com`, message: 'apply', locale: 'az', assignedStaffId: o.assignedStaffId ?? null } as never,
-  });
-  await prisma.externalJobApplication.create({
-    data: {
-      inquiryId: inquiry.id,
-      provider: 'link',
-      listingUrl: 'https://example.com/job',
-      listingTitle: 'Berufskraftfahrer',
-      listingCompany: 'Spedition GmbH',
-      autoState: 'READY',
-      autoReason: o.reason,
-      clientHelpAt: o.reason === 'CLIENT_HELP' ? ago(2 * DAY) : null,
-      employerEmail: o.email ?? null,
-    },
-  });
-  return inquiry;
-};
 
 describe('my work queue: scope', () => {
   it('scope=team is open to every staff member; scope=all stays ADMIN+', async () => {
@@ -117,25 +97,15 @@ describe('my work queue: case contracts', () => {
   });
 });
 
-describe('my work queue: external applications + vacancy requests', () => {
-  it('client asked for help → external_help (HIGH); other READY → external_ready; send-now only with an employer address', async () => {
+describe('my work queue: vacancy requests (no external applications)', () => {
+  it('external applications are no longer queued (external apply retired): an old READY row gives no item', async () => {
     const staff = await asStaff();
-    const help = await externalApp({ reason: 'CLIENT_HELP', email: 'jobs@example.com' });
-    const ready = await externalApp({ reason: null });
-    const b = await work(staff.agent);
-    const h = ofKind(b, 'external_help').find((i) => i.refs.inquiryId === help.id)!;
-    expect(h).toMatchObject({ priority: 'HIGH', category: 'leads', link: `/admin/inquiries?open=${help.id}` });
-    expect(h.actions.map((a) => a.key)).toEqual(['open', 'sendNow', 'markSent']);
-    const r = ofKind(b, 'external_ready').find((i) => i.refs.inquiryId === ready.id)!;
-    expect(r.actions.map((a) => a.key)).toEqual(['open', 'markSent']);
-  });
-
-  it("someone else's lead is only in the team view", async () => {
-    const staff = await asStaff();
-    const colleague = await asStaff();
-    const inq = await externalApp({ reason: 'CLIENT_HELP', assignedStaffId: colleague.user.id });
-    expect(ofKind(await work(staff.agent), 'external_help').some((i) => i.refs.inquiryId === inq.id)).toBe(false);
-    expect(ofKind(await work(staff.agent, 'team'), 'external_help').some((i) => i.refs.inquiryId === inq.id)).toBe(true);
+    const inquiry = await prisma.inquiry.create({ data: { kind: 'contact', contactName: `Ext ${uniq('n')}`, email: `${uniq('e')}@example.com`, message: 'apply', locale: 'az' } as never });
+    await prisma.externalJobApplication.create({
+      data: { inquiryId: inquiry.id, provider: 'link', listingUrl: 'https://example.com/job', autoState: 'READY', autoReason: 'CLIENT_HELP', clientHelpAt: ago(2 * DAY) },
+    });
+    const b = await work(staff.agent, 'team');
+    expect(b.items.some((i) => i.refs.inquiryId === inquiry.id)).toBe(false);
   });
 
   it('NEW vacancy request → vacancy_request; "take" (existing endpoint) removes it', async () => {

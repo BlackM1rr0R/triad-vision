@@ -56,6 +56,7 @@ const az = {
     },
     admin: {
       title: 'Avtomatik göndərmə',
+      retired: 'Avtomatik göndərmə dayandırılıb: xarici elanlara namizəd özü müraciət edir. Burada köhnə qeydlər göstərilir.',
       today: 'Avtomatik göndərildi bu gün: {{n}} / {{limit}}',
       on: 'Avtomatik göndərmə: aktiv',
       off: 'Avtomatik göndərmə: deaktiv',
@@ -210,6 +211,7 @@ const de: Copy = {
     },
     admin: {
       title: 'Automatischer Versand',
+      retired: 'Der automatische Versand ist eingestellt: Bei externen Anzeigen bewirbt sich die Person selbst. Hier stehen nur frühere Daten.',
       today: 'Heute automatisch gesendet: {{n}} / {{limit}}',
       on: 'Automatischer Versand: aktiv',
       off: 'Automatischer Versand: aus',
@@ -362,6 +364,7 @@ const en: Copy = {
     },
     admin: {
       title: 'Automatic sending',
+      retired: 'Automatic sending is retired: for external listings the candidate applies directly. Earlier records are shown here.',
       today: 'Sent automatically today: {{n}} / {{limit}}',
       on: 'Automatic sending: on',
       off: 'Automatic sending: off',
@@ -514,6 +517,7 @@ const ru: Copy = {
     },
     admin: {
       title: 'Автоматическая отправка',
+      retired: 'Автоматическая отправка отключена: на внешние вакансии кандидат откликается сам. Здесь показаны прежние данные.',
       today: 'Отправлено автоматически сегодня: {{n}} / {{limit}}',
       on: 'Автоматическая отправка: включена',
       off: 'Автоматическая отправка: выключена',

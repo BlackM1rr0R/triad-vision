@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, Globe2, Heart, Landmark, Link2, MapPin, Search, Send, X } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BellRing, Building2, ChevronLeft, ChevronRight, ExternalLink, FileText, Globe2, Heart, Landmark, MapPin, Search, X } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy, registerLazyCopy } from '@/i18n';
@@ -15,7 +15,6 @@ import {
   RADII,
   applyFromParams,
   baJobboerseUrl,
-  isListingUrl,
   searchFromParams,
   savedSnapshot,
   searchToParams,
@@ -31,19 +30,12 @@ import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Lost, SearchEmpty } from '@/components/illustrations';
 import { useJobLabels } from '@/components/jobs/labels';
-import type { ExternalListing } from '@/components/germanyJobs/ApplyDialog';
+import { DirectApplyButton, DirectApplyHelpers, DirectApplyNote, type DirectListing } from '@/components/germanyJobs/DirectApply';
 import { AlertDialog } from '@/components/germanyJobs/AlertDialog';
 import { SaveJobButton } from '@/components/germanyJobs/SaveJobButton';
 import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
 import { useAuth } from '@/lib/auth';
 import { pagesGermanyJobAlerts } from '@/i18n/pagesGermanyJobAlerts';
-import { afterLoad } from '@/lib/idle';
-import { ExternalApplyOff } from '@/components/vacancyPlaces/ExternalApplyOff'; // "apply via Triad Vision" switched off by the admin
-
-// "Apply via Triad Vision" dialog: own chunk (its form, the CV picker and their copy, ~70 KB), fetched once the
-// page has loaded so it still opens at once, and mounted from the first time a listing is chosen.
-const loadApplyDialog = () => import('@/components/germanyJobs/ApplyDialog');
-const ApplyDialog = lazy(() => loadApplyDialog().then((m) => ({ default: m.ApplyDialog })));
 
 registerLazyCopy(pagesJobs); // only the copy of the language in use, awaited before the page renders (vite/lazyCopy.ts)
 registerCopy(pagesGermanyJobs);
@@ -85,9 +77,11 @@ const PERIOD_KEY = { year: 'perYear', month: 'perMonth', week: 'perWeek', day: '
 /**
  * Almaniya iş bazası — /jobs/germany (landing, indexable: our own text + the form) and /jobs/germany/search
  * (results, noindex: third-party listings, server lib/seoCatalogue.ts). German jobs and Ausbildung places from free
- * job sources (Arbeitnow by default; Careerjet / Jooble / Adzuna when configured, server lib/germanyJobs), shown apart from our own verified vacancies (/jobs); each listing can be
- * applied for "via Triad Vision" (ApplyDialog) or opened at its source. A box builds the public search URL of the
- * official BA Jobbörse from the same form, and any pasted job-ad link can be applied for as well.
+ * job sources (Arbeitnow by default; Careerjet / Jooble / Adzuna when configured, server lib/germanyJobs), shown apart from our own verified vacancies (/jobs).
+ * Owner decision: for these listings the candidate applies to the employer directly with their own CV ("Elanı aç və
+ * müraciət et" opens the listing; Triad Vision is not an intermediary). Signed-in clients get free helpers next to
+ * each listing (Lebenslauf PDF, a generic Anschreiben; components/germanyJobs/DirectApply). A box builds the public
+ * search URL of the official BA Jobbörse from the same form.
  *
  * Hydration: the form state comes from the URL (same on server and client); the config query is server-rendered
  * (SSR key "germany-jobs-config"); the results are fetched in the browser only.
@@ -100,14 +94,8 @@ export default function GermanyJobs() {
   const [params, setParams] = useSearchParams();
   const search = useMemo(() => searchFromParams(params), [params]);
   const [form, setForm] = useState<GermanyJobSearch>(search);
-  const [listing, setListing] = useState<ExternalListing | null>(null);
-  const [applyMounted, setApplyMounted] = useState(false);
-  useEffect(() => {
-    if (listing) setApplyMounted(true);
-  }, [listing]);
-  useEffect(() => afterLoad(() => void loadApplyDialog().catch(() => undefined)), []);
-  const [pasted, setPasted] = useState('');
-  const [pastedTouched, setPastedTouched] = useState(false);
+  // Listing from a job alert e-mail link (?apply=…): shown as a card with the direct link.
+  const [listing, setListing] = useState<DirectListing | null>(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const saved = useSavedJobs();
   const { user } = useAuth();
@@ -115,13 +103,12 @@ export default function GermanyJobs() {
   // Back / forward and shared URLs: the form follows the URL.
   useEffect(() => setForm(search), [search]);
 
-  // "Apply via Triad Vision" link of a job alert e-mail (?apply=<id>&at&ac&al&au): opens the apply form for that
-  // listing once, then the listing parameters leave the URL (browser only, after hydration). With applying switched
-  // off, the same listing is shown as a card with its original link instead (older e-mails still carry the link).
+  // Listing link of a job alert e-mail (?apply=<id>&at&ac&al&au): the listing is shown once as a card with the direct
+  // link and the helpers, then the listing parameters leave the URL (browser only, after hydration).
   useEffect(() => {
     const fromMail = applyFromParams(params);
     if (!APPLY_PARAMS.some((k) => params.has(k))) return;
-    if (fromMail) setListing({ ...fromMail, type: search.type });
+    if (fromMail) setListing({ url: fromMail.url, title: fromMail.title, company: fromMail.company, location: fromMail.location, type: search.type });
     const next = new URLSearchParams(params);
     APPLY_PARAMS.forEach((k) => next.delete(k));
     setParams(next, { replace: true });
@@ -130,13 +117,10 @@ export default function GermanyJobs() {
 
   const config = useQuery({
     queryKey: ['germany-jobs-config'],
-    queryFn: async () => (await api.get<{ search: boolean; sources: GermanyJobSourceInfo[]; apply?: boolean }>('/germany-jobs/config')).data,
+    queryFn: async () => (await api.get<{ search: boolean; sources: GermanyJobSourceInfo[] }>('/germany-jobs/config')).data,
     staleTime: 60 * 1000,
   });
   const enabled = config.data?.search === true;
-  // Admin setting "allow applications to external Germany job listings" (default off): these are not our vacancies,
-  // so without it only the listing and its original link are shown (server 403 EXTERNAL_APPLICATIONS_DISABLED).
-  const canApply = config.data?.apply === true;
 
   const results = useQuery({
     queryKey: ['germany-jobs-search', search],
@@ -170,7 +154,6 @@ export default function GermanyJobs() {
   };
 
   const baUrl = baJobboerseUrl(form);
-  const pastedOk = isListingUrl(pasted);
   const fmtDate = (iso: string | null) => (iso ? new Intl.DateTimeFormat(DATE_LOCALE[locale], { dateStyle: 'medium' }).format(new Date(iso)) : '');
   const salary = (j: GermanyJob) => {
     if (j.salaryMin == null && j.salaryMax == null) return j.salaryText;
@@ -178,8 +161,6 @@ export default function GermanyJobs() {
     return j.salaryPeriod ? t(`gj.card.${PERIOD_KEY[j.salaryPeriod]}`, { value }) : value;
   };
   const sourceOf = (id: string) => results.data?.sources.find((x) => x.id === id) ?? config.data?.sources.find((x) => x.id === id) ?? FALLBACK_SOURCE[id];
-  const applyFor = (j: GermanyJob) =>
-    setListing({ provider: j.source, url: j.url, listingId: j.id, externalId: j.id.slice(0, 64), title: j.title, company: j.company, location: j.location, type: search.type, created: j.created });
   const sourceList = results.data?.sources ?? config.data?.sources ?? [];
 
   const field = 'input h-11';
@@ -270,7 +251,7 @@ export default function GermanyJobs() {
         </form>
       </PageHero>
 
-      {listing && config.data && !canApply && listing.provider !== 'link' && (
+      {listing && (
         <section className="section-sm" aria-labelledby="gj-mail-listing-h">
           <div className="container-x">
             <div className="card relative rounded-2xl p-5">
@@ -295,11 +276,9 @@ export default function GermanyJobs() {
                   )}
                 </p>
               )}
-              <a href={listing.url} target="_blank" rel="nofollow noopener noreferrer" className={buttonClass({ variant: 'secondary', className: 'mt-4' })}>
-                {t('gj.card.original')} <ExternalLink className="size-3.5" aria-hidden />
-                <span className="sr-only">{t('gj.card.newTab')}</span>
-              </a>
-              <ExternalApplyOff className="mt-4 border-t border-line pt-4" />
+              <DirectApplyButton url={listing.url} className="mt-4" />
+              <DirectApplyNote className="mt-3" />
+              <DirectApplyHelpers listing={listing} className="mt-3" />
             </div>
           </div>
         </section>
@@ -415,17 +394,13 @@ export default function GermanyJobs() {
                         )}
                         {j.snippet && <p className="mt-3 line-clamp-4 text-sm text-muted">{j.snippet}</p>}
                         {j.created && <p className="mt-2 text-xs text-subtle">{t('gj.card.posted', { date: fmtDate(j.created) })}</p>}
-                        <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                          {canApply && (
-                            <Button icon={Send} onClick={() => applyFor(j)}>
-                              {t('gj.card.apply')}
-                            </Button>
-                          )}
-                          <a href={j.url} target="_blank" rel="nofollow noopener noreferrer" className={buttonClass({ variant: 'secondary' })}>
-                            {t('gj.card.original')} <ExternalLink className="size-3.5" aria-hidden />
-                            <span className="sr-only">{t('gj.card.newTab')}</span>
-                          </a>
-                          <SaveJobButton job={savedSnapshot(j, search.type)} className="ml-auto" />
+                        <div className="mt-auto pt-4">
+                          <div className="flex flex-wrap gap-2">
+                            <DirectApplyButton url={j.url} />
+                            <SaveJobButton job={savedSnapshot(j, search.type)} className="ml-auto" />
+                          </div>
+                          <DirectApplyNote className="mt-2" />
+                          <DirectApplyHelpers listing={{ url: j.url, title: j.title, company: j.company, location: j.location, type: search.type }} className="mt-2" />
                         </div>
                       </li>
                     );
@@ -476,46 +451,23 @@ export default function GermanyJobs() {
             </a>
           </div>
 
-          {!canApply ? (
-            <ExternalApplyOff />
-          ) : (
-          <form
-            className="card rounded-3xl p-6 sm:p-8"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setPastedTouched(true);
-              if (pastedOk) setListing({ provider: 'link', url: pasted.trim(), type: form.type });
-            }}
-          >
+          <div className="card rounded-3xl p-6 sm:p-8">
             <p className="eyebrow">
-              <Link2 className="size-4" aria-hidden /> Triad Vision
+              <FileText className="size-4" aria-hidden /> Lebenslauf · Anschreiben
             </p>
-            <h2 className="mt-2 font-display text-xl font-semibold text-ink">{t('gj.link.title')}</h2>
-            <p className="mt-2 text-muted">{t('gj.link.text')}</p>
-            <label className="label mt-4" htmlFor="gj-paste">{t('gj.link.label')}</label>
-            <input
-              id="gj-paste"
-              type="url"
-              inputMode="url"
-              maxLength={1000}
-              className="input h-11"
-              placeholder={t('gj.link.placeholder')}
-              value={pasted}
-              onChange={(e) => setPasted(e.target.value)}
-              onBlur={() => setPastedTouched(true)}
-              aria-invalid={(pastedTouched && !!pasted && !pastedOk) || undefined}
-              aria-describedby={pastedTouched && pasted && !pastedOk ? 'gj-paste-err' : undefined}
-            />
-            {pastedTouched && pasted && !pastedOk && (
-              <p id="gj-paste-err" className="mt-1 text-xs text-danger">
-                {t('gj.link.invalid')}
-              </p>
-            )}
-            <button type="submit" className={buttonClass({ className: 'mt-4' })} disabled={!pasted.trim()}>
-              <Send className="size-4" aria-hidden /> {t('gj.link.button')}
-            </button>
-          </form>
-          )}
+            <h2 className="mt-2 font-display text-xl font-semibold text-ink">{t('gj.direct.title')}</h2>
+            <p className="mt-2 text-muted">{t('gj.direct.text')}</p>
+            <DirectApplyNote className="mt-3 text-sm" />
+            {user?.role === 'CLIENT' ? (
+              <Link to="/account/cv" className={buttonClass({ variant: 'outline', className: 'mt-5' })}>
+                {t('gj.direct.cvBuilder')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            ) : !user ? (
+              <Link to="/register" className={buttonClass({ variant: 'outline', className: 'mt-5' })}>
+                {t('gj.direct.register')} <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -557,11 +509,6 @@ export default function GermanyJobs() {
         </div>
       </section>
 
-      {canApply && (applyMounted || listing) && (
-        <Suspense fallback={null}>
-          <ApplyDialog listing={listing} onClose={() => setListing(null)} />
-        </Suspense>
-      )}
       <AlertDialog search={search} open={alertOpen} onClose={() => setAlertOpen(false)} />
     </>
   );

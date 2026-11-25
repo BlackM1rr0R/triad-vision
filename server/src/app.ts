@@ -315,7 +315,7 @@ export const createApp = () => {
   app.use('/api/glossary', glossaryRouter); // German bureaucracy glossary (static terms, lib/glossary)
   app.use('/api/trust', trustRouter); // Trust Center (public)
   app.use('/api/candidate-catalogue', candidateCatalogueRouter); // anonymous k-anonymous candidate groups (public)
-  app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (Adzuna API) + "apply via Triad Vision" for external listings
+  app.use('/api/germany-jobs', germanyJobsRouter); // German job / Ausbildung search (external listings: the candidate applies directly; /apply answers 410)
   app.use('/api/compare-visas', compareRouter); // "which visa fits me?" comparison table + FAQ
   app.use('/api/visa-checklist', visaChecklistRouter); // public document checklist generator (/visa-document-checklist)
   app.use('/api/lead-magnets', leadMagnetsRouter); // e-book lead magnets: form → Inquiry + signed download link
@@ -362,7 +362,7 @@ export const createApp = () => {
   app.use('/api/privacy/access-log', accessLogRouter); // before the privacy centre router
   app.use('/api/privacy', privacyRouter);
   app.use('/api/cv', cvRouter);
-  app.use('/api/external-applications', externalApplicationsRouter); // client portal: "apply via Triad Vision" applications, status, Anschreiben
+  app.use('/api/external-applications', externalApplicationsRouter); // client portal: earlier "apply via Triad Vision" applications (read-only history)
   app.use('/api/vault', vaultRouter);
   app.use('/api/arrival', arrivalRouter);
   app.use('/api/housing', housingRouter);

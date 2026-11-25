@@ -160,18 +160,15 @@ describe('"Clients can only apply to active vacancies" (admin setting)', () => {
   });
 });
 
-describe('external Germany job listings ("apply via Triad Vision")', () => {
-  it('blocked with 403 EXTERNAL_APPLICATIONS_DISABLED when switched off; /config says so', async () => {
-    await setPolicy({ allowExternalApplications: false });
-    expect(expectStatus(await anon().get('/api/germany-jobs/config'), 200).body.apply).toBe(false);
-    const res = await anon().post('/api/germany-jobs/apply').field('name', 'Ali').field('email', 'ali@example.com').field('listingUrl', 'https://example.com/job/1');
-    expect(res.status).toBe(403);
-    expect(res.body.error).toBe('EXTERNAL_APPLICATIONS_DISABLED');
+describe('external Germany job listings (apply via Triad Vision retired)', () => {
+  it('410 EXTERNAL_APPLY_DIRECT whatever the old policy switch says; /config says apply: false', async () => {
+    for (const allow of [false, true]) {
+      await setPolicy({ allowExternalApplications: allow });
+      expect(expectStatus(await anon().get('/api/germany-jobs/config'), 200).body.apply).toBe(false);
+      const res = await anon().post('/api/germany-jobs/apply').field('name', 'Ali').field('email', 'ali@example.com').field('listingUrl', 'https://example.com/job/1');
+      expect(res.status).toBe(410);
+      expect(res.body.error).toBe('EXTERNAL_APPLY_DIRECT');
+    }
     expect(await prisma.inquiry.count()).toBe(0);
-
-    await setPolicy({ allowExternalApplications: true });
-    expect(expectStatus(await anon().get('/api/germany-jobs/config'), 200).body.apply).toBe(true);
-    // Switched on: the request reaches validation again (400 for the incomplete form instead of 403).
-    expect((await anon().post('/api/germany-jobs/apply').field('name', 'Ali')).status).toBe(400);
   });
 });

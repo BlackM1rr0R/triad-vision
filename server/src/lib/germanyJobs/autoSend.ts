@@ -18,12 +18,16 @@ import { cvPath, hostOf } from './apply.js';
 import { notifyStatusChange } from './applicationStatus.js';
 import { attachLebenslaufCopy } from './lebenslaufAttach.js';
 import { baseDomain, checkExternalApplication, isGermanLevel, missingKey, parseGermanRequirement, readMissing, type AutoCheckResult } from './autoCheck.js';
-import { dayStart, getAutoSendSettings, limitReason, nextDayStart, replyToAddress, type AutoSendSettings } from './autoSettings.js';
+import { EXTERNAL_APPLY_RETIRED, dayStart, getAutoSendSettings, limitReason, nextDayStart, replyToAddress, type AutoSendSettings } from './autoSettings.js';
 import { EMPLOYER_CATEGORY, effectiveLimit, isSuppressed, refreshSendHealth, sendingDomain } from '../deliverability/service.js';
 import { clientHelpStaffText, clientRemindMessage, clientSendMessage, employerMail, localePath, needsMessage } from './autoTexts.js';
 
 /**
- * Automatic handling of "apply via Triad Vision" applications (owner decision: full automatic sending with checks):
+ * RETIRED (owner decision): for external listings the candidate applies to the employer directly; the pipeline below
+ * no longer runs (EXTERNAL_APPLY_RETIRED in autoSettings.ts): processing, re-checks, the scheduler run, reminders and
+ * staff "send now" return without doing anything. Earlier applications keep their rows as history.
+ *
+ * Automatic handling of "apply via Triad Vision" applications (former owner decision: full automatic sending with checks):
  *
  *   new application ─► check (lib/germanyJobs/autoCheck.ts)
  *     ├─ data missing → NEEDS_DATA: status stays SUBMITTED with a note; the client is told exactly what is missing
@@ -325,6 +329,7 @@ const sendToEmployer = async (app: App, settings: AutoSendSettings, staffId: str
  * from the scheduler and after staff actions. Returns the new state (null = not handled automatically).
  */
 export const processExternalApplication = async (id: string, opts: { now?: Date } = {}): Promise<AutoState | null> => {
+  if (EXTERNAL_APPLY_RETIRED) return null; // retired: nothing is processed any more
   if (isImpersonating()) return null; // "view as client" never writes
   try {
     const app = await loadApp(id);
@@ -397,7 +402,7 @@ const routeAfterCheck = async (app: App, user: Awaited<ReturnType<typeof clientU
 
 /** The client changed profile / CV / documents: re-check their open applications (never throws). */
 export const recheckUserApplications = async (userId: string) => {
-  if (isImpersonating()) return;
+  if (EXTERNAL_APPLY_RETIRED || isImpersonating()) return;
   try {
     const rows = await prisma.externalJobApplication.findMany({ where: { userId, status: 'SUBMITTED', autoState: { in: ['NEEDS_DATA', 'NO_CONSENT'] } }, select: { id: true }, take: 20 });
     for (const r of rows) await processExternalApplication(r.id);
@@ -412,6 +417,7 @@ export const recheckUserApplications = async (userId: string) => {
  * SENDING after a crash (handed to staff instead of a second send).
  */
 export const runExternalAutoSend = async (now = new Date()) => {
+  if (EXTERNAL_APPLY_RETIRED) return { sent: 0, rechecked: 0, stuck: 0, reminded: 0 };
   const settings = await getAutoSendSettings();
   await refreshSendHealth(now); // lower / recover the daily limit from the bounce rate before sending
   const stuck = await prisma.externalJobApplication.updateMany({
@@ -452,6 +458,7 @@ export const runExternalAutoSend = async (now = new Date()) => {
 
 /** One reminder CLIENT_REMIND_DAYS after the hand-over while the client has not confirmed (conditional: once). */
 export const remindClientSend = async (now = new Date()) => {
+  if (EXTERNAL_APPLY_RETIRED) return 0;
   const rows = await prisma.externalJobApplication.findMany({
     where: { autoState: 'CLIENT_SEND', status: 'SUBMITTED', autoSentAt: null, clientRemindedAt: null, clientSendAt: { lte: new Date(now.getTime() - CLIENT_REMIND_DAYS * 24 * 60 * 60 * 1000) } },
     select: { id: true },
@@ -510,6 +517,7 @@ export const clientNeedsHelp = async (applicationId: string, userId: string, not
 // ─── Staff overrides (routes/admin/externalApplications.ts) ───────────────
 
 export const staffSendNow = async (applicationId: string, staffId: string): Promise<SendOutcome> => {
+  if (EXTERNAL_APPLY_RETIRED) return 'FAILED';
   const app = await loadApp(applicationId);
   if (!app) return 'FAILED';
   if (app.autoSentAt) return 'BUSY';
@@ -541,6 +549,7 @@ export const stopAutomation = (applicationId: string) =>
 
 /** Staff switch the automation on again for a stopped / duplicate row: runs the pipeline from the start. */
 export const resumeAutomation = async (applicationId: string) => {
+  if (EXTERNAL_APPLY_RETIRED) return null;
   await prisma.externalJobApplication.updateMany({ where: { id: applicationId, autoSentAt: null, autoState: { in: ['STOPPED', 'DUPLICATE', 'READY', 'QUEUED', 'CLIENT_SEND'] } }, data: { autoState: null, autoReason: null, autoNextAt: null } });
   return processExternalApplication(applicationId);
 };

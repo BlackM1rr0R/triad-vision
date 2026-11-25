@@ -36,8 +36,6 @@ export type WorkKind =
   | 'interview' // employer ↔ candidate interview today / this week
   | 'contract_triad' // case contract waiting for the Triad Vision signature (components/caseContracts)
   | 'contract_approve' // case contract signed by every party, staff approve
-  | 'external_help' // apply via Triad Vision: the client pressed "Alınmadı"
-  | 'external_ready' // apply via Triad Vision: staff "Göndərməyə hazır" queue
   | 'vacancy_request'; // new "Vakansiya sorğusu"
 export type WorkCategory = 'documents' | 'tasks' | 'mail' | 'signatures' | 'bookings' | 'leads' | 'other';
 export type WorkPriority = 'URGENT' | 'HIGH' | 'NORMAL';

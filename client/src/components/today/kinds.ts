@@ -31,7 +31,7 @@ import { pagesCaseProcessing } from '@/i18n/pagesCaseProcessing';
 import { pagesPartnerRecords } from '@/i18n/pagesPartnerRecords';
 import { MessageCircleReply, ScrollText, Video } from 'lucide-react';
 import { pagesMyDay } from '@/i18n/pagesMyDay';
-import { BadgeCheck, LifeBuoy, PenTool, SearchCheck, Send } from 'lucide-react';
+import { BadgeCheck, PenTool, SearchCheck } from 'lucide-react';
 import { pagesTodayQueue } from '@/i18n/pagesTodayQueue';
 
 registerCopy(pagesClientProcessToday); // client_task_overdue kind + office-visit notes (client process)
@@ -75,8 +75,6 @@ export const KIND_ICON: Record<WorkKind, LucideIcon> = {
   interview: Video, // employer ↔ candidate interview
   contract_triad: PenTool, // case contract: Triad Vision signs
   contract_approve: BadgeCheck, // case contract signed by everyone: staff approve
-  external_help: LifeBuoy, // apply via Triad Vision: the client asked for help
-  external_ready: Send, // apply via Triad Vision: ready to send (staff queue)
   vacancy_request: SearchCheck, // new "Vakansiya sorğusu"
 };
 

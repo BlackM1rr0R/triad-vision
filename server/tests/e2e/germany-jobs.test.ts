@@ -1,18 +1,13 @@
-import fs from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient } from '../helpers/api';
-import { emailsTo, prisma } from '../helpers/db';
-import { ADMIN_INBOX } from '../helpers/testEnv';
-import { makePdf, PNG_BUFFER } from '../helpers/files';
-import { staffNotifications } from '../helpers/notify';
+import { prisma } from '../helpers/db';
+import { makePdf } from '../helpers/files';
 import { setJobsFetch } from '../../src/lib/germanyJobs/common.js';
 import { resetProviders } from '../../src/lib/germanyJobs/providers.js';
-import { cvPath } from '../../src/lib/germanyJobs/apply.js';
-import { anonymizeInquiries } from '../../src/lib/privacy/inquiries.js';
 
 /**
  * Almaniya iş bazası (/api/germany-jobs): search over the job providers with a fake network (no real API is ever
- * called), and "apply via Triad Vision" for an external listing (validation, CV checks, stored lead, notices).
+ * called). "Apply via Triad Vision" for an external listing is retired: POST /apply answers 410.
  */
 
 const ENV_KEYS = ['ARBEITNOW_ENABLED', 'CAREERJET_API_KEY', 'JOOBLE_API_KEY', 'JOOBLE_ENABLED', 'ADZUNA_APP_ID', 'ADZUNA_APP_KEY', 'ADZUNA_ENABLED'];
@@ -227,69 +222,19 @@ const post = (f: Record<string, string>, file?: { data: Buffer; name: string; ty
   return r;
 };
 
-describe('POST /api/germany-jobs/apply', () => {
-  it('validates fields, consent, phone and the CV type / content', async () => {
-    expect((await post(fields({ listingUrl: 'javascript:alert(1)' }))).status).toBe(400);
-    expect((await post(fields({ consent: '' }))).status).toBe(400);
-    const phone = await post(fields({ phone: '12' }));
-    expect(phone.status).toBe(400);
-    expect(phone.body.error).toBe('INVALID_PHONE');
-    const png = await post(fields(), { data: PNG_BUFFER, name: 'cv.png', type: 'image/png' });
-    expect(png.status).toBe(400);
-    expect(png.body.error).toBe('UNSUPPORTED_FILE_TYPE');
-    const fake = await post(fields(), { data: Buffer.from('not a pdf at all'), name: 'cv.pdf', type: 'application/pdf' });
-    expect(fake.status).toBe(400);
-    expect(fake.body.error).toBe('FILE_CONTENT_MISMATCH');
-    expect(await prisma.inquiry.count()).toBe(0);
-  });
-
-  it('stores the lead with listing + CV, notifies staff, confirms to the applicant; staff see it and download the CV', async () => {
-    const admin = await asAdmin();
-    const pdf = await makePdf('Lebenslauf');
-    const res = await post(fields(), { data: pdf, name: 'Lebenslauf Aysel.pdf', type: 'application/pdf' });
-    expect(res.status).toBe(201);
-    const inquiry = await prisma.inquiry.findUniqueOrThrow({ where: { id: res.body.id }, include: { externalJob: true } });
-    expect(inquiry).toMatchObject({ kind: 'contact', email: 'aysel@example.com', phone: '+994501234567', locale: 'de', source: 'external-job:arbeitnow:arbeitnow.com', convertedUserId: null });
-    expect(inquiry.message).toContain('https://www.arbeitnow.com/jobs/companies/muster/koch-berlin');
-    expect(inquiry.externalJob).toMatchObject({ provider: 'arbeitnow', listingTitle: 'Koch (m/w/d)', germanLevel: 'B1', profession: 'Aşpaz', experienceYears: 4, cvOriginalName: 'Lebenslauf Aysel.pdf', cvMime: 'application/pdf' });
-    expect(fs.existsSync(cvPath(inquiry.externalJob!.cvStoredName!))).toBe(true);
-
-    const staff = await staffNotifications(admin.user.id);
-    expect(staff.some((n) => n.title.includes('Aysel') && n.link === `/admin/inquiries?open=${inquiry.id}`)).toBe(true);
-    await emailsTo(ADMIN_INBOX);
-    const mails = await emailsTo('aysel@example.com');
-    expect(mails[0].subject).toBe('Triad Vision · Ihre Bewerbung ist eingegangen');
-
-    const list = await admin.agent.get('/api/admin/inquiries?source=external-job');
-    expect(list.status).toBe(200);
-    expect(list.body.items).toHaveLength(1);
-    expect(list.body.items[0].externalJob).toMatchObject({ listingUrl: inquiry.externalJob!.listingUrl, cvOriginalName: 'Lebenslauf Aysel.pdf' });
-    expect(list.body.items[0].externalJob.cvStoredName).toBeUndefined();
-    const cv = await admin.agent.get(`/api/admin/germany-jobs/applications/${inquiry.id}/cv`);
-    expect(cv.status).toBe(200);
-    expect(cv.headers['content-type']).toContain('application/pdf');
-
-    // GDPR anonymisation removes the candidate details and the CV file.
-    await anonymizeInquiries([inquiry.id]);
-    const after = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: inquiry.id } });
-    expect(after).toMatchObject({ cvStoredName: null, profession: null, germanLevel: null });
-    expect(fs.existsSync(cvPath(inquiry.externalJob!.cvStoredName!))).toBe(false);
-  });
-
-  it('a signed-in client: lead attached to the account; pasted links of any site; honeypot stores nothing', async () => {
+describe('POST /api/germany-jobs/apply (retired: the candidate applies to the employer directly)', () => {
+  it('answers 410 EXTERNAL_APPLY_DIRECT for guests and clients, with or without a CV; nothing is stored or sent', async () => {
     const client = await asClient();
-    const res = await post(fields({ provider: 'link', externalId: '', listingUrl: 'https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1208446997-S', lng: 'uk' }), undefined, client.agent);
-    expect(res.status).toBe(201);
-    const q = await prisma.inquiry.findUniqueOrThrow({ where: { id: res.body.id }, include: { externalJob: true } });
-    expect(q.convertedUserId).toBe(client.user.id);
-    expect(q.locale).toBe('ru');
-    expect(q.source).toBe('external-job:link:arbeitsagentur.de');
-    expect(q.externalJob).toMatchObject({ userId: client.user.id, provider: 'link', cvStoredName: null });
-    const mails = await emailsTo('aysel@example.com');
-    expect(mails[0].subject).toBe('Triad Vision · Вашу заявку отримано');
-
-    const bot = await post(fields({ website: 'http://spam' }));
-    expect(bot.status).toBe(201);
-    expect(await prisma.inquiry.count()).toBe(1);
+    const pdf = await makePdf('Lebenslauf');
+    for (const agent of [anon(), client.agent]) {
+      const res = await post(fields(), { data: pdf, name: 'Lebenslauf.pdf', type: 'application/pdf' }, agent);
+      expect(res.status).toBe(410);
+      expect(res.body.error).toBe('EXTERNAL_APPLY_DIRECT');
+    }
+    expect((await post(fields({ website: 'http://spam' }))).status).toBe(410);
+    expect(await prisma.inquiry.count()).toBe(0);
+    expect(await prisma.externalJobApplication.count()).toBe(0);
+    expect(await prisma.emailLog.count({ where: { to: 'aysel@example.com' } })).toBe(0);
+    expect((await anon().get('/api/germany-jobs/config').expect(200)).body.apply).toBe(false);
   });
 });

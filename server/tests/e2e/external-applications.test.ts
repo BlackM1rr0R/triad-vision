@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { anon, asAdmin, asClient, asStaff, type Agent } from '../helpers/api';
+import { anon, asAdmin, asClient, asStaff } from '../helpers/api';
 import { emailsTo, prisma } from '../helpers/db';
 import { auditsSettled } from '../../src/lib/audit.js';
-import { applyInput, createExternalApplication, cvPath } from '../../src/lib/germanyJobs/apply.js';
+import { applyInput, createExternalApplication } from '../../src/lib/germanyJobs/apply.js';
 import { lebenslaufPath } from '../../src/lib/cv/versions.js';
 import { anonymizeInquiries } from '../../src/lib/privacy/inquiries.js';
 import { buildUserExport } from '../../src/lib/privacy/export.js';
@@ -11,9 +11,10 @@ import { cvPdfText as pdfText } from '../unit/cvPdfText';
 import { binaryParser } from '../helpers/files';
 
 /**
- * "Apply via Triad Vision" after the application: My applications in the portal (own rows, linking by verified
- * e-mail), staff status with client notifications, Lebenslauf versions attached in the apply dialog, and the
- * template-based Anschreiben (staff + client, admin-managed templates). No AI anywhere.
+ * Earlier "apply via Triad Vision" applications (the route is retired: the candidate applies to external listings
+ * directly; rows are seeded as the history they are): My applications in the portal (own rows, linking by verified
+ * e-mail, read-only), staff status with client notifications, Lebenslauf versions, the template-based Anschreiben
+ * (staff + client, admin-managed templates, the generic letter for any listing). No AI anywhere.
  */
 
 const fields = (o: Record<string, string> = {}) => ({
@@ -35,13 +36,7 @@ const fields = (o: Record<string, string> = {}) => ({
   ...o,
 });
 
-const apply = (f: Record<string, string>, agent?: Agent) => {
-  let r = agent ? agent.post('/api/germany-jobs/apply') : anon().post('/api/germany-jobs/apply');
-  for (const [k, v] of Object.entries(f)) r = r.field(k, v);
-  return r;
-};
-
-/** Direct insert (the public route allows 10 applications per hour and IP). */
+/** Direct insert of an earlier application (POST /api/germany-jobs/apply answers 410 now). */
 const seed = async (o: Record<string, string> = {}, userId: string | null = null) => {
   const q = await createExternalApplication(applyInput.parse(fields(o)), { phone: '+994501234567', lng: 'de', cv: null, userId, partnerId: null, accountLabel: null });
   return { body: { id: q.id } };
@@ -49,8 +44,8 @@ const seed = async (o: Record<string, string> = {}, userId: string | null = null
 
 const binary = (res: { body: unknown }) => res.body as Buffer;
 
-describe('Lebenslauf versions and "attach my Lebenslauf"', () => {
-  it('saves numbered versions, only the owner can download; the apply dialog attaches a copy of the newest', async () => {
+describe('Lebenslauf versions', () => {
+  it('saves numbered versions, only the owner can download or delete them', async () => {
     const client = await asClient({ email: 'ali@example.com', firstName: 'Əli', lastName: 'Məmmədov' });
     const other = await asClient();
     await client.agent.put('/api/cv').send({ data: { headline: 'Kraftfahrer', experience: [{ title: 'Kraftfahrer', employer: 'Azərsun', from: '2019-01', to: null }], drivingLicences: ['CE'], availableFrom: '2027-03' } }).expect(200);
@@ -76,39 +71,16 @@ describe('Lebenslauf versions and "attach my Lebenslauf"', () => {
     expect((await other.agent.delete(`/api/cv/lebenslauf/${v2.body.version.id}`)).status).toBe(404);
     expect((await anon().get(`/api/cv/lebenslauf/${v2.body.version.id}/pdf`)).status).toBe(401);
 
-    const res = await apply(fields({ attachLebenslauf: 'true' }), client.agent).expect(201);
-    const app = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: res.body.id } });
-    expect(app).toMatchObject({ userId: client.user.id, lebenslaufVersionId: v2.body.version.id, cvMime: 'application/pdf', status: 'SUBMITTED' });
-    expect(app.cvOriginalName).toMatch(/^Lebenslauf_.*_v2\.pdf$/);
-    expect(fs.existsSync(cvPath(app.cvStoredName!))).toBe(true);
-
-    // Deleting the version keeps what was sent with the application.
     const versionRow = await prisma.lebenslaufVersion.findUniqueOrThrow({ where: { id: v2.body.version.id } });
     await client.agent.delete(`/api/cv/lebenslauf/${v2.body.version.id}`).expect(200);
     expect(fs.existsSync(lebenslaufPath(versionRow.storageKey))).toBe(false);
-    expect(fs.existsSync(cvPath(app.cvStoredName!))).toBe(true);
-    const own = await client.agent.get(`/api/external-applications/${app.id}/cv`).buffer(true).parse(binaryParser).expect(200);
-    expect(own.headers['content-type']).toContain('application/pdf');
-    expect((await other.agent.get(`/api/external-applications/${app.id}/cv`)).status).toBe(404);
-  });
-
-  it('without a saved version a fresh one is built; anonymous visitors cannot attach one', async () => {
-    const client = await asClient({ email: 'ali@example.com' });
-    const res = await apply(fields({ attachLebenslauf: 'true' }), client.agent).expect(201);
-    const app = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: res.body.id } });
-    expect(app.lebenslaufVersionId).not.toBeNull();
-    expect(await prisma.lebenslaufVersion.count({ where: { userId: client.user.id } })).toBe(1);
-
-    const anonRes = await apply(fields({ attachLebenslauf: 'true', email: 'x@example.com' })).expect(201);
-    const anonApp = await prisma.externalJobApplication.findUniqueOrThrow({ where: { inquiryId: anonRes.body.id } });
-    expect(anonApp.cvStoredName).toBeNull();
   });
 });
 
 describe('My applications (portal)', () => {
   it('lists own applications only and links earlier ones sent with the verified e-mail', async () => {
-    const before = await apply(fields()).expect(201); // sent before signing in
-    const otherMail = await apply(fields({ email: 'someone@example.com' })).expect(201);
+    const before = await seed(); // sent before signing in
+    const otherMail = await seed({ email: 'someone@example.com' });
     const client = await asClient({ email: 'ali@example.com' });
     const other = await asClient({ email: 'someone@example.com', emailVerified: false });
 
@@ -137,13 +109,21 @@ describe('My applications (portal)', () => {
     const appId = list.body.items[0].id as string;
     expect((await other.agent.get(`/api/external-applications/${appId}/cover-letter`)).status).toBe(404);
     expect((await (await asStaff()).agent.get('/api/external-applications')).status).toBe(403);
+
+    // Read-only history: nothing is forwarded, confirmed or escalated any more.
+    for (const path of ['forward-consent', 'sent', 'help']) {
+      const r = await client.agent.post(`/api/external-applications/${appId}/${path}`).send({});
+      expect(r.status).toBe(410);
+      expect(r.body.error).toBe('EXTERNAL_APPLY_DIRECT');
+    }
+    expect(list.body.items[0].auto.clientSend).toBeNull();
   });
 });
 
 describe('status set by staff', () => {
   it('records the event, audits, notifies the client in their language (in-app + e-mail)', async () => {
     const client = await asClient({ email: 'ali@example.com', locale: 'de' });
-    const res = await apply(fields(), client.agent).expect(201);
+    const res = await seed({}, client.user.id);
     const staff = await asStaff();
     const url = `/api/admin/external-applications/${res.body.id}`;
 
@@ -161,7 +141,7 @@ describe('status set by staff', () => {
     expect(n.title).toBe('Bewerbung: An den Arbeitgeber weitergeleitet · Berufskraftfahrer CE (m/w/d)');
     expect(n.body).toContain('Hinweis: An Frau Weber');
     expect(n.link).toBe('/account/job-applications');
-    const mails = await emailsTo('ali@example.com', 2); // confirmation + status
+    const mails = await emailsTo('ali@example.com', 1); // the status e-mail
     expect(mails.some((m) => m.subject.includes('An den Arbeitgeber weitergeleitet'))).toBe(true);
     await auditsSettled();
     const log = await prisma.auditLog.findFirstOrThrow({ where: { action: 'EXTERNAL_JOB_APPLICATION_STATUS' } });
@@ -178,10 +158,10 @@ describe('status set by staff', () => {
   });
 
   it('an application without an account: the e-mail goes to the address of the form', async () => {
-    const res = await apply(fields({ email: 'guest@example.com', lng: 'ru' })).expect(201);
+    const res = await seed({ email: 'guest@example.com', lng: 'ru' });
     const admin = await asAdmin();
     await admin.agent.post(`/api/admin/external-applications/${res.body.id}/status`).send({ status: 'INTERVIEW', note: 'Звонок в пятницу' }).expect(200);
-    const mails = await emailsTo('guest@example.com', 2);
+    const mails = await emailsTo('guest@example.com', 1);
     expect(mails.some((m) => m.subject === 'Triad Vision · Заявка: Собеседование · Berufskraftfahrer CE (m/w/d)')).toBe(true);
   });
 });
@@ -190,7 +170,7 @@ describe('Anschreiben', () => {
   it('staff: draft from the detected template, edit, attach, PDF; anonymisation removes it', async () => {
     const client = await asClient({ email: 'ali@example.com', firstName: 'Əli', lastName: 'Məmmədov' });
     await client.agent.put('/api/cv').send({ data: { drivingLicences: ['B', 'C', 'CE'], availableFrom: '2099-03', languages: [{ language: 'Deutsch', level: 'B1' }] } }).expect(200);
-    const res = await apply(fields(), client.agent).expect(201);
+    const res = await seed({}, client.user.id);
     const staff = await asStaff();
     const url = `/api/admin/external-applications/${res.body.id}`;
 
@@ -232,7 +212,7 @@ describe('Anschreiben', () => {
 
   it('client: draft, PDF and saving to their letters', async () => {
     const client = await asClient({ email: 'ali@example.com' });
-    await apply(fields({ listingTitle: 'Koch (m/w/d)', listingCompany: 'Hotel Nord', profession: 'Koch' }), client.agent).expect(201);
+    await seed({ listingTitle: 'Koch (m/w/d)', listingCompany: 'Hotel Nord', profession: 'Koch' }, client.user.id);
     const appId = (await client.agent.get('/api/external-applications').expect(200)).body.items[0].id as string;
     const d = await client.agent.get(`/api/external-applications/${appId}/cover-letter`).expect(200);
     expect(d.body.draft.jobType).toBe('GASTRO');
@@ -244,6 +224,21 @@ describe('Anschreiben', () => {
     const letters = await client.agent.get('/api/cv/letters').expect(200);
     expect(letters.body.items.map((l: { id: string }) => l.id)).toContain(saved.body.letter.id);
     expect(letters.body.items[0].kind).toBe('JOB');
+  });
+
+  it('generic Anschreiben for any external listing: signed-in clients only, PDF download, nothing stored', async () => {
+    const client = await asClient({ email: 'ali@example.com', firstName: 'Əli', lastName: 'Məmmədov' });
+    const url = '/api/germany-jobs/cover-letter.pdf';
+    expect((await anon().post(url).send({ title: 'Koch (m/w/d)' })).status).toBe(401);
+    expect((await (await asStaff()).agent.post(url).send({ title: 'Koch (m/w/d)' })).status).toBe(403);
+    const before = { letters: await prisma.motivationLetter.count(), apps: await prisma.externalJobApplication.count(), inquiries: await prisma.inquiry.count() };
+    const pdf = await client.agent.post(url).send({ title: 'Koch (m/w/d)', company: 'Hotel Nord', location: 'Berlin', type: 'job' }).buffer(true).parse(binaryParser).expect(200);
+    expect(pdf.headers['content-type']).toContain('application/pdf');
+    expect(pdf.headers['content-disposition']).toContain('Anschreiben_');
+    const text = await pdfText(binary(pdf));
+    expect(text).toContain('Hotel Nord');
+    expect({ letters: await prisma.motivationLetter.count(), apps: await prisma.externalJobApplication.count(), inquiries: await prisma.inquiry.count() }).toEqual(before);
+    expect((await client.agent.post(url).send({ title: 'x', unknown: 1 })).status).toBe(400);
   });
 
   it('templates: ADMIN edits and resets, staff cannot; drafts use the custom text; unknown placeholders are flagged', async () => {

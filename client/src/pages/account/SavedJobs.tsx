@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { BellRing, Building2, ExternalLink, Heart, MapPin, Search, Send, Trash2 } from 'lucide-react';
+import { BellRing, Building2, Heart, MapPin, Search, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { registerCopy } from '@/i18n';
@@ -13,10 +12,9 @@ import { pagesPortalNav } from '@/i18n/pagesPortalNav';
 import { fmtDate } from '@/components/admin/labels';
 import { Spinner } from '@/components/ui/Spinner';
 import { buttonClass } from '@/components/ui/Button';
-import { ApplyDialog, type ExternalListing } from '@/components/germanyJobs/ApplyDialog';
+import { DirectApplyButton, DirectApplyHelpers, DirectApplyNote } from '@/components/germanyJobs/DirectApply'; // the candidate applies directly
 import { useSavedJobs } from '@/components/germanyJobs/savedJobs';
 import { useAlertSummary } from '@/components/germanyJobs/alertSummary';
-import { useApplicationPolicy } from '@/components/vacancyPlaces/api'; // external "apply via Triad Vision" on/off
 import { searchToParams, type AlertFrequency, type GermanyJobAlertView, type SavedGermanyJob } from '@/lib/germanyJobs';
 
 registerCopy(pagesGermanyJobAlerts);
@@ -26,7 +24,8 @@ const SOURCE_NAME: Record<string, string> = { arbeitnow: 'Arbeitnow', careerjet:
 
 /**
  * /account/saved-jobs — Learn › Saved jobs: listings saved in the Germany job search (snapshot; the ad opens at its
- * source, "no longer available" when it left the source) and the client's Germany job alerts (frequency, delete).
+ * source, "no longer available" when it left the source; the candidate applies to the employer directly, with the free
+ * Lebenslauf / Anschreiben helpers) and the client's Germany job alerts (frequency, delete).
  * Server: routes/germanyJobAlerts.ts.
  */
 export default function AccountSavedJobs() {
@@ -35,9 +34,6 @@ export default function AccountSavedJobs() {
   const qc = useQueryClient();
   const saved = useSavedJobs();
   const summary = useAlertSummary();
-  const [listing, setListing] = useState<ExternalListing | null>(null);
-  // "Apply via Triad Vision" only while the admin allows applications to external listings (lib/vacancyPlaces).
-  const canApply = useApplicationPolicy().data?.allowExternalApplications === true;
   const alerts = useQuery({
     queryKey: ['germany-job-alerts-mine'],
     queryFn: async () => (await api.get<{ items: GermanyJobAlertView[]; emailNotifications: boolean }>('/germany-jobs/alerts/mine')).data,
@@ -120,22 +116,15 @@ export default function AccountSavedJobs() {
                         <span className="text-muted">{t('gjPortal.goneHint')}</span>
                       </p>
                     )}
+                    {!gone && (
+                      <>
+                        <DirectApplyNote className="mt-2" />
+                        <DirectApplyHelpers listing={j} className="mt-2" />
+                      </>
+                    )}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
-                    {!gone && canApply && (
-                      <button
-                        type="button"
-                        className={buttonClass({ size: 'sm' })}
-                        onClick={() =>
-                          setListing({ provider: j.source, url: j.url, listingId: j.id, externalId: j.id.slice(0, 64), title: j.title, company: j.company, location: j.location, type: j.type, created: j.created })
-                        }
-                      >
-                        <Send className="size-3.5" aria-hidden /> {t('gjPortal.apply')}
-                      </button>
-                    )}
-                    <a href={j.url} target="_blank" rel="nofollow noopener noreferrer" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
-                      {t('gjPortal.open')} <ExternalLink className="size-3.5" aria-hidden />
-                    </a>
+                    <DirectApplyButton url={j.url} size="sm" />
                     <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm' })} onClick={() => void removeSaved(j)}>
                       <Trash2 className="size-3.5" aria-hidden /> {t('gjPortal.remove')}
                       <span className="sr-only">: {j.title}</span>
@@ -188,8 +177,6 @@ export default function AccountSavedJobs() {
           </ul>
         )}
       </section>
-
-      <ApplyDialog listing={listing} onClose={() => setListing(null)} />
     </div>
   );
 }

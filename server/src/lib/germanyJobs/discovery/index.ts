@@ -3,7 +3,7 @@ import { prisma } from '../../../db.js';
 import { audit } from '../../audit.js';
 import { FetchBudgetExceeded, SafeFetchError, safeGet, type SafeResponse } from '../../net/safeFetch.js';
 import { processExternalApplication } from '../autoSend.js';
-import { getAutoSendSettings } from '../autoSettings.js';
+import { EXTERNAL_APPLY_RETIRED, getAutoSendSettings } from '../autoSettings.js';
 import { acceptCandidate, isBoardDomain, isProviderHost, registrableDomain, type AcceptContext } from './domains.js';
 import { contactLinks, extractCandidates, jsonLdFacts, softRedirect } from './extract.js';
 import { robotsAllowsUrl } from './robots.js';
@@ -209,6 +209,8 @@ const applyResult = async (id: string, inquiryId: string, r: DiscoveryResult | n
  * switched off → they continue at once without it. `fetchPage` replaces the network in tests.
  */
 export const runEmployerDiscovery = async (opts: { now?: Date; fetchPage?: PageFetcher; maxApps?: number; budgetMs?: number } = {}) => {
+  // Retired (owner decision): no employer e-mail discovery for external listings any more.
+  if (EXTERNAL_APPLY_RETIRED) return { checked: 0, found: 0, skipped: 0, deferred: 0 };
   const now = opts.now ?? new Date();
   const settings = await getAutoSendSettings();
   const rows = await prisma.externalJobApplication.findMany({

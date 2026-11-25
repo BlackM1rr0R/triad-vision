@@ -52,8 +52,6 @@ export const WORK_KINDS = [
   'interview', // employer ↔ candidate interview today / this week run by the viewer ("Bu günüm")
   'contract_triad', // case contract (Əmək / İş müqaviləsi) waiting for the Triad Vision signature (lib/caseContracts)
   'contract_approve', // case contract signed by every party, staff approve it (V2 İş müqaviləsi: the whole set)
-  'external_help', // "apply via Triad Vision": the client pressed "Alınmadı" and asked for help (READY + CLIENT_HELP)
-  'external_ready', // "apply via Triad Vision": staff "Göndərməyə hazır" queue (READY for another reason)
   'vacancy_request', // "Vakansiya sorğusu" still NEW (lib/vacancyRequests)
 ] as const;
 export type WorkKind = (typeof WORK_KINDS)[number];
@@ -92,8 +90,6 @@ const CATEGORY: Record<WorkKind, WorkCategory> = {
   interview: 'bookings',
   contract_triad: 'signatures',
   contract_approve: 'signatures',
-  external_help: 'leads',
-  external_ready: 'leads',
   vacancy_request: 'leads',
 };
 
@@ -129,8 +125,6 @@ const MORE_LINK: Record<WorkKind, string> = {
   interview: '/admin/interviews',
   contract_triad: '/admin/cases?status=CONTRACT_SENT',
   contract_approve: '/admin/cases?status=CONTRACT_SIGNED',
-  external_help: '/admin/inquiries',
-  external_ready: '/admin/inquiries',
   vacancy_request: '/admin/vacancies?tab=requests',
 };
 
@@ -1329,7 +1323,7 @@ const interviews = async (ctx: Ctx): Promise<Source> => {
   };
 };
 
-// ─── Case contracts, external applications, vacancy requests ───────────
+// ─── Case contracts, vacancy requests ───────────
 
 const contractRowSelect = {
   id: true,
@@ -1410,62 +1404,6 @@ const caseContracts = async (ctx: Ctx): Promise<Source[]> => {
   return [
     { kind: 'contract_triad', total: triad.length, items: triad.slice(0, LIMIT_PER_KIND).map(draft) },
     { kind: 'contract_approve', total: approve.length, items: approve.slice(0, LIMIT_PER_KIND).map(draft) },
-  ];
-};
-
-/**
- * "Apply via Triad Vision" applications in the staff queue (autoState READY): the client pressed "Alınmadı"
- * (CLIENT_HELP) or the automatic sending stopped for staff. Mine: the lead is mine or unassigned; team / all: every one.
- */
-const externalApplications = async (ctx: Ctx): Promise<Source[]> => {
-  if (!ctx.perms.clients) return [];
-  const inquiry: Prisma.InquiryWhereInput = { anonymizedAt: null, ...(ctx.team || ctx.caseTeam ? {} : { OR: [{ assignedStaffId: ctx.viewer.id }, { assignedStaffId: null }] }) };
-  const base: Prisma.ExternalJobApplicationWhereInput = { autoState: 'READY', status: 'SUBMITTED', inquiry };
-  const helpWhere: Prisma.ExternalJobApplicationWhereInput = { ...base, autoReason: 'CLIENT_HELP' };
-  // autoReason NULL is "another reason" too (SQL NOT never matches NULL).
-  const readyWhere: Prisma.ExternalJobApplicationWhereInput = { ...base, OR: [{ autoReason: null }, { autoReason: { not: 'CLIENT_HELP' } }] };
-  const select = {
-    inquiryId: true,
-    listingTitle: true,
-    listingCompany: true,
-    employerEmail: true,
-    autoReason: true,
-    autoCheckedAt: true,
-    clientHelpAt: true,
-    createdAt: true,
-    inquiry: { select: { contactName: true, phone: true, assignedStaffId: true } },
-  } satisfies Prisma.ExternalJobApplicationSelect;
-  const [help, helpTotal, ready, readyTotal] = await Promise.all([
-    prisma.externalJobApplication.findMany({ where: helpWhere, orderBy: { clientHelpAt: 'asc' }, take: LIMIT_PER_KIND, select }),
-    prisma.externalJobApplication.count({ where: helpWhere }),
-    prisma.externalJobApplication.findMany({ where: readyWhere, orderBy: { createdAt: 'asc' }, take: LIMIT_PER_KIND, select }),
-    prisma.externalJobApplication.count({ where: readyWhere }),
-  ]);
-  const item = (a: (typeof help)[number], kind: 'external_help' | 'external_ready'): Draft => {
-    const auto = `/admin/external-applications/${a.inquiryId}/auto`;
-    const href = `/admin/inquiries?open=${a.inquiryId}`;
-    const since = (kind === 'external_help' ? a.clientHelpAt : a.autoCheckedAt) ?? a.createdAt;
-    const actions: WorkAction[] = [open(href, true)];
-    if (a.employerEmail) actions.push({ key: 'sendNow', label: 'sendNow', type: 'api', method: 'POST', endpoint: `${auto}/send`, body: {}, confirm: true });
-    actions.push({ key: 'markSent', label: 'markSent', type: 'api', method: 'POST', endpoint: `${auto}/mark-sent`, body: {}, confirm: true });
-    return {
-      id: `${kind}:${a.inquiryId}`,
-      kind,
-      title: a.inquiry.contactName,
-      subtitle: join(a.listingTitle, a.listingCompany),
-      note: { key: kind === 'external_help' ? 'externalHelp' : a.employerEmail ? 'externalHasEmail' : 'externalNoEmail' },
-      priority: kind === 'external_help' ? 'HIGH' : 'NORMAL',
-      dueAt: new Date(since.getTime() + (kind === 'external_help' ? DAY : 2 * DAY)),
-      since,
-      link: href,
-      refs: { inquiryId: a.inquiryId, phone: a.inquiry.phone ?? null },
-      assignee: a.inquiry.assignedStaffId === ctx.viewer.id ? person(ctx.viewer) : null,
-      actions,
-    };
-  };
-  return [
-    { kind: 'external_help', total: helpTotal, items: help.map((a) => item(a, 'external_help')) },
-    { kind: 'external_ready', total: readyTotal, items: ready.map((a) => item(a, 'external_ready')) },
   ];
 };
 
@@ -1558,7 +1496,6 @@ export const buildMyWork = async (viewer: WorkViewer, opts: { team: boolean; cas
     acceleratedWork({ status: { not: 'CANCELLED' }, ...myCases(ctx) }, ctx.c.now), // § 81a deadlines
     partnerContractWork({ team: ctx.team, viewerId: ctx.viewer.id, isAdmin: ctx.isAdmin }, ctx.c.now), // employer / partner contracts ending (lib/partnerRecords/work)
     caseContracts(ctx), // case contracts: Triad Vision signs / staff approve
-    externalApplications(ctx), // apply via Triad Vision: client asked for help, staff READY queue
     vacancyRequests(ctx), // new "Vakansiya sorğusu"
   ]);
   const flat = groups.flat().filter((s): s is Source => !!s);

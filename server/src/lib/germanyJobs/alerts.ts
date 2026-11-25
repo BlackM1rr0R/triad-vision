@@ -12,7 +12,6 @@ import { careerjetAlertBudget, careerjetAlertSearch, type AlertSearchStatus } fr
 import { RADII, dedupeKey, type GermanyJob, type SearchQuery } from './common.js';
 import { CONSENT_VERSION, GERMANY_ALERT_MAIL } from './alertTexts.js';
 import { PROVIDERS } from './providers.js';
-import { getApplicationPolicy } from '../vacancyPlaces/policy.js';
 
 /**
  * Germany job alerts (model GermanyJobAlert): "notify me about new jobs like this" for a search on /jobs/germany
@@ -325,7 +324,8 @@ export const runGermanyJobAlerts = async (now = new Date()): Promise<AlertRunRes
   }
   const ordered = [...groups.values()].sort((x, y) => y.length - x.length);
   result.groups = ordered.length;
-  const allowApply = (await getApplicationPolicy()).allowExternalApplications;
+  // "Apply via Triad Vision" for external listings is retired: digests always link to the original ad.
+  const allowApply = false;
   const oldest = now.getTime() - MAX_LOOKBACK_DAYS * DAY;
 
   for (const members of ordered) {
