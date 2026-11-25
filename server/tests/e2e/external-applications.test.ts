@@ -38,7 +38,7 @@ const fields = (o: Record<string, string> = {}) => ({
 
 /** Direct insert of an earlier application (POST /api/germany-jobs/apply answers 410 now). */
 const seed = async (o: Record<string, string> = {}, userId: string | null = null) => {
-  const q = await createExternalApplication(applyInput.parse(fields(o)), { phone: '+994501234567', lng: 'de', cv: null, userId, partnerId: null, accountLabel: null });
+  const q = await createExternalApplication(applyInput.parse(fields(o)), { phone: '+994501234567', lng: (o.lng ?? 'de') as 'de', cv: null, userId, partnerId: null, accountLabel: null });
   return { body: { id: q.id } };
 };
 

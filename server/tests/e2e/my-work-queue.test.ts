@@ -105,7 +105,9 @@ describe('my work queue: vacancy requests (no external applications)', () => {
       data: { inquiryId: inquiry.id, provider: 'link', listingUrl: 'https://example.com/job', autoState: 'READY', autoReason: 'CLIENT_HELP', clientHelpAt: ago(2 * DAY) },
     });
     const b = await work(staff.agent, 'team');
-    expect(b.items.some((i) => i.refs.inquiryId === inquiry.id)).toBe(false);
+    // The inquiry itself may still be listed as a lead; no external-application item exists any more.
+    expect(b.items.some((i) => i.refs.inquiryId === inquiry.id && /^external_/.test(i.kind))).toBe(false);
+    expect(Object.keys(b.counts.byKind).some((k) => k.startsWith('external_'))).toBe(false);
   });
 
   it('NEW vacancy request → vacancy_request; "take" (existing endpoint) removes it', async () => {

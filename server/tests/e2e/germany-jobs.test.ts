@@ -88,7 +88,7 @@ describe('GET /api/germany-jobs/search', () => {
   it('is disabled (404) when every provider is off, and /config says so', async () => {
     process.env.ARBEITNOW_ENABLED = '0';
     const cfg = await anon().get('/api/germany-jobs/config');
-    expect(cfg.body).toEqual({ search: false, sources: [], apply: true }); // apply: test default (VACANCY_POLICY_DEFAULTS=legacy)
+    expect(cfg.body).toEqual({ search: false, sources: [], apply: false }); // apply via Triad Vision is retired
     const res = await anon().get('/api/germany-jobs/search?q=Koch');
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('FEATURE_DISABLED');
