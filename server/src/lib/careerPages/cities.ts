@@ -1,43 +1,54 @@
-import type { CityCost } from '@prisma/client';
 import { DEFAULT_CITY_COSTS, matchCity, type CityCostData } from '../budget/cities.js';
 import type { FederalState } from '../budget/params.js';
 import type { CareerLocale } from './types.js';
 
 /**
  * City pages (/cities/<slug>, e.g. /ru/cities/hamburg): "work and living costs in <city>" — the orientation cost
- * figures of the budget data (lib/budget/cities.ts seed rows, 2026; the same values /budget and the vacancy regions
- * use) plus our live vacancies in and around that city (matched by name and aliases, like the budget prefill).
+ * figures of the budget data plus our live vacancies in and around that city (matched by name and aliases, like the
+ * budget prefill). The figures are the active CityCost rows of the database (Admin → Sayt → Şəhər xərcləri: the
+ * same rows the budget calculator /budget reads, lib/budget/cities.ts activeCityCosts), loaded with the cached SEO
+ * data (SeoData.cities, lib/seo.ts); while the table is empty or cannot be read, the seed defaults
+ * (DEFAULT_CITY_COSTS, 2026). Either way they are shown as estimates ("Təxmini").
  *
  * A page exists only for a real city (kind CITY) that is a metropolis (METRO size class: Berlin, Hamburg, München,
  * Köln, Frankfurt) or has at least one live vacancy right now — no thin pages for places without anything of ours.
- * Texts are generated from the facts in the five career languages (az, ru, tr, en, de).
+ * Texts are generated from the facts in the six career languages (az, ru, tr, en, de, uk).
  */
 
-export const CITY_ROWS: CityCostData[] = DEFAULT_CITY_COSTS.filter((r) => r.kind === 'CITY');
-const ROWS_AS_CITY_COST = CITY_ROWS as unknown as CityCost[];
+/** The seed rows of kind CITY: the fallback, and the default `rows` of the functions below. */
+export const CITY_ROWS: readonly CityCostData[] = DEFAULT_CITY_COSTS.filter((r) => r.kind === 'CITY');
+
+/**
+ * City rows of the pages from the active CityCost rows (a table row also carries id and timestamps): their CITY rows
+ * when the table gave any row, else the seed defaults (empty table, failed read, older fixtures without `cities`).
+ */
+export const cityRowsOf = (rows: readonly CityCostData[] | null | undefined): readonly CityCostData[] =>
+  rows?.length ? rows.filter((r) => r.kind === 'CITY') : CITY_ROWS;
 
 export const cityPagePath = (slug: string) => `/cities/${slug}`;
 
 /** "/cities/hamburg" → "hamburg" (any slug shape; existence is checked against the data). */
 export const cityPageSlug = (path: string) => /^\/cities\/([a-z0-9-]{2,60})$/.exec(path)?.[1] ?? null;
 
-export const cityRow = (slug: string) => CITY_ROWS.find((r) => r.slug === slug) ?? null;
+export const cityRow = (slug: string, rows: readonly CityCostData[] = CITY_ROWS) => rows.find((r) => r.slug === slug) ?? null;
 
 /** City row of a vacancy place (name / alias), or null. */
-export const cityOfPlace = (place: string | null | undefined) => matchCity(ROWS_AS_CITY_COST, place)?.slug ?? null;
+export const cityOfPlace = (place: string | null | undefined, rows: readonly CityCostData[] = CITY_ROWS) => matchCity(rows, place)?.slug ?? null;
 
 /** The given jobs located in (or around) the city. */
-export const jobsInCity = <J extends { city: string | null }>(jobs: J[], slug: string) => jobs.filter((j) => cityOfPlace(j.city) === slug);
+export const jobsInCity = <J extends { city: string | null }>(jobs: J[], slug: string, rows: readonly CityCostData[] = CITY_ROWS) =>
+  jobs.filter((j) => cityOfPlace(j.city, rows) === slug);
 
 /** Whether the city has a page: metropolis, or at least one live vacancy. */
-export const hasCityPage = (slug: string, liveJobs: { city: string | null }[]) => {
-  const row = cityRow(slug);
-  return !!row && (row.sizeClass === 'METRO' || jobsInCity(liveJobs, slug).length > 0);
+export const hasCityPage = (slug: string, liveJobs: { city: string | null }[], rows: readonly CityCostData[] = CITY_ROWS) => {
+  const row = cityRow(slug, rows);
+  return !!row && (row.sizeClass === 'METRO' || jobsInCity(liveJobs, slug, rows).length > 0);
 };
 
 /** Every city with a page, metropolises first, then by number of vacancies. */
-export const cityPages = (liveJobs: { city: string | null }[]) =>
-  CITY_ROWS.map((r) => ({ row: r, jobs: jobsInCity(liveJobs, r.slug).length }))
+export const cityPages = (liveJobs: { city: string | null }[], rows: readonly CityCostData[] = CITY_ROWS) =>
+  rows
+    .map((r) => ({ row: r, jobs: jobsInCity(liveJobs, r.slug, rows).length }))
     .filter((c) => c.row.sizeClass === 'METRO' || c.jobs > 0)
     .sort((a, b) => Number(b.row.sizeClass === 'METRO') - Number(a.row.sizeClass === 'METRO') || b.jobs - a.jobs || a.row.sortOrder - b.row.sortOrder);
 
@@ -118,6 +129,14 @@ export const cityTexts = (row: CityCostData, jobCount: number, lng: CareerLocale
         h1: `${n}: jobs in Germany and monthly costs`,
         intro: `${n} is in ${state}. This page shows estimated monthly costs for rent, groceries and transport, and the jobs currently open through Triad Vision.`,
         labels: { costs: 'Estimated monthly costs', flat1: '1-room flat (35 m², cold rent)', flat2: '2-room flat (55 m², cold rent)', wg: 'WG room (all-in)', food: 'Groceries (1 person)', transport: 'Deutschlandticket', estimate: 'Estimate', source: 'Orientation values 2026: rent indices (Mietspiegel) and listing portals, WG-Gesucht/MLP, Destatis prices. Not a quote.', jobs: `Open jobs in and around ${n}`, jobsNone: 'We have no open job in this city right now. See all jobs or sign up for alerts.', landings: 'Jobs by profession', professions: 'Guides by profession', tools: 'Useful tools', others: 'Other cities' },
+      };
+    case 'uk':
+      return {
+        title: `${n}: робота та вартість життя 2026`,
+        description: fitDescription([`Робота в місті ${n} (${state}): ${jobCount ? `вакансій: ${jobCount}, ` : ''}оренда 1-кімнатної квартири близько ${rent1}, кімната в WG ${wg}, продукти ${food} на місяць. Орієнтовні витрати та вакансії.`, `Робота в місті ${n} (${state}): ${jobCount ? `вакансій: ${jobCount}, ` : ''}оренда 1-кімнатної квартири близько ${rent1}, кімната в WG ${wg}, продукти ${food} на місяць.`, `Робота в місті ${n} (${state}): ${jobCount ? `вакансій: ${jobCount}, ` : ''}оренда 1-кімнатної квартири близько ${rent1}, продукти ${food} на місяць. Орієнтовні витрати та вакансії.`, `Робота в місті ${n} (${state}): ${jobCount ? `вакансій: ${jobCount}, ` : ''}оренда 1-кімнатної квартири близько ${rent1}, продукти ${food} на місяць.`]),
+        h1: `${n}: робота в Німеччині та витрати на життя`,
+        intro: `${n} розташований у землі ${state}. Тут ви побачите орієнтовні щомісячні витрати на оренду, продукти й транспорт та вакансії, відкриті зараз через Triad Vision.`,
+        labels: { costs: 'Орієнтовні витрати на місяць', flat1: '1-кімнатна квартира (35 м², холодна оренда)', flat2: '2-кімнатна квартира (55 м², холодна оренда)', wg: 'Кімната в WG (все включено)', food: 'Продукти (1 особа)', transport: 'Deutschlandticket', estimate: 'Орієнтовно', source: 'Орієнтовні значення 2026: індекси оренди (Mietspiegel) і портали оголошень, WG-Gesucht/MLP, ціни Destatis. Не є пропозицією.', jobs: `Відкриті вакансії в ${n} та околицях`, jobsNone: 'Наразі в цьому місті немає відкритих вакансій. Перегляньте всі вакансії або підпишіться на сповіщення.', landings: 'Вакансії за професіями', professions: 'Посібники за професіями', tools: 'Корисні інструменти', others: 'Інші міста' },
       };
     case 'de':
       return {

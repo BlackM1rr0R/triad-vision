@@ -4,6 +4,7 @@ import { prisma } from '../../db.js';
 import { hasMinRole, type AuthUser } from '../../middleware/auth.js';
 import { audit } from '../audit.js';
 import { HttpError, notFound } from '../http.js';
+import { publish } from '../messaging/realtime.js';
 import { isImpersonating } from '../privacy/impersonationContext.js';
 
 /**
@@ -112,6 +113,29 @@ export const sharedMailboxes = async (viewer: Viewer): Promise<SharedMailbox[]> 
     if (access) out.push({ id: r.id, email: r.email, displayName: r.displayName, access, owner: r.user });
   }
   return out;
+};
+
+// ─── Realtime audience ─────────────────────────────────────────────────
+
+/**
+ * Who gets the realtime events of a mailbox ('mail.new', 'mail.updated'): its owner and every colleague with a READ or
+ * SEND grant who is still staff — the owner's events with the same payloads (sender and subject at most, never a
+ * body). A SUPER_ADMIN without a grant reads every mailbox but is not pushed to (the mail page polls). Never throws:
+ * the owner alone when the grants cannot be read.
+ */
+export const mailboxAudience = async (accountId: string, ownerId: string): Promise<string[]> => {
+  try {
+    const grants = await prisma.mailAccountGrant.findMany({ where: { accountId }, select: { userId: true, user: { select: { role: true } } } });
+    return [...new Set([ownerId, ...grants.filter((g) => hasMinRole(g.user.role, 'STAFF')).map((g) => g.userId)])];
+  } catch (err) {
+    console.error('[mail] grants of a mailbox could not be read', accountId, err);
+    return [ownerId];
+  }
+};
+
+/** Publishes a mail event of a mailbox to its owner and grantees (mailboxAudience). */
+export const publishMailbox = async (account: { id: string; userId: string }, type: 'mail.new' | 'mail.updated', payload: Record<string, unknown>) => {
+  publish(await mailboxAudience(account.id, account.userId), type, payload);
 };
 
 // ─── "Opened someone else's mailbox" audit (once per viewer, mailbox and day) ───

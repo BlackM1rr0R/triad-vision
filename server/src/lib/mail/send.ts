@@ -3,7 +3,7 @@ import MailComposer from 'nodemailer/lib/mail-composer/index.js';
 import type { MailAccount, Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
 import { HttpError, badRequest, notFound } from '../http.js';
-import { publish } from '../messaging/realtime.js';
+import { publishMailbox } from './access.js';
 import { dedupeAddresses, formatAddress, formatAddressList, type Address } from './address.js';
 import { rememberCorrespondents } from './contacts.js';
 import { enqueueRemote, ensureRoleFolder, isLocalFolder, recountFolders, smtpConnectionOf } from './core.js';
@@ -166,6 +166,6 @@ export const sendMessage = async (userId: string, account: MailAccount, input: S
   }
 
   await rememberCorrespondents(userId, recipients, [account.email]);
-  publish(account.userId, 'mail.updated', { accountId: account.id, reason: 'sent', messageId: row.id, folderId: sent.id });
+  await publishMailbox(account, 'mail.updated', { accountId: account.id, reason: 'sent', messageId: row.id, folderId: sent.id }); // owner + colleagues with a grant
   return row;
 };

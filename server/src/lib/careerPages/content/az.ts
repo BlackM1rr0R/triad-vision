@@ -42,7 +42,7 @@ export const AZ: CareerCopy = {
       },
     ],
     allowanceNote:
-      'Rəqəmlər təxminidir: sahənin kollektiv müqavilələrinə (BIBB-nin Ausbildung haqları məlumat bazası) əsaslanan, yuvarlaqlaşdırılmış aylıq brutto aralığıdır (1-ci ildən son ilə qədər). Dəqiq məbləği Ausbildung müqaviləsi müəyyən edir. 2025-ci ildə başlayan Ausbildung üçün qanuni minimum 1-ci ildə ayda 682 € idi.',
+      'Rəqəmlər təxminidir: sahənin kollektiv müqavilələrinə (BIBB-nin Ausbildung haqları məlumat bazası) əsaslanan, yuvarlaqlaşdırılmış aylıq brutto aralığıdır (1-ci ildən son ilə qədər). Dəqiq məbləği Ausbildung müqaviləsi müəyyən edir. 2026-cı ildə başlayan Ausbildung üçün qanuni minimum (Mindestausbildungsvergütung, BIBB) 1-ci ildə 724 €, 2-ci ildə 854 €, 3-cü ildə 977 €, 4-cü ildə 1.014 € təşkil edir; 2027-də başlayanlar üçün 1-ci il 764 €. Kollektiv müqavilə daha yüksək məbləğ nəzərdə tuta bilər.',
   },
   hubs: {
     'truck-driver': {
@@ -243,7 +243,7 @@ export const AZ: CareerCopy = {
       visa: 'IT mütəxəssisləri üçün əsas yol Mavi Kartdır (§ 18g AufenthG): ali təhsil və ya diplom olmadan ən azı 3 il IT təcrübəsi və maaş həddi. Maaş həddinə çatmırsa, ali təhsil ilə § 18b mümkündür. İş təklifi olmadan iş axtarmaq üçün İmkan Kartı (Chancenkarte) da bir yoldur. Mavi Kart bələdçisində bütün şərtləri izah edirik.',
       faq: [
         { q: 'Almaniyada IT mütəxəssisi nə qədər qazanır?', a: 'İlk iş üçün tam ştatda təxmini brutto maaş ayda 3 600 – 4 800 € təşkil edir (Entgeltatlas əsasında, yuvarlaqlaşdırılıb); təcrübə ilə əhəmiyyətli dərəcədə artır. Mavi Kart üçün illik maaş həddinə baxın.' },
-        { q: 'Diplom olmadan IT Mavi Kart almaq olarmı?', a: 'Bəli, son 7 ildə ən azı 3 il IT sahəsində iş təcrübəsi və çatışmazlıq peşələri üçün maaş həddi (2026: 45 934,20 €) olduqda. Təcrübə iş arayışları ilə sübut olunmalıdır.' },
+        { q: 'Diplom olmadan IT Mavi Kart almaq olarmı?', a: 'Bəli, son 7 ildə ən azı 3 il IT sahəsində iş təcrübəsi və çatışmazlıq peşələri üçün maaş həddi (2026: 45 934,20 €) olduqda. Vəzifə akademik səviyyəli IT işi olmalı, Federal Məşğulluq Agentliyi razılıq verməlidir. Təcrübə iş arayışları ilə sübut olunmalıdır.' },
         { q: 'IT işi üçün alman dili lazımdırmı?', a: 'Mavi Kart üçün dil tələbi yoxdur və bir çox komanda ingilis dilində işləyir. Lakin alman dili gündəlik həyatda və daimi yaşayış icazəsini tez almaq üçün faydalıdır (B1 ilə 21 ay).' },
         { q: 'İş təklifi olmadan Almaniyaya getmək olarmı?', a: 'İmkan Kartı (Chancenkarte) ilə iş axtarmaq üçün 1 ilə qədər gəlmək mümkündür: ballar sistemi, dil və maddi təminat tələbləri var. Balınızı Chancenkarte kalkulyatoru ilə hesablayın.' },
         { q: 'Mavi Kartla ailəni gətirmək olarmı?', a: 'Bəli, Mavi Kart sahibləri üçün ailə birləşməsi asanlaşdırılıb: həyat yoldaşı üçün alman dili tələbi yoxdur. Şərtləri ailə birləşməsi bələdçisində oxuyun.' },
@@ -267,7 +267,7 @@ export const AZ: CareerCopy = {
       pay: 'Pflege Ausbildung-da haqq nisbətən yüksəkdir: təxminən ayda 1 300 – 1 600 € brutto (1-ci ildən 3-cü ilə qədər, TVAöD-Pflege əsasında). Özəl müəssisələrdə məbləğ fərqli ola bilər.',
       after: 'Dövlət imtahanından sonra Pflegefachkraft kimi işləyirsiniz; ilk iş üçün təxmini brutto maaş ayda 2 900 – 3 900 € təşkil edir. Ausbildungdan sonra ixtisaslı işçi kimi (§ 18a) yaşayış icazəsi almaq mümkündür.',
       faq: [
-        { q: 'Pflege Ausbildung üçün yaş həddi varmı?', a: 'Ausbildung vizası (§ 16a) üçün qanunda yaş həddi yoxdur. Ausbildung yeri axtarmaq üçün ayrıca viza (§ 17) isə 35 yaşa qədər və B1 dil səviyyəsi tələb edir.' },
+        { q: 'Pflege Ausbildung üçün yaş həddi varmı?', a: 'Ausbildung vizası (§ 16a) üçün qanunda yaş həddi yoxdur. Ausbildung yeri axtarmaq üçün ayrıca viza (§ 17) isə 35 yaşdan kiçik olmağı, kifayət qədər alman dili biliyini (səviyyəni səfirlik bildirir), təminatlı yaşayış xərclərini və ali təhsilə giriş hüququ verən məktəb attestatını tələb edir; icazə 9 aya qədər verilir.' },
         { q: 'Ausbildung zamanı haqq yaşamağa kifayət edirmi?', a: 'Pflege haqqı əksər şəhərlərdə əsas xərcləri qarşılayır, amma böyük şəhərlərdə kirayə yüksəkdir. Haqq tələb olunan məbləğdən azdırsa, səfirlik əlavə maddi təminat sübutu istəyə bilər.' },
         { q: 'Tibb diplomum varsa, yenə Ausbildung lazımdır?', a: 'Xeyr, tibb bacısı diplomunuz varsa, adətən tanınma (Anerkennung) yolu daha qısadır. Diplom olmadıqda və ya tanınma mümkün olmadıqda Ausbildung seçilir.' },
         { q: 'Ausbildung zamanı işləmək olarmı?', a: 'Ausbildung özü tam ştatlı iş kimidir. Əlavə iş həftədə 20 saata qədər mümkündür, amma Ausbildung-un uğuru birinci yerdədir.' },

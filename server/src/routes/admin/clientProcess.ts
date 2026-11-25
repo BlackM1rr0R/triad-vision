@@ -87,6 +87,8 @@ adminClientProcessRouter.post('/cases/:caseId/tasks', documentUpload.single('fil
     let attachmentId: string | null = null;
     if (file) {
       await verifyUploadedFile(file);
+      // A file for the client to download (stage OTHER; body.requirementId belongs to the task, not to this file):
+      // not a list document, so nothing to link (lib/docLink).
       const doc = await prisma.document.create({
         data: { caseId: c.id, stage: 'OTHER', status: 'ACCEPTED', originalName: decodeOriginalName(file.originalname).slice(0, 200), storedName: file.filename, mimeType: file.mimetype, size: file.size, uploadedById: req.user!.id },
       });

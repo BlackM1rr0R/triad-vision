@@ -42,7 +42,7 @@ export const EN: CareerCopy = {
       },
     ],
     allowanceNote:
-      'The figures are estimates: rounded monthly gross ranges based on the collective agreements of the sector (BIBB database of training allowances), from the first year to the last. The exact amount is set by the Ausbildung contract. For an Ausbildung starting in 2025, the legal minimum in the first year was 682 € per month.',
+      'The figures are estimates: rounded monthly gross ranges based on the collective agreements of the sector (BIBB database of training allowances), from the first year to the last. The exact amount is set by the Ausbildung contract. For an Ausbildung starting in 2026, the legal minimum (Mindestausbildungsvergütung, BIBB) is 724 € in the first year, 854 € in the second, 977 € in the third and 1,014 € in the fourth; for a start in 2027 it is 764 € in the first year. Collective agreements may set higher amounts.',
   },
   hubs: {
     'truck-driver': {
@@ -243,7 +243,7 @@ export const EN: CareerCopy = {
       visa: 'For IT specialists the main route is the Blue Card (§ 18g AufenthG): a university degree, or at least 3 years of IT experience without one, and the salary threshold. If you do not reach the salary threshold, § 18b with a university degree is possible. The Opportunity Card (Chancenkarte) for looking for a job without an offer is another route. We explain all the conditions in our Blue Card guide.',
       faq: [
         { q: 'How much does an IT specialist earn in Germany?', a: 'For a first job, the estimated gross salary for a full-time position is 3,600 – 4,800 € per month (based on the Entgeltatlas, rounded); it rises considerably with experience. See the annual salary threshold for the Blue Card.' },
-        { q: 'Can I get an IT Blue Card without a degree?', a: 'Yes, with at least 3 years of IT work experience in the last 7 years and the salary threshold for shortage occupations (2026: 45,934.20 €). The experience must be proven with employment references.' },
+        { q: 'Can I get an IT Blue Card without a degree?', a: 'Yes, with at least 3 years of IT work experience in the last 7 years and the salary threshold for shortage occupations (2026: 45,934.20 €). The job must be a qualified IT role at academic level and the Federal Employment Agency must approve. The experience must be proven with employment references.' },
         { q: 'Do I need German for an IT job?', a: 'There is no language requirement for the Blue Card, and many teams work in English. German is still useful for daily life and for getting a permanent residence permit sooner (21 months with B1).' },
         { q: 'Can I go to Germany without a job offer?', a: 'With the Opportunity Card (Chancenkarte) you can come for up to 1 year to look for a job: there is a points system and language and financial requirements. Work out your points with our Chancenkarte calculator.' },
         { q: 'Can I bring my family with a Blue Card?', a: 'Yes, family reunification is easier for Blue Card holders: there is no German language requirement for the spouse. Read the conditions in our family reunification guide.' },
@@ -267,7 +267,7 @@ export const EN: CareerCopy = {
       pay: 'The allowance in the Pflege Ausbildung is relatively high: about 1,300 – 1,600 € gross a month (from the first to the third year, based on the TVAöD-Pflege). In private facilities the amount can differ.',
       after: 'After the state exam you work as a Pflegefachkraft; the estimated gross salary for a first job is 2,900 – 3,900 € per month. After the Ausbildung it is possible to obtain a residence permit as a skilled worker (§ 18a).',
       faq: [
-        { q: 'Is there an age limit for the Pflege Ausbildung?', a: 'There is no legal age limit for the Ausbildung visa (§ 16a). The separate visa for looking for an Ausbildung place (§ 17) requires you to be under 35 and to have a B1 language level.' },
+        { q: 'Is there an age limit for the Pflege Ausbildung?', a: 'There is no legal age limit for the Ausbildung visa (§ 16a). The separate visa for looking for an Ausbildung place (§ 17) requires you to be under 35, to have sufficient German (the embassy states the level), a secured livelihood and a school-leaving certificate that gives access to university; the permit is issued for up to nine months.' },
         { q: 'Is the allowance enough to live on during the Ausbildung?', a: 'The Pflege allowance covers the basic costs in most cities, but rents are high in big cities. If the allowance is below the required amount, the embassy may ask for additional proof of funds.' },
         { q: 'If I have a medical diploma, do I still need an Ausbildung?', a: 'No, if you have a nursing diploma, the recognition (Anerkennung) route is usually shorter. The Ausbildung is chosen when there is no diploma or recognition is not possible.' },
         { q: 'Can I work during the Ausbildung?', a: 'The Ausbildung itself is like a full-time job. Additional work of up to 20 hours a week is possible, but success in the Ausbildung comes first.' },

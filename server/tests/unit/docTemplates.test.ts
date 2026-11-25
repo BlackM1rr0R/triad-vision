@@ -4,6 +4,7 @@ import { FIELD_DEFS, type VidexField } from '../../src/lib/ai/features/caseAi/vi
 import { missingRequired, renderVidexSheet, videxSheetFileName, videxSheetRows } from '../../src/lib/docTemplates/videxSheet.js';
 import { SHEET_LANGS, SHEET_TEXT, asSheetLang, hintLang } from '../../src/lib/docTemplates/texts.js';
 import { kindAvailable } from '../../src/lib/docTemplates/index.js';
+import { HINTS_TR, HINTS_UK } from '../../src/lib/docTemplates/hintsExtra.js';
 
 const fields = (values: Record<string, string>): VidexField[] =>
   FIELD_DEFS.map((d) => ({ key: d.key, section: d.section, label: d.label, value: values[d.key] ?? '', source: values[d.key] ? 'profile' : null, confidence: null, documentId: null, required: d.required, askClient: !!d.askClient }));
@@ -28,10 +29,15 @@ describe('VIDEX preparation sheet rows', () => {
     expect(videxSheetRows(f, { lang: 'az', employerRevealed: true }).find((r) => r.key === 'employerName')?.value).toBe('Muster GmbH');
   });
 
-  it('tr / uk read the English hint; unknown languages fall back to az', () => {
+  it('tr / uk have their own hints for every field; unknown languages fall back to az', () => {
     expect(hintLang('tr')).toBe('en');
     expect(hintLang('uk')).toBe('en');
-    expect(videxSheetRows(f, { lang: 'uk', employerRevealed: true }).find((r) => r.key === 'surname')?.hint).toBe('Surname');
+    expect(videxSheetRows(f, { lang: 'uk', employerRevealed: true }).find((r) => r.key === 'surname')?.hint).toBe('Прізвище');
+    expect(videxSheetRows(f, { lang: 'tr', employerRevealed: true }).find((r) => r.key === 'surname')?.hint).toBe('Soyadı');
+    for (const d of FIELD_DEFS) {
+      expect(HINTS_TR[d.key], d.key).toBeTruthy();
+      expect(HINTS_UK[d.key], d.key).toBeTruthy();
+    }
     expect(asSheetLang('xx')).toBe('az');
     expect(asSheetLang('de')).toBe('de');
   });

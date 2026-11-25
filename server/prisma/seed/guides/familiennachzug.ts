@@ -69,7 +69,7 @@ Bəli. Ailə birləşməsi ilə gələn həyat yoldaşı qayda olaraq Almaniyada
 Səfirlik siyahını vaxtaşırı yeniləyir, ona görə son versiyanı yoxlayın. Adətən lazım olanlar:
 
 - Etibarlı xarici pasportlar (hər ailə üzvü üçün)
-- VIDEX milli viza anket forması (doldurulmuş və imzalanmış)
+- Milli viza ərizəsi (Auslandsportal-da və ya səfirliyin göstərdiyi VIDEX formasında; doldurulmuş və imzalanmış)
 - Biometrik fotolar
 - Nikah şəhadətnaməsi – apostil ilə (Azərbaycan Apostil Konvensiyasının üzvüdür)
 - Uşaqların doğum şəhadətnamələri – apostil ilə
@@ -192,7 +192,7 @@ Ja. Nachgezogene Ehegatten dürfen in Deutschland in der Regel **uneingeschränk
 Die genaue Liste veröffentlicht die jeweilige Auslandsvertretung. Üblich sind:
 
 - Gültige Reisepässe aller Antragstellenden
-- Antragsformular für das nationale Visum (VIDEX)
+- Antrag auf ein nationales Visum (im Auslandsportal oder per VIDEX-Formular, je nach Auslandsvertretung)
 - Biometrische Passfotos
 - Heiratsurkunde mit Apostille (Aserbaidschan, Türkei und Ukraine sind Vertragsstaaten des Haager Apostilleübereinkommens)
 - Geburtsurkunden der Kinder mit Apostille
@@ -315,7 +315,7 @@ Yes. A spouse who joins through family reunification may, as a rule, **work with
 Each mission publishes its own list, so check the latest version. Typically you need:
 
 - Valid passports for every applicant
-- National visa application form (VIDEX)
+- National visa application (in the Auslandsportal or the VIDEX form, depending on the mission)
 - Biometric photos
 - Marriage certificate with apostille (Azerbaijan, Türkiye and Ukraine are all parties to the Apostille Convention)
 - Children's birth certificates with apostille
@@ -438,7 +438,7 @@ Our team in Baku prepares the document list and the complete set of documents th
 Каждое представительство публикует свой список, проверяйте актуальную версию. Обычно нужны:
 
 - Действительные загранпаспорта всех заявителей
-- Анкета на национальную визу (VIDEX)
+- Заявление на национальную визу (в Auslandsportal или в форме VIDEX, в зависимости от представительства)
 - Биометрические фотографии
 - Свидетельство о браке с апостилем (Азербайджан, Турция и Украина – участники Гаагской конвенции об апостиле)
 - Свидетельства о рождении детей с апостилем
@@ -561,7 +561,7 @@ Evet. Aile birleşimiyle gelen eş kural olarak Almanya’da **kısıtlama olmad
 Her temsilcilik kendi listesini yayımlar; güncel versiyonu kontrol edin. Genellikle gerekenler:
 
 - Tüm başvuru sahipleri için geçerli pasaport
-- Ulusal vize başvuru formu (VIDEX)
+- Ulusal vize başvurusu (Auslandsportal’da veya temsilciliğin belirttiği VIDEX formuyla)
 - Biyometrik fotoğraflar
 - Apostilli evlilik belgesi (Türkiye, Azerbaycan ve Ukrayna Lahey Apostil Sözleşmesi’ne taraftır); Türkiye’de çok dilli uluslararası evlilik kayıt örneği de kullanılabilir, temsilciliğe danışın
 - Çocukların apostilli doğum belgeleri
@@ -684,7 +684,7 @@ Ekibimiz aileler için belge listesini ve büyükelçiliğin istediği belge set
 Кожне представництво публікує власний перелік, тож перевіряйте актуальну версію. Зазвичай потрібні:
 
 - Дійсні закордонні паспорти всіх заявників
-- Анкета на національну візу (VIDEX)
+- Заява на національну візу (в Auslandsportal або у формі VIDEX, залежно від представництва)
 - Біометричні фотографії
 - Свідоцтво про шлюб з апостилем (Україна, Азербайджан і Туреччина – учасниці Гаазької конвенції про апостиль)
 - Свідоцтва про народження дітей з апостилем

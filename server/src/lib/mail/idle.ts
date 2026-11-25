@@ -11,7 +11,7 @@ import { syncMailbox, type FolderSyncResult } from './sync.js';
  * MAIL_IDLE_MAX_CONNECTIONS — one long-lived connection selects INBOX read-only and idles. When the
  * server reports a change (EXISTS / EXPUNGE / FETCH flags) the INBOX is synced incrementally through
  * `syncMailbox` (queued behind any other sync of the account, see sync.ts), which publishes
- * 'mail.new' / 'mail.updated' to the owner's realtime stream.
+ * 'mail.new' / 'mail.updated' to the realtime streams of the owner and the colleagues with a grant (access.ts).
  *
  * The connection is reopened with exponential backoff and jitter (capped at 5 minutes) after errors
  * and disconnects; after a reconnect the INBOX is synced once to catch up on what was missed.

@@ -6,11 +6,9 @@ import type { ProfessionHubSlug } from '../professionHubs.js';
  * /cities/<slug>): the SEO texts that answer the job seekers' queries ("Almaniyada sürücü işi", "работа поваром
  * в Германии", "Almanya'da aşçı") — requirements, the visa path, how we work, FAQ, related pages.
  *
- * Written languages: az (main audience), ru, tr, en, de. Ukrainian readers get the page without these blocks
- * (profession hubs) or no page at all (Ausbildung pages: 404, no hreflang) — never an empty or English variant
- * presented as Ukrainian.
+ * Written languages: az (main audience), ru, tr, en, de, uk (the Ukrainian texts are written natively, not machine-style).
  */
-export const CAREER_LOCALES = ['az', 'ru', 'tr', 'en', 'de'] as const satisfies readonly SeoLocale[];
+export const CAREER_LOCALES = ['az', 'ru', 'tr', 'en', 'de', 'uk'] as const satisfies readonly SeoLocale[];
 export type CareerLocale = (typeof CAREER_LOCALES)[number];
 export const isCareerLocale = (l: string): l is CareerLocale => (CAREER_LOCALES as readonly string[]).includes(l);
 

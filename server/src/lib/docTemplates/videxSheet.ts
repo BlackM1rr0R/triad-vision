@@ -2,6 +2,7 @@ import { rgb } from 'pdf-lib';
 import { A4, BRAND, Flow, INK, LINE, MUTED, createDoc, fit, numberPages, wrap } from '../cv/pdfKit.js';
 import { SECTION_LABELS, type Section, type VidexField } from '../ai/features/caseAi/videx.js';
 import { SHEET_TEXT, hintLang, type SheetLang } from './texts.js';
+import { HINTS_TR, HINTS_UK, SECTION_TR, SECTION_UK } from './hintsExtra.js';
 
 /**
  * "VIDEX hazırlıq vərəqi": every field of the embassy's online VIDEX form with the client's prefilled answer
@@ -24,8 +25,13 @@ export interface SheetRow {
 }
 
 /** Pure: VIDEX fields → sheet rows for one language (employer section blanked while the employer is not revealed). */
+/** Hint of one field in the sheet language: own tr / uk wording, else the field's az / de / en / ru label. */
+const hintOf = (f: VidexField, lang: SheetLang): string => (lang === 'tr' ? HINTS_TR[f.key] : lang === 'uk' ? HINTS_UK[f.key] : undefined) ?? f.label[hintLang(lang)];
+
+/** Section heading in the sheet language. */
+const sectionHint = (s: Section, lang: SheetLang): string => (lang === 'tr' ? SECTION_TR[s] : lang === 'uk' ? SECTION_UK[s] : SECTION_LABELS[s][hintLang(lang)]);
+
 export const videxSheetRows = (fields: VidexField[], opts: { lang: SheetLang; employerRevealed: boolean }): SheetRow[] => {
-  const h = hintLang(opts.lang);
   return fields.map((f) => {
     const employerHidden = f.section === 'employer' && !opts.employerRevealed;
     const value = employerHidden ? '' : f.value.trim();
@@ -33,7 +39,7 @@ export const videxSheetRows = (fields: VidexField[], opts: { lang: SheetLang; em
       key: f.key,
       section: f.section,
       labelDe: f.label.de,
-      hint: f.label[h],
+      hint: hintOf(f, opts.lang),
       value,
       required: f.required,
       missing: !value && !employerHidden,
@@ -50,7 +56,6 @@ const SECTION_ORDER = Object.keys(SECTION_LABELS) as Section[];
 
 export const renderVidexSheet = async (rows: SheetRow[], info: { lang: SheetLang; caseNumber: string; clientName: string; date: Date }): Promise<Buffer> => {
   const tx = SHEET_TEXT[info.lang];
-  const h = hintLang(info.lang);
   const { pdf, fonts } = await createDoc({ title: `${tx.title} – ${info.caseNumber}`, author: 'Triad Vision', subject: 'VIDEX', lang: info.lang });
   const left = 40;
   const right = A4[0] - 40;
@@ -88,7 +93,7 @@ export const renderVidexSheet = async (rows: SheetRow[], info: { lang: SheetLang
     flow.gap(4);
     const head = SECTION_LABELS[section];
     flow.draw(head.de, left, { size: 11.5, bold: true, color: BRAND });
-    if (h !== 'de') flow.draw(head[h], left + fonts.bold.widthOfTextAtSize(head.de, 11.5) + 8, { size: 9, color: MUTED });
+    if (info.lang !== 'de') flow.draw(sectionHint(section, info.lang), left + fonts.bold.widthOfTextAtSize(head.de, 11.5) + 8, { size: 9, color: MUTED });
     flow.gap(6);
     flow.rule(left, right, BRAND, 0.8);
     flow.gap(13);
@@ -98,7 +103,7 @@ export const renderVidexSheet = async (rows: SheetRow[], info: { lang: SheetLang
     }
     for (const r of list) {
       const labelLines = wrap(`${r.labelDe}${r.required ? ' *' : ''}`, fonts.bold, 9, labelW);
-      const hintLines = h === 'de' ? [] : wrap(r.hint, fonts.regular, 8, labelW);
+      const hintLines = info.lang === 'de' ? [] : wrap(r.hint, fonts.regular, 8, labelW);
       const valueLines = r.value ? wrap(r.value, fonts.regular, 10, valueW) : [];
       const height = Math.max(labelLines.length * 12 + hintLines.length * 10, Math.max(valueLines.length, 1) * 13) + 8;
       flow.need(height);

@@ -4,6 +4,7 @@ import type { MailAccount, MailFolder, MailFolderRole, Prisma } from '@prisma/cl
 import type { MessageStructureObject } from 'imapflow';
 import { prisma } from '../../db.js';
 import { publish } from '../messaging/realtime.js';
+import { mailboxAudience, publishMailbox } from './access.js'; // realtime: the owner and the colleagues with a grant
 import { fromParsed } from './address.js';
 import { AUTH_FAILED_PREFIX, LOCAL_PREFIX, ROLE_ORDER, enqueueRemote, imapConnectionOf, isAuthBlocked, isImapAuthFailure, isLocalFolder, recountFolders } from './core.js';
 import { leafParts, withImap, type ImapClient, type ImapFetched, type ImapFolder } from './imap.js';
@@ -20,7 +21,8 @@ import type { ReportPart } from '../deliverability/dsn.js';
 
 /**
  * IMAP → database synchronisation. One run per account: list folders, fetch new messages by UID,
- * re-read the flags of the newest known messages, apply inbox rules, publish realtime events.
+ * re-read the flags of the newest known messages, apply inbox rules, publish realtime events (to the owner and the
+ * colleagues with a grant on the mailbox: access.ts mailboxAudience).
  * A per-account mutex keeps the scheduler and manual syncs from overlapping; errors are recorded
  * on the account (syncStatus/syncError) and never thrown out of `runMailSync`.
  */
@@ -496,12 +498,12 @@ const doSync = async (accountId: string): Promise<SyncResult> => {
     // A refused login is marked so the poll stops retrying it (see runMailSync) until the login changes.
     const error = isImapAuthFailure(err) ? `${AUTH_FAILED_PREFIX}${errorText(err)}`.slice(0, 500) : errorText(err);
     await prisma.mailAccount.update({ where: { id: accountId }, data: { syncStatus: 'ERROR', syncError: error, lastSyncAt: new Date() } }).catch(() => undefined);
-    publish(account.userId, 'mail.updated', { accountId, reason: 'sync-error', error });
+    await publishMailbox(account, 'mail.updated', { accountId, reason: 'sync-error', error });
     return { ok: false, error, newMessages: arrived.length, folders: folderCount };
   }
 
   await announceArrivals(account, arrived);
-  publish(account.userId, 'mail.updated', { accountId, reason: 'sync', newMessages: arrived.filter((a) => a.isNew).length });
+  await publishMailbox(account, 'mail.updated', { accountId, reason: 'sync', newMessages: arrived.filter((a) => a.isNew).length });
   return { ok: true, newMessages: arrived.filter((a) => a.isNew).length, folders: folderCount };
 };
 
@@ -524,10 +526,11 @@ const announceArrivals = async (account: MailAccount, arrived: StoredNew[]) => {
   const announce = newInbox.filter((a) => a.notify);
   const fresh = announce.length ? await prisma.mailMessage.findMany({ where: { id: { in: announce.map((a) => a.id) } }, select: { id: true, folderId: true, seen: true, fromName: true, fromAddr: true, subject: true } }) : [];
   const announced: string[] = [];
+  const audience = fresh.some((m) => !m.seen) ? await mailboxAudience(accountId, account.userId) : [];
   for (const m of fresh) {
     if (m.seen) continue;
     announced.push(m.id);
-    publish(account.userId, 'mail.new', { accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '' });
+    publish(audience, 'mail.new', { accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '' });
   }
   return announced;
 };
@@ -570,7 +573,7 @@ const doFolderSync = async (accountId: string, path: string): Promise<FolderSync
   const after = await prisma.mailFolder.findUnique({ where: { id: folder.id }, select: { unread: true } });
   const newMessageIds = arrived.filter((a) => a.isNew).map((a) => a.id);
   const unread = after?.unread ?? 0;
-  publish(account.userId, 'mail.updated', { accountId, reason: 'idle', folderId: folder.id, unread, newMessages: newMessageIds.length, newMessageIds });
+  await publishMailbox(account, 'mail.updated', { accountId, reason: 'idle', folderId: folder.id, unread, newMessages: newMessageIds.length, newMessageIds });
   return { ok: true, folderId: folder.id, unread, newMessageIds };
 };
 
@@ -610,8 +613,10 @@ export const wakeSnoozed = async (now = new Date()) => {
   if (!due.length) return 0;
   await prisma.mailMessage.updateMany({ where: { id: { in: due.map((d) => d.id) } }, data: { snoozedUntil: null, seen: false } });
   await recountFolders(due.map((d) => d.folderId));
+  const audiences = new Map<string, Promise<string[]>>(); // per mailbox, read once
   for (const m of due) {
-    publish(m.account.userId, 'mail.new', { accountId: m.accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '', snoozed: true });
+    if (!audiences.has(m.accountId)) audiences.set(m.accountId, mailboxAudience(m.accountId, m.account.userId));
+    publish(await audiences.get(m.accountId)!, 'mail.new', { accountId: m.accountId, folderId: m.folderId, messageId: m.id, from: m.fromName || m.fromAddr || '', subject: m.subject ?? '', snoozed: true });
   }
   return due.length;
 };

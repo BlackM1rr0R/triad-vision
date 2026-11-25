@@ -1,7 +1,7 @@
 /**
  * Texts of the prefilled document templates (lib/docTemplates): the VIDEX preparation sheet in the client's
  * language (6 languages). The German field labels of the sheet come from lib/ai/features/caseAi/videx.ts
- * (FIELD_DEFS, az / de / en / ru); tr and uk read the English hint.
+ * (FIELD_DEFS, az / de / en / ru); tr and uk hints live in hintsExtra.ts.
  */
 
 export const SHEET_LANGS = ['az', 'de', 'en', 'ru', 'tr', 'uk'] as const;

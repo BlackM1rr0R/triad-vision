@@ -48,7 +48,7 @@ import { adoptMailUpload, mailPath, removeMailStored } from '../lib/mail/storage
 import { applyRules, syncAccount, withRemote } from '../lib/mail/sync.js';
 import { threadKeyOf } from '../lib/mail/thread.js';
 import { AI_FILTERS, aiFilterWhere } from '../lib/ai/features/mailTriage.js';
-import { assertMailAccess, loadMailAccount, noteMailboxOpened, sharedMailboxes, type MailAccessLevel } from '../lib/mail/access.js';
+import { assertMailAccess, loadMailAccount, mailboxAudience, noteMailboxOpened, sharedMailboxes, type MailAccessLevel } from '../lib/mail/access.js';
 
 /**
  * Workspace mail (/api/mail): every staff member's own IMAP/SMTP mailboxes. Accounts, folders and
@@ -699,8 +699,12 @@ const applyAction = async (req: Request, input: z.infer<typeof actionSchema>) =>
     }
   }
   await recountFolders([...touched]);
-  const notify = new Set([userId, ...rows.map((r) => r.account.userId)]);
-  for (const accountId of accountIds) for (const to of notify) publish(to, 'mail.updated', { accountId, reason: action, messageIds: ids });
+  // Per mailbox: the one who acted, the owner and the colleagues with a grant (each only that mailbox's ids).
+  for (const accountId of accountIds) {
+    const own = rows.filter((r) => r.accountId === accountId);
+    const audience = new Set([userId, ...(await mailboxAudience(accountId, own[0].account.userId))]);
+    publish([...audience], 'mail.updated', { accountId, reason: action, messageIds: own.map((r) => r.id) });
+  }
   if (rows.some((r) => r.account.userId !== userId)) await audit(req, 'MAIL_SHARED_ACTION', accountIds.join(',').slice(0, 190), { action, count: ids.length });
   return ids;
 };

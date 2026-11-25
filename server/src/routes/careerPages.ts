@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { limiter, notFound } from '../lib/http.js';
 import { collapse, getSeoData, liveJobs, parseLocale, pick } from '../lib/seo.js';
 import { hubBySlug, type ProfessionHubSlug } from '../lib/professionHubs.js';
-import { ausbildungList, ausbildungPage, cityPage, cityPagePath, cityPages, hubContent, isCareerLocale } from '../lib/careerPages/index.js';
+import { ausbildungList, ausbildungPage, cityPage, cityPagePath, cityPages, cityRowsOf, hubContent, isCareerLocale } from '../lib/careerPages/index.js';
 
 /**
  * Career pages (lib/careerPages) — mounted at /api/career, public, the same for everyone (SSR query key 'career'):
@@ -12,7 +12,8 @@ import { ausbildungList, ausbildungPage, cityPage, cityPagePath, cityPages, hubC
  *   GET /ausbildung/:slug?lng=  one Ausbildung page; 404 for an unknown slug or a language without the text.
  *   GET /cities?lng=            the city pages (metropolises + cities with live vacancies).
  *   GET /cities/:slug?lng=      one city page: cost figures + live vacancies there (no employer names); 404 otherwise.
- * Vacancies come from the cached SEO data (open, published, not expired: liveJobs).
+ * Vacancies come from the cached SEO data (open, published, not expired: liveJobs), the city cost figures from its
+ * active CityCost rows (the budget calculator's rows; seed defaults while the table is empty): cityRowsOf.
  */
 export const careerPagesRouter = Router();
 
@@ -24,7 +25,7 @@ careerPagesRouter.get('/hubs/:slug', publicLimiter, async (req, res) => {
   if (!hub) throw notFound('HUB_NOT_FOUND');
   const data = await getSeoData();
   res.setHeader('Cache-Control', 'public, max-age=300');
-  res.json(hubContent(hub.slug as ProfessionHubSlug, lngOf(req.query.lng), liveJobs(data)));
+  res.json(hubContent(hub.slug as ProfessionHubSlug, lngOf(req.query.lng), liveJobs(data), cityRowsOf(data.cities)));
 });
 
 careerPagesRouter.get('/ausbildung', publicLimiter, (req, res) => {
@@ -45,14 +46,14 @@ careerPagesRouter.get('/cities', publicLimiter, async (req, res) => {
   const data = await getSeoData();
   res.setHeader('Cache-Control', 'public, max-age=120');
   res.json({
-    items: isCareerLocale(lng) ? cityPages(liveJobs(data)).map((c) => ({ slug: c.row.slug, name: c.row.name, path: cityPagePath(c.row.slug), jobs: c.jobs })) : [],
+    items: isCareerLocale(lng) ? cityPages(liveJobs(data), cityRowsOf(data.cities)).map((c) => ({ slug: c.row.slug, name: c.row.name, path: cityPagePath(c.row.slug), jobs: c.jobs })) : [],
   });
 });
 
 careerPagesRouter.get('/cities/:slug', publicLimiter, async (req, res) => {
   const lng = lngOf(req.query.lng);
   const data = await getSeoData();
-  const page = cityPage(String(req.params.slug), lng, liveJobs(data), (j) => collapse(pick(j.title, lng)));
+  const page = cityPage(String(req.params.slug), lng, liveJobs(data), (j) => collapse(pick(j.title, lng)), cityRowsOf(data.cities));
   if (!page) throw notFound('PAGE_NOT_FOUND');
   res.setHeader('Cache-Control', 'public, max-age=120');
   res.json(page);

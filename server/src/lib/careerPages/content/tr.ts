@@ -42,7 +42,7 @@ export const TR: CareerCopy = {
       },
     ],
     allowanceNote:
-      'Rakamlar tahminidir: sektörün toplu sözleşmelerine (BIBB’nin Ausbildung ücretleri veri tabanı) dayanan, yuvarlanmış aylık brüt aralıktır (1. yıldan son yıla kadar). Kesin tutarı Ausbildung sözleşmesi belirler. 2025’te başlayan Ausbildung için yasal asgari ücret 1. yılda aylık 682 € idi.',
+      'Rakamlar tahminidir: sektörün toplu sözleşmelerine (BIBB’nin Ausbildung ücretleri veri tabanı) dayanan, yuvarlanmış aylık brüt aralıktır (1. yıldan son yıla kadar). Kesin tutarı Ausbildung sözleşmesi belirler. 2026’da başlayan Ausbildung için yasal asgari tutar (Mindestausbildungsvergütung, BIBB) 1. yılda 724 €, 2. yılda 854 €, 3. yılda 977 €, 4. yılda 1.014 €’dur; 2027’de başlayanlar için 1. yıl 764 €’dur. Toplu sözleşmeler daha yüksek tutar öngörebilir.',
   },
   hubs: {
     'truck-driver': {
@@ -243,7 +243,7 @@ export const TR: CareerCopy = {
       visa: 'IT uzmanları için ana yol AB Mavi Kart’tır (§ 18g AufenthG): yükseköğretim veya diploma olmadan en az 3 yıl IT deneyimi ve maaş eşiği. Maaş eşiğe ulaşmıyorsa yükseköğretimle § 18b mümkündür. İş teklifi olmadan iş aramak için Fırsat Kartı (Chancenkarte) da bir yoldur. Mavi Kart rehberinde tüm şartları açıklıyoruz.',
       faq: [
         { q: 'Almanya’da IT uzmanı ne kadar kazanır?', a: 'İlk işte tam zamanlı tahmini brüt maaş aylık 3.600 – 4.800 €’dur (Entgeltatlas’a göre, yuvarlanmış); deneyimle belirgin şekilde artar. Mavi Kart için yıllık maaş eşiğine bakın.' },
-        { q: 'Diploma olmadan IT Mavi Kart alınabilir mi?', a: 'Evet, son 7 yılda en az 3 yıl IT iş deneyimi ve eleman açığı olan meslekler için maaş eşiği (2026: 45.934,20 €) varsa. Deneyim iş referanslarıyla kanıtlanmalıdır.' },
+        { q: 'Diploma olmadan IT Mavi Kart alınabilir mi?', a: 'Evet, son 7 yılda en az 3 yıl IT iş deneyimi ve eleman açığı olan meslekler için maaş eşiği (2026: 45.934,20 €) varsa. Pozisyon akademik düzeyde nitelikli bir IT işi olmalı ve Federal İstihdam Ajansı onay vermelidir. Deneyim iş referanslarıyla kanıtlanmalıdır.' },
         { q: 'IT işi için Almanca gerekli mi?', a: 'Mavi Kart için dil şartı yoktur ve birçok ekip İngilizce çalışır. Ancak Almanca günlük yaşamda ve süresiz oturum iznini daha erken almak için faydalıdır (B1 ile 21 ay).' },
         { q: 'İş teklifi olmadan Almanya’ya gidilebilir mi?', a: 'Fırsat Kartı (Chancenkarte) ile iş aramak için 1 yıla kadar gelmek mümkündür: puan sistemi, dil ve maddi yeterlilik şartları vardır. Puanınızı Chancenkarte hesaplayıcısıyla hesaplayın.' },
         { q: 'Mavi Kart ile aile getirilebilir mi?', a: 'Evet, Mavi Kart sahipleri için aile birleşimi kolaylaştırılmıştır: eş için Almanca şartı yoktur. Şartları aile birleşimi rehberinde okuyun.' },
@@ -267,7 +267,7 @@ export const TR: CareerCopy = {
       pay: 'Pflege Ausbildung’da ücret görece yüksektir: aylık yaklaşık 1.300 – 1.600 € brüt (1. yıldan 3. yıla kadar, TVAöD-Pflege’ye göre). Özel kurumlarda tutar farklı olabilir.',
       after: 'Devlet sınavından sonra Pflegefachkraft olarak çalışırsınız; ilk işte tahmini brüt maaş aylık 2.900 – 3.900 €’dur. Ausbildung’dan sonra nitelikli çalışan olarak (§ 18a) oturum izni almak mümkündür.',
       faq: [
-        { q: 'Pflege Ausbildung için yaş sınırı var mı?', a: 'Ausbildung vizesi (§ 16a) için yasada yaş sınırı yoktur. Ausbildung yeri aramak için ayrı vize (§ 17) ise 35 yaşına kadar olmayı ve B1 dil seviyesini gerektirir.' },
+        { q: 'Pflege Ausbildung için yaş sınırı var mı?', a: 'Ausbildung vizesi (§ 16a) için yasada yaş sınırı yoktur. Ausbildung yeri aramak için ayrı vize (§ 17) ise 35 yaşından küçük olmayı, yeterli Almanca bilgisini (seviyeyi temsilcilik bildirir), güvence altındaki geçim masrafını ve üniversiteye giriş hakkı veren bir okul diploması gerektirir; izin en fazla dokuz ay verilir.' },
         { q: 'Ausbildung ücreti geçinmeye yeter mi?', a: 'Pflege ücreti çoğu şehirde temel giderleri karşılar, ancak büyük şehirlerde kiralar yüksektir. Ücret istenen tutarın altındaysa büyükelçilik ek maddi yeterlilik kanıtı isteyebilir.' },
         { q: 'Sağlık diplomam varsa yine de Ausbildung gerekir mi?', a: 'Hayır, hemşirelik diplomanız varsa denklik (Anerkennung) yolu genellikle daha kısadır. Diploma yoksa veya denklik mümkün değilse Ausbildung seçilir.' },
         { q: 'Ausbildung sırasında ek iş yapılabilir mi?', a: 'Ausbildung’un kendisi tam zamanlı bir iş gibidir. Haftada 20 saate kadar ek iş mümkündür, ancak Ausbildung’un başarısı önceliklidir.' },

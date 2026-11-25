@@ -153,7 +153,7 @@ Diplomunuzun Almaniyada tanınması lazım deyil, əgər:
 Siyahı yola görə dəyişir, amma əsas paket təxminən belədir:
 
 - etibarlı xarici pasport və biometrik fotolar;
-- doldurulmuş viza ərizəsi (VIDEX forması);
+- doldurulmuş viza ərizəsi (Auslandsportal-da və ya səfirliyin göstərdiyi VIDEX formasında);
 - əmək müqaviləsi və ya bağlayıcı iş təklifi;
 - lazım olduqda BA-nın razılığı və ya işəgötürənin "Erklärung zum Beschäftigungsverhältnis" forması;
 - diplom, tanınma qərarı (lazımdırsa) və iş təcrübəsi arayışları;

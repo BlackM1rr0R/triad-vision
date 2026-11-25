@@ -11,24 +11,25 @@ const vacancy = (title: string, o: Record<string, unknown> = {}) =>
   prisma.vacancy.create({ data: { slug: uniq('career-'), title: l10n(title), description: l10n('x'), status: 'OPEN', city: 'Bonn', publishedAt: new Date(), ...o } });
 
 describe('GET /api/career', () => {
-  it('serves the hub blocks in the career languages (null in uk) with the cities of its live vacancies', async () => {
+  it('serves the hub blocks in the career languages (null in a language without them) with the cities of its live vacancies', async () => {
     await vacancy('Koch (m/w/d)');
     const res = await anon().get('/api/career/hubs/cook?lng=ru').expect(200);
     expect(res.body.visa.path).toBe('/visas/gastronomie-hotel');
     expect(res.body.faq.length).toBeGreaterThanOrEqual(7);
     expect(res.body.cities.map((c: { slug: string }) => c.slug)).toContain('bonn');
     const uk = await anon().get('/api/career/hubs/cook?lng=uk').expect(200);
-    expect(uk.body).toBeNull();
+    expect(uk.body.visa.path).toBe('/visas/gastronomie-hotel');
+    expect(uk.body.faq.length).toBeGreaterThanOrEqual(7);
     await anon().get('/api/career/hubs/astronaut').expect(404);
   });
 
-  it('serves the Ausbildung occupations (404 for unknown slugs and in uk)', async () => {
+  it('serves the Ausbildung occupations (404 for unknown slugs; uk has its own texts)', async () => {
     const list = await anon().get('/api/career/ausbildung?lng=tr').expect(200);
     expect(list.body.items.map((i: { slug: string }) => i.slug)).toContain('pflege');
     const page = await anon().get('/api/career/ausbildung/koch?lng=az').expect(200);
     expect(page.body.allowance).toHaveLength(2);
     expect(page.body.hub.path).toBe('/for/cook');
-    await anon().get('/api/career/ausbildung/koch?lng=uk').expect(404);
+    await anon().get('/api/career/ausbildung/koch?lng=uk').expect(200);
     await anon().get('/api/career/ausbildung/zahnarzt').expect(404);
   });
 
@@ -45,6 +46,7 @@ describe('GET /api/career', () => {
     const list = await anon().get('/api/career/cities?lng=az').expect(200);
     expect(list.body.items.map((c: { slug: string }) => c.slug)).toEqual(expect.arrayContaining(['berlin', 'bonn']));
     expect((await anon().get('/__seo/status').query({ path: '/ru/cities/bonn' })).text).not.toBe('404');
-    expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/pflege' })).text).toBe('404');
+    expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/pflege' })).text).toBe('200');
+    expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/zahnarzt' })).text).toBe('404');
   });
 });

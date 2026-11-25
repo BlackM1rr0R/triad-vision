@@ -3,16 +3,17 @@ import { jobLandings, jobProfession, type LandingJob } from '../jobLandings.js';
 import { PROFESSION_HUBS, hubBySlug, hubMatches, type ProfessionHubSlug } from '../professionHubs.js';
 import { CAREER_COPY } from './content/index.js';
 import { AUSBILDUNG_FACTS, CAREER_AS_OF, HUB_FACTS } from './facts.js';
-import { cityPagePath, cityPages, cityRow, cityTexts, jobsInCity, stateName } from './cities.js';
+import type { CityCostData } from '../budget/cities.js';
+import { CITY_ROWS, cityPagePath, cityPages, cityRow, cityTexts, jobsInCity, stateName } from './cities.js';
 import { AUSBILDUNG_SLUGS, isCareerLocale, type AusbildungSlug, type CareerLocale, type Faq } from './types.js';
 
 export { CAREER_LOCALES, AUSBILDUNG_SLUGS, isCareerLocale, type CareerLocale, type AusbildungSlug } from './types.js';
 export { CAREER_AS_OF, CAREER_LASTMOD, HUB_FACTS, AUSBILDUNG_FACTS } from './facts.js';
-export { cityPagePath, cityPageSlug, cityPages, cityRow, cityTexts, hasCityPage, jobsInCity } from './cities.js';
+export { CITY_ROWS, cityPagePath, cityPageSlug, cityPages, cityRow, cityRowsOf, cityTexts, hasCityPage, jobsInCity } from './cities.js';
 
 /**
  * Career pages: builders shared by the API (routes/careerPages.ts), the SEO head (lib/seo.ts) and the crawler body
- * (lib/seoBody.ts). Pure functions over the static texts and the given live vacancies.
+ * (lib/seoBody.ts). Pure functions over the static texts, the given live vacancies and the given city rows.
  */
 
 export const ausbildungPath = (slug: string) => `/ausbildung/${slug}`;
@@ -27,16 +28,19 @@ export const isCareerDetailPath = (path: string) => /^\/(ausbildung|cities)\/[^/
 export const hubFaq = (slug: ProfessionHubSlug, lng: CareerLocale): Faq[] => [...CAREER_COPY[lng].hubs[slug].faq, ...CAREER_COPY[lng].shared.faq];
 
 /** Cities (with a page) where the given hub has live vacancies. */
-const hubCities = <J extends LandingJob>(slug: ProfessionHubSlug, jobs: J[]) => {
+const hubCities = <J extends LandingJob>(slug: ProfessionHubSlug, jobs: J[], cities: readonly CityCostData[]) => {
   const hub = hubBySlug(slug)!;
   const own = jobs.filter((j) => hubMatches(hub, jobProfession(j)));
-  return cityPages(jobs)
-    .map((c) => ({ slug: c.row.slug, name: c.row.name, path: cityPagePath(c.row.slug), jobs: jobsInCity(own, c.row.slug).length }))
+  return cityPages(jobs, cities)
+    .map((c) => ({ slug: c.row.slug, name: c.row.name, path: cityPagePath(c.row.slug), jobs: jobsInCity(own, c.row.slug, cities).length }))
     .filter((c) => c.jobs > 0);
 };
 
-/** GET /api/career/hubs/:slug — the SEO blocks of a profession hub (null in a language without these texts). */
-export const hubContent = <J extends LandingJob>(slug: ProfessionHubSlug, lng: string, liveJobs: J[]) => {
+/**
+ * GET /api/career/hubs/:slug — the SEO blocks of a profession hub (null in a language without these texts).
+ * `cities`: the city rows (cityRowsOf(SeoData.cities)); default the seed rows.
+ */
+export const hubContent = <J extends LandingJob>(slug: ProfessionHubSlug, lng: string, liveJobs: J[], cities: readonly CityCostData[] = CITY_ROWS) => {
   if (!isCareerLocale(lng)) return null;
   const copy = CAREER_COPY[lng];
   const facts = HUB_FACTS[slug];
@@ -53,7 +57,7 @@ export const hubContent = <J extends LandingJob>(slug: ProfessionHubSlug, lng: s
     faq: hubFaq(slug, lng),
     ausbildung,
     guides: facts.guides,
-    cities: hubCities(slug, liveJobs),
+    cities: hubCities(slug, liveJobs, cities),
   };
 };
 
@@ -93,13 +97,16 @@ export const ausbildungPage = (slug: string, lng: string) => {
 
 type CityJob = LandingJob & { city: string | null };
 
-/** GET /api/career/cities/:slug — one city page from the live vacancies (null: no page in that language / city). */
-export const cityPage = <J extends CityJob>(slug: string, lng: string, liveJobs: J[], titleOf: (j: J) => string) => {
+/**
+ * GET /api/career/cities/:slug — one city page from the live vacancies and the city rows (cityRowsOf(SeoData.cities);
+ * default the seed rows). Null: no page in that language / for that city.
+ */
+export const cityPage = <J extends CityJob>(slug: string, lng: string, liveJobs: J[], titleOf: (j: J) => string, cities: readonly CityCostData[] = CITY_ROWS) => {
   if (!isCareerLocale(lng)) return null;
-  const row = cityRow(slug);
-  const pages = cityPages(liveJobs);
+  const row = cityRow(slug, cities);
+  const pages = cityPages(liveJobs, cities);
   if (!row || !pages.some((p) => p.row.slug === slug)) return null;
-  const jobs = jobsInCity(liveJobs, slug);
+  const jobs = jobsInCity(liveJobs, slug, cities);
   const professions = [...new Set(jobs.map((j) => jobProfession(j)).filter((p): p is string => !!p))];
   const hubs = PROFESSION_HUBS.filter((h) => professions.some((p) => hubMatches(h, p))).map((h) => h.slug);
   return {

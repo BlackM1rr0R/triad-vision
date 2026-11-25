@@ -5,7 +5,7 @@ import { skilledWorkerVisaGuide } from './skilledWorkerVisa.js';
 
 /**
  * SEO guides 2026 for the job-seeker audience ("Almaniyada yaşamaq üçün aylıq xərclər", "документы на рабочую
- * визу в Германию", "Almanya nitelikli işçi vizesi" …), one key per topic, written in az (main), ru and tr.
+ * визу в Германию", "Almanya nitelikli işçi vizesi" …), one key per topic, written in az (main), ru, tr and uk.
  *
  * Their figures come from the repository only: city costs from server/src/lib/budget/cities.ts (DEFAULT seed
  * rows), Deutschlandticket / Rundfunkbeitrag / SIM / internet ranges from lib/budget/params.ts, net salary
@@ -24,7 +24,7 @@ export interface Seo2026Guide {
 }
 
 /** Languages every SEO 2026 guide is written in. */
-export const SEO2026_LOCALES: readonly GuideLocale[] = ['az', 'ru', 'tr'];
+export const SEO2026_LOCALES: readonly GuideLocale[] = ['az', 'ru', 'tr', 'uk'];
 
 export const SEO2026_GUIDES: Seo2026Guide[] = [livingCostsGuide, visaDocumentsGuide, skilledWorkerVisaGuide];
 

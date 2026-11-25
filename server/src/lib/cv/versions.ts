@@ -74,8 +74,5 @@ export const pruneLebenslaufVersions = async (userId: string, keep = MAX_LEBENSL
 
 export const latestLebenslauf = (userId: string) => prisma.lebenslaufVersion.findFirst({ where: { userId }, orderBy: { version: 'desc' } });
 
-/** The newest version, or a fresh one built from the current CV when the client never saved one. */
-export const latestOrNewLebenslauf = async (userId: string) => (await latestLebenslauf(userId)) ?? createLebenslaufVersion(userId, { lang: 'de' });
-
 /** Storage keys of a user's versions (account deletion removes the files after commit). */
 export const lebenslaufKeysOf = async (userId: string) => (await prisma.lebenslaufVersion.findMany({ where: { userId }, select: { storageKey: true } })).map((v) => v.storageKey);

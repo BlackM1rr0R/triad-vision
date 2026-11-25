@@ -33,7 +33,7 @@ const job = (over: Partial<SeoData['jobs'][number]> = {}): SeoData['jobs'][numbe
 const SEEDED_VISAS = ['lkw-fahrer', 'kurierfahrer', 'gastronomie-hotel', 'bau-handwerk', 'pflege-gesundheit', 'landwirtschaft', 'industrie-technik', 'ausbildung', 'it-buero'];
 
 describe('career page texts', () => {
-  it('cover every hub and Ausbildung occupation in the five career languages', () => {
+  it('cover every hub and Ausbildung occupation in the six career languages', () => {
     for (const l of CAREER_LOCALES) {
       const c = CAREER_COPY[l];
       expect(c.shared.steps, l).toHaveLength(5);
@@ -80,27 +80,28 @@ describe('career page texts', () => {
 });
 
 describe('Ausbildung occupation pages (/ausbildung/:slug)', () => {
-  it('resolve with Article + FAQPage, breadcrumbs and hreflang for the career languages only', () => {
+  it('resolve with Article + FAQPage, breadcrumbs and hreflang for every career language', () => {
     const head = renderHead('/ru/ausbildung/pflege', null, data());
     expect(head).toContain('rel="canonical" href="');
     expect(head).toMatch(/"@type":"FAQPage"/);
     expect(head).toMatch(/"@type":"BreadcrumbList"/);
     for (const l of CAREER_LOCALES) expect(head).toContain(`hreflang="${l}"`);
-    expect(head).not.toContain('hreflang="uk"');
+    expect(head).toContain('hreflang="uk"');
     const page = resolvePage('/ausbildung/koch', 'az', data());
     expect(page.index).toBe(true);
     expect(page.title.length).toBeLessThanOrEqual(60);
     expect(page.crumbs.map((c) => c.path)).toEqual(['/', '/ausbildung', '/ausbildung/koch']);
   });
 
-  it('answer 404 for an unknown occupation and in Ukrainian (no text), 200 otherwise', () => {
+  it('answer 404 for an unknown occupation, 200 in every career language', () => {
     expect(pageStatus('/ausbildung/pflege', data())).toBe(200);
     expect(pageStatus('/tr/ausbildung/berufskraftfahrer', data())).toBe(200);
-    expect(pageStatus('/uk/ausbildung/pflege', data())).toBe(404);
+    expect(pageStatus('/uk/ausbildung/pflege', data())).toBe(200);
     expect(pageStatus('/ausbildung/zahnarzt', data())).toBe(404);
-    expect(resolvePage('/ausbildung/pflege', 'uk', data()).index).toBe(false);
+    expect(resolvePage('/ausbildung/pflege', 'uk', data()).index).toBe(true);
     expect(isKnownRoute('/ausbildung/x')).toBe(true);
-    expect(ausbildungPage('pflege', 'uk')).toBeNull();
+    expect(ausbildungPage('pflege', 'uk')?.title).toBeTruthy();
+    expect(ausbildungPage('pflege', 'xx')).toBeNull();
   });
 
   it('render the content for crawlers (requirements, allowance as an estimate, FAQ, related links)', () => {
@@ -118,7 +119,7 @@ describe('city pages (/cities/:slug)', () => {
     expect(pageStatus('/cities/berlin', data())).toBe(200);
     expect(pageStatus('/cities/bonn', data())).toBe(404);
     expect(pageStatus('/cities/bonn', data([job()]))).toBe(200);
-    expect(pageStatus('/uk/cities/berlin', data())).toBe(404);
+    expect(pageStatus('/uk/cities/berlin', data())).toBe(200);
     expect(pageStatus('/cities/atlantis', data())).toBe(404);
     expect(cityPages([job()]).map((c) => c.row.slug)).toEqual(expect.arrayContaining(['berlin', 'hamburg', 'muenchen', 'koeln', 'frankfurt', 'bonn']));
   });
@@ -145,9 +146,10 @@ describe('profession hubs: SEO blocks', () => {
     expect(c.ausbildung?.path).toBe('/ausbildung/koch');
     expect(c.cities.map((x) => x.slug)).toContain('bonn');
     expect(c.faq.length).toBeGreaterThanOrEqual(7);
-    expect(hubContent('cook', 'uk', [])).toBeNull();
+    expect(hubContent('cook', 'uk', [])?.faq.length).toBeGreaterThanOrEqual(7);
+    expect(hubContent('cook', 'xx', [])).toBeNull();
     expect(renderHead('/for/courier', null, data())).toMatch(/"@type":"FAQPage"/);
-    expect(renderHead('/uk/for/courier', null, data())).not.toMatch(/"@type":"FAQPage"/);
+    expect(renderHead('/uk/for/courier', null, data())).toMatch(/"@type":"FAQPage"/);
     expect(renderBody('/tr/for/warehouse', data())).toContain('href="/tr/ausbildung/lagerlogistik"');
     for (const h of PROFESSION_HUB_SLUGS) for (const l of SEO_LOCALES) expect(STATIC_PAGES[`/for/${h}`].title[l], `${h} ${l}`).toBeTruthy();
   });
@@ -161,7 +163,8 @@ describe('sitemap', () => {
     expect(locs.some((u) => u.endsWith('/ru/ausbildung/pflege'))).toBe(true);
     expect(locs.some((u) => u.endsWith('/tr/cities/berlin'))).toBe(true);
     expect(locs.some((u) => u.endsWith('/cities/bonn'))).toBe(true);
-    expect(locs.some((u) => u.includes('/uk/ausbildung/') || u.includes('/uk/cities/'))).toBe(false);
+    expect(locs.some((u) => u.endsWith('/uk/ausbildung/pflege'))).toBe(true);
+    expect(locs.some((u) => u.endsWith('/uk/cities/berlin'))).toBe(true);
     const pflege = urls.find((u) => u.loc.endsWith('/de/ausbildung/pflege'))!;
     expect(pflege.alternates.map(([l]) => l).sort()).toEqual([...CAREER_LOCALES, 'x-default'].sort());
     for (const h of PROFESSION_HUB_SLUGS) expect(locs.some((u) => u.endsWith(`/for/${h}`)), h).toBe(true);

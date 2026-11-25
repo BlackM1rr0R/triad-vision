@@ -240,7 +240,8 @@ aiDocsRouter.post('/letters/:id/send', async (req, res) => {
   if (body.caseId && (!c || c.clientId !== req.user!.id)) throw notFound('CASE_NOT_FOUND');
   if (!c) throw conflict('NO_CASE');
 
-  // The letter file joins the case as an OTHER-stage document, so staff can open it next to the message.
+  // The letter file joins the case as an OTHER-stage document, so staff can open it next to the message (no requirement:
+  // nothing to link to the document lists, lib/docLink).
   const storedName = randomKey(path.extname(v.storageKey).toLowerCase().replace(/[^.a-z0-9]/g, ''));
   try {
     await fs.copyFile(path.join(vaultDir(), v.storageKey), path.join(config.uploads.privateDir, storedName));

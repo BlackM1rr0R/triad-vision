@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { createClient, l10n } from '../helpers/factories';
-import { makePdf } from '../helpers/files';
+import { makePdf, PDF } from '../helpers/files';
 import { clientCase, expectStatus, uploadDoc } from '../helpers/workflow';
 import { config } from '../../src/config.js';
 import { createCase } from '../../src/lib/caseFlow.js';
@@ -129,6 +129,36 @@ describe('linked documents (initial ↔ embassy)', () => {
     const before = await prisma.document.count({ where: { caseId: c.id } });
     await backfillLinkedDocuments();
     expect(await prisma.document.count({ where: { caseId: c.id } })).toBe(before);
+  });
+
+  it('files outside the document lists (task attachment and answer, questionnaire file) are never linked', async () => {
+    const client = await asClient();
+    const admin = await asAdmin();
+    const c = expectStatus(await client.agent.post('/api/cases').send({ profession: 'LKW sürücüsü' }), 201).body.case as { id: string };
+    const embPassport = await embassyReq(c.id, 'PASSPORT');
+    const initial = (await clientCase(client.agent, c.id)).requirements as unknown as { id: string; stage: string; key: string | null }[];
+    const iniPassport = initial.find((r) => r.stage === 'INITIAL' && r.key === 'PASSPORT')!;
+
+    // Staff task for the passport requirement with a staff attachment; the client marks it done with a file.
+    const task = expectStatus(
+      await admin.agent
+        .post(`/api/admin/client-process/cases/${c.id}/tasks`)
+        .field('title', 'Pasportu yükləyin')
+        .field('requirementId', iniPassport.id)
+        .field('notify', 'false')
+        .attach('file', await makePdf('Forma'), { filename: 'forma.pdf', ...PDF }),
+      201,
+    ).body.task as { id: string; attachmentId: string };
+    const done = expectStatus(await client.agent.post(`/api/client-process/tasks/${task.id}/done`).attach('file', await makePdf('PASS'), { filename: 'pasport.pdf', ...PDF }), 200).body.task as { clientDocumentId: string };
+    const answer = expectStatus(await client.agent.post(`/api/client-data/cases/${c.id}/files`).attach('file', await makePdf('Police'), { filename: 'police.pdf', ...PDF }), 201).body.document as { id: string };
+
+    const ids = [task.attachmentId, done.clientDocumentId, answer.id];
+    const rows = await prisma.document.findMany({ where: { id: { in: ids } } });
+    expect(rows).toHaveLength(3);
+    for (const d of rows) expect(d).toMatchObject({ stage: 'OTHER', requirementId: null, linkedFromId: null });
+    expect(await prisma.document.count({ where: { linkedFromId: { in: ids } } })).toBe(0);
+    expect(await docsOf(iniPassport.id)).toHaveLength(0);
+    expect(await docsOf(embPassport.id)).toHaveLength(0);
   });
 
   it('a requirement requested by the case AI is filled at once from the other list', async () => {

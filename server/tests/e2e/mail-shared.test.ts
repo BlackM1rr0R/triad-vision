@@ -6,6 +6,7 @@ import { setImapFactory } from '../../src/lib/mail/imap.js';
 import { FakeSmtp, setSmtpFactory } from '../../src/lib/mail/smtp.js';
 import { flushRemote } from '../../src/lib/mail/core.js';
 import { resetMailboxOpenLog } from '../../src/lib/mail/access.js';
+import { subscribe, type RealtimeEvent } from '../../src/lib/messaging/realtime.js';
 
 /**
  * Shared workspace mailboxes (lib/mail/access, Access Center › Mailboxes): owners keep their mailbox private
@@ -172,5 +173,49 @@ describe('shared mailboxes', () => {
     expect((await colleague.agent.get('/api/mail/mailboxes')).body.shared).toEqual([]);
     expect(await prisma.auditLog.count({ where: { action: 'MAIL_ACCESS_GRANTED', target: account.id, actorId: sa.user.id } })).toBe(1);
     expect(await prisma.auditLog.count({ where: { action: 'MAIL_ACCESS_REVOKED', target: account.id, actorId: sa.user.id } })).toBe(1);
+  });
+
+  it('colleagues with a grant get the realtime events of the mailbox (no bodies); super admins without a grant and revoked colleagues do not', async () => {
+    const { owner, account, messageId } = await setup();
+    const sa = await asSuperAdmin();
+    const reader = await asStaff();
+    const sender = await asStaff();
+    const outsider = await asStaff();
+    const readerGrant = await grant(sa, account.id, reader.user.id, 'READ');
+    await grant(sa, account.id, sender.user.id, 'SEND');
+    const actors = [owner, reader, sender, sa, outsider];
+    const events = new Map<string, RealtimeEvent[]>(actors.map((a) => [a.user.id, []]));
+    const stops = actors.map((a) => subscribe(a.user.id, (ev) => ev.type.startsWith('mail.') && events.get(a.user.id)!.push(ev)));
+    const of = (a: Actor) => events.get(a.user.id)!;
+    const clear = () => events.forEach((list) => list.splice(0));
+    try {
+      await imap.deliver({ from: 'Rauf <rauf@client.az>', to: 'owner@example.az', subject: 'Arbeitsvertrag', text: 'Secret body text', messageId: '<s2@client.az>', date: new Date() });
+      expect((await owner.agent.post(`/api/mail/accounts/${account.id}/sync`)).status).toBe(200);
+      for (const a of [owner, reader, sender]) {
+        expect(of(a).find((e) => e.type === 'mail.new')?.payload).toMatchObject({ accountId: account.id, from: 'Rauf', subject: 'Arbeitsvertrag' });
+        expect(of(a).some((e) => e.type === 'mail.updated' && e.payload.reason === 'sync')).toBe(true);
+        expect(JSON.stringify(of(a))).not.toContain('Secret body text');
+      }
+      expect(of(sa)).toEqual([]);
+      expect(of(outsider)).toEqual([]);
+
+      // Changes made by a colleague with "read + send" reach the owner and the other colleague too.
+      clear();
+      expect((await sender.agent.post('/api/mail/messages/bulk').send({ ids: [messageId], action: 'read' })).status).toBe(200);
+      expect((await sender.agent.post('/api/mail/send').send(sendBody(account.id))).status).toBe(201);
+      for (const a of [owner, reader, sender]) expect(of(a).map((e) => e.payload.reason)).toEqual(expect.arrayContaining(['read', 'sent']));
+      expect(of(sa)).toEqual([]);
+
+      // A revoked grant stops the events at once.
+      clear();
+      expect((await sa.agent.delete(`/api/admin/access/mailboxes/grants/${readerGrant.id}`)).status).toBe(200);
+      await imap.deliver({ from: 'Leyla <leyla@client.az>', to: 'owner@example.az', subject: 'Pasport', text: 'x', messageId: '<s3@client.az>', date: new Date() });
+      expect((await owner.agent.post(`/api/mail/accounts/${account.id}/sync`)).status).toBe(200);
+      expect(of(owner).some((e) => e.type === 'mail.new')).toBe(true);
+      expect(of(sender).some((e) => e.type === 'mail.new')).toBe(true);
+      expect(of(reader)).toEqual([]);
+    } finally {
+      for (const stop of stops) stop();
+    }
   });
 });

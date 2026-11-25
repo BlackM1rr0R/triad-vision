@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.js';
-import { conflict, notFound } from '../http.js';
+import { HttpError, conflict, notFound } from '../http.js';
 import { loadCaseContext } from '../ai/features/caseAi/data.js';
 import { mapVidex } from '../ai/features/caseAi/videx.js';
 import type { ContractResult } from '../ai/features/caseAi/contract.js';
@@ -15,7 +15,11 @@ import { listCoverTemplates } from '../coverLetters/index.js';
 import { buildCoverValues, jobTypeOf, type CoverListing } from '../coverLetters/values.js';
 import { ensureCaseFolder } from '../drive/caseFolders.js';
 import { nodeLiteSelect } from '../drive/access.js';
-import { createFileIn } from '../drive/files.js';
+import { createFileIn, saveFileVersion } from '../drive/files.js';
+import { checkName, findSibling } from '../drive/names.js';
+import { hashBuffer } from '../drive/org/hash.js';
+import { liveLock } from '../driveCollab/lock.js';
+import { logDriveActivity } from '../driveCollab/activity.js';
 import { maskJson, type MaskGroup } from '../privacy/mask.js';
 import { missingRequired, renderVidexSheet, videxSheetFileName, videxSheetRows } from './videxSheet.js';
 import { TEMPLATES_FOLDER_NAME, type SheetLang } from './texts.js';
@@ -204,14 +208,41 @@ const templatesFolder = async (caseId: string) => {
   return existing ?? prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: TEMPLATES_FOLDER_NAME, parentId: folderId }, select: nodeLiteSelect });
 };
 
-/** Saves the generated PDF into the client's drive folder (a new file each time) + an internal case event. */
+/**
+ * The PDF as the next version of the file of the same name in the folder (the previous one stays in its version
+ * history), or null when there is none to version: no such file, marked final, or someone else is editing it (live
+ * lock) — a new file then. Unchanged bytes keep the current version.
+ */
+const saveAsNextVersion = async (folderId: string, filename: string, pdf: Buffer, actorId: string) => {
+  const hit = await findSibling(folderId, checkName(filename, 'FILE'));
+  if (hit?.kind !== 'FILE') return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const node = await prisma.driveNode.findUnique({ where: { id: hit.id }, select: { id: true, name: true, version: true, finalAt: true, contentHash: true, deletedAt: true } });
+    if (!node || node.deletedAt || node.finalAt) return null;
+    const lock = await liveLock(node.id);
+    if (lock && lock.lockedBy.id !== actorId) return null;
+    if (node.contentHash && node.contentHash === hashBuffer(pdf)) return { id: node.id, name: node.name, version: node.version, size: pdf.length };
+    try {
+      const saved = await saveFileVersion(node.id, pdf, 'application/pdf', node.version);
+      await logDriveActivity({ nodeId: node.id, folderId, actorId, action: 'NEW_VERSION', name: node.name, meta: { version: saved.version, size: saved.size, source: 'doc-template', kind: 'FILE' } });
+      return { id: node.id, name: node.name, version: saved.version, size: saved.size };
+    } catch (err) {
+      if (!(err instanceof HttpError && err.code === 'VERSION_CONFLICT')) throw err; // saved in between (double click): once more
+    }
+  }
+  return null;
+};
+
+/**
+ * Saves the generated PDF into "<client folder>/Sənəd şablonları" + an internal case event: as a new version of the
+ * file of the same name when there is one (saveAsNextVersion), else as a new file. `version` > 1: a new version.
+ */
 export const attachTemplate = async (c: TemplateCase, kind: DocTemplateKind, actorId: string, opts: BuildOpts) => {
   const { pdf, filename } = await buildTemplatePdf(c, kind, { ...opts, audience: 'staff' });
   const folder = await templatesFolder(c.id);
   if (!folder) throw conflict('NO_DRIVE_FOLDER');
-  const node = await createFileIn(folder, filename, pdf, 'application/pdf', actorId);
-  await prisma.caseEvent
-    .create({ data: { caseId: c.id, type: 'DOC_TEMPLATE_ATTACHED', actorId, note: `${TEMPLATES_FOLDER_NAME}/${filename}`.slice(0, 2000), visibleToClient: false } })
-    .catch(() => undefined);
-  return { nodeId: node.id, name: filename };
+  const saved = (await saveAsNextVersion(folder.id, filename, pdf, actorId)) ?? { ...(await createFileIn(folder, filename, pdf, 'application/pdf', actorId)), version: 1, size: pdf.length };
+  const note = `${TEMPLATES_FOLDER_NAME}/${saved.name}${saved.version > 1 ? ` (v${saved.version})` : ''}`;
+  await prisma.caseEvent.create({ data: { caseId: c.id, type: 'DOC_TEMPLATE_ATTACHED', actorId, note: note.slice(0, 2000), visibleToClient: false } }).catch(() => undefined);
+  return { nodeId: saved.id, name: saved.name, version: saved.version, size: saved.size };
 };

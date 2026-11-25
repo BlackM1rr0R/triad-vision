@@ -51,10 +51,16 @@ const Hint = ({ tone, children }: { tone: 'info' | 'warning'; children: ReactNod
   </p>
 );
 
-/** One document of the V2 İş müqaviləsi set: state, open / signed PDF, return / replace / drop. */
-const DocRow = ({ d, onReturn, onReplace, onDrop }: { d: StaffDoc; onReturn: () => void; onReplace: () => void; onDrop: () => void }) => {
+/** A V2 İş müqaviləsi document staff may send back: open, or signed and not approved yet (server returnDocument). */
+export const canReturnDoc = (d: StaffDoc) => !d.returnedAt && (d.status === 'SENT' || (d.status === 'COMPLETED' && !d.approvedAt));
+
+/**
+ * One document of the V2 İş müqaviləsi set: state, open / signed PDF, return / replace / drop. Shared by the case page
+ * and the quick drawer (QuickContractActions); `busy` disables the drop button while a drop runs.
+ */
+export const DocRow = ({ d, onReturn, onReplace, onDrop, busy }: { d: StaffDoc; onReturn: () => void; onReplace: () => void; onDrop: () => void; busy?: boolean }) => {
   const { t } = useTranslation();
-  const canReturn = !d.returnedAt && (d.status === 'SENT' || (d.status === 'COMPLETED' && !d.approvedAt));
+  const canReturn = canReturnDoc(d);
   return (
     <li className="flex flex-wrap items-center gap-2 py-2 text-xs">
       <span className="min-w-0 flex-1 truncate font-semibold text-ink" title={d.originalName}>
@@ -76,7 +82,7 @@ const DocRow = ({ d, onReturn, onReplace, onDrop }: { d: StaffDoc; onReturn: () 
             <button type="button" className="btn-secondary btn-sm" onClick={onReplace}>
               <Upload className="size-3.5" aria-hidden /> {t('caseContracts.v2.replace')}
             </button>
-            <button type="button" className="btn-ghost btn-sm" onClick={onDrop}>
+            <button type="button" className="btn-ghost btn-sm" onClick={onDrop} disabled={busy}>
               <X className="size-3.5" aria-hidden /> {t('caseContracts.v2.drop')}
             </button>
           </>
@@ -93,9 +99,11 @@ interface StepActions {
   onReturn: (doc?: StaffDoc) => void;
   onReplace: (doc: StaffDoc) => void;
   onDrop: (doc: StaffDoc) => void;
+  /** A drop is running (its button is disabled). */
+  dropping?: boolean;
 }
 
-const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop }: { s: StaffStep } & StepActions) => {
+const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop, dropping }: { s: StaffStep } & StepActions) => {
   const { t } = useTranslation();
   const r = s.request;
   const v2 = s.flow === 'V2';
@@ -136,7 +144,7 @@ const StepCard = ({ s, onUpload, onSign, onApprove, onReturn, onReplace, onDrop 
           <p className="text-xs font-semibold text-muted">{t('caseContracts.v2.documents', { count: s.documents.length })}</p>
           <ul className="divide-y divide-line">
             {s.documents.map((d) => (
-              <DocRow key={d.id} d={d} onReturn={() => onReturn(d)} onReplace={() => onReplace(d)} onDrop={() => onDrop(d)} />
+              <DocRow key={d.id} d={d} onReturn={() => onReturn(d)} onReplace={() => onReplace(d)} onDrop={() => onDrop(d)} busy={dropping} />
             ))}
           </ul>
         </div>
@@ -395,6 +403,7 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
               onReturn={(doc) => setReturning({ step: s.step, doc: doc ?? null })}
               onReplace={(doc) => setUploading({ step: s.step, replacesId: doc.id })}
               onDrop={(doc) => drop.mutate(doc.id)}
+              dropping={drop.isPending}
             />
           ))}
         </div>

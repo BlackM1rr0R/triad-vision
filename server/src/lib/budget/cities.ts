@@ -179,9 +179,9 @@ const norm = (s: string) =>
 
 /**
  * Best row for a free-text place (vacancy / arrival city): slug, name or alias match; otherwise null
- * (the caller then falls back to a size class).
+ * (the caller then falls back to a size class). Works on table rows and on the seed rows (DEFAULT_CITY_COSTS).
  */
-export const matchCity = (rows: readonly CityCost[], place: string | null | undefined): CityCost | null => {
+export const matchCity = <R extends Pick<CityCost, 'slug' | 'name' | 'kind' | 'aliases'>>(rows: readonly R[], place: string | null | undefined): R | null => {
   if (!place?.trim()) return null;
   const q = norm(place);
   if (!q) return null;

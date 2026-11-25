@@ -25,7 +25,7 @@ import { getCaseAiSettings } from './ai/features/caseAi/config.js';
 import { compareContent, currentThresholds, type CompareThresholds } from './compare/visaCompare.js';
 import { occupationByCode } from './jobFeeds/occupations.js';
 import { vacancyImagesOf } from './vacancyImages.js';
-import { DEFAULT_CITY_COSTS, matchCity } from './budget/cities.js';
+import { DEFAULT_CITY_COSTS, activeCityCosts, matchCity, type CityCostData } from './budget/cities.js';
 import type { FederalState } from './budget/params.js';
 import type { CityCost } from '@prisma/client';
 import { findJobLanding, jobLandingTexts, jobLandings, parseJobLandingPath } from './jobLandings.js';
@@ -34,7 +34,7 @@ import { berlinToday, upcomingDeadlines } from './study/deadlines.js';
 import { GLOSSARY_LASTMOD, glossaryDescription, glossarySetLd, glossarySitemapPaths, glossarySlugOf, glossaryTermLd, glossaryTermOfPath, glossaryTitle } from './glossary/seo.js';
 import { germanExamFaqFor } from './germanExam/seo.js';
 import { careerResolve, careerSitemapPaths, careerStatus, hubFaqLd } from './careerPages/seo.js'; // /ausbildung/:slug, /cities/:slug, hub FAQ
-import { CAREER_LASTMOD, CAREER_LOCALES, cityPageSlug, isCareerDetailPath, jobsInCity } from './careerPages/index.js';
+import { CAREER_LASTMOD, CAREER_LOCALES, cityPageSlug, cityRowsOf, isCareerDetailPath, jobsInCity } from './careerPages/index.js';
 import { CHANGES_PATH, changes2027Ld } from './changes2027/seo.js';
 import { getCatalogue } from './candidateCatalogue/index.js';
 import { professionLabel } from './candidateCatalogue/labels.js';
@@ -275,6 +275,11 @@ export interface SeoData {
   closedJobs?: { slug: string; title: unknown; description: unknown; city: string | null }[];
   /** Anonymous candidate catalogue (/kandidaten, lib/candidateCatalogue): profession counts of the k-anonymous groups. Optional. */
   candidateCatalogue?: { professions: { profession: string; count: number }[]; total: number } | null;
+  /**
+   * Active city cost rows (CityCost, Admin → Şəhər xərcləri; the rows of the budget calculator): the figures of the city
+   * pages (lib/careerPages/cities.ts cityRowsOf). Optional for older fixtures and a failed read (seed defaults then).
+   */
+  cities?: CityCostData[];
 }
 
 const SEO_FIELDS = { seoTitle: true, seoDescription: true, ogImage: true, noindex: true } as const;
@@ -385,6 +390,8 @@ const loadSeoData = async (): Promise<SeoData> => {
     compareThresholds: currentThresholds(caseAi),
     landings: await publishedLandingsForSeo(),
     candidateCatalogue: await getCatalogue().catch(() => null),
+    // City pages: the same rows as the budget calculator (cached there too; every admin write clears both caches).
+    cities: await activeCityCosts().catch(() => undefined),
     // Deactivated vacancies (CLOSED after publication, or OPEN past their closing date): their pages stay reachable (lib/vacancyActive.ts).
     closedJobs: await prisma.vacancy.findMany({ where: deactivatedVacancyWhere(now), orderBy: { updatedAt: 'desc' }, take: 2000, select: { slug: true, title: true, description: true, city: true } }),
     settings: Object.fromEntries(settings.map((s) => [s.key, s.value])),
@@ -1291,7 +1298,7 @@ export const resolvePage = (path: string, lng: SeoLocale, data: SeoData): Resolv
     };
   }
 
-  // Ausbildung occupation pages and city pages (lib/careerPages/seo.ts): five languages, no page in the others.
+  // Ausbildung occupation pages and city pages (lib/careerPages/seo.ts): all six languages.
   const career = careerResolve(path, lng, data, url);
   if (career === 'missing') return generic;
   if (career) return career;
@@ -1755,11 +1762,12 @@ export const sitemapUrls = (data: SeoData, group: SitemapGroup): SitemapUrl[] =>
         '/glossary': latest([GLOSSARY_LASTMOD]),
       };
       // /platform sells the platform: only the owner's instance lists it (customer instances answer 404 there).
-      // Career detail pages (/ausbildung/<slug>, /cities/<slug>): the five career languages only (lib/careerPages).
+      // Career detail pages (/ausbildung/<slug>, /cities/<slug>): all six career languages (lib/careerPages).
       const careerLocales = Object.fromEntries(CAREER_LOCALES.map((l) => [l, l]));
+      const cityRows = cityRowsOf(data.cities);
       const careerLastmod = (p: string) => {
         const city = cityPageSlug(p);
-        return city ? latest([CAREER_LASTMOD, ...jobsInCity(jobs, city).map((j) => j.updatedAt)]) : CAREER_LASTMOD;
+        return city ? latest([CAREER_LASTMOD, ...jobsInCity(jobs, city, cityRows).map((j) => j.updatedAt)]) : CAREER_LASTMOD;
       };
       return [
         ...SITEMAP_STATIC.filter((path) => path !== '/platform' || getLicense().role === 'owner').flatMap((path) =>

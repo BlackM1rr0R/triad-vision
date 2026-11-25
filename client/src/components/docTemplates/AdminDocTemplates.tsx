@@ -45,8 +45,9 @@ export function AdminDocTemplates({ caseId }: { caseId: string }) {
   const download = (kind: DocTemplateKind) => run(`d-${kind}`, () => downloadPdf(`/admin/cases/${caseId}/doc-templates/${kind}.pdf${query(kind)}`, `${kind}.pdf`));
   const attach = (kind: DocTemplateKind) =>
     run(`a-${kind}`, async () => {
-      const out = (await api.post<{ nodeId: string; name: string }>(`/admin/cases/${caseId}/doc-templates/${kind}/attach`, { lang })).data;
-      toast.success(t('docTemplates.staff.attached', { name: out.name }));
+      // Attaching again saves a new version of the same file (server lib/docTemplates attachTemplate).
+      const out = (await api.post<{ nodeId: string; name: string; version?: number }>(`/admin/cases/${caseId}/doc-templates/${kind}/attach`, { lang })).data;
+      toast.success(t('docTemplates.staff.attached', { name: out.version && out.version > 1 ? `${out.name} (v${out.version})` : out.name }));
     });
 
   return (

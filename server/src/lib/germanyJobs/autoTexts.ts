@@ -2,8 +2,9 @@ import type { SeoLocale } from '../seoCatalogue.js';
 import type { AutoMissing } from './autoCheck.js';
 
 /**
- * Client texts of the automatic sending (lib/germanyJobs/autoSend.ts) in the six site languages, and the German
- * e-mail to the employer. Azerbaijani wording follows docs/az-terminology.md (e-poçt, işəgötürən, kabinet, yükləyin).
+ * Client texts of the retired automatic sending (lib/germanyJobs/autoSend.ts) in the six site languages: FIX_PATH is still
+ * read by the history view of earlier applications (routes/externalApplications.ts); the notices stay unit-tested.
+ * Azerbaijani wording follows docs/az-terminology.md (e-poçt, işəgötürən, kabinet, yükləyin).
  */
 
 type T = Record<SeoLocale, string>;
@@ -102,24 +103,7 @@ const NEEDS_OUTRO: T = {
   tr: 'Bilgiler tamamlanınca sistem başvuruyu yeniden kontrol eder ve otomatik olarak gönderir.',
   uk: 'Щойно дані будуть заповнені, система знову перевірить заявку й надішле її автоматично.',
 };
-const READY_TITLE: T = {
-  az: 'Müraciətiniz hazırlanıb',
-  de: 'Ihre Bewerbung ist vorbereitet',
-  en: 'Your application is prepared',
-  ru: 'Ваша заявка подготовлена',
-  tr: 'Başvurunuz hazırlandı',
-  uk: 'Вашу заявку підготовлено',
-};
-const READY_BODY: T = {
-  az: '"{{job}}" vakansiyasına müraciətiniz hazırlanıb, işəgötürənə göndərilir. Göndərilən kimi sizə xəbər verəcəyik.',
-  de: 'Ihre Bewerbung für „{{job}}“ ist vorbereitet und wird an den Arbeitgeber gesendet. Wir melden uns, sobald sie verschickt ist.',
-  en: 'Your application for "{{job}}" is prepared and is being sent to the employer. We will let you know once it has been sent.',
-  ru: 'Ваша заявка на вакансию «{{job}}» подготовлена и отправляется работодателю. Сообщим, как только она будет отправлена.',
-  tr: '"{{job}}" ilanına başvurunuz hazırlandı, işverene gönderiliyor. Gönderilince size haber vereceğiz.',
-  uk: 'Вашу заявку на вакансію «{{job}}» підготовлено, вона надсилається роботодавцю. Повідомимо, щойно її буде надіслано.',
-};
 const CTA_FIX: T = { az: 'Məlumatları tamamla', de: 'Angaben ergänzen', en: 'Complete details', ru: 'Заполнить данные', tr: 'Bilgileri tamamla', uk: 'Заповнити дані' };
-const CTA_APPS: T = { az: 'Müraciətlərimə bax', de: 'Meine Bewerbungen', en: 'My applications', ru: 'Мои заявки', tr: 'Başvurularım', uk: 'Мої заявки' };
 
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{\{(\w+)\}\}/g, (_m, k: string) => v[k] ?? '');
 const prefix = (lng: SeoLocale) => (lng === 'az' ? '' : `/${lng}`);
@@ -149,27 +133,6 @@ export const needsMessage = (missing: readonly AutoMissing[], lng: SeoLocale, v:
     cta: CTA_FIX[lng],
     /** First place to fix (button / notification link). */
     path: FIX_PATH[missing[0] ?? 'CV'],
-  };
-};
-
-export const readyMessage = (lng: SeoLocale, job: string) => ({ title: `${READY_TITLE[lng]} · ${job}`.slice(0, 190), body: fill(READY_BODY[lng], { job }), cta: CTA_APPS[lng] });
-
-export const localePath = (lng: SeoLocale, path: string) => `${prefix(lng)}${path}`;
-
-// ─── E-mail to the employer (German) ─────────────────────────────────────────
-
-export const employerMail = (v: { applicant: string; title: string | null; company: string | null; listingUrl: string; subject: string; brandName: string; phone: string; domain: string }) => {
-  const job = v.title ? `„${v.title}“` : 'Ihre Stellenanzeige';
-  return {
-    subject: v.subject,
-    body: [
-      'Sehr geehrte Damen und Herren,',
-      `im Auftrag von ${v.applicant} senden wir Ihnen die Bewerbung auf ${job}${v.company ? ` (${v.company})` : ''}. Anschreiben und Lebenslauf finden Sie als PDF im Anhang.`,
-      `${v.brandName} begleitet Fachkräfte aus Aserbaidschan auf dem Weg nach Deutschland. Der Bewerber hat der Weitergabe seiner Unterlagen an Sie zugestimmt.`,
-      'Bei Interesse antworten Sie einfach auf diese E-Mail. Gern stimmen wir einen Termin für ein Vorstellungsgespräch (auch per Video) ab.',
-      `Stellenanzeige: ${v.listingUrl}`,
-      `Mit freundlichen Grüßen\n${v.brandName}${v.phone ? `\n${v.phone}` : ''}${v.domain ? ` · ${v.domain}` : ''}`,
-    ].join('\n\n'),
   };
 };
 
@@ -211,12 +174,6 @@ const CTA_STEPS: T = { az: 'Addımlara bax', de: 'Schritte ansehen', en: 'See th
 
 export const clientSendMessage = (lng: SeoLocale, job: string) => ({ title: `${CLIENT_TITLE[lng]} · ${job}`.slice(0, 190), body: fill(CLIENT_BODY[lng], { job }), cta: CTA_STEPS[lng] });
 export const clientRemindMessage = (lng: SeoLocale, job: string) => ({ title: `${REMIND_TITLE[lng]} · ${job}`.slice(0, 190), body: fill(REMIND_BODY[lng], { job }), cta: CTA_STEPS[lng] });
-
-/** Staff notice when the client could not send it (staff read Azerbaijani). */
-export const clientHelpStaffText = (v: { name: string; job: string; note: string | null }) => ({
-  subject: `Müştəri müraciəti göndərə bilmədi: ${v.name}`.slice(0, 190),
-  body: `${v.name} "${v.job}" vakansiyasına müraciəti özü göndərə bilmədi və kömək istəyir.${v.note ? `\n\nMüştərinin qeydi: ${v.note}` : ''}\n\nMüraciət "Göndərməyə hazır" növbəsindədir.`,
-});
 
 /** Subject line the client copies: "Bewerbung als <title>". */
 export const clientSubject = (title: string | null, fallback: string | null) => (title ? `Bewerbung als ${title.replace(/\s*\((?:m|w|d|f|x|div)(?:\s*\/\s*(?:m|w|d|f|x|div))*\)\s*/gi, ' ').trim()}` : fallback || 'Bewerbung').slice(0, 300);

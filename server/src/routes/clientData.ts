@@ -84,6 +84,7 @@ clientDataRouter.post('/cases/:caseId/files', documentUpload.single('file'), asy
   try {
     const c = await ownCase(req);
     await verifyUploadedFile(file);
+    // A questionnaire answer / correction proof (stage OTHER, no requirement): nothing to link (lib/docLink).
     const doc = await prisma.document.create({
       data: { caseId: c.id, stage: 'OTHER', originalName: decodeOriginalName(file.originalname).slice(0, 200), storedName: file.filename, mimeType: file.mimetype, size: file.size, uploadedById: req.user!.id },
       select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },

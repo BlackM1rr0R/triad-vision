@@ -72,6 +72,22 @@ describe('doc templates: staff', () => {
     expect(res.status).toBe(201);
     const node = await prisma.driveNode.findUniqueOrThrow({ where: { id: res.body.nodeId } });
     expect(node.mimeType).toBe('application/pdf');
+    expect(res.body).toMatchObject({ name: node.name, version: 1 });
     expect(await prisma.auditLog.count({ where: { action: 'DOC_TEMPLATE_ATTACHED', target: `case:${c.id}` } })).toBe(1);
+
+    // Attaching again: the same file gets a new version (the previous one in its history), no "(2)" copy.
+    await prisma.driveNode.update({ where: { id: node.id }, data: { contentHash: 'changed-elsewhere' } }); // the bytes differ either way
+    const again = expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/doc-templates/lebenslauf/attach`).send({}), 201).body;
+    expect(again).toMatchObject({ nodeId: node.id, name: node.name, version: 2 });
+    expect(await prisma.driveNode.count({ where: { parentId: node.parentId, kind: 'FILE', deletedAt: null } })).toBe(1);
+    expect(await prisma.driveFileVersion.findMany({ where: { nodeId: node.id }, select: { version: true } })).toEqual([{ version: 1 }]);
+    expect(await prisma.auditLog.count({ where: { action: 'DRIVE_FILE_VERSION_ADDED', target: `drive:${node.id}` } })).toBe(1);
+
+    // A file marked final is not overwritten: a new file next to it.
+    await prisma.driveNode.update({ where: { id: node.id }, data: { finalAt: new Date(), contentHash: 'changed-again' } });
+    const third = expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/doc-templates/lebenslauf/attach`).send({}), 201).body;
+    expect(third.nodeId).not.toBe(node.id);
+    expect(third.version).toBe(1);
+    expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: node.id } })).version).toBe(2);
   });
 });

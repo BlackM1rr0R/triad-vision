@@ -14,6 +14,7 @@ import {
   cityPagePath,
   cityPageSlug,
   cityPages,
+  cityRowsOf,
   hubContent,
   hubFaq,
   isCareerLocale,
@@ -24,7 +25,7 @@ import {
  *  - /ausbildung/<slug>: Article-like occupation page + FAQPage + breadcrumbs (Home › Ausbildung › occupation);
  *  - /cities/<slug>: city page (ItemList of its vacancies) + breadcrumbs (Home › Cities › city);
  *  - /for/<hub>: FAQPage of the hub's questions (the hub itself is a static catalogue page).
- * Languages: the five career languages only (hreflang lists exactly those; Ukrainian URLs answer 404).
+ * Languages: the six career languages (hreflang lists exactly those).
  */
 
 const TITLE_MAX = 60;
@@ -41,6 +42,9 @@ const careerAlternates = (path: string): Partial<Record<SeoLocale, string>> => O
 const name = (path: string, lng: SeoLocale) => (STATIC_PAGES[path] ? textIn(STATIC_PAGES[path].name, lng) : '');
 
 const jobTitle = (lng: SeoLocale) => (j: { title: unknown }) => collapse(pick(j.title, lng));
+
+/** City rows of the pages: the active CityCost rows of the SEO data, else the seed defaults (lib/careerPages/cities.ts). */
+const citiesOf = (data: SeoData) => cityRowsOf(data.cities);
 
 /**
  * Head data of a career detail page: a ResolvedPage, 'missing' for a career path without a page in that language,
@@ -82,7 +86,7 @@ export const careerResolve = (path: string, lng: SeoLocale, data: SeoData, url: 
   }
   const cSlug = cityPageSlug(path);
   if (cSlug) {
-    const page = cityPage(cSlug, lng, liveJobs(data), jobTitle(lng));
+    const page = cityPage(cSlug, lng, liveJobs(data), jobTitle(lng), citiesOf(data));
     if (!page) return 'missing';
     return {
       title: fitTitle(page.texts.title),
@@ -121,14 +125,14 @@ export const hubFaqLd = (path: string, lng: SeoLocale) => {
 export const careerStatus = (path: string, lng: SeoLocale, data: SeoData): 200 | 404 | null => {
   if (/^\/ausbildung\/[^/]+$/.test(path)) return ausbildungSlugOf(path) && isCareerLocale(lng) ? 200 : 404;
   const c = cityPageSlug(path);
-  if (c || /^\/cities\/[^/]+$/.test(path)) return c && isCareerLocale(lng) && cityPages(liveJobs(data)).some((p) => p.row.slug === c) ? 200 : 404;
+  if (c || /^\/cities\/[^/]+$/.test(path)) return c && isCareerLocale(lng) && cityPages(liveJobs(data), citiesOf(data)).some((p) => p.row.slug === c) ? 200 : 404;
   return null;
 };
 
-/** Sitemap rows: every Ausbildung page and every city page with a page, in the five career languages. */
+/** Sitemap rows: every Ausbildung page and every city page with a page, in the six career languages. */
 export const careerSitemapPaths = (data: SeoData) => [
   ...AUSBILDUNG_SLUGS.map((s) => ausbildungPath(s)),
-  ...cityPages(liveJobs(data)).map((c) => cityPagePath(c.row.slug)),
+  ...cityPages(liveJobs(data), citiesOf(data)).map((c) => cityPagePath(c.row.slug)),
 ];
 
 // ─── crawler body (lib/seoBody.ts) ─────────────────────────────────────
@@ -162,7 +166,7 @@ export const careerBody = (path: string, lng: SeoLocale, data: SeoData, link: Li
   }
   const cSlug = cityPageSlug(path);
   if (cSlug) {
-    const p = cityPage(cSlug, lng, liveJobs(data), jobTitle(lng));
+    const p = cityPage(cSlug, lng, liveJobs(data), jobTitle(lng), citiesOf(data));
     if (!p) return null;
     const t = p.texts.labels;
     const range = (r: number[]) => `${r[0]}–${r[1]} €`;
@@ -183,7 +187,7 @@ export const careerBody = (path: string, lng: SeoLocale, data: SeoData, link: Li
   }
   const hub = hubOfPath(path);
   if (hub) {
-    const c = hubContent(hub.slug as ProfessionHubSlug, lng, liveJobs(data))!;
+    const c = hubContent(hub.slug as ProfessionHubSlug, lng, liveJobs(data), citiesOf(data))!;
     return [
       `<h2>${e(labels.requirements)}</h2>${ul(c.requirements.map(e))}`,
       `<h2>${e(labels.visa)}: ${e(c.visa.label)}</h2><p>${e(c.visa.text)}</p><p>${link(c.visa.path, labels.visaLink)}</p>`,
@@ -199,6 +203,6 @@ export const careerBody = (path: string, lng: SeoLocale, data: SeoData, link: Li
 export const careerIndexLinks = (path: string, lng: SeoLocale, data: SeoData, link: Link): string[] => {
   if (!isCareerLocale(lng)) return [];
   if (path === '/ausbildung') return [`<h2>${e(CAREER_COPY[lng].shared.labels.ausbildungOthers)}</h2>`, ul(AUSBILDUNG_SLUGS.map((s) => link(ausbildungPath(s), CAREER_COPY[lng].ausbildung[s].title)))];
-  if (path === '/cities') return [ul(cityPages(liveJobs(data)).map((c) => link(cityPagePath(c.row.slug), c.row.name)))];
+  if (path === '/cities') return [ul(cityPages(liveJobs(data), citiesOf(data)).map((c) => link(cityPagePath(c.row.slug), c.row.name)))];
   return [];
 };

@@ -70,6 +70,8 @@ clientProcessRouter.post('/tasks/:id/done', documentUpload.single('file'), async
     let documentId: string | null = null;
     if (file) {
       await verifyUploadedFile(file);
+      // The task's own file (stage OTHER, no requirement — a task with a requirement links to its list upload):
+      // nothing to attach to the other document list (lib/docLink).
       const doc = await prisma.document.create({
         data: {
           caseId: t.caseId,

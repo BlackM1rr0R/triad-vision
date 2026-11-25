@@ -35,7 +35,7 @@ import { SEO2026_KEYS, seo2026Pages } from './seo2026/index.js';
  * against official sources and without review placeholders, so these keys are created PUBLISHED in every
  * language (PUBLISHED_ON_CREATE_KEYS). Same insert-only rule: an existing row or a taken slug is never touched.
  *
- * SEO guides 2026 (added 2026-11-25, ./seo2026): living-costs, visa-documents, skilled-worker-visa in az, ru, tr
+ * SEO guides 2026 (added 2026-11-25, ./seo2026): living-costs, visa-documents, skilled-worker-visa in az, ru, tr, uk
  * (each language written for its audience). Figures taken from the repository's checked sources (budget city data,
  * Blue Card / § 18 thresholds, salary-net examples), no placeholders: created PUBLISHED like the profession guides.
  */

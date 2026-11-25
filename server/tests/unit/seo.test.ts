@@ -497,7 +497,7 @@ describe('robots.txt, sitemaps and RSS', () => {
     const xml = renderSitemap(emptyData({ posts: [{ slug: 'a&b', title: {}, excerpt: {}, cover: '', publishedAt: new Date(), updatedAt: new Date('2026-10-01T00:00:00Z') }] }));
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
     // + the glossary terms (static data, lib/glossary), every language.
-    // + the career pages (lib/careerPages: Ausbildung occupations, metropolis city pages) in the five career languages.
+    // + the career pages (lib/careerPages: Ausbildung occupations, metropolis city pages) in the six career languages.
     expect(xml.match(/<url>/g)).toHaveLength((SITEMAP_STATIC.length + 1 + glossarySitemapPaths().length) * 6 + careerSitemapPaths(emptyData()).length * CAREER_LOCALES.length);
     expect(xml).toContain(`<loc>${ORIGIN}/de/news/a&amp;b</loc>`);
     expect(xml).toContain(`<loc>${ORIGIN}/news/a&amp;b</loc>`);

@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { asAdmin, asClient, asStaff } from '../helpers/api';
 import { prisma } from '../helpers/db';
 import { applyInput, createExternalApplication } from '../../src/lib/germanyJobs/apply.js';
-import { processExternalApplication, recheckUserApplications, remindClientSend, runExternalAutoSend } from '../../src/lib/germanyJobs/autoSend.js';
 import { getAutoSendSettings } from '../../src/lib/germanyJobs/autoSettings.js';
-import { runEmployerDiscovery } from '../../src/lib/germanyJobs/discovery/index.js';
 
 /**
  * "Apply via Triad Vision" for external listings is retired (owner decision: the candidate applies to the employer
- * directly). Earlier applications stay as history, but nothing processes them any more: no check, no Anschreiben,
- * no employer e-mail discovery, no sending, no client reminder; staff "send now" / "resume" / employer address answer
- * 410; the settings keep `enabled` and `discovery` off. The page fetcher below fails the test if it is ever called.
+ * directly). Earlier applications stay as history; the automatic pipeline (check, Anschreiben, employer e-mail
+ * discovery, sending, client reminders) was removed from the code (lib/germanyJobs/autoSend.ts). Staff "send now" /
+ * "resume" / employer address answer 410; the settings keep `enabled` and `discovery` off.
  */
 
 const EMPLOYER = 'bewerbung@nord-logistik.de';
@@ -49,33 +47,6 @@ const snapshot = (id: string) =>
   });
 
 describe('external apply retired: no automatic processing', () => {
-  it('scheduler, discovery, re-checks and reminders leave earlier applications untouched and send nothing', async () => {
-    const client = await asClient({ email: 'ali@example.com' });
-    const day = 24 * 60 * 60 * 1000;
-    const rows = [
-      await seedOpen(client.user.id, { autoState: 'QUEUED', employerEmail: EMPLOYER, autoNextAt: new Date(Date.now() - day) }),
-      await seedOpen(client.user.id, { autoState: 'SEARCHING' }),
-      await seedOpen(client.user.id, { autoState: 'NEEDS_DATA' }),
-      await seedOpen(client.user.id, { autoState: 'CLIENT_SEND', clientSendAt: new Date(Date.now() - 5 * day) }),
-      await seedOpen(null, { autoState: null }),
-    ];
-    const before = await Promise.all(rows.map((r) => snapshot(r.id)));
-    const mailsBefore = await prisma.emailLog.count();
-
-    expect(await runExternalAutoSend(new Date(Date.now() + 2 * day))).toEqual({ sent: 0, rechecked: 0, stuck: 0, reminded: 0 });
-    expect(await remindClientSend(new Date(Date.now() + 10 * day))).toBe(0);
-    const fetchPage = async (url: string) => {
-      throw new Error(`discovery must not fetch ${url}`);
-    };
-    expect(await runEmployerDiscovery({ fetchPage })).toMatchObject({ checked: 0, found: 0 });
-    for (const r of rows) expect(await processExternalApplication(r.id)).toBeNull();
-    await recheckUserApplications(client.user.id);
-
-    expect(await Promise.all(rows.map((r) => snapshot(r.id)))).toEqual(before);
-    expect(await prisma.emailLog.count()).toBe(mailsBefore);
-    expect(await prisma.emailLog.count({ where: { to: EMPLOYER } })).toBe(0);
-  });
-
   it('staff overrides that would send or search answer 410; settings stay off; the record stays readable', async () => {
     const client = await asClient({ email: 'ali@example.com' });
     const r = await seedOpen(client.user.id, { autoState: 'READY', employerEmail: EMPLOYER });

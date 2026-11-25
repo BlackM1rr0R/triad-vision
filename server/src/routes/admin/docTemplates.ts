@@ -12,7 +12,9 @@ import { SHEET_LANGS } from '../../lib/docTemplates/texts.js';
  * "documents" via the route map; case scope enforced by the access guard from the path):
  *   GET  /cases/:id/doc-templates                    per template: available, missing answers, Lebenslauf source
  *   GET  /cases/:id/doc-templates/:kind.pdf?lang=    generated PDF (not stored; audited)
- *   POST /cases/:id/doc-templates/:kind/attach       { lang? } → copy into "<client folder>/Sənəd şablonları" (audited)
+ *   POST /cases/:id/doc-templates/:kind/attach       { lang? } → copy into "<client folder>/Sənəd şablonları" (audited):
+ *                                                    a new version of the file of the same name there, else a new file
+ *                                                    → { nodeId, name, version, size }
  * Staff see the employer even before the client does; masked fields follow the viewer's masking settings.
  */
 export const adminDocTemplatesRouter = Router();
@@ -42,6 +44,8 @@ adminDocTemplatesRouter.post('/cases/:id/doc-templates/:kind/attach', async (req
   const { lang } = parse(z.object({ lang: langSchema }), req.body ?? {});
   const c = await loadTemplateCase(String(req.params.id));
   const out = await attachTemplate(c, kind, req.user!.id, { audience: 'staff', lang, maskGroups: requestMaskGroups(res) });
-  await audit(req, 'DOC_TEMPLATE_ATTACHED', `case:${c.id}`, { kind, lang, nodeId: out.nodeId });
+  await audit(req, 'DOC_TEMPLATE_ATTACHED', `case:${c.id}`, { kind, lang, nodeId: out.nodeId, version: out.version });
+  // A new version of the existing file: the drive's version history names who saved it (as for a replace-upload).
+  if (out.version > 1) await audit(req, 'DRIVE_FILE_VERSION_ADDED', `drive:${out.nodeId}`, { name: out.name, version: out.version, size: out.size, source: 'doc-template' });
   res.status(201).json(out);
 });
