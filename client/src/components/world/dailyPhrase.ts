@@ -8,9 +8,21 @@
  */
 import { PHRASES, type Phrase } from './phrases';
 
-/** "YYYY-MM-DD" of an instant in Germany. */
-export const berlinDay = (at: Date): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
+/**
+ * "YYYY-MM-DD" of an instant in Germany. Built from formatToParts: the "en-CA" short format is not the same in every
+ * browser (some give "11/25/2026"), which broke the day → no phrase → the home card crashed (browser error log).
+ */
+export const berlinDay = (at: Date): string => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(at);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+    const day = `${get('year')}-${get('month')}-${get('day')}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+  } catch {
+    /* no Intl time zone data: UTC below */
+  }
+  return at.toISOString().slice(0, 10);
+};
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const isDay = (s: unknown): s is string => typeof s === 'string' && DAY_RE.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
@@ -34,10 +46,13 @@ export const strideFor = (n: number): number => {
 export const phraseIndex = (day: string, n = PHRASES.length): number => {
   if (n <= 0) return 0;
   const k = strideFor(n);
-  return (((dayNumber(day) * k) % n) + n) % n;
+  const d = dayNumber(day);
+  if (!Number.isFinite(d)) return 0;
+  return (((d * k) % n) + n) % n;
 };
 
-export const phraseForDay = (day: string, list: Phrase[] = PHRASES): Phrase => list[phraseIndex(day, list.length)];
+/** The phrase of a day; a malformed day falls back to the first phrase instead of undefined. */
+export const phraseForDay = (day: string, list: Phrase[] = PHRASES): Phrase => list[phraseIndex(day, list.length)] ?? list[0];
 
 /** The last `count` days up to and including `today`, newest first, each with its phrase. */
 export const recentPhrases = (today: string, count: number, list: Phrase[] = PHRASES): { day: string; phrase: Phrase }[] =>

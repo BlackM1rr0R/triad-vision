@@ -45,6 +45,25 @@ chown -R 2000:2000 "$APP_DIR/data/mail"
 chmod 400 "$APP_DIR/data/mail/cloudflare-dns-token"
 cd src
 
+# Hashed JS/CSS of the build that is running now go to data/assets-archive (kept 21 days): a browser tab opened
+# before this deploy still finds its lazy chunks after it (the web container serves them from /srv-archive, see
+# the Caddyfile "/assets/*" handle). Without this, the first click in such a tab failed to load the page.
+mkdir -p "$APP_DIR/data/assets-archive"
+web_cid=$($COMPOSE ps -q web 2>/dev/null || true)
+if [ -n "$web_cid" ]; then
+  echo "== keep the previous build's assets"
+  assets_tmp=$(mktemp -d)
+  if docker cp "$web_cid:/srv/assets/." "$assets_tmp/" 2>/dev/null; then
+    for f in "$assets_tmp"/*; do
+      [ -f "$f" ] || continue
+      name=$(basename "$f")
+      [ -e "$APP_DIR/data/assets-archive/$name" ] || { mv "$f" "$APP_DIR/data/assets-archive/$name" && touch "$APP_DIR/data/assets-archive/$name"; }
+    done
+  fi
+  rm -rf "$assets_tmp"
+fi
+find "$APP_DIR/data/assets-archive" -type f -mtime +21 -delete 2>/dev/null || true
+
 if [ -n "$PREBUILT_IMAGES" ]; then
   echo "== load prebuilt images + start (built in CI: no compile on this server)"
   [ -s "$PREBUILT_IMAGES" ] || { echo "prebuilt image archive $PREBUILT_IMAGES is missing or empty" >&2; exit 1; }

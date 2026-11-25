@@ -125,6 +125,8 @@ services:
     volumes:
       - ./data/caddy/data:/data
       - ./data/caddy/config:/config
+      # Previous builds' hashed assets (deploy/remote-deploy.sh keeps them 21 days) for tabs opened before a deploy.
+      - ./data/assets-archive:/srv-archive:ro
     depends_on:
       - api
 

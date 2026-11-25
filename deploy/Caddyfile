@@ -279,6 +279,36 @@ autoconfig.{$SITE_DOMAIN}, autodiscover.{$SITE_DOMAIN} {
 		}
 	}
 
+	# Hashed assets: this build's, else a previous build's (data/assets-archive, mounted at /srv-archive and kept
+	# 21 days by deploy/remote-deploy.sh) so a tab opened before a deploy still loads its lazy chunks. A missing
+	# asset is a plain, uncached 404 — never the HTML shell (that broke the page with a module / MIME error).
+	handle /assets/* {
+		@current file {
+			root /srv
+		}
+		handle @current {
+			root * /srv
+			header Cache-Control "public, max-age=31536000, immutable"
+			file_server {
+				precompressed br
+			}
+		}
+		@archived file {
+			root /srv-archive
+		}
+		handle @archived {
+			root * /srv-archive
+			header Cache-Control "public, max-age=31536000, immutable"
+			file_server {
+				precompressed br
+			}
+		}
+		handle {
+			header Cache-Control "no-store"
+			respond 404
+		}
+	}
+
 	# Single-page app: hashed assets are immutable, everything else falls back to index.html.
 	handle {
 		import spa_csp

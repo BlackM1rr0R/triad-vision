@@ -3,10 +3,14 @@
  * The pages themselves stay reachable all year. Tiny and dependency-free: the footer is on every page.
  */
 
-const BERLIN = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' });
+const BERLIN = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' });
 
-/** Calendar day in Berlin as YYYY-MM-DD. */
-export const berlinDay = (now: Date = new Date()): string => BERLIN.format(now);
+/** Calendar day in Berlin as YYYY-MM-DD (formatToParts: the en-CA short format differs between browsers). */
+export const berlinDay = (now: Date = new Date()): string => {
+  const p = BERLIN.formatToParts(now);
+  const get = (type: string) => p.find((x) => x.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+};
 
 /** Advent calendar (/advent-calendar): 15 November – 6 January (Epiphany). */
 export const adventPromoActive = (iso: string) => {
