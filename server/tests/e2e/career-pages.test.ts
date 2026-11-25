@@ -46,7 +46,7 @@ describe('GET /api/career', () => {
     const list = await anon().get('/api/career/cities?lng=az').expect(200);
     expect(list.body.items.map((c: { slug: string }) => c.slug)).toEqual(expect.arrayContaining(['berlin', 'bonn']));
     expect((await anon().get('/__seo/status').query({ path: '/ru/cities/bonn' })).text).not.toBe('404');
-    expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/pflege' })).text).toBe('200');
+    expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/pflege' })).text).toBe(''); // real page: empty status (404 only for unknown URLs)
     expect((await anon().get('/__seo/status').query({ path: '/uk/ausbildung/zahnarzt' })).text).toBe('404');
   });
 });
