@@ -147,7 +147,7 @@ export default function PartnerApp() {
                 {areas.cases && <Route path="clients/:id" element={<PartnerClientDetailPage />} />}
                 {areas.commissions && <Route path="commissions" element={<PartnerCommissionsPage />} />}
                 {areas.messages && <Route path="messages" element={<PartnerMessagesPage />} />}
-                {areas.vacancies && <Route path="vacancies" element={<PartnerVacanciesPage />} />}
+                {areas.vacancies && <Route path="vacancies" element={<PartnerVacanciesPage me={me} />} />}
                 {areas.drive && <Route path="drive" element={<PartnerDrivePage />} />}
                 {areas.team && <Route path="team" element={<PartnerTeamPage />} />}
                 <Route path="notifications" element={<PortalNotificationsPage />} />

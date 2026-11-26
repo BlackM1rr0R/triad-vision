@@ -10,7 +10,7 @@ import { buildPartnerWorkbook, partnerCaseRows, partnerCounts, syncFoldersLater 
 import { refusalCsv, refusalQuery, refusalReport } from '../../lib/partners/refusals.js'; // Ablehnung by partner / company
 import { ensurePartnerFolder, partnerFolderId, partnerFolderIds, syncPartnerFolder } from '../../lib/drive/caseFolders.js';
 import { PARTNER_COMMISSION_TRIGGERS, partnerCommissionTotals } from '../../lib/partners/commissions.js';
-import { PARTNER_VISIBILITY, codeInUse, partnerLinks, setClientOwner, suggestPartnerCode } from '../../lib/partners/owned.js';
+import { PARTNER_VISIBILITY, clientPaymentTotals, codeInUse, partnerLinks, setClientOwner, suggestPartnerCode } from '../../lib/partners/owned.js';
 import { normaliseAgentCode } from '../../lib/agents/referral.js';
 import { deletePartner } from '../../lib/partners/manage.js';
 import { assignPartnerToCases } from '../../lib/clientFolders/partner.js'; // PATCH /assign = the drive's setCasePartner per case
@@ -89,6 +89,8 @@ const partnerBody = z.object({
   visibility: z.enum(PARTNER_VISIBILITY).optional(),
   /** How many clients the partner needs (quota; null = no target). */
   clientQuota: z.number().int().min(1).max(100_000).nullable().optional(),
+  /** Brings clients who register themselves for a vacancy (folder suffix " · Ref <name>" in Anträge); false = German partner firm. */
+  isReferrer: z.boolean().optional(),
   // Type, company, contacts, address, tax id, bank (ADMIN+), contract, language, website, tags, custom fields.
   ...partnerProfileShape,
 });
@@ -520,6 +522,8 @@ adminPartnersRouter.get('/:id', async (req, res) => {
     cases,
     // Clients who belong to the partner (sign-up link, partner portal, admin) — with or without a case.
     ownedClients,
+    // Invoiced / paid / outstanding per client (client billing is ADMIN+, like the revenue of the dashboard); null for STAFF.
+    clientPayments: hasMinRole(req.user!.role, 'ADMIN') ? Object.fromEntries(await clientPaymentTotals([...new Set([...cases.map((c) => c.client.id), ...ownedClients.map((u) => u.id)])])) : null,
   });
 });
 
@@ -678,7 +682,7 @@ adminPartnersRouter.post('/', async (req, res) => {
   const body = parse(partnerBody, stripMaskedProfileInput(req.body));
   await assertNameFree(body.name);
   // Code, commission rule and visibility decide ownership, money and data access: ADMIN and above.
-  if ((body.code || body.commissionTrigger || body.visibility) && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('ADMIN_REQUIRED');
+  if ((body.code || body.commissionTrigger || body.visibility || body.isReferrer) && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('ADMIN_REQUIRED');
   assertBankAllowed(req, body, null);
   await assertCodeFree(body.code);
   // Profile fields; the basic ones are set explicitly below.
@@ -718,7 +722,8 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
   const sensitive =
     (body.code !== undefined && body.code !== current.code) ||
     (body.commissionTrigger !== undefined && body.commissionTrigger !== current.commissionTrigger) ||
-    (body.visibility !== undefined && body.visibility !== current.visibility);
+    (body.visibility !== undefined && body.visibility !== current.visibility) ||
+    (body.isReferrer !== undefined && body.isReferrer !== current.isReferrer);
   if (sensitive && !hasMinRole(req.user!.role, 'ADMIN')) throw forbidden('ADMIN_REQUIRED');
   assertBankAllowed(req, body, current);
   if (body.code !== undefined && body.code !== current.code) await assertCodeFree(body.code, current.id);
@@ -732,9 +737,10 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
     ...(partner.name !== current.name ? { from: current.name, to: partner.name } : {}),
   });
   if (partner.visibility !== current.visibility) await syncClientListFromVisibility(partner, req.user!.id); // the permission set's client list follows
-  if (partner.name !== current.name) {
+  if (partner.name !== current.name || partner.isReferrer !== current.isReferrer) {
     // The partner's drive folder is renamed (files stay); the client folders inside follow.
-    await syncPartnerFolder(partner.id, { previousName: current.name });
+    if (partner.name !== current.name) await syncPartnerFolder(partner.id, { previousName: current.name });
+    // Referrer on / off: client folders are renamed (" · Ref <name>") and move between Anträge and Partner/<name>.
     const cases = await prisma.case.findMany({ where: { partnerId: partner.id }, select: { id: true } });
     syncFoldersLater(cases.map((c) => c.id));
   }

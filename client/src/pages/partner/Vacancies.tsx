@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Briefcase, ExternalLink, MapPin } from 'lucide-react';
+import { Briefcase, ExternalLink, MapPin, UserPlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import type { L10n } from '@/lib/types';
 import { ErrorRetry, Loading, Section } from '@/components/partnerPortal/ui';
+import { accessOf, type PartnerMe } from '@/components/partnerPortal/api';
+import { RegisterForVacancyDialog } from '@/components/partnerPortal/RegisterForVacancy';
 
 interface PartnerVacancy {
   id: string;
@@ -21,8 +24,11 @@ interface PartnerVacancy {
 }
 
 /** Open vacancies (public data) for partners with the vacancies permission (GET /partner/vacancies). */
-export default function PartnerVacanciesPage() {
+export default function PartnerVacanciesPage({ me }: { me?: PartnerMe }) {
   const { t } = useTranslation();
+  const [registering, setRegistering] = useState<{ id: string; title: string } | null>(null);
+  /** Registering a client needs the add-clients permission (server: requireFlag(ctx, 'addClients')). */
+  const canRegister = !!me?.partner.active && accessOf(me).areas.addClients;
   const { tr } = useL10n();
   const q = useQuery({ queryKey: ['partner-portal', 'vacancies'], queryFn: async () => (await api.get<{ items: PartnerVacancy[] }>('/partner/vacancies')).data.items });
   if (q.isLoading) return <Loading />;
@@ -53,13 +59,21 @@ export default function PartnerVacanciesPage() {
                   )}
                 </span>
               </span>
-              <Link to={`/jobs/${v.slug}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link hover:underline" target="_blank" rel="noreferrer">
-                {t('partnerAccess.vacancies.open')} <ExternalLink className="size-3.5" aria-hidden />
-              </Link>
+              <span className="flex flex-wrap items-center gap-3">
+                {canRegister && (
+                  <button type="button" className="btn-primary btn-sm" onClick={() => setRegistering({ id: v.id, title: tr(v.title) })}>
+                    <UserPlus className="size-4" aria-hidden /> {t('partnerClients.register.forVacancy')}
+                  </button>
+                )}
+                <Link to={`/jobs/${v.slug}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-link hover:underline" target="_blank" rel="noreferrer">
+                  {t('partnerAccess.vacancies.open')} <ExternalLink className="size-3.5" aria-hidden />
+                </Link>
+              </span>
             </li>
           ))}
         </ul>
       )}
+      <RegisterForVacancyDialog vacancy={registering} onClose={() => setRegistering(null)} />
     </Section>
   );
 }

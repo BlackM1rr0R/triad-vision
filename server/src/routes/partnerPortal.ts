@@ -2,15 +2,16 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import bcrypt from 'bcryptjs';
 import path from 'node:path';
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
 import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../middleware/upload.js';
-import { badRequest, conflict, forbidden, limiter, notFound, parse } from '../lib/http.js';
+import { badRequest, conflict, forbidden, HttpError, limiter, notFound, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
-import { FINAL_STATUSES } from '../lib/caseFlow.js';
+import { FINAL_STATUSES, createCase } from '../lib/caseFlow.js';
+import { checkedVacancy, vacancyCaseFields } from '../lib/vacancyPlaces/application.js'; // same vacancy checks as the client's own application
 import { partnerTrend } from '../lib/partnerPortal/trend.js';
 import { caseLabels, commissionTotals, monthRange, settlementClientNames } from '../lib/partners/commissions.js';
 import { buildCommissionWorkbook } from '../lib/partners/report.js';
@@ -275,6 +276,23 @@ partnerPortalRouter.get('/clients', async (req, res) => {
 const registerLimiter = limiter({ windowMs: 60 * 60 * 1000, limit: 30, keyGenerator: (req) => `partner-clients:${req.user?.id ?? 'anon'}` });
 
 /**
+ * Opens the application of an OWN client for a vacancy on the partner's behalf: the vacancy must be open with a free
+ * place (lib/vacancyPlaces/application, same as the client's own application), the client may have only one active
+ * application (409 ACTIVE_CASE_EXISTS). The partner vouches for the client, so the client's e-mail need not be
+ * verified. The case belongs to the partner; staff get the usual "new application" notice (createCase).
+ */
+const registerCaseFor = async (req: Request, ctx: Awaited<ReturnType<typeof partnerContextOf>>, clientId: string, vacancyId: string) => {
+  const { partner } = ctx;
+  if (!partner.active) throw forbidden('PARTNER_INACTIVE');
+  const client = await prisma.user.findFirst({ where: { id: clientId, ownerPartnerId: partner.id, role: 'CLIENT', isActive: true }, select: { id: true } });
+  if (!client) throw notFound('CLIENT_NOT_FOUND');
+  const fields = await vacancyCaseFields(await checkedVacancy(vacancyId), client.id);
+  const created = await createCase(client.id, { ...fields, partnerId: partner.id, actorId: req.user!.id });
+  await audit(req, 'PARTNER_CASE_REGISTERED', `case:${created.id}`, { partnerId: partner.id, clientId: client.id, vacancyId: fields.vacancyId, role: ctx.role });
+  return created;
+};
+
+/**
  * POST /clients — the partner registers a client on their behalf. The client gets an e-mail to set their
  * password and belongs to the partner from now on. The partner confirms the client asked for it; the
  * client's own consent to share data with the partner (PARTNER_SHARING) is asked in the client's account.
@@ -291,12 +309,15 @@ partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
       phone: intlPhone,
       passportNumber: passportNo.optional().nullable(),
       locale: z.enum(['az', 'de', 'en', 'ru']).default('az'),
+      /** Optional: register the new client for this vacancy right away. */
+      vacancyId: z.string().trim().min(1).max(40).optional(),
       /** The partner confirms the client asked to be registered (required). */
       clientAgreed: z.literal(true),
     }),
     req.body,
   );
   if (!partner.active) throw forbidden('PARTNER_INACTIVE');
+  if (body.vacancyId) await checkedVacancy(body.vacancyId); // refused before the account exists
   if (await prisma.user.findUnique({ where: { email: body.email }, select: { id: true } })) throw conflict('EMAIL_TAKEN');
   const user = await prisma.user
     .create({
@@ -322,8 +343,32 @@ partnerPortalRouter.post('/clients', registerLimiter, async (req, res) => {
   await audit(req, 'PARTNER_CLIENT_REGISTERED', `user:${user.id}`, { partnerId: partner.id, clientAgreed: true });
   markClientsExcelDirty();
   void scanUserDuplicates(user.id);
+  // The vacancy may have been taken in the meantime: the client stays registered, the answer names the reason.
+  let caseId: string | null = null;
+  let caseError: string | null = null;
+  if (body.vacancyId) {
+    try {
+      caseId = (await registerCaseFor(req, ctx, user.id, body.vacancyId)).id;
+    } catch (err) {
+      if (!(err instanceof HttpError)) throw err;
+      caseError = err.code;
+    }
+  }
   const row = ctx.perms.clientList !== 'none' ? (await listPartnerClients(partner)).find((c) => c.id === user.id) : undefined;
-  res.status(201).json({ client: row ? shapeClientRow(row, ctx.perms) : { id: user.id } });
+  res.status(201).json({ client: row ? shapeClientRow(row, ctx.perms) : { id: user.id }, caseId, caseError });
+});
+
+/**
+ * POST /clients/:id/cases { vacancyId } — the partner registers an own client for a vacancy (addClients). Another
+ * partner's client or an unknown id → 404 CLIENT_NOT_FOUND; closed / full vacancy → 409 VACANCY_CLOSED / VACANCY_FULL;
+ * the client already has an active application → 409 ACTIVE_CASE_EXISTS.
+ */
+partnerPortalRouter.post('/clients/:id/cases', registerLimiter, async (req, res) => {
+  const ctx = await partnerContextOf(req);
+  requireFlag(ctx, 'addClients');
+  const body = parse(z.object({ vacancyId: z.string().trim().min(1).max(40) }), req.body);
+  const created = await registerCaseFor(req, ctx, String(req.params.id), body.vacancyId);
+  res.status(201).json({ case: { id: created.id, number: created.number, status: created.status } });
 });
 
 /** POST /clients/:id/invite — a fresh set-password e-mail for an own client who has not signed in yet. */

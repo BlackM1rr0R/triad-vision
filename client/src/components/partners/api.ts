@@ -123,6 +123,8 @@ export interface Partner extends PartnerRef {
   lastActivityAt?: string | null;
   /** How many clients the partner needs (null = no target). */
   clientQuota?: number | null;
+  /** Brings clients who register themselves for a vacancy (folders in Anträge with " · Ref: name"); false = German partner firm. */
+  isReferrer?: boolean;
   /** List / detail: the quota against the assigned clients (server lib/partners/quota.ts). */
   quota?: PartnerQuota;
 }

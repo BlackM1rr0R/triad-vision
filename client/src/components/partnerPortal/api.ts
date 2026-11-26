@@ -147,7 +147,7 @@ export interface PartnerClientRow {
   extended: boolean;
   contact: { email: string; phone: string | null } | null;
   /** null without the payments permission. */
-  payment: { state: PaymentState; totalCents?: number; paidCents?: number; currency?: string } | null;
+  payment: { state: PaymentState; totalCents?: number; paidCents?: number; outstandingCents?: number; currency?: string } | null;
   cases: number;
   latestCase: { id: string; number: string; status: CaseStatus; step: PortalStep; nextAction: NextAction; missingDocuments: number; refused: boolean; updatedAt: string } | null;
 }

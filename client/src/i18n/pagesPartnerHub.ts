@@ -3,9 +3,12 @@
 // Registered with registerCopy(pagesPartnerHub) by components/partners/hub/* and pages/partner/Profile.tsx.
 // `partnerForm.*` keys are merged into the existing partner form copy (pagesPartnerProfile).
 const az = {
+  partnerHubPay: { invoiced: 'Hesab', paid: 'Ödənilib', outstanding: 'Qalıq' },
   partnerForm: {
     sections: { address: 'Ünvan', legal: 'Hüquqi məlumatlar', bank: 'Bank' },
     f: {
+      isReferrer: 'Müştəri gətirən (referal)',
+      isReferrerHint: 'Müştəri özü vakansiya üçün qeydiyyatdan keçirir; qovluqları Anträge-də qalır və adına « · Ref ad » əlavə olunur. Alman partnyor firmaları üçün söndürün.',
       street: 'Küçə, ev',
       postalCode: 'Poçt indeksi',
       taxIdIndividual: 'VÖEN / FİN',
@@ -244,9 +247,12 @@ const az = {
 type Copy = typeof az;
 
 const de: Copy = {
+  partnerHubPay: { invoiced: 'Rechnungen', paid: 'Bezahlt', outstanding: 'Offen' },
   partnerForm: {
     sections: { address: 'Adresse', legal: 'Rechtliche Angaben', bank: 'Bank' },
     f: {
+      isReferrer: 'Kundenvermittler (Referral)',
+      isReferrerHint: 'Registriert Kunden selbst für eine Stelle; deren Ordner bleiben in Anträge und erhalten den Zusatz « · Ref Name ». Für deutsche Partnerfirmen ausgeschaltet lassen.',
       street: 'Straße, Hausnummer',
       postalCode: 'PLZ',
       taxIdIndividual: 'VÖEN / FIN',
@@ -483,9 +489,12 @@ const de: Copy = {
 };
 
 const en: Copy = {
+  partnerHubPay: { invoiced: 'Invoiced', paid: 'Paid', outstanding: 'Outstanding' },
   partnerForm: {
     sections: { address: 'Address', legal: 'Legal details', bank: 'Bank' },
     f: {
+      isReferrer: 'Brings clients (referral)',
+      isReferrerHint: 'Registers clients for a vacancy themselves; their folders stay in Anträge with the suffix « · Ref name ». Keep off for German partner firms.',
       street: 'Street and number',
       postalCode: 'Postal code',
       taxIdIndividual: 'VÖEN / FIN',
@@ -723,9 +732,12 @@ const en: Copy = {
 
 // Russian carries extra `_few` / `_many` plural keys, so it is not typed as `Copy` (like admin.ts).
 const ru = {
+  partnerHubPay: { invoiced: 'Выставлено', paid: 'Оплачено', outstanding: 'Остаток' },
   partnerForm: {
     sections: { address: 'Адрес', legal: 'Юридические данные', bank: 'Банк' },
     f: {
+      isReferrer: 'Приводит клиентов (реферал)',
+      isReferrerHint: 'Сам регистрирует клиентов на вакансию; их папки остаются в Anträge с приставкой « · Ref имя ». Для немецких фирм-партнёров оставьте выключенным.',
       street: 'Улица, дом',
       postalCode: 'Почтовый индекс',
       taxIdIndividual: 'VÖEN / FİN',

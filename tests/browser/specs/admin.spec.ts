@@ -15,6 +15,8 @@ test.describe('admin', () => {
 
     // A marker on window survives only as long as the page is not reloaded.
     await page.evaluate(() => ((window as unknown as { __noReload: number }).__noReload = 42));
+    // Late cards (next step, contracts, attention) change the page height: measure only once the page height is stable (not networkidle: the realtime stream stays open).
+    await expect(async () => { const h1 = await page.evaluate(() => document.documentElement.scrollHeight); await page.waitForTimeout(400); expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(h1); }).toPass({ timeout: 15_000 });
     const anchor = 'h1';
     await scrollTo(page, anchor, 250);
     const before = await scrollState(page, anchor);

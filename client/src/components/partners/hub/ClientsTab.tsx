@@ -13,6 +13,16 @@ import type { PartnerCase } from '../api';
 import type { OwnedClient } from '../Ownership';
 import { AddClientsDialog } from '../AddClientsDialog'; // hides applications already linked to the partner
 
+/** Invoiced / paid / outstanding of one client (GET /admin/partners/:id → clientPayments, ADMIN+ only). */
+export interface ClientPayment {
+  invoicedCents: number;
+  paidCents: number;
+  outstandingCents: number;
+  currency: string;
+}
+
+const eur = (cents: number, currency: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(cents / 100);
+
 /** Final case statuses (no longer running). */
 const FINAL = new Set(['APPROVED', 'REJECTED', 'CANCELLED']);
 
@@ -38,7 +48,7 @@ export const useVisaKinds = (cases: PartnerCase[] | undefined) => {
 };
 
 /** "Müştərilər / müraciətlər": the partner's cases (visa kind, stage, status, search) and own clients without a case. */
-export const ClientsTab = ({ cases: all, ownedClients, partner }: { cases: PartnerCase[]; ownedClients: OwnedClient[]; partner?: { id: string; name: string } }) => {
+export const ClientsTab = ({ cases: all, ownedClients, partner, payments }: { cases: PartnerCase[]; ownedClients: OwnedClient[]; partner?: { id: string; name: string }; payments?: Record<string, ClientPayment> | null }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const navigate = useNavigate();
@@ -153,6 +163,7 @@ export const ClientsTab = ({ cases: all, ownedClients, partner }: { cases: Partn
                     <th className="px-4 py-2.5">{t('refPartners.th2.stage')}</th>
                     <th className="px-4 py-2.5">{t('refPartners.th2.company')}</th>
                     <th className="px-4 py-2.5">{t('refPartners.th.staff')}</th>
+                    {payments && <th className="px-4 py-2.5">{t('partnerHubPay.invoiced')} / {t('partnerHubPay.paid')} / {t('partnerHubPay.outstanding')}</th>}
                     <th className="px-4 py-2.5">{t('refPartners.th.created')}</th>
                     <th className="px-4 py-2.5">{t('refPartners.th.decision')}</th>
                   </tr>
@@ -185,6 +196,20 @@ export const ClientsTab = ({ cases: all, ownedClients, partner }: { cases: Partn
                       </td>
                       <td className="max-w-[12rem] truncate px-4 py-3 align-top text-xs text-ink/80">{c.company?.name ?? '—'}</td>
                       <td className="px-4 py-3 align-top whitespace-nowrap text-ink/80">{c.assignedStaff ? fullName(c.assignedStaff) : '—'}</td>
+                      {payments && (
+                        <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-ink/80">
+                          {payments[c.client.id] ? (
+                            <>
+                              {eur(payments[c.client.id]!.invoicedCents, payments[c.client.id]!.currency)} / {eur(payments[c.client.id]!.paidCents, payments[c.client.id]!.currency)}
+                              <span className={payments[c.client.id]!.outstandingCents > 0 ? 'block font-semibold text-danger-fg' : 'block text-muted'}>
+                                {eur(payments[c.client.id]!.outstandingCents, payments[c.client.id]!.currency)}
+                              </span>
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{fmtDate(c.createdAt)}</td>
                       <td className="px-4 py-3 align-top text-xs whitespace-nowrap text-muted">{c.decisionAt ? fmtDate(c.decisionAt) : '—'}</td>
                     </tr>

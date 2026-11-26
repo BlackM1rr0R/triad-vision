@@ -3294,6 +3294,8 @@ model ReferralPartner {
   clientQuota       Int?
   /// What kind of partner (lib/partners/schools.ts): AGENCY (default) | SCHOOL (college) | LANGUAGE_SCHOOL. Separate from partnerType (legal form).
   category          String              @default("AGENCY") @db.VarChar(20)
+  /// Brings clients who register themselves for a vacancy (lib/drive/referrerName.ts): their client folders stay in Anträge with a " · Ref <name>" suffix. false = German partner firm (folders under Partner/<name>, document workflow).
+  isReferrer        Boolean             @default(false)
   partnerContracts  PartnerContract[]
   partnerActivities PartnerActivity[]
   contacts          Contact[]

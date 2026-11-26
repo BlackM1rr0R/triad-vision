@@ -11,6 +11,7 @@ import { autoNameFor, caseNaming, requirementTitle } from './org/naming.js';
 import { applyTemplateToCaseFolder } from './org/templates.js';
 import { ensureTypeFolder, typeOfRequirement } from './typeFolders.js';
 import { markClientFolder, syncWorkflowFolderNames } from './workflowLinks.js';
+import { withReferrer } from './referrerName.js';
 
 /**
  * Real client folders in the shared workspace. Every case gets one folder ("Vorname Nachname · Pass-Nr.
@@ -48,7 +49,7 @@ const caseSelect = {
   driveFolderId: true,
   driveParentId: true,
   relation: true,
-  partner: { select: { name: true } },
+  partner: { select: { name: true, isReferrer: true } },
   visaCategory: { select: { title: true, visaLabel: true } },
   client: { select: { firstName: true, lastName: true, passportNumber: true } },
 } satisfies Prisma.CaseSelect;
@@ -79,6 +80,9 @@ const memberName = async (caseId: string) => {
     return null;
   }
 };
+
+/** Folder name incl. the referrer suffix " · Ref <partner>" (main applicants of partners that bring clients only). */
+const wantedBaseName = (c: CaseRow) => (c.partner?.isReferrer && !c.parentCaseId ? withReferrer(clientFolderBaseName(c), c.partner.name) : clientFolderBaseName(c));
 
 const RELATION_DE: Record<string, string> = { spouse: 'Ehepartner', child: 'Kind', parent: 'Elternteil' };
 
@@ -122,12 +126,13 @@ const canonical = async (c: CaseRow): Promise<{ parentId: string; base: string }
       return { parentId: await ensureChild(mainFolder, FAMILY_FOLDER), base: clientFolderBaseName(c, { name: await memberName(c.id), relation: c.relation }) };
     }
   }
-  const base = clientFolderBaseName(c);
+  const base = wantedBaseName(c);
   // Folder chosen for this application (vacancy folder / applicant folder / staff override, lib/drive/vacancyFolders.ts).
   const chosen = await liveFolder(c.driveParentId);
   if (chosen) return { parentId: chosen.id, base };
   // The sections are created again here when a super admin had deleted them (a client folder needs them).
-  if (c.partner) return { parentId: await ensureChild(await ensureSection('partners'), cleanName(c.partner.name, 'Partner')), base };
+  // A referrer's client folder stays in Anträge (suffix in the name); only German partner firms get Partner/<name>.
+  if (c.partner && !c.partner.isReferrer) return { parentId: await ensureChild(await ensureSection('partners'), cleanName(c.partner.name, 'Partner')), base };
   const typeId = await ensureChild(await ensureSection('cases'), VISA_TYPE_FOLDER[c.visaType]);
   const catName = c.visaCategory ? cleanName(categoryFolderName(c.visaCategory), NO_CATEGORY_FOLDER) : NO_CATEGORY_FOLDER;
   return { parentId: await ensureChild(typeId, catName), base };
@@ -172,7 +177,7 @@ export async function syncCaseFolder(caseId: string): Promise<void> {
     await markClientFolder(folder.id); // a folder linked by hand (or before the mark existed) is a client folder for good
     // An archived client folder (moved to "Archiv/<Jahr>" by the retention policy) stays where it is; only its name follows.
     if (folder.archivedAt && folder.parentId) {
-      const name = await uniqueName(folder.parentId, c.parentCaseId ? (await canonical(c)).base : clientFolderBaseName(c), c.number, folder.id);
+      const name = await uniqueName(folder.parentId, c.parentCaseId ? (await canonical(c)).base : wantedBaseName(c), c.number, folder.id);
       if (folder.name !== name) {
         await prisma.driveNode.update({ where: { id: folder.id }, data: { name } });
         await syncWorkflowFolderNames(c.id, name, folder.name); // the "İş axını" copies follow (lib/drive/workflowLinks)

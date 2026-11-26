@@ -42,7 +42,7 @@ import type { OwnedClient, PartnerOwnershipFields } from '../Ownership';
 import { ContractBadge, ReadinessMeter } from './parts';
 import { QuotaMeter } from '../QuotaMeter'; // "needed clients" progress
 import { InfoTab } from './InfoTab';
-import { ClientsTab } from './ClientsTab';
+import { ClientsTab, type ClientPayment } from './ClientsTab';
 import { CommissionsTab, DocumentsTab, PortalTab, VisasTab } from './OtherTabs';
 import { ContactsTab, ContractsTab, HistoryTab } from './RecordsTabs';
 import { PARTNER_STATS_KEY, type PartnerStats } from './types';
@@ -55,7 +55,7 @@ type TabKey = (typeof TABS)[number];
 const TAB_ICON = { dashboard: LayoutDashboard, info: Info, contracts: FileSignature, clients: Users, commissions: Coins, visas: Plane, documents: FolderOpen, contacts: Contact, history: History, portal: KeyRound } as const;
 const STAGE_TONE: Record<string, string> = { IN_PROGRESS: 'bg-info', WRITTEN: 'bg-warning', DONE: 'bg-success', REFUSED: 'bg-danger' };
 
-type Detail = { partner: Partner & PartnerOwnershipFields; cases: PartnerCase[]; ownedClients?: OwnedClient[] };
+type Detail = { partner: Partner & PartnerOwnershipFields; cases: PartnerCase[]; ownedClients?: OwnedClient[]; clientPayments?: Record<string, ClientPayment> | null };
 
 const CopyLink = ({ value }: { value: string }) => {
   const { t } = useTranslation();
@@ -225,7 +225,7 @@ export const PartnerHub = ({ isAdmin }: { isAdmin: boolean }) => {
         {tab === 'dashboard' && <DashboardTab partnerId={partner.id} onOpenHistory={() => setTab('history')} onEdit={isAdmin ? () => setEditing(true) : undefined} />}
         {tab === 'info' && <InfoTab partner={partner} canEdit={isAdmin} onEdit={() => setEditing(true)} />}
         {tab === 'contracts' && <ContractsTab partnerId={partner.id} legacy={stats?.legacyContract ?? null} onFillData={isAdmin ? () => setEditing(true) : () => setTab('info')} />}
-        {tab === 'clients' && <ClientsTab cases={cases} ownedClients={owned} partner={partner} />}
+        {tab === 'clients' && <ClientsTab cases={cases} ownedClients={owned} partner={partner} payments={detail.data.clientPayments ?? null} />}
         {tab === 'commissions' && <CommissionsTab partner={partner} isAdmin={isAdmin} />}
         {tab === 'visas' && <VisasTab partner={partner} cases={cases} />}
         {tab === 'documents' && <DocumentsTab partner={partner} />}

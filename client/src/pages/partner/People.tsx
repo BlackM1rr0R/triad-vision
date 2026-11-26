@@ -7,6 +7,8 @@ import clsx from 'clsx';
 import { AlertCircle, Check, ChevronRight, Copy, Link2, Mail, Search, ShieldCheck, ShieldOff, UserPlus, Users } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import i18n from '@/i18n';
+import { useL10n } from '@/lib/l10n';
+import type { L10n } from '@/lib/types';
 import { TONE_CLASS } from '@/components/ui/status';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -74,12 +76,19 @@ function LinkCard({ me }: { me: PartnerMe }) {
   );
 }
 
-const EMPTY_FORM = { firstName: '', lastName: '', email: '', phone: '', passportNumber: '', locale: 'az', clientAgreed: false };
+const EMPTY_FORM = { firstName: '', lastName: '', email: '', phone: '', passportNumber: '', locale: 'az', vacancyId: '', clientAgreed: false };
 
 /** The partner registers a client on their behalf (POST /partner/clients). */
-function RegisterForm({ onDone }: { onDone: () => void }) {
+function RegisterForm({ me, onDone }: { me: PartnerMe; onDone: () => void }) {
   const { t } = useTranslation();
+  const { tr } = useL10n();
   const qc = useQueryClient();
+  // Optional: register the client for an open vacancy right away (needs the vacancies permission to see the list).
+  const vacancies = useQuery({
+    queryKey: ['partner-portal', 'vacancies'],
+    queryFn: async () => (await api.get<{ items: { id: string; title: L10n; city: string | null }[] }>('/partner/vacancies')).data.items,
+    enabled: accessOf(me).areas.vacancies,
+  });
   const [form, setForm] = useState(EMPTY_FORM);
   const set = (k: keyof typeof EMPTY_FORM) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const save = useMutation({
@@ -92,11 +101,13 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
           phone: form.phone.trim(),
           passportNumber: form.passportNumber.trim() || null,
           locale: form.locale,
+          ...(form.vacancyId ? { vacancyId: form.vacancyId } : {}),
           clientAgreed: true,
         })
       ).data,
-    onSuccess: async () => {
-      toast.success(t('partnerClients.register.done'));
+    onSuccess: async (data: { caseError?: string | null }) => {
+      if (data?.caseError) toast.warning(t('partnerClients.register.vacancyPartial', { reason: i18n.exists(`partnerClients.errors.${data.caseError}`) ? t(`partnerClients.errors.${data.caseError}`) : data.caseError }));
+      else toast.success(t('partnerClients.register.done'));
       setForm(EMPTY_FORM);
       await qc.invalidateQueries({ queryKey: CLIENTS_KEY });
       onDone();
@@ -143,6 +154,20 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
             <option value="ru">Русский</option>
           </select>
         </label>
+        {(vacancies.data?.length ?? 0) > 0 && (
+          <label className="block sm:col-span-2">
+            <span className="label">{t('partnerClients.register.vacancyOptional')}</span>
+            <select className="input" value={form.vacancyId} onChange={set('vacancyId')}>
+              <option value="" />
+              {vacancies.data!.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {tr(v.title)}
+                  {v.city ? ` · ${v.city}` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="flex items-start gap-3 text-sm text-ink sm:col-span-2">
           <input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={form.clientAgreed} onChange={(e) => setForm((f) => ({ ...f, clientAgreed: e.target.checked }))} required />
           <span>{t('partnerClients.register.agreed')}</span>
@@ -192,7 +217,7 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
   return (
     <div className="space-y-6">
       <LinkCard me={me} />
-      {adding && <RegisterForm onDone={() => setAdding(false)} />}
+      {adding && <RegisterForm me={me} onDone={() => setAdding(false)} />}
       <Section
         title={t('partnerClients.list.title')}
         icon={Users}
@@ -247,6 +272,7 @@ export default function PartnerPeoplePage({ me }: { me: PartnerMe }) {
                     <span className={clsx('badge whitespace-nowrap', PAYMENT_TONE[c.payment.state])}>
                       {t(`partnerClients.list.payment.${c.payment.state}`)}
                       {c.payment.totalCents ? ` · ${t('partnerClients.list.paid', { paid: money(c.payment.paidCents ?? 0, c.payment.currency), total: money(c.payment.totalCents, c.payment.currency) })}` : ''}
+                      {c.payment.totalCents && c.payment.outstandingCents ? ` · ${t('partnerClients.list.outstanding', { amount: money(c.payment.outstandingCents, c.payment.currency) })}` : ''}
                     </span>
                     )}
                     {c.latestCase?.status && <StatusPill status={c.latestCase.status} />}

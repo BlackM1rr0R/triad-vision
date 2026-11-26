@@ -21,9 +21,7 @@ import { photoCheckOnUpload } from '../lib/photoCheck/index.js'; // biometric ph
 import { emitAutomationEvent } from '../lib/automation/events.js';
 import { completeTasksForUpload } from '../lib/clientProcess/tasks.js';
 import { copyDocumentToDrive } from '../lib/drive/caseFolders.js';
-import { caseParentFor, vacancyProfession, visaCategoryIdForVacancy } from '../lib/drive/vacancyFolders.js';
-import { assertApplicable } from '../lib/vacancyPlaces/service.js'; // our open vacancies with a free place only
-import { visaTypeOfVacancy } from '../lib/vacancyPlaces/places.js';
+import { checkedVacancy, vacancyCaseFields } from '../lib/vacancyPlaces/application.js'; // our open vacancies with a free place only (shared with the partner portal)
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
 import { notifyEarlyEmbassyUpload, notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
 import { earlyEmbassyOpenFor, ensureEarlyEmbassyRequirements } from '../lib/earlyEmbassy/service.js'; // embassy documents while waiting for the contract
@@ -73,19 +71,19 @@ casesRouter.post('/', requireVerifiedEmail, async (req, res) => {
   // and have a free place (409 VACANCY_FULL) — lib/vacancyPlaces.
   const onlyVacancies = (await getApplicationPolicy()).clientsOnlyActiveVacancies;
   if (onlyVacancies && !body.vacancyId) throw badRequest('VACANCY_REQUIRED');
-  const vacancy = body.vacancyId ? (await assertApplicable({ id: body.vacancyId })).vacancy : null;
+  const vacancy = body.vacancyId ? await checkedVacancy(body.vacancyId) : null;
+  const fromVacancy = vacancy ? await vacancyCaseFields(vacancy, req.user!.id) : null;
   if (body.visaCategoryId && !onlyVacancies) {
     const exists = await prisma.visaCategory.count({ where: { id: body.visaCategoryId, published: true } });
     if (!exists) throw badRequest('INVALID_VISA_CATEGORY');
   }
   const me = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { profession: true } });
-  const profession = vacancy ? vacancyProfession(vacancy) : body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
+  const profession = fromVacancy ? fromVacancy.profession : body.profession || me?.profession || VISA_TYPE_LABEL_AZ[body.visaType];
   const created = await createCase(req.user!.id, {
     profession,
-    visaType: onlyVacancies && vacancy ? visaTypeOfVacancy(vacancy) : body.visaType,
-    visaCategoryId: onlyVacancies ? (vacancy ? await visaCategoryIdForVacancy(vacancy.id) : null) : (body.visaCategoryId ?? (vacancy ? await visaCategoryIdForVacancy(vacancy.id) : null)),
-    // The client folder goes into Anträge/<Visumart>/<Kategorie> (caseParentFor: only a staff override changes that).
-    ...(vacancy ? { vacancyId: vacancy.id, driveParentId: await caseParentFor({ vacancyId: vacancy.id, userId: req.user!.id }) } : {}),
+    visaType: onlyVacancies && fromVacancy ? fromVacancy.visaType : body.visaType,
+    visaCategoryId: onlyVacancies ? (fromVacancy?.visaCategoryId ?? null) : (body.visaCategoryId ?? fromVacancy?.visaCategoryId ?? null),
+    ...(fromVacancy ? { vacancyId: fromVacancy.vacancyId, driveParentId: fromVacancy.driveParentId } : {}),
   });
   res.status(201).json({ case: created });
 });

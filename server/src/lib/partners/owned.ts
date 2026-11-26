@@ -238,6 +238,36 @@ export const paymentStateOf = (invoices: { status: string; grossCents: number; p
   return open.some((i) => i.paidCents > 0) || live.length > open.length ? 'PARTIAL' : 'OPEN';
 };
 
+export interface PaymentTotals {
+  invoicedCents: number;
+  paidCents: number;
+  /** Still to pay (invoiced − paid, never below 0). */
+  outstandingCents: number;
+  currency: string;
+}
+
+/** Invoiced / paid / outstanding of a client from their invoices (drafts and cancelled ones do not count). */
+export const paymentTotalsOf = (invoices: { status: string; grossCents: number; paidCents: number; currency?: string }[]): PaymentTotals => {
+  const live = invoices.filter((i) => i.status !== 'DRAFT' && i.status !== 'CANCELLED');
+  const invoicedCents = live.reduce((a, i) => a + i.grossCents, 0);
+  const paidCents = live.reduce((a, i) => a + Math.min(i.paidCents, i.grossCents), 0);
+  return { invoicedCents, paidCents, outstandingCents: Math.max(0, invoicedCents - paidCents), currency: live[0]?.currency ?? 'EUR' };
+};
+
+/** Payment totals per client id (clients without a live invoice are missing). Staff / admin view of the partner profile. */
+export const clientPaymentTotals = async (clientIds: string[]) => {
+  const out = new Map<string, PaymentTotals>();
+  if (!clientIds.length) return out;
+  const rows = await prisma.clientInvoice.findMany({ where: { clientId: { in: clientIds } }, select: { clientId: true, status: true, grossCents: true, paidCents: true, currency: true } });
+  const by = new Map<string, typeof rows>();
+  for (const r of rows) by.set(r.clientId, [...(by.get(r.clientId) ?? []), r]);
+  for (const [id, list] of by) {
+    const t = paymentTotalsOf(list);
+    if (t.invoicedCents > 0) out.set(id, t);
+  }
+  return out;
+};
+
 /** Same masking as the case view: only the last three characters stay readable. */
 const mask = (p: string | null) => {
   const v = (p ?? '').trim();
@@ -288,7 +318,6 @@ export const listPartnerClients = async (partner: { id: string; visibility: stri
     const latest = own[0] ?? null;
     const inv = invoices.filter((i) => i.clientId === u.id);
     const extended = showExtended(partner.visibility, consents.get(u.id));
-    const live = inv.filter((i) => i.status !== 'DRAFT' && i.status !== 'CANCELLED');
     return {
       id: u.id,
       firstName: u.firstName,
@@ -304,8 +333,9 @@ export const listPartnerClients = async (partner: { id: string; visibility: stri
       contact: extended ? { email: u.email, phone: u.phone } : null,
       payment: {
         state: paymentStateOf(inv),
-        ...(extended
-          ? { totalCents: live.reduce((a, i) => a + i.grossCents, 0), paidCents: live.reduce((a, i) => a + i.paidCents, 0), currency: live[0]?.currency ?? 'EUR' }
+        // Amounts: for clients the partner registered / owns (the partner brought them) and for consenting ones (extended).
+        ...(extended || u.ownerPartnerId === partner.id
+          ? (({ invoicedCents, paidCents, outstandingCents, currency }) => ({ totalCents: invoicedCents, paidCents, outstandingCents, currency }))(paymentTotalsOf(inv))
           : {}),
       },
       cases: own.length,

@@ -43,6 +43,7 @@ interface FormState {
   companyName: string;
   contactPerson: string;
   active: boolean;
+  isReferrer: boolean;
   tags: string[];
   preferredLanguage: PartnerLang | '';
   note: string;
@@ -86,6 +87,7 @@ const formOf = (p: Partner | null): FormState => ({
   companyName: p?.companyName ?? '',
   contactPerson: p?.contactPerson ?? '',
   active: p?.active ?? true,
+  isReferrer: p?.isReferrer ?? false,
   tags: p?.tags ?? [],
   preferredLanguage: p?.preferredLanguage ?? '',
   note: p?.note ?? '',
@@ -127,6 +129,7 @@ const bodyOf = (f: FormState, defs: PartnerFieldDef[], bankEditable: boolean) =>
   companyName: f.companyName,
   contactPerson: f.contactPerson,
   active: f.active,
+  isReferrer: f.isReferrer,
   tags: f.tags,
   preferredLanguage: f.preferredLanguage,
   note: f.note,
@@ -542,6 +545,13 @@ export const PartnerFormDialog = ({
             <div className="flex items-center gap-3 sm:col-span-2">
               <Switch checked={f.active} onChange={(v) => set('active', v)} label={t('partnerForm.f.active')} />
               <span className="text-sm text-ink">{t('partnerForm.f.active')}</span>
+            </div>
+            <div className="flex items-start gap-3 sm:col-span-2">
+              <Switch checked={f.isReferrer} onChange={(v) => set('isReferrer', v)} label={t('partnerForm.f.isReferrer')} />
+              <span className="text-sm text-ink">
+                {t('partnerForm.f.isReferrer')}
+                <span className="block text-xs text-muted">{t('partnerForm.f.isReferrerHint')}</span>
+              </span>
             </div>
           </Section>
 
