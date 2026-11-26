@@ -124,7 +124,9 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
 
   // form state
   const [note, setNote] = useState('');
+  // Appointment: date and time are separate inputs (a datetime-local with an empty time part reads as "no value" and silently disabled the button).
   const [at, setAt] = useState('');
+  const [atTime, setAtTime] = useState('09:00');
   const [place, setPlace] = useState('');
   const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [reason, setReason] = useState('');
@@ -141,7 +143,8 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
   useEffect(() => {
     setSelected(AVAILABLE[c.status][0] ?? null);
     setNote('');
-    setAt(toLocalInput(c.appointmentAt));
+    setAt(toLocalInput(c.appointmentAt).slice(0, 10));
+    setAtTime(toLocalInput(c.appointmentAt).slice(11, 16) || '09:00');
     setPlace(c.appointmentPlace ?? '');
     setReason('');
     setValidFrom('');
@@ -244,7 +247,8 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
 
       case 'SCHEDULE': {
         const resched = c.status === 'APPOINTMENT_SCHEDULED';
-        const ok = !!at && place.trim().length >= 3 && !Number.isNaN(new Date(at).getTime());
+        const atFull = at ? `${at}T${atTime || '09:00'}` : '';
+        const ok = !!atFull && place.trim().length >= 3 && !Number.isNaN(new Date(atFull).getTime());
         return (
           <div className="space-y-3">
             {resched && c.appointmentAt && (
@@ -255,7 +259,10 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
             {!resched && <MissingHint missing={missingEmbassy} what={a('scheduleWhat')} />}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={a('dateTime')} htmlFor="ap-at">
-                <input id="ap-at" type="datetime-local" className="input" value={at} onChange={(e) => setAt(e.target.value)} />
+                <div className="flex gap-2">
+                  <input id="ap-at" type="date" className="input min-w-0 flex-1" value={at} onChange={(e) => setAt(e.target.value)} />
+                  <input id="ap-time" type="time" className="input w-28" value={atTime} onChange={(e) => setAtTime(e.target.value)} aria-label={a('time')} />
+                </div>
               </Field>
               <Field label={a('place')} htmlFor="ap-place">
                 <input id="ap-place" className="input" value={place} onChange={(e) => setPlace(e.target.value)} placeholder={a('placePlaceholder')} />
@@ -271,7 +278,7 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
               onClick={() =>
                 run({
                   action: 'SCHEDULE_APPOINTMENT',
-                  at: new Date(at).toISOString(),
+                  at: new Date(atFull).toISOString(),
                   place: place.trim(),
                   note: note.trim() || undefined,
                 })

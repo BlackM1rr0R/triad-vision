@@ -216,6 +216,14 @@ describe('client folders: Fertig → client portal', () => {
     const n = await prisma.notification.findFirst({ where: { userId: client.user.id, type: 'READY_DOCS' } });
     expect(n).toMatchObject({ caseId: c.id, link: `/account/cases/${c.id}?tab=docs` });
     expect(n!.body).toContain(c.number);
+    // "Göndərilənlər": the view lists each send with the files the client received (name, size, openable by staff)
+    const sentView = expectStatus(await staff.agent.get(`/api/admin/client-folders/cases/${c.id}/ready-docs`), 200).body;
+    expect(sentView.sends).toHaveLength(1);
+    expect(sentView.sends[0].documents.map((d: { name: string }) => d.name).sort()).toEqual([f1.name, f2.name].sort());
+    expect(sentView.sends[0].documents.every((d: { available: boolean; size: number | null; documentId: string }) => d.available && (d.size ?? 0) > 0 && !!d.documentId)).toBe(true);
+    expect((await staff.agent.get(`/api/files/${sentView.sends[0].documents[0].documentId}`)).status).toBe(200);
+    // the client has no access to the staff listing
+    expect((await client.agent.get(`/api/admin/client-folders/cases/${c.id}/ready-docs`)).status).toBe(403);
     expect(await prisma.caseEvent.count({ where: { caseId: c.id, type: 'READY_DOCS_SENT' } })).toBe(1);
     expect(await prisma.auditLog.count({ where: { action: 'CASE_READY_DOCS_SENT', target: `case:${c.id}` } })).toBe(1);
     const r2 = await roots(staff.agent);

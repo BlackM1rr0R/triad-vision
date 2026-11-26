@@ -1,11 +1,11 @@
 import { CallButton } from '@/components/calls/CallButton'; // click-to-call (Twilio / sipgate) or manual call log
-import { lazy, Suspense, useEffect, useId, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { BadgeCheck, CircleAlert, FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, MoreHorizontal, Settings2, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { BadgeCheck, CircleAlert, FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, MoreHorizontal, ShieldCheck, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
@@ -30,8 +30,10 @@ import { Pagination } from '@/components/ui/Pagination';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/Button';
 import { Menu } from '@/components/ui/Menu';
-import { StaffDeskSelect } from '@/components/admin/StaffDeskSelect'; // sidebar desk of a staff member (ADMIN+)
-import { StaffProfileSelect } from '@/components/admin/StaffProfileSelect'; // work profile of the simple sidebar (ADMIN+)
+import { StaffPermissionsPanel, StaffSummaryLine } from '@/components/admin/StaffPermissionsPanel'; // one panel: effective permissions + role / desk / work profile
+import { StaffMailboxDialog } from '@/components/admin/StaffMailboxDialog'; // create / connect the staff member's mailbox (super admin)
+import { pagesUserPerms } from '@/i18n/pagesUserPerms';
+registerCopy(pagesUserPerms);
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
 
 // Field-level change history of the user (ADMIN+, own chunk).
@@ -74,22 +76,25 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
   const empty = { email: '', password: '', firstName: '', lastName: '', phone: '', role: 'STAFF' as 'STAFF' | 'ADMIN' };
   const [f, setF] = useState(empty);
   // Optional "Create mailbox ad.soyad@domain": the local part follows the name until it is edited by hand.
-  const [mb, setMb] = useState({ on: false, localPart: '', edited: false });
+  // Checkbox defaults ON when the mail server is configured (until the admin touches it).
+  const [mb, setMb] = useState({ on: false, touched: false, localPart: '', edited: false });
+  const emailKey = /\S+@\S+\.\S+/.test(f.email.trim()) ? f.email.trim().toLowerCase() : '';
   const [created, setCreated] = useState<CreatedMailbox | null>(null);
   const suggestion = useQuery({
-    queryKey: ['admin-mailbox-suggestion', f.firstName.trim(), f.lastName.trim()],
+    queryKey: ['admin-mailbox-suggestion', f.firstName.trim(), f.lastName.trim(), emailKey],
     queryFn: async () =>
-      (await api.get<{ localPart: string; domain: string; configured: boolean }>('/admin/users/mailbox-suggestion', { params: { firstName: f.firstName.trim(), lastName: f.lastName.trim() } })).data,
-    enabled: open && mb.on,
+      (await api.get<{ localPart: string; domain: string; configured: boolean }>('/admin/users/mailbox-suggestion', { params: { firstName: f.firstName.trim(), lastName: f.lastName.trim(), email: emailKey || undefined } })).data,
+    enabled: open,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
+  const mbOn = mb.touched ? mb.on : !!suggestion.data?.configured;
   const localPart = (mb.edited ? mb.localPart : (suggestion.data?.localPart ?? '')).trim().toLowerCase();
   const domain = suggestion.data?.domain ?? '';
-  const mailboxReady = !mb.on || (!!suggestion.data?.configured && LOCAL_PART_RE.test(localPart) && !localPart.includes('..'));
+  const mailboxReady = !mbOn || (!!suggestion.data?.configured && LOCAL_PART_RE.test(localPart) && !localPart.includes('..'));
   const close = () => {
     setF(empty);
-    setMb({ on: false, localPart: '', edited: false });
+    setMb({ on: false, touched: false, localPart: '', edited: false });
     setCreated(null);
     onClose();
   };
@@ -103,7 +108,7 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
           lastName: f.lastName.trim(),
           phone: f.phone.trim() || undefined,
           role: f.role,
-          ...(mb.on ? { createMailbox: true, mailboxLocalPart: localPart } : {}),
+          ...(mbOn ? { createMailbox: true, mailboxLocalPart: localPart } : {}),
         })
       ).data,
     onSuccess: (data) => {
@@ -224,12 +229,12 @@ const CreateUserModal = ({ open, onClose }: { open: boolean; onClose: () => void
         </div>
         <div className="rounded-lg border border-line p-3 sm:col-span-2">
           <label className="flex items-start gap-2.5 text-sm text-ink">
-            <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={mb.on} onChange={(e) => setMb((v) => ({ ...v, on: e.target.checked }))} />
+            <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-primary" checked={mbOn} onChange={(e) => setMb((v) => ({ ...v, on: e.target.checked, touched: true }))} />
             <span className="min-w-0 break-all">
               {localPart && domain ? t('mailAdmin.staffCreate.checkbox', { address: `${localPart}@${domain}` }) : t('mailAdmin.staffCreate.checkboxPlain', { domain: domain || '…' })}
             </span>
           </label>
-          {mb.on && (
+          {mbOn && (
             <div className="mt-3 pl-6.5">
               {suggestion.data && !suggestion.data.configured ? (
                 <p className="text-xs text-danger-fg" role="alert">
@@ -447,48 +452,20 @@ const CountsCell = ({ u }: { u: AdminUser }) => {
   );
 };
 
-/** Staff-only settings (desk scope, work profile): one icon button next to the role, the two selects open below it. */
-const StaffSettings = ({ u, children }: { u: AdminUser; children: (open: boolean, toggle: ReactNode) => ReactNode }) => {
+/**
+ * Role cell. Active staff (ADMIN+ viewer): ONE summary line ("Əməkdaş · Marketinq · Rəhbərlik profili") and the
+ * "İcazələr" button that opens the panel (permissions + role / desk / work-profile editors). Others: the plain role.
+ */
+const RoleCell = ({ u, editable, showSettings, onOpen }: { u: AdminUser; editable: boolean; showSettings: boolean; onOpen: (u: AdminUser) => void }) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  const toggle = (
-    <IconButton
-      icon={Settings2}
-      size="sm"
-      label={`${t('admin.users.settingsBtn')}: ${fullName(u)}`}
-      aria-expanded={open}
-      aria-controls={id}
-      className={clsx(open && 'bg-sunken text-ink')}
-      onClick={() => setOpen((v) => !v)}
-    />
-  );
+  if (!showSettings) return <RoleControl u={u} editable={editable} />;
   return (
-    <>
-      {children(open, toggle)}
-      {open && (
-        <div id={id} className="mt-2 grid w-full max-w-60 gap-1.5">
-          <StaffDeskSelect userId={u.id} name={fullName(u)} className="block [&_select]:w-full" />
-          <StaffProfileSelect userId={u.id} name={fullName(u)} className="block [&_select]:w-full" />
-        </div>
-      )}
-    </>
-  );
-};
-
-/** Role control + (ADMIN+, active staff) the settings toggle, always on one line of the same height. */
-const RoleCell = ({ u, editable, showSettings }: { u: AdminUser; editable: boolean; showSettings: boolean }) => {
-  const control = <RoleControl u={u} editable={editable} />;
-  if (!showSettings) return control;
-  return (
-    <StaffSettings u={u}>
-      {(_open, toggle) => (
-        <span className="inline-flex items-center gap-1">
-          {control}
-          {toggle}
-        </span>
-      )}
-    </StaffSettings>
+    <span className="flex max-w-60 min-w-0 flex-col items-start gap-1">
+      <StaffSummaryLine u={u} className="max-w-full" />
+      <button type="button" className="btn-secondary btn-sm inline-flex items-center gap-1" aria-label={`${t('userPerms.button')}: ${fullName(u)}`} onClick={() => onOpen(u)}>
+        <ShieldCheck className="size-3.5" aria-hidden /> {t('userPerms.button')}
+      </button>
+    </span>
   );
 };
 
@@ -498,12 +475,15 @@ const RowTools = ({
   onReset,
   onRevoke,
   onDelete,
+  onMailbox,
   showMenu,
 }: {
   u: AdminUser;
   onReset: () => void;
   onRevoke: () => void;
   onDelete: () => void;
+  /** Staff accounts only: create / connect their mailbox. */
+  onMailbox: () => void;
   showMenu: boolean;
 }) => {
   const { t } = useTranslation();
@@ -520,6 +500,7 @@ const RowTools = ({
           items={[
             { key: 'reset', label: t('admin.users.resetPassword'), icon: KeyRound, onSelect: onReset },
             { key: 'revoke', label: t('admin.users.revokeTitle'), icon: LogOut, onSelect: onRevoke },
+            ...(u.role !== 'CLIENT' ? [{ key: 'mailbox', label: t('userPerms.mbox.menu'), icon: Mail, onSelect: onMailbox }] : []),
             'separator',
             { key: 'delete', label: t('admin.users.deleteTitle'), icon: Trash2, danger: true, onSelect: onDelete },
           ]}
@@ -550,6 +531,8 @@ export default function Users() {
   const [resetFor, setResetFor] = useState<AdminUser | null>(null);
   const [revokeFor, setRevokeFor] = useState<AdminUser | null>(null);
   const [deleteFor, setDeleteFor] = useState<AdminUser | null>(null);
+  const [permsFor, setPermsFor] = useState<AdminUser | null>(null);
+  const [mailboxFor, setMailboxFor] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearch(searchInput.trim()), 350);
@@ -776,7 +759,7 @@ export default function Users() {
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} />
+                        <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} onOpen={setPermsFor} />
                       </td>
                       <td className="px-4 py-2.5">
                         <ActiveControl u={u} editable={can} />
@@ -789,7 +772,7 @@ export default function Users() {
                       </td>
                       <td className="px-4 py-2.5 text-xs whitespace-nowrap text-muted tabular-nums">{fmtDate(u.createdAt)}</td>
                       <td className="px-4 py-2.5 text-right">
-                        <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />
+                        <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} onMailbox={() => setMailboxFor(u)} />
                       </td>
                     </tr>
                   );
@@ -814,7 +797,7 @@ export default function Users() {
                         {metaLine(u, self)}
                       </div>
                     </div>
-                    <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} />
+                    <RowTools u={u} showMenu={canManage && can} onReset={() => setResetFor(u)} onRevoke={() => setRevokeFor(u)} onDelete={() => setDeleteFor(u)} onMailbox={() => setMailboxFor(u)} />
                   </div>
                   <div className="mt-3 space-y-1 text-xs text-muted">
                     <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 text-ink/80 hover:text-link" title={u.email}>
@@ -831,7 +814,7 @@ export default function Users() {
                     )}
                   </div>
                   <div className="mt-3">
-                    <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} />
+                    <RoleCell u={u} editable={can} showSettings={isAdmin && u.role !== 'CLIENT' && u.isActive} onOpen={setPermsFor} />
                   </div>
                   <div className="mt-3 space-y-1.5 border-t border-line pt-3">
                     <ActivityCell u={u} />
@@ -850,6 +833,8 @@ export default function Users() {
       )}
 
       {canManage && <CreateUserModal open={creating} onClose={() => setCreating(false)} />}
+      {isAdmin && <StaffPermissionsPanel user={permsFor} onClose={() => setPermsFor(null)} roleEditor={permsFor && <RoleControl u={permsFor} editable={editable(permsFor)} />} canEditDeskProfile={isAdmin} />}
+      {canManage && <StaffMailboxDialog user={mailboxFor} onClose={() => setMailboxFor(null)} />}
       {canManage && <ResetPasswordModal user={resetFor} onClose={() => setResetFor(null)} />}
       {canManage && <RevokeSessionsDialog user={revokeFor} onClose={() => setRevokeFor(null)} />}
       {canManage && <DeleteUserDialog user={deleteFor} onClose={() => setDeleteFor(null)} />}

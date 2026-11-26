@@ -95,6 +95,15 @@ describe('client folders: Fertig → client', () => {
       expect(tx.cta.length).toBeGreaterThan(2);
     }
   });
+  it('the German documents send also names the next step (one message instead of a second "upload embassy documents" one)', () => {
+    for (const l of ['az', 'de', 'en', 'ru'] as const) {
+      const p = { name: 'Ali', number: 'TV-1', count: 2, resend: false };
+      const plain = READY_DOCS_TEXT[l].body(p);
+      const merged = READY_DOCS_TEXT[l].body({ ...p, nextEmbassy: true });
+      expect(merged.startsWith(plain)).toBe(true);
+      expect(merged.length).toBeGreaterThan(plain.length);
+    }
+  });
 });
 
 describe('client folders: results and permissions', () => {

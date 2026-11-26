@@ -4,7 +4,7 @@ import { prisma } from '../../db.js';
 import { HttpError } from '../http.js';
 import { seal } from '../secretBox.js';
 import { slugPart } from '../agents/referral.js';
-import { StalwartError, createMailbox, findMailboxByAddress, type Mailbox } from './client.js';
+import { StalwartError, createMailbox, findMailboxByAddress, setMailboxPassword, type Mailbox } from './client.js';
 import { clientSettings, stalwartConfig, stalwartDomain, stalwartMailHost, type StalwartConfig } from './config.js';
 
 /** Helpers shared by the admin and the self-service mailbox routes. */
@@ -276,4 +276,47 @@ export const connectWorkspaceMailbox = async (userId: string, mailbox: Pick<Mail
     console.warn('[stalwart] workspace account for mailbox not connected', (err as Error).message);
     return null;
   }
+};
+
+/** Local part of an existing staff member's own address when it is on our domain, else the ad.soyad suggestion. */
+export const defaultStaffLocalPart = (user: { email: string; firstName: string; lastName: string }) => {
+  const e = user.email.trim().toLowerCase();
+  if (isOurAddress(e)) {
+    const lp = e.slice(0, e.lastIndexOf('@'));
+    if (localPartSchema.safeParse(lp).success) return lp;
+  }
+  return suggestLocalPart(user.firstName, user.lastName);
+};
+
+/** Is this mailbox already connected as a workspace account of the user (own server host)? */
+export const hasWorkspaceMailbox = async (userId: string, address: string) =>
+  (await prisma.mailAccount.count({ where: { userId, ...workspaceWhere(address) } })) > 0;
+
+/**
+ * "Create / connect mailbox" for an EXISTING staff member. A mailbox that is not there yet is created (generated
+ * password). One that already exists on the mail server cannot be connected without its password, which we do
+ * not have: only with resetPassword a new random one is set on the server (and re-encrypted into every workspace
+ * account that uses the mailbox) and connected. The password is returned once; never logged.
+ */
+export const connectStaffMailbox = async (
+  cfg: StalwartConfig,
+  user: { id: string; firstName: string; lastName: string },
+  localPart: string,
+  resetPassword: boolean,
+): Promise<{ created: boolean; mailbox: Mailbox; password: string; workspaceAccountId: string | null }> => {
+  const address = `${localPart}@${stalwartDomain()}`;
+  const existing = await viaStalwart(() => findMailboxByAddress(cfg, address));
+  if (!existing) {
+    const r = await createStaffMailbox(cfg, user, localPart);
+    return { created: true, ...r };
+  }
+  const protection = protectionOf(existing);
+  if (protection) throw new HttpError(409, protection === 'SITE_SENDER' ? 'SITE_SENDER_PROTECTED' : 'MAIL_ADMIN_PROTECTED');
+  if (!resetPassword) throw new HttpError(409, 'MAILBOX_PASSWORD_NEEDED');
+  if ((await prisma.staffMailbox.findUnique({ where: { address: existing.address }, select: { disabledAt: true } }))?.disabledAt) throw new HttpError(409, 'MAILBOX_DISABLED');
+  const password = generatePassword();
+  await viaStalwart(() => setMailboxPassword(cfg, existing.id, password));
+  await reencryptWorkspaceAccounts(existing.address, password);
+  const workspaceAccountId = await connectWorkspaceMailbox(user.id, existing, password);
+  return { created: false, mailbox: existing, password, workspaceAccountId };
 };

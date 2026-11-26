@@ -346,7 +346,8 @@ export const staffRejectSignature = async (caseId: string, actorId: string, note
   await after(caseId, 'CONTRACT_RESIGN_REQUESTED', { note });
 };
 
-export const staffConfirmContract = async (caseId: string, actorId: string) => {
+/** `opts.silent`: the caller sends its own client message (ready-docs send: "German documents ready, next: embassy documents"), so no separate EMBASSY_DOCS_REQUESTED. */
+export const staffConfirmContract = async (caseId: string, actorId: string, opts: { silent?: boolean } = {}) => {
   // Case contracts V2: the approved İş müqaviləsi moves the case on, not this button (lazy import: no cycle).
   if (await import('./caseContracts/service.js').then((m) => m.workContractPending(caseId))) throw conflict('WORK_CONTRACT_PENDING');
   await transition(caseId, ['CONTRACT_SIGNED'], 'EMBASSY_DOCUMENTS', actorId, {
@@ -358,7 +359,7 @@ export const staffConfirmContract = async (caseId: string, actorId: string) => {
     },
   });
   await linkCaseRequirements(caseId); // documents the initial list already has (passport …) also fill the new embassy list (never throws)
-  await after(caseId, 'EMBASSY_DOCS_REQUESTED');
+  if (!opts.silent) await after(caseId, 'EMBASSY_DOCS_REQUESTED');
   // A signed Əmək müqaviləsi (two-step case contracts) counts as approved by this step (lazy import: no cycle; never throws).
   await import('./caseContracts/service.js').then((m) => m.onContractConfirmed(caseId, actorId)).catch(() => undefined);
 };

@@ -140,12 +140,16 @@ export const readyDocsView = async (caseId: string) => {
   const [{ folder, files }, live, sends, pickable] = await Promise.all([
     readyFilesOf(c.id, c.driveFolderId),
     liveSentFiles(caseId),
-    prisma.caseReadyDocsSend.findMany({ where: { caseId }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, createdAt: true, actorId: true, fileCount: true, newCount: true, resend: true } }),
+    prisma.caseReadyDocsSend.findMany({ where: { caseId }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, createdAt: true, actorId: true, fileCount: true, newCount: true, resend: true, files: true } }),
     pickableFilesOf(c.id, c.driveFolderId),
   ]);
   const actors = await prisma.user.findMany({ where: { id: { in: [...new Set(sends.map((s) => s.actorId).filter((x): x is string => !!x))] } }, select: { id: true, firstName: true, lastName: true } });
   const actorName = new Map(actors.map((a) => [a.id, fullName(a)]));
   const fresh = new Set(newFiles(files, live.sent).map((f) => f.nodeId));
+  // What each send put into the client's portal (case Documents; one deleted since is flagged as unavailable).
+  const sentDocIds = sends.flatMap((s) => parseSentFiles(s.files).map((x) => x.documentId));
+  const docs = sentDocIds.length ? await prisma.document.findMany({ where: { id: { in: sentDocIds }, caseId }, select: { id: true, originalName: true, size: true, mimeType: true } }) : [];
+  const docById = new Map(docs.map((d) => [d.id, d]));
   return {
     caseId: c.id,
     number: c.number,
@@ -157,7 +161,14 @@ export const readyDocsView = async (caseId: string) => {
       .filter((p) => !files.some((f) => f.nodeId === p.nodeId))
       .map(({ storageKey: _k, ...f }) => ({ ...f, sent: !newFiles([f], live.sent).length })),
     newCount: fresh.size,
-    sends: sends.map((s) => ({ id: s.id, at: s.createdAt, by: s.actorId ? (actorName.get(s.actorId) ?? null) : null, fileCount: s.fileCount, newCount: s.newCount, resend: s.resend })),
+    sends: sends.map((s) => ({ id: s.id, at: s.createdAt, by: s.actorId ? (actorName.get(s.actorId) ?? null) : null, fileCount: s.fileCount,
+      newCount: s.newCount,
+      resend: s.resend,
+      documents: parseSentFiles(s.files).map((x) => {
+        const d = docById.get(x.documentId);
+        return { documentId: x.documentId, name: d?.originalName ?? x.name ?? '', size: d?.size ?? null, mimeType: d?.mimeType ?? null, available: !!d };
+      }),
+    })),
   };
 };
 
@@ -241,21 +252,29 @@ export const sendReadyDocs = async (caseId: string, actor: { id: string }, opts:
       data: { caseId, type: 'STAFF_DOCUMENT_UPLOADED', note: created.map((x) => x.name).join(', ').slice(0, 2000), actorId: actor.id, visibleToClient: true },
     });
   }
+  // Single-contract flow: the Əmək müqaviləsi is approved (case waits in CONTRACT_SIGNED) → sending the German documents
+  // moves the case to the embassy documents stage (lazy import: no cycle; the send is already done, never fails it).
+  // Only when the Əmək müqaviləsi is already approved — sending documents never stands in for Triad Vision's signature.
+  // The move is silent: the one client message below says "documents ready" and names the next step.
+  let movedOn = false;
+  if (c.status === 'CONTRACT_SIGNED' && (await import('../caseContracts/service.js').then((m) => m.labourContractApproved(caseId)).catch(() => false))) {
+    movedOn = await import('../caseFlow.js')
+      .then((m) => m.staffConfirmContract(caseId, actor.id, { silent: true }))
+      .then(() => true)
+      .catch((err) => {
+        console.warn('[readyDocs] case not moved to the embassy documents', caseId, (err as Error).message);
+        return false;
+      });
+  }
   const tx = READY_DOCS_TEXT[c.client.locale ?? 'az'] ?? READY_DOCS_TEXT.az;
   await notifyUser(c.client.id, {
     type: 'READY_DOCS',
     title: tx.title(created.length),
-    body: tx.body({ name: c.client.firstName, number: c.number, count: created.length, resend }),
+    body: tx.body({ name: c.client.firstName, number: c.number, count: created.length, resend, nextEmbassy: movedOn }),
     link: `/account/cases/${c.id}?tab=docs`,
     caseId: c.id,
     ctaLabel: tx.cta,
   }).catch(() => undefined);
-  // Single-contract flow: the Əmək müqaviləsi is approved (case waits in CONTRACT_SIGNED) → sending the German documents
-  // moves the case to the embassy documents stage (lazy import: no cycle; the send is already done, never fails it).
-  // Only when the Əmək müqaviləsi is already approved — sending documents never stands in for Triad Vision's signature.
-  if (c.status === 'CONTRACT_SIGNED' && (await import('../caseContracts/service.js').then((m) => m.labourContractApproved(caseId)).catch(() => false))) {
-    await import('../caseFlow.js').then((m) => m.staffConfirmContract(caseId, actor.id)).catch((err) => console.warn('[readyDocs] case not moved to the embassy documents', caseId, (err as Error).message));
-  }
   return { sendId: row.id, total: files.length, sent: created.length, resend, documents: created.map((x) => ({ id: x.documentId, name: x.name ?? '' })) };
 };
 

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { AlertTriangle, ArrowLeft, Camera, Check, CheckCircle2, Paperclip, Pencil, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, Check, CheckCircle2, ChevronDown, Paperclip, Pencil, ShieldCheck } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { useL10n } from '@/lib/l10n';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -32,6 +32,8 @@ export default function ConfirmDataPage() {
   const [draft, setDraft] = useState<Draft>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
+  // Groups are collapsed by default (17 fields would otherwise be 17 questions); a group opens on demand or when a row there needs an answer.
+  const [open, setOpen] = useState<Set<string>>(new Set());
   usePageTitle(t('clientData.portal.confirmTitle'));
   const fileRef = useRef<HTMLInputElement>(null);
   const [proofFor, setProofFor] = useState<string | null>(null);
@@ -66,15 +68,33 @@ export default function ConfirmDataPage() {
   const done = conf.fields.filter((f) => answers[f.key] && (answers[f.key].ok || answers[f.key].value?.trim())).length;
   const set = (k: string, a: Draft[string]) => setDraft((d) => ({ ...d, [k]: a }));
 
-  const submit = async () => {
+  const toggle = (s: string) =>
+    setOpen((cur) => {
+      const next = new Set(cur);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  const answered = (a?: Draft[string]) => !!a && (a.ok || !!a.value?.trim());
+
+  /** "Hamısı düzdür": rows already answered (incl. corrections) stay as they are, every other row is confirmed; one request. */
+  const confirmAll = () => {
+    const merged: Draft = Object.fromEntries(conf.fields.map((f) => [f.key, answered(draft[f.key]) ? draft[f.key] : { ok: true }]));
+    setDraft(merged);
+    return submit(merged);
+  };
+
+  const submit = async (source: Draft = draft) => {
     setTried(true);
-    if (done < total) {
+    const unanswered = conf.fields.filter((f) => !answered(source[f.key]));
+    if (unanswered.length) {
+      setOpen((cur) => new Set([...cur, ...unanswered.map((f) => f.section)]));
       toast.error(t('clientData.errors.ANSWER_EVERY_LINE'));
       return;
     }
     setBusy('submit');
     try {
-      const body = Object.fromEntries(Object.entries(draft).map(([k, a]) => [k, a.ok ? { ok: true } : { ok: false, value: a.value, proofDocumentId: a.proofDocumentId ?? null }]));
+      const body = Object.fromEntries(Object.entries(source).map(([k, a]) => [k, a.ok ? { ok: true } : { ok: false, value: a.value, proofDocumentId: a.proofDocumentId ?? null }]));
       await api.post(`/client-data/cases/${id}/confirmation/submit`, { answers: body });
       toast.success(t('clientData.portal.confirmSent'));
       await Promise.all([qc.invalidateQueries({ queryKey: key }), qc.invalidateQueries({ queryKey: clientTasksKey(id) })]);
@@ -141,10 +161,35 @@ export default function ConfirmDataPage() {
         }}
       />
 
-      {sections.map((s) => (
+      {editable && (
+        <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <p className="text-sm text-ink/80">{t('clientData.portal.confirmAllHint', { count: total })}</p>
+          <button type="button" className="btn-primary min-h-11 shrink-0" disabled={!!busy} onClick={() => void confirmAll()}>
+            {busy === 'submit' ? <Spinner className="size-4" /> : <Check className="size-4" aria-hidden />} {t('clientData.portal.confirmAll')}
+          </button>
+        </div>
+      )}
+
+      {sections.map((s) => {
+        const isOpen = !editable || open.has(s.section);
+        const secDone = s.fields.filter((f) => answered(answers[f.key])).length;
+        const fixes = s.fields.filter((f) => answers[f.key]?.ok === false).length;
+        return (
         <section key={s.section} className="card overflow-hidden">
-          <h2 className="border-b border-line bg-sunken px-5 py-3 text-sm font-semibold text-ink">{tr(data?.sections[s.section]) || s.section}</h2>
-          <ul className="divide-y divide-line">
+          <h2 className="bg-sunken text-sm font-semibold text-ink">
+            <button type="button" aria-expanded={isOpen} disabled={!editable} onClick={() => toggle(s.section)} className="flex w-full items-center gap-2 px-5 py-3 text-left">
+              <span className="min-w-0 flex-1 truncate">{tr(data?.sections[s.section]) || s.section}</span>
+              <span className="shrink-0 text-xs font-normal text-muted">
+                {t('clientData.portal.groupCount', { count: s.fields.length })}
+                {editable && fixes > 0 ? ` · ${t('clientData.portal.groupFixes', { count: fixes })}` : editable && secDone === s.fields.length ? ' ✓' : ''}
+              </span>
+              {editable && <ChevronDown className={clsx('size-4 shrink-0 text-muted transition', isOpen && 'rotate-180')} aria-hidden />}
+            </button>
+          </h2>
+          {!isOpen && (
+            <p className="truncate border-t border-line px-5 py-2 text-xs text-muted">{s.fields.map((f) => f.value).filter(Boolean).join(' · ')}</p>
+          )}
+          {isOpen && <ul className="divide-y divide-line border-t border-line">
             {s.fields.map((f) => {
               const a = answers[f.key];
               const unanswered = tried && !(a && (a.ok || a.value?.trim()));
@@ -208,18 +253,16 @@ export default function ConfirmDataPage() {
                 </li>
               );
             })}
-          </ul>
+          </ul>}
         </section>
-      ))}
+        );
+      })}
 
       {editable && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card p-3 sm:static sm:rounded-xl sm:border sm:p-4">
           <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">{t('clientData.portal.evidenceNote')}</p>
             <div className="flex gap-2">
-              <button type="button" className="btn-white flex-1 border border-line sm:flex-none" disabled={!!busy} onClick={() => setDraft(Object.fromEntries(conf.fields.map((f) => [f.key, draft[f.key] ?? { ok: true }])))}>
-                <Check className="size-4" aria-hidden /> {t('clientData.portal.allCorrect')}
-              </button>
               <button type="button" className="btn-primary flex-1 sm:flex-none" disabled={!!busy} onClick={() => void submit()}>
                 {busy === 'submit' ? <Spinner className="size-4" /> : <ShieldCheck className="size-4" aria-hidden />} {t('clientData.portal.confirmSubmit')}
               </button>

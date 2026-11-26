@@ -4,10 +4,12 @@ import { ListFilter, ListTree } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { registerCopy } from '@/i18n';
 import { adminSimpleCopy } from '@/i18n/adminSimple';
+import { pagesUserPerms } from '@/i18n/pagesUserPerms';
 import { useStaffNav } from '@/components/command/navPrefs';
 import { WORK_PROFILES, isWorkProfile, type NavView } from '@/components/command/workProfiles';
 
 registerCopy(adminSimpleCopy);
+registerCopy(pagesUserPerms);
 
 /**
  * Top of the admin sidebar: "Simple / Full view" (saved per user on the server, PUT /admin/me/nav navView) and,
@@ -38,7 +40,7 @@ export const SidebarViewSwitch = ({ collapsed }: { collapsed: boolean }) => {
 
   return (
     <div className="space-y-1.5">
-      <div role="radiogroup" aria-label={t('wprof.viewAria')} className="grid grid-cols-2 gap-0.5 rounded-lg bg-line/50 p-0.5 text-[12px] font-medium">
+      <div role="radiogroup" aria-label={t('wprof.viewAria')} title={t('userPerms.viewSwitchHint')} className="grid grid-cols-2 gap-0.5 rounded-lg bg-line/50 p-0.5 text-[12px] font-medium">
         {(['simple', 'full'] as const).map((v) => (
           <button
             key={v}
@@ -46,7 +48,7 @@ export const SidebarViewSwitch = ({ collapsed }: { collapsed: boolean }) => {
             role="radio"
             aria-checked={navView === v}
             onClick={() => navView !== v && setNavView(v)}
-            title={v === 'simple' ? t('wprof.simpleHint') : undefined}
+            title={v === 'simple' ? `${t('wprof.simpleHint')} ${t('userPerms.viewSwitchHint')}` : t('userPerms.viewSwitchHint')}
             className={clsx(
               'min-h-7 rounded-md px-2 transition-colors pointer-coarse:min-h-9',
               navView === v ? 'bg-card text-ink shadow-[var(--tv-shadow-card)] ring-1 ring-line' : 'text-muted hover:text-ink',

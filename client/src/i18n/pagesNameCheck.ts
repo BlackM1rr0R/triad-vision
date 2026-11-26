@@ -3,7 +3,7 @@
 const az = {
   nameCheck: {
     title: 'Adın yazılışını yoxla',
-    intro: 'Adınızı Azərbaycan hərfləri ilə yazın. Pasportun aşağısındakı zolaqda (MRZ) necə yazıldığını və Almaniyada rast gələ biləcəyiniz digər yazılışları görəcəksiniz. Bütün formalarda adınız pasportdakı kimi yazılmalıdır.',
+    intro: 'Adınızı Azərbaycan hərfləri ilə yazın — pasportdakı (MRZ) yazılışı görəcəksiniz. Formalarda ad pasportdakı kimi olmalıdır.',
     staffIntro: 'Müştərinin adı → pasport MRZ forması və Almaniyadakı yazılışlar; fayldakı pasport MRZ ilə müqayisə.',
     firstName: 'Ad',
     lastName: 'Soyad',
@@ -46,7 +46,7 @@ const az = {
 const de: typeof az = {
   nameCheck: {
     title: 'Schreibweise des Namens prüfen',
-    intro: 'Schreiben Sie Ihren Namen mit aserbaidschanischen Buchstaben — Sie sehen, wie er in der maschinenlesbaren Zone (MRZ) des Passes steht und welche anderen Schreibweisen Ihnen in Deutschland begegnen können. In allen Formularen muss der Name wie im Pass stehen.',
+    intro: 'Schreiben Sie Ihren Namen mit aserbaidschanischen Buchstaben — Sie sehen die Schreibweise im Pass (MRZ). In Formularen muss der Name wie im Pass stehen.',
     staffIntro: 'Name der Kundin / des Kunden → MRZ-Form und Schreibweisen in Deutschland; Abgleich mit der Pass-MRZ in der Akte.',
     firstName: 'Vorname',
     lastName: 'Nachname',
@@ -89,7 +89,7 @@ const de: typeof az = {
 const en: typeof az = {
   nameCheck: {
     title: 'Check how your name is spelled',
-    intro: 'Type your name in Azerbaijani letters — you will see how it is written in the passport’s machine readable zone (MRZ) and the other spellings you may meet in Germany. Every form must use the name exactly as in the passport.',
+    intro: 'Type your name with Azerbaijani letters — you will see how it is written in your passport (MRZ). Forms must use the passport spelling.',
     staffIntro: 'Client’s name → passport MRZ form and spellings in Germany; compared with the passport MRZ on file.',
     firstName: 'First name',
     lastName: 'Last name',
@@ -132,7 +132,7 @@ const en: typeof az = {
 const ru: typeof az = {
   nameCheck: {
     title: 'Проверить написание имени',
-    intro: 'Напишите имя азербайджанскими буквами — вы увидите, как оно записано в машиночитаемой зоне паспорта (MRZ), и другие написания, которые встречаются в Германии. Во всех анкетах имя должно быть написано как в паспорте.',
+    intro: 'Введите имя азербайджанскими буквами — вы увидите написание в паспорте (MRZ). В формах имя должно быть как в паспорте.',
     staffIntro: 'Имя клиента → форма MRZ и написания в Германии; сравнение с MRZ паспорта в деле.',
     firstName: 'Имя',
     lastName: 'Фамилия',

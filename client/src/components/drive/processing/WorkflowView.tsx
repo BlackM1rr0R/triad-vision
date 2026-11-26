@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { FileText, Folder, HelpCircle, Search, SendHorizontal, UserCheck } from 'lucide-react';
+import { FileText, Folder, HelpCircle, Inbox, Search, SendHorizontal, UserCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
 import { fmtDate, fmtRelative } from '@/components/admin/labels';
@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useProcessingFolders, type ProcessingFilters, type ProcessingFolder, type ProcessingStage, type StageCounts } from '@/components/caseProcessing/api';
 import { SendReadyDialog } from '../clientFolders/Dialogs';
+import { SentDocsDialog } from '../clientFolders/SentDocsDialog';
 import type { FolderTarget } from '../clientFolders/api';
 import { endCaseDrag, startCaseDrag, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
 import type { DriveItem } from '../types';
@@ -72,7 +73,7 @@ const sendTargetOf = (f: ProcessingFolder): FolderTarget => ({
   readySentAt: f.readySentAt,
 });
 
-const Row = ({ f, onNavigate, onAct, onSend }: { f: ProcessingFolder; onNavigate: (href: string) => void; onAct: (a: FlowAction, x: FlowTarget) => void; onSend?: (f: ProcessingFolder) => void }) => {
+const Row = ({ f, onNavigate, onAct, onSend, onShowSent }: { f: ProcessingFolder; onNavigate: (href: string) => void; onAct: (a: FlowAction, x: FlowTarget) => void; onSend?: (f: ProcessingFolder) => void; onShowSent?: (f: ProcessingFolder) => void }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const { user } = useAuth();
@@ -136,6 +137,11 @@ const Row = ({ f, onNavigate, onAct, onSend }: { f: ProcessingFolder; onNavigate
               <SendHorizontal className="size-3.5" aria-hidden /> {t(f.readySentAt ? 'clientFolders.send.resendAction' : 'clientFolders.send.action')}
             </button>
           )}
+          {onSend && onShowSent && f.readySentAt && (
+            <button type="button" className="btn-secondary btn-sm" onClick={() => onShowSent(f)}>
+              <Inbox className="size-3.5" aria-hidden /> {t('clientFolders.sentList.action')}
+            </button>
+          )}
           {actions.map((a, i) => {
             const Icon = ACTION_ICON[a];
             const label = t(`driveProcessing.actions.${a}`);
@@ -190,6 +196,7 @@ export const WorkflowView = ({
   }, [input]);
   const [filters, setFilters] = useState<ProcessingFilters>({});
   const [sending, setSending] = useState<FolderTarget | null>(null);
+  const [showSent, setShowSent] = useState<FolderTarget | null>(null);
   const fertig = stage === 'DONE';
   const active = fertig ? filters : {};
   const q = useProcessingFolders({ stage, mine, search, ...active });
@@ -308,7 +315,7 @@ export const WorkflowView = ({
             <>
               <ul className="divide-y divide-line">
                 {items.map((f) => (
-                  <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} onSend={fertig ? (x) => setSending(sendTargetOf(x)) : undefined} />
+                  <Row key={f.caseId} f={f} onNavigate={onNavigate} onAct={onAct} onSend={fertig ? (x) => setSending(sendTargetOf(x)) : undefined} onShowSent={fertig ? (x) => setShowSent(sendTargetOf(x)) : undefined} />
                 ))}
               </ul>
               {q.data && q.data.total > items.length && <p className="px-4 py-3 text-center text-xs text-muted">{t('driveProcessing.limited', { shown: items.length, total: q.data.total })}</p>}
@@ -317,6 +324,7 @@ export const WorkflowView = ({
         </div>
       </div>
       {sending && <SendReadyDialog targets={[sending]} onClose={() => setSending(null)} onResult={() => undefined} />}
+      {showSent && <SentDocsDialog target={showSent} onClose={() => setShowSent(null)} />}
     </div>
   );
 };

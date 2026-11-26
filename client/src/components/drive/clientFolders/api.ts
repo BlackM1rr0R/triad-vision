@@ -110,7 +110,7 @@ export interface ReadyDocsView {
   /** Everything else that can be picked: the case's other workflow folders and the client's own folder (Arbeitsvertrag, …). */
   others: ReadyFileView[];
   newCount: number;
-  sends: { id: string; at: string; by: string | null; fileCount: number; newCount: number; resend: boolean }[];
+  sends: { id: string; at: string; by: string | null; fileCount: number; newCount: number; resend: boolean; documents: { documentId: string; name: string; size: number | null; mimeType: string | null; available: boolean }[] }[];
 }
 
 export const useReadyDocs = (caseId: string | null) =>

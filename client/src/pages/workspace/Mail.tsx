@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import { ChevronDown, Keyboard, Mail as MailIcon, Menu, PenSquare } from 'lucide-react';
 import { registerCopy } from '@/i18n';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { pagesMail } from '@/i18n/pagesMail';
 import { pagesMailAccess } from '@/i18n/pagesMailAccess';
 import { useRealtime } from '@/lib/realtime';
@@ -62,6 +63,7 @@ const buildPath = (s: Selection, messageId: string | null) => {
 
 export default function WorkspaceMail() {
   const { t } = useTranslation();
+  const { user: me } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const params = useParams();
@@ -388,8 +390,14 @@ export default function WorkspaceMail() {
             <MailIcon className="size-8" />
           </span>
           <h1 className="type-page-title">{t('mail.empty.noAccounts')}</h1>
-          <p className="mt-2 text-sm text-muted">{t('mail.empty.noAccountsBody')}</p>
-          <button type="button" className="btn-primary mt-6" onClick={() => setSettings('accounts')}>
+          <p className="mt-2 text-sm text-muted">{t('mail.empty.noMailboxStaff')}</p>
+          {me?.role === 'SUPER_ADMIN' && (
+            <Link className="btn-primary mt-4 inline-flex" to={`/admin/users?search=${encodeURIComponent(me.email)}`}>
+              {t('mail.empty.createMailboxLink')}
+            </Link>
+          )}
+          <p className="mt-6 text-xs text-muted">{t('mail.empty.externalHint')}</p>
+          <button type="button" className="btn-secondary mt-2" onClick={() => setSettings('accounts')}>
             {t('mail.empty.addAccount')}
           </button>
         </div>

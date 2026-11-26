@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { asAdmin, asSuperAdmin } from '../helpers/api';
+import { asAdmin, asClient, asStaff, asSuperAdmin } from '../helpers/api';
 import { prisma, waitFor } from '../helpers/db';
 import { expectStatus } from '../helpers/workflow';
 import { uniq } from '../helpers/factories';
@@ -113,5 +113,74 @@ describe('POST /api/admin/users with createMailbox', () => {
     const admin = await asAdmin();
     expectStatus(await admin.agent.get('/api/admin/users/mailbox-suggestion'), 403);
     expectStatus(await admin.agent.post('/api/admin/users').send(staffBody({ createMailbox: true })), 403);
+  });
+});
+
+describe('own @domain e-mail as the mailbox (new staff dialog)', () => {
+  it('the suggestion and the creation use the entered e-mail local part', async () => {
+    const sa = await asSuperAdmin();
+    const lp = uniq('tofig').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sug = expectStatus(await sa.agent.get('/api/admin/users/mailbox-suggestion').query({ firstName: 'Tofiq', lastName: 'Abdullayev', email: `${lp}@${DOMAIN}` }), 200);
+    expect(sug.body.localPart).toBe(lp);
+    const res = expectStatus(await sa.agent.post('/api/admin/users').send(staffBody({ email: `${lp}@${DOMAIN}`, createMailbox: true })), 201);
+    expect(res.body.mailbox.address).toBe(`${lp}@${DOMAIN}`);
+  });
+});
+
+describe('/api/admin/users/:id/mailbox (existing staff)', () => {
+  it('creates a missing mailbox on the own @domain address and connects it; audited without the password', async () => {
+    const sa = await asSuperAdmin();
+    const lp = uniq('at').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const staff = await asStaff({ email: `${lp}@${DOMAIN}` });
+    const st = expectStatus(await sa.agent.get(`/api/admin/users/${staff.user.id}/mailbox`), 200).body;
+    expect(st).toMatchObject({ configured: true, localPart: lp, address: `${lp}@${DOMAIN}`, emailOnOurDomain: true, exists: false, connected: false });
+    const res = expectStatus(await sa.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({}), 201);
+    expect(res.body.created).toBe(true);
+    const password = res.body.mailbox.password as string;
+    const ws = await prisma.mailAccount.findFirstOrThrow({ where: { userId: staff.user.id } });
+    expect(ws).toMatchObject({ email: `${lp}@${DOMAIN}`, imapHost: HOST, isDefault: true });
+    expect(open(ws.passwordEnc)).toBe(password);
+    const rows = await waitFor(async () => {
+      const r = await prisma.auditLog.findMany({ where: { action: 'MAILBOX_CREATED', target: `${lp}@${DOMAIN}` } });
+      return r.length ? r : null;
+    });
+    expect(JSON.stringify(rows[0])).not.toContain(password);
+    // already connected: clear conflict
+    expect(expectStatus(await sa.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({}), 409).body.error).toBe('MAILBOX_ALREADY_CONNECTED');
+  });
+
+  it('an existing mailbox needs "reset password and connect" (we do not hold its password)', async () => {
+    const sa = await asSuperAdmin();
+    const lp = uniq('ex').toLowerCase().replace(/[^a-z0-9]/g, '');
+    fake.addAccount({ name: lp, password: 'Old-password-1' });
+    const staff = await asStaff({ email: `${lp}@${DOMAIN}` });
+    expect(expectStatus(await sa.agent.get(`/api/admin/users/${staff.user.id}/mailbox`), 200).body.exists).toBe(true);
+    expect(expectStatus(await sa.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({}), 409).body.error).toBe('MAILBOX_PASSWORD_NEEDED');
+    expect(await prisma.mailAccount.count({ where: { userId: staff.user.id } })).toBe(0);
+    const res = expectStatus(await sa.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({ resetPassword: true }), 200);
+    expect(res.body.created).toBe(false);
+    const password = res.body.mailbox.password as string;
+    const ws = await prisma.mailAccount.findFirstOrThrow({ where: { userId: staff.user.id } });
+    expect(open(ws.passwordEnc)).toBe(password);
+    expect([...fake.accounts.values()].find((a) => a.name === lp)?.secret).toBe(password);
+    expect((await prisma.auditLog.findMany({ where: { action: 'MAILBOX_CONNECTED', target: `${lp}@${DOMAIN}` } })).length).toBeGreaterThan(0);
+  });
+
+  it('is SUPER_ADMIN only, staff only, and refuses without a configured mail server', async () => {
+    const sa = await asSuperAdmin();
+    const admin = await asAdmin();
+    const staff = await asStaff();
+    expectStatus(await admin.agent.get(`/api/admin/users/${staff.user.id}/mailbox`), 403);
+    expectStatus(await admin.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({}), 403);
+    const client = await asClient();
+    expectStatus(await sa.agent.post(`/api/admin/users/${client.user.id}/mailbox`).send({}), 400);
+    const pass = process.env.STALWART_ADMIN_PASSWORD;
+    delete process.env.STALWART_ADMIN_PASSWORD;
+    try {
+      expect(expectStatus(await sa.agent.post(`/api/admin/users/${staff.user.id}/mailbox`).send({}), 503).body.error).toBe('MAIL_SERVER_NOT_CONFIGURED');
+      expect(expectStatus(await sa.agent.get(`/api/admin/users/${staff.user.id}/mailbox`), 200).body.configured).toBe(false);
+    } finally {
+      process.env.STALWART_ADMIN_PASSWORD = pass;
+    }
   });
 });

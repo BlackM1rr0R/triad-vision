@@ -290,3 +290,22 @@ describe('client-level reveals respect case scope', () => {
     expect(JSON.stringify(denied.body)).not.toContain('Füzuli');
   });
 });
+
+describe('GET /api/admin/access/staff/users/:id/preview (effective permissions for the user card panel)', () => {
+  it('STAFF cannot read permissions of anyone, an ADMIN without "manage access" neither; the super admin gets the enforced matrix', async () => {
+    const staff = await asStaff();
+    const other = await asStaff();
+    const admin = await asAdmin();
+    const sup = await asSuperAdmin();
+    expectStatus(await staff.agent.get(`/api/admin/access/staff/users/${other.user.id}/preview`), 403);
+    expectStatus(await staff.agent.get(`/api/admin/access/staff/users/${staff.user.id}/preview`), 403);
+    expectStatus(await admin.agent.get(`/api/admin/access/staff/users/${other.user.id}/preview`), 403);
+    const p = expectStatus(await sup.agent.get(`/api/admin/access/staff/users/${other.user.id}/preview`), 200).body;
+    expect(p).toMatchObject({ superAdmin: false, caseScope: 'ALL' });
+    // defaults reproduce today: a legacy staff member has every action in every area
+    for (const actions of Object.values(p.matrix as Record<string, string[]>)) expect(actions).toEqual(['view', 'edit', 'delete', 'export']);
+    // a client is not a staff member
+    const client = await asClient();
+    expectStatus(await sup.agent.get(`/api/admin/access/staff/users/${client.user.id}/preview`), 404);
+  });
+});
