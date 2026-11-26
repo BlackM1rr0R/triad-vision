@@ -296,7 +296,7 @@ describe('journey: client with the vacancy policy ON, from sign-up to arrival', 
     for (const t of ['CASE_CREATED', 'APPROVED', 'ARRIVAL_COMPLETED', 'FUTURE_LETTER']) expect(types.filter((x) => x === t), t).toHaveLength(1);
     expect(types.indexOf('CASE_CREATED')).toBeLessThan(types.indexOf('DOCUMENT_REJECTED'));
     expect(types.indexOf('APPROVED')).toBeLessThan(types.indexOf('ARRIVAL_COMPLETED'));
-    expect(await notificationsOf(user.id, 'SIGNATURE_REQUEST')).toHaveLength(2); // Əmək + İş müqaviləsi
+    expect(await notificationsOf(user.id, 'SIGNATURE_REQUEST')).toHaveLength(1); // the Əmək müqaviləsi only (İş müqaviləsi retired)
     // The other client never heard about Rauf's case.
     expect(await prisma.notification.count({ where: { userId: other.user.id, caseId } })).toBe(0);
   }, 180_000);
