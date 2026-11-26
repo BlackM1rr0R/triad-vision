@@ -140,7 +140,7 @@ describe('journey: client with the vacancy policy ON, from sign-up to arrival', 
     const before = expectStatus(await staff.agent.get(`${CC}/${caseId}`), 200).body.steps;
     expect(before.map((s: { step: string; state: string; blockedReason: string | null }) => [s.step, s.state, s.blockedReason])).toEqual([
       ['LABOUR', 'NOT_SENT', null],
-      ['WORK', 'NOT_SENT', 'LABOUR_NOT_APPROVED'],
+      ['WORK', 'NOT_SENT', 'WORK_CONTRACT_RETIRED'],
     ]);
     const labour = expectStatus(await staff.agent.post(`${CC}/${caseId}/send`).send({ step: 'LABOUR', templateId: labourTpl.id, inputs: { salary: '1.000 €' } }), 201).body;
     expect(labour.caseContract).toBe(true);

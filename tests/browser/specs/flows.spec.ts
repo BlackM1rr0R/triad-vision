@@ -68,9 +68,9 @@ test.describe('contract: Əmək müqaviləsi (V2)', () => {
       await expect(dialog).toBeHidden();
     });
 
-    await test.step('staff: the contract is approved and the next step is the İş müqaviləsi', async () => {
+    await test.step('staff: the contract is approved and the next step is preparing the German documents', async () => {
       const next = page.locator('#case-next-step');
-      const workStep = next.getByText('İş müqaviləsi sənədlərini yükləyib müştəriyə göndərin');
+      const workStep = next.getByText(/ödənişdən sonra alman sənədlərini/);
       // The card follows the case on its own; one reload is the fallback when that refresh was missed.
       await expect(async () => {
         if (!(await workStep.isVisible())) await page.reload();
