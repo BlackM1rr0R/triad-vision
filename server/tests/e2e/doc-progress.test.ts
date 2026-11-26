@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { anon, asAdmin, asClient } from '../helpers/api';
 import { prisma } from '../helpers/db';
+import { uniq } from '../helpers/factories';
 import { createCaseVia, driveCaseTo, expectStatus, uploadDoc, clientCase } from '../helpers/workflow';
 
 interface Overview {
@@ -54,6 +55,7 @@ describe('GET /api/doc-progress/cases/:id', () => {
 
     // Team marks the documents "Schon geschrieben" with a note and an assignee: the client sees the stage only.
     const staffNote = 'internal: check the diploma stamp';
+    await prisma.case.update({ where: { id: c.id }, data: { partnerId: (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id } }); // the workflow needs a partner
     expectStatus(await admin.agent.post(`/api/admin/cases/${c.id}/processing`).send({ stage: 'WRITTEN', assigneeId: admin.user.id, note: staffNote }), 200);
     const o = await overviewOf(client.agent, c.id);
     expect(o.processing).toMatchObject({ stage: 'WRITTEN', word: 'Schon geschrieben', label: { az: 'Schon geschrieben — artıq yazılıb' } });

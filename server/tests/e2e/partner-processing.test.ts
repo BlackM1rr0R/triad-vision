@@ -41,7 +41,7 @@ describe('team document workflow (Schon geschrieben → In Bearbeitung → Ferti
   it('moves a case with a note and an assignee, notifies, shows it in my work and keeps the history', async () => {
     const writer = await asStaff({ firstName: 'Leyla', lastName: 'Əliyeva' });
     const checker = await asStaff({ firstName: 'Murad', lastName: 'Quliyev', locale: 'de' });
-    const c = await makeCase();
+    const c = await makeCase({ partnerId: (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id }); // the workflow needs a partner
 
     expect((await anon().get(`/api/admin/cases/${c.id}/processing`)).status).toBe(401);
     expect((await (await asClient()).agent.get(`/api/admin/cases/${c.id}/processing`)).status).toBe(403);

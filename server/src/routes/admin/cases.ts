@@ -31,6 +31,7 @@ import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { checkDocumentPhoto, photoCheckOnUpload } from '../../lib/photoCheck/index.js'; // biometric photo rules
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
+import { attentionOfBall, attentionWhere } from '../../lib/staffAttention.js'; // "waits for staff action" badge + sidebar count
 
 import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
@@ -230,6 +231,7 @@ adminCasesRouter.get('/', async (req, res) => {
       processing: processing.get(c.id) ?? null,
       nextStep: nextSteps.get(c.id) ?? null,
       ballInCourt: balls.get(c.id) ?? null,
+      staffAttention: attentionOfBall(balls.get(c.id)),
       lastEvent: events[0] ?? null,
       messagesCount: _count.messages,
       pendingDocs: _count.documents,
@@ -267,6 +269,12 @@ adminCasesRouter.get('/summary', async (req, res) => {
     }),
   );
   res.json({ tiles: Object.fromEntries(entries) });
+});
+
+/** Count on the sidebar item "Müraciətlər": open cases of the viewer's case scope that wait for staff action (lib/staffAttention). */
+adminCasesRouter.get('/attention-count', async (req, res) => {
+  const scope = await caseScopeWhere(req.user);
+  res.json({ count: await prisma.case.count({ where: withCaseScope(attentionWhere(), scope) }) });
 });
 
 adminCasesRouter.get('/:id', async (req, res) => {

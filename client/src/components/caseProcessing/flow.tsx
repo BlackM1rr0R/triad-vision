@@ -37,7 +37,12 @@ export interface FlowTarget {
   assigneeId: string | null;
   /** The case is closed (approved / rejected / cancelled): a closed case outside the workflow offers nothing. */
   closed?: boolean;
+  /** The case has a partner (false = none; undefined = unknown, the server decides). Without one it cannot enter the workflow. */
+  hasPartner?: boolean;
 }
+
+/** "Schon geschrieben" / "In Bearbeitung" for a case outside the workflow needs a partner first (server: 409 WORKFLOW_PARTNER_REQUIRED). */
+export const needsPartner = (x: Pick<FlowTarget, 'stage' | 'hasPartner'>, action: FlowAction) => (action === 'send' || action === 'work') && !x.stage && x.hasPartner === false;
 
 export type FlowKind = 'send' | 'work' | 'finish' | 'back' | 'return';
 export type FlowAction = FlowKind | 'claim';
@@ -70,6 +75,7 @@ export const targetOfItem = (i: DriveItem): FlowTarget | null => {
     stage: isProcessingStage(stage) ? stage : null,
     assigneeId: i.caseInfo.processing?.assigneeId ?? null,
     closed: !!i.caseStatus && CLOSED_STATUSES.has(i.caseStatus),
+    hasPartner: !!i.caseInfo.partner,
   };
 };
 
@@ -377,11 +383,13 @@ export const useClaimFlow = (origin: 'case' | 'drive') => {
 
 /** State for "which FlowDialog is open" + the claim flow, for components offering the actions. */
 export const useFlowActions = (origin: 'case' | 'drive') => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState<{ kind: FlowKind; targets: FlowTarget[] } | null>(null);
   const claimFlow = useClaimFlow(origin);
   const act = (action: FlowAction, targets: FlowTarget[]) => {
     if (!targets.length) return;
     if (action === 'claim') claimFlow.claim(targets[0]);
+    else if (targets.some((x) => needsPartner(x, action))) toast.error(t('driveProcessing.partnerFirst'));
     else setOpen({ kind: action, targets: action === 'return' ? targets.filter((x) => x.stage) : targets.filter((x) => x.stage !== KIND_STAGE[action]) });
   };
   const dialogs = (

@@ -200,22 +200,12 @@ describe('journey: client with the vacancy policy ON, from sign-up to arrival', 
     const waitNotice = await waitFor(() => prisma.notification.findFirst({ where: { userId: other.user.id, type: 'VACANCY_WAITLIST' } }));
     expect(waitNotice.link).toBe(`/jobs/${created.slug}`);
 
-    // ── 8. İş müqaviləsi: same order, never the case contract; case status untouched ─────────────────────────────
-    const work = expectStatus(await staff.agent.post(`${CC}/${caseId}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: { startDate: '2027-03-01' } }), 201).body;
-    expect(work.caseContract).toBe(false);
-    const [, workClient] = await signersOf(work.signatureRequestId);
-    expectStatus(await client.post(`/api/signatures/my/${workClient.id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 409);
-    expectStatus(await staff.agent.post(`${CC}/${caseId}/triad-sign`).send({ step: 'WORK', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
-    ns = await nextStep(client);
-    expect(ns.all.find((a) => a.kind === 'SIGN_DOCUMENTS')).toMatchObject({ to: `/account/signatures/${workClient.id}`, count: 1 });
-    expect(ns.kinds).toContain('UPLOAD_DOCS'); // the embassy documents are still open
-    expectStatus(await client.post(`/api/signatures/my/${workClient.id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
-    await waitFor(async () => ((await prisma.signatureRequest.findUniqueOrThrow({ where: { id: work.signatureRequestId } })).status === 'COMPLETED' ? true : null));
-    expectStatus(await staff.agent.post(`${CC}/${caseId}/approve`).send({ step: 'WORK' }), 200);
+    // ── 8. No second contract: the İş müqaviləsi is retired (German documents go out from the drive workflow) ─────
+    expect(expectStatus(await staff.agent.post(`${CC}/${caseId}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: { startDate: '2027-03-01' } }), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
     expect(await caseStatus(caseId)).toBe('EMBASSY_DOCUMENTS');
     portalSteps = expectStatus(await client.get(`/api/account/case-contracts/cases/${caseId}`), 200).body.steps;
-    expect(portalSteps.map((s: { state: string }) => s.state)).toEqual(['APPROVED', 'APPROVED']);
-    expect(await prisma.notification.count({ where: { userId: user.id, type: 'CASE_CONTRACT_APPROVED' } })).toBe(2);
+    expect(portalSteps.map((s: { state: string }) => s.state)).toEqual(['APPROVED', 'NOT_SENT']);
+    expect(await prisma.notification.count({ where: { userId: user.id, type: 'CASE_CONTRACT_APPROVED' } })).toBe(1);
     expect((await nextStep(client)).kinds).not.toContain('SIGN_DOCUMENTS');
 
     // ── 9. Embassy documents handed in (the early one is already accepted), staff review ─────────────────────────

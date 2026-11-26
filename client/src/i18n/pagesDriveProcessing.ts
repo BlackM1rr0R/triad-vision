@@ -11,7 +11,7 @@ const az = {
       steps: [
         'Yazılmış sənədlər «Schon geschrieben»-ə düşür: diskdə qovluq və ya faylı seçib «İş axınına kopyala» → «Schon geschrieben» basın (Fertig də seçilə bilər).',
         'Kim üzərində işləyirsə, özü «In Bearbeitung»-a göndərir — ora avtomatik heç nə düşmür.',
-        'İş bitəndə «In Bearbeitung»-dan «Fertig»-ə göndərilir. Səhv göndərilibsə «Geri qaytar» sənədləri müştəri qovluğuna qaytarır.',
+        'İş bitəndə «In Bearbeitung»-dan «Fertig»-ə göndərilir. Səhv göndərilibsə və ya şirkət fikrini dəyişibsə «Anträge-yə qaytar» qovluğu öz yerinə qaytarır.',
         'Qovluq quruluşu hər mərhələdə saxlanılır (müştəri qovluğu / alt qovluqlar).',
       ],
       dnd: 'Müştəri qovluğunu soldakı mərhələlərin üzərinə sürüşdürmək də olar.',
@@ -30,6 +30,7 @@ const az = {
     files: '{{count}} sənəd',
     sentBy: '{{name}} · {{date}}',
     openFolder: 'Qovluğu aç',
+    partnerFirst: 'Əvvəlcə partnyor seçin',
     openCase: 'Müraciəti aç',
     actions: {
       send: 'Schon geschrieben-ə göndər',
@@ -37,16 +38,16 @@ const az = {
       claim: 'Götür',
       finish: 'Fertig-ə göndər',
       back: 'Schon geschrieben-ə qaytar',
-      return: 'Geri qaytar',
+      return: 'Anträge-yə qaytar',
     },
     dialog: {
       sendTitle: '«Schon geschrieben»-ə göndər',
       workTitle: '«In Bearbeitung»-a göndər',
       finishTitle: '«Fertig»-ə göndər',
       backTitle: '«Schon geschrieben»-ə geri qaytar',
-      returnTitle: 'Geri qaytar — sənədlər müştəri qovluğuna qayıdır',
-      returnConfirm: 'Geri qaytar',
-      returnNote: 'Sənədlər müştərinin öz qovluğuna qayıdır, iş axını qovluqlarındakı surətlər silinir (zibil qutusunda qalır) və müraciət iş axınından çıxır.',
+      returnTitle: 'Anträge-yə qaytar — müştəri qovluğu öz yerinə qayıdır',
+      returnConfirm: 'Anträge-yə qaytar',
+      returnNote: 'Müraciət iş axınından çıxır, müştəri qovluğu öz yerinə qayıdır («Anträge» və ya partnyorun qovluğu). Sənədlər müştərinin öz qovluğuna qayıdır, iş axını qovluqlarındakı surətlər silinir (zibil qutusunda qalır).',
       folders: '{{count}} qovluq',
       nextAdmin: 'Növbəti admin (istəyə görə)',
       backTo: 'Kimə qaytarılsın? (istəyə görə)',
@@ -136,6 +137,7 @@ const az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Bu qovluğu artıq başqa əməkdaş götürüb.',
       PROCESSING_NOT_OPEN: 'Bu mərhələdə götürmək olmaz (artıq Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Əvvəlcə partnyor seçin: partnyorsuz müştəri qovluğu iş axınına keçmir.',
     },
   },
   admin: {
@@ -143,6 +145,7 @@ const az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Bu qovluğu artıq başqa əməkdaş götürüb.',
       PROCESSING_NOT_OPEN: 'Bu mərhələdə götürmək olmaz (artıq Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Əvvəlcə partnyor seçin: partnyorsuz müştəri qovluğu iş axınına keçmir.',
     },
   },
   drive: {
@@ -150,6 +153,7 @@ const az = {
       WORKFLOW_FOLDER: 'İş axını qovluqlarının özü kopyalanmır və göndərilmir.',
       NOT_IN_WORKFLOW: 'Bu element iş axını mərhələsində deyil.',
       WORKFLOW_TRANSITION_NOT_ALLOWED: 'Bu keçid olmaz: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Əvvəlcə partnyor seçin: partnyorsuz müştəri qovluğu iş axınına keçmir.',
     },
   },
 };
@@ -163,7 +167,7 @@ const de: typeof az = {
       steps: [
         'Geschriebene Unterlagen kommen nach „Schon geschrieben“: im Laufwerk Ordner oder Datei wählen und „In Arbeitsablauf kopieren“ → „Schon geschrieben“ (auch Fertig möglich).',
         'Wer daran arbeitet, schickt es selbst nach „In Bearbeitung“ — dort landet nichts automatisch.',
-        'Fertig? Von „In Bearbeitung“ nach „Fertig“. Falsch gelandet? „Zurückgeben“ bringt die Unterlagen in den Kundenordner zurück.',
+        'Fertig? Von „In Bearbeitung“ nach „Fertig“. Falsch gelandet oder anderer Wunsch der Firma? „Zurück nach Anträge“ bringt den Ordner an seinen Platz zurück.',
         'Die Ordnerstruktur bleibt in jeder Stufe erhalten (Kundenordner / Unterordner).',
       ],
       dnd: 'Einen Kundenordner kann man auch links auf eine Stufe ziehen.',
@@ -182,6 +186,7 @@ const de: typeof az = {
     files: '{{count}} Dokumente',
     sentBy: '{{name}} · {{date}}',
     openFolder: 'Ordner öffnen',
+    partnerFirst: 'Bitte zuerst einen Partner wählen',
     openCase: 'Fall öffnen',
     actions: {
       send: 'Nach Schon geschrieben',
@@ -189,16 +194,16 @@ const de: typeof az = {
       claim: 'Übernehmen',
       finish: 'Nach Fertig',
       back: 'Zurück nach Schon geschrieben',
-      return: 'Zurückgeben',
+      return: 'Zurück nach Anträge',
     },
     dialog: {
       sendTitle: 'Nach „Schon geschrieben“ schicken',
       workTitle: 'Nach „In Bearbeitung“ schicken',
       finishTitle: 'Nach „Fertig“ schicken',
       backTitle: 'Zurück nach „Schon geschrieben“',
-      returnTitle: 'Zurückgeben — Unterlagen zurück in den Kundenordner',
-      returnConfirm: 'Zurückgeben',
-      returnNote: 'Die Unterlagen kommen zurück in den eigenen Ordner des Kunden, die Kopien in den Arbeitsablauf-Ordnern werden entfernt (Papierkorb) und der Fall verlässt den Arbeitsablauf.',
+      returnTitle: 'Zurück nach Anträge — der Kundenordner kehrt an seinen Platz zurück',
+      returnConfirm: 'Zurück nach Anträge',
+      returnNote: 'Der Fall verlässt den Arbeitsablauf, der Kundenordner kehrt an seinen Platz zurück („Anträge“ oder Ordner des Partners). Die Unterlagen kommen in den eigenen Ordner des Kunden, die Kopien in den Arbeitsablauf-Ordnern werden entfernt (Papierkorb).',
       folders: '{{count}} Ordner',
       nextAdmin: 'Nächster Admin (optional)',
       backTo: 'An wen zurück? (optional)',
@@ -288,6 +293,7 @@ const de: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Ein Kollege hat diesen Ordner schon übernommen.',
       PROCESSING_NOT_OPEN: 'In dieser Stufe nicht möglich (schon Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Bitte zuerst einen Partner wählen: ohne Partner kommt ein Kundenordner nicht in den Arbeitsablauf.',
     },
   },
   admin: {
@@ -295,6 +301,7 @@ const de: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Ein Kollege hat diesen Ordner schon übernommen.',
       PROCESSING_NOT_OPEN: 'In dieser Stufe nicht möglich (schon Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Bitte zuerst einen Partner wählen: ohne Partner kommt ein Kundenordner nicht in den Arbeitsablauf.',
     },
   },
   drive: {
@@ -302,6 +309,7 @@ const de: typeof az = {
       WORKFLOW_FOLDER: 'Die Ordner des Arbeitsablaufs selbst werden weder kopiert noch geschickt.',
       NOT_IN_WORKFLOW: 'Dieses Element liegt in keiner Stufe des Arbeitsablaufs.',
       WORKFLOW_TRANSITION_NOT_ALLOWED: 'Dieser Schritt ist nicht möglich: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Bitte zuerst einen Partner wählen: ohne Partner kommt ein Kundenordner nicht in den Arbeitsablauf.',
     },
   },
 };
@@ -315,7 +323,7 @@ const en: typeof az = {
       steps: [
         'Written documents land in "Schon geschrieben": pick a folder or file in the drive and press "Copy to workflow" → "Schon geschrieben" (Fertig works too).',
         'Whoever works on it sends it to "In Bearbeitung" themselves — nothing lands there automatically.',
-        'Done? From "In Bearbeitung" to "Fertig". Sent by mistake? "Return" puts the documents back in the client folder.',
+        'Done? From "In Bearbeitung" to "Fertig". Sent by mistake or the company changed its mind? "Back to Anträge" returns the folder to its place.',
         'The folder structure is kept in every stage (client folder / sub-folders).',
       ],
       dnd: 'You can also drag a client folder onto a stage on the left.',
@@ -334,6 +342,7 @@ const en: typeof az = {
     files: '{{count}} documents',
     sentBy: '{{name}} · {{date}}',
     openFolder: 'Open folder',
+    partnerFirst: 'Pick a partner first',
     openCase: 'Open case',
     actions: {
       send: 'Send to Schon geschrieben',
@@ -341,16 +350,16 @@ const en: typeof az = {
       claim: 'Take',
       finish: 'Send to Fertig',
       back: 'Send back to Schon geschrieben',
-      return: 'Return',
+      return: 'Back to Anträge',
     },
     dialog: {
       sendTitle: 'Send to "Schon geschrieben"',
       workTitle: 'Send to "In Bearbeitung"',
       finishTitle: 'Send to "Fertig"',
       backTitle: 'Back to "Schon geschrieben"',
-      returnTitle: 'Return — documents go back to the client folder',
-      returnConfirm: 'Return',
-      returnNote: 'The documents go back to the client\'s own folder, the copies in the workflow folders are removed (recycle bin) and the case leaves the workflow.',
+      returnTitle: 'Back to Anträge — the client folder returns to its place',
+      returnConfirm: 'Back to Anträge',
+      returnNote: 'The case leaves the workflow and the client folder returns to its place (“Anträge” or the partner’s folder). The documents go back to the client\'s own folder, the copies in the workflow folders are removed (recycle bin).',
       folders: '{{count}} folders',
       nextAdmin: 'Next admin (optional)',
       backTo: 'Back to whom? (optional)',
@@ -440,6 +449,7 @@ const en: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'A colleague already took this folder.',
       PROCESSING_NOT_OPEN: 'Not possible in this stage (already Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Pick a partner first: a client folder cannot enter the workflow without one.',
     },
   },
   admin: {
@@ -447,6 +457,7 @@ const en: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'A colleague already took this folder.',
       PROCESSING_NOT_OPEN: 'Not possible in this stage (already Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Pick a partner first: a client folder cannot enter the workflow without one.',
     },
   },
   drive: {
@@ -454,6 +465,7 @@ const en: typeof az = {
       WORKFLOW_FOLDER: 'The workflow folders themselves are neither copied nor sent.',
       NOT_IN_WORKFLOW: 'This item is not in a workflow stage.',
       WORKFLOW_TRANSITION_NOT_ALLOWED: 'This step is not allowed: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Pick a partner first: a client folder cannot enter the workflow without one.',
     },
   },
 };
@@ -467,7 +479,7 @@ const ru: typeof az = {
       steps: [
         'Написанные документы попадают в «Schon geschrieben»: выберите папку или файл на диске и нажмите «Копировать в процесс» → «Schon geschrieben» (можно и Fertig).',
         'Кто над этим работает, сам отправляет в «In Bearbeitung» — автоматически туда ничего не попадает.',
-        'Готово? Из «In Bearbeitung» в «Fertig». Ошибка? «Вернуть» возвращает документы в папку клиента.',
+        'Готово? Из «In Bearbeitung» в «Fertig». Ошибка или компания передумала? «Вернуть в Anträge» возвращает папку на своё место.',
         'Структура папок сохраняется на каждом этапе (папка клиента / подпапки).',
       ],
       dnd: 'Папку клиента можно также перетащить на этап слева.',
@@ -486,6 +498,7 @@ const ru: typeof az = {
     files: '{{count}} док.',
     sentBy: '{{name}} · {{date}}',
     openFolder: 'Открыть папку',
+    partnerFirst: 'Сначала выберите партнёра',
     openCase: 'Открыть дело',
     actions: {
       send: 'В Schon geschrieben',
@@ -493,16 +506,16 @@ const ru: typeof az = {
       claim: 'Взять',
       finish: 'В Fertig',
       back: 'Вернуть в Schon geschrieben',
-      return: 'Вернуть',
+      return: 'Вернуть в Anträge',
     },
     dialog: {
       sendTitle: 'Отправить в «Schon geschrieben»',
       workTitle: 'Отправить в «In Bearbeitung»',
       finishTitle: 'Отправить в «Fertig»',
       backTitle: 'Вернуть в «Schon geschrieben»',
-      returnTitle: 'Вернуть — документы возвращаются в папку клиента',
-      returnConfirm: 'Вернуть',
-      returnNote: 'Документы возвращаются в собственную папку клиента, копии в папках процесса удаляются (в корзину), заявка выходит из процесса.',
+      returnTitle: 'Вернуть в Anträge — папка клиента возвращается на своё место',
+      returnConfirm: 'Вернуть в Anträge',
+      returnNote: 'Заявка выходит из процесса, папка клиента возвращается на своё место («Anträge» или папка партнёра). Документы возвращаются в собственную папку клиента, копии в папках процесса удаляются (в корзину).',
       folders: 'Папок: {{count}}',
       nextAdmin: 'Следующий админ (необязательно)',
       backTo: 'Кому вернуть? (необязательно)',
@@ -592,6 +605,7 @@ const ru: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Коллега уже взял(а) эту папку.',
       PROCESSING_NOT_OPEN: 'На этом этапе нельзя (уже Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Сначала выберите партнёра: без партнёра папка клиента не попадает в рабочий процесс.',
     },
   },
   admin: {
@@ -599,6 +613,7 @@ const ru: typeof az = {
       PROCESSING_CLAIMED_BY_OTHER: 'Коллега уже взял(а) эту папку.',
       PROCESSING_NOT_OPEN: 'На этом этапе нельзя (уже Fertig).',
       PROCESSING_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Сначала выберите партнёра: без партнёра папка клиента не попадает в рабочий процесс.',
     },
   },
   drive: {
@@ -606,6 +621,7 @@ const ru: typeof az = {
       WORKFLOW_FOLDER: 'Сами папки рабочего процесса не копируются и не отправляются.',
       NOT_IN_WORKFLOW: 'Этот элемент не находится на этапе рабочего процесса.',
       WORKFLOW_TRANSITION_NOT_ALLOWED: 'Такой переход невозможен: Schon geschrieben → In Bearbeitung → Fertig.',
+      WORKFLOW_PARTNER_REQUIRED: 'Сначала выберите партнёра: без партнёра папка клиента не попадает в рабочий процесс.',
     },
   },
 };
@@ -613,7 +629,8 @@ const ru: typeof az = {
 // tr: only the keys added with "Geri qaytar" / the Fertig filters (the rest falls back to English).
 const tr = {
   driveProcessing: {
-    actions: { back: 'Schon geschrieben\'a geri gönder', return: 'Geri gönder' },
+    actions: { back: 'Schon geschrieben\'a geri gönder', return: 'Anträge\'ye geri gönder' },
+    partnerFirst: 'Önce bir iş ortağı seçin',
     dialog: { returnTitle: 'Geri gönder — belgeler müşteri klasörüne döner', returnConfirm: 'Geri gönder', returnNote: 'Belgeler müşterinin kendi klasörüne döner, iş akışı klasörlerindeki kopyalar silinir (geri dönüşüm kutusu) ve başvuru iş akışından çıkar.' },
     toasts: { returned: 'Geri gönderildi: {{count}} klasör.', returnPartial: '{{ok}}/{{total}} geri gönderildi. Kalanlar pencerede duruyor.' },
     fertig: {
@@ -639,7 +656,8 @@ const tr = {
 // uk: only the keys added with "Geri qaytar" / the Fertig filters (the rest falls back to English).
 const uk = {
   driveProcessing: {
-    actions: { back: 'Повернути до Schon geschrieben', return: 'Повернути' },
+    actions: { back: 'Повернути до Schon geschrieben', return: 'Повернути в Anträge' },
+    partnerFirst: 'Спочатку виберіть партнера',
     dialog: { returnTitle: 'Повернути — документи повертаються в папку клієнта', returnConfirm: 'Повернути', returnNote: 'Документи повертаються у власну папку клієнта, копії в папках процесу видаляються (у кошик), заявка виходить із процесу.' },
     toasts: { returned: 'Повернено: {{count}} папок.', returnPartial: 'Повернено {{ok}} із {{total}}. Решта залишилась у вікні.' },
     fertig: {

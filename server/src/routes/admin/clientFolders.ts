@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { audit } from '../../lib/audit.js';
-import { parse } from '../../lib/http.js';
+import { badRequest, parse } from '../../lib/http.js';
 import { bulkMoveStage, bulkStageSchema, caseList, runForCases } from '../../lib/clientFolders/bulk.js';
 import { summarize } from '../../lib/clientFolders/logic.js';
 import { setCasePartner } from '../../lib/clientFolders/partner.js';
@@ -18,7 +18,8 @@ import { returnCaseFromWorkflow } from '../../lib/drive/workflowReturn.js';
  *   POST /client-folders/processing           { cases, stage, assigneeId?, note? } team workflow stage (bulk)
  *   POST /client-folders/return               { cases, note? }  "Geri qaytar": out of the workflow, documents back in the client folder
  *   GET  /client-folders/cases/:caseId/ready-docs   the case's Fertig files (sent or not) and the sends so far
- *   POST /client-folders/ready-docs/send      { cases, resend? }  Fertig documents → the client's portal
+ *   POST /client-folders/ready-docs/send      { cases, resend?, fileIds? }  Fertig documents → the client's portal; with fileIds (one case) exactly
+ *                                             those files, which must lie in the case's workflow folders / client folder
  *
  * Every bulk answer: { results: [{ caseId, ok, skipped?, error?, number, name }], summary: { total, succeeded, skipped, failed } }.
  */
@@ -67,11 +68,13 @@ adminClientFoldersRouter.get('/cases/:caseId/ready-docs', async (req, res) => {
 });
 
 adminClientFoldersRouter.post('/ready-docs/send', async (req, res) => {
-  const body = parse(z.object({ cases: caseList, resend: z.boolean().optional() }), req.body);
+  const body = parse(z.object({ cases: caseList, resend: z.boolean().optional(), fileIds: z.array(z.string().trim().min(1).max(40)).min(1).max(100).optional() }), req.body);
+  // An explicit pick belongs to exactly one case (the ids are validated against that case's own folders).
+  if (body.fileIds && new Set(body.cases).size !== 1) throw badRequest('READY_DOCS_PICK_ONE_CASE');
   const me = req.user!;
   const results = await runForCases(me, body.cases, async (caseId) => {
-    const r = await sendReadyDocs(caseId, me, { resend: body.resend });
-    await audit(req, 'CASE_READY_DOCS_SENT', `case:${caseId}`, { sendId: r.sendId, total: r.total, sent: r.sent, resend: r.resend, documentIds: r.documents.map((d) => d.id) });
+    const r = await sendReadyDocs(caseId, me, { resend: body.resend, fileIds: body.fileIds });
+    await audit(req, 'CASE_READY_DOCS_SENT', `case:${caseId}`, { sendId: r.sendId, total: r.total, sent: r.sent, resend: r.resend, documentIds: r.documents.map((d) => d.id), ...(body.fileIds ? { picked: true } : {}) });
     return {};
   });
   res.json({ results, summary: summarize(results) });

@@ -21,7 +21,7 @@ export const CLIENT_TEXT: Record<Locale, ClientCopy> = {
   az: {
     approvedTitle: (n) => `${n} təsdiqləndi`,
     approvedBody: ({ name, number, next }) =>
-      `${number} müraciətinizin ${name} hər iki tərəfdən imzalandı və Triad Vision tərəfindən təsdiqləndi. İmzalanmış PDF müraciət səhifənizdədir.${next ? ' Növbəti addım: sizə iş müqaviləsi göndəriləcək.' : ''}`,
+      `${number} müraciətinizin ${name} hər iki tərəfdən imzalandı və Triad Vision tərəfindən təsdiqləndi. İmzalanmış PDF müraciət səhifənizdədir.${next ? ' Növbəti addım: ödənişdən sonra Almaniya üçün sənədləriniz (iş müqaviləsi və s.) hazırlanıb sizə göndəriləcək.' : ''}`,
     returnedTitle: (n) => `${n} geri qaytarıldı`,
     returnedBody: ({ name, number, reason }) => `${number} müraciətinizin ${name} Triad Vision tərəfindən geri qaytarıldı.
 
@@ -32,7 +32,7 @@ Düzəldilmiş sənəd sizə yenidən göndəriləcək.`,
   de: {
     approvedTitle: (n) => `${n} bestätigt`,
     approvedBody: ({ name, number, next }) =>
-      `${name} zu Ihrem Antrag ${number} ist von beiden Seiten unterschrieben und von Triad Vision bestätigt. Das unterschriebene PDF finden Sie auf Ihrer Antragsseite.${next ? ' Nächster Schritt: Sie erhalten den Arbeitsvertrag (İş müqaviləsi).' : ''}`,
+      `${name} zu Ihrem Antrag ${number} ist von beiden Seiten unterschrieben und von Triad Vision bestätigt. Das unterschriebene PDF finden Sie auf Ihrer Antragsseite.${next ? ' Nächster Schritt: Nach der Zahlung bereiten wir Ihre deutschen Unterlagen (Arbeitsvertrag usw.) vor und senden sie Ihnen.' : ''}`,
     returnedTitle: (n) => `${n} zurückgegeben`,
     returnedBody: ({ name, number, reason }) => `${name} zu Ihrem Antrag ${number} wurde von Triad Vision zurückgegeben.
 
@@ -43,7 +43,7 @@ Sie erhalten das korrigierte Dokument erneut.`,
   en: {
     approvedTitle: (n) => `${n} approved`,
     approvedBody: ({ name, number, next }) =>
-      `${name} for your application ${number} has been signed by both sides and approved by Triad Vision. The signed PDF is on your application page.${next ? ' Next step: we will send you the work contract (İş müqaviləsi).' : ''}`,
+      `${name} for your application ${number} has been signed by both sides and approved by Triad Vision. The signed PDF is on your application page.${next ? ' Next step: after payment we prepare your German documents (employment contract etc.) and send them to you.' : ''}`,
     returnedTitle: (n) => `${n} returned`,
     returnedBody: ({ name, number, reason }) => `Triad Vision returned ${name} for your application ${number}.
 
@@ -54,7 +54,7 @@ We will send you the corrected document again.`,
   ru: {
     approvedTitle: (n) => `${n} подтверждён`,
     approvedBody: ({ name, number, next }) =>
-      `${name} по вашей заявке ${number} подписан обеими сторонами и подтверждён Triad Vision. Подписанный PDF — на странице заявки.${next ? ' Следующий шаг: мы отправим вам трудовой договор (İş müqaviləsi).' : ''}`,
+      `${name} по вашей заявке ${number} подписан обеими сторонами и подтверждён Triad Vision. Подписанный PDF — на странице заявки.${next ? ' Следующий шаг: после оплаты мы подготовим ваши немецкие документы (трудовой договор и др.) и отправим их вам.' : ''}`,
     returnedTitle: (n) => `${n} возвращён`,
     returnedBody: ({ name, number, reason }) => `Triad Vision вернул ${name} по вашей заявке ${number}.
 

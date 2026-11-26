@@ -22,6 +22,8 @@ export interface AdminCaseListItem {
   nextStep?: NextStepSummary | null;
   /** "Top kimdÉ™dir?" â€” who acts next (lib/clientProcess/ballInCourt). */
   ballInCourt?: import('@/components/clientProcess/api').BallInCourt | null;
+  /** Waits for staff action (client signed / documents to review), server lib/staffAttention. */
+  staffAttention?: 'CLIENT_SIGNED' | 'DOCS_REVIEW' | null;
   /** Team document workflow (Schon geschrieben → Fertig, lib/caseProcessing). */
   processing?: import('@/components/caseProcessing/api').ProcessingSummary | null;
 }
@@ -126,6 +128,8 @@ export interface AdminUser {
   phone: string | null;
   locale: string;
   isActive: boolean;
+  /** ISO date the e-mail was verified; null = not verified. */
+  emailVerifiedAt?: string | null;
   createdAt: string;
   lastSeenAt: string | null;
   lastLoginAt: string | null;

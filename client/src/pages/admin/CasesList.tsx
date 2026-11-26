@@ -13,6 +13,7 @@ import type { AdminCasesResponse } from '@/components/admin/types';
 import { EmptyState, ErrorBlock, KpiCell, KpiStrip, PageHead } from '@/components/admin/ui';
 import { CasePartnerCell } from '@/components/partners/CasesPartnerTools';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
+import { AttentionBadge } from '@/components/caseNext/AttentionBadge';
 import { CasesListSkeleton } from '@/components/admin/CasesListSkeleton';
 import { CASES_LIST_QS_KEY, morphCaseRow } from '@/components/admin/caseMorph';
 import { CaseAssigneeCell, CaseStatusCell } from '@/components/inline/CaseInlineCells'; // inline assignee / quick status
@@ -334,6 +335,7 @@ export default function CasesList() {
                   <p className="truncate text-xs text-muted" title={c.profession}>
                     {c.profession}
                   </p>
+                  <AttentionBadge kind={c.staffAttention} className="mt-1" />
                 </div>
               ),
               status: (c) => (

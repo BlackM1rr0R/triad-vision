@@ -29,9 +29,16 @@ const isText: Matcher = (b) => {
 const HEIF_BRANDS = ['ftypheic', 'ftypheix', 'ftypmif1', 'ftyphevc'];
 const isHeif: Matcher = (b) => HEIF_BRANDS.some((brand) => ascii(brand, 4)(b));
 
+/**
+ * A PDF: "%PDF-" at the start — or within the first 1024 bytes, which is what PDF readers accept (the PDF spec allows
+ * junk before the header: a byte-order mark, a blank line, or a printer / e-sign wrapper). Requiring offset 0 refused
+ * ordinary contract PDFs ("Faylın məzmunu uzantısına uyğun deyil").
+ */
+const isPdf: Matcher = (b) => b.subarray(0, 1024).includes('%PDF-', 0, 'latin1');
+
 /** MIME type → matcher + allowed extensions. */
 const KINDS: Record<string, { match: Matcher; ext: string[] }> = {
-  'application/pdf': { match: ascii('%PDF-'), ext: ['.pdf'] },
+  'application/pdf': { match: isPdf, ext: ['.pdf'] },
   'image/jpeg': { match: startsWith([0xff, 0xd8, 0xff]), ext: ['.jpg', '.jpeg'] },
   'image/png': { match: startsWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), ext: ['.png'] },
   'image/webp': { match: (b) => ascii('RIFF')(b) && ascii('WEBP', 8)(b), ext: ['.webp'] },

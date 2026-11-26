@@ -18,7 +18,7 @@ Agency placing Azerbaijani workers with German employers (triad-vision.de). Owne
 - We do NOT offer apostille or translation and do NOT book embassy appointments: we prepare documents, the client applies, the embassy decides.
 - No paid AI features for new work (cost). Phone everywhere: +994 51 414 14 01 (`client/src/lib/brand.ts`, `server/src/lib/brand`).
 - Vacancies: one source (`/admin/vacancies`); places = `positions` − filled; policy "clients only apply to active vacancies" (`lib/vacancyPlaces/policy.ts`); deactivated = CLOSED after publication or expired (`lib/vacancyActive.ts`).
-- Contracts: two-step (`lib/caseContracts`): Əmək müqaviləsi (Triad signs first → client → admin approves) then İş müqaviləsi; no employer signer.
+- Contracts: ONE contract (`lib/caseContracts`): Əmək müqaviləsi (staff upload own PDF → client signs → Triad signs → approved); the İş müqaviləsi is retired (kept only for old cases that already have one). After approval: once the client has paid, the German documents (Arbeitsvertrag etc.) are prepared in the Drive workflow (Schon geschrieben → In Bearbeitung → Fertig) and sent from Fertig; that send moves the case CONTRACT_SIGNED → EMBASSY_DOCUMENTS and the employer is shown to the client. No employer signer.
 
 ## Working rules (keep token use low)
 - Small change → do it directly; read only the files involved. Use subagents only for large independent work, at most 1–2 at a time; use a cheaper model (`model: "sonnet"` / `"haiku"`) for simple tasks (translations, test writing, searches).

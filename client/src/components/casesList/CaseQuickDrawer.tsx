@@ -74,6 +74,7 @@ export const CaseQuickDrawer = ({
     queryFn: async () => (await api.get<CaseDetailResponse>(`/admin/cases/${id}`)).data,
     enabled: !!id,
     staleTime: 30_000,
+    refetchOnWindowFocus: true, // the client may have signed meanwhile
   });
   const presence = usePresence('case', id, { enabled: !!id });
   const { data: staff } = useStaffOptions();

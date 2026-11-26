@@ -13,7 +13,9 @@ import { ballInCourtFor } from '../../src/lib/clientProcess/ballInCourt.js';
 /**
  * Case contracts V2 (lib/caseContracts): staff upload their own PDF with marked signature places.
  *   Əmək müqaviləsi: the client signs first, then Triad Vision (which approves it); staff may return it with a reason.
- *   İş müqaviləsi: 1–10 PDFs signed by the client only; staff approve the set → employer visible, case → embassy documents.
+ *   İş müqaviləsi: RETIRED — the Əmək müqaviləsi is the only contract. After it is approved the German documents are
+ *   prepared in the drive workflow and sent from "Fertig" (that moves the case to the embassy documents), or staff
+ *   move the case on with "Confirm contract".
  * Plus: applying to a vacancy starts the client's one active application (case).
  */
 
@@ -56,10 +58,10 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
 
   it('Əmək müqaviləsi: places are required; client signs first, then Triad Vision → approved, signed PDF in the drive and on the case', async () => {
     const { client, c, staff } = await setup();
-    // Places: client + Triad Vision are both required; İş müqaviləsi is still locked.
+    // Places: client + Triad Vision are both required; the İş müqaviləsi is retired (no second contract).
     expect(expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek', boxes: [CLIENT_BOX] }]), 400).body.error).toBe('TRIAD_PLACE_REQUIRED');
     expect(expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek', boxes: [TRIAD_BOX] }]), 400).body.error).toBe('CLIENT_PLACE_REQUIRED');
-    expect(expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX] }]), 409).body.error).toBe('LABOUR_NOT_APPROVED');
+    expect(expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX] }]), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
 
     const sent = expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek', boxes: [CLIENT_BOX, TRIAD_BOX] }]), 201).body;
     expect(sent.caseContract).toBe(true);
@@ -96,8 +98,12 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
     const finalDoc = await prisma.document.findUniqueOrThrow({ where: { id: done.finalDocumentId! } });
     expect(finalDoc).toMatchObject({ caseId: c.id, stage: 'CONTRACT_SIGNED' });
     await waitFor(async () => prisma.notification.findFirst({ where: { userId: client.user.id, type: 'CASE_CONTRACT_APPROVED' } }));
-    // "Confirm contract" cannot skip the İş müqaviləsi.
-    await expect(staffConfirmContract(c.id, staff.user.id)).rejects.toMatchObject({ code: 'WORK_CONTRACT_PENDING' });
+    // Single contract: no İş müqaviləsi can be sent and the contracts panel lists it as retired.
+    expect(expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX] }]), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
+    expect(expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps[1]).toMatchObject({ step: 'WORK', state: 'NOT_SENT', blockedReason: 'WORK_CONTRACT_RETIRED' });
+    // "Confirm contract" is not blocked any more: it moves the case on to the embassy documents.
+    await staffConfirmContract(c.id, staff.user.id);
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('EMBASSY_DOCUMENTS');
   });
 
   it('interim PDF: after the client signs, staff see the client signature before Triad Vision signs; the original stays untouched; next step / ball follow V2', async () => {
@@ -141,14 +147,8 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
     expect(after.steps.map((x: { code: string }) => x.code)).not.toContain('CONFIRM_CONTRACT');
     expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'SEND_WORK_CONTRACT' });
 
-    // İş müqaviləsi sent: the client's turn; signed by the client: staff approve.
-    const [w] = expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX] }]), 201).body.signatureRequestIds as string[];
-    expect(expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep.steps.map((x: { code: string }) => x.code)).toContain('AWAIT_WORK_SIGNATURE');
-    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'CLIENT', reason: 'SIGN_CONTRACT' });
-    expectStatus(await client.agent.post(`/api/signatures/my/${(await candidateOf(w)).id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
-    await completed(w);
-    expect(expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep.steps[0]).toMatchObject({ code: 'APPROVE_WORK_CONTRACT' });
-    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'APPROVE_WORK_CONTRACT' });
+    // The next step names the drive workflow and the manual move to the embassy documents (no second contract).
+    expect(after.steps[0].actions.map((a: { id: string }) => a.id)).toEqual(['OPEN_DRIVE_WORKFLOW', 'GO_EMBASSY_DOCS']);
   });
 
   it('Əmək müqaviləsi returned with a reason: the client sees it, a new version can be uploaded', async () => {
@@ -165,62 +165,24 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
     expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek-2', boxes: [CLIENT_BOX, TRIAD_BOX] }]), 201);
   });
 
-  it('İş müqaviləsi: several PDFs, client signs all, one returned and replaced, staff approve → employer visible, embassy documents', async () => {
+  it('single contract: after the Əmək müqaviləsi the case waits in CONTRACT_SIGNED; the employer stays hidden until the case reaches the embassy documents', async () => {
     const { client, c, staff, company } = await setup();
-    // Əmək müqaviləsi done (V2) — the case contract step.
     const [lab] = expectStatus(await upload(staff.agent, c.id, 'LABOUR', [{ name: 'emek', boxes: [CLIENT_BOX, TRIAD_BOX] }]), 201).body.signatureRequestIds as string[];
     expectStatus(await client.agent.post(`/api/signatures/my/${(await candidateOf(lab)).id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
     expectStatus(await staff.agent.post(`${BASE}/${c.id}/triad-sign`).send({ step: 'LABOUR', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
     await waitFor(async () => (await prisma.signatureRequest.findUniqueOrThrow({ where: { id: lab } })).approvedAt);
     expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('CONTRACT_SIGNED');
 
-    // No Triad Vision place on the İş müqaviləsi; at most 10 documents.
-    expect(expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'is', boxes: [CLIENT_BOX, TRIAD_BOX] }]), 400).body.error).toBe('NO_TRIAD_SIGNATURE');
-    const ids = expectStatus(
-      await upload(staff.agent, c.id, 'WORK', [
-        { name: 'Arbeitsvertrag', boxes: [CLIENT_BOX] },
-        { name: 'Anlage', boxes: [{ ...CLIENT_BOX, page: 2 }] },
-      ]),
-      201,
-    ).body.signatureRequestIds as string[];
-    expect(ids).toHaveLength(2);
-    const reqs = await prisma.signatureRequest.findMany({ where: { id: { in: ids } }, include: { signers: true } });
-    for (const x of reqs) {
-      expect(x).toMatchObject({ contractKind: 'WORK', contractFlow: 'V2', isCaseContract: false, companyId: null });
-      expect(x.signers.map((s) => s.role)).toEqual(['CANDIDATE']);
-    }
-    // Client: SIGN_WORK in the status line; the employer is still hidden.
-    expect(expectStatus(await client.agent.get('/api/account/next-step'), 200).body.statusLine).toMatchObject({ stage: 'SIGN_WORK', required: true });
-    const before = expectStatus(await client.agent.get(`/api/cases/${c.id}`), 200).body.case;
-    expect(JSON.stringify(before)).not.toContain(company.name);
+    // No second contract can be sent; the employer is still hidden from the client.
+    expect(expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'Arbeitsvertrag', boxes: [CLIENT_BOX] }]), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
+    expect(JSON.stringify(expectStatus(await client.agent.get(`/api/cases/${c.id}`), 200).body.case)).not.toContain(company.name);
 
-    for (const id of ids) expectStatus(await client.agent.post(`/api/signatures/my/${(await candidateOf(id)).id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
-    for (const id of ids) await completed(id);
-    let view = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps[1];
-    expect(view).toMatchObject({ state: 'SIGNED', flow: 'V2', canApprove: true });
-    expect(view.documents).toHaveLength(2);
-
-    // One document returned → approval blocked until replaced.
-    expectStatus(await staff.agent.post(`${BASE}/${c.id}/return`).send({ step: 'WORK', requestId: ids[1], reason: 'Səhifə 2 imzasızdır' }), 200);
-    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'WORK' }), 409).body.error).toBe('DOCUMENT_RETURNED');
-    const portal = expectStatus(await client.agent.get(`/api/account/case-contracts/cases/${c.id}`), 200).body.steps[1];
-    expect(portal.documents.find((d: { id: string }) => d.id === ids[1])).toMatchObject({ state: 'RETURNED', returnReason: 'Səhifə 2 imzasızdır' });
-    const [replacement] = expectStatus(await upload(staff.agent, c.id, 'WORK', [{ name: 'Anlage-2', boxes: [CLIENT_BOX] }], { replacesId: ids[1] }), 201).body.signatureRequestIds as string[];
-    expectStatus(await client.agent.post(`/api/signatures/my/${(await candidateOf(replacement)).id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
-    await completed(replacement);
-
-    view = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps[1];
-    expect(view.documents).toHaveLength(2);
-    expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'WORK' }), 200);
+    // Staff move the case on (sending the Fertig documents does the same); the client's portal lists the one contract only.
+    await staffConfirmContract(c.id, staff.user.id);
     expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('EMBASSY_DOCUMENTS');
-    const approved = await prisma.signatureRequest.findMany({ where: { id: { in: [ids[0], replacement] } } });
-    expect(approved.every((x) => !!x.approvedAt)).toBe(true);
-    // Drive: both signed copies under "<client folder>/İş müqaviləsi"; client documents list them.
-    for (const x of approved) expect((await prisma.driveNode.findUniqueOrThrow({ where: { id: x.driveNodeId! }, include: { parent: true } })).parent?.name).toBe('İş müqaviləsi');
-    const after = expectStatus(await client.agent.get(`/api/cases/${c.id}`), 200).body.case;
-    const ids2 = (after.otherDocuments as { id: string }[]).map((d) => d.id);
-    for (const x of approved) expect(ids2).toContain(x.finalDocumentId);
-    for (const x of approved) expectStatus(await client.agent.get(`/api/files/${x.finalDocumentId}`), 200);
+    const portal = expectStatus(await client.agent.get(`/api/account/case-contracts/cases/${c.id}`), 200).body.steps;
+    expect(portal[0]).toMatchObject({ step: 'LABOUR', state: 'APPROVED' });
+    expect(portal[1]).toMatchObject({ step: 'WORK', state: 'NOT_SENT' });
   });
 });
 

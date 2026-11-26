@@ -4,13 +4,13 @@ import { prisma } from '../../db.js';
 /**
  * When may the CLIENT see the employer (company name, logo, address) of their case?
  *
- * Owner's rule: only once the İş müqaviləsi (work contract, step 2 of lib/caseContracts) is approved. Staff, admin,
- * company and partner views are not affected — this only filters what the client (portal, client APIs, client
- * e-mails / notifications) is shown.
+ * Owner's rule (single-contract flow): the employer is shown once the German documents (Arbeitsvertrag …) were sent to
+ * the client from the drive workflow "Fertig" — that send moves the case to EMBASSY_DOCUMENTS (lib/clientFolders/readyDocs)
+ * — or staff moved the case there by hand ("Confirm contract"). Staff, admin, company and partner views are not
+ * affected — this only filters what the client (portal, client APIs, client e-mails / notifications) is shown.
  *
- *   revealed = an İş müqaviləsi (WORK / AUSBILDUNG contract request) of the case is approved
- *              OR the case is past the contract stage (EMBASSY_DOCUMENTS and later) — cases that got there under the
- *              old flow (Əmək müqaviləsi approval moved them on) or by a staff override keep what they saw before.
+ *   revealed = the case is at the embassy documents stage or later (EMBASSY_DOCUMENTS and later)
+ *              OR (old cases only) an İş müqaviləsi (WORK / AUSBILDUNG contract request, retired) of the case is approved.
  */
 export const EMPLOYER_REVEALED_STATUSES: CaseStatus[] = ['EMBASSY_DOCUMENTS', 'EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED', 'DECISION_PENDING', 'APPROVED'];
 

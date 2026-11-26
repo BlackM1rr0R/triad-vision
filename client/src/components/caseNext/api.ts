@@ -25,6 +25,7 @@ export type NextAction =
   | { id: string; kind: 'task'; request: ApiCall; title: string }
   | { id: string; kind: 'transition'; request: ApiCall; confirm: true; note?: string }
   | { id: string; kind: 'package' }
+  | { id: string; kind: 'link'; href: string }
   | { id: string; kind: 'scroll'; target: string };
 
 export interface NextStep {

@@ -56,7 +56,7 @@ export const contractProgress = (f: Pick<CaseFacts, 'status' | 'contract' | 'con
     const labour = 'Labour contract (Əmək müqaviləsi) signed by the client and Triad Vision and approved. ';
     switch (f.workContract) {
       case 'NOT_SENT':
-        return `${labour}Next: staff must upload and send the work contract (İş müqaviləsi) documents to the client.`;
+        return `${labour}Next (single-contract flow): once the client has paid, staff prepare the German documents (employment contract etc.) in the drive workflow (Schon geschrieben → In Bearbeitung → Fertig) and send them to the client; that moves the case to the embassy documents. There is no second contract.`;
       case 'CLIENT_TO_SIGN':
         return `${labour}Work contract (İş müqaviləsi) documents were sent; waiting for the client to sign them.`;
       case 'SIGNED':

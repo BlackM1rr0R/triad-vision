@@ -353,15 +353,15 @@ export const ApproveDialog = ({ caseId, s, onClose, onDone }: { caseId: string; 
 };
 
 /**
- * "Müqavilələr" on the case's documents tab: 1) Əmək müqaviləsi, 2) İş müqaviləsi (locked until 1 is approved).
- * Triad Vision signs first, then the client, then staff approve; the employer is not part of either contract.
+ * "Müqavilə" on the case's documents tab: the Əmək müqaviləsi (the only contract; client signs, then Triad Vision, which
+ * approves it). The İş müqaviləsi card only appears for old cases that already have one. The employer is not a party.
  * `legacy`: the old single-contract box, shown only for a case contract that was not sent through this flow.
  */
 export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: ReactNode }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const refreshCase = useCaseRefresh(c.id);
-  const q = useQuery({ queryKey: staffKey(c.id), queryFn: async () => (await api.get<StaffOverview>(`/admin/case-contracts/cases/${c.id}`)).data });
+  const q = useQuery({ queryKey: staffKey(c.id), queryFn: async () => (await api.get<StaffOverview>(`/admin/case-contracts/cases/${c.id}`)).data, refetchOnWindowFocus: true }); // the client may sign meanwhile
   const [uploading, setUploading] = useState<{ step: Step; replacesId?: string } | null>(null);
   const [returning, setReturning] = useState<{ step: Step; doc: StaffDoc | null } | null>(null);
   const [signing, setSigning] = useState<Step | null>(null);
@@ -379,6 +379,8 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
   const stepOf = (k: Step | null) => (k && data ? data.steps.find((x) => x.step === k) : undefined);
   const flowIds = new Set((data?.steps ?? []).map((x) => x.request?.id).filter(Boolean));
   const showLegacy = !!c.contract && !(c.contract.signatureRequestId && flowIds.has(c.contract.signatureRequestId));
+  // The İş müqaviləsi is retired: its card only shows for old cases where one was already sent / signed.
+  const visibleSteps = (data?.steps ?? []).filter((s) => s.step !== 'WORK' || s.state !== 'NOT_SENT');
   const signStep = stepOf(signing);
   const approveStep = stepOf(approving);
 
@@ -392,8 +394,8 @@ export const CaseContractsPanel = ({ c, legacy }: { c: CaseDetail; legacy?: Reac
       ) : q.error || !data ? (
         <p className="text-sm text-danger-fg">{ccError(t, q.error)}</p>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {data.steps.map((s) => (
+        <div className={clsx('grid gap-4', visibleSteps.length > 1 && 'lg:grid-cols-2')}>
+          {visibleSteps.map((s) => (
             <StepCard
               key={s.step}
               s={s}

@@ -10,6 +10,7 @@ import {
   signedFileName,
   stepState,
   workApproveBlock,
+  workRetired,
   workContractTurn,
   workSetState,
   type WorkDocLite,
@@ -114,6 +115,10 @@ describe('V2 İş müqaviləsi: a set of 1–10 documents, signed by the client 
   it('İş müqaviləsi still needs the Əmək müqaviləsi approved; signed file names per document', () => {
     expect(sendBlockReason('WORK', { LABOUR: 'TRIAD_TO_SIGN', WORK: 'NOT_SENT' }, 'CONTRACT_SENT')).toBe('LABOUR_NOT_APPROVED');
     expect(sendBlockReason('WORK', { LABOUR: 'APPROVED', WORK: 'NOT_SENT' }, 'CONTRACT_SIGNED')).toBeNull();
+    // the İş müqaviləsi is retired: a case without one never gets a new one; an old one can still be finished
+    expect(workRetired('WORK', { LABOUR: 'APPROVED', WORK: 'NOT_SENT' })).toBe(true);
+    expect(workRetired('WORK', { LABOUR: 'APPROVED', WORK: 'CLIENT_TO_SIGN' })).toBe(false);
+    expect(workRetired('LABOUR', { LABOUR: 'NOT_SENT', WORK: 'NOT_SENT' })).toBe(false);
     expect(signedFileName('WORK', 'TV-2026-0012', 'Arbeitsvertrag/Anlage 1')).toBe('İş müqaviləsi – Arbeitsvertrag Anlage 1 – TV-2026-0012 (imzalanmış).pdf');
   });
 });

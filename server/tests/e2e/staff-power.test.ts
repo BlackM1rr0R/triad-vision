@@ -222,6 +222,8 @@ describe('bulk actions: cases', () => {
   it('processing stage, message with variables and CSV export', async () => {
     const staff = await asStaff({ firstName: 'Aysel', lastName: 'Q' });
     const cases = await seedCases(2);
+    const stand = await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } }); // the workflow needs a partner
+    await prisma.case.updateMany({ where: { id: { in: cases.map((c) => c.id) } }, data: { partnerId: stand.id } });
     const moved = expectStatus(await staff.agent.post('/api/admin/bulk/cases/processing').send({ selection: { ids: cases.map((c) => c.id) }, stage: 'WRITTEN' }), 200).body;
     expect(moved).toMatchObject({ ok: 2 });
     expect(await prisma.case.count({ where: { processingStage: 'WRITTEN' } })).toBe(2);

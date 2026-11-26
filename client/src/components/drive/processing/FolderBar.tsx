@@ -6,9 +6,9 @@ import { fmtDateTime } from '@/components/admin/labels';
 import { TONE_CLASS } from '@/components/ui/status';
 import { useProcessing } from '@/components/caseProcessing/api';
 import { StageBadge } from '@/components/caseProcessing/parts';
-import { flowActions, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
+import { needsPartner, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
 import type { DriveItem } from '../types';
-import { ACTION_ICON } from './icons';
+import { ACTION_ICON, driveFlowActions } from './icons';
 
 /**
  * Strip under the header of an open client folder: the team workflow stage, who sent it and when, who works
@@ -26,7 +26,7 @@ export const ProcessingFolderBar = ({ target, folder, onAct }: { target: FlowTar
   const mine = !!assigneeId && assigneeId === user?.id;
   // The freshest state decides the buttons (the drive listing may be a few seconds old).
   const live: FlowTarget = { ...target, stage, assigneeId };
-  const actions = flowActions(stage, assigneeId, user?.id, target.closed);
+  const actions = driveFlowActions(stage, assigneeId, user?.id, target.closed);
   if (!stage && !actions.length) return null;
   const note = p?.history.find((h) => h.note)?.note;
 
@@ -59,6 +59,8 @@ export const ProcessingFolderBar = ({ target, folder, onAct }: { target: FlowTar
                 key={a}
                 type="button"
                 onClick={() => onAct(a, live)}
+                disabled={needsPartner(live, a)}
+                title={needsPartner(live, a) ? t('driveProcessing.partnerFirst') : undefined}
                 className={clsx('btn-sm', a === 'return' ? 'btn-secondary text-danger-fg' : i === 0 ? 'btn-primary' : 'btn-secondary')}
               >
                 <Icon className="size-3.5" aria-hidden /> {t(`driveProcessing.actions.${a}`)}

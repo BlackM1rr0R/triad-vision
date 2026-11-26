@@ -7,7 +7,7 @@ import { SIGNATURE_DATA_URL } from '../helpers/files';
 import { expectStatus } from '../helpers/workflow';
 import { seedLabourContractTemplate } from '../../prisma/seed/labourContractTemplate.js';
 
-/** Two-step case contracts (lib/caseContracts): Əmək müqaviləsi (Triad Vision first → client → approve), then İş müqaviləsi. */
+/** Case contracts (lib/caseContracts): Əmək müqaviləsi (old template flow: Triad Vision first → client → approve) is the only contract; the İş müqaviləsi is retired. */
 
 const BASE = '/api/admin/case-contracts/cases';
 
@@ -25,19 +25,19 @@ const setup = async (status: CaseStatus = 'DOCUMENTS_REVIEW') => {
 
 const signers = (requestId: string) => prisma.signatureSigner.findMany({ where: { requestId }, orderBy: { order: 'asc' } });
 
-describe('two-step case contracts', () => {
+describe('case contracts (single contract)', () => {
   it('Əmək müqaviləsi: Triad Vision signs first, then the client, then staff approve; the employer is never involved; the PDF lands in the drive', async () => {
     const { client, c, labourTpl, workTpl, employer, company } = await setup();
     const staff = await asStaff({ firstName: 'Leyla', lastName: 'Staff' });
     await prisma.case.update({ where: { id: c.id }, data: { assignedStaffId: staff.user.id } });
 
-    // Step 2 cannot be sent before step 1 is approved.
+    // The İş müqaviləsi is retired: it cannot be sent at all.
     const before = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body;
     expect(before.steps.map((s: { step: string; state: string; blockedReason: string | null }) => [s.step, s.state, s.blockedReason])).toEqual([
       ['LABOUR', 'NOT_SENT', null],
-      ['WORK', 'NOT_SENT', 'LABOUR_NOT_APPROVED'],
+      ['WORK', 'NOT_SENT', 'WORK_CONTRACT_RETIRED'],
     ]);
-    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: {} }), 409).body.error).toBe('LABOUR_NOT_APPROVED');
+    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: {} }), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
     // Wrong template kind for the step.
     expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'LABOUR', templateId: workTpl.id, inputs: {} }), 400).body.error).toBe('TEMPLATE_WRONG_KIND');
     // The generic template sender refuses the LABOUR kind (only this flow sends it).
@@ -106,14 +106,14 @@ describe('two-step case contracts', () => {
     const signedView = expectStatus(await staff.agent.get(`${BASE}/${c.id}`), 200).body.steps;
     expect(signedView.map((s: { state: string; blockedReason: string | null; canApprove: boolean }) => [s.state, s.blockedReason, s.canApprove])).toEqual([
       ['SIGNED', null, true],
-      ['NOT_SENT', 'LABOUR_NOT_APPROVED', false],
+      ['NOT_SENT', 'WORK_CONTRACT_RETIRED', false],
     ]);
 
     // Approve: case contract step confirmed, document accepted, client notified; step 2 unlocked.
     const approved = expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'LABOUR' }), 200).body;
     expect(approved.steps.map((s: { state: string; blockedReason: string | null }) => [s.state, s.blockedReason])).toEqual([
       ['APPROVED', 'ALREADY_APPROVED'],
-      ['NOT_SENT', null],
+      ['NOT_SENT', 'WORK_CONTRACT_RETIRED'],
     ]);
     expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('EMBASSY_DOCUMENTS');
     expect((await prisma.document.findUniqueOrThrow({ where: { id: done.finalDocumentId! } })).status).toBe('ACCEPTED');
@@ -122,28 +122,11 @@ describe('two-step case contracts', () => {
     // The drive copy was not duplicated into the stage folder by the document acceptance.
     expect(await prisma.driveNode.count({ where: { documentId: done.finalDocumentId! } })).toBe(1);
 
-    // Step 2: İş müqaviləsi, same order, never the case contract, never the employer.
-    const work = expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: { startDate: '2027-03-01' } }), 201).body;
-    expect(work.caseContract).toBe(false);
-    const wr = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: work.signatureRequestId } });
-    expect(wr).toMatchObject({ contractKind: 'WORK', isCaseContract: false, companyId: null });
-    const [wTriad, wCand] = await signers(wr.id);
-    expect([wTriad.role, wCand.role]).toEqual(['STAFF', 'CANDIDATE']);
-    expectStatus(await client.agent.post(`/api/signatures/my/${wCand.id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 409);
-    expectStatus(await staff.agent.post(`${BASE}/${c.id}/triad-sign`).send({ step: 'WORK', mode: 'TYPE', typedName: 'Leyla Staff', agree: true }), 200);
-    expectStatus(await client.agent.post(`/api/signatures/my/${wCand.id}/sign`).send({ mode: 'TYPE', typedName: 'Rauf Həsənov', agree: true }), 200);
-    const wDone = await waitFor(async () => {
-      const r = await prisma.signatureRequest.findUniqueOrThrow({ where: { id: wr.id } });
-      return r.status === 'COMPLETED' && r.driveNodeId ? r : null;
-    });
-    const wFile = await prisma.driveNode.findUniqueOrThrow({ where: { id: wDone.driveNodeId! }, include: { parent: true } });
-    expect(wFile.parent?.name).toBe('İş müqaviləsi');
-    expect(wFile.parent?.parentId).toBe(kase.driveFolderId);
-    expect((await prisma.case.findUniqueOrThrow({ where: { id: c.id } })).status).toBe('EMBASSY_DOCUMENTS'); // case status untouched by step 2
-    expectStatus(await staff.agent.post(`${BASE}/${c.id}/approve`).send({ step: 'WORK' }), 200);
+    // No second contract: the İş müqaviləsi cannot be sent, the client sees one approved contract.
+    expect(expectStatus(await staff.agent.post(`${BASE}/${c.id}/send`).send({ step: 'WORK', templateId: workTpl.id, inputs: { startDate: '2027-03-01' } }), 409).body.error).toBe('WORK_CONTRACT_RETIRED');
     const portal3 = expectStatus(await client.agent.get(`/api/account/case-contracts/cases/${c.id}`), 200).body.steps;
-    expect(portal3.map((s: { state: string }) => s.state)).toEqual(['APPROVED', 'APPROVED']);
-    expect(portal3.every((s: { signedDocumentId: string | null }) => !!s.signedDocumentId)).toBe(true);
+    expect(portal3.map((s: { state: string }) => s.state)).toEqual(['APPROVED', 'NOT_SENT']);
+    expect(portal3[0].signedDocumentId).toBeTruthy();
   });
 
   it('an ADMIN may take over the Triad Vision signature; "Confirm contract" counts as approval; other clients see nothing', async () => {

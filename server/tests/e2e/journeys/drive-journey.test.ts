@@ -53,6 +53,11 @@ describe('journey: client folders in the documents section', () => {
     expect(chips.get(folderA.id)).toMatchObject({ caseId: caseA.id, caseInfo: { clientName: 'Ali Məmmədov', partner: null, processing: { stage: null, assigneeId: null }, readySentAt: null } });
     expect(chips.get(folderB.id)?.caseInfo?.processing).toEqual({ stage: null, assigneeId: null });
 
+    // A client folder enters the workflow only with a partner; a stand-in partner is set for this part and removed again below.
+    const standIn = await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } });
+    expect(expectStatus(await processing(leyla.agent, [caseA.id], 'WRITTEN'), 200).body.results[0]).toMatchObject({ ok: false, error: 'WORKFLOW_PARTNER_REQUIRED' });
+    await prisma.case.updateMany({ where: { id: { in: [caseA.id, caseB.id] } }, data: { partnerId: standIn.id } });
+
     // ── 2. Bulk "Schon geschrieben" for both, to Murad ──────────────────────────────────────────────────────────
     const written = expectStatus(await processing(leyla.agent, [caseA.id, caseB.id], 'WRITTEN', murad.user.id), 200).body;
     expect(written.summary).toEqual({ total: 2, succeeded: 2, skipped: 0, failed: 0 });
@@ -115,6 +120,7 @@ describe('journey: client folders in the documents section', () => {
     expect(await prisma.document.count({ where: { caseId: caseA.id, stage: 'OTHER' } })).toBe(2);
 
     // ── 5. Partner on Banu's folder without opening it: assign → change → remove, with the history ──────────────
+    await prisma.case.updateMany({ where: { id: { in: [caseA.id, caseB.id] } }, data: { partnerId: null } }); // the stand-in partner goes (the workflow stage stays)
     const p1 = expectStatus(await admin.agent.post('/api/admin/partners').send({ name: uniq('Rəşad '), commissionCents: 10000 }), 201).body.partner as { id: string; name: string };
     const p2 = expectStatus(await admin.agent.post('/api/admin/partners').send({ name: uniq('Elvin '), commissionCents: 10000 }), 201).body.partner as { id: string; name: string };
     const p1Login = await createUser({ role: 'AGENT', firstName: 'Rəşad', lastName: 'Partner' });

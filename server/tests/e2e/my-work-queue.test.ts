@@ -63,7 +63,7 @@ describe('my work queue: case contracts', () => {
     const r = await contractRequest(c.id, client.id, { status: 'SENT', clientSigned: true, triadSigned: false });
     const items = ofKind(await work(staff.agent), 'contract_triad').filter((i) => i.refs.caseId === c.id);
     expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({ category: 'signatures', priority: 'HIGH', refs: { requestId: r.id, step: 'LABOUR' } });
+    expect(items[0]).toMatchObject({ category: 'signatures', priority: 'URGENT', bucket: 'today', refs: { requestId: r.id, step: 'LABOUR' } });
     expect(items[0].actions[0]).toMatchObject({ key: 'signContract', type: 'link', href: `/admin/cases/${c.id}#case-contract` });
   });
 

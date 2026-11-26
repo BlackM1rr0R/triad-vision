@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -6,11 +6,13 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import {
   ArrowLeft,
+  Ban,
   Banknote,
   CalendarClock,
   CheckSquare,
   FileText,
   FolderKanban,
+  FolderOpen,
   Handshake,
   History,
   Mail,
@@ -39,6 +41,7 @@ import { auditActionLabel, docStatusLabel, eventLabel, fmtDate, fmtDateTime, fmt
 import { Avatar } from '@/components/ui/Avatar';
 import { Tabs, TabPanel, useTabParam } from '@/components/ui/Tabs';
 import { CallButton } from '@/components/calls/CallButton';
+import { FINAL } from '@/lib/caseStatus';
 import { ViewAsClientButton } from '@/components/privacyTools/ViewAsClientButton';
 import { SensitiveValue } from '@/components/privacyTools/SensitiveValue'; // masked client address: reveal with a reason
 import { fmtMoney } from '@/components/billing/api';
@@ -205,6 +208,11 @@ const Header = ({ data }: { data: Client360 }) => {
                 `${data.agent.name ?? data.agent.code} (${t('sd.c360.agent')})`
               ) : (
                 '—'
+              )}
+              {data.driveFolderId && (
+                <Link to={`/workspace/drive/f/${encodeURIComponent(data.driveFolderId)}`} className="inline-flex items-center gap-1 text-xs font-semibold text-link hover:underline">
+                  <FolderOpen className="size-3.5" aria-hidden /> {t('sd.c360.openFolder')}
+                </Link>
               )}
             </dd>
           </div>
@@ -408,10 +416,15 @@ const Row = ({ children, to }: { children: ReactNode; to?: string }) => (
 
 const CaseRef = ({ id, number }: { id: string | null; number: string | null }) => (number && id ? <span className="code-id text-xs text-link">{number}</span> : null);
 
+const CancelCaseDialog = lazy(() => import('@/components/admin/case/CancelCaseDialog')); // same dialog + endpoint as the case page
+
 const CasesTab = ({ data }: { data: Client360 }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
+  const qc = useQueryClient();
+  const [cancelId, setCancelId] = useState<string | null>(null);
   return (
+    <>
     <List empty={t('sd.c360.empty.cases')} icon={FolderKanban} count={data.cases.length}>
       {data.cases.map((c) => (
         <Row key={c.id} to={`/admin/cases/${c.id}`}>
@@ -429,9 +442,28 @@ const CasesTab = ({ data }: { data: Client360 }) => {
             </span>
           )}
           <span className="text-xs text-muted">{fmtRelative(c.updatedAt)}</span>
+          {!FINAL.includes(c.status) && (
+            <button
+              type="button"
+              className="btn-ghost btn-sm text-danger-fg"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setCancelId(c.id);
+              }}
+            >
+              <Ban className="size-3.5" aria-hidden /> {t('admin.case.action.cancelCase')}
+            </button>
+          )}
         </Row>
       ))}
     </List>
+    {cancelId && (
+      <Suspense fallback={null}>
+        <CancelCaseDialog caseId={cancelId} open onClose={() => setCancelId(null)} onDone={() => void qc.invalidateQueries({ queryKey: client360Key(data.client.id) })} />
+      </Suspense>
+    )}
+    </>
   );
 };
 

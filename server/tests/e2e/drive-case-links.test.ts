@@ -102,6 +102,7 @@ describe('İş axını: case links of the stage folders', () => {
     const { c, folder } = await clientCase(staff.agent);
     const st = await stages(staff.agent);
     const f = await upload(staff.agent, folder.id, 'Pass.pdf');
+    await prisma.case.update({ where: { id: c.id }, data: { partnerId: (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id } }); // the workflow needs a partner
     expectStatus(await staff.agent.post('/api/drive/workflow/copy').send({ ids: [f.id], stage: 'WRITTEN' }), 200);
     const written = await prisma.driveNode.findFirstOrThrow({ where: { parentId: st.WRITTEN, workflowCaseId: c.id, deletedAt: null } });
     const copy = await prisma.driveNode.findFirstOrThrow({ where: { parentId: written.id, deletedAt: null } });

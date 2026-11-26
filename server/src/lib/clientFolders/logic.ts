@@ -31,6 +31,12 @@ export const nextOwner = (owner: string | null, from: string | null, to: string 
   return undefined;
 };
 
+/**
+ * A case enters the workflow (Schon geschrieben / In Bearbeitung) only with a partner assigned (409
+ * WORKFLOW_PARTNER_REQUIRED). A case already in the workflow stays and moves on without one (it was there before the rule).
+ */
+export const workflowNeedsPartner = (from: string | null, to: string, partnerId: string | null | undefined) => !from && to !== 'DONE' && !partnerId;
+
 /** A file of the Fertig folder as it is now. */
 export interface ReadyFile {
   nodeId: string;
@@ -70,6 +76,22 @@ export const sendBlocker = (p: { stage?: string | null; fileCount: number; sentB
  */
 export const bulkAssignee = (p: { from: string | null; to: string; requested: string | null | undefined; current: string | null | undefined }) =>
   p.requested ? p.requested : p.from === p.to ? (p.current ?? null) : null;
+
+/**
+ * An explicit pick of files for "Müştəriyə göndər": the ids must all be among the files the case offers; `missing`
+ * holds the ids that are not (foreign / deleted / unknown nodes). Duplicates are ignored, the order of the pick is kept.
+ */
+export const pickFiles = <F extends { nodeId: string }>(ids: string[], offered: F[]): { files: F[]; missing: string[] } => {
+  const byId = new Map(offered.map((f) => [f.nodeId, f]));
+  const files: F[] = [];
+  const missing: string[] = [];
+  for (const id of [...new Set(ids)]) {
+    const f = byId.get(id);
+    if (f) files.push(f);
+    else missing.push(id);
+  }
+  return { files, missing };
+};
 
 /** Parses CaseReadyDocsSend.files (JSON) defensively. */
 export const parseSentFiles = (v: unknown): SentFile[] =>

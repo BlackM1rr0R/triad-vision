@@ -1,9 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { bulkAssignee, newFiles, nextOwner, parseSentFiles, sendBlocker, summarize } from '../../src/lib/clientFolders/logic.js';
+import { bulkAssignee, newFiles, nextOwner, parseSentFiles, pickFiles, sendBlocker, summarize, workflowNeedsPartner } from '../../src/lib/clientFolders/logic.js';
 import { classifyRoute } from '../../src/lib/access/routeMap.js';
 import { READY_DOCS_TEXT } from '../../src/lib/clientFolders/texts.js';
 
 /** Client folder actions of the documents section (lib/clientFolders): pure rules and the route permissions. */
+
+describe('client folders: partner required before the workflow', () => {
+  it('a case outside the workflow needs a partner for Schon geschrieben / In Bearbeitung', () => {
+    expect(workflowNeedsPartner(null, 'WRITTEN', null)).toBe(true);
+    expect(workflowNeedsPartner(null, 'IN_PROGRESS', undefined)).toBe(true);
+    expect(workflowNeedsPartner(null, 'WRITTEN', 'p1')).toBe(false);
+  });
+  it('a case already in the workflow stays and moves on without a partner', () => {
+    expect(workflowNeedsPartner('WRITTEN', 'IN_PROGRESS', null)).toBe(false);
+    expect(workflowNeedsPartner('IN_PROGRESS', 'DONE', null)).toBe(false);
+    expect(workflowNeedsPartner('DONE', 'IN_PROGRESS', null)).toBe(false);
+    expect(workflowNeedsPartner('WRITTEN', 'WRITTEN', null)).toBe(false);
+  });
+});
+
+describe('client folders: an explicit pick of files to send', () => {
+  const offered = [{ nodeId: 'a' }, { nodeId: 'b' }, { nodeId: 'c' }];
+  it('keeps the order of the pick and ignores duplicates', () => {
+    expect(pickFiles(['c', 'a', 'c'], offered)).toEqual({ files: [{ nodeId: 'c' }, { nodeId: 'a' }], missing: [] });
+  });
+  it('reports ids the case does not offer (foreign or deleted nodes)', () => {
+    expect(pickFiles(['a', 'zzz'], offered)).toEqual({ files: [{ nodeId: 'a' }], missing: ['zzz'] });
+    expect(pickFiles(['x'], [])).toEqual({ files: [], missing: ['x'] });
+  });
+});
 
 describe('client folders: ownership follows the case partner', () => {
   it('moves ownership only when the client belonged to nobody or to the previous partner', () => {

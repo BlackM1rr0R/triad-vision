@@ -2,7 +2,7 @@ import type { Request } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db.js';
-import { HttpError, badRequest, parse } from '../lib/http.js';
+import { HttpError, badRequest, conflict, parse } from '../lib/http.js';
 import { audit } from '../lib/audit.js';
 import { DriveAccessCtx, requireNode } from '../lib/drive/access.js';
 import { copyNodeInto } from '../lib/drive/copy.js';
@@ -24,6 +24,7 @@ import {
 import { logDriveActivity } from '../lib/driveCollab/activity.js';
 import { assertNotLockedByOther } from '../lib/driveCollab/lock.js';
 import { linkStageFolder, stageFolderCase } from '../lib/drive/workflowLinks.js';
+import { caseMayEnterWorkflow } from '../lib/caseProcessing/index.js';
 
 /**
  * "İş axını" stage folders of the drive (lib/drive/workflowFolders), mounted inside the drive router (STAFF+):
@@ -35,6 +36,8 @@ import { linkStageFolder, stageFolderCase } from '../lib/drive/workflowLinks.js'
  * Copy needs DOWNLOAD (files) / EXPORT (folders) on the source and EDIT on the stage folder; send needs EDIT on
  * the item and the target stage (like a move: no item locked by a colleague, nothing "Final" inside). Every item
  * is audited (DRIVE_WORKFLOW_COPIED / DRIVE_WORKFLOW_SENT) and shows in the folder journal (COPY / MOVE).
+ * Copying a client folder (or a file of it) to "Schon geschrieben" needs the case to have a partner (409 WORKFLOW_PARTNER_REQUIRED),
+ * unless it is in the workflow already (lib/caseProcessing.workflowNeedsPartner).
  */
 export const driveWorkflowRouter = Router();
 
@@ -86,6 +89,8 @@ driveWorkflowRouter.post('/workflow/copy', async (req, res) => {
     await requireNode(ctx, id, 'VIEW');
     // The case link (DriveNode.workflowCaseId) goes on the client folder's copy below the stage (lib/drive/workflowLinks).
     const { path, caseId } = await copyTargetOf(ctx, wf, id);
+    // A client folder enters "Schon geschrieben" only with a partner (a case already in the workflow keeps working).
+    if (caseId && stage === 'WRITTEN' && !(await caseMayEnterWorkflow(caseId))) throw conflict('WORKFLOW_PARTNER_REQUIRED');
     const parentId = await ensurePath(stageId, path, me, { caseId });
     if (!takenBy.has(parentId)) takenBy.set(parentId, await siblingNames(parentId));
     const r = await copyNodeInto(ctx, me, id, { id: parentId, space: stageFolder.space, ownerId: stageFolder.ownerId }, takenBy.get(parentId)!);

@@ -46,6 +46,8 @@ export interface Client360 {
   contactId: string | null;
   flags: string[];
   owner: PersonRef | null;
+  /** The client's folder in the drive (main case), or null. */
+  driveFolderId?: string | null;
   partner: { id: string; name: string } | null;
   agent: { id: string; code: string; name: string | null } | null;
   nextAppointment: { caseId: string; number: string; at: string; place: string | null } | null;

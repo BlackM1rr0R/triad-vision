@@ -11,9 +11,9 @@ import { TONE_CLASS, TONE_TEXT } from '@/components/ui/status';
 import { PROCESSING_STAGES, STAGE_TONE, stageLabel, useProcessingFolders, type ProcessingFilters, type ProcessingFolder, type ProcessingStage, type StageCounts } from '@/components/caseProcessing/api';
 import { SendReadyDialog } from '../clientFolders/Dialogs';
 import type { FolderTarget } from '../clientFolders/api';
-import { endCaseDrag, flowActions, startCaseDrag, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
+import { endCaseDrag, startCaseDrag, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
 import type { DriveItem } from '../types';
-import { ACTION_ICON, STAGE_ICON } from './icons';
+import { ACTION_ICON, STAGE_ICON, driveFlowActions } from './icons';
 import { WorkflowHelp } from './Help';
 import { StageTree, type StageFolder } from './stageFolders';
 
@@ -21,7 +21,7 @@ const BASE = '/workspace/drive';
 const folderHref = (id: string) => `${BASE}/f/${encodeURIComponent(id)}`;
 const workflowHref = (stage: ProcessingStage, mine: boolean) => `${BASE}/workflow/${stage}${mine ? '?mine=1' : ''}`;
 
-const targetOf = (f: ProcessingFolder): FlowTarget => ({ caseId: f.caseId, name: f.clientName, number: f.number, stage: f.processing.stage, assigneeId: f.processing.assignee?.id ?? null });
+const targetOf = (f: ProcessingFolder): FlowTarget => ({ caseId: f.caseId, name: f.clientName, number: f.number, stage: f.processing.stage, assigneeId: f.processing.assignee?.id ?? null, hasPartner: !!f.partner });
 
 /** A stage tab: opens the stage, and accepts dropped rows (and drive client folders). */
 const StageTab = ({
@@ -77,7 +77,7 @@ const Row = ({ f, onNavigate, onAct, onSend }: { f: ProcessingFolder; onNavigate
   const { tr } = useL10n();
   const { user } = useAuth();
   const x = targetOf(f);
-  const actions = flowActions(f.processing.stage, x.assigneeId, user?.id, x.closed);
+  const actions = driveFlowActions(f.processing.stage, x.assigneeId, user?.id, x.closed);
   const mine = !!x.assigneeId && x.assigneeId === user?.id;
   const href = folderHref(f.folderId);
   return (

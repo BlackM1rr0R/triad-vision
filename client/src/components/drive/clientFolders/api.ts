@@ -81,14 +81,34 @@ export const moveStages = async (cases: string[], stage: ProcessingStage, assign
 /** "Geri qaytar": the cases leave the workflow, their workflow documents go back to the client folders. */
 export const returnToClient = async (cases: string[], note: string | null) => (await api.post<BulkResponse>('/admin/client-folders/return', { cases, note })).data;
 
-export const sendReady = async (cases: string[], resend: boolean) => (await api.post<BulkResponse>('/admin/client-folders/ready-docs/send', { cases, resend })).data;
+/** Several folders: their Fertig files; one folder with `fileIds`: exactly the picked files (server checks they belong to that case). */
+export const sendReady = async (cases: string[], resend: boolean, fileIds?: string[]) =>
+  (await api.post<BulkResponse>('/admin/client-folders/ready-docs/send', { cases, resend, ...(fileIds ? { fileIds } : {}) })).data;
+
+/** Where a sendable file lives: a stage folder of the workflow or the client's own drive folder. */
+export type FileSource = 'DONE' | 'IN_PROGRESS' | 'WRITTEN' | 'CLIENT';
+
+export interface ReadyFileView {
+  nodeId: string;
+  name: string;
+  path: string;
+  version: number;
+  size: number | null;
+  mimeType: string | null;
+  updatedAt: string;
+  sent: boolean;
+  source: FileSource;
+}
 
 export interface ReadyDocsView {
   caseId: string;
   number: string;
   stage: ProcessingStage | null;
   folder: { id: string; name: string } | null;
-  files: { nodeId: string; name: string; path: string; version: number; size: number | null; mimeType: string | null; updatedAt: string; sent: boolean }[];
+  /** The Fertig folder's files. */
+  files: ReadyFileView[];
+  /** Everything else that can be picked: the case's other workflow folders and the client's own folder (Arbeitsvertrag, …). */
+  others: ReadyFileView[];
   newCount: number;
   sends: { id: string; at: string; by: string | null; fileCount: number; newCount: number; resend: boolean }[];
 }

@@ -1380,9 +1380,9 @@ const caseContracts = async (ctx: Ctx): Promise<Source[]> => {
         ...common,
         id: `contract_triad:${w.requestId}`,
         kind: 'contract_triad',
-        // The client already signed (V2) or waits for the invitation (old flow): within a working day.
-        priority: 'HIGH',
-        dueAt: new Date(w.since.getTime() + DAY),
+        // The client already signed (V2): everything that waits for us is urgent and due today (top of the queue).
+        priority: 'URGENT',
+        dueAt: new Date(ctx.c.endOfToday.getTime() - 1),
         actions: [{ key: 'signContract', label: 'signContract', type: 'link', href, primary: true }],
       };
     }
@@ -1390,8 +1390,8 @@ const caseContracts = async (ctx: Ctx): Promise<Source[]> => {
       ...common,
       id: `contract_approve:${c.id}:${w.step}`,
       kind: 'contract_approve',
-      priority: 'HIGH',
-      dueAt: new Date(w.since.getTime() + 2 * DAY),
+      priority: 'URGENT',
+      dueAt: new Date(ctx.c.endOfToday.getTime() - 1),
       actions: [
         { key: 'approveContract', label: 'approveContract', type: 'api', method: 'POST', endpoint: `/admin/case-contracts/cases/${c.id}/approve`, body: { step: w.step }, confirm: true, primary: true },
         ...(w.finalDocumentId ? [{ key: 'view', label: 'view', type: 'url' as const, href: `/api/files/${w.finalDocumentId}` }] : []),

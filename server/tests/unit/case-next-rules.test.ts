@@ -184,11 +184,20 @@ describe('next step: two-step contracts V2 (lib/caseContracts/turn)', () => {
     expect(contractProgress(f)).toMatch(/client HAS signed; Triad Vision must sign/);
   });
 
-  it('Əmək müqaviləsi approved, no İş müqaviləsi documents yet — send them (not "confirm the contract")', () => {
+  it('Əmək müqaviləsi approved (the only contract) — prepare the German documents in the drive workflow, or move the case on', () => {
     const f = signed({ contractTurn: 'STAFF', workContract: 'NOT_SENT' });
-    expect(top(f)).toMatchObject({ code: 'SEND_WORK_CONTRACT', tone: 'action', actions: [openContract] });
+    const step = top(f);
+    expect(step).toMatchObject({ code: 'SEND_WORK_CONTRACT', tone: 'action' });
+    expect(step.actions.map((a) => a.id)).toEqual(['OPEN_DRIVE_WORKFLOW', 'GO_EMBASSY_DOCS']);
+    expect(step.actions[0]).toMatchObject({ kind: 'link', href: '/workspace/drive' });
+    expect(step.actions[1]).toMatchObject({ kind: 'transition', request: { body: { action: 'CONFIRM_CONTRACT' } } });
     expect(codes(f)).not.toContain('CONFIRM_CONTRACT');
-    expect(contractProgress(f)).toMatch(/upload and send the work contract/);
+    expect(contractProgress(f)).toMatch(/prepare the German documents/);
+  });
+
+  it('the client has to sign: never an empty next step (AWAIT_CLIENT_SIGN), a chase after 3 days', () => {
+    expect(codes(sent({ contractTurn: 'CLIENT' }))).toEqual(['AWAIT_CLIENT_SIGN']);
+    expect(codes(sent({ contractTurn: 'CLIENT', daysInStatus: 4, statusSince: ago(4), lastClientActivityAt: ago(1) }))).toEqual(expect.arrayContaining(['AWAIT_CLIENT_SIGN', 'CONTRACT_NOT_SIGNED']));
   });
 
   it('İş müqaviləsi documents sent — the client signs (info, reminders later; no "status overdue")', () => {

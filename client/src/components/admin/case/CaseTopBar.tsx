@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
+  Ban,
   CalendarClock,
   ClipboardList,
   Copy,
@@ -26,11 +27,14 @@ import { CallButton } from '@/components/calls/CallButton';
 import { StatusPill } from '@/components/ui/Badge';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Menu, type MenuItem } from '@/components/ui/Menu';
+import { FINAL } from '@/lib/caseStatus';
+import { AttentionBadge, attentionOfBall } from '@/components/caseNext/AttentionBadge';
 import { fmtDate, fmtDateTime, fullName, statusLabel, waLink } from '../labels';
 import { CASES_LIST_QS_KEY } from '../caseMorph';
 import type { CaseStats } from '../types';
 
 const HeaderChips = lazy(() => import('./HeaderChips'));
+const CancelCaseDialog = lazy(() => import('./CancelCaseDialog'));
 const TimerButton = lazy(() => import('@/components/timeCare/TimerButton'));
 
 export type GoTo = (section: string, opts?: { focus?: string }) => void;
@@ -80,6 +84,7 @@ export const CaseTopBar = ({
   const relation = (c as CaseDetail & { relation?: string | null }).relation ?? null;
   const client = c.client;
   const name = fullName(client);
+  const [cancelling, setCancelling] = useState(false);
 
   const items: MenuItem[] = [
     { label: t('caseLayout.menu.edit'), icon: Pencil, onSelect: onEdit },
@@ -102,6 +107,8 @@ export const CaseTopBar = ({
           () => undefined,
         ),
     },
+    // Same dialog / endpoint as "Müraciəti ləğv et" in the action panel and the quick drawer.
+    ...(!FINAL.includes(c.status) ? ['separator' as const, { label: t('admin.case.action.cancelCase'), icon: Ban, danger: true, onSelect: () => setCancelling(true) }] : []),
   ];
 
   return (
@@ -125,6 +132,7 @@ export const CaseTopBar = ({
               {c.number}
             </h1>
             <StatusPill domain="case" status={c.status} label={statusLabel(c.status)} />
+            <AttentionBadge kind={attentionOfBall((c as CaseDetail & { ballInCourt?: { side: string; reason: string } | null }).ballInCourt)} />
             <span className="hidden flex-wrap items-center gap-1.5 sm:inline-flex">
               <Suspense fallback={null}>
                 <HeaderChips caseId={c.id} clientId={client.id} relation={relation} onOpenData={() => goTo('case-data')} />
@@ -178,6 +186,11 @@ export const CaseTopBar = ({
         </div>
       </div>
     </header>
+      {cancelling && (
+        <Suspense fallback={null}>
+          <CancelCaseDialog caseId={c.id} open onClose={() => setCancelling(false)} />
+        </Suspense>
+      )}
       {/* Phones: chips + timer get their own row, below the sticky part (keeps the sticky header short). */}
       <div className="-mt-3 flex flex-wrap items-center gap-1.5 empty:hidden sm:hidden">
         <Suspense fallback={null}>

@@ -4,14 +4,14 @@ import clsx from 'clsx';
 import { HelpCircle, UserCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { STAGE_TONE, PROCESSING_STAGES, isProcessingStage, stageLabel, useProcessingFolders, type ProcessingStage } from '@/components/caseProcessing/api';
-import { STAGE_KIND, flowActions, targetOfItem, useFlowActions, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
+import { STAGE_KIND, needsPartner, targetOfItem, useFlowActions, useStageDrop, type FlowAction, type FlowTarget } from '@/components/caseProcessing/flow';
 import { TONE_TEXT } from '@/components/ui/status';
 import type { MenuEntry } from '../ContextMenu';
 import type { ToolAction } from '../Toolbar';
 import type { DriveItem, DriveLocation } from '../types';
 import { ProcessingFolderBar } from './FolderBar';
 import { WorkflowView } from './WorkflowView';
-import { ACTION_ICON, STAGE_ICON } from './icons';
+import { ACTION_ICON, STAGE_ICON, driveFlowActions } from './icons';
 import { WorkflowHelp } from './Help';
 import { useStageFolders } from './stageFolders';
 
@@ -142,7 +142,7 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
 
   // ── actions on a client folder ──
   const actionLabel = (a: FlowAction) => t(`driveProcessing.actions.${a}`);
-  const actionsOf = (x: FlowTarget) => flowActions(x.stage, x.assigneeId, myId, x.closed);
+  const actionsOf = (x: FlowTarget) => driveFlowActions(x.stage, x.assigneeId, myId, x.closed);
 
   const menuEntries = (list: DriveItem[] | null, trail?: string[]): MenuEntry[] => [...caseMenuEntries(list), ...folders.menuEntries(list, trail)];
 
@@ -155,7 +155,9 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     return [
       { kind: 'separator', id: 'proc-s' },
       { kind: 'heading', id: 'proc-h', label: x.stage ? `${t('driveProcessing.group')} · ${stageLabel(x.stage)}` : t('driveProcessing.group') },
-      ...acts.map((a): MenuEntry => ({ id: `proc-${a}`, label: actionLabel(a), icon: ACTION_ICON[a], danger: a === 'return', onSelect: () => flow.act(a, [x]) })),
+      ...acts.map(
+        (a): MenuEntry => ({ id: `proc-${a}`, label: actionLabel(a), icon: ACTION_ICON[a], danger: a === 'return', disabled: needsPartner(x, a), title: needsPartner(x, a) ? t('driveProcessing.partnerFirst') : undefined, onSelect: () => flow.act(a, [x]) }),
+      ),
     ];
   };
 
@@ -166,7 +168,22 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     const x = targetOfItem(list[0]);
     if (!x) return [];
     const [first] = actionsOf(x);
-    return first ? [{ id: `proc-${first}`, icon: ACTION_ICON[first], label: actionLabel(first), onClick: () => flow.act(first, [x]), primary: true, danger: first === 'return' }] : [];
+    // A labelled button (icon + short text, like "Partnyor"): an icon alone does not say what it does.
+    return first
+      ? [
+          {
+            id: `proc-${first}`,
+            icon: ACTION_ICON[first],
+            label: actionLabel(first),
+            onClick: () => flow.act(first, [x]),
+            primary: true,
+            labelled: true,
+            danger: first === 'return',
+            disabled: needsPartner(x, first),
+            title: needsPartner(x, first) ? t('driveProcessing.partnerFirst') : undefined,
+          },
+        ]
+      : [];
   };
 
   /** "İş axınına kopyala ▾" in the command bar, next to the selection actions. */

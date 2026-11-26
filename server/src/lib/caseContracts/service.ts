@@ -33,6 +33,8 @@ import {
   stepOfKind,
   stepState,
   triadFirstSigners,
+  workRetired,
+  WORK_RETIRED,
   type Step,
   type StepState,
 } from './flow.js';
@@ -143,7 +145,7 @@ export const staffOverview = async (caseId: string, viewer: { id: string; role: 
         step,
         state: states[step],
         driveFolder: DRIVE_FOLDER[step],
-        blockedReason: sendBlockReason(step, states, c.status),
+        blockedReason: workRetired(step, states) ? WORK_RETIRED : sendBlockReason(step, states, c.status),
         templates: templates.filter((t) => STEP_TEMPLATE_KINDS[step].includes(t.kind)),
         request: r
           ? { ...requestView(r), approvedBy: r.approvedById ? (names.get(r.approvedById) ?? null) : null, driveFolderNodeId: r.driveNodeId ? (parents.get(r.driveNodeId) ?? null) : null }
@@ -185,6 +187,7 @@ const safeBase = (s: string) =>
 export const sendStep = async (caseId: string, input: SendInput, actor: Actor, meta: Meta = {}) => {
   const c = await loadContractCase(caseId);
   const steps = byStep(await caseRequests(caseId));
+  if (workRetired(input.step, statesOf(steps))) throw conflict(WORK_RETIRED);
   const block = sendBlockReason(input.step, statesOf(steps), c.status);
   if (block) throw conflict(block);
 
@@ -330,6 +333,12 @@ export const approveStep = async (caseId: string, step: Step, actor: Actor) => {
  * Hook from caseFlow.staffConfirmContract ("Confirm contract" on the case / bulk): a signed, not yet approved
  * Əmək müqaviləsi counts as approved by that step. Never throws.
  */
+/** True when the case has no two-step Əmək müqaviləsi request, or its latest one is approved (both signed + approved). */
+export const labourContractApproved = async (caseId: string) => {
+  const r = byStep(await caseRequests(caseId)).LABOUR.latest;
+  return !r || stepState(r) === 'APPROVED';
+};
+
 export const onContractConfirmed = async (caseId: string, actorId: string) => {
   try {
     const r = byStep(await caseRequests(caseId)).LABOUR.latest;
@@ -498,6 +507,7 @@ export const uploadStep = async (caseId: string, input: UploadInput, actor: Acto
   const c = await loadContractCase(caseId);
   const steps = byStep(await caseRequests(caseId));
   const states = statesOf(steps);
+  if (workRetired(input.step, states)) throw conflict(WORK_RETIRED);
   // İş müqaviləsi: more documents may join the set until it is approved.
   const block = sendBlockReason(input.step, input.step === 'WORK' && states.WORK !== 'APPROVED' ? { ...states, WORK: 'NOT_SENT' } : states, c.status);
   if (block) throw conflict(block);
@@ -681,14 +691,16 @@ const v2Completed = async (requestId: string, caseId: string, step: Step, number
 };
 
 /**
- * V2 case whose Əmək müqaviləsi is done but whose İş müqaviləsi is not approved yet: "Confirm contract"
- * (caseFlow.staffConfirmContract) must not skip it — the İş müqaviləsi approval moves the case on.
+ * Legacy only: a V2 case that already has an İş müqaviləsi set (sent before the contract was retired) which is not
+ * approved yet — "Confirm contract" (caseFlow.staffConfirmContract) must not skip it. A case without one (the normal
+ * case now) is never blocked: staff move it on with "Confirm contract" / by sending the German documents.
  */
 export const workContractPending = async (caseId: string) => {
   const steps = byStep(await caseRequests(caseId));
   const labour = steps.LABOUR.latest;
   if (!labour || labour.contractFlow !== FLOW_V2 || !labour.approvedAt) return false;
-  return workSetState(workSetOf(steps)) !== 'APPROVED';
+  const set = workSetOf(steps);
+  return set.length > 0 && workSetState(set) !== 'APPROVED';
 };
 
 /** State of the İş müqaviləsi of a case (V2 set or the old single request) — the client's status line. */

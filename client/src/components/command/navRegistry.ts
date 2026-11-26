@@ -152,7 +152,7 @@ export interface StaffNavItem {
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
-  badge?: 'today' | 'training' | 'inbox' | 'browserErrors';
+  badge?: 'today' | 'training' | 'inbox' | 'browserErrors' | 'cases';
   /** Optional feature (System → Modules); hidden when switched off. */
   module?: ModuleKey;
   /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
@@ -243,7 +243,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('dashboard', '/admin', LayoutDashboard, 'today', { end: true }),
   a('workspace', '/workspace/home', LayoutGrid, 'today'),
   // İşlər
-  a('cases', '/admin/cases', FolderKanban, 'work'),
+  a('cases', '/admin/cases', FolderKanban, 'work', { badge: 'cases' }), // badge = open cases waiting for staff action (client signed, documents to review)
   a('review', '/admin/review', ScanEye, 'work'), // fast document review queue (J / K / A / R / S / Z)
   a('kanban', '/admin/kanban', KanbanSquare, 'work'),
   a('tasks', '/admin/tasks', ListTodo, 'work'),

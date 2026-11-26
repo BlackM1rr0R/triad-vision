@@ -34,7 +34,10 @@ const clientFolder = async (a: Agent) => {
   const r = await roots(a);
   const { user } = await createClient({ firstName: 'Aysel', lastName: 'Məmmədova' });
   const folder = await mkdir(a, r.cases.id, uniq('Aysel Məmmədova · '));
-  const kase = await prisma.case.create({ data: { number: uniq('TV-'), clientId: user.id, profession: 'Sürücü', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', driveFolderId: folder.id } });
+  // A client folder enters the workflow only with a partner.
+  const kase = await prisma.case.create({
+    data: { number: uniq('TV-'), clientId: user.id, profession: 'Sürücü', status: 'DOCUMENTS_REVIEW', visaType: 'WORK', driveFolderId: folder.id, partnerId: (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id },
+  });
   const pass = await mkdir(a, folder.id, 'Reisepass');
   const passPdf = await upload(a, pass.id, 'Pass.pdf', 'pass page');
   const antrag = await upload(a, folder.id, 'Antrag.pdf', 'antrag');

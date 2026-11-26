@@ -36,6 +36,9 @@ describe('bufferMatches', () => {
   it.each([
     ['application/pdf', PDF, true],
     ['application/pdf', PNG, false],
+    ['application/pdf', Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('\r\n'), PDF]), true], // junk before the header (BOM / blank line / wrapper) is fine
+    ['application/pdf', Buffer.concat([Buffer.alloc(1100, 0x20), PDF]), false], // but not beyond the first 1024 bytes
+    ['application/pdf', Buffer.from('<html>%PDF</html>'), false],
     ['image/png', PNG, true],
     ['image/jpeg', Buffer.from([0xff, 0xd8, 0xff, 0xdb]), true],
     ['image/webp', Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBP')]), true],

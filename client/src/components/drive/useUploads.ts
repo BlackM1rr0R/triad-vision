@@ -132,7 +132,12 @@ export const useUploads = (maxBytes: number, askConflict: AskConflict, options: 
         }
       } catch (err) {
         if (cancelled.current.has(task.id) || (err as { name?: string })?.name === 'CanceledError') patch(task.id, { status: 'cancelled' });
-        else patch(task.id, { status: 'error', error: driveError(err) });
+        else {
+          // The panel lists the error too, but a failed upload must also be seen when the panel is folded away.
+          const reason = driveError(err);
+          patch(task.id, { status: 'error', error: reason });
+          toast.error(`${task.file.name}: ${reason}`);
+        }
       }
     }
     running.current = false;
@@ -159,6 +164,7 @@ export const useUploads = (maxBytes: number, askConflict: AskConflict, options: 
           error: tooBig ? t('tooLarge', { mb: Math.round(maxBytes / 1024 / 1024) }) : unsupported ? t('unsupported') : undefined,
         };
       });
+      for (const f of fresh) if (f.status === 'error') toast.error(`${f.file.name}: ${f.error}`);
       setTasks((list) => [...list, ...fresh]);
       queue.current.push(...fresh.filter((f) => f.status === 'queued'));
       void run();

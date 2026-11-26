@@ -25,7 +25,7 @@ export const QuickContractActions = ({ caseId }: { caseId: string }) => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const refreshCase = useCaseRefresh(caseId);
-  const q = useQuery({ queryKey: staffKey(caseId), queryFn: async () => (await api.get<StaffOverview>(`/admin/case-contracts/cases/${caseId}`)).data });
+  const q = useQuery({ queryKey: staffKey(caseId), queryFn: async () => (await api.get<StaffOverview>(`/admin/case-contracts/cases/${caseId}`)).data, refetchOnWindowFocus: true });
   const [signing, setSigning] = useState<Step | null>(null);
   const [approving, setApproving] = useState<Step | null>(null);
   const [returning, setReturning] = useState<{ step: Step; doc: StaffDoc | null } | null>(null);

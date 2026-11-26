@@ -55,7 +55,7 @@ export const client360 = async (userId: string, now = new Date()) => {
     where: { clientId: userId },
     orderBy: [{ createdAt: 'desc' }],
     select: {
-      id: true, number: true, status: true, profession: true, visaType: true, createdAt: true, updatedAt: true, appointmentAt: true, appointmentPlace: true, parentCaseId: true,
+      id: true, number: true, status: true, profession: true, visaType: true, createdAt: true, updatedAt: true, appointmentAt: true, appointmentPlace: true, parentCaseId: true, driveFolderId: true,
       assignedStaff: staffSel, partner: { select: { id: true, name: true } }, company: { select: { id: true, name: true } },
       visaCategory: { select: { title: true, visaLabel: true } },
     },
@@ -113,6 +113,8 @@ export const client360 = async (userId: string, now = new Date()) => {
     flags,
     owner: primary?.assignedStaff ?? null,
     partner: user.ownerPartner ?? primary?.partner ?? null,
+    // The client's folder in the drive (it sits under Partner/<name> once a partner is assigned): "Partnyor: X" links to it.
+    driveFolderId: primary?.driveFolderId ?? null,
     agent: user.referredByAgent ? { id: user.referredByAgent.id, code: user.referredByAgent.code, name: name(user.referredByAgent.user) } : null,
     nextAppointment: nextAppointment ? { caseId: nextAppointment.id, number: nextAppointment.number, at: nextAppointment.appointmentAt, place: nextAppointment.appointmentPlace } : null,
     counts: {

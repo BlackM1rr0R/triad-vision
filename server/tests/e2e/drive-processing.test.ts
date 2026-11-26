@@ -12,7 +12,7 @@ import { expectStatus } from '../helpers/workflow';
 
 const roots = async (a: Agent) => expectStatus(await a.get('/api/drive/roots'), 200).body;
 
-const makeCase = async (parentId: string, opts: { firstName?: string; status?: string; assignedStaffId?: string; updatedAt?: Date } = {}) => {
+const makeCase = async (parentId: string, opts: { firstName?: string; status?: string; assignedStaffId?: string; updatedAt?: Date; noPartner?: boolean } = {}) => {
   const { user: client } = await createClient({ firstName: opts.firstName ?? 'Aysel', lastName: 'Məmmədova' });
   const folder = await prisma.driveNode.create({ data: { space: 'SHARED', kind: 'FOLDER', name: uniq(`${opts.firstName ?? 'Aysel'} · `), parentId } });
   const c = await prisma.case.create({
@@ -24,6 +24,8 @@ const makeCase = async (parentId: string, opts: { firstName?: string; status?: s
       visaType: 'WORK',
       driveFolderId: folder.id,
       assignedStaffId: opts.assignedStaffId ?? null,
+      // A case enters the workflow only with a partner (409 WORKFLOW_PARTNER_REQUIRED).
+      partnerId: opts.noPartner ? null : (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id,
     },
   });
   if (opts.updatedAt) await prisma.$executeRaw`UPDATE \`Case\` SET updatedAt = ${opts.updatedAt} WHERE id = ${c.id}`;

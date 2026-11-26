@@ -5,7 +5,7 @@ const az = {
   caseContracts: {
     title: 'Müqavilələr',
     intro:
-      'İki müqavilə ardıcıllıqla göndərilir. Əvvəlcə Əmək müqaviləsi (Triad Vision ilə müştəri arasında). O, hər iki tərəfdən imzalanıb siz təsdiqlədikdən sonra İş müqaviləsi. Hər müqaviləni əvvəlcə Triad Vision imzalayır, sonra müştəri, sonda siz təsdiqləyirsiniz. İşəgötürən bu müqavilələrdə iştirak etmir.',
+      'Əmək müqaviləsi (Triad Vision ilə müştəri arasında) müraciətin yeganə müqaviləsidir. Siz öz PDF-inizi yükləyirsiniz, əvvəlcə müştəri, sonra Triad Vision imzalayır və müqavilə təsdiqlənir. Sonra, ödəniş olduqda, alman sənədləri (Arbeitsvertrag və s.) İş axınında hazırlanıb müştəriyə göndərilir. İşəgötürən müqavilədə iştirak etmir.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Triad Vision ilə müştəri arasında. Birinci müqavilə.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'İş müqaviləsi. Əmək müqaviləsi təsdiqləndikdən sonra göndərilir.', number: '2' },
@@ -23,6 +23,7 @@ const az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Hələ göndərmək olmaz: əvvəlcə Əmək müqaviləsi Triad Vision və müştəri tərəfindən imzalanmalı və siz onu təsdiqləməlisiniz.',
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi ləğv edilib: müqavilə yalnız Əmək müqaviləsidir. Alman sənədlərini (Arbeitsvertrag və s.) İş axınında hazırlayıb «Hazır sənədləri müştəriyə göndər» ilə göndərin.',
       ALREADY_APPROVED: 'Bu müqavilə imzalanıb və təsdiqlənib.',
       CASE_CLOSED: 'Müraciət bağlıdır, müqavilə göndərmək olmaz.',
       NOT_CONTRACT_STEP: 'Əmək müqaviləsi müraciətin müqavilə mərhələsində göndərilir: əvvəlcə müştəri ilkin sənədləri yoxlamaya göndərməlidir.',
@@ -69,11 +70,12 @@ const az = {
     approveDialog: {
       title: '{{name}} təsdiqlənsin?',
       text: 'Hər iki imzanı və PDF-i yoxlamısınız? Təsdiqdən sonra müştəriyə bildiriş gedir.',
-      labourNext: 'Bundan sonra İş müqaviləsini göndərmək mümkün olacaq. Müraciət «səfirlik sənədləri» mərhələsinə keçir.',
+      labourNext: 'Bundan sonra ödənişi gözləyin: ödənişdən sonra alman sənədlərini İş axınında hazırlayıb müştəriyə göndərin. Müraciət «səfirlik sənədləri» mərhələsinə keçir.',
       done: 'Təsdiqləndi',
     },
     cancel: 'İmtina',
     errors: {
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi artıq göndərilmir: müqavilə yalnız Əmək müqaviləsidir.',
       LABOUR_NOT_APPROVED: 'Əvvəlcə Əmək müqaviləsi imzalanmalı və təsdiqlənməlidir.',
       ALREADY_APPROVED: 'Bu müqavilə artıq təsdiqlənib.',
       CASE_CLOSED: 'Müraciət bağlıdır.',
@@ -132,7 +134,7 @@ const az = {
         done: 'Geri qaytarıldı. Müştəriyə səbəb göndərildi.',
       },
       approveWork: 'Bütün sənədləri yoxlamısınız? Təsdiqdən sonra müştəri işəgötürəni görür və müraciət səfirlik sənədləri mərhələsinə keçir.',
-      portalIntro: 'Əvvəlcə Əmək müqaviləsini siz imzalayırsınız, sonra Triad Vision. Sonra İş müqaviləsinin sənədlərini imzalayırsınız. Triad Vision onları yoxlayıb təsdiqləyir.',
+      portalIntro: 'Əvvəlcə Əmək müqaviləsini siz imzalayırsınız, sonra Triad Vision, və müqavilə təsdiqlənir. Almaniya üçün sənədləriniz (iş müqaviləsi və s.) ödənişdən sonra ayrıca hazırlanıb sizə göndəriləcək.',
       portalReturned: 'Geri qaytarıldı: {{reason}}',
       portalWorkDocs: 'İmzalanacaq sənədlər',
       errors: {
@@ -153,7 +155,7 @@ const az = {
     },
     portal: {
       title: 'Müqavilələriniz',
-      intro: 'İki müqavilə var. Əvvəlcə Triad Vision imzalayır, sonra siz. Sonra Triad Vision yoxlayıb təsdiqləyir.',
+      intro: 'Müraciətin bir müqaviləsi var (Əmək müqaviləsi). Əvvəlcə siz imzalayırsınız, sonra Triad Vision. Sonra müqavilə təsdiqlənir.',
       states: {
         NOT_SENT: 'Hələ göndərilməyib',
         TRIAD_TO_SIGN: 'Triad Vision imzalayır. Sonra sizə bildiriş gələcək.',
@@ -176,7 +178,7 @@ const de: typeof az = {
   caseContracts: {
     title: 'Verträge',
     intro:
-      'Zwei Verträge nacheinander: zuerst der Əmək müqaviləsi (zwischen Triad Vision und dem Kunden), danach — wenn er von beiden Seiten unterschrieben und von Ihnen bestätigt ist — der İş müqaviləsi (Arbeitsvertrag). Bei beiden unterschreibt zuerst Triad Vision, dann der Kunde, zuletzt bestätigen Sie. Der Arbeitgeber ist an diesen Verträgen nicht beteiligt.',
+      'Der Əmək müqaviləsi (zwischen Triad Vision und dem Kunden) ist der einzige Vertrag des Antrags. Sie laden Ihr eigenes PDF hoch, zuerst unterschreibt der Kunde, dann Triad Vision, und der Vertrag ist bestätigt. Danach, nach der Zahlung, werden die deutschen Unterlagen (Arbeitsvertrag usw.) im Arbeitsablauf vorbereitet und an den Kunden gesendet. Der Arbeitgeber ist am Vertrag nicht beteiligt.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Vertrag zwischen Triad Vision und dem Kunden. Der erste Vertrag.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'Arbeitsvertrag. Erst nach Bestätigung des Əmək müqaviləsi.', number: '2' },
@@ -194,6 +196,7 @@ const de: typeof az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Noch nicht möglich: Zuerst muss der Əmək müqaviləsi von Triad Vision und dem Kunden unterschrieben und von Ihnen bestätigt sein.',
+      WORK_CONTRACT_RETIRED: 'Der İş müqaviləsi entfällt: der einzige Vertrag ist der Əmək müqaviləsi. Die deutschen Unterlagen (Arbeitsvertrag usw.) im Arbeitsablauf vorbereiten und mit „Fertige Dokumente an den Kunden senden“ schicken.',
       ALREADY_APPROVED: 'Dieser Vertrag ist unterschrieben und bestätigt.',
       CASE_CLOSED: 'Der Antrag ist abgeschlossen; kein Vertrag möglich.',
       NOT_CONTRACT_STEP: 'Der Əmək müqaviləsi wird im Vertragsschritt des Antrags gesendet: Zuerst muss der Kunde die ersten Unterlagen zur Prüfung einreichen.',
@@ -240,11 +243,12 @@ const de: typeof az = {
     approveDialog: {
       title: '{{name}} bestätigen?',
       text: 'Haben Sie beide Unterschriften und das PDF geprüft? Nach der Bestätigung wird der Kunde benachrichtigt.',
-      labourNext: 'Danach kann der İş müqaviləsi gesendet werden. Der Antrag geht in die Phase „Botschaftsunterlagen“.',
+      labourNext: 'Danach die Zahlung abwarten: nach der Zahlung die deutschen Unterlagen im Arbeitsablauf vorbereiten und an den Kunden senden. Der Antrag geht in die Phase „Botschaftsunterlagen“.',
       done: 'Bestätigt',
     },
     cancel: 'Abbrechen',
     errors: {
+      WORK_CONTRACT_RETIRED: 'Der İş müqaviləsi wird nicht mehr gesendet: der einzige Vertrag ist der Əmək müqaviləsi.',
       LABOUR_NOT_APPROVED: 'Zuerst muss der Əmək müqaviləsi unterschrieben und bestätigt sein.',
       ALREADY_APPROVED: 'Dieser Vertrag ist bereits bestätigt.',
       CASE_CLOSED: 'Der Antrag ist abgeschlossen.',
@@ -303,7 +307,7 @@ const de: typeof az = {
         done: 'Zurückgegeben. Der Kunde hat den Grund erhalten.',
       },
       approveWork: 'Haben Sie alle Dokumente geprüft? Nach der Bestätigung sieht der Kunde den Arbeitgeber und der Antrag geht zu den Botschaftsdokumenten.',
-      portalIntro: 'Zuerst unterschreiben Sie den Əmək müqaviləsi, danach Triad Vision. Dann unterschreiben Sie die Dokumente des İş müqaviləsi; Triad Vision prüft und bestätigt sie.',
+      portalIntro: 'Zuerst unterschreiben Sie den Əmək müqaviləsi, danach Triad Vision, und der Vertrag wird bestätigt. Ihre deutschen Unterlagen (Arbeitsvertrag usw.) werden nach der Zahlung gesondert vorbereitet und Ihnen gesendet.',
       portalReturned: 'Zurückgegeben: {{reason}}',
       portalWorkDocs: 'Zu unterschreibende Dokumente',
       errors: {
@@ -324,7 +328,7 @@ const de: typeof az = {
     },
     portal: {
       title: 'Ihre Verträge',
-      intro: 'Es gibt zwei Verträge. Zuerst unterschreibt Triad Vision, dann Sie. Danach prüft und bestätigt Triad Vision.',
+      intro: 'Der Antrag hat einen Vertrag (Əmək müqaviləsi). Zuerst unterschreiben Sie, dann Triad Vision. Danach wird der Vertrag bestätigt.',
       states: {
         NOT_SENT: 'Noch nicht gesendet',
         TRIAD_TO_SIGN: 'Triad Vision unterschreibt. Danach erhalten Sie eine Nachricht.',
@@ -347,7 +351,7 @@ const en: typeof az = {
   caseContracts: {
     title: 'Contracts',
     intro:
-      'Two contracts, one after the other: first the Əmək müqaviləsi (between Triad Vision and the client); once both sides have signed it and you have approved it, the İş müqaviləsi (work contract). For both, Triad Vision signs first, then the client, and you approve at the end. The employer takes no part in these contracts.',
+      'The Əmək müqaviləsi (between Triad Vision and the client) is the only contract of the application. You upload your own PDF, the client signs first, then Triad Vision, and the contract is approved. After that, once the client has paid, the German documents (employment contract etc.) are prepared in the drive workflow and sent to the client. The employer takes no part in the contract.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Between Triad Vision and the client. The first contract.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'Work contract. Sent after the Əmək müqaviləsi is approved.', number: '2' },
@@ -365,6 +369,7 @@ const en: typeof az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Not yet: the Əmək müqaviləsi must first be signed by Triad Vision and the client and approved by you.',
+      WORK_CONTRACT_RETIRED: 'The İş müqaviləsi is retired: the only contract is the Əmək müqaviləsi. Prepare the German documents (employment contract etc.) in the drive workflow and send them with “Send finished documents to the client”.',
       ALREADY_APPROVED: 'This contract is signed and approved.',
       CASE_CLOSED: 'The application is closed; no contract can be sent.',
       NOT_CONTRACT_STEP: 'The Əmək müqaviləsi is sent in the contract step of the case: the client must first hand in the initial documents for review.',
@@ -411,11 +416,12 @@ const en: typeof az = {
     approveDialog: {
       title: 'Approve the {{name}}?',
       text: 'Have you checked both signatures and the PDF? The client is notified after approval.',
-      labourNext: 'Then the İş müqaviləsi can be sent. The application moves to the “embassy documents” step.',
+      labourNext: 'Next, wait for the payment: after it, prepare the German documents in the drive workflow and send them to the client. The application moves to the “embassy documents” step.',
       done: 'Approved',
     },
     cancel: 'Cancel',
     errors: {
+      WORK_CONTRACT_RETIRED: 'The İş müqaviləsi is no longer sent: the only contract is the Əmək müqaviləsi.',
       LABOUR_NOT_APPROVED: 'The Əmək müqaviləsi must be signed and approved first.',
       ALREADY_APPROVED: 'This contract is already approved.',
       CASE_CLOSED: 'The application is closed.',
@@ -474,7 +480,7 @@ const en: typeof az = {
         done: 'Returned. The client got the reason.',
       },
       approveWork: 'Have you checked every document? After approval the client sees the employer and the application moves on to the embassy documents.',
-      portalIntro: 'First you sign the Əmək müqaviləsi, then Triad Vision. Then you sign the documents of the İş müqaviləsi; Triad Vision checks and approves them.',
+      portalIntro: 'First you sign the Əmək müqaviləsi, then Triad Vision, and the contract is approved. Your German documents (employment contract etc.) are prepared separately after payment and sent to you.',
       portalReturned: 'Returned: {{reason}}',
       portalWorkDocs: 'Documents to sign',
       errors: {
@@ -495,7 +501,7 @@ const en: typeof az = {
     },
     portal: {
       title: 'Your contracts',
-      intro: 'There are two contracts. Triad Vision signs first, then you. Then Triad Vision checks and approves.',
+      intro: 'The application has one contract (Əmək müqaviləsi). You sign first, then Triad Vision. Then the contract is approved.',
       states: {
         NOT_SENT: 'Not sent yet',
         TRIAD_TO_SIGN: 'Triad Vision is signing. You will get a message after that.',
@@ -518,7 +524,7 @@ const ru: typeof az = {
   caseContracts: {
     title: 'Договоры',
     intro:
-      'Два договора по очереди: сначала Əmək müqaviləsi (между Triad Vision и клиентом); когда его подписали обе стороны и вы его подтвердили — İş müqaviləsi (трудовой договор). В обоих случаях сначала подписывает Triad Vision, потом клиент, в конце подтверждаете вы. Работодатель в этих договорах не участвует.',
+      'Əmək müqaviləsi (между Triad Vision и клиентом) — единственный договор заявки. Вы загружаете свой PDF, сначала подписывает клиент, затем Triad Vision, и договор утверждается. После этого, после оплаты, немецкие документы (трудовой договор и др.) готовятся в рабочем процессе и отправляются клиенту. Работодатель в договоре не участвует.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Между Triad Vision и клиентом. Первый договор.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'Трудовой договор. Отправляется после подтверждения Əmək müqaviləsi.', number: '2' },
@@ -536,6 +542,7 @@ const ru: typeof az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Пока нельзя: сначала Əmək müqaviləsi должны подписать Triad Vision и клиент, а вы — подтвердить.',
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi отменён: единственный договор — Əmək müqaviləsi. Подготовьте немецкие документы (трудовой договор и др.) в рабочем процессе и отправьте через «Отправить готовые документы клиенту».',
       ALREADY_APPROVED: 'Этот договор подписан и подтверждён.',
       CASE_CLOSED: 'Заявка закрыта, договор отправить нельзя.',
       NOT_CONTRACT_STEP: 'Əmək müqaviləsi отправляется на этапе договора: сначала клиент должен отправить первичные документы на проверку.',
@@ -582,11 +589,12 @@ const ru: typeof az = {
     approveDialog: {
       title: 'Подтвердить {{name}}?',
       text: 'Вы проверили обе подписи и PDF? После подтверждения клиент получит уведомление.',
-      labourNext: 'После этого можно отправить İş müqaviləsi. Заявка переходит на этап «документы для посольства».',
+      labourNext: 'Далее дождитесь оплаты: после неё подготовьте немецкие документы в рабочем процессе и отправьте клиенту. Заявка переходит на этап «документы для посольства».',
       done: 'Подтверждено',
     },
     cancel: 'Отмена',
     errors: {
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi больше не отправляется: единственный договор — Əmək müqaviləsi.',
       LABOUR_NOT_APPROVED: 'Сначала Əmək müqaviləsi должен быть подписан и подтверждён.',
       ALREADY_APPROVED: 'Этот договор уже подтверждён.',
       CASE_CLOSED: 'Заявка закрыта.',
@@ -645,7 +653,7 @@ const ru: typeof az = {
         done: 'Возвращено. Клиент получил причину.',
       },
       approveWork: 'Вы проверили все документы? После подтверждения клиент видит работодателя, а заявка переходит к документам для посольства.',
-      portalIntro: 'Сначала вы подписываете Əmək müqaviləsi, затем Triad Vision. Потом вы подписываете документы İş müqaviləsi; Triad Vision проверяет и подтверждает их.',
+      portalIntro: 'Сначала вы подписываете Əmək müqaviləsi, затем Triad Vision, и договор утверждается. Ваши немецкие документы (трудовой договор и др.) готовятся отдельно после оплаты и отправляются вам.',
       portalReturned: 'Возвращено: {{reason}}',
       portalWorkDocs: 'Документы на подпись',
       errors: {
@@ -666,7 +674,7 @@ const ru: typeof az = {
     },
     portal: {
       title: 'Ваши договоры',
-      intro: 'Договоров два. Сначала подписывает Triad Vision, потом вы. Затем Triad Vision проверяет и подтверждает.',
+      intro: 'У заявки один договор (Əmək müqaviləsi). Сначала подписываете вы, затем Triad Vision. Затем договор утверждается.',
       states: {
         NOT_SENT: 'Ещё не отправлен',
         TRIAD_TO_SIGN: 'Triad Vision подписывает. После этого вы получите сообщение.',
@@ -689,7 +697,7 @@ const tr: typeof az = {
   caseContracts: {
     title: 'Sözleşmeler',
     intro:
-      'Art arda iki sözleşme: önce Əmək müqaviləsi (Triad Vision ile müşteri arasında); iki taraf da imzalayıp siz onayladıktan sonra İş müqaviləsi (iş sözleşmesi). Her ikisinde de önce Triad Vision, sonra müşteri imzalar, en sonunda siz onaylarsınız. İşveren bu sözleşmelerde yer almaz.',
+      'Əmək müqaviləsi (Triad Vision ile müşteri arasında) başvurunun tek sözleşmesidir. Kendi PDF’inizi yüklersiniz, önce müşteri, sonra Triad Vision imzalar ve sözleşme onaylanır. Ardından ödeme yapılınca Almanca belgeler (iş sözleşmesi vb.) iş akışında hazırlanıp müşteriye gönderilir. İşveren sözleşmede yer almaz.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Triad Vision ile müşteri arasında. İlk sözleşme.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'İş sözleşmesi. Əmək müqaviləsi onaylandıktan sonra gönderilir.', number: '2' },
@@ -707,6 +715,7 @@ const tr: typeof az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Henüz değil: önce Əmək müqaviləsi Triad Vision ve müşteri tarafından imzalanmalı ve sizin tarafınızdan onaylanmalı.',
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi kaldırıldı: tek sözleşme Əmək müqaviləsidir. Almanca belgeleri (iş sözleşmesi vb.) iş akışında hazırlayıp “Hazır belgeleri müşteriye gönder” ile gönderin.',
       ALREADY_APPROVED: 'Bu sözleşme imzalandı ve onaylandı.',
       CASE_CLOSED: 'Başvuru kapalı; sözleşme gönderilemez.',
       NOT_CONTRACT_STEP: 'Əmək müqaviləsi başvurunun sözleşme adımında gönderilir: önce müşteri ilk belgeleri incelemeye göndermelidir.',
@@ -753,11 +762,12 @@ const tr: typeof az = {
     approveDialog: {
       title: '{{name}} onaylansın mı?',
       text: 'İki imzayı ve PDF’i kontrol ettiniz mi? Onaydan sonra müşteriye bildirim gider.',
-      labourNext: 'Ardından İş müqaviləsi gönderilebilir. Başvuru “büyükelçilik belgeleri” adımına geçer.',
+      labourNext: 'Ardından ödemeyi bekleyin: ödemeden sonra Almanca belgeleri iş akışında hazırlayıp müşteriye gönderin. Başvuru “büyükelçilik belgeleri” adımına geçer.',
       done: 'Onaylandı',
     },
     cancel: 'İptal',
     errors: {
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi artık gönderilmiyor: tek sözleşme Əmək müqaviləsidir.',
       LABOUR_NOT_APPROVED: 'Önce Əmək müqaviləsi imzalanmalı ve onaylanmalı.',
       ALREADY_APPROVED: 'Bu sözleşme zaten onaylandı.',
       CASE_CLOSED: 'Başvuru kapalı.',
@@ -816,7 +826,7 @@ const tr: typeof az = {
         done: 'Geri gönderildi. Müşteriye neden iletildi.',
       },
       approveWork: 'Tüm belgeleri kontrol ettiniz mi? Onaydan sonra müşteri işvereni görür ve başvuru büyükelçilik belgelerine geçer.',
-      portalIntro: 'Önce Əmək müqaviləsi’ni siz imzalarsınız, sonra Triad Vision. Ardından İş müqaviləsi belgelerini imzalarsınız; Triad Vision kontrol edip onaylar.',
+      portalIntro: 'Önce Əmək müqaviləsi’ni siz imzalarsınız, sonra Triad Vision; sözleşme onaylanır. Almanca belgeleriniz (iş sözleşmesi vb.) ödemeden sonra ayrıca hazırlanıp size gönderilir.',
       portalReturned: 'Geri gönderildi: {{reason}}',
       portalWorkDocs: 'İmzalanacak belgeler',
       errors: {
@@ -837,7 +847,7 @@ const tr: typeof az = {
     },
     portal: {
       title: 'Sözleşmeleriniz',
-      intro: 'İki sözleşme var. Önce Triad Vision, sonra siz imzalarsınız. Ardından Triad Vision kontrol edip onaylar.',
+      intro: 'Başvurunun tek bir sözleşmesi var (Əmək müqaviləsi). Önce siz imzalarsınız, sonra Triad Vision. Ardından sözleşme onaylanır.',
       states: {
         NOT_SENT: 'Henüz gönderilmedi',
         TRIAD_TO_SIGN: 'Triad Vision imzalıyor. Ardından size mesaj gelecek.',
@@ -860,7 +870,7 @@ const uk: typeof az = {
   caseContracts: {
     title: 'Договори',
     intro:
-      'Два договори по черзі: спершу Əmək müqaviləsi (між Triad Vision і клієнтом); коли його підписали обидві сторони і ви його підтвердили — İş müqaviləsi (трудовий договір). В обох випадках спершу підписує Triad Vision, потім клієнт, наприкінці підтверджуєте ви. Роботодавець у цих договорах участі не бере.',
+      'Əmək müqaviləsi (між Triad Vision і клієнтом) — єдиний договір заявки. Ви завантажуєте свій PDF, спершу підписує клієнт, потім Triad Vision, і договір підтверджується. Після цього, після оплати, німецькі документи (трудовий договір тощо) готуються в робочому процесі й надсилаються клієнту. Роботодавець у договорі участі не бере.',
     steps: {
       LABOUR: { name: 'Əmək müqaviləsi', what: 'Між Triad Vision і клієнтом. Перший договір.', number: '1' },
       WORK: { name: 'İş müqaviləsi', what: 'Трудовий договір. Надсилається після підтвердження Əmək müqaviləsi.', number: '2' },
@@ -878,6 +888,7 @@ const uk: typeof az = {
     },
     blocked: {
       LABOUR_NOT_APPROVED: 'Поки що ні: спершу Əmək müqaviləsi мають підписати Triad Vision і клієнт, а ви — підтвердити.',
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi скасовано: єдиний договір — Əmək müqaviləsi. Підготуйте німецькі документи (трудовий договір тощо) в робочому процесі й надішліть через «Надіслати готові документи клієнту».',
       ALREADY_APPROVED: 'Цей договір підписано й підтверджено.',
       CASE_CLOSED: 'Заявку закрито, договір надіслати не можна.',
       NOT_CONTRACT_STEP: 'Əmək müqaviləsi надсилається на етапі договору: спочатку клієнт має подати первинні документи на перевірку.',
@@ -924,11 +935,12 @@ const uk: typeof az = {
     approveDialog: {
       title: 'Підтвердити {{name}}?',
       text: 'Ви перевірили обидва підписи та PDF? Після підтвердження клієнт отримає сповіщення.',
-      labourNext: 'Після цього можна надіслати İş müqaviləsi. Заявка переходить на етап «документи для посольства».',
+      labourNext: 'Далі дочекайтеся оплати: після неї підготуйте німецькі документи в робочому процесі й надішліть клієнту. Заявка переходить на етап «документи для посольства».',
       done: 'Підтверджено',
     },
     cancel: 'Скасувати',
     errors: {
+      WORK_CONTRACT_RETIRED: 'İş müqaviləsi більше не надсилається: єдиний договір — Əmək müqaviləsi.',
       LABOUR_NOT_APPROVED: 'Спершу Əmək müqaviləsi має бути підписаний і підтверджений.',
       ALREADY_APPROVED: 'Цей договір уже підтверджено.',
       CASE_CLOSED: 'Заявку закрито.',
@@ -987,7 +999,7 @@ const uk: typeof az = {
         done: 'Повернуто. Клієнт отримав причину.',
       },
       approveWork: 'Ви перевірили всі документи? Після підтвердження клієнт бачить роботодавця, а заявка переходить до документів для посольства.',
-      portalIntro: 'Спочатку ви підписуєте Əmək müqaviləsi, потім Triad Vision. Далі ви підписуєте документи İş müqaviləsi; Triad Vision перевіряє й підтверджує їх.',
+      portalIntro: 'Спочатку ви підписуєте Əmək müqaviləsi, потім Triad Vision, і договір підтверджується. Ваші німецькі документи (трудовий договір тощо) готуються окремо після оплати й надсилаються вам.',
       portalReturned: 'Повернуто: {{reason}}',
       portalWorkDocs: 'Документи на підпис',
       errors: {
@@ -1008,7 +1020,7 @@ const uk: typeof az = {
     },
     portal: {
       title: 'Ваші договори',
-      intro: 'Договорів два. Спершу підписує Triad Vision, потім ви. Далі Triad Vision перевіряє та підтверджує.',
+      intro: 'У заявки один договір (Əmək müqaviləsi). Спершу підписуєте ви, потім Triad Vision. Потім договір підтверджується.',
       states: {
         NOT_SENT: 'Ще не надіслано',
         TRIAD_TO_SIGN: 'Triad Vision підписує. Після цього ви отримаєте повідомлення.',

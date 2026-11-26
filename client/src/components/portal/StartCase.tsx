@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Award, Briefcase, FilePlus2, GraduationCap, Plane, Rocket, School, Search, Users } from 'lucide-react';
@@ -16,8 +16,8 @@ import { registerCopy } from '@/i18n';
 import { vacancyFolders } from '@/i18n/vacancyFolders';
 import { toast } from 'sonner';
 import { placesErrorText, useApplicationPolicy } from '@/components/vacancyPlaces/api'; // only our open vacancies with free places
-import { VacancyOnlyPicker, unavailableOption, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
-import { orderForVisa, preselectForVisa } from '@/components/vacancyPlaces/visaPreference'; // ?visa= from the calculator
+import { unavailableOption, useVacancyOptionLabel, type VacancyOption } from '@/components/vacancyPlaces/VacancyPicker';
+import { preselectForVisa } from '@/components/vacancyPlaces/visaPreference'; // ?visa= from the calculator
 import { WaitlistForm } from '@/components/jobs/WaitlistForm'; // no vacancy with a free place: "Uyğun vakansiya açılanda xəbər ver"
 
 registerCopy(vacancyFolders);
@@ -68,7 +68,7 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
   // lib/referralCookie) until a case was started. Free choice: preselects the kind and sector. Vacancies only: the
   // vacancies of that visa come first, and the only one with a free place is preselected.
   const [prefill, setPrefill] = useState(rememberedVisa);
-  const [visaPrefCategory, setVisaPrefCategory] = useState('');
+  const [, setVisaPrefCategory] = useState('');
   if (prefill && content?.visaCategories?.length && policy && (!onlyVacancies || vacancies)) {
     const cat = content.visaCategories.find((v) => v.slug === prefill);
     setPrefill('');
@@ -83,7 +83,6 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
     }
   }
   const openVacancies = (vacancies ?? []).filter((v) => !unavailableOption(v));
-  const orderedVacancies = orderForVisa(vacancies ?? [], visaPrefCategory, unavailableOption);
   const optionLabel = useVacancyOptionLabel();
 
   const categories = [...(content?.visaCategories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -177,14 +176,14 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
           }}
         >
           {onlyVacancies ? (
-            <VacancyOnlyPicker
-              id={vacancyFieldId}
-              vacancies={orderedVacancies}
-              loading={vacanciesLoading}
-              hasOpen={openVacancies.length > 0}
-              value={vacancyId}
-              onChange={setVacancyId}
-            />
+            // No dropdown: the client opens the vacancy list; choosing a vacancy there starts the visa case.
+            <div>
+              <p className="text-sm font-semibold text-ink">{t('vacPlaces.start.pickText')}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{t('vacPlaces.start.hint')}</p>
+              <Link to="/jobs" className="btn-primary btn-lg mt-4 min-h-12 w-full sm:w-auto">
+                <Briefcase className="size-4" aria-hidden /> {t('vacPlaces.start.seeJobs')}
+              </Link>
+            </div>
           ) : (
             <>
               <fieldset>
@@ -245,10 +244,12 @@ export const StartCase = ({ hasCases, defaultProfession }: { hasCases: boolean; 
               )}
             </>
           )}
-          <button type="submit" className="btn-primary btn-lg min-h-12 w-full sm:w-auto" disabled={busy || (onlyVacancies ? !vacancyId : !visaType)}>
-            {busy ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
-            {t('portal.create')}
-          </button>
+          {!onlyVacancies && (
+            <button type="submit" className="btn-primary btn-lg min-h-12 w-full sm:w-auto" disabled={busy || !visaType}>
+              {busy ? <Spinner className="size-4" /> : <FilePlus2 className="size-4" aria-hidden />}
+              {t('portal.create')}
+            </button>
+          )}
         </form>
       </div>
       {/* Only our vacancies can be chosen and none has a free place: the vacancy waitlist (outside the form above). */}

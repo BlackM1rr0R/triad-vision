@@ -5,7 +5,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { toast } from 'sonner';
-import { FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, MoreHorizontal, Settings2, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
+import { BadgeCheck, CircleAlert, FileSpreadsheet, FolderOpen, Handshake, KeyRound, LogOut, Mail, MoreHorizontal, Settings2, Trash2, MessageSquare, MonitorSmartphone, Phone, Search, UserPlus, Users as UsersIcon, Wifi } from 'lucide-react';
 import { api, errorCode } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesMailAdmin } from '@/i18n/pagesMailAdmin';
@@ -392,6 +392,21 @@ const ActiveControl = ({ u, editable }: { u: AdminUser; editable: boolean }) => 
 };
 
 /** Session facts: last login, live sessions, logins in 30 days. */
+/** E-mail verified (green check) or not yet (amber), next to the address. */
+const EmailVerifiedBadge = ({ u }: { u: AdminUser }) => {
+  const { t } = useTranslation();
+  const ok = !!u.emailVerifiedAt;
+  const Icon = ok ? BadgeCheck : CircleAlert;
+  return (
+    <span
+      className={clsx('inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold', ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}
+      title={t(ok ? 'admin.users.emailVerifiedTitle' : 'admin.users.emailUnverifiedTitle')}
+    >
+      <Icon className="size-3.5" aria-hidden /> {t(ok ? 'admin.users.emailVerified' : 'admin.users.emailUnverified')}
+    </span>
+  );
+};
+
 const ActivityCell = ({ u }: { u: AdminUser }) => {
   const { t } = useTranslation();
   return (
@@ -748,6 +763,7 @@ export default function Users() {
                         <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 text-ink/80 hover:text-link" title={u.email}>
                           <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.email}</span>
                         </a>
+                        <EmailVerifiedBadge u={u} />
                         {u.phone ? (
                           <span className="flex min-h-6 items-center gap-1.5 text-muted">
                             <a href={`tel:${u.phone}`} className="flex min-w-0 items-center gap-1 tabular-nums hover:text-link">
@@ -804,6 +820,7 @@ export default function Users() {
                     <a href={`mailto:${u.email}`} className="flex min-h-6 items-center gap-1 text-ink/80 hover:text-link" title={u.email}>
                       <Mail className="size-3 shrink-0" aria-hidden /> <span className="truncate">{u.email}</span>
                     </a>
+                    <EmailVerifiedBadge u={u} />
                     {u.phone && (
                       <span className="flex min-h-6 items-center gap-1.5">
                         <a href={`tel:${u.phone}`} className="flex min-w-0 items-center gap-1 tabular-nums hover:text-link">

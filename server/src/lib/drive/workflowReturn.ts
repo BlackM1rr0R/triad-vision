@@ -2,6 +2,7 @@ import { prisma } from '../../db.js';
 import { conflict, notFound } from '../http.js';
 import { invalidateMyWork } from '../myWork.js';
 import { stageLabel } from '../caseProcessing/texts.js';
+import { syncCaseFolder } from './caseFolders.js';
 import { collectSubtree } from './items.js';
 import { freeNameIn } from './names.js';
 import { WORKFLOW_STAGES, ensurePath, legacyRefusedFolderId, peekWorkflowFolders } from './workflowFolders.js';
@@ -19,7 +20,10 @@ import { caseFoldersInStage } from './workflowLinks.js';
  *     into the client folder, to the same relative path (folders are reused or created), under a free name — nothing is
  *     ever lost; "Final" files are always moved, never removed;
  *   - sends the emptied case folders in the stage folders (and the legacy "Ablehnung" folder) to the recycle bin;
+ *   - puts the client folder back where it belongs ("Anträge/<Visumart>/<Kategorie>" or "Partner/<name>"): it is only
+ *     moved when staff had dragged it elsewhere (e.g. into a stage folder) — syncCaseFolder never touches its files;
  *   - clears Case.processingStage / assignee, keeps the history (CaseProcessingMove toStage RETURNED + case event).
+ * The UI calls this "Anträge-yə qaytar" (Schon geschrieben / In Bearbeitung / Fertig); every return is audited (CASE_WORKFLOW_RETURNED).
  * Idempotent: a case that is not in the workflow (no stage, no folders) answers 409 NOT_IN_WORKFLOW.
  */
 
@@ -68,7 +72,9 @@ export const returnCaseFromWorkflow = async (caseId: string, actor: { id: string
   const stageIds = wf ? WORKFLOW_STAGES.map((st) => wf.stages[st]) : [];
   const refusedId = await legacyRefusedFolderId();
   if (refusedId) stageIds.push(refusedId);
-  const tops = (await Promise.all(stageIds.map((id) => caseFoldersInStage(id, caseId, clientFolder?.name ?? null)))).flat();
+  // The client folder itself is never a workflow copy (it can sit in a stage when staff dragged it there; the name
+  // fallback would match it) — it is put back in its place below instead.
+  const tops = (await Promise.all(stageIds.map((id) => caseFoldersInStage(id, caseId, clientFolder?.name ?? null)))).flat().filter((t) => t.id !== clientFolder?.id);
   const topIds = new Set(tops.map((t) => t.id));
   if (!c.processingStage && !tops.length) throw conflict('NOT_IN_WORKFLOW');
   if (tops.length && !clientFolder) throw conflict('CLIENT_FOLDER_MISSING'); // nowhere to put the files back
@@ -121,5 +127,6 @@ export const returnCaseFromWorkflow = async (caseId: string, actor: { id: string
   ]);
   for (const id of [actor?.id, c.processingAssigneeId]) if (id) invalidateMyWork(id);
   invalidateMyWork();
+  await syncCaseFolder(caseId).catch(() => undefined); // never throws; back to Anträge / the partner folder
   return { from, removed, moved };
 };

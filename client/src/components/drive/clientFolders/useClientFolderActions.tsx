@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import clsx from 'clsx';
 import { ArrowDownWideNarrow, Filter, Handshake, PenLine, SendHorizontal, UserMinus, X } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -106,6 +107,8 @@ export const useClientFolderActions = () => {
     // "Schon geschrieben": every selected client folder not WRITTEN yet (also in a mixed selection; the rest is skipped
     // and counted in the dialog). Hidden when none is eligible or without cases:edit.
     const eligible = targetsOf(writtenEligible(list));
+    // A client folder enters the workflow only with a partner: without one the button is greyed out (the server refuses too).
+    const noPartnerYet = eligible.length > 0 && eligible.every((x) => !x.stage && !x.partner);
     const quick: ToolAction[] =
       eligible.length && can('cases', 'edit')
         ? [
@@ -116,6 +119,8 @@ export const useClientFolderActions = () => {
               onClick: () => open('quick', eligible, list.length - eligible.length),
               primary: true,
               labelled: true,
+              disabled: noPartnerYet,
+              title: noPartnerYet ? t('driveProcessing.partnerFirst') : undefined,
             },
           ]
         : [];
@@ -213,7 +218,9 @@ export const useClientFolderActions = () => {
   const quickWritten = can('cases', 'edit')
     ? (item: DriveItem) => {
         const targets = targetsOf(writtenEligible([item]));
-        if (targets.length) open('quick', targets);
+        if (!targets.length) return;
+        if (targets.every((x) => !x.stage && !x.partner)) toast.error(t('driveProcessing.partnerFirst'));
+        else open('quick', targets);
       }
     : undefined;
 

@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { useStaffOptions } from '@/components/inline/CaseInlineCells';
 import { usePartnerOptions } from '@/components/partners/api';
 import { stageLabel } from '@/components/caseProcessing/api';
-import { moveStages, refreshAfter, reasonOf, requestError, sendReady, setPartner, useReadyDocs, type BulkResponse, type FolderTarget } from './api';
+import { moveStages, refreshAfter, reasonOf, requestError, sendReady, setPartner, useReadyDocs, type BulkResponse, type FolderTarget, type ReadyFileView } from './api';
 
 /** Names of the folders a dialog works on (one line, or a short list). */
 const TargetsLine = ({ targets }: { targets: FolderTarget[] }) => {
@@ -285,11 +285,36 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
   const one = targets.length === 1 ? targets[0] : null;
   const view = useReadyDocs(one?.caseId ?? null);
   const [resend, setResend] = useState(false);
-  const { busy, run } = useRun(onResult);
+  const lastResult = useRef<BulkResponse | null>(null);
+  const { busy, run } = useRun((r) => {
+    lastResult.current = r;
+    onResult(r);
+  });
+  const [error, setError] = useState<string | null>(null);
   const data = view.data;
   const sentBefore = one ? !!data?.sends.length : targets.some((x) => x.readySentAt);
-  const blocked = one ? !data || !data.files.length || (data.sends.length > 0 && (!resend || data.newCount === 0)) : false;
+  // One folder: the admin picks the files (Fertig, the other workflow folders, the client's own folder). Default: the
+  // Fertig files not sent yet; `picked` holds the changes the admin made (null = the default).
+  const all: ReadyFileView[] = useMemo(() => (data ? [...data.files, ...data.others] : []), [data]);
+  const [picked, setPicked] = useState<Set<string> | null>(null);
+  const selected = useMemo(() => picked ?? new Set(all.filter((f) => f.source === 'DONE' && !f.sent).map((f) => f.nodeId)), [picked, all]);
+  const toggle = (id: string) =>
+    setPicked((cur) => {
+      const next = new Set(cur ?? selected);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const blocked = one ? !data || selected.size === 0 : false;
   const last = data?.sends[0];
+  const submit = async () => {
+    setError(null);
+    lastResult.current = null;
+    const ok = await run(() => (one ? sendReady([one.caseId], resend, [...selected]) : sendReady(targets.map((x) => x.caseId), resend)));
+    const failed = (lastResult.current as BulkResponse | null)?.results.find((x) => !x.ok);
+    if (failed) setError(reasonOf(failed.error));
+    else if (ok) onClose();
+  };
   return (
     <Modal
       open
@@ -308,7 +333,7 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
             type="button"
             className="btn-primary btn-sm"
             disabled={busy || blocked}
-            onClick={() => void run(() => sendReady(targets.map((x) => x.caseId), resend)).then((ok) => ok && onClose())}
+            onClick={() => void submit()}
           >
             {busy && <Spinner className="size-3.5" />} {t('clientFolders.send.submit')}
           </button>
@@ -327,40 +352,50 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
             </p>
           ) : data ? (
             <>
-              <p className="text-muted">{t('clientFolders.send.explain', { folder: data.folder?.name ?? one.name })}</p>
-              {data.files.length === 0 ? (
+              <p className="text-muted">{t('clientFolders.send.explain')}</p>
+              {all.length === 0 ? (
                 <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('clientFolders.send.noFiles')}</p>
               ) : (
                 <section aria-labelledby="cf-files">
-                  <h3 id="cf-files" className="mb-1 text-xs font-semibold text-muted">
-                    {t('clientFolders.send.filesTitle')} ({data.files.length})
+                  <h3 id="cf-files" className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted">
+                    <span className="flex-1">
+                      {t('clientFolders.send.filesTitle')} ({all.length})
+                    </span>
+                    <span className="font-normal">{t('clientFolders.send.selected', { count: selected.size })}</span>
+                    <button type="button" className="font-semibold text-link hover:underline" onClick={() => setPicked(new Set(selected.size === all.length ? [] : all.map((f) => f.nodeId)))}>
+                      {t(selected.size === all.length ? 'clientFolders.send.selectNone' : 'clientFolders.send.selectAll')}
+                    </button>
                   </h3>
-                  <ul className="max-h-60 divide-y divide-line overflow-y-auto rounded-lg border border-line">
-                    {data.files.map((f) => (
-                      <li key={f.nodeId} className="flex items-center gap-2.5 px-3 py-2">
-                        <FileText className="size-4 shrink-0 text-muted" aria-hidden />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium text-ink">{f.name}</span>
-                          <span className="block truncate text-[11px] text-muted">
-                            {[f.path, f.size != null ? formatBytes(f.size) : null].filter(Boolean).join(' · ')}
+                  <ul className="max-h-64 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+                    {all.map((f) => (
+                      <li key={f.nodeId}>
+                        <label className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-sunken">
+                          <input type="checkbox" className="size-4 shrink-0 accent-primary" checked={selected.has(f.nodeId)} onChange={() => toggle(f.nodeId)} />
+                          <FileText className="size-4 shrink-0 text-muted" aria-hidden />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium text-ink">{f.name}</span>
+                            <span className="block truncate text-[11px] text-muted">
+                              {[t(`clientFolders.send.source.${f.source}`), f.path, f.size != null ? formatBytes(f.size) : null].filter(Boolean).join(' · ')}
+                            </span>
                           </span>
-                        </span>
-                        <span className={clsx('shrink-0 rounded px-1.5 py-px text-[10px] font-semibold', f.sent ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg')}>
-                          {f.sent ? t('clientFolders.send.sent') : t('clientFolders.send.fresh')}
-                        </span>
+                          <span className={clsx('shrink-0 rounded px-1.5 py-px text-[10px] font-semibold', f.sent ? 'bg-success-bg text-success-fg' : 'bg-info-bg text-info-fg')}>
+                            {f.sent ? t('clientFolders.send.sent') : t('clientFolders.send.fresh')}
+                          </span>
+                        </label>
                       </li>
                     ))}
                   </ul>
                 </section>
               )}
+              {error && (
+                <p className="rounded-lg bg-danger-bg px-3 py-2 text-xs text-danger-fg" role="alert">
+                  {error}
+                </p>
+              )}
               {last && (
-                <div className="space-y-2 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg" role="status">
+                <div className="space-y-1 rounded-lg bg-warning-bg px-3 py-2 text-xs text-warning-fg" role="status">
                   <p className="font-semibold">{t('clientFolders.send.already', { date: fmtDateTime(last.at), by: last.by ? ` · ${last.by}` : '' })}</p>
                   <p>{t('clientFolders.send.resendHint')}</p>
-                  <label className="inline-flex items-center gap-2 font-semibold">
-                    <input type="checkbox" className="size-4 accent-primary" checked={resend} onChange={(e) => setResend(e.target.checked)} />
-                    {t('clientFolders.send.resendCheck')}
-                  </label>
                 </div>
               )}
             </>

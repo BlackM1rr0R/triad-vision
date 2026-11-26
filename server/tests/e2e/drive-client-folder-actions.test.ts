@@ -30,6 +30,9 @@ const clientCase = async (a: Agent, opts: { clientId?: string; firstName?: strin
 
 const newPartner = async (admin: Agent, name: string) => expectStatus(await admin.post('/api/admin/partners').send({ name, commissionCents: 10000 }), 201).body.partner as { id: string; name: string };
 
+/** A case enters the workflow only with a partner: gives the case a stand-in one. */
+const givePartner = async (caseId: string) => prisma.case.update({ where: { id: caseId }, data: { partnerId: (await prisma.referralPartner.create({ data: { name: uniq('Stand-in ') } })).id } });
+
 const setPartner = (a: Agent, cases: string[], partnerId: string | null, note?: string) => a.post('/api/admin/client-folders/partner').send({ cases, partnerId, ...(note ? { note } : {}) });
 
 describe('client folder: partner without opening the folder', () => {
@@ -111,6 +114,7 @@ describe('client folders: bulk "Schon geschrieben"', () => {
     const b = await clientCase(staff.agent, { firstName: 'Banu' });
     const d = await clientCase(staff.agent, { firstName: 'Dunya' });
     const w = await clientCase(staff.agent, { firstName: 'Vüsal' });
+    for (const x of [a, b, d, w]) await givePartner(x.c.id);
     // Fertig cannot go back to Schon geschrieben (only In Bearbeitung); one is already there
     await prisma.case.update({ where: { id: d.c.id }, data: { processingStage: 'DONE' } });
     await prisma.case.update({ where: { id: w.c.id }, data: { processingStage: 'WRITTEN' } });
@@ -130,6 +134,31 @@ describe('client folders: bulk "Schon geschrieben"', () => {
     // again without a new admin / note: all skipped
     const again = expectStatus(await staff.agent.post('/api/admin/client-folders/processing').send({ cases: [a.c.id, b.c.id], stage: 'WRITTEN' }), 200).body;
     expect(again.summary).toMatchObject({ succeeded: 0, skipped: 2, failed: 0 });
+  });
+});
+
+describe('client folders: a partner is required before the workflow', () => {
+  it('refuses Schon geschrieben / In Bearbeitung without a partner (409 WORKFLOW_PARTNER_REQUIRED), accepts it with one, and a case already in the workflow stays', async () => {
+    const staff = await asStaff();
+    const x = await clientCase(staff.agent, { firstName: 'Nargiz' });
+    const bulk = (stage: string) => staff.agent.post('/api/admin/client-folders/processing').send({ cases: [x.c.id], stage });
+    expect(expectStatus(await bulk('WRITTEN'), 200).body.results[0]).toMatchObject({ ok: false, error: 'WORKFLOW_PARTNER_REQUIRED' });
+    expect(expectStatus(await bulk('IN_PROGRESS'), 200).body.results[0]).toMatchObject({ ok: false, error: 'WORKFLOW_PARTNER_REQUIRED' });
+    // the single-case route answers 409 with the same code
+    const single = await staff.agent.post(`/api/admin/cases/${x.c.id}/processing`).send({ stage: 'WRITTEN' });
+    expect(single.status).toBe(409);
+    expect(single.body.error).toBe('WORKFLOW_PARTNER_REQUIRED');
+    // copying the client folder into "Schon geschrieben" is refused too, nothing is created there
+    const copy = expectStatus(await staff.agent.post('/api/drive/workflow/copy').send({ ids: [x.folder.id], stage: 'WRITTEN' }), 200).body;
+    expect(copy.results[0]).toMatchObject({ ok: false, error: 'WORKFLOW_PARTNER_REQUIRED' });
+    expect(await prisma.driveNode.count({ where: { workflowCaseId: x.c.id } })).toBe(0);
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: x.c.id } })).processingStage).toBeNull();
+
+    await givePartner(x.c.id);
+    expect(expectStatus(await bulk('WRITTEN'), 200).body.results[0]).toMatchObject({ ok: true });
+    // removing the partner later does not throw the folder out of the workflow: it moves on without one
+    await prisma.case.update({ where: { id: x.c.id }, data: { partnerId: null } });
+    expect(expectStatus(await bulk('IN_PROGRESS'), 200).body.results[0]).toMatchObject({ ok: true });
   });
 });
 
@@ -259,5 +288,90 @@ describe('client folders: permissions and case scope', () => {
     expectStatus(await staff.agent.post('/api/admin/client-folders/processing').send({ cases: [mine.c.id], stage: 'WRITTEN' }), 200);
     expect((await prisma.case.findUniqueOrThrow({ where: { id: mine.c.id } })).partnerId).toBe(p.id);
     expectStatus(await sup.agent.put(`/api/admin/access/staff/users/${staff.user.id}`).send({ templateId: null, overrides: [] }), 200);
+  });
+});
+
+describe('client folders: send picked files to the client', () => {
+  it('offers the workflow folders and the client folder, sends exactly the picked files and never a foreign node', async () => {
+    const staff = await asStaff();
+    const client = await asClient({ firstName: 'Ali', lastName: 'Məmmədov', locale: 'az' });
+    const { c, folder } = await clientCase(staff.agent, { clientId: client.user.id });
+    const sub = await mkdir(staff.agent, folder.id, 'Arbeitsvertrag');
+    const contract = await upload(staff.agent, sub.id, 'Vertrag.pdf');
+    const cover = await upload(staff.agent, folder.id, 'Anschreiben.pdf');
+    const stranger = await clientCase(staff.agent, { firstName: 'Fremd' });
+    const foreign = await upload(staff.agent, stranger.folder.id, 'Fremd.pdf');
+    const view = async () => expectStatus(await staff.agent.get(`/api/admin/client-folders/cases/${c.id}/ready-docs`), 200).body;
+    const send = (body: Record<string, unknown>, agent: Agent = staff.agent) => agent.post('/api/admin/client-folders/ready-docs/send').send({ cases: [c.id], ...body });
+
+    // Nothing in Fertig, but the client's own folder (with its sub-folders) can be picked from.
+    const before = await view();
+    expect(before.files).toEqual([]);
+    expect(before.others.map((f: { name: string; path: string; source: string }) => [f.name, f.path, f.source]).sort()).toEqual(
+      [
+        [cover.name, '', 'CLIENT'],
+        [contract.name, 'Arbeitsvertrag', 'CLIENT'],
+      ].sort(),
+    );
+    // Without a pick the old rule stays: only Fertig files, and there are none.
+    expect(expectStatus(await send({}), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NO_FILES' });
+
+    // A node of another client (or an unknown id) is refused, nothing is written.
+    expect(expectStatus(await send({ fileIds: [contract.id, foreign.id] }), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_FILE_NOT_ALLOWED' });
+    expect(expectStatus(await send({ fileIds: ['cknotanodeid000000000'] }), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_FILE_NOT_ALLOWED' });
+    expect(await prisma.document.count({ where: { caseId: c.id, stage: 'OTHER' } })).toBe(0);
+    // A pick is for exactly one case.
+    expect((await staff.agent.post('/api/admin/client-folders/ready-docs/send').send({ cases: [c.id, stranger.c.id], fileIds: [contract.id] })).status).toBe(400);
+
+    // The pick: only the contract goes to the client's account, with notification and audit.
+    const ok = expectStatus(await send({ fileIds: [contract.id] }), 200).body;
+    expect(ok.summary).toEqual({ total: 1, succeeded: 1, skipped: 0, failed: 0 });
+    const docs = await prisma.document.findMany({ where: { caseId: c.id, stage: 'OTHER' } });
+    expect(docs.map((d) => d.originalName)).toEqual([contract.name]);
+    expect(await prisma.notification.count({ where: { userId: client.user.id, type: 'READY_DOCS' } })).toBe(1);
+    expect(await prisma.auditLog.count({ where: { action: 'CASE_READY_DOCS_SENT', target: `case:${c.id}` } })).toBe(1);
+    // The same pick again has nothing new; another file of the folder can still be added.
+    expect(expectStatus(await send({ fileIds: [contract.id] }), 200).body.results[0]).toMatchObject({ ok: false, error: 'READY_DOCS_NOTHING_NEW' });
+    expectStatus(await send({ fileIds: [contract.id, cover.id] }), 200);
+    expect(await prisma.document.count({ where: { caseId: c.id, stage: 'OTHER' } })).toBe(2);
+
+    // Access: a client cannot send (staff only; the route map asks documents:edit of staff).
+    expect((await send({ fileIds: [cover.id] }, client.agent)).status).toBe(403);
+  });
+});
+
+describe('client folders: back to Anträge and findable by client name', () => {
+  it('"Geri qaytar" puts a client folder dragged into a stage folder back in its place (partner folder) and audits it', async () => {
+    const staff = await asStaff();
+    const x = await clientCase(staff.agent, { firstName: 'Rüstəm' });
+    await givePartner(x.c.id);
+    expectStatus(await staff.agent.post('/api/admin/client-folders/processing').send({ cases: [x.c.id], stage: 'WRITTEN' }), 200);
+    const written = expectStatus(await staff.agent.get('/api/drive/workflow/folders'), 200).body.stages.find((s: { stage: string }) => s.stage === 'WRITTEN').id as string;
+    await prisma.driveNode.update({ where: { id: x.folder.id }, data: { parentId: written } }); // staff dragged the real folder into the stage
+
+    const r = expectStatus(await staff.agent.post('/api/admin/client-folders/return').send({ cases: [x.c.id], note: 'Şirkət fikrini dəyişdi' }), 200).body;
+    expect(r.results[0]).toMatchObject({ ok: true });
+    const back = await prisma.driveNode.findUniqueOrThrow({ where: { id: x.folder.id } });
+    expect(back.deletedAt).toBeNull();
+    expect(back.parentId).not.toBe(written);
+    const parent = await prisma.driveNode.findUniqueOrThrow({ where: { id: back.parentId! } });
+    expect(parent.parentId).toBe((await roots(staff.agent)).partners.id); // the case has a partner: Partner/<name>
+    expect((await prisma.case.findUniqueOrThrow({ where: { id: x.c.id } })).processingStage).toBeNull();
+    expect(await prisma.auditLog.count({ where: { action: 'CASE_WORKFLOW_RETURNED', target: `case:${x.c.id}` } })).toBe(1);
+  });
+
+  it('the drive search finds a client folder by client name, case number and passport number wherever it lives', async () => {
+    const staff = await asStaff();
+    const client = await createClient({ firstName: 'Zaur', lastName: 'Quliyevzadə' });
+    await prisma.user.update({ where: { id: client.user.id }, data: { passportNumber: 'C5674567' } });
+    const x = await clientCase(staff.agent, { clientId: client.user.id });
+    await prisma.driveNode.update({ where: { id: x.folder.id }, data: { name: uniq('Ordner ohne Namen ') } }); // the folder name says nothing about the client
+    const found = async (q: string) => (expectStatus(await staff.agent.get('/api/drive/search').query({ q }), 200).body.items as { id: string }[]).some((i) => i.id === x.folder.id);
+    expect(await found('Zaur Quliyevzadə')).toBe(true);
+    expect(await found('Quliyevzadə Zaur')).toBe(true);
+    expect(await found('Quliyevzad')).toBe(true);
+    expect(await found('C5674567')).toBe(true);
+    expect(await found(x.c.number)).toBe(true);
+    expect(await found('Niemand Unbekannt')).toBe(false);
   });
 });

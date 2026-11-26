@@ -224,6 +224,8 @@ export type RuleCode =
   | 'SEND_WORK_CONTRACT'
   | 'RESEND_WORK_CONTRACT'
   | 'AWAIT_WORK_SIGNATURE'
+  | 'AWAIT_CLIENT_SIGN'
+  | 'AWAIT_CLIENT'
   | 'APPROVE_WORK_CONTRACT'
   | 'MISSING_DOCS'
   | 'DECISION_OVERDUE'
@@ -257,7 +259,9 @@ export type ActionId =
   | 'ORDER_TRANSLATION'
   | 'ASK_CONFIRM_DATA'
   | 'OPEN_DATA'
-  | 'OPEN_CONTRACT';
+  | 'OPEN_CONTRACT'
+  | 'OPEN_DRIVE_WORKFLOW'
+  | 'GO_EMBASSY_DOCS';
 
 export interface ApiCall {
   method: 'POST';
@@ -273,6 +277,7 @@ export type NextAction =
   | { id: ActionId; kind: 'task'; request: ApiCall; title: string }
   | { id: ActionId; kind: 'transition'; request: ApiCall; confirm: true; note?: string }
   | { id: ActionId; kind: 'package' }
+  | { id: ActionId; kind: 'link'; href: string }
   | { id: ActionId; kind: 'scroll'; target: 'case-actions' | 'case-messages' | 'case-tasks' | 'case-onboarding' | 'case-data' | 'case-contract' };
 
 export interface NextStep {
@@ -437,7 +442,9 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   if (f.status === 'CONTRACT_SIGNED' && f.contractTurn === 'STAFF') {
     const work = f.workContract;
     const urgent = { priority: slow ? 90 : 85, tone: (slow ? 'urgent' : 'action') as NextStep['tone'], params: { days: f.daysInStatus } };
-    if (work === 'NOT_SENT') add({ code: 'SEND_WORK_CONTRACT', ...urgent, actions: [openContract] });
+    // Single-contract flow: the Əmək müqaviləsi is the only contract. After the payment staff prepare the German
+    // documents in the drive workflow and send them from "Fertig" (that moves the case on); or move it on by hand.
+    if (work === 'NOT_SENT') add({ code: 'SEND_WORK_CONTRACT', ...urgent, actions: [{ id: 'OPEN_DRIVE_WORKFLOW', kind: 'link', href: '/workspace/drive' }, transition(f, 'GO_EMBASSY_DOCS', { action: 'CONFIRM_CONTRACT' })] });
     else if (work === 'RETURNED' || work === 'DECLINED' || work === 'EXPIRED' || work === 'CANCELLED') add({ code: 'RESEND_WORK_CONTRACT', ...urgent, params: { days: f.daysInStatus, state: work }, actions: [openContract] });
     else if (work === 'SIGNED') add({ code: 'APPROVE_WORK_CONTRACT', ...urgent, actions: [openContract] });
     // Facts without the İş müqaviləsi state (older callers): staff check it in the contracts panel.
@@ -460,6 +467,9 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   if (clientContractTurn && f.daysInStatus >= 3) {
     add({ code: 'CONTRACT_NOT_SIGNED', priority: f.daysInStatus >= f.typicalDays ? 70 : 62, tone: 'action', params: { days: f.daysInStatus }, actions: [messageAction(f, 'SEND_MESSAGE', T.sign)] });
   }
+
+  // The client's turn to sign the Əmək müqaviləsi: never an empty "next step" (the chase rule above only starts after 3 days).
+  if (clientContractTurn) add({ code: 'AWAIT_CLIENT_SIGN', priority: 30, tone: 'info', params: { days: f.daysInStatus }, actions: [openContract] });
 
   // Missing documents while the client uploads
   const missing = (f.status === 'DOCUMENTS_PENDING' || f.status === 'EMBASSY_DOCUMENTS') ? stageReqs.filter((r) => r.required && !hasLive(r)) : [];
@@ -538,6 +548,9 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
   if (slow && !workClientTurn && !steps.some((s) => s.priority >= 80) && ['DOCUMENTS_REVIEW', 'CONTRACT_SIGNED', 'EMBASSY_REVIEW'].includes(f.status)) {
     add({ code: 'STATUS_OVERDUE', priority: 64, tone: 'action', params: { days: f.daysInStatus, typical: f.typicalDays }, actions: [taskAction(f, 'overdue', staffLocale, 1, now)] });
   }
+
+  // A case that waits for the client with nothing more specific to say: still name the pending party.
+  if (!steps.length && (CLIENT_SIDE.includes(f.status) || workClientTurn)) add({ code: 'AWAIT_CLIENT', priority: 20, tone: 'info', params: { days: f.daysInStatus }, actions: [] });
 
   return steps.sort((a, b) => b.priority - a.priority);
 };

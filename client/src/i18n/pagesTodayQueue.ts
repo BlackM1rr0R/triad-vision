@@ -9,16 +9,16 @@ const az = {
       areaHint: 'Sizə açıq olan bütün müraciətlər (giriş icazənizə görə), təkcə Sizə təyin olunanlar yox',
     },
     kind: {
-      contract_triad: 'Triad Vision imzalamalıdır',
+      contract_triad: 'Müştəri imzaladı — imzalayın və təsdiqləyin',
       contract_approve: 'Müqavilə təsdiq gözləyir',
       vacancy_request: 'Yeni vakansiya sorğusu',
     },
     action: {
-      signContract: 'İmzala',
+      signContract: 'İmzalayın və təsdiqləyin',
       approveContract: 'Təsdiqlə',
     },
     note: {
-      contractStep: { LABOUR: 'Əmək müqaviləsi', WORK: 'İş müqaviləsi' },
+      contractStep: { LABOUR: 'Əmək müqaviləsi', WORK: 'Əvvəlki İş müqaviləsi' },
       vacancyRequestType: { WORK: 'İş', AUSBILDUNG: 'Ausbildung' },
     },
   },
@@ -31,12 +31,12 @@ const de: typeof az = {
       areaHint: 'Alle Anträge, die Sie laut Ihren Zugriffsrechten sehen — nicht nur die Ihnen zugewiesenen',
     },
     kind: {
-      contract_triad: 'Triad Vision muss unterschreiben',
+      contract_triad: 'Kunde hat unterschrieben — gegenzeichnen und freigeben',
       contract_approve: 'Vertrag wartet auf Freigabe',
       vacancy_request: 'Neue Stellenanfrage',
     },
     action: {
-      signContract: 'Unterschreiben',
+      signContract: 'Gegenzeichnen und freigeben',
       approveContract: 'Freigeben',
     },
     note: {
@@ -53,12 +53,12 @@ const en: typeof az = {
       areaHint: 'Every case your access allows — not only the ones assigned to you',
     },
     kind: {
-      contract_triad: 'Triad Vision to sign',
+      contract_triad: 'Client signed — countersign and approve',
       contract_approve: 'Contract awaiting approval',
       vacancy_request: 'New vacancy request',
     },
     action: {
-      signContract: 'Sign',
+      signContract: 'Countersign and approve',
       approveContract: 'Approve',
     },
     note: {
@@ -75,12 +75,12 @@ const ru: typeof az = {
       areaHint: 'Все заявки, доступные по вашим правам, — не только назначенные вам',
     },
     kind: {
-      contract_triad: 'Подпись Triad Vision',
+      contract_triad: 'Клиент подписал — подпишите и утвердите',
       contract_approve: 'Договор ждёт утверждения',
       vacancy_request: 'Новый запрос вакансии',
     },
     action: {
-      signContract: 'Подписать',
+      signContract: 'Подписать и утвердить',
       approveContract: 'Утвердить',
     },
     note: {

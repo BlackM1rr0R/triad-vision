@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { AlertTriangle, ArrowRight, CheckCircle2, Compass, FileStack, ListTodo, Loader2, MessageSquareText, Send, Sparkles } from 'lucide-react';
@@ -37,10 +38,11 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
   const { t } = useTranslation();
   const { tr } = useL10n();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const refreshCase = useCaseRefresh(c.id);
   // Re-evaluated whenever the case changes (status, documents, events).
   const version = `${c.status}:${c.events[0]?.id ?? ''}:${c.requirements.reduce((a, r) => a + r.documents.map((d) => d.status[0]).join(''), '')}:${c.messages.length}`;
-  const { data, isLoading } = useQuery({ queryKey: [...nextStepKey(c.id), version], queryFn: () => fetchNextStep(c.id), staleTime: 15_000, placeholderData: keepPreviousData }); // keep the card while a changed case (new `version`) is re-evaluated: it must never vanish (the page would jump)
+  const { data, isLoading } = useQuery({ queryKey: [...nextStepKey(c.id), version], queryFn: () => fetchNextStep(c.id), staleTime: 15_000, refetchOnWindowFocus: true, placeholderData: keepPreviousData }); // keep the card while a changed case (new `version`) is re-evaluated: it must never vanish (the page would jump)
   const ai = useQuery({ queryKey: nextStepAiKey(c.id, data ? `${data.status}:${data.steps.map((s) => `${s.code}${JSON.stringify(s.params)}`).join('|')}` : ''), queryFn: () => fetchNextStepAi(c.id), enabled: !!data && data.steps.length > 0, staleTime: 10 * 60_000, retry: false, placeholderData: keepPreviousData });
 
   const [busy, setBusy] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export const NextStepCard = ({ c }: { c: CaseDetail }) => {
     if (a.kind === 'review') return setReview(a.documentIds);
     if (a.kind === 'package') return openPackage(c.id);
     if (a.kind === 'scroll') return scrollToSection(a.target);
+    if (a.kind === 'link') return navigate(a.href);
     if (a.kind === 'transition') return setConfirm({ step, action: a });
     if (a.kind === 'message') {
       const aiDraft = step === data?.steps[0] && ai.data?.draft ? ai.data.draft.body : null;

@@ -50,6 +50,9 @@ export interface ToolAction {
   primary?: boolean;
   /** Prominent: a text button with its label (also on small screens), before the icon buttons. */
   labelled?: boolean;
+  /** Greyed out; `title` then tells why (shown instead of the label as the tooltip). */
+  disabled?: boolean;
+  title?: string;
 }
 
 const IconBtn = ({ label, onClick, disabled, children, active }: { label: string; onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void; disabled?: boolean; children: ReactNode; active?: boolean }) => (
@@ -209,7 +212,7 @@ export const Toolbar = (p: ToolbarProps) => {
     { id: 'dir', label: t('drive.toolbar.uploadFolder'), icon: FolderUp, onSelect: p.onUploadFolder },
   ];
   const primary = p.actions.filter((a) => a.primary);
-  const moreEntries: MenuEntry[] = p.actions.map((a) => ({ id: a.id, label: a.label, icon: a.icon, danger: a.danger, onSelect: a.onClick }));
+  const moreEntries: MenuEntry[] = p.actions.map((a) => ({ id: a.id, label: a.label, icon: a.icon, danger: a.danger, onSelect: a.onClick, disabled: a.disabled, title: a.disabled ? a.title : undefined }));
 
   return (
     <div className="shrink-0 border-b border-line bg-card">
@@ -303,14 +306,14 @@ export const Toolbar = (p: ToolbarProps) => {
             {primary
               .filter((a) => a.labelled)
               .map((a) => (
-                <button key={a.id} type="button" onClick={a.onClick} title={a.label} className="btn-primary btn-sm mr-1 shrink-0 !gap-1.5 !rounded-lg !px-2.5 !shadow-none">
+                <button key={a.id} type="button" onClick={a.onClick} disabled={a.disabled} title={a.disabled && a.title ? a.title : a.label} className="btn-primary btn-sm mr-1 shrink-0 !gap-1.5 !rounded-lg !px-2.5 !shadow-none">
                   <a.icon className="size-4" aria-hidden />
                   <span className="max-w-[11rem] truncate">{a.label}</span>
                 </button>
               ))}
             {primary.filter((a) => !a.labelled).map((a) => (
               <span key={a.id} className="hidden sm:contents">
-                <IconBtn label={a.label} onClick={a.onClick}>
+                <IconBtn label={a.disabled && a.title ? a.title : a.label} onClick={a.onClick} disabled={a.disabled}>
                   <a.icon className={clsx('size-[18px]', a.danger && 'text-danger-fg')} />
                 </IconBtn>
               </span>

@@ -277,8 +277,8 @@ const searchQuery = z.object({
 });
 
 /**
- * Name search across the shared workspace. Client folders are also found by case number and passport
- * number (they are named "Vorname Nachname · Pass-Nr. …"). Files are also found by their text (PDF text
+ * Name search across the shared workspace. Client folders are also found by case number, passport
+ * number and the client's name, wherever the folder lives (they are named "Vorname Nachname · Pass-Nr. …"). Files are also found by their text (PDF text
  * layer, DOCX, XLSX, OCR — see jobs/driveIndex.ts); such rows carry `contentMatch: { snippet }`.
  */
 driveRouter.get('/search', async (req, res) => {
@@ -301,8 +301,18 @@ driveRouter.get('/search', async (req, res) => {
     rows.push(...hits.filter((h) => !rows.some((r) => r.id === h.id)));
   }
   if (!q.type || q.type === 'folder') {
+    // Wherever the folder lives (Anträge, a partner's folder, a family folder): by case number, passport number and the
+    // client's name (every word of the query must match the first or the last name: "Men Menov", "Menov Men", "Menov").
+    const words = q.q.split(/\s+/).filter(Boolean).slice(0, 4);
     const cases = await prisma.case.findMany({
-      where: { driveFolderId: { not: null }, OR: [{ number: { contains: q.q } }, { client: { passportNumber: { contains: q.q } } }] },
+      where: {
+        driveFolderId: { not: null },
+        OR: [
+          { number: { contains: q.q } },
+          { client: { passportNumber: { contains: q.q } } },
+          { AND: words.map((w) => ({ client: { OR: [{ firstName: { contains: w } }, { lastName: { contains: w } }] } })) },
+        ],
+      },
       select: { driveFolderId: true },
       take: 50,
     });

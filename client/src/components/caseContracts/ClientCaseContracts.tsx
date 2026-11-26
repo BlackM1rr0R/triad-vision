@@ -124,8 +124,10 @@ export const ClientCaseContracts = ({ data, fallback }: { data: CaseDetail; fall
   const q = useQuery({
     queryKey: clientKey(data.id),
     queryFn: async () => (await api.get<{ steps: ClientStep[] }>(`/account/case-contracts/cases/${data.id}`)).data.steps,
+    refetchOnWindowFocus: true,
   });
-  const steps = q.data ?? [];
+  // The İş müqaviləsi is retired: its card only shows for old cases that already have one.
+  const steps = (q.data ?? []).filter((s) => s.step !== 'WORK' || s.state !== 'NOT_SENT');
   if (!steps.some((s) => s.state !== 'NOT_SENT')) return <>{fallback ?? null}</>;
   return (
     <section id="contract" className="card scroll-mt-28 overflow-hidden lg:scroll-mt-36" aria-labelledby="case-contracts-title">

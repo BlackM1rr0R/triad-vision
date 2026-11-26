@@ -6,6 +6,7 @@ import { invalidateMyWork } from '../myWork.js';
 import { notifyUser } from '../notifications.js';
 import { processingTexts, stageLabel } from './texts.js';
 import { scoped } from '../accessAudit/scope.js';
+import { workflowNeedsPartner } from '../clientFolders/logic.js';
 
 /**
  * Team document workflow of a case — a lightweight hand-over between two staff members, independent of the
@@ -52,6 +53,14 @@ export const NEXT_STAGES: Record<ProcessingStage | 'NONE', ProcessingStage[]> = 
   DONE: ['IN_PROGRESS'],
 };
 export const canMoveStage = (from: ProcessingStage | null, to: ProcessingStage) => from === to || NEXT_STAGES[from ?? 'NONE'].includes(to);
+
+export { workflowNeedsPartner }; // pure rule in lib/clientFolders/logic.ts (a case enters the workflow only with a partner)
+
+/** Whether a case may be copied into the workflow (drive "İş axınına kopyala → Schon geschrieben"): it has a partner or is in the workflow already. */
+export const caseMayEnterWorkflow = async (caseId: string) => {
+  const c = await prisma.case.findUnique({ where: { id: caseId }, select: { partnerId: true, processingStage: true, status: true } });
+  return !c || !workflowNeedsPartner(effectiveStage(c.processingStage, c.status), 'WRITTEN', c.partnerId);
+};
 
 /** Visa refused: CaseStatus REJECTED, or marked "Ablehnung" by the team (an approved visa wins). */
 export const isRefused = (c: { status: CaseStatus; processingStage?: string | null }) => c.status === 'REJECTED' || (c.processingStage === 'REFUSED' && c.status !== 'APPROVED');
@@ -127,7 +136,7 @@ export const driveFolderLink = (caseId: string, folderId: string | null | undefi
 export const moveStage = async (caseId: string, actor: { id: string; firstName: string; lastName: string }, input: z.infer<typeof moveSchema>) => {
   const c = await prisma.case.findUnique({
     where: { id: caseId },
-    select: { id: true, number: true, driveFolderId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
+    select: { id: true, number: true, driveFolderId: true, partnerId: true, ...PROCESSING_SELECT, client: { select: { firstName: true, lastName: true } } },
   });
   if (!c) throw notFound('CASE_NOT_FOUND');
   let assignee: { id: string; locale: 'az' | 'de' | 'en' | 'ru' } | null = null;
@@ -139,6 +148,7 @@ export const moveStage = async (caseId: string, actor: { id: string; firstName: 
   const note = input.note || null;
   if (from === input.stage && (assignee?.id ?? null) === c.processingAssigneeId && !note) throw conflict('PROCESSING_UNCHANGED');
   if (!canMoveStage(from, input.stage)) throw conflict('PROCESSING_TRANSITION_NOT_ALLOWED');
+  if (workflowNeedsPartner(from, input.stage, c.partnerId)) throw conflict('WORKFLOW_PARTNER_REQUIRED');
   const previousBy = c.processingStageById;
   const previousAssignee = c.processingAssigneeId;
   const now = new Date();

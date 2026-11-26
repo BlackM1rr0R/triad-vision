@@ -28,6 +28,7 @@ const userSelect = {
   phone: true,
   locale: true,
   isActive: true,
+  emailVerifiedAt: true,
   createdAt: true,
   mergedIntoId: true, // merged duplicate (closed stub) → link to the primary
   ownerPartner: { select: { id: true, name: true } }, // partner-owned client (badge; lib/partners/owned.ts)

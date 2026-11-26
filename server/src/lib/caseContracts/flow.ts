@@ -1,10 +1,13 @@
 import type { CaseStatus, ContractKind, Locale } from '@prisma/client';
 
 /**
- * Two-step case contracts — pure rules (no database), shared by the service, the routes and the unit tests.
+ * Case contracts — pure rules (no database), shared by the service, the routes and the unit tests.
  *
- *   1. LABOUR — "Əmək müqaviləsi" between Triad Vision and the client.
- *   2. WORK   — "İş müqaviləsi" (work contract; WORK or AUSBILDUNG template). Only after step 1 is approved.
+ *   1. LABOUR — "Əmək müqaviləsi" between Triad Vision and the client: THE ONLY contract of a case.
+ *   2. WORK   — "İş müqaviləsi": RETIRED (owner's rule). New cases never get one: the German documents (Arbeitsvertrag …)
+ *               are prepared in the drive workflow (Schon geschrieben → In Bearbeitung → Fertig) and sent to the client
+ *               from there, which moves the case to the embassy documents. The WORK step stays in the code only so that
+ *               old cases where an İş müqaviləsi was already sent / signed keep their data and can be finished.
  *
  * Old flow (contractFlow null, template PDF): Triad Vision's signatory first (STAFF, order 1), then the client
  * (CANDIDATE, order 2), then a staff member approves.
@@ -14,7 +17,7 @@ import type { CaseStatus, ContractKind, Locale } from '@prisma/client';
  *   LABOUR  one PDF; the client signs first (order 1), then Triad Vision (order 2) if it agrees — that signature
  *           completes the request and approves it at once. Staff may instead send it back with a reason (RETURNED).
  *   WORK    1–10 PDFs (one request each), only the client signs; staff review the whole set and approve it (no
- *           Triad Vision signature) or send one document back with a reason. Approval = İş müqaviləsi approved: the
+ *           Triad Vision signature) or send one document back with a reason (legacy only, see above). Approval = İş müqaviləsi approved: the
  *           employer becomes visible to the client and the case moves on to the embassy documents.
  * The employer is never a party or signer of these contracts.
  */
@@ -117,6 +120,13 @@ export const sendBlockReason = (step: Step, states: Record<Step, StepState>, cas
   if (step === 'WORK' && states.LABOUR !== 'APPROVED') return 'LABOUR_NOT_APPROVED';
   return null;
 };
+
+/**
+ * The İş müqaviləsi is retired: it can only be (re)sent while the case already has one (legacy data). A case with
+ * none (state NOT_SENT) gets no new one — blockedReason in the staff overview and a 409 in the send / upload routes.
+ */
+export const WORK_RETIRED = 'WORK_CONTRACT_RETIRED';
+export const workRetired = (step: Step, states: Record<Step, StepState>) => step === 'WORK' && states.WORK === 'NOT_SENT';
 
 /** Step 1 becomes the case's contract (case status flow) only while the case is in its contract step. */
 export const isCaseContractFor = (step: Step, caseStatus: CaseStatus) => step === 'LABOUR' && CONTRACT_STEP_STATUSES.includes(caseStatus);

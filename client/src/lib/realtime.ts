@@ -220,10 +220,23 @@ export const useRealtimeStatus = (): RealtimeStatus => useSyncExternalStore((cb)
  */
 export const useRealtimeNotifications = () => {
   const qc = useQueryClient();
-  useRealtime('notification', () => {
+  useRealtime('notification', (p) => {
     void qc.invalidateQueries({ queryKey: ['notifications'] });
     void qc.invalidateQueries({ queryKey: ['admin-notifications'] });
+    // A notification about a case ("Yeni imza", contract approved / returned …): the open case page, contract panel,
+    // next step, cases list, sidebar count and the "Bu günün işləri" queue must not keep the old state.
+    const caseId = typeof p.caseId === 'string' && p.caseId ? p.caseId : null;
+    if (caseId) refreshCaseQueries(qc, caseId);
   });
+  useRealtime('case.updated', (p) => {
+    const caseId = typeof p.caseId === 'string' && p.caseId ? p.caseId : null;
+    if (caseId) refreshCaseQueries(qc, caseId);
+  });
+};
+
+/** Query prefixes that show the state of one case (staff case page / drawer, client portal, contracts, queues). */
+export const refreshCaseQueries = (qc: ReturnType<typeof useQueryClient>, caseId: string) => {
+  for (const queryKey of [['admin-case', caseId], ['case', caseId], ['cases'], ['case-contracts'], ['case-next-step', caseId], ['admin-cases'], ['my-work']]) void qc.invalidateQueries({ queryKey });
 };
 
 /** Renders nothing; mount it anywhere inside the auth provider to keep the bell in sync. */
