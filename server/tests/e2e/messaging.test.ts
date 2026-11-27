@@ -430,7 +430,7 @@ describe('notification templates', () => {
   it('lists every type × locale with defaults, placeholders and overrides', async () => {
     const staff = await asStaff();
     const res = expectStatus(await staff.agent.get('/api/admin/messaging/templates'), 200).body;
-    expect(res.types.length).toBe(15);
+    expect(res.types.length).toBe(16);
     const appt = res.types.find((t: { type: string }) => t.type === 'APPOINTMENT_SCHEDULED');
     expect(appt.placeholders).toEqual(['number', 'firstName', 'date', 'place', 'note']);
     expect(appt.locales.de.default.title).toBe('Ihr Botschaftstermin');

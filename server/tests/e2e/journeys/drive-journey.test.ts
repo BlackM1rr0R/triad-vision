@@ -110,7 +110,7 @@ describe('journey: client folders in the documents section', () => {
     // Another client cannot open them.
     expect((await second.agent.get(`/api/files/${detail.otherDocuments[0].id}`)).status).not.toBe(200);
     const note = await prisma.notification.findFirstOrThrow({ where: { userId: client.user.id, type: 'READY_DOCS' } });
-    expect(note).toMatchObject({ caseId: caseA.id, link: `/account/cases/${caseA.id}?tab=docs` });
+    expect(note).toMatchObject({ caseId: caseA.id, link: `/account/cases/${caseA.id}?tab=docs#received` });
     expect(await prisma.notification.count({ where: { userId: second.user.id, type: 'READY_DOCS' } })).toBe(0);
     chips = await chipsIn(leyla.agent, r.cases.id);
     expect(chips.get(folderA.id)?.caseInfo?.readySentAt).toBeTruthy();

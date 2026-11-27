@@ -166,7 +166,7 @@ describe('full journey (client in German)', () => {
       'EMBASSY_CHANGES_REQUESTED',
       ...Array(4).fill('DOCUMENT_ACCEPTED'),
       'APPOINTMENT_SCHEDULED',
-      'APPOINTMENT_SCHEDULED',
+      'APPOINTMENT_UPDATED',
       'DECISION_PENDING',
       'REJECTED',
       'REOPENED',

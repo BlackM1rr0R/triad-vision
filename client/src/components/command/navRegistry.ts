@@ -439,7 +439,7 @@ export const HUBS: { key: HubKey; icon: LucideIcon; tabs: string[] }[] = [
   { key: 'employers', icon: Building2, tabs: ['companies', 'vacancies', 'jobChannels', 'candidateRequests', 'candidatePool', 'interviews', 'employmentContracts', 'interviewPrep', 'coverLetterTemplates', 'employerChecklist', 'realSalaries'] },
   { key: 'comms', icon: MessageSquareText, tabs: ['notifications', 'messaging', 'cannedReplies', 'calls', 'campaigns', 'emailDelivery', 'ruleChanges', 'announcements', 'surveys', 'reviews'] },
   { key: 'finance', icon: Wallet, tabs: ['finance', 'invoices', 'clientInvoices', 'packages', 'accounting', 'quotes', 'settlements', 'profitability', 'bizAnalytics', 'reports', 'quarterlyReport'] },
-  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'publicApiKeys', 'agents'] },
+  { key: 'leads', icon: Target, tabs: ['inquiries', 'bookings', 'overview', 'analytics', 'yearReview', 'referralPartners', 'referrers', 'publicApiKeys', 'agents'] },
   {
     key: 'site',
     icon: Globe,

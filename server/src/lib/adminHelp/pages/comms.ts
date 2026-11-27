@@ -784,6 +784,63 @@ export const PAGES_COMMS: PageHelpEntry[] = [
     },
   },
   {
+    route: 'referrers',
+    text: {
+      az: {
+        title: 'Referallar',
+        purpose: 'Bakıda bizə müştəri gətirən referallar və onların komandası (piramida). Komissiya yoxdur; yalnız kimin kimi gətirdiyi görünür.',
+        steps: [
+          'Ağacda referalı açın: onun altındakı alt-referalları və gətirdiyi müştəriləri görürsünüz.',
+          'Referalın alt-referal əlavə etmək sorğusunu baxın və «Təsdiq et» və ya «Rədd et» basın.',
+          'Referalın kartında onun müştərilərinin vəziyyətinə baxın.',
+        ],
+        tips: [
+          'Alt-referalı yalnız administrator təsdiqləyir.',
+          'Referal öz portalında «Komandam» bölməsində yalnız məhdud məlumat görür.',
+        ],
+      },
+      ru: {
+        title: 'Рефералы',
+        purpose: 'Рефералы, приводящие нам клиентов в Баку, и их команда (пирамида). Комиссий нет; видно только, кто кого привёл.',
+        steps: [
+          'Раскройте реферала в дереве: видны его суб-рефералы и приведённые клиенты.',
+          'Просмотрите запрос на добавление суб-реферала и нажмите «Одобрить» или «Отклонить».',
+          'В карточке реферала проверьте статус его клиентов.',
+        ],
+        tips: [
+          'Суб-рефералов одобряет только администратор.',
+          'В своём портале в разделе «Моя команда» реферал видит только ограниченные данные.',
+        ],
+      },
+      en: {
+        title: 'Referrers',
+        purpose: 'Referrers who bring us clients in Baku and their team (pyramid). There are no commissions; it only shows who brought whom.',
+        steps: [
+          'Expand a referrer in the tree to see their sub-referrers and the clients they brought.',
+          'Review a request to add a sub-referrer and press “Approve” or “Reject”.',
+          'In the referrer’s card, check the status of their clients.',
+        ],
+        tips: [
+          'Only an administrator approves sub-referrers.',
+          'In their own portal, under “My team”, a referrer sees privacy-limited data only.',
+        ],
+      },
+      de: {
+        title: 'Empfehler',
+        purpose: 'Empfehler, die uns in Baku Kunden bringen, und ihr Team (Pyramide). Es gibt keine Provisionen; sichtbar ist nur, wer wen gebracht hat.',
+        steps: [
+          'Einen Empfehler im Baum aufklappen: seine Unter-Empfehler und die vermittelten Kunden werden angezeigt.',
+          'Eine Anfrage zum Hinzufügen eines Unter-Empfehlers prüfen und „Genehmigen“ oder „Ablehnen“ klicken.',
+          'In der Karte des Empfehlers den Stand seiner Kunden prüfen.',
+        ],
+        tips: [
+          'Unter-Empfehler genehmigt nur ein Administrator.',
+          'Im eigenen Portal sieht ein Empfehler unter „Mein Team“ nur datenschutzbegrenzte Angaben.',
+        ],
+      },
+    },
+  },
+  {
     route: 'public-api-keys',
     text: {
       az: {

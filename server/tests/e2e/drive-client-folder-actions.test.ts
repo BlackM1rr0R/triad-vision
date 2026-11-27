@@ -214,7 +214,7 @@ describe('client folders: Fertig → client portal', () => {
     expect((await client.agent.get(`/api/files/${docId}`)).status).toBe(200);
     // notification (in-app; the link opens the documents tab), event, audit, sent chip on the folder
     const n = await prisma.notification.findFirst({ where: { userId: client.user.id, type: 'READY_DOCS' } });
-    expect(n).toMatchObject({ caseId: c.id, link: `/account/cases/${c.id}?tab=docs` });
+    expect(n).toMatchObject({ caseId: c.id, link: `/account/cases/${c.id}?tab=docs#received` });
     expect(n!.body).toContain(c.number);
     // "Göndərilənlər": the view lists each send with the files the client received (name, size, openable by staff)
     const sentView = expectStatus(await staff.agent.get(`/api/admin/client-folders/cases/${c.id}/ready-docs`), 200).body;
