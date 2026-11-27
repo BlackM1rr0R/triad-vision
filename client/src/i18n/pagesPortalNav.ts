@@ -60,6 +60,7 @@ const az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Yenilənmiş şərtləri qəbul edin', text: 'Şərtlərimizi və ya məxfilik siyasətimizi yenilədik. Kabinetdən istifadəyə davam etmək üçün yeni versiyanı oxuyub qəbul edin.', action: 'Oxu və qəbul et' },
         PAY_INVOICE: { title: 'Hesab-faktura ödənilməlidir ({{count}})', titleDetail: 'Hesab-fakturanı ödəyin: {{detail}}', text: 'Bank köçürməsi ilə ödəyin. Ödənişin təyinatına hesab-faktura nömrəsini yazın.', action: 'Ödəniş məlumatları' },
+        PAY_CASE: { title: 'Növbəti addım: ödəniş', titleDetail: 'Növbəti addım: ödəniş', text: 'Əmək müqaviləniz təsdiqləndi. Ödənişi ofisdə edin — ofisə gəlmək üçün gün və vaxt seçin.', action: 'Ödəniş' },
         FIX_DOCS: { title: 'Rədd edilmiş sənədi yenidən yükləyin', titleDetail: 'Sənədi yenidən yükləyin: {{detail}}', text: 'Yenidən yüklənməli sənəd sayı: {{count}}. Komandanın qeydinə baxın.', action: 'Sənədləri düzəlt' },
         UPLOAD_DOCS: { title: 'Sənədlərinizi yükləyin', titleDetail: 'Yükləyin: {{detail}}', text: 'Çatışmayan vacib sənəd sayı: {{count}}.', action: 'İndi yüklə' },
         SUBMIT_DOCS: { title: 'Sənədləri yoxlamaya göndərin', text: 'Bütün vacib sənədlər yüklənib. Onları yoxlama üçün komandamıza göndərin.', action: 'Yoxlamaya göndər' },
@@ -176,6 +177,7 @@ const de: typeof az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Aktualisierte Bedingungen akzeptieren', text: 'Wir haben unsere AGB bzw. Datenschutzerklärung aktualisiert. Bitte lesen und akzeptieren Sie die neue Fassung, um das Portal weiter zu nutzen.', action: 'Lesen und akzeptieren' },
         PAY_INVOICE: { title: 'Rechnung bezahlen ({{count}})', titleDetail: 'Rechnung {{detail}} bezahlen', text: 'Bitte überweisen Sie den Betrag mit der Rechnungsnummer als Verwendungszweck.', action: 'Zahlungsdetails' },
+        PAY_CASE: { title: 'Nächster Schritt: Zahlung', titleDetail: 'Nächster Schritt: Zahlung', text: 'Ihr Arbeitsvertrag ist bestätigt. Die Zahlung erfolgt aktuell im Büro — wählen Sie Tag und Uhrzeit für Ihren Besuch.', action: 'Zahlung' },
         FIX_DOCS: { title: 'Abgelehntes Dokument ersetzen', titleDetail: 'Dokument ersetzen: {{detail}}', text: 'Neu hochzuladende Dokumente: {{count}}. Beachten Sie den Hinweis unseres Teams.', action: 'Dokumente korrigieren' },
         UPLOAD_DOCS: { title: 'Laden Sie Ihre Dokumente hoch', titleDetail: 'Hochladen: {{detail}}', text: 'Fehlende Pflichtdokumente: {{count}}.', action: 'Jetzt hochladen' },
         SUBMIT_DOCS: { title: 'Dokumente zur Prüfung senden', text: 'Alle Pflichtdokumente sind hochgeladen. Senden Sie sie unserem Team zur Prüfung.', action: 'Zur Prüfung senden' },
@@ -292,6 +294,7 @@ const en: typeof az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Accept the updated terms', text: 'We updated our terms or privacy policy. Please read and accept the new version to keep using the portal.', action: 'Review and accept' },
         PAY_INVOICE: { title: 'Pay your invoice ({{count}})', titleDetail: 'Pay invoice {{detail}}', text: 'Please transfer the amount and quote the invoice number as the payment reference.', action: 'Payment details' },
+        PAY_CASE: { title: 'Next step: payment', titleDetail: 'Next step: payment', text: 'Your employment contract is approved. Payment is currently taken at our office — pick a day and time to visit.', action: 'Payment' },
         FIX_DOCS: { title: 'Replace a rejected document', titleDetail: 'Replace the document: {{detail}}', text: 'Documents to upload again: {{count}}. See the note from our team.', action: 'Fix documents' },
         UPLOAD_DOCS: { title: 'Upload your documents', titleDetail: 'Upload: {{detail}}', text: 'Required documents still missing: {{count}}.', action: 'Upload now' },
         SUBMIT_DOCS: { title: 'Send your documents for review', text: 'All required documents are uploaded. Send them to our team for checking.', action: 'Send for review' },
@@ -408,6 +411,7 @@ const ru: typeof az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Примите обновлённые условия', text: 'Мы обновили условия или политику конфиденциальности. Прочитайте и примите новую версию, чтобы продолжить пользоваться порталом.', action: 'Прочитать и принять' },
         PAY_INVOICE: { title: 'Оплатите счёт ({{count}})', titleDetail: 'Оплатите счёт {{detail}}', text: 'Переведите сумму, указав номер счёта в назначении платежа.', action: 'Реквизиты для оплаты' },
+        PAY_CASE: { title: 'Следующий шаг: оплата', titleDetail: 'Следующий шаг: оплата', text: 'Ваш трудовой договор утверждён. Оплата сейчас принимается в офисе — выберите день и время визита.', action: 'Оплата' },
         FIX_DOCS: { title: 'Замените отклонённый документ', titleDetail: 'Замените документ: {{detail}}', text: 'Документов для повторной загрузки: {{count}}. Посмотрите комментарий команды.', action: 'Исправить документы' },
         UPLOAD_DOCS: { title: 'Загрузите документы', titleDetail: 'Загрузите: {{detail}}', text: 'Не хватает обязательных документов: {{count}}.', action: 'Загрузить' },
         SUBMIT_DOCS: { title: 'Отправьте документы на проверку', text: 'Все обязательные документы загружены. Отправьте их нашей команде на проверку.', action: 'Отправить на проверку' },
@@ -524,6 +528,7 @@ const tr: typeof az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Güncellenen koşulları kabul edin', text: 'Koşullarımızı veya gizlilik politikamızı güncelledik. Portalı kullanmaya devam etmek için lütfen yeni sürümü okuyup kabul edin.', action: 'İncele ve kabul et' },
         PAY_INVOICE: { title: 'Faturanızı ödeyin ({{count}})', titleDetail: '{{detail}} numaralı faturayı ödeyin', text: 'Lütfen tutarı havale edin ve ödeme açıklamasına fatura numarasını yazın.', action: 'Ödeme bilgileri' },
+        PAY_CASE: { title: 'Sıradaki adım: ödeme', titleDetail: 'Sıradaki adım: ödeme', text: 'İş sözleşmeniz onaylandı. Ödeme şu anda ofisimizde alınıyor — ziyaret için gün ve saat seçin.', action: 'Ödeme' },
         FIX_DOCS: { title: 'Reddedilen bir belgeyi değiştirin', titleDetail: 'Belgeyi değiştirin: {{detail}}', text: 'Yeniden yüklenecek belge sayısı: {{count}}. Ekibimizin notuna bakın.', action: 'Belgeleri düzelt' },
         UPLOAD_DOCS: { title: 'Belgelerinizi yükleyin', titleDetail: 'Yükleyin: {{detail}}', text: 'Hâlâ eksik olan zorunlu belge sayısı: {{count}}.', action: 'Şimdi yükle' },
         SUBMIT_DOCS: { title: 'Belgelerinizi kontrole gönderin', text: 'Tüm zorunlu belgeler yüklendi. Kontrol için ekibimize gönderin.', action: 'Kontrole gönder' },
@@ -640,6 +645,7 @@ const uk: typeof az = {
       kind: {
         ACCEPT_LEGAL: { title: 'Прийміть оновлені умови', text: 'Ми оновили умови або політику конфіденційності. Щоб і далі користуватися порталом, прочитайте й прийміть нову версію.', action: 'Переглянути й прийняти' },
         PAY_INVOICE: { title: 'Оплатіть рахунок ({{count}})', titleDetail: 'Оплатіть рахунок {{detail}}', text: 'Перекажіть суму й укажіть номер рахунку як призначення платежу.', action: 'Реквізити для оплати' },
+        PAY_CASE: { title: 'Наступний крок: оплата', titleDetail: 'Наступний крок: оплата', text: 'Ваш трудовий договір підтверджено. Оплата зараз приймається в офісі — оберіть день і час візиту.', action: 'Оплата' },
         FIX_DOCS: { title: 'Замініть відхилений документ', titleDetail: 'Замініть документ: {{detail}}', text: 'Документів, які треба завантажити знову: {{count}}. Перегляньте примітку нашої команди.', action: 'Виправити документи' },
         UPLOAD_DOCS: { title: 'Завантажте документи', titleDetail: 'Завантажте: {{detail}}', text: 'Ще бракує обов’язкових документів: {{count}}.', action: 'Завантажити' },
         SUBMIT_DOCS: { title: 'Надішліть документи на перевірку', text: 'Усі обов’язкові документи завантажено. Надішліть їх нашій команді на перевірку.', action: 'Надіслати на перевірку' },

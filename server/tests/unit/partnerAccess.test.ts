@@ -133,8 +133,10 @@ describe('response shaping', () => {
   });
 
   it('portal areas', () => {
-    expect(portalAreas(NO_PERMS, { owner: false })).toEqual({ clients: false, cases: false, commissions: false, addClients: false, messages: false, vacancies: false, drive: false, team: false, profile: false });
+    expect(portalAreas(NO_PERMS, { owner: false })).toEqual({ clients: false, cases: false, commissions: false, addClients: false, messages: false, vacancies: false, drive: false, team: false, profile: false, referrals: false });
     expect(portalAreas(DEFAULT_PERMS, { owner: true })).toMatchObject({ clients: true, drive: true, team: true, profile: true });
+    // referrers: the sub-referrer area instead of commissions and the team page
+    expect(portalAreas(TEMPLATE_PERMS.REFERRER, { owner: true, referrer: true })).toMatchObject({ commissions: false, team: false, referrals: true, clients: true });
   });
 });
 

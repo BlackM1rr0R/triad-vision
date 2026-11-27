@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CheckCircle2, PenLine, Undo2 } from 'lucide-react';
+import { CheckCircle2, Eye, PenLine, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { registerCopy } from '@/i18n';
 import { pagesCaseContracts } from '@/i18n/pagesCaseContracts';
@@ -59,6 +59,12 @@ export const QuickContractActions = ({ caseId }: { caseId: string }) => {
                   <button type="button" className="btn-primary btn-sm" onClick={() => setSigning(s.step)}>
                     <PenLine className="size-3.5" aria-hidden /> {s.flow === 'V2' ? t('caseContracts.v2.agreeSign') : t('caseContracts.triadSign')}
                   </button>
+                )}
+                {/* Current PDF: the one the client signed if they already did, else the uploaded one (same endpoint as the case page). */}
+                {s.canTriadSign && s.request && (
+                  <a href={`/api/admin/signatures/${s.request.id}/document?version=current`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
+                    <Eye className="size-3.5" aria-hidden /> {t('caseContracts.v2.viewContract')}
+                  </a>
                 )}
                 {s.canReturn && s.step === 'LABOUR' && (
                   <button type="button" className="btn-ghost btn-sm text-danger-fg" onClick={() => setReturning({ step: s.step, doc: null })}>

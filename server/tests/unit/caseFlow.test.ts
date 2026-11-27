@@ -293,7 +293,7 @@ describe('document preconditions', () => {
     );
   });
 
-  it('rescheduling records APPOINTMENT_RESCHEDULED and notifies with the localized date', async () => {
+  it('rescheduling records APPOINTMENT_RESCHEDULED and notifies APPOINTMENT_UPDATED with the localized date', async () => {
     setStatus('APPOINTMENT_SCHEDULED');
     await flow.staffScheduleAppointment(CASE_ID, ACTOR, { at: new Date('2026-11-20T05:30:00Z'), place: 'Embassy Baku', note: 'bring originals' });
     expect(p.caseEvent.create).toHaveBeenCalledWith(
@@ -301,7 +301,7 @@ describe('document preconditions', () => {
     );
     expect(notifyClient).toHaveBeenCalledWith(
       CASE_ID,
-      'APPOINTMENT_SCHEDULED',
+      'APPOINTMENT_UPDATED',
       expect.objectContaining({ place: 'Embassy Baku', note: 'bring originals', date: expect.stringContaining('09:30') }),
     );
   });

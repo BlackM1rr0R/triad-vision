@@ -34,3 +34,11 @@ export const attentionWhere = (): Prisma.CaseWhereInput => ({
     { status: { in: ['CONTRACT_SENT', 'CONTRACT_SIGNED'] }, signatureRequests: { some: { contractKind: { not: null }, status: 'COMPLETED', approvedAt: null } } },
   ],
 });
+
+/**
+ * Sidebar count on "Müraciətlər": cases waiting for staff action PLUS open cases created since the staff member last
+ * opened the cases list. One query condition, so a case in both groups counts once (combine with the case scope).
+ */
+export const casesNavWhere = (since: Date): Prisma.CaseWhereInput => ({
+  OR: [attentionWhere(), { status: { notIn: FINAL_STATUSES }, createdAt: { gt: since } }],
+});

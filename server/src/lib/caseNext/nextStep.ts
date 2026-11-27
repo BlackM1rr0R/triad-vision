@@ -6,6 +6,7 @@ import type { L10n } from '../ai/features/caseAi/texts.js';
 import { PACKAGE_EVENT } from './embassyPackage.js';
 import { confirmationStates, type ConfirmState } from '../clientData/confirmation.js';
 import type { ContractTurn, StepState } from '../caseContracts/flow.js';
+import { loadCasePayments, paymentDue, type CasePayment } from '../casePayment/index.js'; // office payment after the Əmək müqaviləsi
 import { loadContractInfo } from '../caseContracts/turn.js'; // whose turn the contract is, old flow vs V2, İş müqaviləsi state
 import { CHANGES_NOTE, fmtDate, fmtDateTime, message, MESSAGE_TEXT, TRANSLATION_TITLE } from './texts.js';
 
@@ -82,6 +83,8 @@ export interface CaseFacts {
   contractV2?: boolean;
   /** CONTRACT_SIGNED + V2: state of the İş müqaviləsi documents (undefined / null = old flow or not loaded). */
   workContract?: StepState | null;
+  /** CONTRACT_SIGNED: payment state (lib/casePayment); undefined / null = not loaded (no payment rule). */
+  payment?: CasePayment | null;
   requirements: FactRequirement[];
   lastClientActivityAt: Date | null;
   lastClientMessageAt: Date | null;
@@ -143,6 +146,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
   ]);
 
   const contracts = await loadContractInfo(cases, now);
+  const payments = await loadCasePayments(cases.filter((c) => c.status === 'CONTRACT_SIGNED').map((c) => c.id), now);
   return cases.map((c) => {
     const since = opts.statusSince?.get(c.id) ?? entered.find((e) => e.caseId === c.id && e.toStatus === c.status)?.createdAt ?? c.createdAt;
     const clientMsg = msgs.find((m) => m.caseId === c.id && m.authorId === c.clientId)?._max.createdAt ?? null;
@@ -183,6 +187,7 @@ export const loadFacts = async (caseIds: string[], opts: { statusSince?: Map<str
       contractTurn: contracts.get(c.id)?.turn ?? null,
       contractV2: contracts.get(c.id)?.v2 ?? false,
       workContract: contracts.get(c.id)?.work ?? null,
+      payment: payments.get(c.id) ?? null,
       requirements,
       lastClientActivityAt: maxDate(clientMsg, clientEvent, clientUpload),
       lastClientMessageAt: clientMsg,
@@ -222,6 +227,7 @@ export type RuleCode =
   | 'TRIAD_SIGN_AFTER_CLIENT'
   | 'RESEND_CONTRACT'
   | 'SEND_WORK_CONTRACT'
+  | 'AWAIT_PAYMENT'
   | 'RESEND_WORK_CONTRACT'
   | 'AWAIT_WORK_SIGNATURE'
   | 'AWAIT_CLIENT_SIGN'
@@ -261,6 +267,7 @@ export type ActionId =
   | 'OPEN_DATA'
   | 'OPEN_CONTRACT'
   | 'OPEN_DRIVE_WORKFLOW'
+  | 'RECORD_PAYMENT'
   | 'GO_EMBASSY_DOCS';
 
 export interface ApiCall {
@@ -444,7 +451,10 @@ export const computeSteps = (f: CaseFacts, opts: { now?: Date; staffLocale?: Loc
     const urgent = { priority: slow ? 90 : 85, tone: (slow ? 'urgent' : 'action') as NextStep['tone'], params: { days: f.daysInStatus } };
     // Single-contract flow: the Əmək müqaviləsi is the only contract. After the payment staff prepare the German
     // documents in the drive workflow and send them from "Fertig" (that moves the case on); or move it on by hand.
-    if (work === 'NOT_SENT') add({ code: 'SEND_WORK_CONTRACT', ...urgent, actions: [{ id: 'OPEN_DRIVE_WORKFLOW', kind: 'link', href: '/workspace/drive' }, transition(f, 'GO_EMBASSY_DOCS', { action: 'CONFIRM_CONTRACT' })] });
+    const payDue = paymentDue({ status: f.status, contractTurn: f.contractTurn, work, paid: f.payment ? f.payment.paid : null });
+    // Unpaid: the client pays in the office first (lib/casePayment); staff record it ("Ödəniş alındı") — the Fertig send is not blocked.
+    if (payDue) add({ code: 'AWAIT_PAYMENT', ...urgent, params: { days: f.daysInStatus, ...(f.payment?.visit ? { visit: f.payment.visit.startsAt.toISOString() } : {}), ...(f.payment?.openCents ? { amount: f.payment.openCents / 100, currency: f.payment.currency } : {}) }, actions: [{ id: 'RECORD_PAYMENT', kind: 'transition', confirm: true, request: { method: 'POST', path: casePath(f, '/payment'), body: {} } }, { id: 'OPEN_DRIVE_WORKFLOW', kind: 'link', href: '/workspace/drive' }] });
+    else if (work === 'NOT_SENT') add({ code: 'SEND_WORK_CONTRACT', ...urgent, actions: [{ id: 'OPEN_DRIVE_WORKFLOW', kind: 'link', href: '/workspace/drive' }, transition(f, 'GO_EMBASSY_DOCS', { action: 'CONFIRM_CONTRACT' })] });
     else if (work === 'RETURNED' || work === 'DECLINED' || work === 'EXPIRED' || work === 'CANCELLED') add({ code: 'RESEND_WORK_CONTRACT', ...urgent, params: { days: f.daysInStatus, state: work }, actions: [openContract] });
     else if (work === 'SIGNED') add({ code: 'APPROVE_WORK_CONTRACT', ...urgent, actions: [openContract] });
     // Facts without the İş müqaviləsi state (older callers): staff check it in the contracts panel.

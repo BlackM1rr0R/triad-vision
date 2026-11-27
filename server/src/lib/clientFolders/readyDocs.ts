@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import type { Prisma } from '@prisma/client';
 import { config } from '../../config.js';
+import { paymentViewFor } from '../casePayment/index.js';
 import { prisma } from '../../db.js';
 import { conflict, notFound } from '../http.js';
 import { notifyUser } from '../notifications.js';
@@ -161,6 +162,8 @@ export const readyDocsView = async (caseId: string) => {
       .filter((p) => !files.some((f) => f.nodeId === p.nodeId))
       .map(({ storageKey: _k, ...f }) => ({ ...f, sent: !newFiles([f], live.sent).length })),
     newCount: fresh.size,
+    // Unpaid after the Əmək müqaviləsi: the send dialog warns (the send itself is never blocked).
+    paymentDue: await paymentViewFor(caseId).then((p) => p.due).catch(() => false),
     sends: sends.map((s) => ({ id: s.id, at: s.createdAt, by: s.actorId ? (actorName.get(s.actorId) ?? null) : null, fileCount: s.fileCount,
       newCount: s.newCount,
       resend: s.resend,
@@ -271,7 +274,7 @@ export const sendReadyDocs = async (caseId: string, actor: { id: string }, opts:
     type: 'READY_DOCS',
     title: tx.title(created.length),
     body: tx.body({ name: c.client.firstName, number: c.number, count: created.length, resend, nextEmbassy: movedOn }),
-    link: `/account/cases/${c.id}?tab=docs`,
+    link: `/account/cases/${c.id}?tab=docs#received`,
     caseId: c.id,
     ctaLabel: tx.cta,
   }).catch(() => undefined);

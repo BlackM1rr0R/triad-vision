@@ -23,8 +23,9 @@ import { useL10n } from '@/lib/l10n';
 import type { CaseDetail, CaseStatus, Requirement } from '@/lib/types';
 import { Spinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '../ConfirmDialog';
-import { fmtDateTime, statusLabel, toLocalInput } from '../labels';
+import { statusLabel } from '../labels';
 import { Panel } from '../ui';
+import { AppointmentForm } from './AppointmentForm';
 import { goToCaseSection } from './sections';
 import { missingAccepted, useCaseAction, useCaseRefresh, type ActionBody } from './shared';
 import { staffKey } from '@/components/caseContracts/api';
@@ -124,10 +125,6 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
 
   // form state
   const [note, setNote] = useState('');
-  // Appointment: date and time are separate inputs (a datetime-local with an empty time part reads as "no value" and silently disabled the button).
-  const [at, setAt] = useState('');
-  const [atTime, setAtTime] = useState('09:00');
-  const [place, setPlace] = useState('');
   const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [reason, setReason] = useState('');
   const [validFrom, setValidFrom] = useState('');
@@ -143,15 +140,12 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
   useEffect(() => {
     setSelected(AVAILABLE[c.status][0] ?? null);
     setNote('');
-    setAt(toLocalInput(c.appointmentAt).slice(0, 10));
-    setAtTime(toLocalInput(c.appointmentAt).slice(11, 16) || '09:00');
-    setPlace(c.appointmentPlace ?? '');
     setReason('');
     setValidFrom('');
     setValidTo('');
     setCancelReason('');
     setShowCancel(false);
-  }, [c.status, c.appointmentAt, c.appointmentPlace]);
+  }, [c.status]);
 
   useEffect(() => setNote(''), [selected]);
 
@@ -245,51 +239,9 @@ export const ActionPanel = ({ c, quickContracts }: { c: CaseDetail; quickContrac
           </div>
         );
 
-      case 'SCHEDULE': {
-        const resched = c.status === 'APPOINTMENT_SCHEDULED';
-        const atFull = at ? `${at}T${atTime || '09:00'}` : '';
-        const ok = !!atFull && place.trim().length >= 3 && !Number.isNaN(new Date(atFull).getTime());
-        return (
-          <div className="space-y-3">
-            {resched && c.appointmentAt && (
-              <Hint tone="info">
-                {a('currentAppointment')} <strong>{fmtDateTime(c.appointmentAt)}</strong>, {c.appointmentPlace}
-              </Hint>
-            )}
-            {!resched && <MissingHint missing={missingEmbassy} what={a('scheduleWhat')} />}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label={a('dateTime')} htmlFor="ap-at">
-                <div className="flex gap-2">
-                  <input id="ap-at" type="date" className="input min-w-0 flex-1" value={at} onChange={(e) => setAt(e.target.value)} />
-                  <input id="ap-time" type="time" className="input w-28" value={atTime} onChange={(e) => setAtTime(e.target.value)} aria-label={a('time')} />
-                </div>
-              </Field>
-              <Field label={a('place')} htmlFor="ap-place">
-                <input id="ap-place" className="input" value={place} onChange={(e) => setPlace(e.target.value)} placeholder={a('placePlaceholder')} />
-              </Field>
-            </div>
-            <Field label={a('noteOptional')} htmlFor="ap-anote">
-              <textarea id="ap-anote" className="input" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={a('appointmentNotePlaceholder')} />
-            </Field>
-            <button
-              type="button"
-              className="btn-primary btn-sm"
-              disabled={!ok || busy || (!resched && missingEmbassy.length > 0)}
-              onClick={() =>
-                run({
-                  action: 'SCHEDULE_APPOINTMENT',
-                  at: new Date(atFull).toISOString(),
-                  place: place.trim(),
-                  note: note.trim() || undefined,
-                })
-              }
-            >
-              {busy ? <Spinner className="size-3.5" /> : <CalendarClock className="size-3.5" />}
-              {resched ? a('reschedule') : a('label.SCHEDULE')}
-            </button>
-          </div>
-        );
-      }
+      case 'SCHEDULE':
+        // The form (date, time, place, note, confirmation files; prefilled when the appointment is already recorded) is shared with the "Düzəlt" dialog.
+        return <AppointmentForm c={c} hint={c.status === 'APPOINTMENT_SCHEDULED' ? undefined : <MissingHint missing={missingEmbassy} what={a('scheduleWhat')} />} canSave={c.status === 'APPOINTMENT_SCHEDULED' || missingEmbassy.length === 0} />;
 
       case 'MARK_LODGED':
         return (

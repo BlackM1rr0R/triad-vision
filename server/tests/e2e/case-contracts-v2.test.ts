@@ -143,12 +143,18 @@ describe('case contracts V2: own PDF, signature places, client first', () => {
     await completed(id);
     await waitFor(async () => (await prisma.signatureRequest.findUniqueOrThrow({ where: { id } })).approvedAt);
     const after = expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep;
-    expect(after.steps[0]).toMatchObject({ code: 'SEND_WORK_CONTRACT' });
+    // Unpaid: the client pays in the office first (ball with the client); staff record it with "Ödəniş alındı".
+    expect(after.steps[0]).toMatchObject({ code: 'AWAIT_PAYMENT' });
     expect(after.steps.map((x: { code: string }) => x.code)).not.toContain('CONFIRM_CONTRACT');
+    expect(after.steps[0].actions.map((a: { id: string }) => a.id)).toEqual(['RECORD_PAYMENT', 'OPEN_DRIVE_WORKFLOW']);
+    expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'CLIENT', reason: 'PAY_OFFICE' });
+    expectStatus(await staff.agent.post(`/api/admin/cases/${c.id}/payment`).send({}), 201);
+    const paid = expectStatus(await staff.agent.get(`/api/admin/cases/${c.id}/next-step`), 200).body.nextStep;
+    expect(paid.steps[0]).toMatchObject({ code: 'SEND_WORK_CONTRACT' });
     expect(await ballInCourtFor(c.id)).toMatchObject({ side: 'TEAM', reason: 'SEND_WORK_CONTRACT' });
 
-    // The next step names the drive workflow and the manual move to the embassy documents (no second contract).
-    expect(after.steps[0].actions.map((a: { id: string }) => a.id)).toEqual(['OPEN_DRIVE_WORKFLOW', 'GO_EMBASSY_DOCS']);
+    // Paid: the next step names the drive workflow and the manual move to the embassy documents (no second contract).
+    expect(paid.steps[0].actions.map((a: { id: string }) => a.id)).toEqual(['OPEN_DRIVE_WORKFLOW', 'GO_EMBASSY_DOCS']);
   });
 
   it('Əmək müqaviləsi returned with a reason: the client sees it, a new version can be uploaded', async () => {

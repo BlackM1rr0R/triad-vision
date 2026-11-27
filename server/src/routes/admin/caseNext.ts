@@ -9,6 +9,7 @@ import { auditDetails, buildEmbassyPackage, MAX_COPIES, packagePreview } from '.
 import { requestDocuments } from '../../lib/caseNext/requests.js';
 import { nextStepFor } from '../../lib/caseNext/nextStep.js';
 import { nextStepAi } from '../../lib/caseNext/ai.js';
+import { recordCasePayment } from '../../lib/casePayment/index.js';
 import { confirmationState } from '../../lib/clientData/confirmation.js';
 
 /**
@@ -18,6 +19,7 @@ import { confirmationState } from '../../lib/clientData/confirmation.js';
  *   GET  /cases/:id/next-step                       rules → { nextStep: { steps[≤3], total, clientLocale, … } }
  *   POST /cases/:id/next-step/ai                    AI explanation + client message draft (200 with ai.reason when unavailable)
  *   POST /cases/:id/next-step/request-documents     { items: [{ requirementId } | { requirementKey, title }] } — one notification
+ *   POST /cases/:id/payment                         { amountCents?, note? } "Ödəniş alındı": records the office payment after the Əmək müqaviləsi, notifies the client
  *   GET  /cases/:id/embassy-package                 preview checklist (✓ found / ⚠ pending / ✗ missing / manual)
  *   POST /cases/:id/embassy-package                 { items?, separators?, copies?, format? } → saved Document + entries
  *   POST /cases/:id/embassy-package/request         { keys[] } request missing checklist items from the client
@@ -68,6 +70,16 @@ adminCaseNextRouter.post('/cases/:id/next-step/request-documents', async (req, r
   const requested = await requestDocuments(c.id, body.items, req.user!.id);
   await audit(req, 'CASE_NEXT_STEP_REQUEST_DOCUMENTS', c.id, { requirementIds: requested.map((r) => r.requirementId), created: requested.filter((r) => r.created).length });
   res.status(201).json({ requested });
+});
+
+// ─── Payment received (office) ─────────────────────────────────────
+
+adminCaseNextRouter.post('/cases/:id/payment', async (req, res) => {
+  const body = parse(z.object({ amountCents: z.coerce.number().int().min(1).max(100_000_000).optional(), note: z.string().trim().max(500).optional() }), req.body ?? {});
+  const c = await ensureCase(String(req.params.id));
+  const out = await recordCasePayment(c.id, req.user!.id, body);
+  await audit(req, 'CASE_PAYMENT_RECEIVED', c.id, { paidCents: out.paidCents });
+  res.status(201).json(out);
 });
 
 // ─── Embassy package ───────────────────────────────────────────────

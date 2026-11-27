@@ -285,6 +285,7 @@ const AdminMyDay = lazyRoute('AdminMyDay', () => import('./pages/admin/MyDay'));
 /** /admin: the own start page (pages/admin/AdminIndex), else STAFF → queue, ADMIN+ → dashboard (also at /admin/dashboard). */
 const AdminIndex = lazyRoute('AdminIndex', () => import('./pages/admin/AdminIndex'));
 const AdminPartners = lazyRoute('AdminPartners', () => import('./pages/admin/Partners'));
+const AdminReferrers = lazyRoute('AdminReferrers', () => import('./pages/admin/Referrers')); // Baku referrer tree + sub-referrer approvals
 const AdminClientRegister = lazyRoute('AdminClientRegister', () => import('./pages/admin/ClientRegister'));
 const AdminSettlements = lazyRoute('AdminSettlements', () => import('./pages/admin/Settlements'));
 const SheetEditor = lazyRoute('SheetEditor', () => import('./pages/workspace/SheetEditor'));
@@ -1076,6 +1077,7 @@ export default function App() {
               }
             />
             <Route path="partners/*" element={<AdminPartners />} />
+            <Route path="referrers" element={<AdminReferrers />} />
             <Route path="register" element={<AdminClientRegister />} />
             <Route path="settlements/*" element={<AdminSettlements />} />
             <Route path="interview-prep" element={<AdminInterviewPrep />} />

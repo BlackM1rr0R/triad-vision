@@ -51,6 +51,7 @@ export const resetDb = async () => {
     prisma.accessReviewItem, // Access Center › Audit: quarterly access reviews (plain ids)
     prisma.accessReview,
     prisma.staffRecordAccess, // anomaly rule "many records": opened case / client records per hour
+    prisma.caseReceivedDocSeen, // "Bizdən gələn sənədlər" seen marks (plain ids)
   ] as { deleteMany: () => Promise<unknown> }[])
     await m.deleteMany();
   await prisma.saasLead.deleteMany(); // SaaS demo-request pipeline (plain ids)

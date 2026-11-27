@@ -25,6 +25,7 @@ import { checkedVacancy, vacancyCaseFields } from '../lib/vacancyPlaces/applicat
 import { getApplicationPolicy } from '../lib/vacancyPlaces/policy.js'; // "clients can only apply to active vacancies"
 import { notifyEarlyEmbassyUpload, notifyReplacement, resolveClientUploadTarget } from '../lib/clientUploadTarget.js'; // re-upload in place of a rejected document
 import { earlyEmbassyOpenFor, ensureEarlyEmbassyRequirements } from '../lib/earlyEmbassy/service.js'; // embassy documents while waiting for the contract
+import { markReceivedSeen, receivedDocumentsFor } from '../lib/receivedDocs/index.js'; // "Bizdən gələn sənədlər"
 import { linkUploadedDocument, removeLinkedPendingCopies } from '../lib/docLink/service.js'; // one upload for the initial and the embassy list
 
 export const casesRouter = Router();
@@ -92,6 +93,19 @@ casesRouter.get('/:id', async (req, res) => {
   await ownCase(req.params.id, req.user!.id);
   await ensureEarlyEmbassyRequirements(req.params.id); // older cases already waiting for the contract get their embassy list (idempotent)
   res.json({ case: await loadCaseDetail(req.params.id, { forStaff: false }) });
+});
+
+/** Everything staff sent to the client of this case (ready-docs sends, contract copies, appointment files, other staff files); read-only. */
+casesRouter.get('/:id/received-documents', async (req, res) => {
+  await ownCase(String(req.params.id), req.user!.id);
+  res.json(await receivedDocumentsFor(String(req.params.id), req.user!.id));
+});
+
+/** The client has seen these documents (ids; all of the list when omitted). A write, so never part of the GET. */
+casesRouter.post('/:id/received-documents/seen', async (req, res) => {
+  await ownCase(String(req.params.id), req.user!.id);
+  const body = parse(z.object({ ids: z.array(z.string().max(40)).max(500).optional() }), req.body ?? {});
+  res.json(await markReceivedSeen(String(req.params.id), req.user!.id, body.ids));
 });
 
 casesRouter.post('/:id/documents', documentUpload.single('file'), async (req, res) => {

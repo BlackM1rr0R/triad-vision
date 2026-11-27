@@ -78,6 +78,12 @@ export const runCall = async <T = unknown>(call: ApiCall, body?: Record<string, 
 export const ruleText = (t: TFunction, s: { code: string; params: Record<string, string | number> }) => {
   const p: Record<string, string | number> = { ...s.params };
   for (const k of ['date', 'entry'] as const) if (typeof p[k] === 'string') p[k] = fmtDate(String(p[k]));
+  // AWAIT_PAYMENT: with the booked office visit ("… — visit {{visit}}").
+  if (s.code === 'AWAIT_PAYMENT' && typeof p.visit === 'string') {
+    const d = new Date(p.visit);
+    p.visit = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+    return t('caseNext.rule.AWAIT_PAYMENT_visit', { ...p, defaultValue: s.code });
+  }
   return t(`caseNext.rule.${s.code}`, { ...p, defaultValue: s.code });
 };
 

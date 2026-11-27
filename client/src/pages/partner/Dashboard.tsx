@@ -12,6 +12,7 @@ import { accessOf, type PartnerDashboard, type PartnerMe } from '@/components/pa
 import { ErrorRetry, Kpi, Loading, Section, StatusPill } from '@/components/partnerPortal/ui';
 import { EmptyState } from '@/components/ui';
 import { EmptyInbox } from '@/components/illustrations';
+import { ReferrerTeamPanel } from './Referrals'; // referrers: own + whole-team figures
 
 registerCopy(pagesDashboards);
 
@@ -68,6 +69,8 @@ export default function PartnerDashboardPage({ me }: { me: PartnerMe }) {
           <p className="col-span-2 self-center text-sm text-muted lg:col-span-3">{t('partnerAccess.noStage')}</p>
         )}
       </div>
+
+      {accessOf(me).areas.referrals && <ReferrerTeamPanel />}
 
       {d.trend && <TrendSection trend={d.trend} />}
 

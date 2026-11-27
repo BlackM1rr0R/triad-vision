@@ -12,7 +12,7 @@ registerCopy(pagesClientProcess);
 
 export type BallSide = 'CLIENT' | 'TEAM' | 'EMBASSY' | 'NONE';
 export type BallReason =
-  | 'UPLOAD_DOCS' | 'FIX_DOCS' | 'SUBMIT_DOCS' | 'SIGN_CONTRACT' | 'SIGN_DOCUMENTS' | 'CLIENT_TASKS' | 'ATTEND_APPOINTMENT'
+  | 'UPLOAD_DOCS' | 'FIX_DOCS' | 'SUBMIT_DOCS' | 'SIGN_CONTRACT' | 'SIGN_DOCUMENTS' | 'CLIENT_TASKS' | 'ATTEND_APPOINTMENT' | 'PAY_OFFICE'
   | 'REVIEW_DOCS' | 'TRIAD_SIGN_CONTRACT' | 'RESEND_CONTRACT' | 'SEND_WORK_CONTRACT' | 'APPROVE_WORK_CONTRACT' | 'CHECK_SIGNATURE' | 'LODGE_APPLICATION' | 'REPLY_MESSAGE' | 'DECISION' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface BallItem {
@@ -74,8 +74,8 @@ export interface TaskTemplate {
   dueDays: number;
 }
 
-export type VisitReason = 'originals' | 'passport' | 'sign' | 'other';
-export const VISIT_REASONS: VisitReason[] = ['originals', 'passport', 'sign', 'other'];
+export type VisitReason = 'originals' | 'passport' | 'sign' | 'payment' | 'other';
+export const VISIT_REASONS: VisitReason[] = ['originals', 'passport', 'sign', 'payment', 'other'];
 
 export interface OfficeSlot {
   id: string;

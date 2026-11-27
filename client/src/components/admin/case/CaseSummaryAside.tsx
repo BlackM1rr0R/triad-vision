@@ -17,6 +17,7 @@ import { actorSideLabel, eventLabel, fmtDate, fmtDateTime, fmtRelative, fullName
 import type { CaseStats, StaffMember } from '../types';
 import { DefRow } from '../ui';
 import { useCaseRefresh } from './shared';
+import { AppointmentEditButton } from './AppointmentForm'; // "Düzəlt": edit the recorded embassy appointment
 import { useCompanyOptions, useJobsCopy, useVacancyOptions, type CaseLink } from './caseLinks';
 import { FolderLine, type FolderInfo } from '@/components/vacancyFolders/FolderPicker'; // client folder in the drive (vacancy folder)
 import { AssignHint } from '@/components/staffDesk/AssignHint'; // least-loaded colleague hint
@@ -181,6 +182,7 @@ export const CaseSummaryAside = ({ c, stats, onEdit, onTemplate }: { c: CaseDeta
               <span className="text-accent-fg">
                 {fmtDateTime(c.appointmentAt)}
                 {c.appointmentPlace && <span className="block text-xs font-normal text-muted">{c.appointmentPlace}</span>}
+                <AppointmentEditButton c={c} />
               </span>
             </DefRow>
           )}

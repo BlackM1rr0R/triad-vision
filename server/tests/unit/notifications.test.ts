@@ -30,6 +30,7 @@ const TYPES = [
   'EMBASSY_DOCS_REQUESTED',
   'EMBASSY_CHANGES_REQUESTED',
   'APPOINTMENT_SCHEDULED',
+  'APPOINTMENT_UPDATED',
   'DECISION_PENDING',
   'APPROVED',
   'REJECTED',
@@ -99,6 +100,7 @@ describe('notification catalog', () => {
     'REOPENED',
     'DOCUMENT_REJECTED',
     'APPOINTMENT_SCHEDULED',
+    'APPOINTMENT_UPDATED',
   ];
   for (const type of noteTypes) {
     it.each(LOCALES)(`${type} includes the note only when given (%s)`, async (l) => {
@@ -120,6 +122,19 @@ describe('notification catalog', () => {
     const n = await render('APPOINTMENT_SCHEDULED', l, { date: '20.11.2026 09:30', place: 'Nizami küç. 15, Bakı' });
     expect(n.body).toContain('20.11.2026 09:30');
     expect(n.body).toContain('Nizami küç. 15, Bakı');
+  });
+
+  it.each(LOCALES)('APPOINTMENT_SCHEDULED / APPOINTMENT_UPDATED mention the attached files only when there are some (%s)', async (l) => {
+    for (const type of ['APPOINTMENT_SCHEDULED', 'APPOINTMENT_UPDATED'] as const) {
+      const none = await render(type, l, { date: 'D', place: 'P' });
+      const some = await render(type, l, { date: 'D', place: 'P', files: 2 });
+      expect(some.body.length).toBeGreaterThan(none.body.length);
+      expect(none.body).not.toContain('undefined');
+    }
+  });
+
+  it('the appointment update title is "Görüş məlumatlarınız yeniləndi" (az)', async () => {
+    expect((await render('APPOINTMENT_UPDATED', 'az', { date: 'D', place: 'P' })).title).toBe('Görüş məlumatlarınız yeniləndi');
   });
 
   it.each(LOCALES)('DOCUMENT_ACCEPTED/REJECTED name the document (%s)', async (l) => {

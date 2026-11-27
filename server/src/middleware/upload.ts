@@ -58,6 +58,13 @@ export const documentUpload = multer({
   fileFilter: clientDocFilter,
 });
 
+/** Embassy appointment confirmation files (staff): same rules as case documents, several files per request. */
+export const appointmentUpload = multer({
+  storage: randomStorage(config.uploads.privateDir),
+  limits: { fileSize: config.uploads.maxFileSize, files: 5 },
+  fileFilter: clientDocFilter,
+});
+
 /** CMS images (admin only): publicly served. */
 export const imageUpload = multer({
   storage: randomStorage(config.uploads.publicDir),

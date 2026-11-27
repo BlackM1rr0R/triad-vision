@@ -774,7 +774,7 @@ const bookings = async (ctx: Ctx): Promise<Source> => {
         title: b.name,
         subtitle: join(b.email, b.phone),
         // Office visits (client portal): the reason as note (lib/clientProcess/office).
-        note: b.slot.kind === 'OFFICE' ? { key: `officeVisit.${['originals', 'passport', 'sign'].includes(b.topic ?? '') ? b.topic : 'other'}` } : b.topic ? { key: `bookingTopic.${['candidate', 'company'].includes(b.topic) ? b.topic : 'other'}` } : undefined,
+        note: b.slot.kind === 'OFFICE' ? { key: `officeVisit.${['originals', 'passport', 'sign', 'payment'].includes(b.topic ?? '') ? b.topic : 'other'}` } : b.topic ? { key: `bookingTopic.${['candidate', 'company'].includes(b.topic) ? b.topic : 'other'}` } : undefined,
         priority: startsIn < HOUR ? 'URGENT' : 'HIGH',
         // A past consultation still to be marked is due at its end.
         dueAt: startsIn > 0 ? b.slot.startsAt : b.slot.endsAt,

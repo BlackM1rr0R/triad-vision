@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMarkSeen } from '@/components/admin/CasesNavBadge';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -58,6 +59,7 @@ const TILE_ICON: Record<SummaryTile, typeof FolderOpen> = {
  * away. Selecting rows shows the bulk bar at the bottom of the screen.
  */
 export default function CasesList() {
+  useMarkSeen('cases'); // opening the list marks the new cases as seen (sidebar badge)
   const { t } = useTranslation();
   const { tr } = useL10n();
   const navigate = useNavigate();

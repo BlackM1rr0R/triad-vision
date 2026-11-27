@@ -27,6 +27,7 @@ import { partnerAccessPortalRouter } from '../lib/partnerAccess/portalRoutes.js'
 import { partnerContextOf, partnerTeamUserIds, requireClientList, requireDocuments, requireFlag } from '../lib/partnerAccess/context.js';
 import { portalAreas, shapeCaseDetail, shapeCaseRow, shapeClientRow, type PartnerPerms } from '../lib/partnerAccess/permissions.js';
 import type { VisaFacet } from '../lib/partnerPortal/cases.js';
+import { referrerPortalRouter } from '../lib/referrers/portalRoutes.js'; // referrers: own subtree, sub-referrer requests
 
 /**
  * Referral-partner portal API — mounted at /api/partner. The login is a user with role AGENT that is
@@ -40,6 +41,12 @@ partnerPortalRouter.use(requireRole('AGENT'));
 partnerPortalRouter.use('/', partnerPortalProfileRouter); // GET/PATCH /profile, POST /profile/change-request, GET /contracts[/:id/file]
 partnerPortalRouter.use('/', partnerSchoolRouter); // schools: GET /students[/:clientId], POST /students/:clientId/records, /student-records/:id[/certificate]
 partnerPortalRouter.use('/', partnerAccessPortalRouter); // /team, /drive, /messages, /vacancies, /cases/:id/documents/:docId/file
+partnerPortalRouter.use('/', referrerPortalRouter); // referrers: GET/POST /referrals, GET /referrals/:id
+
+/** Referrers work without commissions (owner decision): the commission endpoints are closed for them. */
+const requireNotReferrer = (ctx: Awaited<ReturnType<typeof partnerContextOf>>) => {
+  if (ctx.partner.isReferrer) throw forbidden('REFERRER_NO_COMMISSIONS');
+};
 
 /** Visa chips: the status breakdown only with the case-stage permission. */
 const facetsFor = (facets: VisaFacet[], perms: PartnerPerms) =>
@@ -66,7 +73,7 @@ partnerPortalRouter.get('/me', async (req, res) => {
       phone: partner.phone,
       email: partner.email,
       active: partner.active,
-      commissionCents: perms.payments ? partner.commissionCents : null,
+      commissionCents: perms.payments && !partner.isReferrer ? partner.commissionCents : null,
       currency: partner.currency,
       // Personal sign-up code and links: clients who use them belong to the partner (lib/partners/owned.ts).
       code: perms.addClients ? partner.code : null,
@@ -75,12 +82,14 @@ partnerPortalRouter.get('/me', async (req, res) => {
       visibility: partner.visibility,
       // AGENCY | SCHOOL | LANGUAGE_SCHOOL: schools get the Students view (lib/partners/schools.ts).
       category: partner.category,
+      // Referrer (pyramid area "Komandam", no commissions; lib/referrers).
+      isReferrer: partner.isReferrer,
     },
     user,
     // The same login may also take part in the agent programme: the portal then links to /agent.
     alsoAgent: !!agent,
     // What this login may do (lib/partnerAccess); the server checks every request anyway.
-    access: { role: ctx.role, template: ctx.template, permissions: perms, areas: portalAreas(perms, { owner: ctx.role === 'OWNER' }) },
+    access: { role: ctx.role, template: ctx.template, permissions: perms, areas: portalAreas(perms, { owner: ctx.role === 'OWNER', referrer: partner.isReferrer }) },
   });
 });
 
@@ -113,7 +122,7 @@ partnerPortalRouter.get('/dashboard', async (req, res) => {
     byVisa: facetsFor(await visaFacets({ partnerId: partner.id }), perms),
     // Monthly trend of the partner's own clients / cases; the visa series only with the case-stage permission.
     trend: (({ approved, ...rest }) => ({ ...rest, approved: perms.caseStage ? approved : null }))(partnerTrend(cases, new Date())),
-    commissions: perms.payments ? { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents } : null,
+    commissions: perms.payments && !partner.isReferrer ? { ...all, thisMonthCents: commissionTotals(commissions, start, end).totalCents } : null,
     // Client names and stage changes: only with the client list and the case stage.
     recent:
       perms.clientList !== 'none' && perms.caseStage
@@ -211,6 +220,7 @@ const commissionQuery = z.object({
 partnerPortalRouter.get('/commissions', async (req, res) => {
   const ctx = await partnerContextOf(req);
   requireFlag(ctx, 'payments');
+  requireNotReferrer(ctx);
   const { partner } = ctx;
   // Client names next to the amounts only with the client list.
   const names = ctx.perms.clientList !== 'none';
@@ -252,6 +262,7 @@ partnerPortalRouter.get('/commissions', async (req, res) => {
 partnerPortalRouter.get('/commissions/export.xlsx', async (req, res) => {
   const ctx = await partnerContextOf(req);
   requireFlag(ctx, 'payments');
+  requireNotReferrer(ctx);
   requireClientList(ctx); // the workbook lists client names
   const { partner } = ctx;
   const q = parse(commissionQuery.omit({ status: true }), req.query);

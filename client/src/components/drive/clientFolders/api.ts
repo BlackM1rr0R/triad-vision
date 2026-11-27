@@ -110,6 +110,8 @@ export interface ReadyDocsView {
   /** Everything else that can be picked: the case's other workflow folders and the client's own folder (Arbeitsvertrag, …). */
   others: ReadyFileView[];
   newCount: number;
+  /** Single-contract flow: the client has not paid yet (the send dialog warns; the send is not blocked). */
+  paymentDue?: boolean;
   sends: { id: string; at: string; by: string | null; fileCount: number; newCount: number; resend: boolean; documents: { documentId: string; name: string; size: number | null; mimeType: string | null; available: boolean }[] }[];
 }
 

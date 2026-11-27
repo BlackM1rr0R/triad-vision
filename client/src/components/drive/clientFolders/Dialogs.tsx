@@ -353,6 +353,11 @@ export const SendReadyDialog = ({ targets, onClose, onResult }: { targets: Folde
           ) : data ? (
             <>
               <p className="text-muted">{t('clientFolders.send.explain')}</p>
+              {data.paymentDue && (
+                <p className="rounded-lg bg-warning-bg px-3 py-2 text-xs font-medium text-warning-fg" role="status" data-testid="send-unpaid-warning">
+                  {t('clientFolders.send.unpaid')}
+                </p>
+              )}
               {all.length === 0 ? (
                 <p className="rounded-lg bg-sunken px-3 py-2 text-xs text-muted">{t('clientFolders.send.noFiles')}</p>
               ) : (

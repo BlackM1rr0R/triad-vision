@@ -12,9 +12,12 @@ import { useNextStep, type NextAction, type NextStep, type StatusLineData } from
 import { buildMilestones } from './journey';
 import { useActionCopy } from '@/pages/account/portal/NextStepCard';
 import { caseHref } from '@/pages/account/portal/useNextUp';
+import { useReceivedDocuments } from './ReceivedDocuments';
+import { pagesReceivedDocs } from '@/i18n/pagesReceivedDocs';
 
 registerCopy(pagesStatusLine);
 registerCopy(pagesJourneyMap);
+registerCopy(pagesReceivedDocs);
 
 /** Pure: the sentence of a status line (stage text + "nothing needed" / "needed: …"). Exported for tests. */
 export const statusSentence = (
@@ -39,6 +42,7 @@ export const statusSentence = (
 function StatusPanel({ id, next, s, required }: { id: string; next: NextStep; s: StatusLineData; required: string | null }) {
   const { t, i18n } = useTranslation();
   const c = next.case!;
+  const received = useReceivedDocuments(c.id).data;
   const milestones = useMemo(() => (next.journey ? buildMilestones(next.journey).filter((m) => m.status !== 'skipped') : []), [next.journey]);
   // All documents accepted, contract not sent yet: the card says "Sənədləriniz qəbul edildi" (CaseView CurrentStepPanel).
   const docsAccepted = c.status === 'DOCUMENTS_REVIEW' && s.stage === 'CONTRACT_PREP';
@@ -84,6 +88,14 @@ function StatusPanel({ id, next, s, required }: { id: string; next: NextStep; s:
             </li>
           ))}
         </ol>
+      )}
+
+      {!!received?.total && (
+        <Link to={caseHref(c.id, 'docs', '#received')} className="mt-3 flex min-h-10 items-center gap-2 rounded-xl border border-line px-3 py-2 font-semibold text-ink hover:bg-sunken" data-testid="status-received-docs">
+          <span className="min-w-0 flex-1">{received.newCount ? t('recv.home.entryNew', { count: received.newCount }) : t('recv.home.entry')}</span>
+          {!!received.newCount && <span className="badge bg-highlight-bg text-ink">{received.newCount}</span>}
+          <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden />
+        </Link>
       )}
 
       <Link to={caseHref(c.id, 'overview')} className="mt-3 inline-flex min-h-10 items-center gap-1 font-semibold text-link hover:underline">

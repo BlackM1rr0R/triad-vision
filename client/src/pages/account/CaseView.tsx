@@ -15,11 +15,13 @@ import { CaseViewSkeleton } from '@/components/portal/PortalSkeletons';
 import { Reveal } from '@/components/motion';
 import { StatusBadge } from '@/components/portal/StatusBadge';
 import { CaseDocuments } from '@/components/portal/CaseDocuments';
+import { ClientDocumentsArea } from '@/components/portal/ClientDocumentsArea'; // Sənədlər: "Bizdən gələn sənədlər" + "Mənim yüklədiklərim"
+import { useReceivedDocuments } from '@/components/portal/ReceivedDocuments';
 import { DocumentsPurgedNotice } from '@/components/retention/DocumentsPurgedNotice';
 import { CaseContract } from '@/components/portal/CaseContract';
 import { ClientCaseContracts } from '@/components/caseContracts/ClientCaseContracts'; // Əmək müqaviləsi → İş müqaviləsi states
 import { CaseMessages } from '@/components/portal/CaseMessages';
-import { AppointmentCard, CaseTimeline, DecisionCard, OtherFiles } from '@/components/portal/CaseCards';
+import { AppointmentCard, CaseTimeline, DecisionCard } from '@/components/portal/CaseCards';
 import { useErrorMessage } from '@/components/portal/useApiError';
 import { OVERVIEW_KEY, useHashScroll, useOverview } from '@/components/portal/useOverview';
 import { TipsCard } from '@/components/portal/Dashboard';
@@ -38,6 +40,7 @@ import { FamilyMembersSection } from '@/components/family/FamilyMembersSection';
 import { PortalTasks } from '@/components/clientProcess/PortalTasks'; // "Mənim tapşırıqlarım"
 import { ClientRecognitionCard } from '@/components/recognition/ClientRecognitionCard'; // Anerkennung status (read-only)
 import { ClientAuthoritiesCard } from '@/components/authorities/ClientAuthoritiesCard'; // embassy / Ausländerbehörde info (read-only)
+import { ClientPaymentCard, useCasePayment } from '@/components/casePayment/ClientPaymentCard'; // payment step after the Əmək müqaviləsi (office)
 import { PortalOfficeVisits } from '@/components/clientProcess/PortalOfficeVisits'; // "Ofisə gəliş təyin et"
 import { useFamilyOverview } from '@/components/family/api';
 import { useAuth } from '@/lib/auth';
@@ -57,8 +60,11 @@ const TABS = ['overview', 'docs', 'messages', 'family', 'other'] as const satisf
 
 const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
   const { t } = useTranslation();
-  const clientTurn = CLIENT_ACTION.includes(data.status);
-  const staffTurn = STAFF_ACTION.includes(data.status);
+  // Single-contract flow: after the Əmək müqaviləsi the client pays in the office first (the card below); then the team prepares the German documents.
+  const pay = useCasePayment(data.id, data.status === 'CONTRACT_SIGNED').data?.payment;
+  const payStep = pay?.due ? 'stepTitle' : pay?.paid ? 'paidStepTitle' : null;
+  const clientTurn = CLIENT_ACTION.includes(data.status) || !!pay?.due;
+  const staffTurn = STAFF_ACTION.includes(data.status) && !pay?.due;
   // Initial documents all accepted, contract not sent yet: say so instead of "documents under review".
   const initialReqs = data.requirements.filter((r) => r.stage === 'INITIAL' && r.required);
   const docsAccepted =
@@ -101,9 +107,9 @@ const CurrentStepPanel = ({ data }: { data: CaseDetail }) => {
             {staffTurn && <span className="badge bg-info-bg text-info-fg">{t('portal.waiting')}</span>}
           </div>
           <h2 id="current-step-title" className="mt-2 text-xl font-semibold break-words text-ink sm:text-[1.7rem]">
-            {docsAccepted ? t('portal.docsAcceptedTitle') : t(`portal.status.${data.status}`)}
+            {docsAccepted ? t('portal.docsAcceptedTitle') : payStep ? t(`cp.pay.${payStep}`) : t(`portal.status.${data.status}`)}
           </h2>
-          <p className={clsx('mt-2 max-w-[65ch] leading-relaxed', clientTurn ? 'text-ink/80' : 'text-muted')}>{docsAccepted ? t('portal.docsAcceptedHelp') : t(`portal.statusHelp.${data.status}`)}</p>
+          <p className={clsx('mt-2 max-w-[65ch] leading-relaxed', clientTurn ? 'text-ink/80' : 'text-muted')}>{docsAccepted ? t('portal.docsAcceptedHelp') : payStep ? t(payStep === 'stepTitle' ? 'cp.pay.stepHelp' : 'cp.pay.paidStepHelp') : t(`portal.statusHelp.${data.status}`)}</p>
           {staffTurn && <p className="mt-2 text-sm font-medium text-info-fg">{t('portal.waitingUs')}</p>}
 
           {data.status === 'CANCELLED' && data.cancelReason && (
@@ -151,6 +157,7 @@ export default function CaseView() {
   });
   usePageTitle(data ? `${t('portal.caseNo')} ${data.number}` : t('portal.title'));
   const next = useNextUp(id);
+  const receivedNew = useReceivedDocuments(id ?? '', !!id).data?.newCount; // "Yeni" count on the Sənədlər tab
   // Journey map: the portal's next-step data is about one case (the primary one), shown only on that case.
   const nextStep = useNextStep(user?.role === 'CLIENT');
   // The portal home's next-step card morphs into this heading (View Transitions; off with reduced motion).
@@ -255,7 +262,7 @@ export default function CaseView() {
 
   const tabs = [
     { key: 'overview' as const, label: t('pux.caseTabs.overview'), icon: LayoutList, count: next.allItems.length || undefined },
-    { key: 'docs' as const, label: t('pux.caseTabs.docs'), icon: FolderOpen },
+    { key: 'docs' as const, label: t('pux.caseTabs.docs'), icon: FolderOpen, count: receivedNew || undefined },
     { key: 'messages' as const, label: t('pux.caseTabs.messages'), icon: MessageCircle, count: unread || undefined },
     ...(familyTab ? [{ key: 'family' as const, label: t('pux.caseTabs.family'), icon: Users }] : []),
     { key: 'other' as const, label: t('pux.caseTabs.other'), icon: MoreHorizontal },
@@ -314,6 +321,8 @@ export default function CaseView() {
         {current === 'overview' && (
           <>
             <CurrentStepPanel data={data} />
+            {/* "Ödəniş": pay in the office after the contract was approved (only while CONTRACT_SIGNED). */}
+            <ClientPaymentCard caseId={data.id} status={data.status} />
             {/* Home city → German city with the six milestones (primary case only), right below the current step. */}
             {nextStep.data?.case?.id === data.id && <JourneyCard next={nextStep.data} />}
             {data.status === 'APPROVED' && <SuccessShareCard caseId={data.id} />}
@@ -336,10 +345,16 @@ export default function CaseView() {
 
         {current === 'docs' && (
           <>
-            <DocumentsPurgedNotice at={data.documentsPurgedAt} audience="client" />
-            <CaseDocProgress caseId={data.id} />
-            {mainBlocks}
-            <OtherFiles data={data} />
+            <ClientDocumentsArea
+              data={data}
+              before={<DocumentsPurgedNotice at={data.documentsPurgedAt} audience="client" />}
+              mine={
+                <>
+                  <CaseDocProgress caseId={data.id} />
+                  {mainBlocks}
+                </>
+              }
+            />
             <div id="originals" className="scroll-mt-40 empty:hidden">
               <ClientOriginals caseId={data.id} />
             </div>

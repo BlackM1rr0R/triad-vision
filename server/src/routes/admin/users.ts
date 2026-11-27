@@ -7,6 +7,7 @@ import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
 import { HttpError, badRequest, conflict, notFound, parse } from '../../lib/http.js';
 import { audit } from '../../lib/audit.js';
+import { markSeen, readSeenSince } from '../../lib/staffSeen.js';
 import { caseScopeWhere } from '../../lib/access/api.js';
 import { clientUsersInScope } from '../../lib/accessAudit/scope.js';
 import { ensurePersonalRoot } from '../../lib/drive/roots.js';
@@ -106,6 +107,20 @@ adminUsersRouter.get('/', async (req, res) => {
       };
     }),
   });
+});
+
+/** Sidebar badge on "İstifadəçilər": clients (in the viewer's case scope) registered since this staff member last opened the page. */
+adminUsersRouter.get('/new-count', async (req, res) => {
+  const since = await readSeenSince(req.user!.id, 'users');
+  const clientScope = clientUsersInScope(await caseScopeWhere(req.user));
+  const where: Prisma.UserWhereInput = { role: 'CLIENT', createdAt: { gt: since }, ...(Object.keys(clientScope).length ? { AND: [clientScope] } : {}) };
+  res.json({ count: await prisma.user.count({ where }) });
+});
+
+/** The users page was opened: registrations so far count as seen (explicit POST, not inside a GET). */
+adminUsersRouter.post('/seen', async (req, res) => {
+  await markSeen(req.user!.id, 'users');
+  res.json({ ok: true });
 });
 
 adminUsersRouter.get('/staff', async (_req, res) => {

@@ -31,6 +31,7 @@ export type NextKind =
   | 'UPLOAD_DOCS'
   | 'SUBMIT_DOCS'
   | 'SIGN_CONTRACT'
+  | 'PAY_CASE'
   | 'ATTEND_APPOINTMENT'
   | 'BOOK_INTERVIEW'
   | 'PREP_INTERVIEW'

@@ -24,9 +24,16 @@ import { ContractBadge } from '@/components/partners/hub/parts';
 import { CONTRACT_STATUSES } from '@/components/partners/hub/types';
 import { QuotaMeter } from '@/components/partners/QuotaMeter'; // "needed clients" progress (registers its copy)
 import { PartnerInfoDrawer } from '@/components/partners/PartnerInfoDrawer'; // the row's info button
+import { registerCopy } from '@/i18n';
+import { pagesReferrers } from '@/i18n/pagesReferrers'; // referrer filter (Baku referrers have their own page /admin/referrers)
 import { PartnerSchoolsAdmin } from '@/components/partners/SchoolsAdmin'; // colleges / language schools: categories + records review (registers pagesPartnerSchools)
 
+registerCopy(pagesReferrers);
+
 type ActiveFilter = 'all' | 'true' | 'false';
+/** Baku referrers are listed on /admin/referrers; here they are hidden unless asked for. */
+const REF_FILTERS = ['exclude', 'only', 'all'] as const;
+type RefFilter = (typeof REF_FILTERS)[number];
 type SortKey = 'name' | 'clients' | 'activeCases' | 'commissions' | 'pending' | 'lastActivity' | 'contractEnd' | 'quota';
 const SORTS: SortKey[] = ['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'contractEnd', 'quota'];
 const QUOTA_FILTERS = ['open', 'filled', 'none'] as const;
@@ -46,20 +53,21 @@ const useListParams = () => {
   const dir: 'asc' | 'desc' = params.get('dir') === 'desc' ? 'desc' : 'asc';
   const contract = CONTRACT_STATUSES.find((s) => s === params.get('contract'));
   const quota: QuotaFilter | undefined = QUOTA_FILTERS.find((s) => s === params.get('quota'));
+  const ref: RefFilter = REF_FILTERS.find((v) => v === params.get('ref')) ?? 'exclude';
   const type = params.get('type') === 'COMPANY' || params.get('type') === 'INDIVIDUAL' ? (params.get('type') as PartnerType) : undefined;
   const set = (patch: Record<string, string | undefined>) =>
     setParams(
       (prev) => {
         const p = new URLSearchParams(prev);
         for (const [k, v] of Object.entries(patch)) {
-          if (!v || (k === 'active' && v === 'all')) p.delete(k);
+          if (!v || (k === 'active' && v === 'all') || (k === 'ref' && v === 'exclude')) p.delete(k);
           else p.set(k, v);
         }
         return p;
       },
       { replace: true },
     );
-  return { q: get('q'), active: active as ActiveFilter, type, country: get('country'), tag: get('tag'), contract, quota, sort, dir, set };
+  return { q: get('q'), active: active as ActiveFilter, ref, type, country: get('country'), tag: get('tag'), contract, quota, sort, dir, set };
 };
 
 const SortHeader = ({ k, label, sort, dir, onSort, className }: { k: SortKey; label: string; sort?: SortKey; dir: 'asc' | 'desc'; onSort: (k: SortKey) => void; className?: string }) => {
@@ -99,6 +107,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
     tag: lp.tag || undefined,
     contract: lp.contract,
     quota: lp.quota,
+    referrers: lp.ref,
     sort: lp.sort,
     dir: lp.sort ? lp.dir : undefined,
   };
@@ -109,7 +118,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
   });
   const items = data?.items;
   const facets = data?.facets ?? { countries: [], tags: [] };
-  const filtered = !!(lp.q || lp.active !== 'all' || lp.type || lp.country || lp.tag || lp.contract || lp.quota);
+  const filtered = !!(lp.q || lp.active !== 'all' || lp.ref !== 'exclude' || lp.type || lp.country || lp.tag || lp.contract || lp.quota);
   const onSort = (k: SortKey) => {
     // name / contract end start ascending, the numbers descending; a second click flips the direction.
     const first: 'asc' | 'desc' = k === 'name' || k === 'contractEnd' ? 'asc' : 'desc';
@@ -198,6 +207,13 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
               </option>
             ))}
           </select>
+          <select className="input xl:w-52" aria-label={t('adminReferrers.filter.label')} value={lp.ref} onChange={(e) => lp.set({ ref: e.target.value })}>
+            {REF_FILTERS.map((v) => (
+              <option key={v} value={v}>
+                {t(`adminReferrers.filter.${v}`)}
+              </option>
+            ))}
+          </select>
           <select className="input xl:w-52" aria-label={t('partnerQuota.column')} value={lp.quota ?? ''} onChange={(e) => lp.set({ quota: e.target.value || undefined })}>
             <option value="">{t('partnerQuota.filter.all')}</option>
             {QUOTA_FILTERS.map((s) => (
@@ -212,7 +228,7 @@ const PartnerList = ({ isAdmin }: { isAdmin: boolean }) => {
               className="btn-ghost btn-sm col-span-2 md:col-span-4 xl:col-span-1"
               onClick={() => {
                 setSearchInput('');
-                lp.set({ q: undefined, active: undefined, type: undefined, country: undefined, tag: undefined, contract: undefined, quota: undefined });
+                lp.set({ q: undefined, active: undefined, ref: undefined, type: undefined, country: undefined, tag: undefined, contract: undefined, quota: undefined });
               }}
             >
               <X className="size-3.5" aria-hidden /> {t('partnerHub.list.reset')}

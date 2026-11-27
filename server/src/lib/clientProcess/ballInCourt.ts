@@ -3,6 +3,7 @@ import { prisma } from '../../db.js';
 import { CLIENT_UPLOAD_STAGE, FINAL_STATUSES } from '../caseFlow.js';
 import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
 import type { ContractTurn, StepState } from '../caseContracts/flow.js';
+import { loadCasePayments, paymentDue } from '../casePayment/index.js'; // office payment after the Əmək müqaviləsi
 import { loadContractInfo } from '../caseContracts/turn.js'; // whose turn the case contract is (old flow / V2) + İş müqaviləsi state
 import { getClientProcessSettings, type ClientProcessSettings, type Eta, type EtaStatus } from './settings.js';
 
@@ -25,6 +26,7 @@ export type BallReason =
   | 'SIGN_DOCUMENTS'
   | 'CLIENT_TASKS'
   | 'ATTEND_APPOINTMENT'
+  | 'PAY_OFFICE' // single-contract flow: Əmək müqaviləsi approved — the client pays in the office before the German documents
   // team
   | 'REVIEW_DOCS'
   | 'PREPARE_CONTRACT' // initial documents all accepted: staff prepare the Əmək müqaviləsi
@@ -94,7 +96,7 @@ const STATUS_SIDE: Record<CaseStatus, BallSide> = {
   CANCELLED: 'NONE',
 };
 
-const CLIENT_ORDER: BallReason[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'ATTEND_APPOINTMENT', 'SIGN_DOCUMENTS', 'CLIENT_TASKS'];
+const CLIENT_ORDER: BallReason[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'PAY_OFFICE', 'ATTEND_APPOINTMENT', 'SIGN_DOCUMENTS', 'CLIENT_TASKS'];
 const TEAM_ORDER: BallReason[] = ['REVIEW_DOCS', 'PREPARE_CONTRACT', 'TRIAD_SIGN_CONTRACT', 'RESEND_CONTRACT', 'SEND_WORK_CONTRACT', 'APPROVE_WORK_CONTRACT', 'CHECK_SIGNATURE', 'LODGE_APPLICATION', 'REPLY_MESSAGE'];
 
 export interface BallFacts {
@@ -108,6 +110,8 @@ export interface BallFacts {
   contractTurn?: ContractTurn | null;
   /** CONTRACT_SIGNED + V2: state of the İş müqaviləsi documents (lib/caseContracts/turn); null / undefined = old flow. */
   workContract?: StepState | null;
+  /** The client is expected to pay now (lib/casePayment paymentDue). */
+  paymentDue?: boolean;
   /** Required requirements of the open upload stage with their documents' statuses (newest first). */
   uploadReqs: { docs: string[] }[];
   /** Requirements outside the open upload step whose files were all rejected: the client may upload a new one (lib/clientUploadTarget). */
@@ -179,6 +183,8 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   // V2: after the Əmək müqaviləsi the client signs the İş müqaviləsi documents (lib/caseContracts/turn).
   const workTurn = f.status === 'CONTRACT_SIGNED' ? (f.contractTurn ?? null) : null;
   if (workTurn === 'CLIENT') add('CLIENT', 'SIGN_CONTRACT', 1);
+  const payDue = f.paymentDue === true;
+  if (payDue) add('CLIENT', 'PAY_OFFICE', 1);
   const apptFuture = f.status === 'APPOINTMENT_SCHEDULED' && !!f.appointmentAt && f.appointmentAt > now;
   if (apptFuture) add('CLIENT', 'ATTEND_APPOINTMENT', 1, f.appointmentAt);
   // A case contract signed through the e-signature module is already counted as SIGN_CONTRACT.
@@ -190,7 +196,7 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   else if (f.status === 'DOCUMENTS_REVIEW' || f.status === 'EMBASSY_REVIEW') add('TEAM', 'REVIEW_DOCS', Math.max(1, f.pendingDocs));
   if (contractTurn === 'TRIAD') add('TEAM', 'TRIAD_SIGN_CONTRACT', 1);
   if (contractTurn === 'STAFF') add('TEAM', 'RESEND_CONTRACT', 1);
-  if (f.status === 'CONTRACT_SIGNED' && workTurn !== 'CLIENT') {
+  if (f.status === 'CONTRACT_SIGNED' && workTurn !== 'CLIENT' && !payDue) {
     // V2: no signature to check (Triad Vision's signature approved the Əmək müqaviləsi) — the İş müqaviləsi is next.
     const w = f.workContract;
     add('TEAM', !w || w === 'APPROVED' ? 'CHECK_SIGNATURE' : w === 'SIGNED' ? 'APPROVE_WORK_CONTRACT' : 'SEND_WORK_CONTRACT', 1);
@@ -210,7 +216,7 @@ export const computeBall = (f: BallFacts, settings: ClientProcessSettings, now =
   const days = Math.floor((now.getTime() - since.getTime()) / DAY);
 
   const teamContract = contractTurn === 'TRIAD' || contractTurn === 'STAFF';
-  const statusSide = teamContract ? 'TEAM' : workTurn === 'CLIENT' ? 'CLIENT' : sideAt(f.status, now.getTime(), f.appointmentAt);
+  const statusSide = teamContract ? 'TEAM' : workTurn === 'CLIENT' || payDue ? 'CLIENT' : sideAt(f.status, now.getTime(), f.appointmentAt);
   if (statusSide === 'NONE') {
     return {
       side: 'NONE',
@@ -286,6 +292,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
     }),
   ]);
   const contracts = await loadContractInfo(cases);
+  const payments = await loadCasePayments(cases.filter((c) => c.status === 'CONTRACT_SIGNED').map((c) => c.id));
   const turns = new Map([...contracts].map(([id, i]) => [id, i.turn]));
   return cases.map((c) => {
     const stage = CLIENT_UPLOAD_STAGE[c.status];
@@ -301,6 +308,7 @@ export const loadBallFacts = async (caseIds: string[]): Promise<BallFacts[]> => 
       contract: c.contract,
       contractTurn: turns.get(c.id) ?? null,
       workContract: contracts.get(c.id)?.work ?? null,
+      paymentDue: paymentDue({ status: c.status, contractTurn: turns.get(c.id), work: contracts.get(c.id)?.work, paid: payments.get(c.id)?.paid ?? null }),
       uploadReqs: stage ? c.requirements.filter((r) => r.stage === stage && r.required).map((r) => ({ docs: r.documents.map((d) => d.status) })) : [],
       replaceReqs: c.requirements.filter((r) => clientUploadStageFor(c.status, r)?.replacement).length,
       pendingDocs: c.documents.length,

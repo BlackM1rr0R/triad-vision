@@ -21,7 +21,7 @@ export type ActionBody =
   | { action: 'REQUEST_CHANGES'; note: string }
   | { action: 'REJECT_SIGNATURE'; note: string }
   | { action: 'CONFIRM_CONTRACT' }
-  | { action: 'SCHEDULE_APPOINTMENT'; at: string; place: string; note?: string }
+  | { action: 'SCHEDULE_APPOINTMENT'; at: string; place: string; note?: string; removeDocumentIds?: string[] }
   | { action: 'MARK_LODGED' }
   | { action: 'DECIDE'; decision: 'APPROVED' | 'REJECTED'; reason?: string; validFrom?: string; validTo?: string }
   | { action: 'CANCEL'; reason: string }
@@ -42,7 +42,8 @@ export const useCaseRefresh = (id: string) => {
 export const useCaseAction = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: ActionBody) => (await api.post<{ case: CaseDetail }>(`/admin/cases/${id}/actions`, body)).data.case,
+    // FormData: an appointment with confirmation files (multipart); every other action is JSON.
+    mutationFn: async (body: ActionBody | FormData) => (await api.post<{ case: CaseDetail }>(`/admin/cases/${id}/actions`, body)).data.case,
     onSuccess: (c) => {
       // Show the new case state at once; the derived stats are refetched right after.
       qc.setQueryData<CaseDetailResponse>(caseKey(id), (old) => (old ? { ...old, case: c } : old));

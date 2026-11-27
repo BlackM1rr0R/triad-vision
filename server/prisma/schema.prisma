@@ -680,15 +680,15 @@ model EmailBounce {
 
 /// Addresses we no longer send automatic mail to (external auto-send, campaigns): hard bounce, complaint or staff.
 model EmailSuppression {
-  id        String   @id @default(cuid())
-  address   String   @unique @db.VarChar(190)
+  id          String   @id @default(cuid())
+  address     String   @unique @db.VarChar(190)
   /// HARD_BOUNCE | COMPLAINT | MANUAL
-  reason    String   @db.VarChar(20)
-  detail    String?  @db.VarChar(500)
+  reason      String   @db.VarChar(20)
+  detail      String?  @db.VarChar(500)
   /// Plain id of the staff member (MANUAL).
-  createdById String? @db.VarChar(40)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdById String?  @db.VarChar(40)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ─── Website content (CMS) ─────────────────────────────────────────────
@@ -1020,42 +1020,42 @@ enum EmploymentType {
 }
 
 model Vacancy {
-  id             String                @id @default(cuid())
-  slug           String                @unique
-  companyId      String?
-  company        Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  visaCategoryId String?
-  visaCategory   VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
-  title          Json // L10n
-  description    Json // L10n
-  requirements   Json? // L10nList
-  benefits       Json? // L10nList
-  sector         String?
-  city           String?
-  profession     String? // normalised profession used for matching
-  germanLevel    String? // minimum: none | A1 | A2 | B1 | B2 | C1 | C2
-  minExperience  Int?
-  drivingLicence String? // e.g. "CE"
-  salaryMin      Int? // EUR gross per month
-  salaryMax      Int?
-  positions      Int                   @default(1)
+  id               String                @id @default(cuid())
+  slug             String                @unique
+  companyId        String?
+  company          Company?              @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  visaCategoryId   String?
+  visaCategory     VisaCategory?         @relation(fields: [visaCategoryId], references: [id], onDelete: SetNull)
+  title            Json // L10n
+  description      Json // L10n
+  requirements     Json? // L10nList
+  benefits         Json? // L10nList
+  sector           String?
+  city             String?
+  profession       String? // normalised profession used for matching
+  germanLevel      String? // minimum: none | A1 | A2 | B1 | B2 | C1 | C2
+  minExperience    Int?
+  drivingLicence   String? // e.g. "CE"
+  salaryMin        Int? // EUR gross per month
+  salaryMax        Int?
+  positions        Int                   @default(1)
   /// Staff correction of the filled places (+ placed outside the system, − freed); filled = occupying people + this (lib/vacancyPlaces).
-  filledAdjustment Int                 @default(0)
-  employmentType EmploymentType        @default(FULL_TIME)
-  showCompany    Boolean               @default(false) // publish the employer's name on the public board
-  status         VacancyStatus         @default(DRAFT)
-  publishedAt    DateTime?
-  closesAt       DateTime?
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  applications   VacancyApplication[]
-  cases          Case[]
-  distribution   VacancyDistribution? // external job boards (lib/jobFeeds)
-  channelStates  VacancyChannelState[]
+  filledAdjustment Int                   @default(0)
+  employmentType   EmploymentType        @default(FULL_TIME)
+  showCompany      Boolean               @default(false) // publish the employer's name on the public board
+  status           VacancyStatus         @default(DRAFT)
+  publishedAt      DateTime?
+  closesAt         DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  applications     VacancyApplication[]
+  cases            Case[]
+  distribution     VacancyDistribution? // external job boards (lib/jobFeeds)
+  channelStates    VacancyChannelState[]
   /// Cover image and gallery: [{ url, alt? }] (public uploads); the first one is the card/OG image.
-  images         Json?
+  images           Json?
   /// Drive folder the applicants of this vacancy are collected in (one sub-folder per applicant; lib/drive/vacancyFolders.ts).
-  driveFolderId  String?               @db.VarChar(40)
+  driveFolderId    String?               @db.VarChar(40)
 
   @@index([status, publishedAt])
   @@index([companyId])
@@ -1866,28 +1866,28 @@ enum MailSyncStatus {
 
 /// A staff member's own mailbox (IMAP + SMTP); the password is sealed with the server key.
 model MailAccount {
-  id            String         @id @default(cuid())
+  id            String             @id @default(cuid())
   userId        String
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email         String         @db.VarChar(190)
-  displayName   String?        @db.VarChar(120)
-  provider      MailProvider   @default(CUSTOM)
-  imapHost      String         @db.VarChar(190)
-  imapPort      Int            @default(993)
-  imapSecure    Boolean        @default(true)
-  smtpHost      String         @db.VarChar(190)
-  smtpPort      Int            @default(465)
-  smtpSecure    Boolean        @default(true)
-  username      String         @db.VarChar(190)
-  passwordEnc   String         @db.Text
-  signatureHtml String?        @db.Text
-  isDefault     Boolean        @default(false)
-  syncEnabled   Boolean        @default(true)
-  syncStatus    MailSyncStatus @default(IDLE)
-  syncError     String?        @db.VarChar(500)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email         String             @db.VarChar(190)
+  displayName   String?            @db.VarChar(120)
+  provider      MailProvider       @default(CUSTOM)
+  imapHost      String             @db.VarChar(190)
+  imapPort      Int                @default(993)
+  imapSecure    Boolean            @default(true)
+  smtpHost      String             @db.VarChar(190)
+  smtpPort      Int                @default(465)
+  smtpSecure    Boolean            @default(true)
+  username      String             @db.VarChar(190)
+  passwordEnc   String             @db.Text
+  signatureHtml String?            @db.Text
+  isDefault     Boolean            @default(false)
+  syncEnabled   Boolean            @default(true)
+  syncStatus    MailSyncStatus     @default(IDLE)
+  syncError     String?            @db.VarChar(500)
   lastSyncAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
   folders       MailFolder[]
   messages      MailMessage[]
   rules         MailRule[]
@@ -3128,42 +3128,42 @@ model CandidateRequest {
 /// it. Employers only ever get the whitelisted fields of lib/pool/anonymous.ts: never name, photo, contact,
 /// birth date, IDs, address or documents. Removed with the account (cascade).
 model CandidatePoolProfile {
-  id             String                  @id @default(cuid())
-  userId         String                  @unique
-  user           User                    @relation("CandidatePoolOwner", fields: [userId], references: [id], onDelete: Cascade)
+  id               String                  @id @default(cuid())
+  userId           String                  @unique
+  user             User                    @relation("CandidatePoolOwner", fields: [userId], references: [id], onDelete: Cascade)
   /// Pseudonymous code shown to employers (TV-K-1234); random, never derived from the account.
-  code           String                  @unique @db.VarChar(16)
+  code             String                  @unique @db.VarChar(16)
   /// Set while the client consents (cleared on withdrawal); version of the consent text they agreed to.
-  consentAt      DateTime?
-  consentVersion String?                 @db.VarChar(40)
-  withdrawnAt    DateTime?
+  consentAt        DateTime?
+  consentVersion   String?                 @db.VarChar(40)
+  withdrawnAt      DateTime?
   /// Further professions besides User.profession (string[], max 3).
-  professions    Json?
+  professions      Json?
   /// Other languages: { lang: ISO code, level: A1..C2 | native }[].
-  languages      Json?
+  languages        Json?
   /// Preferred German states (Bundesland codes, "ANY" = anywhere); empty = anywhere.
-  regions        Json?
-  earliestStart  DateTime?
+  regions          Json?
+  earliestStart    DateTime?
   /// IMMEDIATE | ONE_MONTH | THREE_MONTHS | LATER
-  availability   String?                 @db.VarChar(16)
+  availability     String?                 @db.VarChar(16)
   /// Short skills list (string[], max 12).
-  skills         Json?
+  skills           Json?
   /// JOB | AUSBILDUNG | BOTH
-  track          String                  @default("JOB") @db.VarChar(12)
+  track            String                  @default("JOB") @db.VarChar(12)
   /// Staff: recommended for the pool (the client's consent is still required to be visible).
-  staffReady     Boolean                 @default(false)
+  staffReady       Boolean                 @default(false)
   /// Staff: taken out of the pool (consent kept).
-  hidden         Boolean                 @default(false)
-  hiddenReason   String?                 @db.VarChar(300)
+  hidden           Boolean                 @default(false)
+  hiddenReason     String?                 @db.VarChar(300)
   /// Public pool summary written by staff (shown to employers instead of any client free text).
-  summary        String?                 @db.Text
-  staffUpdatedById String?             @db.VarChar(40)
+  summary          String?                 @db.Text
+  staffUpdatedById String?                 @db.VarChar(40)
   staffUpdatedAt   DateTime?
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  interests      CandidatePoolInterest[]
-  saved          CandidatePoolSaved[]
-  views          CandidatePoolView[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  interests        CandidatePoolInterest[]
+  saved            CandidatePoolSaved[]
+  views            CandidatePoolView[]
 
   @@index([consentAt, hidden])
 }
@@ -3234,77 +3234,90 @@ model CandidatePoolView {
 
 /// Person who brings clients and cooperates on visas (e.g. Ilqar, Ənvər); own folder in the shared drive.
 model ReferralPartner {
-  id                String              @id @default(cuid())
-  name              String              @unique @db.VarChar(120)
-  phone             String?             @db.VarChar(40)
-  email             String?             @db.VarChar(191)
-  note              String?             @db.Text
-  active            Boolean             @default(true)
+  id                 String              @id @default(cuid())
+  name               String              @unique @db.VarChar(120)
+  phone              String?             @db.VarChar(40)
+  email              String?             @db.VarChar(191)
+  note               String?             @db.Text
+  active             Boolean             @default(true)
   /// Login of the partner for the partner portal (own clients, commissions, uploads).
-  userId            String?             @unique
-  user              User?               @relation("PartnerUser", fields: [userId], references: [id], onDelete: SetNull)
+  userId             String?             @unique
+  user               User?               @relation("PartnerUser", fields: [userId], references: [id], onDelete: SetNull)
   /// Default commission per client in cents (copied into each new commission row).
-  commissionCents   Int?
-  currency          String              @default("EUR") @db.VarChar(3)
+  commissionCents    Int?
+  currency           String              @default("EUR") @db.VarChar(3)
   /// Personal sign-up code (/register?ref=CODE, short /p/CODE): clients who use it belong to the partner.
-  code              String?             @unique @db.VarChar(32)
+  code               String?             @unique @db.VarChar(32)
   /// When the automatic commission of a case is created: ASSIGNED (the case gets the partner) | CONTRACT_SIGNED | VISA_APPROVED.
-  commissionTrigger String              @default("ASSIGNED") @db.VarChar(20)
+  commissionTrigger  String              @default("ASSIGNED") @db.VarChar(20)
   /// What the portal shows of the clients: MINIMAL (masked) | EXTENDED (contacts + payments, only for clients who consented).
-  visibility        String              @default("MINIMAL") @db.VarChar(12)
+  visibility         String              @default("MINIMAL") @db.VarChar(12)
   // Profile (lib/partners/profile.ts): all optional; bank data only ADMIN+ (masked / hidden for staff).
   /// INDIVIDUAL | COMPANY
-  partnerType       String              @default("INDIVIDUAL") @db.VarChar(12)
-  companyName       String?             @db.VarChar(160)
-  contactPerson     String?             @db.VarChar(120)
-  phone2            String?             @db.VarChar(40)
-  whatsapp          String?             @db.VarChar(40)
-  address           String?             @db.VarChar(255)
-  city              String?             @db.VarChar(120)
-  country           String?             @db.VarChar(80)
+  partnerType        String              @default("INDIVIDUAL") @db.VarChar(12)
+  companyName        String?             @db.VarChar(160)
+  contactPerson      String?             @db.VarChar(120)
+  phone2             String?             @db.VarChar(40)
+  whatsapp           String?             @db.VarChar(40)
+  address            String?             @db.VarChar(255)
+  city               String?             @db.VarChar(120)
+  country            String?             @db.VarChar(80)
   /// VÖEN / Steuernummer (mask group TAX_ID).
-  taxId             String?             @db.VarChar(40)
-  bankName          String?             @db.VarChar(120)
-  bankAccountHolder String?             @db.VarChar(120)
+  taxId              String?             @db.VarChar(40)
+  bankName           String?             @db.VarChar(120)
+  bankAccountHolder  String?             @db.VarChar(120)
   /// Mask group IBAN; only ADMIN+ see or edit it.
-  iban              String?             @db.VarChar(42)
-  bic               String?             @db.VarChar(11)
-  contractStart     DateTime?           @db.Date
-  contractEnd       DateTime?           @db.Date
+  iban               String?             @db.VarChar(42)
+  bic                String?             @db.VarChar(11)
+  contractStart      DateTime?           @db.Date
+  contractEnd        DateTime?           @db.Date
   /// az | de | en | ru | tr
-  preferredLanguage String?             @db.VarChar(5)
-  website           String?             @db.VarChar(255)
+  preferredLanguage  String?             @db.VarChar(5)
+  website            String?             @db.VarChar(255)
   /// string[]
-  tags              Json?
+  tags               Json?
   /// Values of the admin-defined fields: { [PartnerFieldDef.id]: string | number | boolean }.
-  customData        Json?
+  customData         Json?
   /// The partner's own extra fields: [{ label, value }].
-  extraFields       Json?
+  extraFields        Json?
   /// Legal data for partner companies (contracts are generated from it).
-  legalForm         String?             @db.VarChar(60)
-  registerNumber    String?             @db.VarChar(40)
-  registerCourt     String?             @db.VarChar(120)
-  vatId             String?             @db.VarChar(40)
-  betriebsnummer    String?             @db.VarChar(20)
-  street            String?             @db.VarChar(160)
-  postalCode        String?             @db.VarChar(12)
-  signatoryName     String?             @db.VarChar(160)
-  signatoryRole     String?             @db.VarChar(80)
+  legalForm          String?             @db.VarChar(60)
+  registerNumber     String?             @db.VarChar(40)
+  registerCourt      String?             @db.VarChar(120)
+  vatId              String?             @db.VarChar(40)
+  betriebsnummer     String?             @db.VarChar(20)
+  street             String?             @db.VarChar(160)
+  postalCode         String?             @db.VarChar(12)
+  signatoryName      String?             @db.VarChar(160)
+  signatoryRole      String?             @db.VarChar(80)
   /// How many clients the partner should bring / needs (quota; null = no target). Progress = distinct clients via cases + owned clients.
-  clientQuota       Int?
+  clientQuota        Int?
   /// What kind of partner (lib/partners/schools.ts): AGENCY (default) | SCHOOL (college) | LANGUAGE_SCHOOL. Separate from partnerType (legal form).
-  category          String              @default("AGENCY") @db.VarChar(20)
+  category           String              @default("AGENCY") @db.VarChar(20)
   /// Brings clients who register themselves for a vacancy (lib/drive/referrerName.ts): their client folders stay in Anträge with a " · Ref <name>" suffix. false = German partner firm (folders under Partner/<name>, document workflow).
-  isReferrer        Boolean             @default(false)
-  partnerContracts  PartnerContract[]
-  partnerActivities PartnerActivity[]
-  contacts          Contact[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  cases             Case[]
-  commissions       PartnerCommission[]
-  settlements       SettlementEntry[]
-  ownedClients      User[]              @relation("PartnerOwnedClients")
+  isReferrer         Boolean             @default(false)
+  /// Referrer tree (lib/referrers): the referrer this one works under (null = top level). Only between referrers; max depth MAX_DEPTH, no cycles.
+  parentPartnerId    String?
+  parentPartner      ReferralPartner?    @relation("ReferrerTree", fields: [parentPartnerId], references: [id], onDelete: SetNull)
+  subReferrers       ReferralPartner[]   @relation("ReferrerTree")
+  /// PENDING (a sub-referrer created from the portal, waits for an admin) | APPROVED | REJECTED. Only APPROVED partners may use the portal.
+  approvalStatus     String              @default("APPROVED") @db.VarChar(10)
+  /// The referrer who created this profile from the portal (null = created by staff).
+  createdByPartnerId String?             @db.VarChar(40)
+  approvalDecidedAt  DateTime?
+  approvalNote       String?             @db.VarChar(500)
+  partnerContracts   PartnerContract[]
+  partnerActivities  PartnerActivity[]
+  contacts           Contact[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  cases              Case[]
+  commissions        PartnerCommission[]
+  settlements        SettlementEntry[]
+  ownedClients       User[]              @relation("PartnerOwnedClients")
+
+  @@index([parentPartnerId])
+  @@index([approvalStatus])
 }
 
 /// History of client ownership by referral partners (sign-up link, partner registration, admin reassignment).
@@ -4309,24 +4322,27 @@ model AutomationStep {
 
 /// Per staff member: what they handle for automatic assignment (empty lists = no restriction).
 model StaffPreferences {
-  userId          String   @id @db.VarChar(40)
+  userId          String    @id @db.VarChar(40)
   languages       Json? // ["az","ru"]
   visaTypes       Json? // ["WORK","AUSBILDUNG"]
   visaCategoryIds Json?
   maxOpenCases    Int?
   workingDays     Json? // ISO weekdays [1..7], Baku time
-  autoAssign      Boolean  @default(true)
+  autoAssign      Boolean   @default(true)
   /// Admin navigation: role desk, pinned items and recently opened pages.
-  desk            String?  @db.VarChar(20) // MANAGER | FINANCE | MARKETING | ALL
+  desk            String?   @db.VarChar(20) // MANAGER | FINANCE | MARKETING | ALL
   navPins         Json? // nav item ids
   navRecent       Json? // [{ id, at }]
   /// Work profile of the simple sidebar (lib/workProfiles: SALES | CASES | FINANCE | EMPLOYERS | CONTENT | OWNER); null = derived from role / desk.
-  workProfile     String?  @db.VarChar(20)
+  workProfile     String?   @db.VarChar(20)
   /// Sidebar view: simple | full; null = simple when a work profile was chosen, else full.
-  navView         String?  @db.VarChar(10)
-  updatedAt       DateTime @updatedAt
+  navView         String?   @db.VarChar(10)
+  updatedAt       DateTime  @updatedAt
   /// Personal admin dashboard: widget ids, order and sizes.
   dashboardLayout Json?
+  /// Sidebar badges "new since I last opened": the users page (new registrations) and the cases list (new cases).
+  usersSeenAt     DateTime?
+  casesSeenAt     DateTime?
 }
 
 enum CaseHandoverStatus {
@@ -5843,27 +5859,27 @@ model AdminPageVisit {
 
 /// "Tell me when a vacancy for this profession appears" (double opt-in).
 model JobAlert {
-  id             String    @id @default(cuid())
-  email          String    @db.VarChar(190)
-  userId         String?   @db.VarChar(40)
-  locale         String    @default("az") @db.VarChar(8)
+  id             String           @id @default(cuid())
+  email          String           @db.VarChar(190)
+  userId         String?          @db.VarChar(40)
+  locale         String           @default("az") @db.VarChar(8)
   professions    Json // string[]
-  germanLevel    String?   @db.VarChar(4)
+  germanLevel    String?          @db.VarChar(4)
   visaTypes      Json?
-  tokenHash      String    @unique @db.Char(64) // manage / unsubscribe link
+  tokenHash      String           @unique @db.Char(64) // manage / unsubscribe link
   confirmedAt    DateTime?
   lastSentAt     DateTime?
-  sentCount      Int       @default(0)
+  sentCount      Int              @default(0)
   unsubscribedAt DateTime?
-  visitorId      String?   @db.VarChar(40)
+  visitorId      String?          @db.VarChar(40)
   /// Vacancy waitlist ("Uyğun vakansiya açılanda xəbər ver", lib/jobAlerts/waitlist.ts): one profession, optional city / region,
   /// notified once per opened vacancy with free places instead of the daily digest.
-  waitlist       Boolean   @default(false)
-  city           String?   @db.VarChar(80)
+  waitlist       Boolean          @default(false)
+  city           String?          @db.VarChar(80)
   /// Lead created for a visitor's waitlist sign-up (Inquiry id; plain id).
-  inquiryId      String?   @db.VarChar(40)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  inquiryId      String?          @db.VarChar(40)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   notices        JobAlertNotice[]
 
   @@index([email])
@@ -6652,86 +6668,86 @@ model StaffMailbox {
 /// link: arbeitsagentur.de, StepStone, Indeed …). The lead itself is the Inquiry (staff inbox); this row holds the
 /// listing and the candidate's details and CV. Deleted with the inquiry; emptied when the inquiry is anonymised.
 model ExternalJobApplication {
-  id              String   @id @default(cuid())
-  inquiryId       String   @unique
-  inquiry         Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  id                       String                        @id @default(cuid())
+  inquiryId                String                        @unique
+  inquiry                  Inquiry                       @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   /// arbeitnow | careerjet | jooble | adzuna | link
-  provider        String   @db.VarChar(20)
+  provider                 String                        @db.VarChar(20)
   /// Adzuna ad id (when applied from a search result).
-  externalId      String?  @db.VarChar(64)
-  listingUrl      String   @db.VarChar(1000)
-  listingTitle    String?  @db.VarChar(300)
-  listingCompany  String?  @db.VarChar(200)
-  listingLocation String?  @db.VarChar(200)
+  externalId               String?                       @db.VarChar(64)
+  listingUrl               String                        @db.VarChar(1000)
+  listingTitle             String?                       @db.VarChar(300)
+  listingCompany           String?                       @db.VarChar(200)
+  listingLocation          String?                       @db.VarChar(200)
   /// job | ausbildung
-  jobType         String?  @db.VarChar(20)
-  germanLevel     String?  @db.VarChar(10)
-  profession      String?  @db.VarChar(160)
-  experienceYears Int?
+  jobType                  String?                       @db.VarChar(20)
+  germanLevel              String?                       @db.VarChar(10)
+  profession               String?                       @db.VarChar(160)
+  experienceYears          Int?
   /// Client account of a signed-in applicant.
-  userId          String?  @db.VarChar(40)
+  userId                   String?                       @db.VarChar(40)
   /// CV in the private uploads folder (random name); null after anonymisation.
-  cvStoredName    String?  @db.VarChar(120)
-  cvOriginalName  String?  @db.VarChar(255)
-  cvMime          String?  @db.VarChar(120)
-  cvSize          Int?
+  cvStoredName             String?                       @db.VarChar(120)
+  cvOriginalName           String?                       @db.VarChar(255)
+  cvMime                   String?                       @db.VarChar(120)
+  cvSize                   Int?
   /// The CV is a snapshot of this Lebenslauf version (attached from the portal instead of an upload).
-  lebenslaufVersionId String?  @db.VarChar(40)
+  lebenslaufVersionId      String?                       @db.VarChar(40)
   /// Progress shown to the client: SUBMITTED | FORWARDED | INTERVIEW | ACCEPTED | REJECTED | NO_REPLY (set by staff).
-  status          String   @default("SUBMITTED") @db.VarChar(20)
+  status                   String                        @default("SUBMITTED") @db.VarChar(20)
   /// Latest note for the client (shown in the portal timeline).
-  statusNote      String?  @db.VarChar(1000)
-  statusChangedAt DateTime?
+  statusNote               String?                       @db.VarChar(1000)
+  statusChangedAt          DateTime?
   /// Anschreiben edited by staff and attached to the application (subject + body as written).
-  coverLetterSubject String?  @db.VarChar(300)
-  coverLetterBody    String?  @db.Text
-  coverLetterAt      DateTime?
+  coverLetterSubject       String?                       @db.VarChar(300)
+  coverLetterBody          String?                       @db.Text
+  coverLetterAt            DateTime?
   /// Site language of the apply form (az | de | en | ru | tr | uk): texts to a guest applicant.
-  siteLocale         String?   @db.VarChar(5)
+  siteLocale               String?                       @db.VarChar(5)
   /// DSGVO: the applicant agreed that Triad Vision forwards the CV and data to the employer (ConsentRecord
   /// EXTERNAL_JOB_FORWARD). Without it nothing is sent automatically (lib/germanyJobs/autoSend.ts).
-  forwardConsentAt   DateTime?
+  forwardConsentAt         DateTime?
   /// German level the listing asks for (parsed from the listing; null = not stated).
-  requiredGerman     String?   @db.VarChar(10)
+  requiredGerman           String?                       @db.VarChar(10)
   /// Employer address for the automatic sending; source: listing (provider data / the employer's own site) | staff |
   /// DISCOVERED (found on the employer / listing page by lib/germanyJobs/discovery).
-  employerEmail       String?  @db.VarChar(190)
-  employerEmailSource String?  @db.VarChar(20)
+  employerEmail            String?                       @db.VarChar(190)
+  employerEmailSource      String?                       @db.VarChar(20)
   /// Discovery: page the address was found on + the text around it (for staff).
-  employerEmailEvidenceUrl String? @db.VarChar(1000)
-  employerEmailEvidence    String? @db.VarChar(500)
+  employerEmailEvidenceUrl String?                       @db.VarChar(1000)
+  employerEmailEvidence    String?                       @db.VarChar(500)
   /// Direct employer / job page behind the provider's tracking link (resolved by the discovery).
-  employerPageUrl     String?  @db.VarChar(1000)
+  employerPageUrl          String?                       @db.VarChar(1000)
   /// Discovery result: FOUND | NOT_FOUND | ROBOTS (robots.txt disallows) | FAILED | SKIPPED (switched off). null = not run.
-  discoveryState      String?  @db.VarChar(20)
-  discoveryAt         DateTime?
+  discoveryState           String?                       @db.VarChar(20)
+  discoveryAt              DateTime?
   /// The client was asked to send the prepared package themselves (CLIENT_SEND), reminded once, asked staff for help.
-  clientSendAt        DateTime?
-  clientRemindedAt    DateTime?
-  clientHelpAt        DateTime?
+  clientSendAt             DateTime?
+  clientRemindedAt         DateTime?
+  clientHelpAt             DateTime?
   /// Automatic sending: NO_CONSENT (old rows) | NEEDS_DATA | SEARCHING (employer e-mail discovery running) | CLIENT_SEND
   /// (no usable address: the client sends the package) | READY (staff queue: client asked for help, stuck send) |
   /// QUEUED (limit, switched off, retry) | SENDING | SENT | STOPPED (staff) | DUPLICATE (same client + listing already
   /// sent). null = old row.
-  autoState          String?   @db.VarChar(20)
+  autoState                String?                       @db.VarChar(20)
   /// Missing-data codes of the last check, comma-separated (lib/germanyJobs/autoCheck.ts).
-  autoMissing        String?   @db.VarChar(200)
-  autoCheckedAt      DateTime?
+  autoMissing              String?                       @db.VarChar(200)
+  autoCheckedAt            DateTime?
   /// Missing codes the client was last told about (a new notice only when the list changes).
-  autoNotifiedKey    String?   @db.VarChar(200)
+  autoNotifiedKey          String?                       @db.VarChar(200)
   /// Reason of QUEUED / last failure: DAILY_LIMIT | DOMAIN_LIMIT | DISABLED | SEND_FAILED | EMAIL_REJECTED.
-  autoReason         String?   @db.VarChar(40)
+  autoReason               String?                       @db.VarChar(40)
   /// Next try of a QUEUED application (null = when sending is switched on again).
-  autoNextAt         DateTime?
-  autoSentAt         DateTime?
+  autoNextAt               DateTime?
+  autoSentAt               DateTime?
   /// AUTO (system) | STAFF (staff pressed "send now") | MANUAL (staff sent it outside and marked it sent) | CLIENT (the
   /// client sent the package and confirmed "Göndərdim").
-  autoSentMode       String?   @db.VarChar(10)
+  autoSentMode             String?                       @db.VarChar(10)
   /// Message-ID of the automatic employer e-mail: answers are matched by In-Reply-To / References (lib/germanyJobs/replies).
-  autoMessageId      String?   @db.VarChar(500)
-  createdAt       DateTime @default(now())
-  events          ExternalJobApplicationEvent[]
-  replies         ExternalJobApplicationReply[]
+  autoMessageId            String?                       @db.VarChar(500)
+  createdAt                DateTime                      @default(now())
+  events                   ExternalJobApplicationEvent[]
+  replies                  ExternalJobApplicationReply[]
 
   @@index([userId])
   @@index([autoState, autoNextAt])
@@ -7286,37 +7302,37 @@ model PublicApiAttribution {
 /// Language-school partner record of a referred student (lib/partners/schools.ts): attendance or an exam result.
 /// Staff confirm it before it reaches the client's profile (an exam result then raises User.germanLevel). Plain ids.
 model PartnerStudentRecord {
-  id               String    @id @default(cuid())
-  partnerId        String    @db.VarChar(40)
-  clientId         String    @db.VarChar(40)
+  id              String    @id @default(cuid())
+  partnerId       String    @db.VarChar(40)
+  clientId        String    @db.VarChar(40)
   /// ATTENDANCE | EXAM
-  kind             String    @db.VarChar(12)
-  courseName       String?   @db.VarChar(160)
-  periodFrom       DateTime? @db.Date
-  periodTo         DateTime? @db.Date
-  attendancePct    Int?
+  kind            String    @db.VarChar(12)
+  courseName      String?   @db.VarChar(160)
+  periodFrom      DateTime? @db.Date
+  periodTo        DateTime? @db.Date
+  attendancePct   Int?
   /// A1 … C2 (exam results)
-  level            String?   @db.VarChar(4)
-  examDate         DateTime? @db.Date
-  provider         String?   @db.VarChar(40)
-  passed           Boolean?
-  note             String?   @db.Text
+  level           String?   @db.VarChar(4)
+  examDate        DateTime? @db.Date
+  provider        String?   @db.VarChar(40)
+  passed          Boolean?
+  note            String?   @db.Text
   /// Certificate in the private uploads folder (stored name), with the original name / type / size.
-  certificateKey   String?   @db.VarChar(120)
-  certificateName  String?   @db.VarChar(255)
-  certificateMime  String?   @db.VarChar(100)
-  certificateSize  Int?
+  certificateKey  String?   @db.VarChar(120)
+  certificateName String?   @db.VarChar(255)
+  certificateMime String?   @db.VarChar(100)
+  certificateSize Int?
   /// PENDING | CONFIRMED | REJECTED
-  status           String    @default("PENDING") @db.VarChar(12)
-  reviewedById     String?   @db.VarChar(40)
-  reviewedAt       DateTime?
-  reviewNote       String?   @db.Text
+  status          String    @default("PENDING") @db.VarChar(12)
+  reviewedById    String?   @db.VarChar(40)
+  reviewedAt      DateTime?
+  reviewNote      String?   @db.Text
   /// The client's level before / after a confirmed exam (null when it did not change).
-  levelBefore      String?   @db.VarChar(4)
-  levelApplied     String?   @db.VarChar(4)
-  createdById      String?   @db.VarChar(40)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  levelBefore     String?   @db.VarChar(4)
+  levelApplied    String?   @db.VarChar(4)
+  createdById     String?   @db.VarChar(40)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([partnerId, clientId])
   @@index([clientId])
@@ -7870,34 +7886,34 @@ enum VacancyRequestStatus {
 /// offer vacancies, and every new / reactivated matching vacancy is announced once (VacancyRequestNotice). Plain ids
 /// (user, staff, source vacancy, lead) — erased with the account / by e-mail (lib/vacancyRequests/privacy.ts).
 model VacancyRequest {
-  id              String               @id @default(cuid())
+  id              String                 @id @default(cuid())
   /// WORK | AUSBILDUNG
-  type            String               @db.VarChar(12)
-  sector          String?              @db.VarChar(30)
+  type            String                 @db.VarChar(12)
+  sector          String?                @db.VarChar(30)
   /// Canonical profession key (lib/matching.ts) or free text.
-  profession      String?              @db.VarChar(120)
-  city            String?              @db.VarChar(80)
-  germanLevel     String?              @db.VarChar(4)
-  note            String?              @db.Text
-  status          VacancyRequestStatus @default(NEW)
+  profession      String?                @db.VarChar(120)
+  city            String?                @db.VarChar(80)
+  germanLevel     String?                @db.VarChar(4)
+  note            String?                @db.Text
+  status          VacancyRequestStatus   @default(NEW)
   /// Signed-in client (null = guest).
-  userId          String?              @db.VarChar(40)
+  userId          String?                @db.VarChar(40)
   /// Guest contact (null for accounts).
-  contactName     String?              @db.VarChar(120)
-  email           String?              @db.VarChar(190)
-  phone           String?              @db.VarChar(40)
-  locale          String               @default("az") @db.VarChar(8)
+  contactName     String?                @db.VarChar(120)
+  email           String?                @db.VarChar(190)
+  phone           String?                @db.VarChar(40)
+  locale          String                 @default("az") @db.VarChar(8)
   /// Vacancy the request was made from (deactivated vacancy page) — announced again when it is reactivated.
-  sourceVacancyId String?              @db.VarChar(40)
+  sourceVacancyId String?                @db.VarChar(40)
   /// Lead (Inquiry id) of a guest request.
-  inquiryId       String?              @db.VarChar(40)
-  assignedStaffId String?              @db.VarChar(40)
-  staffNote       String?              @db.Text
+  inquiryId       String?                @db.VarChar(40)
+  assignedStaffId String?                @db.VarChar(40)
+  staffNote       String?                @db.Text
   cancelledAt     DateTime?
   closedAt        DateTime?
   lastOfferedAt   DateTime?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
   notices         VacancyRequestNotice[]
 
   @@index([status, createdAt])
@@ -7944,4 +7960,16 @@ model SearchKeywordDay {
   position    Float    @default(0)
 
   @@unique([keywordId, day])
+}
+
+/// "Bizdən gələn sənədlər" (lib/receivedDocs): the case documents the client has seen in that list (per client; marked
+/// by POST …/received-documents/seen, never by a GET). Plain ids; rows of a deleted document are harmless.
+model CaseReceivedDocSeen {
+  userId     String   @db.VarChar(40)
+  documentId String   @db.VarChar(40)
+  caseId     String   @db.VarChar(40)
+  seenAt     DateTime @default(now())
+
+  @@id([userId, documentId])
+  @@index([caseId, userId])
 }

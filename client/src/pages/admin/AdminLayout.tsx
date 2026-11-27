@@ -19,7 +19,7 @@ import { adminCopy } from '@/i18n/admin';
 import { roleLabel } from '@/components/admin/labels';
 import { HelpButton } from '@/components/admin/help/HelpButton';
 import { BrowserErrorsNavBadge } from '@/components/admin/BrowserErrorsNavBadge'; // new browser error groups (24 h)
-import { CasesNavBadge } from '@/components/admin/CasesNavBadge'; // cases waiting for staff action
+import { CasesNavBadge, UsersNavBadge } from '@/components/admin/CasesNavBadge'; // cases waiting for staff action / new; new client registrations
 import { TodayNavBadge } from '@/components/today/TodayNavBadge'; // urgent count of "my work today"
 import { InboxNavBadge } from '@/components/staffMobile/InboxNavBadge'; // unanswered client messages
 import { TrainingNavBadge } from '@/components/team/training/TrainingNotice'; // unfinished required courses
@@ -157,6 +157,7 @@ const SideLink = ({ item, role, collapsed, pinned, onTogglePin, onNavigate }: Si
           {!collapsed && <span className="truncate">{label}</span>}
           {item.badge === 'today' && <TodayNavBadge collapsed={collapsed} />}
           {item.badge === 'cases' && <CasesNavBadge collapsed={collapsed} />}
+          {item.badge === 'users' && <UsersNavBadge collapsed={collapsed} />}
           {item.badge === 'inbox' && <InboxNavBadge collapsed={collapsed} />}
           {item.badge === 'training' && <TrainingNavBadge collapsed={collapsed} />}
           {item.badge === 'browserErrors' && <BrowserErrorsNavBadge collapsed={collapsed} />}

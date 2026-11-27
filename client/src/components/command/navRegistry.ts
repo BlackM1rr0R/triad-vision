@@ -102,6 +102,7 @@ import {
   Landmark,
   Store,
   ScanEye,
+  Network,
 } from 'lucide-react';
 // Relative (not '@/'): the server unit tests load this module directly (tests/unit/adminNavRegistry.test.ts).
 import { hasMinRole, type Role } from '../../lib/types';
@@ -152,7 +153,7 @@ export interface StaffNavItem {
   adminOnly?: boolean;
   superOnly?: boolean;
   /** Live counter shown on the sidebar item. */
-  badge?: 'today' | 'training' | 'inbox' | 'browserErrors' | 'cases';
+  badge?: 'today' | 'training' | 'inbox' | 'browserErrors' | 'cases' | 'users';
   /** Optional feature (System → Modules); hidden when switched off. */
   module?: ModuleKey;
   /** White-label: only on the owner's own instance (INSTANCE_ROLE=owner), e.g. the list of customer agencies. */
@@ -186,7 +187,7 @@ const PERM_OF: Record<string, PermArea> = {
   originals: 'documents', coverLetterTemplates: 'documents', translations: 'documents', contractTemplates: 'documents', docsAudit: 'documents',
   clientTasks: 'clients', germanyReady: 'clients', examDates: 'clients', candidates: 'clients', skillVideos: 'clients', register: 'clients',
   duplicates: 'clients', inquiries: 'clients', privacyRequests: 'clients', bookings: 'clients',
-  referralPartners: 'partners', publicApiKeys: 'partners', agents: 'partners',
+  referralPartners: 'partners', referrers: 'partners', publicApiKeys: 'partners', agents: 'partners',
   companies: 'employers', employerChecklist: 'employers', realSalaries: 'employers', vacancies: 'employers', jobChannels: 'employers',
   candidateRequests: 'employers', candidatePool: 'employers', interviews: 'employers', employmentContracts: 'employers', interviewPrep: 'employers',
   inbox: 'communications', messaging: 'communications', mailboxes: 'communications', emailDelivery: 'communications', campaigns: 'communications', ruleChanges: 'communications',
@@ -268,7 +269,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('journey', '/admin/journey', Route, 'work', { module: 'journey' }),
   a('shifts', '/admin/shifts', CalendarRange, 'work', { module: 'shifts' }), // team calendar: shifts, leave, handovers
   // Müştərilər
-  a('users', '/admin/users', Users, 'clients'),
+  a('users', '/admin/users', Users, 'clients', { badge: 'users' }), // badge = clients registered since this page was last opened
   a('candidates', '/admin/candidates', UserSearch, 'clients'),
   a('skillVideos', '/admin/skill-videos', Clapperboard, 'clients'), // candidates' skill videos: review queue (approve / reject)
   a('register', '/admin/register', Sheet, 'clients'),
@@ -276,6 +277,7 @@ export const STAFF_NAV: StaffNavItem[] = [
   a('inquiries', '/admin/inquiries', Inbox, 'clients'),
   a('privacyRequests', '/admin/privacy-requests', ShieldHalf, 'clients', { adminOnly: true }),
   a('referralPartners', '/admin/partners', Handshake, 'clients', { module: 'referrals' }),
+  a('referrers', '/admin/referrers', Network, 'clients', { module: 'referrals' }), // Baku referrers: tree (pyramid, no commissions) + sub-referrer approvals
   a('publicApiKeys', '/admin/public-api-keys', Plug, 'clients', { adminOnly: true }), // public vacancy API keys of partners + usage (ADMIN+)
   // İşəgötürənlər
   a('companies', '/admin/companies', Building2, 'employers'),

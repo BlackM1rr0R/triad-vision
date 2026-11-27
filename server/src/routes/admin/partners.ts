@@ -192,6 +192,8 @@ const listQuery = z.object({
   contract: z.enum(CONTRACT_STATUSES).optional(),
   /** Client quota: open (target not reached) | filled | none (no target) — lib/partners/quota.ts. */
   quota: z.enum(QUOTA_FILTERS).optional(),
+  /** Baku referrers (isReferrer, own page /admin/referrers): exclude | only | all (default: all, for the pickers). */
+  referrers: z.enum(['exclude', 'only', 'all']).default('all'),
   sort: z.enum(['name', 'clients', 'activeCases', 'commissions', 'pending', 'lastActivity', 'created', 'contractEnd', 'quota']).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
 });
@@ -205,6 +207,7 @@ const listPartners = async (req: Request, q: ListQuery) => {
     ...(q.type ? { partnerType: q.type } : {}),
     ...(q.category ? { category: q.category } : {}),
     ...(q.country ? { country: q.country } : {}),
+    ...(q.referrers === 'exclude' ? { isReferrer: false } : q.referrers === 'only' ? { isReferrer: true } : {}),
     ...(search ? { OR: [...SEARCH_COLUMNS.map((k) => ({ [k]: { contains: search } })), { id: { in: await jsonSearchIds(search) } }] } : {}),
   };
   let partners = await prisma.referralPartner.findMany({ where, orderBy: [{ active: 'desc' }, { name: 'asc' }] });
@@ -737,6 +740,11 @@ adminPartnersRouter.patch('/:id', async (req, res) => {
     ...(partner.name !== current.name ? { from: current.name, to: partner.name } : {}),
   });
   if (partner.visibility !== current.visibility) await syncClientListFromVisibility(partner, req.user!.id); // the permission set's client list follows
+  if (current.isReferrer && !partner.isReferrer) {
+    // No longer a referrer: it leaves the referrer tree (lib/referrers); its sub-referrers move up to its parent.
+    await prisma.referralPartner.updateMany({ where: { parentPartnerId: partner.id }, data: { parentPartnerId: current.parentPartnerId } });
+    if (current.parentPartnerId) await prisma.referralPartner.update({ where: { id: partner.id }, data: { parentPartnerId: null } });
+  }
   if (partner.name !== current.name || partner.isReferrer !== current.isReferrer) {
     // The partner's drive folder is renamed (files stay); the client folders inside follow.
     if (partner.name !== current.name) await syncPartnerFolder(partner.id, { previousName: current.name });

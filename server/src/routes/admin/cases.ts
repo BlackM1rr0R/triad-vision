@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { Router } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { PDFDocument } from 'pdf-lib';
 import { config } from '../../config.js';
 import { prisma } from '../../db.js';
-import { decodeOriginalName, documentUpload, verifyUploadedFile } from '../../middleware/upload.js';
+import { appointmentUpload, decodeOriginalName, documentUpload, verifyUploadedFile } from '../../middleware/upload.js';
 import {
   staffCancel,
   staffConfirmContract,
@@ -31,7 +31,8 @@ import { hasMissing, translateMany } from '../../lib/ai/translate.js';
 import { prepareCaseDocument, publicQuality, scheduleUploadAnalysis } from '../../lib/uploadAi/index.js';
 import { checkDocumentPhoto, photoCheckOnUpload } from '../../lib/photoCheck/index.js'; // biometric photo rules
 import { nextStepSummaries } from '../../lib/caseNext/nextStep.js';
-import { attentionOfBall, attentionWhere } from '../../lib/staffAttention.js'; // "waits for staff action" badge + sidebar count
+import { markSeen, readSeenSince } from '../../lib/staffSeen.js';
+import { attentionOfBall, casesNavWhere } from '../../lib/staffAttention.js'; // "waits for staff action" badge + sidebar count
 
 import { emitAutomationEvent } from '../../lib/automation/events.js';
 import { onLanguageCertAccepted } from '../../lib/german/progress.js';
@@ -271,10 +272,20 @@ adminCasesRouter.get('/summary', async (req, res) => {
   res.json({ tiles: Object.fromEntries(entries) });
 });
 
-/** Count on the sidebar item "Müraciətlər": open cases of the viewer's case scope that wait for staff action (lib/staffAttention). */
+/**
+ * Count on the sidebar item "Müraciətlər": open cases of the viewer's case scope that wait for staff action
+ * (lib/staffAttention) plus new cases not yet seen by this staff member (opening the list posts /seen).
+ */
 adminCasesRouter.get('/attention-count', async (req, res) => {
   const scope = await caseScopeWhere(req.user);
-  res.json({ count: await prisma.case.count({ where: withCaseScope(attentionWhere(), scope) }) });
+  const since = await readSeenSince(req.user!.id, 'cases');
+  res.json({ count: await prisma.case.count({ where: withCaseScope(casesNavWhere(since), scope) }) });
+});
+
+/** The cases list was opened: everything created so far counts as seen (explicit POST, not inside a GET). */
+adminCasesRouter.post('/seen', async (req, res) => {
+  await markSeen(req.user!.id, 'cases');
+  res.json({ ok: true });
 });
 
 adminCasesRouter.get('/:id', async (req, res) => {
@@ -562,6 +573,26 @@ adminCasesRouter.post('/:id/documents', documentUpload.single('file'), async (re
 
 // ─── Workflow actions ──────────────────────────────────────────────────
 
+/** Multipart fields arrive as strings: "id1" / ["id1","id2"] / '["id1","id2"]' → string[]. */
+const listOfIds = (v: unknown) => {
+  if (typeof v === 'string') {
+    const t = v.trim();
+    if (!t) return [];
+    if (t.startsWith('[')) {
+      try {
+        return JSON.parse(t) as unknown;
+      } catch {
+        return v;
+      }
+    }
+    return [t];
+  }
+  return v;
+};
+
+/** The action endpoint stays JSON; only a multipart request (appointment with confirmation files) is parsed by multer. */
+const actionBody: RequestHandler = (req, res, next) => (req.is('multipart/form-data') ? appointmentUpload.array('files', 5)(req, res, next) : next());
+
 const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('REQUEST_CHANGES'), note: z.string().trim().min(3).max(2000) }),
   z.object({ action: z.literal('REJECT_SIGNATURE'), note: z.string().trim().min(3).max(2000) }),
@@ -571,6 +602,8 @@ const actionSchema = z.discriminatedUnion('action', [
     at: z.coerce.date(),
     place: z.string().trim().min(3).max(300),
     note: z.string().trim().max(2000).optional(),
+    /** Confirmation files to remove when the appointment is edited (ids of its appointment documents). JSON array or repeated field in multipart. */
+    removeDocumentIds: z.preprocess(listOfIds, z.array(z.string().min(1).max(40)).max(20).optional()),
   }),
   z.object({ action: z.literal('MARK_LODGED') }),
   z.object({
@@ -588,10 +621,22 @@ const actionSchema = z.discriminatedUnion('action', [
   }),
 ]);
 
-adminCasesRouter.post('/:id/actions', async (req, res) => {
+adminCasesRouter.post('/:id/actions', actionBody, async (req, res) => {
+  const uploaded = (Array.isArray(req.files) ? req.files : []) as Express.Multer.File[];
+  try {
+    await runAction(req, res, uploaded);
+  } catch (err) {
+    // The files were not taken over by a case document: remove them from the disk.
+    await Promise.all(uploaded.map((f) => fs.unlink(f.path).catch(() => undefined)));
+    throw err;
+  }
+});
+
+const runAction = async (req: Request, res: Response, uploaded: Express.Multer.File[]) => {
   const a = parse(actionSchema, req.body);
-  const id = req.params.id;
+  const id = String(req.params.id);
   const actor = req.user!.id;
+  if (uploaded.length && a.action !== 'SCHEDULE_APPOINTMENT') throw badRequest('FILES_NOT_ALLOWED');
   switch (a.action) {
     case 'REQUEST_CHANGES':
       await staffRequestChanges(id, actor, a.note);
@@ -603,7 +648,13 @@ adminCasesRouter.post('/:id/actions', async (req, res) => {
       await staffConfirmContract(id, actor);
       break;
     case 'SCHEDULE_APPOINTMENT':
-      await staffScheduleAppointment(id, actor, { at: a.at, place: a.place, note: a.note });
+      for (const f of uploaded) await verifyUploadedFile(f); // same checks as case documents (type, signature, HEIC → JPEG)
+      await staffScheduleAppointment(id, actor, {
+        at: a.at,
+        place: a.place,
+        note: a.note,
+        files: { add: uploaded.map((f) => ({ filename: f.filename, originalname: decodeOriginalName(f.originalname), mimetype: f.mimetype, size: f.size })), removeIds: a.removeDocumentIds ?? [] },
+      });
       break;
     case 'MARK_LODGED':
       await staffMarkLodged(id, actor);
@@ -620,7 +671,7 @@ adminCasesRouter.post('/:id/actions', async (req, res) => {
       break;
   }
   res.json({ case: await loadCaseDetail(id, { forStaff: true }) });
-});
+};
 
 // ─── Messages & internal notes ─────────────────────────────────────────
 

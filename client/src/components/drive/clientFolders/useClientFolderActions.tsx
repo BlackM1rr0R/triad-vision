@@ -107,10 +107,11 @@ export const useClientFolderActions = () => {
     // "Schon geschrieben": every selected client folder not WRITTEN yet (also in a mixed selection; the rest is skipped
     // and counted in the dialog). Hidden when none is eligible or without cases:edit.
     const eligible = targetsOf(writtenEligible(list));
-    // A client folder enters the workflow only with a partner: without one the button is greyed out (the server refuses too).
+    // A client folder enters the workflow only with a partner (the server refuses too): in Anträge, before a partner is
+    // chosen, there is no «Schon geschrieben» button at all — only «Partnyor»; the folder then moves to Partner/<name>.
     const noPartnerYet = eligible.length > 0 && eligible.every((x) => !x.stage && !x.partner);
     const quick: ToolAction[] =
-      eligible.length && can('cases', 'edit')
+      eligible.length && !noPartnerYet && can('cases', 'edit')
         ? [
             {
               id: 'cf-quick-written',
@@ -119,8 +120,6 @@ export const useClientFolderActions = () => {
               onClick: () => open('quick', eligible, list.length - eligible.length),
               primary: true,
               labelled: true,
-              disabled: noPartnerYet,
-              title: noPartnerYet ? t('driveProcessing.partnerFirst') : undefined,
             },
           ]
         : [];

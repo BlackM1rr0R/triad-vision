@@ -36,6 +36,8 @@ export interface PartnerMe {
     visibility?: 'MINIMAL' | 'EXTENDED';
     /** Schools get the Students view (/partner/students); language schools also record attendance / exams. */
     category?: 'AGENCY' | 'SCHOOL' | 'LANGUAGE_SCHOOL';
+    /** Baku referrer: "Komandam" area (sub-referrers), no commissions (server lib/referrers). */
+    isReferrer?: boolean;
   };
   user: { firstName: string; lastName: string; email: string; phone: string | null; locale: string };
   alsoAgent: boolean;
@@ -61,7 +63,7 @@ export interface PartnerAccess {
   role: 'OWNER' | 'MEMBER';
   template: PartnerTemplate;
   permissions: PartnerPerms;
-  areas: { clients: boolean; cases: boolean; commissions: boolean; addClients: boolean; messages: boolean; vacancies: boolean; drive: boolean; team: boolean; profile: boolean };
+  areas: { clients: boolean; cases: boolean; commissions: boolean; addClients: boolean; messages: boolean; vacancies: boolean; drive: boolean; team: boolean; profile: boolean; referrals?: boolean };
 }
 
 /** Today's portal (a server without per-partner permissions). */

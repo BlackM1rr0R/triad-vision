@@ -27,6 +27,7 @@ export const SYNONYMS: Record<string, string> = {
   inquiries: 'sorğu, inquiry, lead, anfrage, kontakt, запрос, заявка с сайта',
   privacyRequests: 'məxfilik, dsgvo, gdpr, privacy, datenschutz, auskunft, löschung, конфиденциальность',
   referralPartners: 'partnyor, referral, tövsiyə, empfehlung, vermittler, партнёр, реферал',
+  referrers: 'referal, alt-referal, piramida, komanda, tippgeber, referrer, реферал',
   companies: 'şirkət, işəgötürən, company, employer, firma, arbeitgeber, компания, работодатель',
   vacancies: 'vakansiya, iş elanı, job, vacancy, stelle, stellenangebot, вакансия',
   candidateRequests: 'toplu sorğu, bulk, candidate request, kandidatenanfrage, запрос кандидатов',

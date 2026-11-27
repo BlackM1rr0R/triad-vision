@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LucideIcon } from 'lucide-react';
-import { BookOpenCheck, CalendarCheck, ClipboardList, FileSignature, FileUp, ListChecks, PenLine, ShieldCheck } from 'lucide-react';
+import { Wallet, BookOpenCheck, CalendarCheck, ClipboardList, FileSignature, FileUp, ListChecks, PenLine, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useL10n } from '@/lib/l10n';
@@ -47,7 +47,7 @@ export type CaseTab = 'overview' | 'docs' | 'messages' | 'family' | 'other';
 export const tabOfAnchor = (hash: string): CaseTab | null => {
   const id = hash.replace(/^#/, '');
   if (!id) return null;
-  if (id.startsWith('docs-') || id === 'contract' || id === 'other-files' || id === 'originals' || id === 'doc-intel') return 'docs';
+  if (id.startsWith('docs-') || id === 'contract' || id === 'other-files' || id === 'received' || id === 'mine' || id === 'originals' || id === 'doc-intel') return 'docs';
   if (id === 'messages') return 'messages';
   if (id === 'family-members' || id === 'family') return 'family';
   if (id === 'office-visits' || id === 'timeline') return 'other';
@@ -81,6 +81,7 @@ const REASON_ICON: Partial<Record<BallReason, LucideIcon>> = {
   SIGN_CONTRACT: PenLine,
   SIGN_DOCUMENTS: FileSignature,
   CLIENT_TASKS: ListChecks,
+  PAY_OFFICE: Wallet,
   ATTEND_APPOINTMENT: CalendarCheck,
 };
 
@@ -95,6 +96,8 @@ const reasonHref = (caseId: string, status: CaseStatus, reason: BallReason) => {
       return caseHref(caseId, 'docs', stage ? `#docs-${stage.toLowerCase()}` : null);
     case 'SIGN_CONTRACT':
       return caseHref(caseId, 'docs', '#contract');
+    case 'PAY_OFFICE':
+      return caseHref(caseId, 'overview', '#payment');
     case 'SIGN_DOCUMENTS':
       return '/account/signatures';
     case 'CLIENT_TASKS':

@@ -13,6 +13,7 @@ import { openInvoicesOf } from '../billing/service.js';
 import { isPastDue } from '../billing/math.js';
 import { recognitionClientAction } from '../recognition/service.js';
 import { portalStageOf } from './portalStage.js';
+import { loadCasePayments } from '../casePayment/index.js'; // office payment after the Əmək müqaviləsi (status line)
 import { loadContractTurns } from '../caseContracts/turn.js'; // whose turn the case contract is (status line)
 import { buildStatusLine } from './statusLine.js'; // plain status line of the cabinet (stage + what is required)
 import { clientUploadStageFor } from '../clientUploadTarget.js'; // rejected documents the client may replace after hand-in
@@ -35,6 +36,7 @@ export type NextKind =
   | 'UPLOAD_DOCS'
   | 'SUBMIT_DOCS'
   | 'SIGN_CONTRACT'
+  | 'PAY_CASE'
   | 'ATTEND_APPOINTMENT'
   | 'BOOK_INTERVIEW'
   | 'PREP_INTERVIEW'
@@ -75,6 +77,8 @@ export const KIND_RANK: Record<NextKind, number> = {
   UPLOAD_DOCS: 11,
   SUBMIT_DOCS: 12,
   SIGN_CONTRACT: 13,
+  // Single-contract flow: Əmək müqaviləsi approved, the client pays in the office before the German documents.
+  PAY_CASE: 13.2,
   ATTEND_APPOINTMENT: 14,
   // An employer interview to book (open invite: pick a slot) or to confirm (proposed time).
   BOOK_INTERVIEW: 14.5,
@@ -180,6 +184,9 @@ export const collectActions = (f: NextStepFacts): NextAction[] => {
           break;
         case 'SIGN_CONTRACT':
           add('SIGN_CONTRACT', caseUrl(p.id, 'docs', '#contract'), { dueAt: due, overdue: b.overdue });
+          break;
+        case 'PAY_OFFICE':
+          add('PAY_CASE', caseUrl(p.id, undefined, '#payment'), { dueAt: due, overdue: false });
           break;
         case 'ATTEND_APPOINTMENT':
           // The appointment date is not a deadline that can be "overdue" for the client.
@@ -408,7 +415,11 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     ? await prisma.case.findUnique({ where: { id: open.id }, select: { id: true, status: true, contract: { select: { signedAt: true, signatureRequestId: true } } } })
     : null;
   const contractTurn = contractRow ? ((await loadContractTurns([contractRow], now)).get(contractRow.id) ?? null) : null;
-  const workSigned = open?.status === 'CONTRACT_SIGNED' && contractTurn === 'STAFF' ? (await import('../caseContracts/service.js').then((m) => m.workStateOf(open.id))) === 'SIGNED' : false;
+  const workState = open?.status === 'CONTRACT_SIGNED' && contractTurn === 'STAFF' ? await import('../caseContracts/service.js').then((m) => m.workStateOf(open.id)) : null;
+  const workSigned = workState === 'SIGNED';
+  // Single-contract flow: nothing sent after the Əmək müqaviləsi → the payment step (due until staff record it).
+  const casePay = open && workState === 'NOT_SENT' ? (await loadCasePayments([open.id], now)).get(open.id) : null;
+  const payment = casePay ? (casePay.paid ? ('PAID' as const) : ('DUE' as const)) : null;
   const statusLine = buildStatusLine({
     now,
     primary: open ? { id: open.id, status: open.status, appointmentAt: open.appointmentAt } : primary ? { id: primary.id, status: primary.status, appointmentAt: null } : null,
@@ -417,6 +428,7 @@ export const loadNextStep = async (userId: string, now = new Date(), opts: { cas
     hasEmployer: !!open?.company,
     contractTurn,
     workSigned,
+    payment,
   });
   // Stage-based portal (lib/account/portalStage): the same facts decide which tools the portal features.
   const docKinds: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT'];

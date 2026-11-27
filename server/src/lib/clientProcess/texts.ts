@@ -189,14 +189,14 @@ export const taskTexts: Record<Locale, { created: (c: TaskCtx) => Msg; dueSoon: 
 
 // ─── Office visits ────────────────────────────────────────────────────
 
-export const VISIT_REASONS = ['originals', 'passport', 'sign', 'other'] as const;
+export const VISIT_REASONS = ['originals', 'passport', 'sign', 'payment', 'other'] as const;
 export type VisitReason = (typeof VISIT_REASONS)[number];
 
 export const reasonLabel: Record<Locale, Record<VisitReason, string>> = {
-  az: { originals: 'Orijinal sənədləri təhvil vermək', passport: 'Pasportu götürmək', sign: 'Sənədləri imzalamaq', other: 'Digər' },
-  de: { originals: 'Originaldokumente abgeben', passport: 'Reisepass abholen', sign: 'Dokumente unterschreiben', other: 'Sonstiges' },
-  en: { originals: 'Hand over original documents', passport: 'Collect passport', sign: 'Sign documents', other: 'Other' },
-  ru: { originals: 'Сдать оригиналы документов', passport: 'Забрать паспорт', sign: 'Подписать документы', other: 'Другое' },
+  az: { originals: 'Orijinal sənədləri təhvil vermək', passport: 'Pasportu götürmək', sign: 'Sənədləri imzalamaq', payment: 'Ödəniş', other: 'Digər' },
+  de: { originals: 'Originaldokumente abgeben', passport: 'Reisepass abholen', sign: 'Dokumente unterschreiben', payment: 'Zahlung', other: 'Sonstiges' },
+  en: { originals: 'Hand over original documents', passport: 'Collect passport', sign: 'Sign documents', payment: 'Payment', other: 'Other' },
+  ru: { originals: 'Сдать оригиналы документов', passport: 'Забрать паспорт', sign: 'Подписать документы', payment: 'Оплата', other: 'Другое' },
 };
 
 export const asReason = (topic: string | null | undefined): VisitReason => ((VISIT_REASONS as readonly string[]).includes(topic ?? '') ? (topic as VisitReason) : 'other');

@@ -257,15 +257,19 @@ export const partnerNoticeRule = (perms: PartnerPerms, type: string): { names: b
   return { names: clients };
 };
 
-/** Portal areas the UI shows (cosmetic; the server checks every request). */
-export const portalAreas = (perms: PartnerPerms, opts: { owner: boolean }) => ({
+/**
+ * Portal areas the UI shows (cosmetic; the server checks every request). Referrers (lib/referrers) get the
+ * "Komandam / Alt-referallar" area instead of the commission and team pages (no commissions for referrers).
+ */
+export const portalAreas = (perms: PartnerPerms, opts: { owner: boolean; referrer?: boolean }) => ({
   clients: perms.clientList !== 'none',
   cases: perms.clientList !== 'none',
-  commissions: perms.payments,
+  commissions: perms.payments && !opts.referrer,
   addClients: perms.addClients && perms.clientList !== 'none',
   messages: perms.messaging,
   vacancies: perms.vacancies,
   drive: perms.drive !== 'none',
-  team: opts.owner,
+  team: opts.owner && !opts.referrer,
   profile: opts.owner,
+  referrals: !!opts.referrer && perms.clientList !== 'none',
 });

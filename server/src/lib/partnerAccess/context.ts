@@ -42,9 +42,15 @@ export const loadPartnerPerms = async (partner: Pick<ReferralPartner, 'id' | 'vi
   return partnerPermsOf(partner, access);
 };
 
+/** A sub-referrer waiting for (or refused by) an admin may not use the portal (lib/referrers). */
+const assertApproved = (partner: Pick<ReferralPartner, 'approvalStatus'>) => {
+  if (partner.approvalStatus !== 'APPROVED') throw forbidden('PARTNER_NOT_APPROVED');
+};
+
 const resolve = async (userId: string): Promise<PartnerCtx> => {
   const own = await prisma.referralPartner.findUnique({ where: { userId } });
   if (own) {
+    assertApproved(own);
     const { template, perms } = await loadPartnerPerms(own);
     return { partner: { ...own, visibility: visibilityFor(perms) }, perms, partnerPerms: perms, template, role: 'OWNER', memberId: null };
   }
@@ -52,6 +58,7 @@ const resolve = async (userId: string): Promise<PartnerCtx> => {
   if (!member || !member.active) throw forbidden('NO_PARTNER_PROFILE');
   const partner = await prisma.referralPartner.findUnique({ where: { id: member.partnerId } });
   if (!partner) throw forbidden('NO_PARTNER_PROFILE');
+  assertApproved(partner);
   const { template, perms: partnerPerms } = await loadPartnerPerms(partner);
   const perms = intersectPerms(partnerPerms, parsePerms(member.perms));
   return { partner: { ...partner, visibility: visibilityFor(perms) }, perms, partnerPerms, template, role: 'MEMBER', memberId: member.id };

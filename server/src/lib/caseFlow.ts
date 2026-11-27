@@ -13,6 +13,7 @@ import { syncSettlementsForCase } from './settlement/service.js';
 import { emitAutomationEvent } from './automation/events.js'; // automation rules: domain events (never throws)
 import { linkCaseRequirements } from './docLink/service.js'; // one upload for the initial and the embassy list (never throws)
 import { ensureEarlyEmbassyRequirements } from './earlyEmbassy/service.js'; // embassy list while waiting for the contract (never throws)
+import type { AppointmentUpload } from './caseAppointment/files.js';
 
 export const FINAL_STATUSES: CaseStatus[] = ['APPROVED', 'REJECTED', 'CANCELLED'];
 
@@ -364,10 +365,14 @@ export const staffConfirmContract = async (caseId: string, actorId: string, opts
   await import('./caseContracts/service.js').then((m) => m.onContractConfirmed(caseId, actorId)).catch(() => undefined);
 };
 
+/**
+ * Records the embassy appointment (first time) or updates it (APPOINTMENT_SCHEDULED → APPOINTMENT_RESCHEDULED).
+ * `files`: confirmation files to attach / remove (lib/caseAppointment/files.ts: case document + drive "Termin" copy).
+ */
 export const staffScheduleAppointment = async (
   caseId: string,
   actorId: string,
-  input: { at: Date; place: string; note?: string | null },
+  input: { at: Date; place: string; note?: string | null; files?: { add: AppointmentUpload[]; removeIds: string[] } },
 ) => {
   const c = await loadCase(caseId);
   if (c.status === 'EMBASSY_REVIEW') {
@@ -376,16 +381,23 @@ export const staffScheduleAppointment = async (
   } else if (c.status !== 'APPOINTMENT_SCHEDULED') {
     throw conflict('INVALID_TRANSITION');
   }
+  const update = c.status === 'APPOINTMENT_SCHEDULED';
+  const files = input.files && (input.files.add.length || input.files.removeIds.length) ? input.files : null;
+  const apptFiles = files ? await import('./caseAppointment/files.js') : null;
+  if (files && apptFiles) await apptFiles.assertAppointmentFiles(caseId, files);
   await transition(caseId, ['EMBASSY_REVIEW', 'APPOINTMENT_SCHEDULED'], 'APPOINTMENT_SCHEDULED', actorId, {
-    eventType: c.status === 'APPOINTMENT_SCHEDULED' ? 'APPOINTMENT_RESCHEDULED' : 'APPOINTMENT_SCHEDULED',
+    eventType: update ? 'APPOINTMENT_RESCHEDULED' : 'APPOINTMENT_SCHEDULED',
     note: input.note,
     data: { appointmentAt: input.at, appointmentPlace: input.place, staffNote: input.note ?? null },
   });
+  const fileCount = files && apptFiles ? await apptFiles.applyAppointmentFiles(caseId, actorId, files) : undefined;
   const client = await prisma.user.findFirstOrThrow({ where: { cases: { some: { id: caseId } } } });
-  await after(caseId, 'APPOINTMENT_SCHEDULED', {
+  // First recording: "your appointment"; later edits: "your appointment details were updated".
+  await after(caseId, update ? 'APPOINTMENT_UPDATED' : 'APPOINTMENT_SCHEDULED', {
     date: formatDateTime(input.at, client.locale),
     place: input.place,
     note: input.note,
+    ...(fileCount !== undefined ? { files: fileCount } : {}),
   });
 };
 

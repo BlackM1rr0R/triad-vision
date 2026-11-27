@@ -11,6 +11,7 @@ import { ballInCourtFor } from '../lib/clientProcess/ballInCourt.js';
 import { clientView, completeTask, loadTask, taskInclude } from '../lib/clientProcess/tasks.js';
 import { bookOfficeVisit, cancelOfficeVisit, freeOfficeSlots, listOffices, loadVisit, rescheduleOfficeVisit, visitIcs, visitInclude, visitView } from '../lib/clientProcess/office.js';
 import { VISIT_REASONS } from '../lib/clientProcess/texts.js';
+import { paymentViewFor } from '../lib/casePayment/index.js';
 
 /**
  * Client portal / mobile app: ball-in-court, "my tasks" and office visits — mounted at /api/client-process.
@@ -101,6 +102,15 @@ clientProcessRouter.post('/tasks/:id/reopen', async (req, res) => {
   if (t.status !== 'DONE' || t.completedVia !== 'CLIENT' || t.completedById !== req.user!.id) throw conflict('TASK_NOT_REOPENABLE');
   await prisma.clientTask.update({ where: { id: t.id }, data: { status: 'OPEN', completedAt: null, completedById: null, completedVia: null } });
   res.json({ task: clientView((await loadTask(t.id))!, await localeOf(req.user!.id)) });
+});
+
+// ─── Payment step (after the Əmək müqaviləsi) ───────────────────────
+
+/** The payment step of an own case: due / paid, the amount of the open invoice, the booked office visit + offices. */
+clientProcessRouter.get('/payment', async (req, res) => {
+  const q = parse(z.object({ caseId: z.string().min(1).max(40) }), req.query);
+  await ownCase(q.caseId, req.user!.id);
+  res.json({ payment: await paymentViewFor(q.caseId), offices: await listOffices(await localeOf(req.user!.id)) });
 });
 
 // ─── Office visits ────────────────────────────────────────────────────

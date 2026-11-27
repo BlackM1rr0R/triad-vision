@@ -36,10 +36,13 @@ const ADMIN_RULES: Rule[] = [
   r('/admin/access', 'self'),
   // Staff picker (assignee drop-downs everywhere) stays open; the rest of user management is settings.
   r('/admin/users/staff', 'self'),
+  r('/admin/users/seen', 'self'), // own "last opened" mark of the sidebar badge (no data)
+  r('/admin/cases/seen', 'self'),
   r('/admin/users/clients\\.xlsx', 'clients'),
   // Case sub-resources
   r('/admin/cases/[^/]+/(?:documents|upload-links|official-forms|embassy-package|ezb-wizard|doc-templates)', 'documents'),
   r('/admin/cases/[^/]+/(?:messages|typing)', 'communications'),
+  r('/admin/cases/[^/]+/payment', 'finance'), // «Ödəniş alındı»: records money (invoices / payments) — finance, not cases
   r('/admin/bulk/cases', 'cases'),
   r('/admin/bulk/(?:inquiries|candidates)', 'clients'),
   r('/admin/ai-staff/mail', 'communications'),
@@ -156,6 +159,7 @@ const ADMIN_SEGMENTS: Record<string, RouteTarget> = {
   'public-api-keys': 'partners',
   agents: 'partners',
   partners: 'partners',
+  referrers: 'partners', // Baku referrer tree + sub-referrer approvals
   'partner-records': 'partners',
   'partner-schools': 'partners',
   // content

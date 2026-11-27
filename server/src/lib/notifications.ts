@@ -17,6 +17,7 @@ export type NotificationType =
   | 'EMBASSY_DOCS_REQUESTED'
   | 'EMBASSY_CHANGES_REQUESTED'
   | 'APPOINTMENT_SCHEDULED'
+  | 'APPOINTMENT_UPDATED'
   | 'DECISION_PENDING'
   | 'APPROVED'
   | 'REJECTED'
@@ -33,11 +34,16 @@ export interface NotifyParams {
   place?: string;
   reason?: string;
   doc?: string;
+  /** Number of appointment confirmation files attached (embassy appointment). */
+  files?: number;
 }
 
 type Template = (p: NotifyParams) => { title: string; body: string };
 type Catalog = Record<NotificationType, Template>;
 
+const filesLine = (label: string, n?: number) => (n ? `
+
+${label}` : '');
 const noteLine = (label: string, note?: string | null) => (note ? `\n\n${label}: ${note}` : '');
 
 const az: Catalog = {
@@ -47,7 +53,11 @@ const az: Catalog = {
   CONTRACT_RESIGN_REQUESTED: (p) => ({ title: 'Müqavilənin yenidən imzalanması tələb olunur', body: 'İmzalanmış müqavilə qəbul edilmədi. Zəhmət olmasa müqaviləni yenidən imzalayın.' + noteLine('Səbəb', p.note) }),
   EMBASSY_DOCS_REQUESTED: () => ({ title: 'Səfirlik üçün sənədlər', body: 'Müqaviləniz təsdiqləndi. Növbəti addım: səfirlik üçün tələb olunan sənədləri kabinetinizdə yükləyin.' }),
   EMBASSY_CHANGES_REQUESTED: (p) => ({ title: 'Səfirlik sənədlərində düzəliş tələb olunur', body: 'Səfirlik sənədlərinizdə düzəliş tələb olunur. Zəhmət olmasa qeyd olunan sənədləri yenidən yükləyin.' + noteLine('Qeyd', p.note) }),
-  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Səfirlik görüşünüz', body: `Səfirliyin sizə verdiyi görüş vaxtı qeydə alındı.\n\nTarix: ${p.date}\nYer: ${p.place}\n\nZəhmət olmasa hazırladığımız sənəd paketi və bütün orijinallarla vaxtında gəlin.` + noteLine('Qeyd', p.note) }),
+  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Səfirlik görüşünüz', body: `Səfirliyin sizə verdiyi görüş vaxtı qeydə alındı.\n\nTarix: ${p.date}\nYer: ${p.place}\n\nZəhmət olmasa hazırladığımız sənəd paketi və bütün orijinallarla vaxtında gəlin.` + noteLine('Qeyd', p.note) + filesLine('Təsdiq faylı kabinetinizin Sənədlər bölməsinə əlavə edildi.', p.files) }),
+  APPOINTMENT_UPDATED: (p) => ({ title: 'Görüş məlumatlarınız yeniləndi', body: `Səfirliyin sizə verdiyi görüş məlumatları yeniləndi.
+
+Tarix: ${p.date}
+Yer: ${p.place}` + noteLine('Qeyd', p.note) + filesLine('Yenilənmiş təsdiq faylı kabinetinizin Sənədlər bölməsindədir.', p.files) }),
   DECISION_PENDING: () => ({ title: 'Müraciət səfirliyə təqdim edildi', body: 'Viza müraciətiniz səfirliyə təqdim edildi. Qərar gözlənilir. Nəticə məlum olan kimi sizə bildiriş göndəriləcək.' }),
   APPROVED: (p) => ({ title: 'Təbriklər! Vizanız təsdiqləndi', body: 'Vizanız təsdiqləndi! Almaniyaya gəliş, yaşayış və işə başlama ilə bağlı növbəti addımlar üçün sizinlə əlaqə saxlayacağıq.' + noteLine('Qeyd', p.reason) }),
   REJECTED: (p) => ({ title: 'Viza qərarı: imtina', body: 'Təəssüf ki, səfirlik viza müraciətinizi rədd etdi.' + noteLine('Səbəb', p.reason) + '\n\nNövbəti addımları müzakirə etmək üçün əməkdaşımız sizinlə əlaqə saxlayacaq.' }),
@@ -65,7 +75,11 @@ const de: Catalog = {
   CONTRACT_RESIGN_REQUESTED: (p) => ({ title: 'Bitte unterschreiben Sie den Vertrag erneut', body: 'Der unterschriebene Vertrag konnte nicht akzeptiert werden. Bitte unterschreiben Sie erneut.' + noteLine('Grund', p.note) }),
   EMBASSY_DOCS_REQUESTED: () => ({ title: 'Dokumente für die Botschaft', body: 'Ihr Vertrag wurde bestätigt. Nächster Schritt: Laden Sie die für die Botschaft erforderlichen Dokumente hoch.' }),
   EMBASSY_CHANGES_REQUESTED: (p) => ({ title: 'Korrekturen an den Botschaftsunterlagen erforderlich', body: 'Ihre Botschaftsunterlagen benötigen Korrekturen. Bitte laden Sie die markierten Dokumente erneut hoch.' + noteLine('Hinweis', p.note) }),
-  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Ihr Botschaftstermin', body: `Ihr Termin, den Ihnen die Botschaft gegeben hat, ist eingetragen.\n\nDatum: ${p.date}\nOrt: ${p.place}\n\nBitte erscheinen Sie pünktlich mit dem von uns vorbereiteten Unterlagenpaket und allen Originalen.` + noteLine('Hinweis', p.note) }),
+  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Ihr Botschaftstermin', body: `Ihr Termin, den Ihnen die Botschaft gegeben hat, ist eingetragen.\n\nDatum: ${p.date}\nOrt: ${p.place}\n\nBitte erscheinen Sie pünktlich mit dem von uns vorbereiteten Unterlagenpaket und allen Originalen.` + noteLine('Hinweis', p.note) + filesLine('Die Terminbestätigung wurde Ihrem Kundenbereich unter „Dokumente“ hinzugefügt.', p.files) }),
+  APPOINTMENT_UPDATED: (p) => ({ title: 'Ihre Termindaten wurden aktualisiert', body: `Die Daten Ihres Botschaftstermins wurden aktualisiert.
+
+Datum: ${p.date}
+Ort: ${p.place}` + noteLine('Hinweis', p.note) + filesLine('Die aktualisierte Terminbestätigung finden Sie in Ihrem Kundenbereich unter „Dokumente“.', p.files) }),
   DECISION_PENDING: () => ({ title: 'Antrag bei der Botschaft eingereicht', body: 'Ihr Visumantrag wurde bei der Botschaft eingereicht. Wir benachrichtigen Sie, sobald die Entscheidung vorliegt.' }),
   APPROVED: (p) => ({ title: 'Herzlichen Glückwunsch! Ihr Visum wurde erteilt', body: 'Ihr Visum wurde erteilt! Wir melden uns bei Ihnen zu Einreise, Wohnung und Arbeitsbeginn.' + noteLine('Hinweis', p.reason) }),
   REJECTED: (p) => ({ title: 'Visumentscheidung: Ablehnung', body: 'Leider hat die Botschaft Ihren Visumantrag abgelehnt.' + noteLine('Grund', p.reason) + '\n\nUnser Team kontaktiert Sie, um die nächsten Schritte zu besprechen.' }),
@@ -83,7 +97,11 @@ const en: Catalog = {
   CONTRACT_RESIGN_REQUESTED: (p) => ({ title: 'Please sign the contract again', body: 'The signed contract could not be accepted. Please sign it again.' + noteLine('Reason', p.note) }),
   EMBASSY_DOCS_REQUESTED: () => ({ title: 'Documents for the embassy', body: 'Your contract was confirmed. Next step: upload the documents required by the embassy.' }),
   EMBASSY_CHANGES_REQUESTED: (p) => ({ title: 'Changes needed on embassy documents', body: 'Your embassy documents need changes. Please re-upload the marked documents.' + noteLine('Note', p.note) }),
-  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Your embassy appointment', body: `The appointment the embassy gave you has been recorded.\n\nDate: ${p.date}\nPlace: ${p.place}\n\nPlease arrive on time with the document set we prepared and all originals.` + noteLine('Note', p.note) }),
+  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Your embassy appointment', body: `The appointment the embassy gave you has been recorded.\n\nDate: ${p.date}\nPlace: ${p.place}\n\nPlease arrive on time with the document set we prepared and all originals.` + noteLine('Note', p.note) + filesLine('The appointment confirmation was added to the Documents section of your account.', p.files) }),
+  APPOINTMENT_UPDATED: (p) => ({ title: 'Your appointment details were updated', body: `The details of the appointment the embassy gave you were updated.
+
+Date: ${p.date}
+Place: ${p.place}` + noteLine('Note', p.note) + filesLine('The updated appointment confirmation is in the Documents section of your account.', p.files) }),
   DECISION_PENDING: () => ({ title: 'Application lodged at the embassy', body: 'Your visa application was lodged at the embassy. We will notify you as soon as the decision is made.' }),
   APPROVED: (p) => ({ title: 'Congratulations! Your visa was approved', body: 'Your visa was approved! We will contact you about travel, housing and your first working day.' + noteLine('Note', p.reason) }),
   REJECTED: (p) => ({ title: 'Visa decision: refused', body: 'Unfortunately the embassy refused your visa application.' + noteLine('Reason', p.reason) + '\n\nOur team will contact you to discuss next steps.' }),
@@ -101,7 +119,11 @@ const ru: Catalog = {
   CONTRACT_RESIGN_REQUESTED: (p) => ({ title: 'Пожалуйста, подпишите договор повторно', body: 'Подписанный договор не был принят. Пожалуйста, подпишите его повторно.' + noteLine('Причина', p.note) }),
   EMBASSY_DOCS_REQUESTED: () => ({ title: 'Документы для посольства', body: 'Ваш договор подтверждён. Следующий шаг: загрузите документы, необходимые для посольства.' }),
   EMBASSY_CHANGES_REQUESTED: (p) => ({ title: 'Требуются исправления в документах для посольства', body: 'В документах для посольства требуются исправления. Пожалуйста, загрузите отмеченные документы повторно.' + noteLine('Примечание', p.note) }),
-  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Дата приёма в посольстве', body: `Дата приёма, которую вам назначило посольство, внесена в заявку.\n\nДата: ${p.date}\nМесто: ${p.place}\n\nПожалуйста, приходите вовремя с подготовленным нами пакетом документов и всеми оригиналами.` + noteLine('Примечание', p.note) }),
+  APPOINTMENT_SCHEDULED: (p) => ({ title: 'Дата приёма в посольстве', body: `Дата приёма, которую вам назначило посольство, внесена в заявку.\n\nДата: ${p.date}\nМесто: ${p.place}\n\nПожалуйста, приходите вовремя с подготовленным нами пакетом документов и всеми оригиналами.` + noteLine('Примечание', p.note) + filesLine('Подтверждение приёма добавлено в раздел «Документы» вашего кабинета.', p.files) }),
+  APPOINTMENT_UPDATED: (p) => ({ title: 'Данные вашего приёма обновлены', body: `Данные приёма, назначенного посольством, обновлены.
+
+Дата: ${p.date}
+Место: ${p.place}` + noteLine('Примечание', p.note) + filesLine('Обновлённое подтверждение приёма находится в разделе «Документы» вашего кабинета.', p.files) }),
   DECISION_PENDING: () => ({ title: 'Заявка подана в посольство', body: 'Ваша визовая заявка подана в посольство. Мы сообщим вам, как только будет принято решение.' }),
   APPROVED: (p) => ({ title: 'Поздравляем! Ваша виза одобрена', body: 'Ваша виза одобрена! Мы свяжемся с вами по поводу переезда, жилья и начала работы.' + noteLine('Примечание', p.reason) }),
   REJECTED: (p) => ({ title: 'Решение по визе: отказ', body: 'К сожалению, посольство отказало в выдаче визы.' + noteLine('Причина', p.reason) + '\n\nНаш сотрудник свяжется с вами, чтобы обсудить дальнейшие шаги.' }),
@@ -135,6 +157,7 @@ export const PLACEHOLDERS: Record<NotificationType, string[]> = {
   EMBASSY_DOCS_REQUESTED: ['number', 'firstName'],
   EMBASSY_CHANGES_REQUESTED: ['number', 'firstName', 'note'],
   APPOINTMENT_SCHEDULED: ['number', 'firstName', 'date', 'place', 'note'],
+  APPOINTMENT_UPDATED: ['number', 'firstName', 'date', 'place', 'note'],
   DECISION_PENDING: ['number', 'firstName'],
   APPROVED: ['number', 'firstName', 'reason'],
   REJECTED: ['number', 'firstName', 'reason'],
@@ -187,7 +210,7 @@ export const notifyClient = async (
   const body = brandify(rendered.body);
   // Document reviews open the case's documents tab, where a rejected file can be uploaded again.
   // Straight to the right tab (a message opens the Mesajlar tab, a document the Sənədlər tab).
-  const tabQuery = type === 'DOCUMENT_REJECTED' || type === 'DOCUMENT_ACCEPTED' ? '?tab=docs' : type === 'NEW_MESSAGE' ? '?tab=messages' : '';
+  const tabQuery = type === 'DOCUMENT_REJECTED' || type === 'DOCUMENT_ACCEPTED' ? '?tab=docs' : type === 'NEW_MESSAGE' ? '?tab=messages' : (type === 'APPOINTMENT_SCHEDULED' || type === 'APPOINTMENT_UPDATED') && params.files ? '?tab=docs#received' : '';
   const link = `/account/cases/${c.id}${tabQuery}`;
 
   const n = await prisma.notification.create({

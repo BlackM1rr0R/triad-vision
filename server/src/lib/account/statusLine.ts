@@ -24,6 +24,8 @@ export type StatusStage =
   | 'CONTRACT_PREP'
   | 'SIGN_LABOUR'
   | 'LABOUR_TRIAD'
+  | 'PAY'
+  | 'PAID_PREP'
   | 'WORK_PREP'
   | 'SIGN_WORK'
   | 'WORK_REVIEW'
@@ -58,10 +60,12 @@ export interface StatusFacts {
   contractTurn?: ContractTurn | null;
   /** The İş müqaviləsi documents are all signed by the client and wait for the team's approval (V2). */
   workSigned?: boolean;
+  /** Single-contract flow after the Əmək müqaviləsi: DUE = the client pays in the office, PAID = staff recorded it (lib/casePayment). */
+  payment?: 'DUE' | 'PAID' | null;
 }
 
 /** Stage kinds the status line itself describes (not repeated as "also required"). */
-const STAGE_KINDS: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'ATTEND_APPOINTMENT'];
+const STAGE_KINDS: NextKind[] = ['FIX_DOCS', 'UPLOAD_DOCS', 'SUBMIT_DOCS', 'SIGN_CONTRACT', 'PAY_CASE', 'ATTEND_APPOINTMENT'];
 /** Nudges that never count as "required" (same as the next-step card's soft kinds). */
 const SOFT: NextKind[] = ['PASSPORT_EXPIRY', 'COMPLETE_PROFILE', 'START_CASE', 'PREP_INTERVIEW', 'ARRIVAL_PREP'];
 
@@ -108,6 +112,8 @@ export const buildStatusLine = (f: StatusFacts): StatusLine => {
       return need('SIGN_LABOUR', find('SIGN_CONTRACT'), caseUrl(p.id, '?tab=docs#contract'), null);
     case 'CONTRACT_SIGNED':
       if (f.contractTurn === 'CLIENT') return need('SIGN_WORK', find('SIGN_CONTRACT'), caseUrl(p.id, '?tab=docs#contract'), null);
+      if (f.payment === 'DUE') return need('PAY', find('PAY_CASE'), caseUrl(p.id, '#payment'), null);
+      if (f.payment === 'PAID') return done('PAID_PREP');
       return done(f.workSigned ? 'WORK_REVIEW' : 'WORK_PREP');
     case 'EMBASSY_DOCUMENTS': {
       const up = find('UPLOAD_DOCS');

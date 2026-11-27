@@ -87,6 +87,9 @@ describe('partner-owned clients: sign-up link → cases → portal → commissio
     list = expectStatus(await p.agent.get('/api/partner/clients'), 200).body;
     row = list.items.find((x: { id: string }) => x.id === userId);
     expect(row).toMatchObject({ extended: true, contact: { email: user.email } });
+    // A partner firm is never named to the client (internal business information); a referrer is, with the consent switch.
+    expect(expectStatus(await client.get('/api/partner-sharing'), 200).body).toEqual({ partner: null, granted: null });
+    await prisma.referralPartner.update({ where: { id: p.partner.id }, data: { isReferrer: true } });
     // Withdrawing the consent hides the contacts again.
     expect(expectStatus(await client.get('/api/partner-sharing'), 200).body).toEqual({ partner: { name: 'Ilqar Mammadov' }, granted: true });
     expectStatus(await client.post('/api/partner-sharing').send({ granted: false }), 200);

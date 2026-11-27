@@ -19,6 +19,7 @@ import { fmtDateTime, fmtRelative, fullName, toastError } from '@/components/adm
 import type { AdminCaseListItem } from '@/components/admin/types';
 import { caseKey, type CaseDetailResponse } from '@/components/admin/case/shared';
 import { ActionPanel } from '@/components/admin/case/ActionPanel';
+import { AppointmentEditButton } from '@/components/admin/case/AppointmentForm';
 import { useStaffOptions } from '@/components/inline/CaseInlineCells';
 import { NextStepChip } from '@/components/caseNext/NextStepChip';
 import { BallChip } from '@/components/clientProcess/Ball';
@@ -207,7 +208,7 @@ export const CaseQuickDrawer = ({
               <AssignHint caseId={c.id} currentId={c.assignedStaff?.id ?? null} disabled={assign.isPending} onPick={(sid) => assign.mutate(sid)} />
             </Section>
 
-            <Section title={t('cl.drawer.appointment')} icon={CalendarClock}>
+            <Section title={t('cl.drawer.appointment')} icon={CalendarClock} action={<AppointmentEditButton c={c} />}>
               {c.appointmentAt ? (
                 <p className="text-sm">
                   <span className="block font-semibold text-ink">{fmtDateTime(c.appointmentAt)}</span>

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
+import type { ReferralPartner } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../../db.js';
 import { requireMinRole, revokeUserSessions } from '../../middleware/auth.js';
@@ -51,28 +52,33 @@ const loadPartner = async (id: string) => {
   return partner;
 };
 
-/** POST /:id/login — creates (or links an existing AGENT user as) the partner's portal login. */
-partnerLoginRouter.post('/:id/login', requireMinRole('ADMIN'), async (req, res) => {
-  const body = parse(
-    z.object({
-      email: z.string().trim().toLowerCase().email().max(191).optional(),
-      phone: z
-        .string()
-        .trim()
-        .max(40)
-        .nullable()
-        .optional()
-        .transform((v) => (v === '' ? null : v)),
-      firstName: z.string().trim().min(1).max(80).optional(),
-      lastName: z.string().trim().max(80).optional(),
-      locale: z.enum(['az', 'de', 'en', 'ru']).default('az'),
-      /** For an existing account: also e-mail a set-password link (new accounts always get one). */
-      sendInvite: z.boolean().optional(),
-    }),
-    req.body,
-  );
-  const partner = await loadPartner(String(req.params.id));
+const loginBody = z.object({
+  email: z.string().trim().toLowerCase().email().max(191).optional(),
+  phone: z
+    .string()
+    .trim()
+    .max(40)
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v)),
+  firstName: z.string().trim().min(1).max(80).optional(),
+  lastName: z.string().trim().max(80).optional(),
+  locale: z.enum(['az', 'de', 'en', 'ru']).default('az'),
+  /** For an existing account: also e-mail a set-password link (new accounts always get one). */
+  sendInvite: z.boolean().optional(),
+});
+export type PartnerLoginInput = z.input<typeof loginBody>;
+
+/**
+ * Creates (or links an existing AGENT user as) the partner's portal login; a new account always gets the
+ * set-password invitation. Also used when an admin approves a sub-referrer (lib/referrers). Throws 409
+ * PARTNER_HAS_LOGIN / EMAIL_TAKEN / USER_LINKED_TO_OTHER_PARTNER / PARTNER_NOT_APPROVED, 400 EMAIL_REQUIRED.
+ */
+export const createPartnerLogin = async (partner: ReferralPartner, input: PartnerLoginInput) => {
+  const body = loginBody.parse(input);
   if (partner.userId) throw conflict('PARTNER_HAS_LOGIN');
+  // A sub-referrer waiting for (or refused by) an admin never gets a login (lib/referrers).
+  if (partner.approvalStatus !== 'APPROVED') throw conflict('PARTNER_NOT_APPROVED');
   const email = body.email ?? partner.email?.toLowerCase() ?? null;
   if (!email) throw badRequest('EMAIL_REQUIRED');
 
@@ -114,6 +120,14 @@ partnerLoginRouter.post('/:id/login', requireMinRole('ADMIN'), async (req, res) 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
   const invited = created || body.sendInvite === true;
   if (invited) await sendPartnerInvite(user);
+  return { userId, email, created, invited };
+};
+
+/** POST /:id/login — creates (or links an existing AGENT user as) the partner's portal login. */
+partnerLoginRouter.post('/:id/login', requireMinRole('ADMIN'), async (req, res) => {
+  const body = parse(loginBody, req.body);
+  const partner = await loadPartner(String(req.params.id));
+  const { userId, email, created, invited } = await createPartnerLogin(partner, body);
   await audit(req, created ? 'PARTNER_LOGIN_CREATED' : 'PARTNER_LOGIN_LINKED', partner.id, { userId, email, invited });
   res.status(created ? 201 : 200).json({ login: await partnerLoginView(userId), created, invited });
 });

@@ -15,8 +15,10 @@ export const partnerSharingRouter = Router();
 partnerSharingRouter.use(requireAuth);
 
 const view = async (userId: string) => {
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { ownerPartner: { select: { name: true } } } });
-  if (!u?.ownerPartner) return { partner: null, granted: null };
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { ownerPartner: { select: { name: true, isReferrer: true } } } });
+  // Only a referrer (the person who brought the client) is shown, with the consent switch; a German partner firm is our
+  // internal business information and never named to the client.
+  if (!u?.ownerPartner?.isReferrer) return { partner: null, granted: null };
   return { partner: { name: u.ownerPartner.name }, granted: (await partnerSharingConsent([userId])).get(userId) ?? null };
 };
 

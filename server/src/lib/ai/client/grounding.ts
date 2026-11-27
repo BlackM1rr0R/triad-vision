@@ -199,6 +199,7 @@ export const NEXT_KIND_TEXT: Record<string, string> = {
   UPLOAD_DOCS: 'Upload missing documents',
   SUBMIT_DOCS: 'Submit the uploaded documents for review',
   SIGN_CONTRACT: 'Sign the contract',
+  PAY_CASE: 'Pay in the office after the contract was approved (pick a visit time)',
   ATTEND_APPOINTMENT: 'Attend the embassy appointment',
   BOOK_INTERVIEW: 'Book or confirm an interview with the employer',
   SIGN_DOCUMENTS: 'Sign documents waiting for the signature',

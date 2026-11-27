@@ -13,7 +13,7 @@ import { confirmDialog } from '@/components/ui/ConfirmHost';
 const STATUS_TONE: Record<OfficeVisit['status'], string> = toneClasses(STATUS_TONES.officeVisit);
 
 /** Free office slots, grouped per day; `onPick(slotId)`. */
-const SlotPicker = ({ selected, onPick }: { selected: string | null; onPick: (id: string) => void }) => {
+export const SlotPicker = ({ selected, onPick }: { selected: string | null; onPick: (id: string) => void }) => {
   const { t } = useTranslation();
   const { date } = useL10n();
   const { data, isLoading } = useQuery({

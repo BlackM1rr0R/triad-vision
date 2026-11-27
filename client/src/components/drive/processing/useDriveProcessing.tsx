@@ -168,6 +168,9 @@ export const useDriveProcessing = ({ loc, onNavigate }: Options) => {
     const x = targetOfItem(list[0]);
     if (!x) return [];
     const [first] = actionsOf(x);
+    // Not in the workflow yet: the client-folder bar already has the «Schon geschrieben» button (with the next admin / note),
+    // a second one here was the same action twice.
+    if (first === 'send') return [];
     // A labelled button (icon + short text, like "Partnyor"): an icon alone does not say what it does.
     return first
       ? [

@@ -367,9 +367,10 @@ const copyInner = async (documentId: string, opts: CopyOptions = {}): Promise<Co
   if (!folderId) return 'skipped';
   // The folder of the document's type ("Reisepass", "Lebenslauf" …); else its stage folder (Erstdokumente …).
   const type = typeOfRequirement(doc.requirement?.key);
-  const stageId = (type ? await ensureTypeFolder(folderId, type) : null) ?? (await ensureChild(folderId, STAGE_FOLDER[doc.stage]));
+  // `opts.folder`: a named subfolder of the client folder instead (embassy appointment files → "Termin").
+  const stageId = opts.folder ? await ensureChild(folderId, opts.folder) : (type ? await ensureTypeFolder(folderId, type) : null) ?? (await ensureChild(folderId, STAGE_FOLDER[doc.stage]));
   // Automatic name "<Nachname>_<Vorname>_<requirement title>_<date>.pdf" when it is switched on.
-  const naming = await caseNaming(doc.caseId);
+  const naming = opts.folder ? null : await caseNaming(doc.caseId);
   const auto = naming ? await autoNameFor(naming, { typ: requirementTitle(doc.requirement?.title), date: doc.createdAt, originalName: doc.originalName }) : null;
   const name = await freeNameIn(stageId, auto ?? safeUploadName(doc.originalName), true);
   const key = await copyIntoStore(src);
@@ -403,6 +404,8 @@ const copyInner = async (documentId: string, opts: CopyOptions = {}): Promise<Co
 export interface CopyOptions {
   /** Also copy a PENDING document (client / application uploads land in the client folder right away). */
   pending?: boolean;
+  /** Put the copy into this named subfolder of the client folder (created when missing) instead of the type / stage folder. */
+  folder?: string;
 }
 
 /**

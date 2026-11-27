@@ -32,6 +32,7 @@ import { IconButton } from '@/components/ui/Button';
 import { Menu } from '@/components/ui/Menu';
 import { StaffPermissionsPanel, StaffSummaryLine } from '@/components/admin/StaffPermissionsPanel'; // one panel: effective permissions + role / desk / work profile
 import { StaffMailboxDialog } from '@/components/admin/StaffMailboxDialog'; // create / connect the staff member's mailbox (super admin)
+import { useMarkSeen } from '@/components/admin/CasesNavBadge'; // opening the page clears the sidebar "new users" badge
 import { pagesUserPerms } from '@/i18n/pagesUserPerms';
 registerCopy(pagesUserPerms);
 registerCopy(pagesMailAdmin); // "Create mailbox" option of the new-staff dialog
@@ -511,6 +512,7 @@ const RowTools = ({
 };
 
 export default function Users() {
+  useMarkSeen('users');
   const { t } = useTranslation();
   const { user: me } = useAuth();
   /** Only the super admin manages accounts; admins and staff see the list. */

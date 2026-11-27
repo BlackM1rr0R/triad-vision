@@ -42,6 +42,7 @@ import { adminCaseContractsRouter } from './caseContracts.js'; // Əmək müqavi
 import { adminCandidateRequestsRouter } from './candidateRequests.js';
 import { adminCandidatePoolRouter } from './candidatePool.js'; // anonymous candidate pool: overview, interests, view log
 import { adminPartnersRouter } from './partners.js';
+import { adminReferrersRouter } from './referrers.js'; // Baku referrers: tree, sub-referrer approvals (partners area)
 import { adminPartnerRecordsRouter } from './partnerRecords.js'; // contracts, timeline, contact persons of employers + referral partners
 import { adminPartnerSchoolsRouter } from './partnerSchools.js'; // colleges / language schools: categories + student records review
 import { adminRegisterRouter } from './register.js';
@@ -331,6 +332,7 @@ adminRouter.use('/candidate-requests', adminCandidateRequestsRouter);
 adminRouter.use('/candidate-pool', adminCandidatePoolRouter);
 adminRouter.use('/skill-videos', adminSkillVideosRouter); // candidates' skill videos: review queue, approve / reject, view log
 adminRouter.use('/partners', adminPartnersRouter);
+adminRouter.use('/referrers', adminReferrersRouter); // referrer tree (pyramid, no commissions): view = staff, writes ADMIN+
 adminRouter.use('/partner-records', adminPartnerRecordsRouter); // /contracts*, /activities*, /contacts* (owner: companyId | referralPartnerId)
 adminRouter.use('/partner-schools', adminPartnerSchoolsRouter); // partner categories (ADMIN+ edit) + language-school records review (confirm → German level)
 adminRouter.use('/register', adminRegisterRouter);

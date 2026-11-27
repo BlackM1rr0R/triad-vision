@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { ArrowUpRight, Briefcase, CircleUser, Coins, FolderOpen, GraduationCap, HardDrive, LayoutDashboard, LogOut, MessagesSquare, PauseCircle, UserCog, Users } from 'lucide-react';
+import { ArrowUpRight, Briefcase, CircleUser, Coins, FolderOpen, GraduationCap, HardDrive, LayoutDashboard, LogOut, MessagesSquare, Network, PauseCircle, UserCog, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { errorCode } from '@/lib/api';
@@ -24,6 +24,7 @@ import PartnerTeamPage from './Team';
 import PartnerDrivePage from './Drive';
 import PartnerMessagesPage from './Messages';
 import PartnerVacanciesPage from './Vacancies';
+import PartnerReferralsPage, { PartnerReferralDetailPage } from './Referrals'; // referrers: own team (sub-referrers), registers pagesReferrers
 import { PortalNotificationBell, PortalNotificationsPage } from '@/components/notifications/PortalNotifications';
 
 registerCopy(pagesPartnerPortal);
@@ -59,6 +60,8 @@ export default function PartnerApp() {
     ...(areas.messages ? [{ to: '/partner/messages', label: t('partnerAccess.nav.messages'), icon: MessagesSquare, match: (p: string) => p.startsWith('/partner/messages') }] : []),
     ...(areas.vacancies ? [{ to: '/partner/vacancies', label: t('partnerAccess.nav.vacancies'), icon: Briefcase, match: (p: string) => p.startsWith('/partner/vacancies') }] : []),
     ...(areas.drive ? [{ to: '/partner/drive', label: t('partnerAccess.nav.drive'), icon: HardDrive, match: (p: string) => p.startsWith('/partner/drive') }] : []),
+    // Referrers: "Komandam / Alt-referallar" (own subtree, sub-referrer requests).
+    ...(areas.referrals ? [{ to: '/partner/referrals', label: t('referrers.nav'), icon: Network, match: (p: string) => p.startsWith('/partner/referrals') }] : []),
     ...(areas.team ? [{ to: '/partner/team', label: t('partnerAccess.nav.team'), icon: UserCog, match: (p: string) => p.startsWith('/partner/team') }] : []),
     { to: '/partner/profile', label: t('partnerPortal.nav.profile'), icon: CircleUser, match: (p: string) => p.startsWith('/partner/profile') },
   ];
@@ -150,6 +153,8 @@ export default function PartnerApp() {
                 {areas.vacancies && <Route path="vacancies" element={<PartnerVacanciesPage me={me} />} />}
                 {areas.drive && <Route path="drive" element={<PartnerDrivePage />} />}
                 {areas.team && <Route path="team" element={<PartnerTeamPage />} />}
+                {areas.referrals && <Route path="referrals" element={<PartnerReferralsPage />} />}
+                {areas.referrals && <Route path="referrals/:id" element={<PartnerReferralDetailPage />} />}
                 <Route path="notifications" element={<PortalNotificationsPage />} />
                 <Route path="profile" element={<PartnerProfilePage me={me} />} />
                 <Route path="*" element={<Navigate to="/partner" replace />} />
